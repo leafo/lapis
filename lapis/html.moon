@@ -62,6 +62,14 @@ element = (buffer, name, ...) ->
     \write "</", name, ">"
 
 class Buffer
+  builders: {
+    html_5: (...) ->
+      raw '<!DOCTYPE HTML>'
+      raw '<html lang="en">'
+      text ...
+      raw '</html>'
+  }
+
   new: (@buffer) ->
     @old_env = {}
     @i = #@buffer
@@ -81,21 +89,37 @@ class Buffer
         default = @old_env[name]
         return default if default != nil
 
-        res = switch name
-          when "capture"
-            (fn) -> table.concat @with_temp -> fn!
-          when "element"
-            (...) -> element @, ...
-          when "text"
-            @\write_escaped
-          when "raw"
-            @\write
-          else
-            (...) -> element @, name, ...
+        builder = @builders[name]
+        res = if builder != nil
+          (...) -> @call builder, ...
+        else
+          switch name
+            when "capture"
+              (fn) -> table.concat @with_temp -> fn!
+            when "element"
+              (...) -> element @, ...
+            when "text"
+              @\write_escaped
+            when "raw"
+              @\write
+            else
+              (...) -> element @, name, ...
 
         scope[name] = res
         res
     }
+
+  call: (fn, ...) =>
+    env = getfenv fn
+    if env == @scope
+      fn ...
+    else
+      before = @old_env
+      @old_env = getfenv fn
+      setfenv fn, @scope
+      fn ...
+      setfenv fn, @old_env
+      @old_env = before
 
   write_escaped: (...) =>
     for thing in *{...}
@@ -121,16 +145,7 @@ class Buffer
           for chunk in *thing
             @write chunk
         when "function"
-          env = getfenv thing
-          if env == @scope
-            thing!
-          else
-            before = @old_env
-            @old_env = getfenv thing
-            setfenv thing, @scope
-            thing!
-            setfenv thing, @old_env
-            @old_env = before
+          @call thing
         else
           error "don't know how to handle: " .. type(thing)
     nil
