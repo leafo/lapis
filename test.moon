@@ -14,9 +14,7 @@ class Cool extends lapis.Application
     View!
 
   "/cool": =>
-    @html ->
-      html_5 ->
-        pre "hello world!"
+    @html -> pre "hello world!"
 
   "/simple": => "YEEAAAH"
 

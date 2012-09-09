@@ -164,17 +164,25 @@ class Widget
   @__inherited: (cls) =>
     cls.__base.__call = (...) => @render ...
 
+  new: (opts) =>
+    -- copy in options
+    if opts
+      @[k] = v for k,v in pairs opts
+
+  content_for: (name) =>
+    @_buffer\write_escaped @[name]
+
   content: => -- implement me
   render: (buffer, ...) =>
-    b = Buffer(buffer)
+    @_buffer = Buffer(buffer)
 
     base = getmetatable @
     scope = setmetatable {}, {
       __index: (scope, name) ->
-        value = base[name] or rawget @, name
+        value = base[name]
 
         if type(value) == "function"
-          wrapped = (...) -> b\call value, ...
+          wrapped = (...) -> @_buffer\call value, ...
           scope[name] = wrapped
           wrapped
         else

@@ -6,7 +6,6 @@ require "lapis.router"
 require "lapis.html"
 
 import Router from lapis.router
-import Layout from lapis.layout
 import html_writer from lapis.html
 
 export Application, Request
@@ -21,7 +20,14 @@ class Request
     for k,v in pairs params
       self[k] = v
 
-  render: => table.concat @buffer
+  render: =>
+    if @app.layout
+      inner = @buffer
+      @buffer = {}
+      layout = @app.layout inner: -> raw inner
+      layout\render @buffer
+
+    table.concat @buffer
 
   html: (fn) => html_writer fn
 
@@ -57,7 +63,7 @@ class Request
 
 
 class Application
-  layout: Layout
+  layout: lapis.layout.Default
 
   new: =>
     @router = Router!
