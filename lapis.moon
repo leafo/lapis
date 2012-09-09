@@ -9,7 +9,7 @@ import insert from table
 require "lpeg"
 
 import R, S, V, P from lpeg
-import C, Ct, Cmt, Cg, Cb, Cc from lpeg
+import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
 
 reduce = (items, fn) ->
   return items[1] if #items == 1
@@ -19,7 +19,6 @@ reduce = (items, fn) ->
   left
 
 class Router
-
   alpha = R("az", "AZ", "__")
   alpha_num = alpha + R("09")
   slug = (alpha_num + S("-")) ^ 1
@@ -58,8 +57,11 @@ class Router
       print "matched", path
       p params
 
-  url_for: (name, params) ->
-    error "TODO"
+  url_for: (name, params) =>
+    replace = (s) -> params[s\sub 2] or ""
+    patt = Cs (symbol / replace + 1)^0
+    route = assert @named_routes[name]
+    patt\match route
 
   resolve: (route) =>
     @build! unless @_built
@@ -74,5 +76,5 @@ with r
 
 r\resolve "/user/34343"
 
--- p r\url_for "user", id: 2323
+p r\url_for "user", id: 2323
 
