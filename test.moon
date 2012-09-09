@@ -1,29 +1,15 @@
 
+require "moon"
 require "lapis"
 
-self = lapis.new!
+class Cool extends lapis.Application
+  [home: "/"]: =>
+    @html ->
+      html_5 ->
+        pre "hello world!"
 
-@dispatch "/base",
+  "/cool": =>
+    "so cool!"
 
+lapis.serve Cool, 6789
 
-class App extends @dispatcher"/base"
-  ":id": (id) -> -- matches /base/someid343
-    "what is going on"
-
-  show: @route":id"
-
-
-get "/", json_api (req) ->
-  hello: "world"
-
-
-
-div "hello world"
-
-div ->
-  if something
-    text "yeah"
-  text "what is going on"
-
-div class: "blue", ->
-  print "what"
