@@ -32,10 +32,17 @@ class Router
     name = str\sub 2
     Cg slug, name
 
+  make_splat = ->
+    Cg P(1)^1, "splat"
+
   make_lit = (str) -> P(str)
 
+  splat = P"*"
   symbol = P":" * alpha * alpha_num^0
-  chunk = (1 - symbol)^1 / make_lit + symbol / make_var
+
+  -- chunk = (1 - symbol)^1 / make_lit + symbol / make_var
+  chunk = symbol / make_var + splat / make_splat
+  chunk = (1 - chunk)^1 / make_lit + chunk
 
   @route_grammar = Ct(chunk^1) / (parts) ->
     patt = reduce parts, (a,b) -> a * b
@@ -55,6 +62,9 @@ class Router
 
     insert @routes, { route, responder, name }
 
+  default_route: (route) =>
+    error "failed to find route: " .. route
+
   build: =>
     @p = reduce [@build_route unpack r for r in *@routes], (a, b) -> a + b
   
@@ -71,6 +81,6 @@ class Router
   resolve: (route, ...) =>
     @build! unless @p
     params, responder, path, name = @p\match route
-    error "failed to route: " .. route unless params
+    @default_route route unless params
     responder params, path, name, ... if responder
 
