@@ -3,9 +3,11 @@ module "lapis.application", package.seeall
 
 require "lapis.layout"
 require "lapis.router"
+require "lapis.html"
 
 import Router from lapis.router
 import Layout from lapis.layout
+import html_writer from lapis.html
 
 export Application, Request
 
@@ -21,6 +23,8 @@ class Request
 
   render: => table.concat @buffer
 
+  html: (fn) => html_writer fn
+
   write: (thing) =>
     switch type(thing)
       when "string"
@@ -29,6 +33,8 @@ class Request
         @write part for part in *thing
       when "function"
         @write thing @buffer
+      when "nil"
+        nil -- ignore
       else
         error "Don't know how to write:", tostring(thing)
 
@@ -58,8 +64,7 @@ class Application
       with r
         .route_name = name
         \add_params params, "url_params"
-        out = handler r
-        \write out if out
+        \write handler r
 
   dispatch: (req, res) =>
     r = Request self, req, res
