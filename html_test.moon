@@ -1,5 +1,5 @@
 
-import html_writer from require "lapis.html"
+import html_writer, Widget from require "lapis.html"
 
 buffer = {}
 w = html_writer ->
@@ -17,7 +17,18 @@ w = html_writer ->
     div "what is going on there?"
 
 
-w buffer
+-- w buffer
+
+class TestWidget extends Widget
+  content: =>
+    div class: "hello", -> @hi!
+
+  hi: => text "Hello!", @msg!
+
+  msg: => 123
+
+
+TestWidget! buffer
 
 print "result:"
 print table.concat buffer

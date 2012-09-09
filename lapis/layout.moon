@@ -1,7 +1,8 @@
 
 module "lapis.layout", package.seeall
+require "lapis.html"
 
-export Layout
+export Default
 
-class Layout
-  nil
+class Default extends lapis.html.Widget
+  content: =>

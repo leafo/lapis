@@ -4,6 +4,7 @@ module "lapis.html", package.seeall
 import concat from table
 
 export html_writer
+export Widget
 
 punct = "[%^$()%.%[%]*+%-?]"
 escape_patt = (str) ->
@@ -111,15 +112,18 @@ class Buffer
 
   call: (fn, ...) =>
     env = getfenv fn
+    out = nil
     if env == @scope
-      fn ...
+      out = {fn ...}
     else
       before = @old_env
       @old_env = getfenv fn
       setfenv fn, @scope
-      fn ...
+      out = {fn ...}
       setfenv fn, @old_env
       @old_env = before
+
+    unpack out
 
   write_escaped: (...) =>
     for thing in *{...}
@@ -139,6 +143,8 @@ class Buffer
         when "string"
           @i += 1
           @buffer[@i] = thing
+        when "number"
+          @write tostring thing
         when "nil"
           nil -- ignore
         when "table"
@@ -152,4 +158,31 @@ class Buffer
 
 html_writer = (fn) ->
   (buffer) -> Buffer(buffer)\write fn
+
+-- ensures that all methods are called in the buffer's scope
+class Widget
+  @__inherited: (cls) =>
+    cls.__base.__call = (...) => @render ...
+
+  content: => -- implement me
+  render: (buffer, ...) =>
+    b = Buffer(buffer)
+
+    base = getmetatable @
+    scope = setmetatable {}, {
+      __index: (scope, name) ->
+        value = base[name] or rawget @, name
+
+        if type(value) == "function"
+          wrapped = (...) -> b\call value, ...
+          scope[name] = wrapped
+          wrapped
+        else
+          value
+    }
+
+    setmetatable @, __index: scope
+    @content ...
+    setmetatable @, base
+    nil
 

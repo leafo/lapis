@@ -26,7 +26,15 @@ class Request
   html: (fn) => html_writer fn
 
   write: (thing) =>
-    switch type(thing)
+    t = type(thing)
+
+    -- is it callable?
+    if t == "table"
+      mt = getmetatable(thing)
+      if mt and mt.__call
+        t = "function"
+
+    switch t
       when "string"
         table.insert @buffer, thing
       when "table"
