@@ -16,7 +16,7 @@ class Cool extends lapis.Application
   "/cool": =>
     @html -> pre "hello world!"
 
-  "/simple": => "YEEAAAH"
+  "/hello/world/*": lapis.server.make_static_handler "static"
 
 lapis.serve Cool, 6789
 

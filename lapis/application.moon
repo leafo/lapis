@@ -10,24 +10,39 @@ import html_writer from lapis.html
 
 export Application, Request
 
+set_and_truthy = (val, default=true) ->
+  return default if val == nil
+  val
+
 class Request
   new: (@app, @req, @res) =>
-    @res.headers["Content-type"] = "text/html"
     @buffer = {} -- output buffer
+    @params = {}
+    @options = {}
 
   add_params: (params, name) =>
     self[name] = params
     for k,v in pairs params
-      self[k] = v
+      @params[k] = v
 
+  -- render the request into the response
+  -- do this last
   render: =>
-    if @app.layout
+    if not @res.headers["Content-type"]
+      @res.headers["Content-type"] = "text/html"
+
+    if @app.layout and set_and_truthy(@options.layout, true)
       inner = @buffer
       @buffer = {}
       layout = @app.layout inner: -> raw inner
       layout\render @buffer
 
-    table.concat @buffer
+    if next @buffer
+      content = table.concat @buffer
+      @res.content = if @res.content
+        @res.content .. content
+      else
+        content
 
   html: (fn) => html_writer fn
 
@@ -44,7 +59,12 @@ class Request
       when "string"
         table.insert @buffer, thing
       when "table"
-        @write part for part in *thing
+        -- see if there are options
+        for k,v in pairs thing
+          if type(k) == "string"
+            @options[k] = v
+          else
+            @write v
       when "function"
         @write thing @buffer
       when "nil"
@@ -68,6 +88,10 @@ class Application
   new: =>
     @router = Router!
 
+    -- add static route
+    @@__base["/static/*"] = lapis.server.make_static_handler "static"
+    @@__base["/favicon.ico"] = lapis.server.serve_from_static!
+
     for path, handler in pairs @@__base
       t = type path
       if t == "table" or t == "string" and path\match "^/"
@@ -83,7 +107,7 @@ class Application
   dispatch: (req, res) =>
     r = Request self, req, res
     @router\resolve req.parsed_url.path, r
-    res.content = r\render!
+    r\render!
     res
 
   serve: =>
