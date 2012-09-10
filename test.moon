@@ -13,8 +13,8 @@ class Cool extends lapis.Application
   [home: "/"]: =>
     View!
 
-  "/cool": =>
-    @html -> pre "hello world!"
+  "/cool/:name/:id": =>
+    @html -> pre "hello world! ", @params.name, " - ", @params.id
 
   "/hello/world/*": lapis.server.make_static_handler "static"
 

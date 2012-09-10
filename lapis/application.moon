@@ -4,6 +4,7 @@ module "lapis.application", package.seeall
 require "lapis.layout"
 require "lapis.router"
 require "lapis.html"
+logger = require "lapis.logging"
 
 import Router from lapis.router
 import html_writer from lapis.html
@@ -108,7 +109,8 @@ class Application
     r = Request self, req, res
     @router\resolve req.parsed_url.path, r
     r\render!
+    logger.request r
     res
 
-  serve: =>
+  serve: => -- TODO: alias to lapis.serve
 
