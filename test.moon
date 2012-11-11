@@ -1,13 +1,12 @@
 
 require "moon"
-require "lapis"
+lapis = require "lapis"
 
 class View extends lapis.html.Widget
   msg: => "hello from a widget"
   content: =>
     html_5 ->
       pre @msg!
-
 
 class Cool extends lapis.Application
   [home: "/"]: =>

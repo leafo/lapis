@@ -1,15 +1,8 @@
 
-module "lapis.application", package.seeall
-
-require "lapis.layout"
-require "lapis.router"
-require "lapis.html"
 logger = require "lapis.logging"
 
-import Router from lapis.router
-import html_writer from lapis.html
-
-export Application, Request
+import Router from require "lapis.router"
+import html_writer from require "lapis.html"
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -84,14 +77,15 @@ class Request
 
 
 class Application
-  layout: lapis.layout.Default
+  layout: require"lapis.layout".Default
 
   new: =>
     @router = Router!
 
-    -- add static route
-    @@__base["/static/*"] = lapis.server.make_static_handler "static"
-    @@__base["/favicon.ico"] = lapis.server.serve_from_static!
+    with require "lapis.server"
+      -- add static route
+      @@__base["/static/*"] = .make_static_handler "static"
+      @@__base["/favicon.ico"] = .serve_from_static!
 
     for path, handler in pairs @@__base
       t = type path
@@ -113,4 +107,7 @@ class Application
     res
 
   serve: => -- TODO: alias to lapis.serve
+
+
+{ :Request, :Application }
 

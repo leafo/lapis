@@ -1,10 +1,5 @@
 
-module "lapis.html", package.seeall
-
 import concat from table
-
-export html_writer
-export Widget
 
 punct = "[%^$()%.%[%]*+%-?]"
 escape_patt = (str) ->
@@ -193,4 +188,6 @@ class Widget
     @content ...
     setmetatable @, base
     nil
+
+{ :Widget, :html_writer }
 

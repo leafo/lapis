@@ -17,21 +17,5 @@ make_server = (port, handler) ->
 
   xavante
 
-make_static_handler = (root) ->
-  handler = xavante.filehandler root
-  =>
-    import req, res from @
-    req.relpath = @params.splat
-    handler req, res, root
-    layout: false
-
-
-serve_from_static = (root="static") ->
-  handler = make_static_handler root
-  =>
-    @params.splat = @req.relpath
-    handler @
-
-
-{ :make_server, :make_static_handler, :serve_from_static }
+{ :make_server }
 

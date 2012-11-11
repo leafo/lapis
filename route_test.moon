@@ -1,8 +1,7 @@
 
 require "moon"
-require "lapis.router"
 
-import Router from lapis.router
+import Router from require "lapis.router"
 handle = (...) -> moon.p {...}
 
 r = Router!

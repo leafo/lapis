@@ -1,6 +1,4 @@
 
-module "lapis.logging", package.seeall
-
 colors = require "ansicolors"
 import insert from table
 
@@ -25,8 +23,6 @@ flatten_params_helper = (params, out = {}, sep= ", ")->
 flatten_params = (params) ->
   table.concat flatten_params_helper params
 
-export *
-
 request = (r) ->
   import req, res from r
   status = if res.statusline then res.statusline\match " (%d+) " else "200"
@@ -37,4 +33,6 @@ request = (r) ->
 
   print colors(t)\format status, cmd, flatten_params r.params
 
+
+{ :request }
 

@@ -1,36 +1,22 @@
 
-require "lapis.router"
-require "lapis.application"
-require "lapis.server"
+router = require "lapis.router"
+application = require "lapis.application"
+html = require "lapis.html"
+server = require "lapis.server"
 
-module "lapis", package.seeall
+import Application from application
 
-import make_server from lapis.server
-
-export Application = lapis.application.Application
-
-export serve = (app_cls, port = 80) ->
+serve = (app_cls, port = 80) ->
   app = app_cls!
-  -- return if true
 
-  server = make_server port, app\dispatch
+  if server.current! == "xavante"
+    x = require "lapis.xavante"
+    s = x.make_server port, app\dispatch
+    s.start!
+  else
+    error "Don't know how to serve: #{server.current!}"
 
-  -- res.headers["Content-type"] = "text/html"
-  -- res.content = table.concat {
-  --   "<html>"
-  --   "req:"
-  --   "<pre>"
-  --   moon.dump req
-  --   "</pre>"
-  --   "res:"
-  --   "<pre>"
-  --   moon.dump res
-  --   "</pre>"
-  --   "hello world, the time is: ", os.date()
-  --   "</html>"
-  -- }
-
-  -- res
-  
-  server.start!
-
+{
+  :server, :serve, :html, :application
+  :Application
+}

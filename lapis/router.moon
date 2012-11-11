@@ -1,14 +1,9 @@
 
-module "lapis.router", package.seeall
-
-export Router
-
 -- todo: splats in routes (*)
 -- Cmt conditions on routes
 -- pattern classes
 --    :something[num] *[slug]
 
-import p from require "moon"
 import insert from table
 
 require "lpeg"
@@ -83,4 +78,6 @@ class Router
     params, responder, path, name = @p\match route
     @default_route route unless params
     responder params, path, name, ... if responder
+
+{ :Router }
 
