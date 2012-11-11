@@ -2,9 +2,7 @@
 require "xavante"
 require "xavante.filehandler"
 
-module "lapis.server", package.seeall
-
-export make_server = (port, handler) ->
+make_server = (port, handler) ->
   xavante.HTTP {
     server: { host: "*", port: tonumber port },
     defaultHost: {
@@ -19,7 +17,7 @@ export make_server = (port, handler) ->
 
   xavante
 
-export make_static_handler = (root) ->
+make_static_handler = (root) ->
   handler = xavante.filehandler root
   =>
     import req, res from @
@@ -28,10 +26,12 @@ export make_static_handler = (root) ->
     layout: false
 
 
-export serve_from_static = (root="static") ->
+serve_from_static = (root="static") ->
   handler = make_static_handler root
   =>
     @params.splat = @req.relpath
     handler @
 
+
+{ :make_server, :make_static_handler, :serve_from_static }
 
