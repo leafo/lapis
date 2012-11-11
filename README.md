@@ -14,8 +14,9 @@ lapis.serve class extends lapis.Application
       text "Go to my "
       a href: profile_url, "profile"
 
-  [user_profile: "/:name"]: =>
+  ⁣[user_profile: "/:name"]: =>
     @html ->
       div class: "profile", ->
         text "Welcome to the profile of ", @params.name
 ```
+
