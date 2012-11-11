@@ -40,6 +40,8 @@ class Request
 
   html: (fn) => html_writer fn
 
+  url_for: (...) => @app.router\url_for ...
+
   write: (thing) =>
     t = type(thing)
 
