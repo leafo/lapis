@@ -29,6 +29,8 @@ build = {
 		["lapis.logging"] = "lapis/logging.lua",
 		["lapis.router"] = "lapis/router.lua",
 		["lapis.server"] = "lapis/server.lua",
+		["lapis.nginx"] = "lapis/nginx.lua",
+		["lapis.xavante"] = "lapis/xavante.lua",
 	},
 }
 
