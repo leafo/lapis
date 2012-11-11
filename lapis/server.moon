@@ -1,6 +1,6 @@
 
 current = ->
-  return "nginx" if nginx
+  return "nginx" if ngx
   "xavante"
 
 make_static_handler = (root) ->

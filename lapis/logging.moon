@@ -28,11 +28,8 @@ request = (r) ->
   status = if res.statusline then res.statusline\match " (%d+) " else "200"
   t = "[%{green}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
 
-  cmd = req.cmdline
-  cmd = cmd\gsub " [^ ]*$", ""
-
+  cmd = "#{req.cmd_mth} #{req.cmd_url}"
   print colors(t)\format status, cmd, flatten_params r.params
-
 
 { :request }
 

@@ -9,12 +9,16 @@ import Application from application
 serve = (app_cls, port = 80) ->
   app = app_cls!
 
-  if server.current! == "xavante"
-    x = require "lapis.xavante"
-    s = x.make_server port, app\dispatch
-    s.start!
-  else
-    error "Don't know how to serve: #{server.current!}"
+  switch server.current!
+    when "xavante"
+      x = require "lapis.xavante"
+      s = x.make_server port, app\dispatch
+      s.start!
+    when "nginx"
+      n = require "lapis.nginx"
+      n.dispatch app
+    else
+      error "Don't know how to serve: #{server.current!}"
 
 {
   :server, :serve, :html, :application
