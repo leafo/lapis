@@ -98,7 +98,11 @@ class Application
     (params, path, name, r) ->
       with r
         .route_name = name
+
+        \add_params r.req.params_get, "GET"
+        \add_params r.req.params_post, "POST"
         \add_params params, "url_params"
+
         \write handler r
 
   dispatch: (req, res) =>

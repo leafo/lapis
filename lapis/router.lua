@@ -61,7 +61,7 @@ do
         return params[s:sub(2)] or ""
       end
       local patt = Cs((symbol / replace + 1) ^ 0)
-      local route = assert(self.named_routes[name])
+      local route = assert(self.named_routes[name], "Missing route named " .. tostring(name))
       return patt:match(route)
     end,
     resolve = function(self, route, ...)

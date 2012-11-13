@@ -70,7 +70,7 @@ class Router
   url_for: (name, params) =>
     replace = (s) -> params[s\sub 2] or ""
     patt = Cs (symbol / replace + 1)^0
-    route = assert @named_routes[name]
+    route = assert @named_routes[name], "Missing route named #{name}"
     patt\match route
 
   resolve: (route, ...) =>

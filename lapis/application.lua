@@ -145,6 +145,8 @@ do
         do
           local _with_0 = r
           _with_0.route_name = name
+          _with_0:add_params(r.req.params_get, "GET")
+          _with_0:add_params(r.req.params_post, "POST")
           _with_0:add_params(params, "url_params")
           _with_0:write(handler(r))
           return _with_0

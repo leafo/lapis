@@ -1,4 +1,14 @@
 local url = require("socket.url")
+local flatten_params
+flatten_params = function(t)
+  return (function()
+    local _tbl_0 = { }
+    for k, v in pairs(t) do
+      _tbl_0[k] = type(v) == "table" and v[#v] or v
+    end
+    return _tbl_0
+  end)()
+end
 local ngx_req = {
   headers = function()
     return ngx.req.get_headers()
@@ -26,6 +36,13 @@ local ngx_req = {
   end,
   built_url = function(t)
     return url.build(t.parsed_url)
+  end,
+  params_post = function()
+    ngx.req.read_body()
+    return flatten_params(ngx.req.get_post_args())
+  end,
+  params_get = function()
+    return flatten_params(ngx.req.get_uri_args())
   end
 }
 local lazy_tbl

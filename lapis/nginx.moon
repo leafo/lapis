@@ -1,6 +1,9 @@
 
 url = require "socket.url"
 
+flatten_params = (t) ->
+  {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
+
 ngx_req = {
   headers: -> ngx.req.get_headers!
   cmd_mth: -> ngx.var.request_method
@@ -13,6 +16,13 @@ ngx_req = {
     url.parse "#{t.scheme}://#{ngx.var.http_host}#{t.cmd_url}"
   built_url: (t) ->
     url.build t.parsed_url
+
+  params_post: ->
+    ngx.req.read_body!
+    flatten_params ngx.req.get_post_args!
+
+  params_get: ->
+    flatten_params ngx.req.get_uri_args!
 }
 
 lazy_tbl = (tbl, index) ->
