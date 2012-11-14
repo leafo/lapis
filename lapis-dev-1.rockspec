@@ -15,7 +15,8 @@ description = {
 dependencies = {
 	"lua >= 5.1",
 	"ansicolors",
-	"lpeg"
+	"lpeg",
+	"luasocket"
 }
 
 build = {
