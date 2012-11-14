@@ -29,7 +29,7 @@ request = (r) ->
   t = "[%{green}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
 
   cmd = "#{req.cmd_mth} #{req.cmd_url}"
-  print colors(t)\format status, cmd, flatten_params r.params
+  print colors(t)\format status, cmd, flatten_params r.url_params
 
 { :request }
 

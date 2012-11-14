@@ -1,4 +1,10 @@
 local url = require("socket.url")
+local upload = require("resty.upload")
+local escape_pattern, parse_content_disposition
+do
+  local _table_0 = require("lapis.util")
+  escape_pattern, parse_content_disposition = _table_0.escape_pattern, _table_0.parse_content_disposition
+end
 local flatten_params
 flatten_params = function(t)
   return (function()
@@ -8,6 +14,53 @@ flatten_params = function(t)
     end
     return _tbl_0
   end)()
+end
+local parse_multipart
+parse_multipart = function()
+  local out = { }
+  local input = upload:new(8192)
+  local current = {
+    content = { }
+  }
+  while true do
+    local t, res, err = input:read()
+    local _exp_0 = t
+    if "body" == _exp_0 then
+      table.insert(current.content, res)
+    elseif "header" == _exp_0 then
+      local name, value = unpack(res)
+      if name == "Content-Disposition" then
+        do
+          local params = parse_content_disposition(value)
+          if params then
+            local _list_0 = params
+            for _index_0 = 1, #_list_0 do
+              local tuple = _list_0[_index_0]
+              current[tuple[1]] = tuple[2]
+            end
+          end
+        end
+      else
+        current[name:lower()] = value
+      end
+    elseif "part_end" == _exp_0 then
+      current.content = table.concat(current.content)
+      if current.name then
+        if current["content-type"] then
+          out[current.name] = current
+        else
+          out[current.name] = current.content
+        end
+      end
+      current = {
+        content = { }
+      }
+    end
+    if t == "eof" then
+      break
+    end
+  end
+  return out
 end
 local ngx_req = {
   headers = function()
@@ -37,9 +90,13 @@ local ngx_req = {
   built_url = function(t)
     return url.build(t.parsed_url)
   end,
-  params_post = function()
-    ngx.req.read_body()
-    return flatten_params(ngx.req.get_post_args())
+  params_post = function(t)
+    if (t.headers["content-type"] or ""):match(escape_pattern("multipart/form-data")) then
+      return parse_multipart()
+    else
+      ngx.req.read_body()
+      return flatten_params(ngx.req.get_post_args())
+    end
   end,
   params_get = function()
     return flatten_params(ngx.req.get_uri_args())

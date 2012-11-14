@@ -1,8 +1,43 @@
 
 url = require "socket.url"
+upload = require "resty.upload"
+import escape_pattern, parse_content_disposition from require "lapis.util"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
+
+parse_multipart = ->
+  out = {}
+  input = upload\new 8192
+
+  current = { content: {} }
+  while true
+    t, res, err = input\read!
+    switch t
+      when "body"
+        table.insert current.content, res
+      when "header"
+        name, value = unpack res
+        if name == "Content-Disposition"
+          if params = parse_content_disposition value
+            for tuple in *params
+              current[tuple[1]] = tuple[2]
+        else
+          current[name\lower!] = value
+      when "part_end"
+        current.content = table.concat current.content
+
+        if current.name
+          if current["content-type"] -- a file
+            out[current.name] = current
+          else
+            out[current.name] = current.content
+
+        current = { content: {} }
+
+    break if t == "eof"
+
+  out
 
 ngx_req = {
   headers: -> ngx.req.get_headers!
@@ -17,9 +52,13 @@ ngx_req = {
   built_url: (t) ->
     url.build t.parsed_url
 
-  params_post: ->
-    ngx.req.read_body!
-    flatten_params ngx.req.get_post_args!
+  params_post: (t) ->
+    -- parse multipart if required
+    if (t.headers["content-type"] or "")\match escape_pattern "multipart/form-data"
+      parse_multipart!
+    else
+      ngx.req.read_body!
+      flatten_params ngx.req.get_post_args!
 
   params_get: ->
     flatten_params ngx.req.get_uri_args!

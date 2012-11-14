@@ -40,7 +40,7 @@ request = function(r)
   end
   local t = "[%{green}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
   local cmd = tostring(req.cmd_mth) .. " " .. tostring(req.cmd_url)
-  return print(colors(t):format(status, cmd, flatten_params(r.params)))
+  return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end
 return {
   request = request
