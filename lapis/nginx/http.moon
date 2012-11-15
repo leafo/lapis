@@ -8,10 +8,13 @@
 --     internal;
 --     rewrite_by_lua "
 --       local req = ngx.req
---       req.clear_header'Cookie'
---       req.clear_header'Accept-Encoding'
---       req.clear_header'Accept'
---       req.clear_header'User-Agent'
+--
+--       for k,v in pairs(req.get_headers()) do
+--         if k ~= 'content-length' then
+--           req.clear_header(k)
+--         end
+--       end
+--
 --       if ngx.ctx.headers then
 --         for k,v in pairs(ngx.ctx.headers) do
 --           req.set_header(k, v)
@@ -29,7 +32,6 @@
 --
 -- set $_url "";
 --
-
 
 ltn12 = require "ltn12"
 
