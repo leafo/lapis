@@ -1,5 +1,6 @@
 
 logger = require "lapis.logging"
+url = require "socket.url"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
@@ -25,6 +26,13 @@ class Request
     if not @res.headers["Content-type"]
       @res.headers["Content-type"] = "text/html"
 
+    if @options.redirect_to
+      @res\add_header "Location", @build_url @options.redirect_to
+      @res.status = 302
+
+    if @options.status
+      @res.status = @options.status
+
     if @app.layout and set_and_truthy(@options.layout, true)
       inner = @buffer
       @buffer = {}
@@ -42,31 +50,49 @@ class Request
 
   url_for: (...) => @app.router\url_for ...
 
-  write: (thing) =>
-    t = type(thing)
+  build_url: (path, options) =>
+    parsed = { k,v for k,v in pairs @req.parsed_url }
+    parsed.authority = nil
 
-    -- is it callable?
-    if t == "table"
-      mt = getmetatable(thing)
-      if mt and mt.__call
-        t = "function"
+    if path and not path\match "^/"
+      path = "/#{path}"
 
-    switch t
-      when "string"
-        table.insert @buffer, thing
-      when "table"
-        -- see if there are options
-        for k,v in pairs thing
-          if type(k) == "string"
-            @options[k] = v
-          else
-            @write v
-      when "function"
-        @write thing @buffer
-      when "nil"
-        nil -- ignore
-      else
-        error "Don't know how to write:", tostring(thing)
+    parsed.path = path
+
+    if parsed.port == "80"
+      parsed.port = nil
+
+    if options
+      for k,v in pairs options
+        parsed[k] = v
+
+    url.build parsed
+
+  write: (...) =>
+    for thing in *{...}
+      t = type(thing)
+      -- is it callable?
+      if t == "table"
+        mt = getmetatable(thing)
+        if mt and mt.__call
+          t = "function"
+
+      switch t
+        when "string"
+          table.insert @buffer, thing
+        when "table"
+          -- see if there are options
+          for k,v in pairs thing
+            if type(k) == "string"
+              @options[k] = v
+            else
+              @write v
+        when "function"
+          @write thing @buffer
+        when "nil"
+          nil -- ignore
+        else
+          error "Don't know how to write:", tostring(thing)
 
   _debug: =>
     @buffer = {

@@ -159,11 +159,22 @@ local dispatch
 dispatch = function(app)
   local res = build_response()
   app:dispatch(res.req, res)
+  if res.status then
+    ngx.status = res.status
+  end
   ngx.say(res.content)
   return res
+end
+local debug
+debug = function(thing)
+  require("moon")
+  ngx.say("debug <pre>")
+  ngx.say(moon.dump(thing))
+  return ngx.say("<pre>")
 end
 return {
   build_request = build_request,
   build_response = build_response,
-  dispatch = dispatch
+  dispatch = dispatch,
+  debug = debug
 }

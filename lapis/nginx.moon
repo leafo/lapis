@@ -101,9 +101,16 @@ build_response = ->
 dispatch = (app) ->
   res = build_response!
   app\dispatch res.req, res
+  ngx.status = res.status if res.status
   ngx.say res.content
   res
 
-{ :build_request, :build_response, :dispatch }
+debug = (thing) ->
+  require "moon"
+  ngx.say "debug <pre>"
+  ngx.say moon.dump thing
+  ngx.say "<pre>"
+
+{ :build_request, :build_response, :dispatch, :debug }
 
 
