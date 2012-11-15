@@ -31,6 +31,8 @@ build = {
 		["lapis.server"] = "lapis/server.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
 		["lapis.xavante"] = "lapis/xavante.lua",
+		["lapis.nginx.http"] = "lapis/nginx/http.lua",
+		["lapis.nginx.postgres"] = "lapis/nginx/postgres.lua",
 	},
 }
 
