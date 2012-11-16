@@ -183,6 +183,7 @@ do
   local _parent_0 = nil
   local _base_0 = {
     layout = require("lapis.layout").Default,
+    before_filters = { },
     wrap_handler = function(self, handler)
       return function(params, path, name, r)
         do
@@ -191,6 +192,11 @@ do
           _with_0:add_params(r.req.params_get, "GET")
           _with_0:add_params(r.req.params_post, "POST")
           _with_0:add_params(params, "url_params")
+          local _list_0 = self.before_filters
+          for _index_0 = 1, #_list_0 do
+            local filter = _list_0[_index_0]
+            filter(r)
+          end
           _with_0:write(handler(r))
           return _with_0
         end
@@ -243,6 +249,10 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  self.before_filter = function(self, fn)
+    return table.insert(self.before_filters, fn)
+  end
   if _parent_0 and _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end

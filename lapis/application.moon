@@ -113,6 +113,8 @@ class Request
 class Application
   layout: require"lapis.layout".Default
 
+  before_filters: {}
+
   new: =>
     @router = Router!
 
@@ -135,6 +137,9 @@ class Application
         \add_params r.req.params_post, "POST"
         \add_params params, "url_params"
 
+        for filter in *@before_filters
+          filter r
+
         \write handler r
 
   dispatch: (req, res) =>
@@ -146,6 +151,8 @@ class Application
 
   serve: => -- TODO: alias to lapis.serve
 
+  @before_filter: (fn) =>
+    table.insert @before_filters, fn
 
 { :Request, :Application }
 
