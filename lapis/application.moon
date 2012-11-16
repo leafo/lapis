@@ -1,6 +1,7 @@
 
 logger = require "lapis.logging"
 url = require "socket.url"
+json = require "cjson"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
@@ -23,6 +24,11 @@ class Request
   -- render the request into the response
   -- do this last
   render: =>
+    if @options.json
+      @res.headers["Content-type"] = "application/json"
+      @res.content = json.encode @options.json
+      return
+
     if not @res.headers["Content-type"]
       @res.headers["Content-type"] = "text/html"
 

@@ -1,5 +1,6 @@
 local logger = require("lapis.logging")
 local url = require("socket.url")
+local json = require("cjson")
 local Router
 do
   local _table_0 = require("lapis.router")
@@ -31,6 +32,11 @@ do
       end
     end,
     render = function(self)
+      if self.options.json then
+        self.res.headers["Content-type"] = "application/json"
+        self.res.content = json.encode(self.options.json)
+        return 
+      end
       if not self.res.headers["Content-type"] then
         self.res.headers["Content-type"] = "text/html"
       end
