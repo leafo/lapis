@@ -154,5 +154,13 @@ class Application
   @before_filter: (fn) =>
     table.insert @before_filters, fn
 
-{ :Request, :Application }
+respond_to = (tbl) ->
+  =>
+    fn = tbl[@req.cmd_mth]
+    if fn
+      fn @
+    else
+      error "don't know how to respond to #{@req.cmd_mth}"
+
+{ :Request, :Application, :respond_to }
 

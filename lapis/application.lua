@@ -258,7 +258,19 @@ do
   end
   Application = _class_0
 end
+local respond_to
+respond_to = function(tbl)
+  return function(self)
+    local fn = tbl[self.req.cmd_mth]
+    if fn then
+      return fn(self)
+    else
+      return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
+    end
+  end
+end
 return {
   Request = Request,
-  Application = Application
+  Application = Application,
+  respond_to = respond_to
 }
