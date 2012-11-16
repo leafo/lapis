@@ -12,7 +12,7 @@ serve = (app_cls, port = 80) ->
   switch server.current!
     when "xavante"
       x = require "lapis.xavante"
-      s = x.make_server port, app\dispatch
+      s = x.make_server port, x.wrap_dispatch app\dispatch
       s.start!
     when "nginx"
       n = require "lapis.nginx"
