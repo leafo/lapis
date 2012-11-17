@@ -28,7 +28,7 @@ parse_content_disposition = do
   import C, R, P, S, Ct, Cg from require "lpeg"
 
   white = S" \t"^0
-  token = C R("az", "AZ", "__", "--", "09")^1
+  token = C (R("az", "AZ", "09") + S"._-")^1
   value = (token + P'"' * C((1 - S('"'))^0) * P'"') / unescape
 
   param = Ct white * token * white * P"=" * white * value
@@ -39,9 +39,13 @@ parse_content_disposition = do
     with out = patt\match str
       inject_tuples out if out
 
+parse_cookie_string = (str) ->
+  {key, unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
 
 
-{ :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition }
+{ :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
+  :parse_cookie_string }

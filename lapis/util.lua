@@ -52,7 +52,7 @@ do
     C, R, P, S, Ct, Cg = _table_0.C, _table_0.R, _table_0.P, _table_0.S, _table_0.Ct, _table_0.Cg
   end
   local white = S(" \t") ^ 0
-  local token = C(R("az", "AZ", "__", "--", "09") ^ 1)
+  local token = C((R("az", "AZ", "09") + S("._-")) ^ 1)
   local value = (token + P('"') * C((1 - S('"')) ^ 0) * P('"')) / unescape
   local param = Ct(white * token * white * P("=") * white * value)
   local patt = Ct(Cg(token, "type") * (white * P(";") * param) ^ 0)
@@ -67,6 +67,16 @@ do
     end
   end
 end
+local parse_cookie_string
+parse_cookie_string = function(str)
+  return (function()
+    local _tbl_0 = { }
+    for key, value in str:gmatch("([^=%s]*)=([^;]*)") do
+      _tbl_0[key] = unescape(value)
+    end
+    return _tbl_0
+  end)()
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -75,5 +85,6 @@ return {
   unescape = unescape,
   escape_pattern = escape_pattern,
   parse_query_string = parse_query_string,
-  parse_content_disposition = parse_content_disposition
+  parse_content_disposition = parse_content_disposition,
+  parse_cookie_string = parse_cookie_string
 }
