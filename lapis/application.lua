@@ -11,6 +11,11 @@ do
   local _table_0 = require("lapis.html")
   html_writer = _table_0.html_writer
 end
+local parse_cookie_string
+do
+  local _table_0 = require("lapis.util")
+  parse_cookie_string = _table_0.parse_cookie_string
+end
 local set_and_truthy
 set_and_truthy = function(val, default)
   if default == nil then
@@ -47,6 +52,7 @@ do
       if self.options.status then
         self.res.status = self.options.status
       end
+      self:write_cookies()
       if self.app.layout and set_and_truthy(self.options.layout, true) then
         local inner = self.buffer
         self.buffer = { }
@@ -128,6 +134,21 @@ do
         end
       end
     end,
+    write_cookies = function(self)
+      local parts = (function()
+        local _accum_0 = { }
+        local _len_0 = 0
+        for k, v in pairs(self.cookies) do
+          local _value_0 = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
+          if _value_0 ~= nil then
+            _len_0 = _len_0 + 1
+            _accum_0[_len_0] = _value_0
+          end
+        end
+        return _accum_0
+      end)()
+      return self.res:add_header("Set-cookie", table.concat(parts, "; "))
+    end,
     _debug = function(self)
       self.buffer = {
         "<html>",
@@ -153,6 +174,15 @@ do
       self.buffer = { }
       self.params = { }
       self.options = { }
+      self.cookies = setmetatable({ }, {
+        __index = function(tbl, name)
+          local parsed = parse_cookie_string(self.req.headers.cookie)
+          setmetatable(self.cookies, {
+            __index = parsed
+          })
+          return parsed[name]
+        end
+      })
     end,
     __base = _base_0,
     __name = "Request",

@@ -6,6 +6,8 @@ json = require "cjson"
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
 
+import parse_cookie_string from require "lapis.util"
+
 set_and_truthy = (val, default=true) ->
   return default if val == nil
   val
@@ -15,6 +17,11 @@ class Request
     @buffer = {} -- output buffer
     @params = {}
     @options = {}
+
+    @cookies = setmetatable {}, __index: (tbl, name) ->
+      parsed = parse_cookie_string @req.headers.cookie
+      setmetatable @cookies , __index: parsed
+      parsed[name]
 
   add_params: (params, name) =>
     self[name] = params
@@ -38,6 +45,8 @@ class Request
 
     if @options.status
       @res.status = @options.status
+
+    @write_cookies!
 
     if @app.layout and set_and_truthy(@options.layout, true)
       inner = @buffer
@@ -99,6 +108,13 @@ class Request
           nil -- ignore
         else
           error "Don't know how to write:", tostring(thing)
+
+  -- TODO: cookie paramaters
+  write_cookies: =>
+    parts = for k,v in pairs @cookies
+      "#{url.escape k}=#{url.escape v}"
+
+    @res\add_header "Set-cookie", table.concat parts, "; "
 
   _debug: =>
     @buffer = {

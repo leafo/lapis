@@ -40,6 +40,7 @@ parse_content_disposition = do
       inject_tuples out if out
 
 parse_cookie_string = (str) ->
+  return {} unless str
   {key, unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
 if ... == "test"
