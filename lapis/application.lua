@@ -1,6 +1,7 @@
 local logger = require("lapis.logging")
 local url = require("socket.url")
 local json = require("cjson")
+local session = require("lapis.session")
 local Router
 do
   local _table_0 = require("lapis.router")
@@ -25,6 +26,18 @@ set_and_truthy = function(val, default)
     return default
   end
   return val
+end
+local auto_table
+auto_table = function(fn)
+  return setmetatable({ }, {
+    __index = function(self, name)
+      local result = fn()
+      setmetatable(self, {
+        __index = result
+      })
+      return result[name]
+    end
+  })
 end
 local Request
 do
@@ -52,6 +65,7 @@ do
       if self.options.status then
         self.res.status = self.options.status
       end
+      session.write_session(self)
       self:write_cookies()
       if self.app.layout and set_and_truthy(self.options.layout, true) then
         local inner = self.buffer
@@ -174,15 +188,12 @@ do
       self.buffer = { }
       self.params = { }
       self.options = { }
-      self.cookies = setmetatable({ }, {
-        __index = function(tbl, name)
-          local parsed = parse_cookie_string(self.req.headers.cookie)
-          setmetatable(self.cookies, {
-            __index = parsed
-          })
-          return parsed[name]
-        end
-      })
+      self.cookies = auto_table(function()
+        return parse_cookie_string(self.req.headers.cookie)
+      end)
+      self.session = auto_table(function()
+        return session.get_session(self)
+      end)
     end,
     __base = _base_0,
     __name = "Request",

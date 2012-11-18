@@ -2,6 +2,7 @@
 logger = require "lapis.logging"
 url = require "socket.url"
 json = require "cjson"
+session = require "lapis.session"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
@@ -12,16 +13,20 @@ set_and_truthy = (val, default=true) ->
   return default if val == nil
   val
 
+auto_table = (fn) ->
+  setmetatable {}, __index: (name) =>
+    result = fn!
+    setmetatable @, __index: result
+    result[name]
+
 class Request
   new: (@app, @req, @res) =>
     @buffer = {} -- output buffer
     @params = {}
     @options = {}
 
-    @cookies = setmetatable {}, __index: (tbl, name) ->
-      parsed = parse_cookie_string @req.headers.cookie
-      setmetatable @cookies , __index: parsed
-      parsed[name]
+    @cookies = auto_table -> parse_cookie_string @req.headers.cookie
+    @session = auto_table -> session.get_session self
 
   add_params: (params, name) =>
     self[name] = params
@@ -46,6 +51,7 @@ class Request
     if @options.status
       @res.status = @options.status
 
+    session.write_session @
     @write_cookies!
 
     if @app.layout and set_and_truthy(@options.layout, true)
