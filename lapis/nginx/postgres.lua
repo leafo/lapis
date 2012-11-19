@@ -13,6 +13,10 @@ raw = function(val)
     tostring(val)
   }
 end
+local format_date
+format_date = function(time)
+  return os.date("!%Y-%m-%d %H:%M:%S", time)
+end
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do
@@ -131,13 +135,22 @@ _select = function(str, ...)
   end
 end
 local _insert
-_insert = function(table, values)
+_insert = function(tbl, values, returning)
+  if values._timestamp then
+    values._timestamp = nil
+    local time = format_date()
+    values.created_at = time
+    values.updated_at = time
+  end
   local buff = {
     "INSERT INTO ",
-    escape_identifier(table),
+    escape_identifier(tbl),
     " "
   }
   encode_values(values, buff)
+  if returning then
+    append_all(buff, " RETURNING ", escape_identifier(returning))
+  end
   return raw_query(concat(buff))
 end
 local add_cond
@@ -213,6 +226,10 @@ if ... == "test" then
   _delete("cats", {
     name = "rump"
   })
+  _insert("cats", {
+    age = 123,
+    name = "catter"
+  }, "age")
 end
 return {
   query = query,

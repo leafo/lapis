@@ -26,6 +26,9 @@ set_proxy_location = (loc) -> proxy_location = loc
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
 
+format_date = (time) ->
+  os.date "!%Y-%m-%d %H:%M:%S", time
+
 append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
@@ -96,13 +99,22 @@ _select = (str, ...) ->
   else
     nil, err
 
-_insert = (table, values) ->
+_insert = (tbl, values, returning) ->
+  if values._timestamp
+    values._timestamp = nil
+    time = format_date!
+
+    values.created_at = time
+    values.updated_at = time
+
   buff = {
     "INSERT INTO "
-    escape_identifier(table)
+    escape_identifier(tbl)
     " "
   }
   encode_values values, buff
+  if returning
+    append_all buff, " RETURNING ", escape_identifier returning
   raw_query concat buff
 
 add_cond = (buffer, cond, ...) ->
@@ -168,6 +180,9 @@ if ... == "test"
   _delete "cats"
   _delete "cats", "name = ?", "rump"
   _delete "cats", name: "rump"
+
+
+  _insert "cats", { age: 123, name: "catter" }, "age"
 
   -- query "update things set #{encode_assigns(v)} where id = ?", "hello-world"
 
