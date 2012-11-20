@@ -31,11 +31,14 @@ get_session = (r) ->
 
 write_session = (r) ->
   -- see if the session has changed
-  if next r.session
-    s = {k,v for k,v in pairs r.session}
+  if nil != next r.session
+    s = {}
     if index = getmetatable(r.session).__index
       for k,v in pairs index
         s[k] = v
+
+    for k,v in pairs r.session
+      s[k] = v
 
     s = mime.b64 json.encode s
     if secret

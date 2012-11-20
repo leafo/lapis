@@ -35,14 +35,8 @@ get_session = function(r)
 end
 local write_session
 write_session = function(r)
-  if next(r.session) then
-    local s = (function()
-      local _tbl_0 = { }
-      for k, v in pairs(r.session) do
-        _tbl_0[k] = v
-      end
-      return _tbl_0
-    end)()
+  if nil ~= next(r.session) then
+    local s = { }
     do
       local index = getmetatable(r.session).__index
       if index then
@@ -50,6 +44,9 @@ write_session = function(r)
           s[k] = v
         end
       end
+    end
+    for k, v in pairs(r.session) do
+      s[k] = v
     end
     s = mime.b64(json.encode(s))
     if secret then
