@@ -99,7 +99,7 @@ _select = (str, ...) ->
   else
     nil, err
 
-_insert = (tbl, values, returning) ->
+_insert = (tbl, values, ...) ->
   if values._timestamp
     values._timestamp = nil
     time = format_date!
@@ -113,8 +113,14 @@ _insert = (tbl, values, returning) ->
     " "
   }
   encode_values values, buff
-  if returning
-    append_all buff, " RETURNING ", escape_identifier returning
+
+  returning = {...}
+  if #returning
+    append_all buff, " RETURNING "
+    for i, r in ipairs returning
+      append_all buff, escape_identifier r
+      append_all buff, ", " if i != #returning
+
   raw_query concat buff
 
 add_cond = (buffer, cond, ...) ->
@@ -183,6 +189,7 @@ if ... == "test"
 
 
   _insert "cats", { age: 123, name: "catter" }, "age"
+  _insert "cats", { age: 123, name: "catter" }, "age", "name"
 
   -- query "update things set #{encode_assigns(v)} where id = ?", "hello-world"
 

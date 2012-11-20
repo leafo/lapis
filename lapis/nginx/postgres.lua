@@ -135,7 +135,7 @@ _select = function(str, ...)
   end
 end
 local _insert
-_insert = function(tbl, values, returning)
+_insert = function(tbl, values, ...)
   if values._timestamp then
     values._timestamp = nil
     local time = format_date()
@@ -148,8 +148,17 @@ _insert = function(tbl, values, returning)
     " "
   }
   encode_values(values, buff)
-  if returning then
-    append_all(buff, " RETURNING ", escape_identifier(returning))
+  local returning = {
+    ...
+  }
+  if #returning then
+    append_all(buff, " RETURNING ")
+    for i, r in ipairs(returning) do
+      append_all(buff, escape_identifier(r))
+      if i ~= #returning then
+        append_all(buff, ", ")
+      end
+    end
   end
   return raw_query(concat(buff))
 end
@@ -230,6 +239,10 @@ if ... == "test" then
     age = 123,
     name = "catter"
   }, "age")
+  _insert("cats", {
+    age = 123,
+    name = "catter"
+  }, "age", "name")
 end
 return {
   query = query,
