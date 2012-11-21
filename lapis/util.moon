@@ -2,6 +2,7 @@
 url = require "socket.url"
 
 import concat from table
+import Path from require "lapis.util.path"
 
 unescape = do
   u = require"socket.url".unescape
@@ -68,4 +69,4 @@ if ... == "test"
   print camelize "world_wide_i_web"
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
-  :parse_cookie_string, :underscore, :slugify }
+  :parse_cookie_string, :underscore, :slugify, :Path }

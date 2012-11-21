@@ -1,5 +1,10 @@
 local url = require("socket.url")
 local concat = table.concat
+local Path
+do
+  local _table_0 = require("lapis.util.path")
+  Path = _table_0.Path
+end
 local unescape
 do
   local u = require("socket.url").unescape
@@ -128,5 +133,6 @@ return {
   parse_content_disposition = parse_content_disposition,
   parse_cookie_string = parse_cookie_string,
   underscore = underscore,
-  slugify = slugify
+  slugify = slugify,
+  Path = Path
 }
