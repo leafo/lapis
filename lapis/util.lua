@@ -1,4 +1,5 @@
 local url = require("socket.url")
+local concat = table.concat
 local unescape
 do
   local u = require("socket.url").unescape
@@ -80,14 +81,52 @@ parse_cookie_string = function(str)
     return _tbl_0
   end)()
 end
+local slugify
+slugify = function(str)
+  return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", ""))
+end
+local underscore
+underscore = function(str)
+  local words = (function()
+    local _accum_0 = { }
+    local _len_0 = 0
+    for word in str:gmatch("%L*%l+") do
+      _len_0 = _len_0 + 1
+      _accum_0[_len_0] = word:lower()
+    end
+    return _accum_0
+  end)()
+  return concat(words, "_")
+end
+local camelize
+do
+  local patt = "[^" .. tostring(escape_pattern("_")) .. "]+"
+  camelize = function(str)
+    return concat((function()
+      local _accum_0 = { }
+      local _len_0 = 0
+      for part in str:gmatch(patt) do
+        _len_0 = _len_0 + 1
+        _accum_0[_len_0] = part:sub(1, 1):upper() .. part:sub(2)
+      end
+      return _accum_0
+    end)())
+  end
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
+  print(underscore("ManifestRocks"))
+  print(camelize(underscore("ManifestRocks")))
+  print(camelize("hello"))
+  print(camelize("world_wide_i_web"))
 end
 return {
   unescape = unescape,
   escape_pattern = escape_pattern,
   parse_query_string = parse_query_string,
   parse_content_disposition = parse_content_disposition,
-  parse_cookie_string = parse_cookie_string
+  parse_cookie_string = parse_cookie_string,
+  underscore = underscore,
+  slugify = slugify
 }

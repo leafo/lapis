@@ -1,6 +1,8 @@
 
 url = require "socket.url"
 
+import concat from table
+
 unescape = do
   u = require"socket.url".unescape
   (str) -> (u str)
@@ -43,10 +45,27 @@ parse_cookie_string = (str) ->
   return {} unless str
   {key, unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
+slugify = (str) ->
+  (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))
+
+-- TODO: make this not suck
+underscore = (str) ->
+  words = [word\lower! for word in str\gmatch "%L*%l+"]
+  concat words, "_"
+
+camelize = do
+  patt = "[^#{escape_pattern"_"}]+"
+  (str) ->
+    concat [part\sub(1,1)\upper! .. part\sub(2) for part in str\gmatch patt]
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
 
+  print underscore "ManifestRocks"
+  print camelize underscore "ManifestRocks"
+  print camelize "hello"
+  print camelize "world_wide_i_web"
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
-  :parse_cookie_string }
+  :parse_cookie_string, :underscore, :slugify }
