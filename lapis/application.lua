@@ -75,22 +75,7 @@ do
           end
           local widget = require(tostring(self.app.views_prefix) .. "." .. tostring(rpath))
           local view = widget(self.options.locals)
-          if not (self.options.locals) then
-            for k, v in pairs(self) do
-              local _continue_0 = false
-              repeat
-                if k == "buffer" or k == "options" then
-                  _continue_0 = true
-                  break
-                end
-                view[k] = v
-                _continue_0 = true
-              until true
-              if not _continue_0 then
-                break
-              end
-            end
-          end
+          view:include_helper(self)
           self:write(view)
         end
       end
