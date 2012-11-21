@@ -268,6 +268,30 @@ local Widget
 do
   local _parent_0 = nil
   local _base_0 = {
+    include_helper = function(self, helper)
+      local meta = getmetatable(self)
+      local old_index = meta.__index
+      meta.__index = function(self, key)
+        local val
+        if "function" == type(old_index) then
+          val = old_index(self, key)
+        else
+          val = old_index[key]
+        end
+        if val == nil then
+          local helper_val = helper[key]
+          if "function" == type(helper_val) then
+            val = function(w, ...)
+              return helper_val(helper, ...)
+            end
+          else
+            val = helper_val
+          end
+          self[key] = val
+        end
+        return val
+      end
+    end,
     content_for = function(self, name)
       return self._buffer:write_escaped(self[name])
     end,
@@ -275,9 +299,15 @@ do
     render = function(self, buffer, ...)
       self._buffer = Buffer(buffer)
       local base = getmetatable(self)
+      local index = base.__index
       local scope = setmetatable({ }, {
         __index = function(scope, name)
-          local value = base[name]
+          local value
+          if "function" == type(index) then
+            value = index(scope, name)
+          else
+            value = index[name]
+          end
           if type(value) == "function" then
             local wrapped
             wrapped = function(...)

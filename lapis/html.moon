@@ -164,6 +164,26 @@ class Widget
     if opts
       @[k] = v for k,v in pairs opts
 
+  include_helper: (helper) =>
+    meta = getmetatable @
+    old_index = meta.__index
+    meta.__index = (key) =>
+      val = if "function" == type old_index
+        old_index @, key
+      else
+        old_index[key]
+
+      if val == nil
+        helper_val = helper[key]
+        val = if "function" == type helper_val
+          (w, ...) -> helper_val helper, ...
+        else
+          helper_val
+
+        @[key] = val
+
+      val
+
   content_for: (name) =>
     @_buffer\write_escaped @[name]
 
@@ -172,9 +192,13 @@ class Widget
     @_buffer = Buffer(buffer)
 
     base = getmetatable @
+    index = base.__index
     scope = setmetatable {}, {
       __index: (scope, name) ->
-        value = base[name]
+        value = if "function" == type index
+          index scope, name
+        else
+          index[name]
 
         if type(value) == "function"
           wrapped = (...) -> @_buffer\call value, ...

@@ -40,3 +40,25 @@ WidgetInherit(layout: -> text "what is going on?") buffer
 print "result:"
 print table.concat buffer
 
+
+print!
+print!
+print!
+print!
+
+
+b = {}
+class Test extends Widget
+  content: =>
+    div "What's up! #{@hello!}"
+
+with t = Test!
+  \include_helper {
+    id: 10
+    hello: => "id: #{@id}"
+  }
+  \render b
+
+print table.concat b
+
+
