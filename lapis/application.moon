@@ -56,8 +56,16 @@ class Request
 
     if rpath = @options.render
       rpath = @route_name if rpath == true
-      view = require "#{@app.views_prefix}.#{rpath}"
-      @write view @options.locals or @
+      widget = require "#{@app.views_prefix}.#{rpath}"
+      view = widget @options.locals
+
+      -- copy locals from req if no locals were passed
+      unless @options.locals
+        for k,v in pairs @
+          continue if k == "buffer" or k == "options"
+          view[k] = v
+
+      @write view
 
     if @app.layout and set_and_truthy(@options.layout, true)
       inner = @buffer
