@@ -67,6 +67,16 @@ do
       end
       session.write_session(self)
       self:write_cookies()
+      do
+        local rpath = self.options.render
+        if rpath then
+          if rpath == true then
+            rpath = self.route_name
+          end
+          local view = require(tostring(self.app.views_prefix) .. "." .. tostring(rpath))
+          self:write(view(self.options.locals or self))
+        end
+      end
       if self.app.layout and set_and_truthy(self.options.layout, true) then
         local inner = self.buffer
         self.buffer = { }
@@ -224,6 +234,7 @@ do
   local _parent_0 = nil
   local _base_0 = {
     layout = require("lapis.layout").Default,
+    views_prefix = "views",
     before_filters = { },
     wrap_handler = function(self, handler)
       return function(params, path, name, r)

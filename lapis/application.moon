@@ -54,6 +54,11 @@ class Request
     session.write_session @
     @write_cookies!
 
+    if rpath = @options.render
+      rpath = @route_name if rpath == true
+      view = require "#{@app.views_prefix}.#{rpath}"
+      @write view @options.locals or @
+
     if @app.layout and set_and_truthy(@options.layout, true)
       inner = @buffer
       @buffer = {}
@@ -134,6 +139,7 @@ class Request
 
 class Application
   layout: require"lapis.layout".Default
+  views_prefix: "views"
 
   before_filters: {}
 
