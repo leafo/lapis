@@ -109,5 +109,7 @@ do
     _parent_0.__inherited(_parent_0, _class_0)
   end
   Model = _class_0
-  return _class_0
 end
+return {
+  Model = Model
+}

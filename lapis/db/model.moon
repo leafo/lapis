@@ -52,3 +52,5 @@ class Model
     res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
     res.c > 0
 
+{ :Model }
+
