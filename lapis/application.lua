@@ -87,6 +87,7 @@ do
             return raw(inner)
           end
         })
+        layout:include_helper(self)
         layout:render(self.buffer)
       end
       if next(self.buffer) then

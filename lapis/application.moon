@@ -67,6 +67,7 @@ class Request
       inner = @buffer
       @buffer = {}
       layout = @app.layout inner: -> raw inner
+      layout\include_helper @
       layout\render @buffer
 
     if next @buffer
