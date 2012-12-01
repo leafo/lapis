@@ -64,7 +64,11 @@ do
     end
   end
   self.table_name = function(self)
-    return underscore(self.__name)
+    local name = underscore(self.__name)
+    self.table_name = function()
+      return name
+    end
+    return name
   end
   self.load = function(self, tbl)
     return setmetatable(tbl, self.__base)
@@ -81,6 +85,16 @@ do
       end
       return _accum_0
     end)()
+  end
+  self.select = function(self, query, ...)
+    query = db.interpolate_query(query, ...)
+    local tbl_name = db.escape_identifier(self:table_name())
+    do
+      local res = db.select("* from " .. tostring(tbl_name) .. " " .. tostring(query))
+      if res then
+        return self:load_all(res)
+      end
+    end
   end
   self.include_in = function(self, other_records, foreign_key)
     if type(self.primary_key) == "table" then

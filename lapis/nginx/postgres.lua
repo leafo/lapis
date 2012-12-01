@@ -255,6 +255,7 @@ return {
   escape_identifier = escape_identifier,
   encode_values = encode_values,
   encode_assigns = encode_assigns,
+  interpolate_query = interpolate_query,
   set_proxy_location = set_proxy_location,
   select = _select,
   insert = _insert,

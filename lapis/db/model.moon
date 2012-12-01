@@ -20,13 +20,22 @@ class Model
     else
       { [@primary_key]: ... }
 
-  @table_name = => underscore @__name
+  @table_name = =>
+    name = underscore @__name
+    @table_name = -> name
+    name
 
   @load: (tbl) =>
     setmetatable tbl, @__base
 
   @load_all: (tbls) =>
     [@load t for t in *tbls]
+
+  @select: (query, ...) =>
+    query = db.interpolate_query query, ...
+    tbl_name = db.escape_identifier @table_name!
+    if res = db.select "* from #{tbl_name} #{query}"
+      @load_all res
 
   -- include references to this model in a list of records based on a foreign
   -- key

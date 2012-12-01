@@ -195,7 +195,7 @@ if ... == "test"
 
 {
   :query, :raw, :NULL, :escape_literal, :escape_identifier
-  :encode_values, :encode_assigns
+  :encode_values, :encode_assigns, :interpolate_query
   :set_proxy_location
 
   select: _select
