@@ -39,6 +39,7 @@ build = {
 		["lapis.session"] = "lapis/session.lua",
 		["lapis.util"] = "lapis/util.lua",
 		["lapis.util.path"] = "lapis/util/path.lua",
+		["lapis.version"] = "lapis/version.lua",
 		["lapis.views.error"] = "lapis/views/error.lua",
 		["lapis.views.layout"] = "lapis/views/layout.lua",
 		["lapis.xavante"] = "lapis/xavante.lua",

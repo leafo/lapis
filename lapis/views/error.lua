@@ -3,8 +3,63 @@ local ErrorPage
 do
   local _parent_0 = html.Widget
   local _base_0 = {
-    contente = function(self)
-      return text("There was an error!")
+    style = function(self)
+      return style({
+        type = "text/css"
+      }, function()
+        return raw([[        body {
+          color: #222;
+          background: #ddd;
+          font-family: sans-serif;
+          margin: 20px;
+        }
+
+        h1, h2, pre {
+          margin: 20px;
+        }
+
+        .box {
+          background: white;
+          overflow: hidden;
+          box-shadow: 1px 1px 8px gray;
+          border-radius: 1px;
+        }
+
+        .footer {
+          text-align: center;
+          font-family: serif;
+          margin: 10px;
+          font-size: 12px;
+          color: #A7A7A7;
+        }
+      ]])
+      end)
+    end,
+    content = function(self)
+      return html_5(function()
+        head(function()
+          title("Error")
+          return self:style()
+        end)
+        return body(function()
+          div({
+            class = "box"
+          }, function()
+            h1("Error")
+            pre(function()
+              return text(self.err)
+            end)
+            h2("Traceback")
+            return pre(function()
+              return text(self.trace)
+            end)
+          end)
+          local version = require("lapis.version")
+          return div({
+            class = "footer"
+          }, "lapis " .. tostring(version))
+        end)
+      end)
     end
   }
   _base_0.__index = _base_0

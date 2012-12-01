@@ -35,7 +35,9 @@ class Request
 
   -- render the request into the response
   -- do this last
-  render: =>
+  render: (opts=false) =>
+    @options = opts if opts
+
     if @options.json
       @res.headers["Content-type"] = "application/json"
       @res.content = json.encode @options.json
@@ -144,6 +146,8 @@ class Request
 
 class Application
   layout: require"lapis.views.layout"
+  error_page: require"lapis.views.error"
+
   views_prefix: "views"
 
   before_filters: {}
@@ -176,10 +180,25 @@ class Application
         \write handler r
 
   dispatch: (req, res) =>
-    r = Request self, req, res
-    @router\resolve req.parsed_url.path, r
-    r\render!
-    logger.request r
+    local err, trace
+    success = xpcall (->
+        r = Request self, req, res
+        @router\resolve req.parsed_url.path, r
+        r\render!
+        logger.request r),
+      (_err) ->
+        err = _err
+        trace = debug.traceback "", 2
+
+    unless success
+      r = Request self, req, res
+      r\write {
+        status: 500
+        layout: false
+        self.error_page { staus: 500, :err, :trace }
+      }
+      r\render!
+
     res
 
   serve: => -- TODO: alias to lapis.serve

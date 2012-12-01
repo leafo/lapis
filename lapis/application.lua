@@ -49,7 +49,13 @@ do
         self.params[k] = v
       end
     end,
-    render = function(self)
+    render = function(self, opts)
+      if opts == nil then
+        opts = false
+      end
+      if opts then
+        self.options = opts
+      end
       if self.options.json then
         self.res.headers["Content-type"] = "application/json"
         self.res.content = json.encode(self.options.json)
@@ -237,6 +243,7 @@ do
   local _parent_0 = nil
   local _base_0 = {
     layout = require("lapis.views.layout"),
+    error_page = require("lapis.views.error"),
     views_prefix = "views",
     before_filters = { },
     wrap_handler = function(self, handler)
@@ -258,10 +265,29 @@ do
       end
     end,
     dispatch = function(self, req, res)
-      local r = Request(self, req, res)
-      self.router:resolve(req.parsed_url.path, r)
-      r:render()
-      logger.request(r)
+      local err, trace
+      local success = xpcall((function()
+        local r = Request(self, req, res)
+        self.router:resolve(req.parsed_url.path, r)
+        r:render()
+        return logger.request(r)
+      end), function(_err)
+        err = _err
+        trace = debug.traceback("", 2)
+      end)
+      if not (success) then
+        local r = Request(self, req, res)
+        r:write({
+          status = 500,
+          layout = false,
+          self.error_page({
+            staus = 500,
+            err = err,
+            trace = trace
+          })
+        })
+        r:render()
+      end
       return res
     end,
     serve = function(self) end
