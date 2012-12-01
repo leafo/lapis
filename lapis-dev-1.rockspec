@@ -30,7 +30,6 @@ build = {
 		["lapis.db"] = "lapis/db.lua",
 		["lapis.db.model"] = "lapis/db/model.lua",
 		["lapis.html"] = "lapis/html.lua",
-		["lapis.layout"] = "lapis/layout.lua",
 		["lapis.logging"] = "lapis/logging.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
 		["lapis.nginx.http"] = "lapis/nginx/http.lua",
@@ -40,6 +39,8 @@ build = {
 		["lapis.session"] = "lapis/session.lua",
 		["lapis.util"] = "lapis/util.lua",
 		["lapis.util.path"] = "lapis/util/path.lua",
+		["lapis.views.error"] = "lapis/views/error.lua",
+		["lapis.views.layout"] = "lapis/views/layout.lua",
 		["lapis.xavante"] = "lapis/xavante.lua",
 	},
 }

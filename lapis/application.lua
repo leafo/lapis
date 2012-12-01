@@ -236,7 +236,7 @@ local Application
 do
   local _parent_0 = nil
   local _base_0 = {
-    layout = require("lapis.layout").Default,
+    layout = require("lapis.views.layout"),
     views_prefix = "views",
     before_filters = { },
     wrap_handler = function(self, handler)

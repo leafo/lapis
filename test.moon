@@ -10,6 +10,7 @@ class View extends lapis.html.Widget
 
 class Cool extends lapis.Application
   [home: "/"]: =>
+    @title = "Welcome to the test page!"
     View!
 
   "/cool/:name/:id": =>

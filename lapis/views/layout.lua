@@ -6,7 +6,7 @@ do
     content = function(self)
       return html_5(function()
         head(function()
-          return title("The Test Page")
+          return title(self.title or "Lapis Page")
         end)
         return body(function()
           return self:content_for("inner")
@@ -47,7 +47,5 @@ do
     _parent_0.__inherited(_parent_0, _class_0)
   end
   Default = _class_0
+  return _class_0
 end
-return {
-  Default = Default
-}

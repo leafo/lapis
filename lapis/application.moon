@@ -143,7 +143,7 @@ class Request
 
 
 class Application
-  layout: require"lapis.layout".Default
+  layout: require"lapis.views.layout"
   views_prefix: "views"
 
   before_filters: {}
