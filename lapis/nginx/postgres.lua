@@ -1,9 +1,14 @@
 local parser = require("rds.parser")
 local concat = table.concat
+local logger = nil
 local proxy_location = "/query"
 local set_proxy_location
 set_proxy_location = function(loc)
   proxy_location = loc
+end
+local set_logger
+set_logger = function(l)
+  logger = l
 end
 local NULL = { }
 local raw
@@ -116,6 +121,9 @@ encode_assigns = function(t, buffer, join)
 end
 local raw_query
 raw_query = function(str)
+  if logger then
+    logger.query(str)
+  end
   local res, m = ngx.location.capture(proxy_location, {
     body = str
   })
@@ -257,6 +265,7 @@ return {
   encode_assigns = encode_assigns,
   interpolate_query = interpolate_query,
   set_proxy_location = set_proxy_location,
+  set_logger = set_logger,
   select = _select,
   insert = _insert,
   update = _update,

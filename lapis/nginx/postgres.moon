@@ -20,8 +20,12 @@ parser = require "rds.parser"
 
 import concat from table
 
+logger = nil
+
 proxy_location = "/query"
 set_proxy_location = (loc) -> proxy_location = loc
+
+set_logger = (l) -> logger = l
 
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
@@ -82,6 +86,7 @@ encode_assigns = (t, buffer, join=", ") ->
   concat buffer unless have_buffer
 
 raw_query = (str) ->
+  logger.query str if logger
   res, m = ngx.location.capture proxy_location, {
     body: str
   }
@@ -197,6 +202,7 @@ if ... == "test"
   :query, :raw, :NULL, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query
   :set_proxy_location
+  :set_logger
 
   select: _select
   insert: _insert

@@ -25,6 +25,9 @@ flatten_params_helper = (params, out = {}, sep= ", ")->
 flatten_params = (params) ->
   table.concat flatten_params_helper params
 
+query = (q) ->
+  print colors("%{bright}%{cyan}SQL: %{reset}%{magenta}#{q}%{reset}")
+
 request = (r) ->
   import req, res from r
 
@@ -46,5 +49,5 @@ request = (r) ->
   cmd = "#{req.cmd_mth} #{req.cmd_url}"
   print colors(t)\format status, cmd, flatten_params r.url_params
 
-{ :request }
+{ :request, :query }
 

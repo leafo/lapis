@@ -34,6 +34,10 @@ local flatten_params
 flatten_params = function(params)
   return table.concat(flatten_params_helper(params))
 end
+local query
+query = function(q)
+  return print(colors("%{bright}%{cyan}SQL: %{reset}%{magenta}" .. tostring(q) .. "%{reset}"))
+end
 local request
 request = function(r)
   local req, res = r.req, r.res
@@ -57,5 +61,6 @@ request = function(r)
   return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end
 return {
-  request = request
+  request = request,
+  query = query
 }
