@@ -1,9 +1,10 @@
 local db = require("lapis.db")
-local underscore
+local underscore, escape_pattern
 do
   local _table_0 = require("lapis.util")
-  underscore = _table_0.underscore
+  underscore, escape_pattern = _table_0.underscore, _table_0.escape_pattern
 end
+local insert, concat = table.insert, table.concat
 local Model
 do
   local _parent_0 = nil
@@ -67,6 +68,87 @@ do
   end
   self.load = function(self, tbl)
     return setmetatable(tbl, self.__base)
+  end
+  self.load_all = function(self, tbls)
+    return (function()
+      local _accum_0 = { }
+      local _len_0 = 0
+      local _list_0 = tbls
+      for _index_0 = 1, #_list_0 do
+        local t = _list_0[_index_0]
+        _len_0 = _len_0 + 1
+        _accum_0[_len_0] = self:load(t)
+      end
+      return _accum_0
+    end)()
+  end
+  self.include_in = function(self, other_records, foreign_key)
+    if type(self.primary_key) == "table" then
+      error("model must have singular primary key to include")
+    end
+    local include_ids = (function()
+      local _accum_0 = { }
+      local _len_0 = 0
+      local _list_0 = other_records
+      for _index_0 = 1, #_list_0 do
+        local _continue_0 = false
+        repeat
+          local record = _list_0[_index_0]
+          local _value_0
+          do
+            local _with_0 = record[foreign_key]
+            local id = _with_0
+            if not (id) then
+              _continue_0 = true
+              break
+            end
+            _value_0 = _with_0
+          end
+          if _value_0 ~= nil then
+            _len_0 = _len_0 + 1
+            _accum_0[_len_0] = _value_0
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+      return _accum_0
+    end)()
+    if next(include_ids) then
+      local flat_ids = concat((function()
+        local _accum_0 = { }
+        local _len_0 = 0
+        local _list_0 = include_ids
+        for _index_0 = 1, #_list_0 do
+          local id = _list_0[_index_0]
+          _len_0 = _len_0 + 1
+          _accum_0[_len_0] = db.escape_literal(id)
+        end
+        return _accum_0
+      end)(), ", ")
+      local primary = db.escape_identifier(self.primary_key)
+      local tbl_name = db.escape_identifier(self:table_name())
+      do
+        local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
+        if res then
+          local records = { }
+          local _list_0 = res
+          for _index_0 = 1, #_list_0 do
+            local t = _list_0[_index_0]
+            records[t[self.primary_key]] = self:load(t)
+          end
+          local field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
+          local _list_1 = other_records
+          for _index_0 = 1, #_list_1 do
+            local other = _list_1[_index_0]
+            other[field_name] = records[other[foreign_key]]
+          end
+        end
+      end
+    end
+    return other_records
   end
   self.find = function(self, ...)
     local cond

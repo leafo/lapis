@@ -1,7 +1,8 @@
 
 db = require "lapis.db"
 
-import underscore from require "lapis.util"
+import underscore, escape_pattern from require "lapis.util"
+import insert, concat from table
 
 class Model
   @timestamp: false
@@ -23,6 +24,35 @@ class Model
 
   @load: (tbl) =>
     setmetatable tbl, @__base
+
+  @load_all: (tbls) =>
+    [@load t for t in *tbls]
+
+  -- include references to this model in a list of records based on a foreign
+  -- key
+  @include_in: (other_records, foreign_key) =>
+    if type(@primary_key) == "table"
+      error "model must have singular primary key to include"
+
+    include_ids = for record in *other_records
+      with id = record[foreign_key]
+        continue unless id
+
+    if next include_ids
+      flat_ids = concat [db.escape_literal id for id in *include_ids], ", "
+      primary = db.escape_identifier @primary_key
+      tbl_name = db.escape_identifier @table_name!
+
+      if res = db.select "* from #{tbl_name} where #{primary} in (#{flat_ids})"
+        records = {}
+        for t in *res
+          records[t[@primary_key]] = @load t
+        field_name = foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
+
+        for other in *other_records
+          other[field_name] = records[other[foreign_key]]
+
+    other_records
 
   -- find by primary key, or by table of conds
   @find: (...) =>
