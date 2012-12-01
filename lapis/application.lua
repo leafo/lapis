@@ -287,6 +287,7 @@ do
           })
         })
         r:render()
+        logger.request(r)
       end
       return res
     end,

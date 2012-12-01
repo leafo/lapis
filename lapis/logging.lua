@@ -8,6 +8,11 @@ flatten_params_helper = function(params, out, sep)
   if sep == nil then
     sep = ", "
   end
+  if not (params) then
+    return {
+      "{}"
+    }
+  end
   insert(out, "{ ")
   for k, v in pairs(params) do
     insert(out, tostring(k))
@@ -36,9 +41,18 @@ request = function(r)
   if res.statusline then
     status = res.statusline:match(" (%d+) ")
   else
-    status = "200"
+    status = res.status or "200"
   end
-  local t = "[%{green}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
+  status = tostring(status)
+  local status_color
+  if status:match("^2") then
+    status_color = "green"
+  elseif status:match("^5") then
+    status_color = "red"
+  else
+    status_color = "yellow"
+  end
+  local t = "[%{" .. tostring(status_color) .. "}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
   local cmd = tostring(req.cmd_mth) .. " " .. tostring(req.cmd_url)
   return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end

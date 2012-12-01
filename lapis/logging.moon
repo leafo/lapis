@@ -3,6 +3,8 @@ colors = require "ansicolors"
 import insert from table
 
 flatten_params_helper = (params, out = {}, sep= ", ")->
+  return {"{}"} unless params
+
   insert out, "{ "
   for k,v in pairs params
     insert out, tostring k
@@ -25,8 +27,21 @@ flatten_params = (params) ->
 
 request = (r) ->
   import req, res from r
-  status = if res.statusline then res.statusline\match " (%d+) " else "200"
-  t = "[%{green}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
+
+  status = if res.statusline
+    res.statusline\match " (%d+) "
+  else
+    res.status or "200"
+
+  status = tostring status
+  status_color = if status\match "^2"
+    "green"
+  elseif status\match "^5"
+    "red"
+  else
+    "yellow"
+
+  t = "[%{#{status_color}}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
 
   cmd = "#{req.cmd_mth} #{req.cmd_url}"
   print colors(t)\format status, cmd, flatten_params r.url_params

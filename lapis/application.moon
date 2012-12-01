@@ -198,6 +198,7 @@ class Application
         self.error_page { staus: 500, :err, :trace }
       }
       r\render!
+      logger.request r
 
     res
 
