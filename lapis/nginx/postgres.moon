@@ -71,12 +71,12 @@ encode_values = (t, buffer) ->
   concat buffer unless have_buffer
 
 -- col1 = val1, col2 = val2, col3 = val3
-encode_assigns = (t, buffer) ->
+encode_assigns = (t, buffer, join=", ") ->
   have_buffer = buffer
   buffer or= {}
 
   for k,v in pairs t
-    append_all buffer, escape_identifier(k), " = ", escape_literal(v), ", "
+    append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
   buffer[#buffer] = nil
 
   concat buffer unless have_buffer

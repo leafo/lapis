@@ -71,9 +71,9 @@ do
   self.find = function(self, ...)
     local cond
     if "table" == type(select(1, ...)) then
-      cond = db.encode_assigns((...))
+      cond = db.encode_assigns((...), nil, "and")
     else
-      cond = db.encode_assigns(self:encode_key(...))
+      cond = db.encode_assigns(self:encode_key(...), nil, "and")
     end
     local table_name = db.escape_identifier(self:table_name())
     do

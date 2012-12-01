@@ -27,9 +27,9 @@ class Model
   -- find by primary key, or by table of conds
   @find: (...) =>
     cond = if "table" == type select 1, ...
-      db.encode_assigns (...)
+      db.encode_assigns (...), nil, "and"
     else
-      db.encode_assigns @encode_key ...
+      db.encode_assigns @encode_key(...), nil, "and"
 
     table_name = db.escape_identifier @table_name!
 

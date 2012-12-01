@@ -100,11 +100,14 @@ encode_values = function(t, buffer)
   end
 end
 local encode_assigns
-encode_assigns = function(t, buffer)
+encode_assigns = function(t, buffer, join)
+  if join == nil then
+    join = ", "
+  end
   local have_buffer = buffer
   buffer = buffer or { }
   for k, v in pairs(t) do
-    append_all(buffer, escape_identifier(k), " = ", escape_literal(v), ", ")
+    append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
   end
   buffer[#buffer] = nil
   if not (have_buffer) then
