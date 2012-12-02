@@ -67,9 +67,9 @@ class Model
   -- find by primary key, or by table of conds
   @find: (...) =>
     cond = if "table" == type select 1, ...
-      db.encode_assigns (...), nil, "and"
+      db.encode_assigns (...), nil, " and "
     else
-      db.encode_assigns @encode_key(...), nil, "and"
+      db.encode_assigns @encode_key(...), nil, " and "
 
     table_name = db.escape_identifier @table_name!
 
@@ -87,7 +87,12 @@ class Model
       @load values
 
   @check_unique_constraint: (name, value) =>
-    cond = db.encode_assigns { [name]: value }
+    t = if type(name) == "table"
+      name
+    else
+      { [name]: value }
+
+    cond = db.encode_assigns t, nil, " and "
     table_name = db.escape_identifier @table_name!
     res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
     res.c > 0
@@ -95,6 +100,11 @@ class Model
   delete: =>
     cond = { key, @[key] for key in *{@@primary_keys!} }
     db.delete @@table_name!, cond
+
+  update: (...) =>
+    columns = {...}
+    cond = { key, @[key] for key in *{@@primary_keys!} }
+    db.update @@table_name!, { col, @[col] for col in *columns }, cond
 
 { :Model }
 

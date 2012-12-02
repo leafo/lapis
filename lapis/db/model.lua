@@ -23,6 +23,31 @@ do
         return _tbl_0
       end)()
       return db.delete(self.__class:table_name(), cond)
+    end,
+    update = function(self, ...)
+      local columns = {
+        ...
+      }
+      local cond = (function()
+        local _tbl_0 = { }
+        local _list_0 = {
+          self.__class:primary_keys()
+        }
+        for _index_0 = 1, #_list_0 do
+          local key = _list_0[_index_0]
+          _tbl_0[key] = self[key]
+        end
+        return _tbl_0
+      end)()
+      return db.update(self.__class:table_name(), (function()
+        local _tbl_0 = { }
+        local _list_0 = columns
+        for _index_0 = 1, #_list_0 do
+          local col = _list_0[_index_0]
+          _tbl_0[col] = self[col]
+        end
+        return _tbl_0
+      end)(), cond)
     end
   }
   _base_0.__index = _base_0
@@ -183,9 +208,9 @@ do
   self.find = function(self, ...)
     local cond
     if "table" == type(select(1, ...)) then
-      cond = db.encode_assigns((...), nil, "and")
+      cond = db.encode_assigns((...), nil, " and ")
     else
-      cond = db.encode_assigns(self:encode_key(...), nil, "and")
+      cond = db.encode_assigns(self:encode_key(...), nil, " and ")
     end
     local table_name = db.escape_identifier(self:table_name())
     do
@@ -210,9 +235,15 @@ do
     end
   end
   self.check_unique_constraint = function(self, name, value)
-    local cond = db.encode_assigns({
-      [name] = value
-    })
+    local t
+    if type(name) == "table" then
+      t = name
+    else
+      t = {
+        [name] = value
+      }
+    end
+    local cond = db.encode_assigns(t, nil, " and ")
     local table_name = db.escape_identifier(self:table_name())
     local res = unpack(db.select("COUNT(*) as c from " .. tostring(table_name) .. " where " .. tostring(cond)))
     return res.c > 0
