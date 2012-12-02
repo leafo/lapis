@@ -69,11 +69,10 @@ do
         self:build()
       end
       local params, responder, path, name = self.p:match(route)
-      if not (params) then
-        self:default_route(route)
-      end
-      if responder then
+      if params and responder then
         return responder(params, path, name, ...)
+      else
+        return self:default_route(route, params, path, name)
       end
     end
   }

@@ -76,8 +76,10 @@ class Router
   resolve: (route, ...) =>
     @build! unless @p
     params, responder, path, name = @p\match route
-    @default_route route unless params
-    responder params, path, name, ... if responder
+    if params and responder
+      responder params, path, name, ...
+    else
+      @default_route route, params, path, name
 
 { :Router }
 

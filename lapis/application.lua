@@ -268,7 +268,10 @@ do
       local err, trace
       local success = xpcall((function()
         local r = Request(self, req, res)
-        self.router:resolve(req.parsed_url.path, r)
+        if not (self.router:resolve(req.parsed_url.path, r)) then
+          local handler = self:wrap_handler(self.default_route)
+          r:write(handler({ }, nil, "default_route", r))
+        end
         r:render()
         return logger.request(r)
       end), function(_err)
@@ -291,7 +294,18 @@ do
       end
       return res
     end,
-    serve = function(self) end
+    serve = function(self) end,
+    default_route = function(self)
+      if self.req.cmd_url:match("./$") then
+        local stripped = self.req.cmd_url:match("^(.+)/+$")
+        return {
+          redirect_to = stripped,
+          status = 301
+        }
+      else
+        return error("Failed to find route: " .. tostring(self.req.cmd_url))
+      end
+    end
   }
   _base_0.__index = _base_0
   if _parent_0 then
@@ -300,6 +314,9 @@ do
   local _class_0 = setmetatable({
     __init = function(self)
       self.router = Router()
+      self.router.default_route = function(self)
+        return false
+      end
       do
         local _with_0 = require("lapis.server")
         self.__class.__base["/static/*"] = _with_0.make_static_handler("static")

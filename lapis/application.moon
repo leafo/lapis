@@ -154,6 +154,7 @@ class Application
 
   new: =>
     @router = Router!
+    @router.default_route = => false
 
     with require "lapis.server"
       -- add static route
@@ -183,7 +184,12 @@ class Application
     local err, trace
     success = xpcall (->
         r = Request self, req, res
-        @router\resolve req.parsed_url.path, r
+
+        unless @router\resolve req.parsed_url.path, r
+          -- run default route if nothing matched
+          handler = @wrap_handler self.default_route
+          r\write handler {}, nil, "default_route", r
+
         r\render!
         logger.request r),
       (_err) ->
@@ -203,6 +209,14 @@ class Application
     res
 
   serve: => -- TODO: alias to lapis.serve
+
+  default_route: =>
+    -- strip trailing /
+    if @req.cmd_url\match "./$"
+      stripped = @req.cmd_url\match "^(.+)/+$"
+      redirect_to: stripped, status: 301
+    else
+      error "Failed to find route: #{@req.cmd_url}"
 
   @before_filter: (fn) =>
     table.insert @before_filters, fn
