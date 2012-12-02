@@ -97,14 +97,15 @@ class Model
     res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
     res.c > 0
 
+  _primary_cond: =>
+    { key, @[key] for key in *{@@primary_keys!} }
+
   delete: =>
-    cond = { key, @[key] for key in *{@@primary_keys!} }
-    db.delete @@table_name!, cond
+    db.delete @@table_name!, @_primary_cond!
 
   update: (...) =>
     columns = {...}
-    cond = { key, @[key] for key in *{@@primary_keys!} }
-    db.update @@table_name!, { col, @[col] for col in *columns }, cond
+    db.update @@table_name!, { col, @[col] for col in *columns }, @_primary_cond!
 
 { :Model }
 

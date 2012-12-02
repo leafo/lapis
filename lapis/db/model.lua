@@ -10,8 +10,8 @@ local Model
 do
   local _parent_0 = nil
   local _base_0 = {
-    delete = function(self)
-      local cond = (function()
+    _primary_cond = function(self)
+      return (function()
         local _tbl_0 = { }
         local _list_0 = {
           self.__class:primary_keys()
@@ -22,23 +22,14 @@ do
         end
         return _tbl_0
       end)()
-      return db.delete(self.__class:table_name(), cond)
+    end,
+    delete = function(self)
+      return db.delete(self.__class:table_name(), self:_primary_cond())
     end,
     update = function(self, ...)
       local columns = {
         ...
       }
-      local cond = (function()
-        local _tbl_0 = { }
-        local _list_0 = {
-          self.__class:primary_keys()
-        }
-        for _index_0 = 1, #_list_0 do
-          local key = _list_0[_index_0]
-          _tbl_0[key] = self[key]
-        end
-        return _tbl_0
-      end)()
       return db.update(self.__class:table_name(), (function()
         local _tbl_0 = { }
         local _list_0 = columns
@@ -47,7 +38,7 @@ do
           _tbl_0[col] = self[col]
         end
         return _tbl_0
-      end)(), cond)
+      end)(), self:_primary_cond())
     end
   }
   _base_0.__index = _base_0
