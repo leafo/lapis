@@ -21,7 +21,7 @@ reduce = (items, fn) ->
 class Router
   alpha = R("az", "AZ", "__")
   alpha_num = alpha + R("09")
-  slug = (alpha_num + S("-")) ^ 1
+  slug = (P(1) - "/") ^ 1
 
   make_var = (str) ->
     name = str\sub 2

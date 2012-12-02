@@ -107,7 +107,7 @@ do
   local self = _class_0
   alpha = R("az", "AZ", "__")
   alpha_num = alpha + R("09")
-  slug = (alpha_num + S("-")) ^ 1
+  slug = (P(1) - "/") ^ 1
   make_var = function(str)
     local name = str:sub(2)
     return Cg(slug, name)
