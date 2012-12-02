@@ -57,7 +57,26 @@ request = function(url, str_body)
   end
   return out, res.status, res.header
 end
+local ngx_replace_headers
+ngx_replace_headers = function(new_headers)
+  if new_headers == nil then
+    new_headers = nil
+  end
+  local req = ngx.req
+  new_headers = new_headers or ngx.ctx.headers
+  for k, v in pairs(req.get_headers()) do
+    if k ~= 'content-length' then
+      req.clear_header(k)
+    end
+  end
+  if new_headers then
+    for k, v in pairs(new_headers) do
+      req.set_header(k, v)
+    end
+  end
+end
 return {
   request = request,
-  set_proxy_location = set_proxy_location
+  set_proxy_location = set_proxy_location,
+  ngx_replace_headers = ngx_replace_headers
 }

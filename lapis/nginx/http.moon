@@ -90,5 +90,19 @@ request = (url, str_body) ->
 
   out, res.status, res.header
 
-{ :request, :set_proxy_location }
+
+ngx_replace_headers = (new_headers=nil) ->
+  import req from ngx
+  new_headers or= ngx.ctx.headers
+
+  for k,v in pairs req.get_headers!
+    if k != 'content-length' then
+        req.clear_header k
+
+  if new_headers
+    for k,v in pairs new_headers
+      req.set_header k, v
+
+
+{ :request, :set_proxy_location, :ngx_replace_headers }
 
