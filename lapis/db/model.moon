@@ -32,7 +32,7 @@ class Model
   @load_all: (tbls) =>
     [@load t for t in *tbls]
 
-  @select: (query, ...) =>
+  @select: (query="", ...) =>
     query = db.interpolate_query query, ...
     tbl_name = db.escape_identifier @table_name!
     if res = db.select "* from #{tbl_name} #{query}"

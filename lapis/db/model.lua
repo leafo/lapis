@@ -128,6 +128,9 @@ do
     end)()
   end
   self.select = function(self, query, ...)
+    if query == nil then
+      query = ""
+    end
     query = db.interpolate_query(query, ...)
     local tbl_name = db.escape_identifier(self:table_name())
     do
