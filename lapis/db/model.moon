@@ -92,5 +92,9 @@ class Model
     res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
     res.c > 0
 
+  delete: =>
+    cond = { key, @[key] for key in *{@@primary_keys!} }
+    db.delete @@table_name!, cond
+
 { :Model }
 

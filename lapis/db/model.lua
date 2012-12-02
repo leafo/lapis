@@ -9,7 +9,22 @@ local insert, concat = table.insert, table.concat
 local Model
 do
   local _parent_0 = nil
-  local _base_0 = { }
+  local _base_0 = {
+    delete = function(self)
+      local cond = (function()
+        local _tbl_0 = { }
+        local _list_0 = {
+          self.__class:primary_keys()
+        }
+        for _index_0 = 1, #_list_0 do
+          local key = _list_0[_index_0]
+          _tbl_0[key] = self[key]
+        end
+        return _tbl_0
+      end)()
+      return db.delete(self.__class:table_name(), cond)
+    end
+  }
   _base_0.__index = _base_0
   if _parent_0 then
     setmetatable(_base_0, _parent_0.__base)
