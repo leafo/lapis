@@ -68,7 +68,19 @@ class Router
       params, responder, path, name
 
   url_for: (name, params) =>
-    replace = (s) -> params[s\sub 2] or ""
+    replace = (s) ->
+      param_name = s\sub 2
+      if val = params[param_name]
+        if "table" == type val
+          if get_key = val.url_key
+            val = get_key(val, param_name) or ""
+          else
+            obj_name = val.__class and val.__class.__name or type(val)
+            error "Don't know how to serialize object for url: #{obj_name}"
+        val
+      else
+        ""
+
     patt = Cs (symbol / replace + 1)^0
     route = assert @named_routes[name], "Missing route named #{name}"
     patt\match route

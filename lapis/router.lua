@@ -58,7 +58,26 @@ do
     url_for = function(self, name, params)
       local replace
       replace = function(s)
-        return params[s:sub(2)] or ""
+        local param_name = s:sub(2)
+        do
+          local val = params[param_name]
+          if val then
+            if "table" == type(val) then
+              do
+                local get_key = val.url_key
+                if get_key then
+                  val = get_key(val, param_name) or ""
+                else
+                  local obj_name = val.__class and val.__class.__name or type(val)
+                  error("Don't know how to serialize object for url: " .. tostring(obj_name))
+                end
+              end
+            end
+            return val
+          else
+            return ""
+          end
+        end
       end
       local patt = Cs((symbol / replace + 1) ^ 0)
       local route = assert(self.named_routes[name], "Missing route named " .. tostring(name))

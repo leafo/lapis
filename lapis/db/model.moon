@@ -100,6 +100,8 @@ class Model
   _primary_cond: =>
     { key, @[key] for key in *{@@primary_keys!} }
 
+  url_key: => concat {@@primary_keys!}, "-"
+
   delete: =>
     db.delete @@table_name!, @_primary_cond!
 

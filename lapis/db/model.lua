@@ -23,6 +23,11 @@ do
         return _tbl_0
       end)()
     end,
+    url_key = function(self)
+      return concat({
+        self.__class:primary_keys()
+      }, "-")
+    end,
     delete = function(self)
       return db.delete(self.__class:table_name(), self:_primary_cond())
     end,
