@@ -30,6 +30,9 @@ set_logger = (l) -> logger = l
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
 
+TRUE = raw"TRUE"
+FALSE = raw"FALSE"
+
 format_date = (time) ->
   os.date "!%Y-%m-%d %H:%M:%S", time
 
@@ -47,9 +50,11 @@ escape_literal = (val) ->
       return tostring val
     when "string"
       return "'#{(val\gsub "'", "''")}'"
+    when "boolean"
+      return val and "TRUE" or "FALSE"
     when "table"
       return "NULL" if val == NULL
-      if val[1] == "raw" and  val[2]
+      if val[1] == "raw" and val[2]
         return val[2]
 
   error "don't know how to escape value: #{val}"
@@ -120,7 +125,7 @@ _insert = (tbl, values, ...) ->
   encode_values values, buff
 
   returning = {...}
-  if #returning
+  if next returning
     append_all buff, " RETURNING "
     for i, r in ipairs returning
       append_all buff, escape_identifier r
@@ -196,10 +201,12 @@ if ... == "test"
   _insert "cats", { age: 123, name: "catter" }, "age"
   _insert "cats", { age: 123, name: "catter" }, "age", "name"
 
+  _insert "cats", { hungry: true }
+
   -- query "update things set #{encode_assigns(v)} where id = ?", "hello-world"
 
 {
-  :query, :raw, :NULL, :escape_literal, :escape_identifier
+  :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query
   :set_proxy_location
   :set_logger

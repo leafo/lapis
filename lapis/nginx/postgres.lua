@@ -18,6 +18,8 @@ raw = function(val)
     tostring(val)
   }
 end
+local TRUE = raw("TRUE")
+local FALSE = raw("FALSE")
 local format_date
 format_date = function(time)
   return os.date("!%Y-%m-%d %H:%M:%S", time)
@@ -40,6 +42,8 @@ escape_literal = function(val)
     return tostring(val)
   elseif "string" == _exp_0 then
     return "'" .. tostring((val:gsub("'", "''"))) .. "'"
+  elseif "boolean" == _exp_0 then
+    return val and "TRUE" or "FALSE"
   elseif "table" == _exp_0 then
     if val == NULL then
       return "NULL"
@@ -162,7 +166,7 @@ _insert = function(tbl, values, ...)
   local returning = {
     ...
   }
-  if #returning then
+  if next(returning) then
     append_all(buff, " RETURNING ")
     for i, r in ipairs(returning) do
       append_all(buff, escape_identifier(r))
@@ -254,11 +258,16 @@ if ... == "test" then
     age = 123,
     name = "catter"
   }, "age", "name")
+  _insert("cats", {
+    hungry = true
+  })
 end
 return {
   query = query,
   raw = raw,
   NULL = NULL,
+  TRUE = TRUE,
+  FALSE = FALSE,
   escape_literal = escape_literal,
   escape_identifier = escape_identifier,
   encode_values = encode_values,
