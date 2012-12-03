@@ -182,7 +182,7 @@ add_cond = function(buffer, cond, ...)
   append_all(buffer, " WHERE ")
   local _exp_0 = type(cond)
   if "table" == _exp_0 then
-    return encode_assigns(cond, buffer)
+    return encode_assigns(cond, buffer, " AND ")
   elseif "string" == _exp_0 then
     return append_all(buffer, interpolate_query(cond, ...))
   end
@@ -245,10 +245,20 @@ if ... == "test" then
   }, {
     name = NULL
   })
+  _update("cats", {
+    color = "red"
+  }, {
+    weight = 1200,
+    length = 392
+  })
   _delete("cats")
   _delete("cats", "name = ?", "rump")
   _delete("cats", {
     name = "rump"
+  })
+  _delete("cats", {
+    name = "rump",
+    dad = "duck"
   })
   _insert("cats", {
     age = 123,

@@ -137,7 +137,7 @@ add_cond = (buffer, cond, ...) ->
   append_all buffer, " WHERE "
   switch type cond
     when "table"
-      encode_assigns cond, buffer
+      encode_assigns cond, buffer, " AND "
     when "string"
       append_all buffer, interpolate_query cond, ...
 
@@ -192,10 +192,12 @@ if ... == "test"
 
   _update "cats", { age: raw"age - 10" }, "name = ?", "catter"
   _update "cats", { age: raw"age - 10" }, { name: NULL }
+  _update "cats", { color: "red" }, { weight: 1200, length: 392 }
 
   _delete "cats"
   _delete "cats", "name = ?", "rump"
   _delete "cats", name: "rump"
+  _delete "cats", name: "rump", dad: "duck"
 
 
   _insert "cats", { age: 123, name: "catter" }, "age"
