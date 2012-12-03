@@ -162,7 +162,9 @@ dispatch = function(app)
   if res.status then
     ngx.status = res.status
   end
-  ngx.say(res.content)
+  if res.content then
+    ngx.say(res.content)
+  end
   return res
 end
 local debug
