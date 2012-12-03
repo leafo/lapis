@@ -1,9 +1,9 @@
 local db = require("lapis.db")
 db.set_logger(require("lapis.logging"))
-local underscore, escape_pattern
+local underscore, escape_pattern, uniquify
 do
   local _table_0 = require("lapis.util")
-  underscore, escape_pattern = _table_0.underscore, _table_0.escape_pattern
+  underscore, escape_pattern, uniquify = _table_0.underscore, _table_0.escape_pattern, _table_0.uniquify
 end
 local insert, concat = table.insert, table.concat
 local Model
@@ -186,6 +186,7 @@ do
       return _accum_0
     end)()
     if next(include_ids) then
+      include_ids = uniquify(include_ids)
       local flat_ids = concat((function()
         local _accum_0 = { }
         local _len_0 = 0

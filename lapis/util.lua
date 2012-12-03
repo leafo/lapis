@@ -118,6 +118,36 @@ do
     end)())
   end
 end
+local uniquify
+uniquify = function(list)
+  local seen = { }
+  return (function()
+    local _accum_0 = { }
+    local _len_0 = 0
+    local _list_0 = list
+    for _index_0 = 1, #_list_0 do
+      local _continue_0 = false
+      repeat
+        local item = _list_0[_index_0]
+        if seen[item] then
+          _continue_0 = true
+          break
+        end
+        seen[item] = true
+        local _value_0 = item
+        if _value_0 ~= nil then
+          _len_0 = _len_0 + 1
+          _accum_0[_len_0] = _value_0
+        end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    return _accum_0
+  end)()
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -134,5 +164,6 @@ return {
   parse_cookie_string = parse_cookie_string,
   underscore = underscore,
   slugify = slugify,
-  Path = Path
+  Path = Path,
+  uniquify = uniquify
 }

@@ -2,7 +2,7 @@
 db = require "lapis.db"
 db.set_logger require "lapis.logging"
 
-import underscore, escape_pattern from require "lapis.util"
+import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
 
 class Model
@@ -51,6 +51,7 @@ class Model
         continue unless id
 
     if next include_ids
+      include_ids = uniquify include_ids
       flat_ids = concat [db.escape_literal id for id in *include_ids], ", "
       primary = db.escape_identifier @primary_key
       tbl_name = db.escape_identifier @table_name!

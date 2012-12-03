@@ -59,6 +59,13 @@ camelize = do
   (str) ->
     concat [part\sub(1,1)\upper! .. part\sub(2) for part in str\gmatch patt]
 
+uniquify = (list) ->
+  seen = {}
+  return for item in *list
+    continue if seen[item]
+    seen[item] = true
+    item
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
@@ -69,4 +76,4 @@ if ... == "test"
   print camelize "world_wide_i_web"
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
-  :parse_cookie_string, :underscore, :slugify, :Path }
+  :parse_cookie_string, :underscore, :slugify, :Path, :uniquify }
