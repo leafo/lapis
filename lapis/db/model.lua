@@ -24,9 +24,19 @@ do
       end)()
     end,
     url_key = function(self)
-      return concat({
-        self.__class:primary_keys()
-      }, "-")
+      return concat((function()
+        local _accum_0 = { }
+        local _len_0 = 0
+        local _list_0 = {
+          self.__class:primary_keys()
+        }
+        for _index_0 = 1, #_list_0 do
+          local key = _list_0[_index_0]
+          _len_0 = _len_0 + 1
+          _accum_0[_len_0] = self[key]
+        end
+        return _accum_0
+      end)(), "-")
     end,
     delete = function(self)
       return db.delete(self.__class:table_name(), self:_primary_cond())
