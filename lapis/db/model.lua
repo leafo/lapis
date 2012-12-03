@@ -231,6 +231,8 @@ do
         end
       end
       return self:load(values)
+    else
+      return nil, "Failed to create " .. tostring(self.__name)
     end
   end
   self.check_unique_constraint = function(self, name, value)

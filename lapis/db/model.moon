@@ -85,6 +85,8 @@ class Model
         for k,v in pairs res.resultset[1]
           values[k] = v
       @load values
+    else
+      nil, "Failed to create #{@__name}"
 
   @check_unique_constraint: (name, value) =>
     t = if type(name) == "table"
