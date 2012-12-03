@@ -118,6 +118,11 @@ do
     return name
   end
   self.load = function(self, tbl)
+    for k, v in pairs(tbl) do
+      if v == ngx.null then
+        tbl[k] = nil
+      end
+    end
     return setmetatable(tbl, self.__base)
   end
   self.load_all = function(self, tbls)

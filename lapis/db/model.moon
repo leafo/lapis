@@ -27,6 +27,8 @@ class Model
     name
 
   @load: (tbl) =>
+    for k,v in pairs tbl
+      tbl[k] = nil if v == ngx.null
     setmetatable tbl, @__base
 
   @load_all: (tbls) =>
