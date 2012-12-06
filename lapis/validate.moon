@@ -6,7 +6,7 @@ validate_functions = {
     input and input != "", "%s must be provided"
 
   file_exists: (input) ->
-    type(input) == "table" and input.filename != "" and input.content != ""
+    type(input) == "table" and input.filename != "" and input.content != "", "Missing file"
 
   min_length: (input, len) ->
     #tostring(input or "") >= len, "%s must be at least #{len} chars"
@@ -41,6 +41,9 @@ validate = (object, validations) ->
 
   next(errors) and errors
 
+assert_valid = (object, validations) ->
+  errors = validate object, validations
+  coroutine.yield "error", errors if errors
 
 if ... == "test"
   require "moon"
@@ -74,4 +77,4 @@ if ... == "test"
   }
 
 
-{ :validate, :test_input }
+{ :validate, :assert_valid, :test_input }

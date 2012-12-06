@@ -4,7 +4,7 @@ local validate_functions = {
     return input and input ~= "", "%s must be provided"
   end,
   file_exists = function(input)
-    return type(input) == "table" and input.filename ~= "" and input.content ~= ""
+    return type(input) == "table" and input.filename ~= "" and input.content ~= "", "Missing file"
   end,
   min_length = function(input, len)
     return #tostring(input or "") >= len, "%s must be at least " .. tostring(len) .. " chars"
@@ -57,6 +57,13 @@ validate = function(object, validations)
     end
   end
   return next(errors) and errors
+end
+local assert_valid
+assert_valid = function(object, validations)
+  local errors = validate(object, validations)
+  if errors then
+    return coroutine.yield("error", errors)
+  end
 end
 if ... == "test" then
   require("moon")
@@ -113,5 +120,6 @@ if ... == "test" then
 end
 return {
   validate = validate,
+  assert_valid = assert_valid,
   test_input = test_input
 }

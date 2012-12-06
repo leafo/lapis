@@ -379,33 +379,37 @@ capture_errors = function(fn)
   return function(self, ...)
     local co = coroutine.create(fn)
     local out = {
-      coroutine.resume(co)
+      coroutine.resume(co, self)
     }
     if not (out[1]) then
       error(debug.traceback(co, out[2]))
     end
     if coroutine.status(co) == "suspended" then
-      self.errors = {
-        unpack(out, 2)
-      }
-      return {
-        render = true
-      }
+      if out[2] == "error" then
+        self.errors = out[3]
+        return {
+          render = true
+        }
+      else
+        return error("Unknown yield")
+      end
     else
       return unpack(out, 2)
     end
   end
 end
+local yield_error
+yield_error = function(msg)
+  return coroutine.yield("error", {
+    msg
+  })
+end
 local assert_error
 assert_error = function(thing, msg)
   if not (thing) then
-    coroutine.yield(msg)
+    yield_error(msg)
   end
   return thing
-end
-local yield_error
-yield_error = function(msg)
-  return coroutine.yield(msg)
 end
 return {
   Request = Request,

@@ -234,27 +234,30 @@ respond_to = (tbl) ->
 capture_errors = (fn) ->
   (...) =>
     co = coroutine.create fn
-    out = { coroutine.resume co }
+    out = { coroutine.resume co, @ }
 
-    unless out[1]
+    unless out[1] -- error
       error debug.traceback co, out[2]
 
+    -- { status, "error", error_msgs }
     if coroutine.status(co) == "suspended"
-      @errors = { unpack out, 2 }
-      render: true
+      if out[2] == "error"
+        @errors = out[3]
+        render: true
+      else -- yield to someone else
+        error "Unknown yield"
     else
       unpack out, 2
 
+yield_error = (msg) ->
+  coroutine.yield "error", {msg}
+
 assert_error = (thing, msg) ->
-  unless thing
-    coroutine.yield msg
+  yield_error msg unless thing
   thing
 
-yield_error = (msg) ->
-  coroutine.yield msg
-
 {
-  :Request, :Application, :respond_to, :capture_errors, :assert_error
-  :yield_error
+  :Request, :Application, :respond_to, :capture_errors
+  :assert_error, :yield_error
 }
 
