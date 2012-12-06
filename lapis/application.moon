@@ -229,5 +229,30 @@ respond_to = (tbl) ->
     else
       error "don't know how to respond to #{@req.cmd_mth}"
 
-{ :Request, :Application, :respond_to }
+capture_errors = (fn) ->
+  (...) =>
+    co = coroutine.create fn
+    out = { coroutine.resume co }
+
+    unless out[1]
+      error debug.traceback co, out[2]
+
+    if coroutine.status(co) == "suspended"
+      @errors = { unpack out, 2 }
+      render: true
+    else
+      unpack out, 2
+
+assert_error = (thing, msg) ->
+  unless thing
+    coroutine.yield msg
+  thing
+
+yield_error = (msg) ->
+  coroutine.yield msg
+
+{
+  :Request, :Application, :respond_to, :capture_errors, :assert_error
+  :yield_error
+}
 
