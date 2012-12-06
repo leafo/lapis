@@ -5,6 +5,9 @@ validate_functions = {
   exists: (input) ->
     input and input != "", "%s must be provided"
 
+  file_exists: (input) ->
+    type(input) == "table" and input.filename != "" and input.content != ""
+
   min_length: (input, len) ->
     #tostring(input or "") >= len, "%s must be at least #{len} chars"
 

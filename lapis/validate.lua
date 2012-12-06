@@ -3,6 +3,9 @@ local validate_functions = {
   exists = function(input)
     return input and input ~= "", "%s must be provided"
   end,
+  file_exists = function(input)
+    return type(input) == "table" and input.filename ~= "" and input.content ~= ""
+  end,
   min_length = function(input, len)
     return #tostring(input or "") >= len, "%s must be at least " .. tostring(len) .. " chars"
   end,
