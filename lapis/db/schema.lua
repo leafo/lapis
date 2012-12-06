@@ -1,5 +1,5 @@
 local db = require("lapis.db")
-local types = {
+local types = setmetatable({
   serial = "serial NOT NULL",
   varchar = "character varying(255) NOT NULL",
   varchar_nullable = "character varying(255)",
@@ -9,7 +9,11 @@ local types = {
   integer = "integer NOT NULL DEFAULT 0",
   foreign_key = "integer NOT NULL",
   boolean = "boolean NOT NULL"
-}
+}, {
+  __index = function(self, key)
+    return error("Don't know column type `" .. tostring(key) .. "`")
+  end
+})
 local concat = table.concat
 local append_all
 append_all = function(t, ...)
@@ -129,9 +133,52 @@ local drop_table
 drop_table = function(tname)
   return db.query("DROP TABLE IF EXISTS " .. tostring(db.escape_identifier(tname)) .. ";")
 end
+local add_column
+add_column = function(tname, col_name, col_type)
+  tname = db.escape_identifier(tname)
+  col_name = db.escape_identifier(col_name)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " ADD COLUMN " .. tostring(col_name) .. " " .. tostring(col_type))
+end
+local drop_column
+drop_column = function(tname, col_name)
+  tname = db.escape_identifier(tname)
+  col_name = db.escape_identifier(col_name)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " DROP COLUMN " .. tostring(col_name))
+end
+local rename_column
+rename_column = function(tname, col_from, col_to)
+  tname = db.escape_identifier(tname)
+  col_from = db.escape_identifier(col_from)
+  col_to = db.escape_identifier(col_to)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " RENAME COLUMN " .. tostring(col_from) .. " TO " .. tostring(col_to))
+end
+local rename_table
+rename_table = function(tname_from, tname_to)
+  tname_from = db.escape_identifier(tname_from)
+  tname_to = db.escape_identifier(tname_to)
+  return db.query("ALTER TABLE " .. tostring(tname_from) .. " RENAME TO " .. tostring(tname_to))
+end
+if ... == "test" then
+  db.query = print
+  db.select = function()
+    return {
+      {
+        c = 0
+      }
+    }
+  end
+  add_column("hello", "dads", types.integer)
+  rename_column("hello", "dads", "cats")
+  drop_column("hello", "cats")
+  rename_table("hello", "world")
+end
 return {
   types = types,
   create_table = create_table,
   drop_table = drop_table,
-  create_index = create_index
+  create_index = create_index,
+  add_column = add_column,
+  drop_column = drop_column,
+  rename_column = rename_column,
+  rename_table = rename_table
 }

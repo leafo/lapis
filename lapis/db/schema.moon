@@ -1,7 +1,7 @@
 
 db = require "lapis.db"
 
-types = {
+types = setmetatable {
   serial: "serial NOT NULL"
   varchar: "character varying(255) NOT NULL"
   varchar_nullable: "character varying(255)"
@@ -11,8 +11,8 @@ types = {
   integer: "integer NOT NULL DEFAULT 0"
   foreign_key: "integer NOT NULL"
   boolean: "boolean NOT NULL"
-}
-
+}, __index: (key) =>
+  error "Don't know column type `#{key}`"
 
 import concat from table
 append_all = (t, ...) ->
@@ -75,6 +75,38 @@ create_index = (tname, ...) ->
 drop_table = (tname) ->
   db.query "DROP TABLE IF EXISTS #{db.escape_identifier tname};"
 
+add_column = (tname, col_name, col_type) ->
+  tname = db.escape_identifier tname
+  col_name = db.escape_identifier col_name
+  db.query "ALTER TABLE #{tname} ADD COLUMN #{col_name} #{col_type}"
 
-{ :types, :create_table, :drop_table, :create_index }
+drop_column = (tname, col_name) ->
+  tname = db.escape_identifier tname
+  col_name = db.escape_identifier col_name
+  db.query "ALTER TABLE #{tname} DROP COLUMN #{col_name}"
+
+rename_column = (tname, col_from, col_to) ->
+  tname = db.escape_identifier tname
+  col_from = db.escape_identifier col_from
+  col_to = db.escape_identifier col_to
+  db.query "ALTER TABLE #{tname} RENAME COLUMN #{col_from} TO #{col_to}"
+
+rename_table = (tname_from, tname_to) ->
+  tname_from = db.escape_identifier tname_from
+  tname_to = db.escape_identifier tname_to
+  db.query "ALTER TABLE #{tname_from} RENAME TO #{tname_to}"
+
+if ... == "test"
+  db.query = print
+  db.select = -> { { c: 0 } }
+
+  add_column "hello", "dads", types.integer
+  rename_column "hello", "dads", "cats"
+  drop_column "hello", "cats"
+  rename_table "hello", "world"
+
+{
+  :types, :create_table, :drop_table, :create_index, :add_column, :drop_column
+  :rename_column, :rename_table
+}
 
