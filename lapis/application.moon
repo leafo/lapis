@@ -225,6 +225,8 @@ respond_to = (tbl) ->
   =>
     fn = tbl[@req.cmd_mth]
     if fn
+      if before = tbl.before
+        before @
       fn @
     else
       error "don't know how to respond to #{@req.cmd_mth}"

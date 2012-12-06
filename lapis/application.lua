@@ -362,6 +362,12 @@ respond_to = function(tbl)
   return function(self)
     local fn = tbl[self.req.cmd_mth]
     if fn then
+      do
+        local before = tbl.before
+        if before then
+          before(self)
+        end
+      end
       return fn(self)
     else
       return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
