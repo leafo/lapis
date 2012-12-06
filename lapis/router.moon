@@ -73,7 +73,7 @@ class Router
       if val = params[param_name]
         if "table" == type val
           if get_key = val.url_key
-            val = get_key(val, param_name) or ""
+            val = get_key(val, name, param_name) or ""
           else
             obj_name = val.__class and val.__class.__name or type(val)
             error "Don't know how to serialize object for url: #{obj_name}"

@@ -66,7 +66,7 @@ do
               do
                 local get_key = val.url_key
                 if get_key then
-                  val = get_key(val, param_name) or ""
+                  val = get_key(val, name, param_name) or ""
                 else
                   local obj_name = val.__class and val.__class.__name or type(val)
                   error("Don't know how to serialize object for url: " .. tostring(obj_name))
