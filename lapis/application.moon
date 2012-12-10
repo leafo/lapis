@@ -231,7 +231,9 @@ respond_to = (tbl) ->
     else
       error "don't know how to respond to #{@req.cmd_mth}"
 
-capture_errors = (fn) ->
+
+default_error_response = -> { render: true }
+capture_errors = (fn, error_response=default_error_response) ->
   (...) =>
     co = coroutine.create fn
     out = { coroutine.resume co, @ }
@@ -243,11 +245,16 @@ capture_errors = (fn) ->
     if coroutine.status(co) == "suspended"
       if out[2] == "error"
         @errors = out[3]
-        render: true
+        error_response @
       else -- yield to someone else
         error "Unknown yield"
     else
       unpack out, 2
+
+capture_errors_json = (fn) ->
+  capture_errors fn, => {
+    json: { errors: @errors }
+  }
 
 yield_error = (msg) ->
   coroutine.yield "error", {msg}
@@ -257,7 +264,8 @@ assert_error = (thing, msg) ->
   thing
 
 {
-  :Request, :Application, :respond_to, :capture_errors
+  :Request, :Application, :respond_to
+  :capture_errors, :capture_errors_json
   :assert_error, :yield_error
 }
 

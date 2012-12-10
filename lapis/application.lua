@@ -374,8 +374,17 @@ respond_to = function(tbl)
     end
   end
 end
+local default_error_response
+default_error_response = function()
+  return {
+    render = true
+  }
+end
 local capture_errors
-capture_errors = function(fn)
+capture_errors = function(fn, error_response)
+  if error_response == nil then
+    error_response = default_error_response
+  end
   return function(self, ...)
     local co = coroutine.create(fn)
     local out = {
@@ -387,9 +396,7 @@ capture_errors = function(fn)
     if coroutine.status(co) == "suspended" then
       if out[2] == "error" then
         self.errors = out[3]
-        return {
-          render = true
-        }
+        return error_response(self)
       else
         return error("Unknown yield")
       end
@@ -397,6 +404,16 @@ capture_errors = function(fn)
       return unpack(out, 2)
     end
   end
+end
+local capture_errors_json
+capture_errors_json = function(fn)
+  return capture_errors(fn, function(self)
+    return {
+      json = {
+        errors = self.errors
+      }
+    }
+  end)
 end
 local yield_error
 yield_error = function(msg)
@@ -416,6 +433,7 @@ return {
   Application = Application,
   respond_to = respond_to,
   capture_errors = capture_errors,
+  capture_errors_json = capture_errors_json,
   assert_error = assert_error,
   yield_error = yield_error
 }
