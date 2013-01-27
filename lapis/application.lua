@@ -170,13 +170,10 @@ do
     write_cookies = function(self)
       local parts = (function()
         local _accum_0 = { }
-        local _len_0 = 0
+        local _len_0 = 1
         for k, v in pairs(self.cookies) do
-          local _value_0 = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
-          if _value_0 ~= nil then
-            _len_0 = _len_0 + 1
-            _accum_0[_len_0] = _value_0
-          end
+          _accum_0[_len_0] = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
+          _len_0 = _len_0 + 1
         end
         return _accum_0
       end)()

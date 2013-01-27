@@ -94,10 +94,10 @@ local underscore
 underscore = function(str)
   local words = (function()
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     for word in str:gmatch("%L*%l+") do
-      _len_0 = _len_0 + 1
       _accum_0[_len_0] = word:lower()
+      _len_0 = _len_0 + 1
     end
     return _accum_0
   end)()
@@ -109,10 +109,10 @@ do
   camelize = function(str)
     return concat((function()
       local _accum_0 = { }
-      local _len_0 = 0
+      local _len_0 = 1
       for part in str:gmatch(patt) do
-        _len_0 = _len_0 + 1
         _accum_0[_len_0] = part:sub(1, 1):upper() .. part:sub(2)
+        _len_0 = _len_0 + 1
       end
       return _accum_0
     end)())
@@ -123,7 +123,7 @@ uniquify = function(list)
   local seen = { }
   return (function()
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     local _list_0 = list
     for _index_0 = 1, #_list_0 do
       local _continue_0 = false
@@ -135,10 +135,8 @@ uniquify = function(list)
         end
         seen[item] = true
         local _value_0 = item
-        if _value_0 ~= nil then
-          _len_0 = _len_0 + 1
-          _accum_0[_len_0] = _value_0
-        end
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
         _continue_0 = true
       until true
       if not _continue_0 then

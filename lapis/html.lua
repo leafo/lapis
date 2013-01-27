@@ -19,10 +19,10 @@ for key, value in pairs(html_encode_entities) do
 end
 local html_encode_pattern = "[" .. concat((function()
   local _accum_0 = { }
-  local _len_0 = 0
+  local _len_0 = 1
   for char in pairs(html_encode_entities) do
-    _len_0 = _len_0 + 1
     _accum_0[_len_0] = escape_patt(char)
+    _len_0 = _len_0 + 1
   end
   return _accum_0
 end)()) .. "]"

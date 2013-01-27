@@ -66,7 +66,7 @@ class Buffer
       raw '</html>'
   }
 
-  new: (@buffer) ->
+  new: (@buffer) =>
     @old_env = {}
     @i = #@buffer
     @make_scope!

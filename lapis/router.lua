@@ -15,7 +15,7 @@ reduce = function(items, fn)
 end
 local Router
 do
-  local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, symbol, chunk, chunk
+  local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, symbol, chunk
   local _parent_0 = nil
   local _base_0 = {
     add_route = function(self, route, responder)
@@ -38,12 +38,12 @@ do
     build = function(self)
       self.p = reduce((function()
         local _accum_0 = { }
-        local _len_0 = 0
+        local _len_0 = 1
         local _list_0 = self.routes
         for _index_0 = 1, #_list_0 do
           local r = _list_0[_index_0]
-          _len_0 = _len_0 + 1
           _accum_0[_len_0] = self:build_route(unpack(r))
+          _len_0 = _len_0 + 1
         end
         return _accum_0
       end)(), function(a, b)
