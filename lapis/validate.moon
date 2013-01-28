@@ -19,6 +19,12 @@ validate_functions = {
 
   equals: (input, value) ->
     input == value, "%s must match"
+
+  one_of: (input, ...) ->
+    choices = {...}
+    for choice in *choices
+      return true if input == choice
+    false, "%s must be one of #{table.concat choices, ", "}"
 }
 
 test_input = (input, func, args) ->
@@ -85,6 +91,15 @@ if ... == "test"
     { "age", optional: true, max_length: 2 }
     { "name", optional: true, max_length: 2 }
   }
+
+  moon.p validate o, {
+    { "name", one_of: {"cruise", "control" } }
+  }
+
+  moon.p validate o, {
+    { "name", one_of: {"bcd", "abc" } }
+  }
+
 
 
 { :validate, :assert_valid, :test_input }

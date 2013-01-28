@@ -17,6 +17,19 @@ local validate_functions = {
   end,
   equals = function(input, value)
     return input == value, "%s must match"
+  end,
+  one_of = function(input, ...)
+    local choices = {
+      ...
+    }
+    local _list_0 = choices
+    for _index_0 = 1, #_list_0 do
+      local choice = _list_0[_index_0]
+      if input == choice then
+        return true
+      end
+    end
+    return false, "%s must be one of " .. tostring(table.concat(choices, ", "))
   end
 }
 local test_input
@@ -141,6 +154,24 @@ if ... == "test" then
       "name",
       optional = true,
       max_length = 2
+    }
+  }))
+  moon.p(validate(o, {
+    {
+      "name",
+      one_of = {
+        "cruise",
+        "control"
+      }
+    }
+  }))
+  moon.p(validate(o, {
+    {
+      "name",
+      one_of = {
+        "bcd",
+        "abc"
+      }
     }
   }))
 end
