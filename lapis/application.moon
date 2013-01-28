@@ -246,6 +246,10 @@ respond_to = (tbl) ->
 
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->
+  if type(fn) == "table"
+    error_response = fn.on_error
+    fn = fn[1]
+
   (...) =>
     co = coroutine.create fn
     out = { coroutine.resume co, @ }

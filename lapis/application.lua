@@ -399,6 +399,10 @@ capture_errors = function(fn, error_response)
   if error_response == nil then
     error_response = default_error_response
   end
+  if type(fn) == "table" then
+    error_response = fn.on_error
+    fn = fn[1]
+  end
   return function(self, ...)
     local co = coroutine.create(fn)
     local out = {
