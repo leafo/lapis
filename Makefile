@@ -5,7 +5,7 @@ global: build
 build::
 	moonc lapis
 
-watch::
+watch:: build
 	moonc -w lapis
 
 

@@ -88,7 +88,7 @@ parse_cookie_string = function(str)
 end
 local slugify
 slugify = function(str)
-  return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", ""))
+  return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", "")):lower()
 end
 local underscore
 underscore = function(str)
@@ -146,6 +146,19 @@ uniquify = function(list)
     return _accum_0
   end)()
 end
+local trim
+trim = function(str)
+  return tostring(str):match("^%s*(.-)%s*$")
+end
+local trim_all
+trim_all = function(tbl)
+  for k, v in pairs(tbl) do
+    if type(v) == "string" then
+      tbl[k] = trim(v)
+    end
+  end
+  return tbl
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -163,5 +176,7 @@ return {
   underscore = underscore,
   slugify = slugify,
   Path = Path,
-  uniquify = uniquify
+  uniquify = uniquify,
+  trim = trim,
+  trim_all = trim_all
 }

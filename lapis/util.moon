@@ -47,7 +47,7 @@ parse_cookie_string = (str) ->
   {key, unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
 slugify = (str) ->
-  (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))
+  (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))\lower!
 
 -- TODO: make this not suck
 underscore = (str) ->
@@ -66,6 +66,14 @@ uniquify = (list) ->
     seen[item] = true
     item
 
+trim = (str) -> tostring(str)\match "^%s*(.-)%s*$"
+
+trim_all = (tbl) ->
+  for k,v in pairs tbl
+    if type(v) == "string"
+      tbl[k] = trim v
+  tbl
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
@@ -76,4 +84,5 @@ if ... == "test"
   print camelize "world_wide_i_web"
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
-  :parse_cookie_string, :underscore, :slugify, :Path, :uniquify }
+  :parse_cookie_string, :underscore, :slugify, :Path, :uniquify, :trim,
+  :trim_all }
