@@ -34,26 +34,40 @@ validate = function(object, validations)
   local errors = { }
   local _list_0 = validations
   for _index_0 = 1, #_list_0 do
-    local v = _list_0[_index_0]
-    local key = v[1]
-    local input = object[key]
-    for fn, args in pairs(v) do
-      local _continue_0 = false
-      repeat
-        if not (type(fn) == "string") then
+    local _continue_0 = false
+    repeat
+      local v = _list_0[_index_0]
+      local key = v[1]
+      local input = object[key]
+      if v.optional then
+        if not (validate_functions.exists(input)) then
           _continue_0 = true
           break
         end
-        local success, msg = test_input(input, fn, args)
-        if not (success) then
-          insert(errors, msg:format(key))
+      end
+      v.optional = nil
+      for fn, args in pairs(v) do
+        local _continue_1 = false
+        repeat
+          if not (type(fn) == "string") then
+            _continue_1 = true
+            break
+          end
+          local success, msg = test_input(input, fn, args)
+          if not (success) then
+            insert(errors, msg:format(key))
+            break
+          end
+          _continue_1 = true
+        until true
+        if not _continue_1 then
           break
         end
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
       end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
   end
   return next(errors) and errors
@@ -115,6 +129,18 @@ if ... == "test" then
     {
       "height",
       min_length = 4
+    }
+  }))
+  moon.p(validate(o, {
+    {
+      "age",
+      optional = true,
+      max_length = 2
+    },
+    {
+      "name",
+      optional = true,
+      max_length = 2
     }
   }))
 end

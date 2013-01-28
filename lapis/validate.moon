@@ -32,6 +32,11 @@ validate = (object, validations) ->
     key = v[1]
     input = object[key]
 
+    if v.optional
+      continue unless validate_functions.exists input
+
+    v.optional = nil
+
     for fn, args in pairs v
       continue unless type(fn) == "string"
       success, msg = test_input input, fn, args
@@ -74,6 +79,11 @@ if ... == "test"
 
   moon.p validate o, {
     { "height", min_length: 4 }
+  }
+
+  moon.p validate o, {
+    { "age", optional: true, max_length: 2 }
+    { "name", optional: true, max_length: 2 }
   }
 
 
