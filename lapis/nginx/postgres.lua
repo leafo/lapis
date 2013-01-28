@@ -71,35 +71,35 @@ encode_values = function(t, buffer)
   buffer = buffer or { }
   local tuples = (function()
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     for k, v in pairs(t) do
-      _len_0 = _len_0 + 1
       _accum_0[_len_0] = {
         k,
         v
       }
+      _len_0 = _len_0 + 1
     end
     return _accum_0
   end)()
   local cols = concat((function()
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     local _list_0 = tuples
     for _index_0 = 1, #_list_0 do
       local pair = _list_0[_index_0]
-      _len_0 = _len_0 + 1
       _accum_0[_len_0] = escape_identifier(pair[1])
+      _len_0 = _len_0 + 1
     end
     return _accum_0
   end)(), ", ")
   local vals = concat((function()
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     local _list_0 = tuples
     for _index_0 = 1, #_list_0 do
       local pair = _list_0[_index_0]
-      _len_0 = _len_0 + 1
       _accum_0[_len_0] = escape_literal(pair[2])
+      _len_0 = _len_0 + 1
     end
     return _accum_0
   end)(), ", ")

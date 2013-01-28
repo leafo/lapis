@@ -26,7 +26,7 @@ extract_options = function(cols)
   local options = { }
   cols = (function()
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     local _list_0 = cols
     for _index_0 = 1, #_list_0 do
       local _continue_0 = false
@@ -40,10 +40,8 @@ extract_options = function(cols)
           break
         end
         local _value_0 = col
-        if _value_0 ~= nil then
-          _len_0 = _len_0 + 1
-          _accum_0[_len_0] = _value_0
-        end
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
         _continue_0 = true
       until true
       if not _continue_0 then
@@ -92,7 +90,7 @@ local create_index
 create_index = function(tname, ...)
   local parts = (function(...)
     local _accum_0 = { }
-    local _len_0 = 0
+    local _len_0 = 1
     local _list_0 = {
       tname,
       ...
@@ -100,8 +98,8 @@ create_index = function(tname, ...)
     for _index_0 = 1, #_list_0 do
       local p = _list_0[_index_0]
       if type(p) == "string" then
-        _len_0 = _len_0 + 1
         _accum_0[_len_0] = p
+        _len_0 = _len_0 + 1
       end
     end
     return _accum_0

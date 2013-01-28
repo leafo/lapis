@@ -26,14 +26,14 @@ do
     url_key = function(self)
       return concat((function()
         local _accum_0 = { }
-        local _len_0 = 0
+        local _len_0 = 1
         local _list_0 = {
           self.__class:primary_keys()
         }
         for _index_0 = 1, #_list_0 do
           local key = _list_0[_index_0]
-          _len_0 = _len_0 + 1
           _accum_0[_len_0] = self[key]
+          _len_0 = _len_0 + 1
         end
         return _accum_0
       end)(), "-")
@@ -128,12 +128,12 @@ do
   self.load_all = function(self, tbls)
     return (function()
       local _accum_0 = { }
-      local _len_0 = 0
+      local _len_0 = 1
       local _list_0 = tbls
       for _index_0 = 1, #_list_0 do
         local t = _list_0[_index_0]
-        _len_0 = _len_0 + 1
         _accum_0[_len_0] = self:load(t)
+        _len_0 = _len_0 + 1
       end
       return _accum_0
     end)()
@@ -157,13 +157,12 @@ do
     end
     local include_ids = (function()
       local _accum_0 = { }
-      local _len_0 = 0
+      local _len_0 = 1
       local _list_0 = other_records
       for _index_0 = 1, #_list_0 do
         local _continue_0 = false
         repeat
           local record = _list_0[_index_0]
-          local _value_0
           do
             local _with_0 = record[foreign_key]
             local id = _with_0
@@ -171,12 +170,9 @@ do
               _continue_0 = true
               break
             end
-            _value_0 = _with_0
+            _accum_0[_len_0] = _with_0
           end
-          if _value_0 ~= nil then
-            _len_0 = _len_0 + 1
-            _accum_0[_len_0] = _value_0
-          end
+          _len_0 = _len_0 + 1
           _continue_0 = true
         until true
         if not _continue_0 then
@@ -189,12 +185,12 @@ do
       include_ids = uniquify(include_ids)
       local flat_ids = concat((function()
         local _accum_0 = { }
-        local _len_0 = 0
+        local _len_0 = 1
         local _list_0 = include_ids
         for _index_0 = 1, #_list_0 do
           local id = _list_0[_index_0]
-          _len_0 = _len_0 + 1
           _accum_0[_len_0] = db.escape_literal(id)
+          _len_0 = _len_0 + 1
         end
         return _accum_0
       end)(), ", ")
