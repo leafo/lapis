@@ -31,7 +31,19 @@ class Request
   add_params: (params, name) =>
     self[name] = params
     for k,v in pairs params
-      @params[k] = v
+      -- expand nested[param][keys]
+      if front = k\match "^([^%[]+)%["
+        curr = @params
+        for match in k\gmatch "%[(.-)%]"
+          new = curr[front]
+          if new == nil
+            new = {}
+            curr[front] = new
+          curr = new
+          front = match
+        curr[front] = v
+      else
+        @params[k] = v
 
   -- render the request into the response
   -- do this last

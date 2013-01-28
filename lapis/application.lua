@@ -46,7 +46,24 @@ do
     add_params = function(self, params, name)
       self[name] = params
       for k, v in pairs(params) do
-        self.params[k] = v
+        do
+          local front = k:match("^([^%[]+)%[")
+          if front then
+            local curr = self.params
+            for match in k:gmatch("%[(.-)%]") do
+              local new = curr[front]
+              if new == nil then
+                new = { }
+                curr[front] = new
+              end
+              curr = new
+              front = match
+            end
+            curr[front] = v
+          else
+            self.params[k] = v
+          end
+        end
       end
     end,
     render = function(self, opts)
