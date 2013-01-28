@@ -163,7 +163,7 @@ do
         elseif "nil" == _exp_0 then
           local _ = nil
         else
-          error("Don't know how to write:", tostring(thing))
+          error("Don't know how to write: (" .. tostring(t) .. ") " .. tostring(thing))
         end
       end
     end,

@@ -125,7 +125,7 @@ class Request
         when "nil"
           nil -- ignore
         else
-          error "Don't know how to write:", tostring(thing)
+          error "Don't know how to write: (#{t}) #{thing}"
 
   -- TODO: cookie paramaters
   write_cookies: =>
