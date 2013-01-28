@@ -6,9 +6,10 @@ local types = setmetatable({
   text = "text NOT NULL",
   text_nullable = "text",
   time = "timestamp without time zone NOT NULL",
+  time_nullable = "timestamp without time zone NOT NULL",
   integer = "integer NOT NULL DEFAULT 0",
   foreign_key = "integer NOT NULL",
-  boolean = "boolean NOT NULL"
+  boolean = "boolean NOT NULL DEFAULT FALSE"
 }, {
   __index = function(self, key)
     return error("Don't know column type `" .. tostring(key) .. "`")
