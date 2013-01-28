@@ -74,6 +74,13 @@ trim_all = (tbl) ->
       tbl[k] = trim v
   tbl
 
+trim_filter = (tbl) ->
+  for k,v in pairs tbl
+    if type(v) == "string"
+      trimmed = trim v
+      tbl[k] = if trimmed == "" then nil else trimmed
+  tbl
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
@@ -85,4 +92,4 @@ if ... == "test"
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
   :parse_cookie_string, :underscore, :slugify, :Path, :uniquify, :trim,
-  :trim_all }
+  :trim_all, :trim_filter }

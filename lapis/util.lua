@@ -159,6 +159,20 @@ trim_all = function(tbl)
   end
   return tbl
 end
+local trim_filter
+trim_filter = function(tbl)
+  for k, v in pairs(tbl) do
+    if type(v) == "string" then
+      local trimmed = trim(v)
+      if trimmed == "" then
+        tbl[k] = nil
+      else
+        tbl[k] = trimmed
+      end
+    end
+  end
+  return tbl
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -178,5 +192,6 @@ return {
   Path = Path,
   uniquify = uniquify,
   trim = trim,
-  trim_all = trim_all
+  trim_all = trim_all,
+  trim_filter = trim_filter
 }
