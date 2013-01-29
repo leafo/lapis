@@ -110,8 +110,22 @@ class Model
   delete: =>
     db.delete @@table_name!, @_primary_cond!
 
-  update: (...) =>
-    columns = {...}
+  -- thing\update "col1", "col2", "col3"
+  -- thing\update {
+  --   "col1", "col2"
+  --   col3: "Hello"
+  -- }
+  update: (first, ...) =>
+    columns = if type(first) == "table"
+      for k,v in pairs first
+        if type(k) == "number"
+          v
+        else
+          @[k] = v
+          k
+    else
+      {first, ...}
+
     db.update @@table_name!, { col, @[col] for col in *columns }, @_primary_cond!
 
 { :Model }

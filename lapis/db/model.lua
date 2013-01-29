@@ -41,10 +41,29 @@ do
     delete = function(self)
       return db.delete(self.__class:table_name(), self:_primary_cond())
     end,
-    update = function(self, ...)
-      local columns = {
-        ...
-      }
+    update = function(self, first, ...)
+      local columns
+      if type(first) == "table" then
+        columns = (function()
+          local _accum_0 = { }
+          local _len_0 = 1
+          for k, v in pairs(first) do
+            if type(k) == "number" then
+              _accum_0[_len_0] = v
+            else
+              self[k] = v
+              _accum_0[_len_0] = k
+            end
+            _len_0 = _len_0 + 1
+          end
+          return _accum_0
+        end)()
+      else
+        columns = {
+          first,
+          ...
+        }
+      end
       return db.update(self.__class:table_name(), (function()
         local _tbl_0 = { }
         local _list_0 = columns
