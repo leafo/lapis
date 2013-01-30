@@ -78,6 +78,12 @@ do
         self.res.content = json.encode(self.options.json)
         return 
       end
+      do
+        local ct = self.options.content_type
+        if ct then
+          self.res.headers["Content-type"] = ct
+        end
+      end
       if not self.res.headers["Content-type"] then
         self.res.headers["Content-type"] = "text/html"
       end

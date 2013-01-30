@@ -55,6 +55,9 @@ class Request
       @res.content = json.encode @options.json
       return
 
+    if ct = @options.content_type
+      @res.headers["Content-type"] = ct
+
     if not @res.headers["Content-type"]
       @res.headers["Content-type"] = "text/html"
 
