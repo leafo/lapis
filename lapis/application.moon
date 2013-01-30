@@ -83,7 +83,14 @@ class Request
     if @app.layout and set_and_truthy(@options.layout, true)
       inner = @buffer
       @buffer = {}
-      layout = @app.layout inner: -> raw inner
+
+      layout_path = @options.layout
+      layout_cls = if type(layout_path) == "string"
+         require "#{@app.views_prefix}.#{layout_path}"
+      else
+        @app.layout
+
+      layout = layout_cls inner: -> raw inner
       layout\include_helper @
       layout\render @buffer
 

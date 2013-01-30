@@ -111,7 +111,14 @@ do
       if self.app.layout and set_and_truthy(self.options.layout, true) then
         local inner = self.buffer
         self.buffer = { }
-        local layout = self.app.layout({
+        local layout_path = self.options.layout
+        local layout_cls
+        if type(layout_path) == "string" then
+          layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(layout_path))
+        else
+          layout_cls = self.app.layout
+        end
+        local layout = layout_cls({
           inner = function()
             return raw(inner)
           end
