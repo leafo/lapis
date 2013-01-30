@@ -57,7 +57,7 @@ request = (url, str_body) ->
     {
       :url
       source: str_body and ltn12.source.string str_body
-      headers: {
+      headers: str_body and {
         "Content-type": "application/x-www-form-urlencoded"
       }
     }
