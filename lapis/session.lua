@@ -1,5 +1,9 @@
 local json = require("cjson")
-local crypto = require("crypto")
+local encode_base64, decode_base64, hmac_sha1
+do
+  local _table_0 = require("lapis.util.encoding")
+  encode_base64, decode_base64, hmac_sha1 = _table_0.encode_base64, _table_0.decode_base64, _table_0.hmac_sha1
+end
 local mime = require("mime")
 local secret = "please-change-me"
 local session_name = "lapis_session"
@@ -17,7 +21,7 @@ get_secret = function()
 end
 local hmac
 hmac = function(str)
-  return crypto.hmac.digest("sha1", str, secret)
+  return encode_base64(hmac_sha1(secret, str))
 end
 local get_session
 get_session = function(r)
@@ -33,7 +37,7 @@ get_session = function(r)
     cookie = real_cookie
   end
   local _, session = pcall(function()
-    return json.decode((mime.unb64(cookie)))
+    return json.decode((decode_base64(cookie)))
   end)
   return session or { }
 end
@@ -52,7 +56,7 @@ write_session = function(r)
     for k, v in pairs(r.session) do
       s[k] = v
     end
-    s = mime.b64(json.encode(s))
+    s = encode_base64(json.encode(s))
     if secret then
       s = s .. "\n--" .. tostring(hmac(s))
     end

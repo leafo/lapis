@@ -2,8 +2,7 @@
 -- signed sessions
 
 json = require "cjson"
-crypto = require "crypto"
-mime = require "mime"
+import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding"
 
 secret = "please-change-me"
 session_name = "lapis_session"
@@ -14,7 +13,7 @@ set_session_name = (s) -> session_name = s
 get_secret = -> secret
 
 hmac = (str) ->
-  crypto.hmac.digest "sha1", str, secret
+  encode_base64 hmac_sha1 secret, str
 
 get_session = (r) ->
   cookie = r.cookies[session_name]
@@ -27,7 +26,7 @@ get_session = (r) ->
     cookie = real_cookie
 
   _, session = pcall ->
-    json.decode (mime.unb64 cookie)
+    json.decode (decode_base64 cookie)
 
   session or {}
 
@@ -42,7 +41,7 @@ write_session = (r) ->
     for k,v in pairs r.session
       s[k] = v
 
-    s = mime.b64 json.encode s
+    s = encode_base64 json.encode s
     if secret
       s ..= "\n--#{hmac s}"
 
