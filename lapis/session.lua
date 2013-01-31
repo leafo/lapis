@@ -11,6 +11,10 @@ local set_session_name
 set_session_name = function(s)
   session_name = s
 end
+local get_secret
+get_secret = function()
+  return secret
+end
 local hmac
 hmac = function(str)
   return crypto.hmac.digest("sha1", str, secret)
@@ -87,5 +91,6 @@ return {
   get_session = get_session,
   write_session = write_session,
   set_secret = set_secret,
-  set_session_name = set_session_name
+  set_session_name = set_session_name,
+  get_secret = get_secret
 }

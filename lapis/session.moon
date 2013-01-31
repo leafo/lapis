@@ -11,6 +11,8 @@ session_name = "lapis_session"
 set_secret = (s) -> secret = s
 set_session_name = (s) -> session_name = s
 
+get_secret = -> secret
+
 hmac = (str) ->
   crypto.hmac.digest "sha1", str, secret
 
@@ -77,4 +79,4 @@ if ... == "test"
   moon.p get_session r
 
 
-{ :get_session, :write_session, :set_secret, :set_session_name }
+{ :get_session, :write_session, :set_secret, :set_session_name, :get_secret }
