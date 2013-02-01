@@ -15,6 +15,15 @@ local validate_functions = {
   is_integer = function(input)
     return tostring(input):match("^%d+$"), "%s must be an integer"
   end,
+  is_color = (function()
+    local hex = "[a-fA-f0-9]"
+    local three = "^#" .. tostring(hex:rep(3)) .. "$"
+    local six = "^#" .. tostring(hex:rep(6)) .. "$"
+    return function(input)
+      input = tostring(input)
+      return input:match(three) or input:match(six), "%s must be a color"
+    end
+  end)(),
   equals = function(input, value)
     return input == value, "%s must match"
   end,

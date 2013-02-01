@@ -4,7 +4,6 @@ do
   local _table_0 = require("lapis.util.encoding")
   encode_base64, decode_base64, hmac_sha1 = _table_0.encode_base64, _table_0.decode_base64, _table_0.hmac_sha1
 end
-local mime = require("mime")
 local secret = "please-change-me"
 local session_name = "lapis_session"
 local set_secret

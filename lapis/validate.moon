@@ -17,6 +17,14 @@ validate_functions = {
   is_integer: (input) ->
     tostring(input)\match"^%d+$", "%s must be an integer"
 
+  is_color: do
+    hex = "[a-fA-f0-9]"
+    three = "^##{hex\rep 3}$"
+    six = "^##{hex\rep 6}$"
+    (input) ->
+      input = tostring(input)
+      input\match(three) or input\match(six), "%s must be a color"
+
   equals: (input, value) ->
     input == value, "%s must match"
 
