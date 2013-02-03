@@ -42,6 +42,7 @@ do
       return db.delete(self.__class:table_name(), self:_primary_cond())
     end,
     update = function(self, first, ...)
+      local cond = self:_primary_cond()
       local columns
       if type(first) == "table" then
         columns = (function()
@@ -72,7 +73,7 @@ do
           _tbl_0[col] = self[col]
         end
         return _tbl_0
-      end)(), self:_primary_cond())
+      end)(), cond)
     end
   }
   _base_0.__index = _base_0

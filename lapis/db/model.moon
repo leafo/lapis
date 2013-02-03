@@ -127,6 +127,8 @@ class Model
   --   col3: "Hello"
   -- }
   update: (first, ...) =>
+    cond = @_primary_cond!
+
     columns = if type(first) == "table"
       for k,v in pairs first
         if type(k) == "number"
@@ -137,7 +139,7 @@ class Model
     else
       {first, ...}
 
-    db.update @@table_name!, { col, @[col] for col in *columns }, @_primary_cond!
+    db.update @@table_name!, { col, @[col] for col in *columns }, cond
 
 { :Model }
 
