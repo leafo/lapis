@@ -90,6 +90,8 @@ class Buffer
           (...) -> @call builder, ...
         else
           switch name
+            when "widget"
+              (w) -> w\render @buffer
             when "capture"
               (fn) -> table.concat @with_temp -> fn!
             when "element"

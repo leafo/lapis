@@ -117,7 +117,11 @@ do
             end
           else
             local _exp_0 = name
-            if "capture" == _exp_0 then
+            if "widget" == _exp_0 then
+              res = function(w)
+                return w:render(self.buffer)
+              end
+            elseif "capture" == _exp_0 then
               res = function(fn)
                 return table.concat(self:with_temp(function()
                   return fn()
