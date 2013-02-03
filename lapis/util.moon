@@ -74,11 +74,19 @@ trim_all = (tbl) ->
       tbl[k] = trim v
   tbl
 
+-- remove empty string (all whitespace) values from table
 trim_filter = (tbl) ->
   for k,v in pairs tbl
     if type(v) == "string"
       trimmed = trim v
       tbl[k] = if trimmed == "" then nil else trimmed
+  tbl
+
+-- remove all keys except those passed in
+key_filter = (tbl, ...) ->
+  set = {val, true for val in *{...}}
+  for k,v in pairs tbl
+    tbl[k] = nil unless set[k]
   tbl
 
 if ... == "test"
@@ -92,4 +100,4 @@ if ... == "test"
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
   :parse_cookie_string, :underscore, :slugify, :Path, :uniquify, :trim,
-  :trim_all, :trim_filter }
+  :trim_all, :trim_filter, :key_filter }

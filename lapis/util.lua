@@ -173,6 +173,26 @@ trim_filter = function(tbl)
   end
   return tbl
 end
+local key_filter
+key_filter = function(tbl, ...)
+  local set = (function(...)
+    local _tbl_0 = { }
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local val = _list_0[_index_0]
+      _tbl_0[val] = true
+    end
+    return _tbl_0
+  end)(...)
+  for k, v in pairs(tbl) do
+    if not (set[k]) then
+      tbl[k] = nil
+    end
+  end
+  return tbl
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -193,5 +213,6 @@ return {
   uniquify = uniquify,
   trim = trim,
   trim_all = trim_all,
-  trim_filter = trim_filter
+  trim_filter = trim_filter,
+  key_filter = key_filter
 }
