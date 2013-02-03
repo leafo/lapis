@@ -156,6 +156,8 @@ class Buffer
 html_writer = (fn) ->
   (buffer) -> Buffer(buffer)\write fn
 
+
+helper_key = setmetatable {}, __tostring: -> "::helper_key::"
 -- ensures that all methods are called in the buffer's scope
 class Widget
   @__inherited: (cls) =>
@@ -166,25 +168,16 @@ class Widget
     if opts
       @[k] = v for k,v in pairs opts
 
+  _set_helper_chain: (chain) => rawset @, helper_key, chain
+  _get_helper_chain: => rawget @, helper_key
+
+  -- insert table onto end of helper_chain
   include_helper: (helper) =>
-    meta = getmetatable @
-    old_index = meta.__index
-    meta.__index = (key) =>
-      val = if "function" == type old_index
-        old_index @, key
-      else
-        old_index[key]
-
-      if val == nil
-        helper_val = helper[key]
-        val = if "function" == type helper_val
-          (w, ...) -> helper_val helper, ...
-        else
-          helper_val
-
-        @[key] = val
-
-      val
+    if helper_chain = @[helper_key]
+      insert helper_chain, helper
+    else
+      @_set_helper_chain { helper }
+    nil
 
   content_for: (name) =>
     @_buffer\write_escaped @[name]
@@ -194,28 +187,49 @@ class Widget
     @_buffer = if buffer.__class == Buffer
       buffer
     else
-      Buffer(buffer)
+      Buffer buffer
 
-    base = getmetatable @
-    index = base.__index
+    meta = getmetatable @
+    index = meta.__index
+    index_is_fn = type(index) == "function"
+
+    seen_helpers = {}
+    helper_chain = @_get_helper_chain!
     scope = setmetatable {}, {
-      __index: (scope, name) ->
-        value = if "function" == type index
-          index scope, name
+      __tostring: meta.__tostring
+      __index: (scope, key) ->
+        value = if index_is_fn
+          index scope, key
         else
-          index[name]
+          index[key]
 
+        -- run method in buffer scope
         if type(value) == "function"
           wrapped = (...) -> @_buffer\call value, ...
-          scope[name] = wrapped
-          wrapped
-        else
-          value
+          scope[key] = wrapped
+          return wrapped
+
+        -- look for helper
+        if value == nil and not seen_helpers[key] and helper_chain
+          for h in *helper_chain
+            helper_val = h[key]
+            if helper_val
+              -- call functions in scope of helper
+              value = if type(helper_val) == "function"
+                (w, ...) -> helper_val h, ...
+              else
+                helper_val
+
+              seen_helpers[key] = true
+              scope[key] = value
+              return value
+
+        value
     }
 
     setmetatable @, __index: scope
     @content ...
-    setmetatable @, base
+    setmetatable @, meta
     nil
 
 { :Widget, :html_writer }

@@ -268,33 +268,33 @@ html_writer = function(fn)
     return Buffer(buffer):write(fn)
   end
 end
+local helper_key = setmetatable({ }, {
+  __tostring = function()
+    return "::helper_key::"
+  end
+})
 local Widget
 do
   local _parent_0 = nil
   local _base_0 = {
+    _set_helper_chain = function(self, chain)
+      return rawset(self, helper_key, chain)
+    end,
+    _get_helper_chain = function(self)
+      return rawget(self, helper_key)
+    end,
     include_helper = function(self, helper)
-      local meta = getmetatable(self)
-      local old_index = meta.__index
-      meta.__index = function(self, key)
-        local val
-        if "function" == type(old_index) then
-          val = old_index(self, key)
+      do
+        local helper_chain = self[helper_key]
+        if helper_chain then
+          insert(helper_chain, helper)
         else
-          val = old_index[key]
+          self:_set_helper_chain({
+            helper
+          })
         end
-        if val == nil then
-          local helper_val = helper[key]
-          if "function" == type(helper_val) then
-            val = function(w, ...)
-              return helper_val(helper, ...)
-            end
-          else
-            val = helper_val
-          end
-          self[key] = val
-        end
-        return val
       end
+      return nil
     end,
     content_for = function(self, name)
       return self._buffer:write_escaped(self[name])
@@ -306,33 +306,55 @@ do
       else
         self._buffer = Buffer(buffer)
       end
-      local base = getmetatable(self)
-      local index = base.__index
+      local meta = getmetatable(self)
+      local index = meta.__index
+      local index_is_fn = type(index) == "function"
+      local seen_helpers = { }
+      local helper_chain = self:_get_helper_chain()
       local scope = setmetatable({ }, {
-        __index = function(scope, name)
+        __tostring = meta.__tostring,
+        __index = function(scope, key)
           local value
-          if "function" == type(index) then
-            value = index(scope, name)
+          if index_is_fn then
+            value = index(scope, key)
           else
-            value = index[name]
+            value = index[key]
           end
           if type(value) == "function" then
             local wrapped
             wrapped = function(...)
               return self._buffer:call(value, ...)
             end
-            scope[name] = wrapped
+            scope[key] = wrapped
             return wrapped
-          else
-            return value
           end
+          if value == nil and not seen_helpers[key] and helper_chain then
+            local _list_0 = helper_chain
+            for _index_0 = 1, #_list_0 do
+              local h = _list_0[_index_0]
+              local helper_val = h[key]
+              if helper_val then
+                if type(helper_val) == "function" then
+                  value = function(w, ...)
+                    return helper_val(h, ...)
+                  end
+                else
+                  value = helper_val
+                end
+                seen_helpers[key] = true
+                scope[key] = value
+                return value
+              end
+            end
+          end
+          return value
         end
       })
       setmetatable(self, {
         __index = scope
       })
       self:content(...)
-      setmetatable(self, base)
+      setmetatable(self, meta)
       return nil
     end
   }
