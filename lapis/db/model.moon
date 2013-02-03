@@ -35,9 +35,17 @@ class Model
     [@load t for t in *tbls]
 
   @select: (query="", ...) =>
+    opts = {}
+    param_count = select "#", ...
+    if param_count > 0
+      last = select param_count, ...
+      opts = last if type(last) == "table"
+
     query = db.interpolate_query query, ...
     tbl_name = db.escape_identifier @table_name!
-    if res = db.select "* from #{tbl_name} #{query}"
+
+    fields = opts.fields or "*"
+    if res = db.select "#{fields} from #{tbl_name} #{query}"
       @load_all res
 
   -- include references to this model in a list of records based on a foreign
@@ -69,7 +77,10 @@ class Model
 
   -- find by primary key, or by table of conds
   @find: (...) =>
-    cond = if "table" == type select 1, ...
+    first = select 1, ...
+    error "(#{@table_name!}) trying to find with no conditions" if first == nil
+
+    cond = if "table" == type first
       db.encode_assigns (...), nil, " and "
     else
       db.encode_assigns @encode_key(...), nil, " and "

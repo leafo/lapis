@@ -161,10 +161,19 @@ do
     if query == nil then
       query = ""
     end
+    local opts = { }
+    local param_count = select("#", ...)
+    if param_count > 0 then
+      local last = select(param_count, ...)
+      if type(last) == "table" then
+        opts = last
+      end
+    end
     query = db.interpolate_query(query, ...)
     local tbl_name = db.escape_identifier(self:table_name())
+    local fields = opts.fields or "*"
     do
-      local res = db.select("* from " .. tostring(tbl_name) .. " " .. tostring(query))
+      local res = db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " " .. tostring(query))
       if res then
         return self:load_all(res)
       end
@@ -236,8 +245,12 @@ do
     return other_records
   end
   self.find = function(self, ...)
+    local first = select(1, ...)
+    if first == nil then
+      error("(" .. tostring(self:table_name()) .. ") trying to find with no conditions")
+    end
     local cond
-    if "table" == type(select(1, ...)) then
+    if "table" == type(first) then
       cond = db.encode_assigns((...), nil, " and ")
     else
       cond = db.encode_assigns(self:encode_key(...), nil, " and ")
