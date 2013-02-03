@@ -119,7 +119,7 @@ do
             local _exp_0 = name
             if "widget" == _exp_0 then
               res = function(w)
-                return w:render(self.buffer)
+                return w:render(self)
               end
             elseif "capture" == _exp_0 then
               res = function(fn)
@@ -301,7 +301,11 @@ do
     end,
     content = function(self) end,
     render = function(self, buffer, ...)
-      self._buffer = Buffer(buffer)
+      if buffer.__class == Buffer then
+        self._buffer = buffer
+      else
+        self._buffer = Buffer(buffer)
+      end
       local base = getmetatable(self)
       local index = base.__index
       local scope = setmetatable({ }, {

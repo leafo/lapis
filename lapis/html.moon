@@ -91,7 +91,7 @@ class Buffer
         else
           switch name
             when "widget"
-              (w) -> w\render @buffer
+              (w) -> w\render @
             when "capture"
               (fn) -> table.concat @with_temp -> fn!
             when "element"
@@ -191,7 +191,10 @@ class Widget
 
   content: => -- implement me
   render: (buffer, ...) =>
-    @_buffer = Buffer(buffer)
+    @_buffer = if buffer.__class == Buffer
+      buffer
+    else
+      Buffer(buffer)
 
     base = getmetatable @
     index = base.__index
