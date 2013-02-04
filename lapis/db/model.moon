@@ -139,6 +139,7 @@ class Model
     else
       {first, ...}
 
+    return if next(columns) == nil
     db.update @@table_name!, { col, @[col] for col in *columns }, cond
 
 { :Model }

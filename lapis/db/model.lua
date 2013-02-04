@@ -65,6 +65,9 @@ do
           ...
         }
       end
+      if next(columns) == nil then
+        return 
+      end
       return db.update(self.__class:table_name(), (function()
         local _tbl_0 = { }
         local _list_0 = columns
