@@ -4,9 +4,14 @@ url = require "socket.url"
 import concat, insert from table
 import Path from require "lapis.util.path"
 
+-- todo: consider renaming to url_escape/url_unescape
 unescape = do
-  u = require"socket.url".unescape
+  u = url.unescape
   (str) -> (u str)
+
+escape = do
+  e = url.escape
+  (str) -> (e str)
 
 escape_pattern = do
   punct = "[%^$()%.%[%]*+%-?]"
@@ -20,7 +25,7 @@ parse_query_string = do
   import C, P, S, Ct from require "lpeg"
 
   chunk = C (P(1) - S("=&"))^1
-  tuple = Ct(chunk * "=" * (chunk / unescape) + chunk)
+  tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
   query = S"?#"^-1 * Ct tuple * (P"&" * tuple)^0
 
   (str) ->
@@ -36,9 +41,9 @@ encode_query_string = (t, sep="&") ->
     if type(k) == "number" and type(v) == "table"
       {k,v} = v
 
-    buf[i + 1] = url.escape k
+    buf[i + 1] = escape k
     buf[i + 2] = "="
-    buf[i + 3] = url.escape v
+    buf[i + 3] = escape v
     buf[i + 4] = sep
     i += 4
 
@@ -116,10 +121,14 @@ if ... == "test"
   print camelize "hello"
   print camelize "world_wide_i_web"
 
-  print encode_query_string {
+  encoded = encode_query_string {
     {"dad", "day"}
     "hello[hole]": "wor=ld"
   }
+
+  res = parse_query_string encoded
+  moon.p res
+
 
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
   :parse_cookie_string, :encode_query_string, :underscore, :slugify, :Path,

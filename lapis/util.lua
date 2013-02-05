@@ -7,9 +7,16 @@ do
 end
 local unescape
 do
-  local u = require("socket.url").unescape
+  local u = url.unescape
   unescape = function(str)
     return (u(str))
+  end
+end
+local escape
+do
+  local e = url.escape
+  escape = function(str)
+    return (e(str))
   end
 end
 local escape_pattern
@@ -37,7 +44,7 @@ do
     C, P, S, Ct = _table_0.C, _table_0.P, _table_0.S, _table_0.Ct
   end
   local chunk = C((P(1) - S("=&")) ^ 1)
-  local tuple = Ct(chunk * "=" * (chunk / unescape) + chunk)
+  local tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
   local query = S("?#") ^ -1 * Ct(tuple * (P("&") * tuple) ^ 0)
   parse_query_string = function(str)
     do
@@ -64,9 +71,9 @@ encode_query_string = function(t, sep)
         k, v = _obj_0[1], _obj_0[2]
       end
     end
-    buf[i + 1] = url.escape(k)
+    buf[i + 1] = escape(k)
     buf[i + 2] = "="
-    buf[i + 3] = url.escape(v)
+    buf[i + 3] = escape(v)
     buf[i + 4] = sep
     i = i + 4
   end
@@ -223,13 +230,15 @@ if ... == "test" then
   print(camelize(underscore("ManifestRocks")))
   print(camelize("hello"))
   print(camelize("world_wide_i_web"))
-  print(encode_query_string({
+  local encoded = encode_query_string({
     {
       "dad",
       "day"
     },
     ["hello[hole]"] = "wor=ld"
-  }))
+  })
+  local res = parse_query_string(encoded)
+  moon.p(res)
 end
 return {
   unescape = unescape,
