@@ -1,5 +1,5 @@
 local url = require("socket.url")
-local concat = table.concat
+local concat, insert = table.concat, table.insert
 local Path
 do
   local _table_0 = require("lapis.util.path")
@@ -49,6 +49,29 @@ do
       return _with_0
     end
   end
+end
+local encode_query_string
+encode_query_string = function(t, sep)
+  if sep == nil then
+    sep = "&"
+  end
+  local i = 0
+  local buf = { }
+  for k, v in pairs(t) do
+    if type(k) == "number" and type(v) == "table" then
+      do
+        local _obj_0 = v
+        k, v = _obj_0[1], _obj_0[2]
+      end
+    end
+    buf[i + 1] = url.escape(k)
+    buf[i + 2] = "="
+    buf[i + 3] = url.escape(v)
+    buf[i + 4] = sep
+    i = i + 4
+  end
+  buf[i] = nil
+  return concat(buf)
 end
 local parse_content_disposition
 do
@@ -200,6 +223,13 @@ if ... == "test" then
   print(camelize(underscore("ManifestRocks")))
   print(camelize("hello"))
   print(camelize("world_wide_i_web"))
+  print(encode_query_string({
+    {
+      "dad",
+      "day"
+    },
+    ["hello[hole]"] = "wor=ld"
+  }))
 end
 return {
   unescape = unescape,
@@ -207,6 +237,7 @@ return {
   parse_query_string = parse_query_string,
   parse_content_disposition = parse_content_disposition,
   parse_cookie_string = parse_cookie_string,
+  encode_query_string = encode_query_string,
   underscore = underscore,
   slugify = slugify,
   Path = Path,

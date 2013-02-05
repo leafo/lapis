@@ -1,7 +1,7 @@
 
 url = require "socket.url"
 
-import concat from table
+import concat, insert from table
 import Path from require "lapis.util.path"
 
 unescape = do
@@ -26,6 +26,24 @@ parse_query_string = do
   (str) ->
     with out = query\match str
       inject_tuples out if out
+
+-- todo: handle nested tables
+-- takes either { hello: "world"} or { {"hello", "world"} }
+encode_query_string = (t, sep="&") ->
+  i = 0
+  buf = {}
+  for k,v in pairs t
+    if type(k) == "number" and type(v) == "table"
+      {k,v} = v
+
+    buf[i + 1] = url.escape k
+    buf[i + 2] = "="
+    buf[i + 3] = url.escape v
+    buf[i + 4] = sep
+    i += 4
+
+  buf[i] = nil
+  concat buf
 
 parse_content_disposition = do
   import C, R, P, S, Ct, Cg from require "lpeg"
@@ -98,6 +116,11 @@ if ... == "test"
   print camelize "hello"
   print camelize "world_wide_i_web"
 
+  print encode_query_string {
+    {"dad", "day"}
+    "hello[hole]": "wor=ld"
+  }
+
 { :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
-  :parse_cookie_string, :underscore, :slugify, :Path, :uniquify, :trim,
-  :trim_all, :trim_filter, :key_filter }
+  :parse_cookie_string, :encode_query_string, :underscore, :slugify, :Path,
+  :uniquify, :trim, :trim_all, :trim_filter, :key_filter }
