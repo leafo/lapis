@@ -207,6 +207,9 @@ do
         end
         return _accum_0
       end)()
+      local i = #parts
+      parts[i + 1] = "Path=/"
+      parts[i + 2] = "HttpOnly"
       return self.res:add_header("Set-cookie", table.concat(parts, "; "))
     end,
     _debug = function(self)

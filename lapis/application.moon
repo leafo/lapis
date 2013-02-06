@@ -154,6 +154,10 @@ class Request
     parts = for k,v in pairs @cookies
       "#{url.escape k}=#{url.escape v}"
 
+    i = #parts
+    parts[i + 1] = "Path=/"
+    parts[i + 2] = "HttpOnly"
+
     @res\add_header "Set-cookie", table.concat parts, "; "
 
   _debug: =>
