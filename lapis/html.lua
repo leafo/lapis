@@ -268,6 +268,12 @@ html_writer = function(fn)
     return Buffer(buffer):write(fn)
   end
 end
+local render_html
+render_html = function(fn)
+  local buffer = { }
+  html_writer(fn)(buffer)
+  return concat(buffer)
+end
 local helper_key = setmetatable({ }, {
   __tostring = function()
     return "::helper_key::"
@@ -402,5 +408,6 @@ do
 end
 return {
   Widget = Widget,
-  html_writer = html_writer
+  html_writer = html_writer,
+  render_html = render_html
 }

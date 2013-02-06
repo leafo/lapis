@@ -156,6 +156,10 @@ class Buffer
 html_writer = (fn) ->
   (buffer) -> Buffer(buffer)\write fn
 
+render_html = (fn) ->
+  buffer = {}
+  html_writer(fn) buffer
+  concat buffer
 
 helper_key = setmetatable {}, __tostring: -> "::helper_key::"
 -- ensures that all methods are called in the buffer's scope
@@ -232,5 +236,5 @@ class Widget
     setmetatable @, meta
     nil
 
-{ :Widget, :html_writer }
+{ :Widget, :html_writer, :render_html }
 
