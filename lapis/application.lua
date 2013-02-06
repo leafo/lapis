@@ -150,8 +150,15 @@ do
         return _tbl_0
       end)()
       parsed.authority = nil
-      if path and not path:match("^/") then
-        path = "/" .. tostring(path)
+      if path then
+        local query
+        path, query = path:match("(.-)%?(.*)")
+        if query then
+          parsed.query = query
+        end
+        if not path:match("^/") then
+          path = "/" .. tostring(path)
+        end
       end
       parsed.path = path
       if parsed.port == "80" then

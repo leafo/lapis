@@ -105,12 +105,17 @@ class Request
 
   url_for: (...) => @app.router\url_for ...
 
+  -- TODO: just replace url.build with something written here
   build_url: (path, options) =>
     parsed = { k,v for k,v in pairs @req.parsed_url }
     parsed.authority = nil
 
-    if path and not path\match "^/"
-      path = "/#{path}"
+    if path
+      path, query = path\match "(.-)%?(.*)"
+      parsed.query = query if query
+
+      if not path\match "^/"
+        path = "/#{path}"
 
     parsed.path = path
 
