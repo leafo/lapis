@@ -151,9 +151,10 @@ do
       end)()
       parsed.authority = nil
       if path then
-        local query
-        path, query = path:match("(.-)%?(.*)")
+        local _path, query = path:match("^(.-)%?(.*)$")
+        path = _path or path
         if query then
+          path = _path
           parsed.query = query
         end
         if not path:match("^/") then

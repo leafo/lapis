@@ -111,8 +111,12 @@ class Request
     parsed.authority = nil
 
     if path
-      path, query = path\match "(.-)%?(.*)"
-      parsed.query = query if query
+      _path, query = path\match("^(.-)%?(.*)$")
+      path = _path or path
+
+      if query
+        path = _path
+        parsed.query = query
 
       if not path\match "^/"
         path = "/#{path}"
