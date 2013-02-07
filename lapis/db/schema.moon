@@ -11,6 +11,7 @@ types = setmetatable {
   time_nullable: "timestamp without time zone"
   integer: "integer NOT NULL DEFAULT 0"
   foreign_key: "integer NOT NULL"
+  foreign_key_nullable: "integer"
   boolean: "boolean NOT NULL DEFAULT FALSE"
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
