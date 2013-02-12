@@ -75,6 +75,19 @@ class Model
 
     other_records
 
+  @find_all: (ids, by_key=@primary_key) =>
+    if type(by_key) == "table"
+      error "find_all must have a singular key to search"
+
+    return {} if #ids == 0
+    flat_ids = concat [db.escape_literal id for id in *ids], ", "
+    primary = db.escape_identifier by_key
+    tbl_name = db.escape_identifier @table_name!
+
+    if res = db.select "* from #{tbl_name} where #{primary} in (#{flat_ids})"
+      @load r for r in *res
+      res
+
   -- find by primary key, or by table of conds
   @find: (...) =>
     first = select 1, ...

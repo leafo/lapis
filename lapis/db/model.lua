@@ -248,6 +248,41 @@ do
     end
     return other_records
   end
+  self.find_all = function(self, ids, by_key)
+    if by_key == nil then
+      by_key = self.primary_key
+    end
+    if type(by_key) == "table" then
+      error("find_all must have a singular key to search")
+    end
+    if #ids == 0 then
+      return { }
+    end
+    local flat_ids = concat((function()
+      local _accum_0 = { }
+      local _len_0 = 1
+      local _list_0 = ids
+      for _index_0 = 1, #_list_0 do
+        local id = _list_0[_index_0]
+        _accum_0[_len_0] = db.escape_literal(id)
+        _len_0 = _len_0 + 1
+      end
+      return _accum_0
+    end)(), ", ")
+    local primary = db.escape_identifier(by_key)
+    local tbl_name = db.escape_identifier(self:table_name())
+    do
+      local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
+      if res then
+        local _list_0 = res
+        for _index_0 = 1, #_list_0 do
+          local r = _list_0[_index_0]
+          self:load(r)
+        end
+        return res
+      end
+    end
+  end
   self.find = function(self, ...)
     local first = select(1, ...)
     if first == nil then
