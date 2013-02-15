@@ -17,9 +17,7 @@ dependencies = {
 	"ansicolors",
 	"lpeg",
 	"luasocket",
-	-- -- sessions
-	-- "cjson",
-	-- "luacrypto",
+	"cjson",
 }
 
 build = {
