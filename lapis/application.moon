@@ -103,7 +103,11 @@ class Request
 
   html: (fn) => html_writer fn
 
-  url_for: (...) => @app.router\url_for ...
+  url_for: (first, ...) =>
+    if type(first) == "table"
+      @app.router\url_for first\url_params!
+    else
+      @app.router\url_for first, ...
 
   -- TODO: just replace url.build with something written here
   build_url: (path, options) =>

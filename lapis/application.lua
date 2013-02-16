@@ -138,8 +138,12 @@ do
     html = function(self, fn)
       return html_writer(fn)
     end,
-    url_for = function(self, ...)
-      return self.app.router:url_for(...)
+    url_for = function(self, first, ...)
+      if type(first) == "table" then
+        return self.app.router:url_for(first:url_params())
+      else
+        return self.app.router:url_for(first, ...)
+      end
     end,
     build_url = function(self, path, options)
       local parsed = (function()
