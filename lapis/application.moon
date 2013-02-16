@@ -109,6 +109,7 @@ class Request
   build_url: (path, options) =>
     parsed = { k,v for k,v in pairs @req.parsed_url }
     parsed.authority = nil
+    parsed.query = nil
 
     if path
       _path, query = path\match("^(.-)%?(.*)$")

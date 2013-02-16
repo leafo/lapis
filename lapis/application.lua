@@ -150,6 +150,7 @@ do
         return _tbl_0
       end)()
       parsed.authority = nil
+      parsed.query = nil
       if path then
         local _path, query = path:match("^(.-)%?(.*)$")
         path = _path or path
