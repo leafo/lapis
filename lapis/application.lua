@@ -73,10 +73,13 @@ do
       if opts then
         self.options = opts
       end
-      if self.options.json then
-        self.res.headers["Content-type"] = "application/json"
-        self.res.content = json.encode(self.options.json)
-        return 
+      do
+        local obj = self.options.json
+        if obj then
+          self.res.headers["Content-type"] = "application/json"
+          self.res.content = json.encode(obj)
+          return 
+        end
       end
       do
         local ct = self.options.content_type
@@ -87,9 +90,15 @@ do
       if not self.res.headers["Content-type"] then
         self.res.headers["Content-type"] = "text/html"
       end
-      if self.options.redirect_to then
-        self.res:add_header("Location", self:build_url(self.options.redirect_to))
-        self.res.status = 302
+      do
+        url = self.options.redirect_to
+        if url then
+          if url:match("^/") then
+            url = self:build_url(url)
+          end
+          self.res:add_header("Location", url)
+          self.res.status = 302
+        end
       end
       if self.options.status then
         self.res.status = self.options.status

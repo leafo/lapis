@@ -50,9 +50,9 @@ class Request
   render: (opts=false) =>
     @options = opts if opts
 
-    if @options.json
+    if obj = @options.json
       @res.headers["Content-type"] = "application/json"
-      @res.content = json.encode @options.json
+      @res.content = json.encode obj
       return
 
     if ct = @options.content_type
@@ -61,8 +61,11 @@ class Request
     if not @res.headers["Content-type"]
       @res.headers["Content-type"] = "text/html"
 
-    if @options.redirect_to
-      @res\add_header "Location", @build_url @options.redirect_to
+    if url = @options.redirect_to
+      if url\match "^/"
+        url  = @build_url url
+
+      @res\add_header "Location", url
       @res.status = 302
 
     if @options.status
