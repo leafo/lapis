@@ -61,11 +61,11 @@ class Request
     if not @res.headers["Content-type"]
       @res.headers["Content-type"] = "text/html"
 
-    if url = @options.redirect_to
-      if url\match "^/"
-        url  = @build_url url
+    if redirect_url = @options.redirect_to
+      if redirect_url\match "^/"
+        redirect_url  = @build_url redirect_url
 
-      @res\add_header "Location", url
+      @res\add_header "Location", redirect_url
       @res.status = 302
 
     if @options.status

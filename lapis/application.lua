@@ -91,12 +91,12 @@ do
         self.res.headers["Content-type"] = "text/html"
       end
       do
-        url = self.options.redirect_to
-        if url then
-          if url:match("^/") then
-            url = self:build_url(url)
+        local redirect_url = self.options.redirect_to
+        if redirect_url then
+          if redirect_url:match("^/") then
+            redirect_url = self:build_url(redirect_url)
           end
-          self.res:add_header("Location", url)
+          self.res:add_header("Location", redirect_url)
           self.res.status = 302
         end
       end
