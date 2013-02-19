@@ -13,6 +13,7 @@ types = setmetatable {
   foreign_key: "integer NOT NULL"
   foreign_key_nullable: "integer"
   boolean: "boolean NOT NULL DEFAULT FALSE"
+  numeric: "numeric NOT NULL DEFAULT 0"
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
 

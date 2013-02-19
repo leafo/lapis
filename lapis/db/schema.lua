@@ -10,7 +10,8 @@ local types = setmetatable({
   integer = "integer NOT NULL DEFAULT 0",
   foreign_key = "integer NOT NULL",
   foreign_key_nullable = "integer",
-  boolean = "boolean NOT NULL DEFAULT FALSE"
+  boolean = "boolean NOT NULL DEFAULT FALSE",
+  numeric = "numeric NOT NULL DEFAULT 0"
 }, {
   __index = function(self, key)
     return error("Don't know column type `" .. tostring(key) .. "`")
