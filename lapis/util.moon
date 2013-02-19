@@ -130,6 +130,7 @@ if ... == "test"
   moon.p res
 
 
-{ :unescape, :escape_pattern, :parse_query_string, :parse_content_disposition,
-  :parse_cookie_string, :encode_query_string, :underscore, :slugify, :Path,
-  :uniquify, :trim, :trim_all, :trim_filter, :key_filter }
+{ :unescape, :escape, :escape_pattern, :parse_query_string,
+  :parse_content_disposition, :parse_cookie_string, :encode_query_string,
+  :underscore, :slugify, :Path, :uniquify, :trim, :trim_all, :trim_filter,
+  :key_filter }

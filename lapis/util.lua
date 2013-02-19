@@ -242,6 +242,7 @@ if ... == "test" then
 end
 return {
   unescape = unescape,
+  escape = escape,
   escape_pattern = escape_pattern,
   parse_query_string = parse_query_string,
   parse_content_disposition = parse_content_disposition,

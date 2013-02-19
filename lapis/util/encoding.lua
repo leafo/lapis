@@ -60,5 +60,7 @@ end
 return {
   encode_base64 = encode_base64,
   decode_base64 = decode_base64,
-  hmac_sha1 = hmac_sha1
+  hmac_sha1 = hmac_sha1,
+  encode_with_secret = encode_with_secret,
+  decode_with_secret = decode_with_secret
 }
