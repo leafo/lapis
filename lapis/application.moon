@@ -244,6 +244,7 @@ class Application
       r\write {
         status: 500
         layout: false
+        content_type: "text/html"
         self.error_page { staus: 500, :err, :trace }
       }
       r\render!
