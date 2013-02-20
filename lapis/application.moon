@@ -1,13 +1,12 @@
 
 logger = require "lapis.logging"
 url = require "socket.url"
-json = require "cjson"
 session = require "lapis.session"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
 
-import parse_cookie_string from require "lapis.util"
+import parse_cookie_string, to_json from require "lapis.util"
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -52,7 +51,7 @@ class Request
 
     if obj = @options.json
       @res.headers["Content-type"] = "application/json"
-      @res.content = json.encode obj
+      @res.content = to_json obj
       return
 
     if ct = @options.content_type

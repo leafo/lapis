@@ -1,6 +1,5 @@
 local logger = require("lapis.logging")
 local url = require("socket.url")
-local json = require("cjson")
 local session = require("lapis.session")
 local Router
 do
@@ -12,10 +11,10 @@ do
   local _table_0 = require("lapis.html")
   html_writer = _table_0.html_writer
 end
-local parse_cookie_string
+local parse_cookie_string, to_json
 do
   local _table_0 = require("lapis.util")
-  parse_cookie_string = _table_0.parse_cookie_string
+  parse_cookie_string, to_json = _table_0.parse_cookie_string, _table_0.to_json
 end
 local set_and_truthy
 set_and_truthy = function(val, default)
@@ -77,7 +76,7 @@ do
         local obj = self.options.json
         if obj then
           self.res.headers["Content-type"] = "application/json"
-          self.res.content = json.encode(obj)
+          self.res.content = to_json(obj)
           return 
         end
       end

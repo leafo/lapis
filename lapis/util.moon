@@ -1,5 +1,6 @@
 
 url = require "socket.url"
+json = require "cjson"
 
 import concat, insert from table
 import Path from require "lapis.util.path"
@@ -112,6 +113,19 @@ key_filter = (tbl, ...) ->
     tbl[k] = nil unless set[k]
   tbl
 
+json_encodable = (obj, seen={}) ->
+  switch type obj
+    when "table"
+      unless seen[obj]
+        seen[obj] = true
+        { k, json_encodable(v) for k,v in pairs obj }
+    when "function", "userdata", "thread"
+      nil
+    else
+      obj
+
+to_json = (obj) -> json.encode json_encodable obj
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
@@ -129,8 +143,16 @@ if ... == "test"
   res = parse_query_string encoded
   moon.p res
 
+  print to_json {
+    color: "blue"
+    data: {
+      height: 10
+      fn: =>
+    }
+  }
+
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :Path, :uniquify, :trim, :trim_all, :trim_filter,
-  :key_filter }
+  :key_filter, :to_json, :json_encodable }

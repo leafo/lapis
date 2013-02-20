@@ -1,4 +1,5 @@
 local url = require("socket.url")
+local json = require("cjson")
 local concat, insert = table.concat, table.insert
 local Path
 do
@@ -223,6 +224,33 @@ key_filter = function(tbl, ...)
   end
   return tbl
 end
+local json_encodable
+json_encodable = function(obj, seen)
+  if seen == nil then
+    seen = { }
+  end
+  local _exp_0 = type(obj)
+  if "table" == _exp_0 then
+    if not (seen[obj]) then
+      seen[obj] = true
+      return (function()
+        local _tbl_0 = { }
+        for k, v in pairs(obj) do
+          _tbl_0[k] = json_encodable(v)
+        end
+        return _tbl_0
+      end)()
+    end
+  elseif "function" == _exp_0 or "userdata" == _exp_0 or "thread" == _exp_0 then
+    return nil
+  else
+    return obj
+  end
+end
+local to_json
+to_json = function(obj)
+  return json.encode(json_encodable(obj))
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -239,6 +267,13 @@ if ... == "test" then
   })
   local res = parse_query_string(encoded)
   moon.p(res)
+  print(to_json({
+    color = "blue",
+    data = {
+      height = 10,
+      fn = function(self) end
+    }
+  }))
 end
 return {
   unescape = unescape,
@@ -255,5 +290,7 @@ return {
   trim = trim,
   trim_all = trim_all,
   trim_filter = trim_filter,
-  key_filter = key_filter
+  key_filter = key_filter,
+  to_json = to_json,
+  json_encodable = json_encodable
 }
