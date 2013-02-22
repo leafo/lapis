@@ -35,6 +35,10 @@ tasks = {
     name: "new"
     help: "create a new lapis project in the current directory"
     ->
+      if path.exists "nginx.conf"
+        print "Aborting, nginx.conf already exists"
+        return
+
       path.mkdir "logs"
       path.mkdir "conf"
       path.write_file "nginx.conf", require "lapis.cmd.templates.config"
