@@ -61,6 +61,11 @@ tasks = {
     name = "server",
     help = "start the development server",
     function()
+      local nginx = find_nginx()
+      if not (nginx) then
+        print("Aborting, can not find an installation of OpenResty")
+        return 
+      end
       local compile_config
       do
         local _table_0 = require("lapis.cmd.nginx")
@@ -85,7 +90,7 @@ tasks = {
         if nginx then
           print("using nginx: " .. tostring(nginx))
         else
-          print("can not find nginx")
+          print("can not find installation of OpenResty")
         end
       end
       print()

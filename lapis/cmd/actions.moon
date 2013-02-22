@@ -49,6 +49,11 @@ tasks = {
     name: "server"
     help: "start the development server"
     ->
+      nginx = find_nginx!
+      unless nginx
+        print "Aborting, can not find an installation of OpenResty"
+        return
+
       -- compile config
       import compile_config from require "lapis.cmd.nginx"
       compiled = compile_config path.read_file"nginx.conf", {
@@ -69,7 +74,7 @@ tasks = {
       if nginx = find_nginx!
         print "using nginx: #{nginx}"
       else
-        print "can not find nginx"
+        print "can not find installation of OpenResty"
 
       print!
       print "Available actions:"
