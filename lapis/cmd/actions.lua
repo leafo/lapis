@@ -47,6 +47,10 @@ tasks = {
     name = "new",
     help = "create a new lapis project in the current directory",
     function()
+      if path.exists("nginx.conf") then
+        print("Aborting, nginx.conf already exists")
+        return 
+      end
       path.mkdir("logs")
       path.mkdir("conf")
       path.write_file("nginx.conf", require("lapis.cmd.templates.config"))

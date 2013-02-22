@@ -3,7 +3,6 @@ url = require "socket.url"
 json = require "cjson"
 
 import concat, insert from table
-import Path from require "lapis.util.path"
 
 -- todo: consider renaming to url_escape/url_unescape
 unescape = do
@@ -154,5 +153,5 @@ if ... == "test"
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
-  :underscore, :slugify, :Path, :uniquify, :trim, :trim_all, :trim_filter,
+  :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :json_encodable }

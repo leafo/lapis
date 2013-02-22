@@ -1,11 +1,6 @@
 local url = require("socket.url")
 local json = require("cjson")
 local concat, insert = table.concat, table.insert
-local Path
-do
-  local _table_0 = require("lapis.util.path")
-  Path = _table_0.Path
-end
 local unescape
 do
   local u = url.unescape
@@ -285,7 +280,6 @@ return {
   encode_query_string = encode_query_string,
   underscore = underscore,
   slugify = slugify,
-  Path = Path,
   uniquify = uniquify,
   trim = trim,
   trim_all = trim_all,
