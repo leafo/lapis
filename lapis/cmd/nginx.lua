@@ -1,3 +1,30 @@
+local find_nginx
+do
+  local nginx_bin = "nginx"
+  local nginx_search_paths = {
+    "/usr/local/openresty/nginx/sbin/",
+    "/usr/sbin/",
+    ""
+  }
+  local nginx_path
+  find_nginx = function()
+    if nginx_path then
+      return nginx_path
+    end
+    local _list_0 = nginx_search_paths
+    for _index_0 = 1, #_list_0 do
+      local prefix = _list_0[_index_0]
+      local cmd = tostring(prefix) .. tostring(nginx_bin) .. " -v 2>&1"
+      local handle = io.popen(cmd)
+      local out = handle:read()
+      handle:close()
+      if out:match("^nginx version: ngx_openresty/1.2.6.6") then
+        nginx_path = tostring(prefix) .. tostring(nginx_bin)
+        return nginx_path
+      end
+    end
+  end
+end
 local filters = {
   pg = function(url)
     local user, password, host, db = url:match("^postgres://(.*):(.*)@(.*)/(.*)$")
@@ -18,7 +45,7 @@ compile_config = function(config, opts)
       if v ~= nil then
         return v
       end
-      return opts[key]
+      return opts[key:lower()]
     end
   })
   local out = config:gsub("(${%b{}})", function(w)
@@ -54,5 +81,6 @@ if ... == "test" then
 end
 return {
   compile_config = compile_config,
-  filters = filters
+  filters = filters,
+  find_nginx = find_nginx
 }

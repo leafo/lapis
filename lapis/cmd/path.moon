@@ -1,4 +1,6 @@
 
+io = io
+
 local *
 
 -- move up a directory
@@ -26,6 +28,12 @@ write_file = (path, content) ->
     \write content
     \close!
 
+read_file = (path) ->
+  file = io.open path
+  error "file doesn't exist `#{path}'" unless file
+  with file\read "*a"
+    file\close!
+
 mkdir = (path) ->
   os.execute "mkdir -p #{path}"
 
@@ -41,4 +49,4 @@ join = (a, b) ->
 
 
 { :up, :exists, :normalize, :basepath, :filename, :write_file, :mkdir, :copy,
-  :join }
+  :join, :read_file }

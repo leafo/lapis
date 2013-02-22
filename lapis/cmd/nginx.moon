@@ -1,4 +1,27 @@
 
+find_nginx = do
+  nginx_bin = "nginx"
+  nginx_search_paths = {
+    "/usr/local/openresty/nginx/sbin/"
+    "/usr/sbin/"
+    ""
+  }
+
+  local nginx_path
+  ->
+    return nginx_path if nginx_path
+    for prefix in *nginx_search_paths
+      cmd = "#{prefix}#{nginx_bin} -v 2>&1"
+      handle = io.popen cmd
+      out = handle\read!
+      handle\close!
+
+      if out\match "^nginx version: ngx_openresty/1.2.6.6"
+        nginx_path = "#{prefix}#{nginx_bin}"
+        return nginx_path
+
+
+
 filters = {
   pg: (url) ->
     user, password, host, db = url\match "^postgres://(.*):(.*)@(.*)/(.*)$"
@@ -10,7 +33,7 @@ compile_config = (config, opts={}) ->
   env = setmetatable {}, __index: (key) =>
     v = os.getenv "LAPIS_" .. key\upper!
     return v if v != nil
-    opts[key]
+    opts[key\lower!]
 
   out = config\gsub "(${%b{}})", (w) ->
     name = w\sub 4, -3
@@ -29,4 +52,4 @@ if ... == "test"
   ]]
   print compile_config str, { some_var: "what's up" }
 
-{ :compile_config, :filters }
+{ :compile_config, :filters, :find_nginx }

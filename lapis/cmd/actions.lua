@@ -3,37 +3,15 @@ do
   local _table_0 = require("lapis.cmd.util")
   columnize = _table_0.columnize
 end
+local find_nginx
+do
+  local _table_0 = require("lapis.cmd.nginx")
+  find_nginx = _table_0.find_nginx
+end
 local path = require("lapis.cmd.path")
 local log
 log = function(...)
   return print("->", ...)
-end
-local find_nginx
-do
-  local nginx_bin = "nginx"
-  local nginx_search_paths = {
-    "/usr/local/openresty/nginx/sbin/",
-    "/usr/sbin/",
-    ""
-  }
-  local nginx_path
-  find_nginx = function()
-    if nginx_path then
-      return nginx_path
-    end
-    local _list_0 = nginx_search_paths
-    for _index_0 = 1, #_list_0 do
-      local prefix = _list_0[_index_0]
-      local cmd = tostring(prefix) .. tostring(nginx_bin) .. " -v 2>&1"
-      local handle = io.popen(cmd)
-      local out = handle:read()
-      handle:close()
-      if out:match("^nginx version: ngx_openresty/1.2.6.6") then
-        nginx_path = tostring(prefix) .. tostring(nginx_bin)
-        return nginx_path
-      end
-    end
-  end
 end
 local annotate
 annotate = function(obj, verbs)
@@ -77,7 +55,20 @@ tasks = {
   },
   {
     name = "server",
-    help = "start the development server"
+    help = "start the development server",
+    function()
+      local compile_config
+      do
+        local _table_0 = require("lapis.cmd.nginx")
+        compile_config = _table_0.compile_config
+      end
+      local compiled = compile_config(path.read_file("nginx.conf"), {
+        port = "8080",
+        num_workers = "1"
+      })
+      path.write_file("nginx.conf.compiled", compiled)
+      return os.execute(find_nginx() .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
+    end
   },
   {
     name = "help",
@@ -118,7 +109,15 @@ end
 local execute
 execute = function(args)
   local task_name = args[1] or tasks.default
-  return get_task(task_name)[1](args)
+  do
+    local task = get_task(task_name)
+    if task then
+      return assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")(args)
+    else
+      print("Error: unknown command `" .. tostring(task_name) .. "'")
+      return get_task("help")[1](args)
+    end
+  end
 end
 return {
   tasks = tasks,

@@ -1,31 +1,10 @@
 
 import columnize from require "lapis.cmd.util"
+import find_nginx from require "lapis.cmd.nginx"
 path = require "lapis.cmd.path"
 
 log = (...) ->
   print "->", ...
-
-find_nginx = do
-  nginx_bin = "nginx"
-  nginx_search_paths = {
-    "/usr/local/openresty/nginx/sbin/"
-    "/usr/sbin/"
-    ""
-  }
-
-  local nginx_path
-  ->
-    return nginx_path if nginx_path
-    for prefix in *nginx_search_paths
-      cmd = "#{prefix}#{nginx_bin} -v 2>&1"
-      handle = io.popen cmd
-      out = handle\read!
-      handle\close!
-
-      if out\match "^nginx version: ngx_openresty/1.2.6.6"
-        nginx_path = "#{prefix}#{nginx_bin}"
-        return nginx_path
-
 
 annotate = (obj, verbs) ->
   setmetatable {}, {
@@ -65,6 +44,15 @@ tasks = {
   {
     name: "server"
     help: "start the development server"
+    ->
+      -- compile config
+      import compile_config from require "lapis.cmd.nginx"
+      compiled = compile_config path.read_file"nginx.conf", {
+        port: "8080"
+        num_workers: "1"
+      }
+      path.write_file "nginx.conf.compiled", compiled
+      os.execute find_nginx! .. ' -p "$(pwd)" -c "nginx.conf.compiled"'
   }
 
   {
@@ -89,7 +77,11 @@ get_task = (name) ->
 
 execute = (args) ->
   task_name = args[1] or tasks.default
-  get_task(task_name)[1] args
+  if task = get_task(task_name)
+    assert(task[1], "action `#{task_name}' not implemented") args
+  else
+    print "Error: unknown command `#{task_name}'"
+    get_task("help")[1] args
 
 { :tasks, :execute }
 

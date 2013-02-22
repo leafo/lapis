@@ -1,4 +1,5 @@
-local up, exists, normalize, basepath, filename, write_file, mkdir, copy, join
+local io = io
+local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join
 up = function(path)
   path = path:gsub("/$", "")
   path = path:gsub("[^/]*$", "")
@@ -26,6 +27,17 @@ write_file = function(path, content)
     local _with_0 = io.open(path, "w")
     _with_0:write(content)
     _with_0:close()
+    return _with_0
+  end
+end
+read_file = function(path)
+  local file = io.open(path)
+  if not (file) then
+    error("file doesn't exist `" .. tostring(path) .. "'")
+  end
+  do
+    local _with_0 = file:read("*a")
+    file:close()
     return _with_0
   end
 end
@@ -57,5 +69,6 @@ return {
   write_file = write_file,
   mkdir = mkdir,
   copy = copy,
-  join = join
+  join = join,
+  read_file = read_file
 }
