@@ -16,11 +16,9 @@ find_nginx = do
       out = handle\read!
       handle\close!
 
-      if out\match "^nginx version: ngx_openresty/1.2.6.6"
+      if out\match "^nginx version: ngx_openresty/"
         nginx_path = "#{prefix}#{nginx_bin}"
         return nginx_path
-
-
 
 filters = {
   pg: (url) ->

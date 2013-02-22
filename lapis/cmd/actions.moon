@@ -66,7 +66,11 @@ tasks = {
     ->
       print "Lapis #{require "lapis.version"}"
       print "usage: lapis <action> [arguments]"
-      print "using nginx: #{find_nginx!}"
+      if nginx = find_nginx!
+        print "using nginx: #{nginx}"
+      else
+        print "can not find nginx"
+
       print!
       print "Available actions:"
       print!

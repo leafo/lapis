@@ -80,7 +80,14 @@ tasks = {
     function()
       print("Lapis " .. tostring(require("lapis.version")))
       print("usage: lapis <action> [arguments]")
-      print("using nginx: " .. tostring(find_nginx()))
+      do
+        local nginx = find_nginx()
+        if nginx then
+          print("using nginx: " .. tostring(nginx))
+        else
+          print("can not find nginx")
+        end
+      end
       print()
       print("Available actions:")
       print()
