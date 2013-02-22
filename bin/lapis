@@ -1,0 +1,6 @@
+#!/usr/bin/env moon
+
+cmd = require "lapis.cmd.actions"
+cmd.execute arg
+
+-- vim: set filetype=moon:
