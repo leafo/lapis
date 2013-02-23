@@ -50,11 +50,11 @@ compile_config = function(config, opts)
   })
   local out = config:gsub("(${%b{}})", function(w)
     local name = w:sub(4, -3)
-    local filter_name, filter_arg = name:match("^(%S*)%s*(.*)$")
+    local filter_name, filter_arg = name:match("^(%S+)%s+(.+)$")
     do
       local filter = filters[filter_name]
       if filter then
-        local value = env[filter_name]
+        local value = env[filter_arg]
         if value == nil then
           return w
         else

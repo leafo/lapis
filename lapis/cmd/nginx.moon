@@ -35,9 +35,9 @@ compile_config = (config, opts={}) ->
 
   out = config\gsub "(${%b{}})", (w) ->
     name = w\sub 4, -3
-    filter_name, filter_arg = name\match("^(%S*)%s*(.*)$")
+    filter_name, filter_arg = name\match "^(%S+)%s+(.+)$"
     if filter = filters[filter_name]
-      value = env[filter_name]
+      value = env[filter_arg]
       if value == nil then w else filter value
     else
       value = env[name]
