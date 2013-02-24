@@ -9,6 +9,11 @@ do
   find_nginx = _table_0.find_nginx
 end
 local path = require("lapis.cmd.path")
+local config = require("lapis.config")
+local default_config = {
+  port = "8080",
+  num_workers = "1"
+}
 local log
 log = function(...)
   return print("->", ...)
@@ -59,22 +64,29 @@ tasks = {
   },
   {
     name = "server",
-    help = "start the development server",
-    function()
+    usage = "server [environment]",
+    help = "start the server",
+    function(environment)
+      if environment == nil then
+        environment = "development"
+      end
       local nginx = find_nginx()
       if not (nginx) then
         print("Aborting, can not find an installation of OpenResty")
         return 
       end
+      print(pcall(function()
+        return require("config")
+      end))
+      local vars = setmetatable(config.for_environment(environment), {
+        __index = default_config
+      })
       local compile_config
       do
         local _table_0 = require("lapis.cmd.nginx")
         compile_config = _table_0.compile_config
       end
-      local compiled = compile_config(path.read_file("nginx.conf"), {
-        port = "8080",
-        num_workers = "1"
-      })
+      local compiled = compile_config(path.read_file("nginx.conf"), vars)
       path.write_file("nginx.conf.compiled", compiled)
       return os.execute(find_nginx() .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
     end
@@ -103,7 +115,7 @@ tasks = {
         for _index_0 = 1, #_list_0 do
           local t = _list_0[_index_0]
           _accum_0[_len_0] = {
-            t.name,
+            t.usage or t.name,
             t.help
           }
           _len_0 = _len_0 + 1
@@ -125,13 +137,24 @@ end
 local execute
 execute = function(args)
   local task_name = args[1] or tasks.default
+  local task_args = (function()
+    local _accum_0 = { }
+    local _len_0 = 1
+    for i, a in ipairs(args) do
+      if i > 1 then
+        _accum_0[_len_0] = a
+        _len_0 = _len_0 + 1
+      end
+    end
+    return _accum_0
+  end)()
   do
     local task = get_task(task_name)
     if task then
-      return assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")(args)
+      return assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")(unpack(task_args))
     else
       print("Error: unknown command `" .. tostring(task_name) .. "'")
-      return get_task("help")[1](args)
+      return get_task("help")[1](unpack(task_args))
     end
   end
 end
