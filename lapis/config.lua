@@ -95,7 +95,7 @@ do
       local success, err = pcall(function()
         return require("config")
       end)
-      if not (success or err:match("^module 'config' not found")) then
+      if not (success or err:match("module 'config' not found")) then
         error(err)
       end
     end

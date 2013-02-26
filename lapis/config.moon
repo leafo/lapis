@@ -66,7 +66,7 @@ get = do
     unless loaded_config
       loaded_config = true
       success, err = pcall -> require "config"
-      unless success or err\match "^module 'config' not found"
+      unless success or err\match "module 'config' not found"
         error err
 
     return cache[name] if cache[name]
