@@ -75,10 +75,7 @@ tasks = {
         print("Aborting, can not find an installation of OpenResty")
         return 
       end
-      print(pcall(function()
-        return require("config")
-      end))
-      local vars = setmetatable(config.for_environment(environment), {
+      local vars = setmetatable(config.get(environment), {
         __index = default_config
       })
       local compile_config
@@ -88,7 +85,7 @@ tasks = {
       end
       local compiled = compile_config(path.read_file("nginx.conf"), vars)
       path.write_file("nginx.conf.compiled", compiled)
-      return os.execute(find_nginx() .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
+      return os.execute("LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
     end
   },
   {

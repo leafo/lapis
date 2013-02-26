@@ -56,9 +56,19 @@ merge_set = (t, k, v) ->
   else
     t[k] = v
 
-for_environment = do
+get = do
   cache = {}
-  (name) ->
+  loaded_config = false
+
+  (name=os.getenv "LAPIS_ENVIRONMENT") ->
+    error "missing environment name" unless name
+
+    unless loaded_config
+      loaded_config = true
+      success, err = pcall -> require "config"
+      unless success or err\match "^module 'config' not found"
+        error err
+
     return cache[name] if cache[name]
     conf = if fns = configs[name]
       with c = {}
@@ -67,6 +77,7 @@ for_environment = do
     else
       {}
 
+    conf._name = name
     cache[name] = conf
     conf
 
@@ -96,7 +107,7 @@ if ... == "test"
 
     include f
 
-  conf = for_environment "basic"
+  conf = get "basic"
   moon.p conf
 
   print!
@@ -120,7 +131,7 @@ if ... == "test"
        }
     }
 
-  moon.p for_environment "cool"
+  moon.p get "cool"
 
-{ :config, :for_environment, :merge_set }
+{ :get, :config, :merge_set }
 

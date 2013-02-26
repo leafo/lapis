@@ -3,6 +3,7 @@
 worker_processes  ${{NUM_WORKERS}};
 error_log stderr notice;
 daemon off;
+env LAPIS_ENVIRONMENT;
 
 events {
     worker_connections 1024;

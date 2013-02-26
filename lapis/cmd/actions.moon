@@ -62,16 +62,14 @@ tasks = {
         return
 
       -- load app config
-      print pcall -> require "config"
-      vars = setmetatable config.for_environment(environment), __index: default_config
+      vars = setmetatable config.get(environment), __index: default_config
 
       -- compile config
       import compile_config from require "lapis.cmd.nginx"
       compiled = compile_config path.read_file"nginx.conf", vars
 
-
       path.write_file "nginx.conf.compiled", compiled
-      os.execute find_nginx! .. ' -p "$(pwd)" -c "nginx.conf.compiled"'
+      os.execute "LAPIS_ENVIRONMENT='#{environment}' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"'
   }
 
   {

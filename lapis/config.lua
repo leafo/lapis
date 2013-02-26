@@ -1,5 +1,5 @@
 local insert = table.insert
-local scope_meta, configs, config, run_with_scope, merge_set, for_environment
+local scope_meta, configs, config, run_with_scope, merge_set, get
 scope_meta = {
   __index = (function()
     local set
@@ -82,7 +82,23 @@ merge_set = function(t, k, v)
 end
 do
   local cache = { }
-  for_environment = function(name)
+  local loaded_config = false
+  get = function(name)
+    if name == nil then
+      name = os.getenv("LAPIS_ENVIRONMENT")
+    end
+    if not (name) then
+      error("missing environment name")
+    end
+    if not (loaded_config) then
+      loaded_config = true
+      local success, err = pcall(function()
+        return require("config")
+      end)
+      if not (success or err:match("^module 'config' not found")) then
+        error(err)
+      end
+    end
     if cache[name] then
       return cache[name]
     end
@@ -104,6 +120,7 @@ do
         conf = { }
       end
     end
+    conf._name = name
     cache[name] = conf
     return conf
   end
@@ -133,7 +150,7 @@ if ... == "test" then
     })
     return include(f)
   end)
-  local conf = for_environment("basic")
+  local conf = get("basic")
   moon.p(conf)
   print()
   local x = { }
@@ -154,10 +171,10 @@ if ... == "test" then
       }
     })
   end)
-  moon.p(for_environment("cool"))
+  moon.p(get("cool"))
 end
 return {
+  get = get,
   config = config,
-  for_environment = for_environment,
   merge_set = merge_set
 }
