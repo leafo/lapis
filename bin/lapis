@@ -1,6 +1,6 @@
-#!/usr/bin/env moon
+#!/usr/bin/env lua
 
-cmd = require "lapis.cmd.actions"
-cmd.execute arg
+local cmd = require "lapis.cmd.actions"
+cmd.execute(arg)
 
--- vim: set filetype=moon:
+-- vim: set filetype=lua:
