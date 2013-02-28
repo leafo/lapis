@@ -60,6 +60,7 @@ validate = function(object, validations)
     repeat
       local v = _list_0[_index_0]
       local key = v[1]
+      local error_msg = v[2]
       local input = object[key]
       if v.optional then
         if not (validate_functions.exists(input)) then
@@ -77,7 +78,7 @@ validate = function(object, validations)
           end
           local success, msg = test_input(input, fn, args)
           if not (success) then
-            insert(errors, msg:format(key))
+            insert(errors, (error_msg or msg):format(key))
             break
           end
           _continue_1 = true
@@ -116,6 +117,11 @@ if ... == "test" then
     {
       "name",
       exists = true
+    },
+    {
+      "rupture",
+      exists = true,
+      "CUSTOM MESSAGE COOL"
     }
   }))
   moon.p(validate(o, {

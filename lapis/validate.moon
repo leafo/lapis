@@ -44,6 +44,8 @@ validate = (object, validations) ->
   errors = {}
   for v in *validations
     key = v[1]
+    error_msg = v[2]
+
     input = object[key]
 
     if v.optional
@@ -55,7 +57,7 @@ validate = (object, validations) ->
       continue unless type(fn) == "string"
       success, msg = test_input input, fn, args
       unless success
-        insert errors, msg\format key
+        insert errors, (error_msg or msg)\format key
         break
 
   next(errors) and errors
@@ -76,6 +78,7 @@ if ... == "test"
   moon.p validate o, {
     { "age", exists: true }
     { "name", exists: true }
+    { "rupture", exists: true, "CUSTOM MESSAGE COOL" }
   }
 
   moon.p validate o, {
@@ -107,7 +110,6 @@ if ... == "test"
   moon.p validate o, {
     { "name", one_of: {"bcd", "abc" } }
   }
-
 
 
 { :validate, :assert_valid, :test_input }
