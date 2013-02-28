@@ -45,8 +45,6 @@ tasks = {
         print "Aborting, nginx.conf already exists"
         return
 
-      path.mkdir "logs"
-      path.mkdir "conf"
       path.write_file "nginx.conf", require "lapis.cmd.templates.config"
       path.write_file "mime.types", require "lapis.cmd.templates.mime_types"
   }
@@ -69,6 +67,11 @@ tasks = {
       compiled = compile_config path.read_file"nginx.conf", vars
 
       path.write_file "nginx.conf.compiled", compiled
+
+      path.mkdir "logs"
+
+      os.execute "touch logs/error.log"
+      os.execute "touch logs/access.log"
       os.execute "LAPIS_ENVIRONMENT='#{environment}' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"'
   }
 
