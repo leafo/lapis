@@ -183,10 +183,12 @@ do
       end
     end
   end
-  self.include_in = function(self, other_records, foreign_key)
+  self.include_in = function(self, other_records, foreign_key, opts)
     if type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
     end
+    local flip = opts and opts.flip
+    local src_key = flip and "id" or foreign_key
     local include_ids = (function()
       local _accum_0 = { }
       local _len_0 = 1
@@ -196,7 +198,7 @@ do
         repeat
           local record = _list_0[_index_0]
           do
-            local _with_0 = record[foreign_key]
+            local _with_0 = record[src_key]
             local id = _with_0
             if not (id) then
               _continue_0 = true
@@ -226,22 +228,36 @@ do
         end
         return _accum_0
       end)(), ", ")
-      local primary = db.escape_identifier(self.primary_key)
+      local find_by
+      if flip then
+        find_by = foreign_key
+      else
+        find_by = self.primary_key
+      end
       local tbl_name = db.escape_identifier(self:table_name())
+      local find_by_escaped = db.escape_identifier(find_by)
       do
-        local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
+        local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")")
         if res then
           local records = { }
           local _list_0 = res
           for _index_0 = 1, #_list_0 do
             local t = _list_0[_index_0]
-            records[t[self.primary_key]] = self:load(t)
+            records[t[find_by]] = self:load(t)
           end
-          local field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
+          local field_name
+          if opts and opts.as then
+            field_name = opts.as
+          elseif flip then
+            local tbl = self:table_name()
+            field_name = tbl:match("^(.*)s$") or tbl
+          else
+            field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
+          end
           local _list_1 = other_records
           for _index_0 = 1, #_list_1 do
             local other = _list_1[_index_0]
-            other[field_name] = records[other[foreign_key]]
+            other[field_name] = records[other[src_key]]
           end
         end
       end

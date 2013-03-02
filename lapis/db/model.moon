@@ -50,28 +50,62 @@ class Model
 
   -- include references to this model in a list of records based on a foreign
   -- key
-  @include_in: (other_records, foreign_key) =>
+  -- Examples:
+  --
+  -- -- Models
+  -- Users { id, name }
+  -- Games { id, user_id, title }
+  -- 
+  -- -- Have games, inlcude users
+  -- games = Games\select!
+  -- Users\include_in games, "user_id"
+  --
+  -- -- Have users, get games (be careful of many to one, only one will be
+  -- -- assigned but all will be fetched)
+  -- users = Users\select!
+  -- Games\include_in users, "user_id", flip: true
+  --
+  -- specify as: "name" to set the key of the included objects in each item
+  -- from the source list
+  @include_in: (other_records, foreign_key, opts) =>
     if type(@primary_key) == "table"
       error "model must have singular primary key to include"
 
+    flip = opts and opts.flip
+
+    src_key = flip and "id" or foreign_key
     include_ids = for record in *other_records
-      with id = record[foreign_key]
+      with id = record[src_key]
         continue unless id
 
     if next include_ids
       include_ids = uniquify include_ids
       flat_ids = concat [db.escape_literal id for id in *include_ids], ", "
-      primary = db.escape_identifier @primary_key
-      tbl_name = db.escape_identifier @table_name!
 
-      if res = db.select "* from #{tbl_name} where #{primary} in (#{flat_ids})"
+      find_by = if flip
+        foreign_key
+      else
+        @primary_key
+
+      tbl_name = db.escape_identifier @table_name!
+      find_by_escaped = db.escape_identifier find_by
+
+      if res = db.select "* from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
         records = {}
         for t in *res
-          records[t[@primary_key]] = @load t
-        field_name = foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
+          records[t[find_by]] = @load t
+
+        field_name = if opts and opts.as
+          opts.as
+        elseif flip
+          -- TODO: need a proper singularize
+          tbl = @table_name!
+          tbl\match"^(.*)s$" or tbl
+        else
+          foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
         for other in *other_records
-          other[field_name] = records[other[foreign_key]]
+          other[field_name] = records[other[src_key]]
 
     other_records
 
