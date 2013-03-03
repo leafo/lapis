@@ -355,8 +355,11 @@ do
           status = 301
         }
       else
-        return error("Failed to find route: " .. tostring(self.req.cmd_url))
+        return self.app:handle_404()
       end
+    end,
+    handle_404 = function(self)
+      return error("Failed to find route: " .. tostring(self.req.cmd_url))
     end
   }
   _base_0.__index = _base_0

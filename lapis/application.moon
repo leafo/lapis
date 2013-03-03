@@ -259,6 +259,9 @@ class Application
       stripped = @req.cmd_url\match "^(.+)/+$"
       redirect_to: stripped, status: 301
     else
+      @app\handle_404!
+
+  handle_404: =>
       error "Failed to find route: #{@req.cmd_url}"
 
   @before_filter: (fn) =>
