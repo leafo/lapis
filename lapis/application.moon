@@ -223,7 +223,7 @@ class Application
         \write handler r
 
   dispatch: (req, res) =>
-    local err, trace
+    local err, trace, r
     success = xpcall (->
         r = Request self, req, res
 
@@ -239,19 +239,18 @@ class Application
         trace = debug.traceback "", 2
 
     unless success
-      r = Request self, req, res
-      r\write {
-        status: 500
-        layout: false
-        content_type: "text/html"
-        self.error_page { staus: 500, :err, :trace }
-      }
-      r\render!
-      logger.request r
+      self.handle_error r, err, trace
 
     res
 
   serve: => -- TODO: alias to lapis.serve
+
+  @before_filter: (fn) =>
+    table.insert @before_filters, fn
+
+
+  -- Callbacks
+  -- run with Request as self, instead of application
 
   default_route: =>
     -- strip trailing /
@@ -259,13 +258,23 @@ class Application
       stripped = @req.cmd_url\match "^(.+)/+$"
       redirect_to: stripped, status: 301
     else
-      @app\handle_404!
+      @app.handle_404 @
 
   handle_404: =>
-      error "Failed to find route: #{@req.cmd_url}"
+    error "Failed to find route: #{@req.cmd_url}"
 
-  @before_filter: (fn) =>
-    table.insert @before_filters, fn
+  -- self is Request that errrored
+  handle_error: (err, trace) =>
+    r = Request self, @req, @res
+    r\write {
+      status: 500
+      layout: false
+      content_type: "text/html"
+      @app.error_page { staus: 500, :err, :trace }
+    }
+    r\render!
+    logger.request r
+    r
 
 respond_to = (tbl) ->
   =>

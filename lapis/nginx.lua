@@ -84,6 +84,12 @@ local ngx_req = {
   srv = function()
     return ngx.var.server_addr
   end,
+  remote_addr = function()
+    return ngx.var.remote_addr
+  end,
+  referer = function()
+    return ngx.var.http_referer or ""
+  end,
   parsed_url = function(t)
     return url.parse(tostring(t.scheme) .. "://" .. tostring(ngx.var.http_host) .. tostring(t.cmd_url))
   end,

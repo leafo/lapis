@@ -47,6 +47,9 @@ ngx_req = {
   scheme: -> ngx.var.scheme
   port: -> ngx.var.server_port
   srv: -> ngx.var.server_addr
+  remote_addr: -> ngx.var.remote_addr
+  referer: -> ngx.var.http_referer or ""
+
   parsed_url: (t) ->
     url.parse "#{t.scheme}://#{ngx.var.http_host}#{t.cmd_url}"
   built_url: (t) ->

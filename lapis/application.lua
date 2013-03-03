@@ -316,9 +316,9 @@ do
       end
     end,
     dispatch = function(self, req, res)
-      local err, trace
+      local err, trace, r
       local success = xpcall((function()
-        local r = Request(self, req, res)
+        r = Request(self, req, res)
         if not (self.router:resolve(req.parsed_url.path, r)) then
           local handler = self:wrap_handler(self.default_route)
           r:write(handler({ }, nil, "default_route", r))
@@ -330,19 +330,7 @@ do
         trace = debug.traceback("", 2)
       end)
       if not (success) then
-        local r = Request(self, req, res)
-        r:write({
-          status = 500,
-          layout = false,
-          content_type = "text/html",
-          self.error_page({
-            staus = 500,
-            err = err,
-            trace = trace
-          })
-        })
-        r:render()
-        logger.request(r)
+        self.handle_error(r, err, trace)
       end
       return res
     end,
@@ -355,11 +343,27 @@ do
           status = 301
         }
       else
-        return self.app:handle_404()
+        return self.app.handle_404(self)
       end
     end,
     handle_404 = function(self)
       return error("Failed to find route: " .. tostring(self.req.cmd_url))
+    end,
+    handle_error = function(self, err, trace)
+      local r = Request(self, self.req, self.res)
+      r:write({
+        status = 500,
+        layout = false,
+        content_type = "text/html",
+        self.app.error_page({
+          staus = 500,
+          err = err,
+          trace = trace
+        })
+      })
+      r:render()
+      logger.request(r)
+      return r
     end
   }
   _base_0.__index = _base_0
