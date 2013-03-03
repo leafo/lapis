@@ -142,6 +142,10 @@ add_cond = (buffer, cond, ...) ->
       append_all buffer, interpolate_query cond, ...
 
 _update = (table, values, cond, ...) ->
+  if values._timestamp
+    values._timestamp = nil
+    values.updated_at = format_date!
+
   buff = {
     "UPDATE "
     escape_identifier(table)

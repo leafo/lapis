@@ -68,7 +68,7 @@ do
       if next(columns) == nil then
         return 
       end
-      return db.update(self.__class:table_name(), (function()
+      local values = (function()
         local _tbl_0 = { }
         local _list_0 = columns
         for _index_0 = 1, #_list_0 do
@@ -76,7 +76,11 @@ do
           _tbl_0[col] = self[col]
         end
         return _tbl_0
-      end)(), cond)
+      end)()
+      if self.__class.timestamp then
+        values._timestamp = true
+      end
+      return db.update(self.__class:table_name(), values, cond)
     end
   }
   _base_0.__index = _base_0

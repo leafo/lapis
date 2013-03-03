@@ -189,6 +189,10 @@ add_cond = function(buffer, cond, ...)
 end
 local _update
 _update = function(table, values, cond, ...)
+  if values._timestamp then
+    values._timestamp = nil
+    values.updated_at = format_date()
+  end
   local buff = {
     "UPDATE ",
     escape_identifier(table),

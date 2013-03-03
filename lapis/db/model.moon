@@ -187,7 +187,9 @@ class Model
       {first, ...}
 
     return if next(columns) == nil
-    db.update @@table_name!, { col, @[col] for col in *columns }, cond
+    values = { col, @[col] for col in *columns }
+    values._timestamp = true if @@timestamp
+    db.update @@table_name!, values, cond
 
 { :Model }
 
