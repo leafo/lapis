@@ -30,6 +30,38 @@ Next install Lapis using LuaRocks. You can find the rockspec [on MoonRocks][3]:
 
 ## Creating An Application
 
+### `lapis` command line tool
+
+Lapis comes with a command line tool to help you create new projects and start
+your server. To see what Lapis can do, run in your shell:
+
+  $ lapis help
+
+For now though, we'll just be creating a new project. Navigate to a clean
+directory and run:
+
+  $  lapis new
+
+  ->	wrote	nginx.conf
+  ->	wrote	mime.types
+
+
+Lapis starts you off by writing some basic Nginx configuration. Because your
+application runs directly in Nginx, this configuration is what routes requests
+from Nginx to your Lua code.
+
+Feel free to look at the generated config file (`nginx.conf` is the only
+important file). Here's a brief overview of what it does:
+
+ * Any requests inside `/static/` will serve files out of the directory
+   `static` (You can create this directory now if you want)
+ * A request to `/favicon.ico` is read from `static/favicon.ico`
+ * All other requests will be served by `web.lua`. (We'll create this next)
+
+When you start your server with Lapis, the `nginx.conf` file is actually
+processed and templated variables are filled in based on the server's
+environment. We'll talk about how to configure these things later on.
+
 ### Nginx Configuration
 
 To start out, create a `nginx.conf` file in a new directory. The config file
