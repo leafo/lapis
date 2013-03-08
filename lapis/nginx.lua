@@ -70,10 +70,17 @@ local ngx_req = {
     return ngx.var.request_method
   end,
   cmd_url = function()
-    return ngx.var.request_uri
+    url = ngx.var.uri
+    do
+      local args = ngx.var.args
+      if args then
+        url = url .. "?" .. ngx.var.args
+      end
+    end
+    return url
   end,
   relpath = function()
-    return url.unescape(ngx.var.uri)
+    return ngx.var.uri
   end,
   scheme = function()
     return ngx.var.scheme
@@ -91,7 +98,13 @@ local ngx_req = {
     return ngx.var.http_referer or ""
   end,
   parsed_url = function(t)
-    return url.parse(tostring(t.scheme) .. "://" .. tostring(ngx.var.http_host) .. tostring(t.cmd_url))
+    return {
+      scheme = ngx.var.scheme,
+      path = ngx.var.uri,
+      host = ngx.var.host,
+      port = ngx.var.server_port,
+      query = ngx.var.args
+    }
   end,
   built_url = function(t)
     return url.build(t.parsed_url)
