@@ -161,7 +161,6 @@ do
         end
         return _tbl_0
       end)()
-      parsed.authority = nil
       parsed.query = nil
       if path then
         local _path, query = path:match("^(.-)%?(.*)$")
@@ -293,6 +292,7 @@ local Application
 do
   local _parent_0 = nil
   local _base_0 = {
+    Request = Request,
     layout = require("lapis.views.layout"),
     error_page = require("lapis.views.error"),
     views_prefix = "views",
@@ -318,7 +318,7 @@ do
     dispatch = function(self, req, res)
       local err, trace, r
       local success = xpcall((function()
-        r = Request(self, req, res)
+        r = self.Request(self, req, res)
         if not (self.router:resolve(req.parsed_url.path, r)) then
           local handler = self:wrap_handler(self.default_route)
           r:write(handler({ }, nil, "default_route", r))
@@ -350,7 +350,7 @@ do
       return error("Failed to find route: " .. tostring(self.req.cmd_url))
     end,
     handle_error = function(self, err, trace)
-      local r = Request(self, self.req, self.res)
+      local r = self.app.Request(self, self.req, self.res)
       r:write({
         status = 500,
         layout = false,

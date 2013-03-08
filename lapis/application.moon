@@ -111,10 +111,13 @@ class Request
     else
       @app.router\url_for first, ...
 
-  -- TODO: just replace url.build with something written here
+  -- @build_url! --> http://example.com:8080/current/path
+  -- @build_url "hello_world" --> http://example.com:8080/hello_world
+  -- @build_url "hello_world?color=blue" --> http://example.com:8080/hello_world?color=blue
+  -- @build_url "cats", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
+  -- Where example.com is the host of the request, and 8080 is current port
   build_url: (path, options) =>
     parsed = { k,v for k,v in pairs @req.parsed_url }
-    parsed.authority = nil
     parsed.query = nil
 
     if path
@@ -187,6 +190,7 @@ class Request
 
 
 class Application
+  Request: Request
   layout: require"lapis.views.layout"
   error_page: require"lapis.views.error"
 
@@ -225,7 +229,7 @@ class Application
   dispatch: (req, res) =>
     local err, trace, r
     success = xpcall (->
-        r = Request self, req, res
+        r = @.Request self, req, res
 
         unless @router\resolve req.parsed_url.path, r
           -- run default route if nothing matched
@@ -265,7 +269,7 @@ class Application
 
   -- self is Request that errrored
   handle_error: (err, trace) =>
-    r = Request self, @req, @res
+    r = @app.Request self, @req, @res
     r\write {
       status: 500
       layout: false
