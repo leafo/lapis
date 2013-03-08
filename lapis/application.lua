@@ -230,6 +230,18 @@ do
       local i = #parts
       parts[i + 1] = "Path=/"
       parts[i + 2] = "HttpOnly"
+      do
+        local extra = self.app.cookie_attributes
+        if extra then
+          i = i + 3
+          local _list_0 = extra
+          for _index_0 = 1, #_list_0 do
+            local p = _list_0[_index_0]
+            parts[i] = p
+            i = i + 1
+          end
+        end
+      end
       return self.res:add_header("Set-cookie", table.concat(parts, "; "))
     end,
     _debug = function(self)

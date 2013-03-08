@@ -177,6 +177,12 @@ class Request
     parts[i + 1] = "Path=/"
     parts[i + 2] = "HttpOnly"
 
+    if extra = @app.cookie_attributes
+      i += 3
+      for p in *extra
+        parts[i] = p
+        i += 1
+
     @res\add_header "Set-cookie", table.concat parts, "; "
 
   _debug: =>
