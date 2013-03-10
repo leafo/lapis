@@ -6,7 +6,7 @@ session = require "lapis.session"
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
 
-import parse_cookie_string, to_json from require "lapis.util"
+import parse_cookie_string, to_json, build_url from require "lapis.util"
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -126,10 +126,11 @@ class Request
 
       if query
         path = _path
-        parsed.query = query
-
-      if not path\match "^/"
-        path = "/#{path}"
+        -- join the queries
+        parsed.query = if old_query = parsed.query
+          old_query .. "&" .. query
+        else
+          query
 
     parsed.path = path
 
@@ -140,7 +141,7 @@ class Request
       for k,v in pairs options
         parsed[k] = v
 
-    url.build parsed
+    build_url parsed
 
   write: (...) =>
     for thing in *{...}

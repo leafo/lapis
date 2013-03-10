@@ -125,6 +125,34 @@ json_encodable = (obj, seen={}) ->
 
 to_json = (obj) -> json.encode json_encodable obj
 
+-- {
+--     [path] = "/test"
+--     [scheme] = "http"
+--     [host] = "localhost.com"
+--     [port] = "8080"
+--     [fragment] = "yes"
+--     [query] = "hello=world"
+-- }
+build_url = (parts) ->
+  out = parts.path or ""
+  out ..= "?" .. parts.query if parts.query
+  out ..= "#" .. parts.fragment if parts.fragment
+
+  if host = parts.host
+    host = "//" .. host
+    if parts.port
+      host ..= ":" .. parts.port
+
+    if parts.scheme
+      host = parts.scheme .. ":" .. host
+
+    if parts.path and out\sub(1,1) != "/"
+      out = "/" .. out
+
+    out = host .. out
+
+  out
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
@@ -150,8 +178,20 @@ if ... == "test"
     }
   }
 
+  parts = {
+    path: "/test"
+    scheme: "http"
+    host: "localhost.com"
+    port: "8080"
+    fragment: "cool_thing"
+    query: "dad=days"
+  }
+
+  print build_url parts
+  print url.build parts
+
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
-  :key_filter, :to_json, :json_encodable }
+  :key_filter, :to_json, :json_encodable, :build_url }

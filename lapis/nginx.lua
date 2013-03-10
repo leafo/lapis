@@ -1,9 +1,9 @@
 local url = require("socket.url")
 local upload = require("resty.upload")
-local escape_pattern, parse_content_disposition
+local escape_pattern, parse_content_disposition, build_url
 do
   local _table_0 = require("lapis.util")
-  escape_pattern, parse_content_disposition = _table_0.escape_pattern, _table_0.parse_content_disposition
+  escape_pattern, parse_content_disposition, build_url = _table_0.escape_pattern, _table_0.parse_content_disposition, _table_0.build_url
 end
 local flatten_params
 flatten_params = function(t)
@@ -107,7 +107,7 @@ local ngx_req = {
     }
   end,
   built_url = function(t)
-    return url.build(t.parsed_url)
+    return build_url(t.parsed_url)
   end,
   params_post = function(t)
     if (t.headers["content-type"] or ""):match(escape_pattern("multipart/form-data")) then

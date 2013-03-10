@@ -246,6 +246,33 @@ local to_json
 to_json = function(obj)
   return json.encode(json_encodable(obj))
 end
+local build_url
+build_url = function(parts)
+  local out = parts.path or ""
+  if parts.query then
+    out = out .. ("?" .. parts.query)
+  end
+  if parts.fragment then
+    out = out .. ("#" .. parts.fragment)
+  end
+  do
+    local host = parts.host
+    if host then
+      host = "//" .. host
+      if parts.port then
+        host = host .. (":" .. parts.port)
+      end
+      if parts.scheme then
+        host = parts.scheme .. ":" .. host
+      end
+      if parts.path and out:sub(1, 1) ~= "/" then
+        out = "/" .. out
+      end
+      out = host .. out
+    end
+  end
+  return out
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -269,6 +296,16 @@ if ... == "test" then
       fn = function(self) end
     }
   }))
+  local parts = {
+    path = "/test",
+    scheme = "http",
+    host = "localhost.com",
+    port = "8080",
+    fragment = "cool_thing",
+    query = "dad=days"
+  }
+  print(build_url(parts))
+  print(url.build(parts))
 end
 return {
   unescape = unescape,
@@ -286,5 +323,6 @@ return {
   trim_filter = trim_filter,
   key_filter = key_filter,
   to_json = to_json,
-  json_encodable = json_encodable
+  json_encodable = json_encodable,
+  build_url = build_url
 }

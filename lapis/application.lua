@@ -11,10 +11,10 @@ do
   local _table_0 = require("lapis.html")
   html_writer = _table_0.html_writer
 end
-local parse_cookie_string, to_json
+local parse_cookie_string, to_json, build_url
 do
   local _table_0 = require("lapis.util")
-  parse_cookie_string, to_json = _table_0.parse_cookie_string, _table_0.to_json
+  parse_cookie_string, to_json, build_url = _table_0.parse_cookie_string, _table_0.to_json, _table_0.build_url
 end
 local set_and_truthy
 set_and_truthy = function(val, default)
@@ -167,10 +167,14 @@ do
         path = _path or path
         if query then
           path = _path
-          parsed.query = query
-        end
-        if not path:match("^/") then
-          path = "/" .. tostring(path)
+          do
+            local old_query = parsed.query
+            if old_query then
+              parsed.query = old_query .. "&" .. query
+            else
+              parsed.query = query
+            end
+          end
         end
       end
       parsed.path = path
@@ -182,7 +186,7 @@ do
           parsed[k] = v
         end
       end
-      return url.build(parsed)
+      return build_url(parsed)
     end,
     write = function(self, ...)
       local _list_0 = {

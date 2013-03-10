@@ -1,7 +1,7 @@
 
 url = require "socket.url"
 upload = require "resty.upload"
-import escape_pattern, parse_content_disposition from require "lapis.util"
+import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
@@ -65,7 +65,7 @@ ngx_req = {
     }
 
   built_url: (t) ->
-    url.build t.parsed_url
+    build_url t.parsed_url
 
   params_post: (t) ->
     -- parse multipart if required
