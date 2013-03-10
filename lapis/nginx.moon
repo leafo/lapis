@@ -60,7 +60,7 @@ ngx_req = {
       scheme: ngx.var.scheme
       path: ngx.var.uri
       host: ngx.var.host
-      port: ngx.var.server_port
+      port: ngx.var.http_host\match ":(%d+)$"
       query: ngx.var.args
     }
 
