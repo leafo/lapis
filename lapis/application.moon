@@ -107,7 +107,7 @@ class Request
 
   url_for: (first, ...) =>
     if type(first) == "table"
-      @app.router\url_for first\url_params!
+      @app.router\url_for first\url_params @, ...
     else
       @app.router\url_for first, ...
 

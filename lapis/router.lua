@@ -56,6 +56,9 @@ do
       end
     end,
     url_for = function(self, name, params)
+      if not (name) then
+        return params
+      end
       local replace
       replace = function(s)
         local param_name = s:sub(2)

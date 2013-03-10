@@ -148,7 +148,7 @@ do
     end,
     url_for = function(self, first, ...)
       if type(first) == "table" then
-        return self.app.router:url_for(first:url_params())
+        return self.app.router:url_for(first:url_params(self, ...))
       else
         return self.app.router:url_for(first, ...)
       end

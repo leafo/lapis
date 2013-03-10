@@ -68,6 +68,8 @@ class Router
       params, responder, path, name
 
   url_for: (name, params) =>
+    return params unless name
+
     replace = (s) ->
       param_name = s\sub 2
       if val = params[param_name]
