@@ -202,8 +202,6 @@ class Application
 
   views_prefix: "views"
 
-  before_filters: {}
-
   new: =>
     @router = Router!
     @router.default_route = => false
@@ -227,8 +225,9 @@ class Application
         \add_params r.req.params_post, "POST"
         \add_params params, "url_params"
 
-        for filter in *@before_filters
-          filter r
+        if @before_filters
+          for filter in *@before_filters
+            filter r
 
         \write handler r
 
@@ -256,8 +255,8 @@ class Application
   serve: => -- TODO: alias to lapis.serve
 
   @before_filter: (fn) =>
+    @__base.before_filters or= {}
     table.insert @before_filters, fn
-
 
   -- Callbacks
   -- run with Request as self, instead of application
