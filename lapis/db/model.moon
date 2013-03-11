@@ -34,9 +34,9 @@ class Model
   @load_all: (tbls) =>
     [@load t for t in *tbls]
 
-  @delete: (query, ...) =>
-    assert query, "tried to delete with no query"
-    db.delete @table_name!, query, ...
+  -- @delete: (query, ...) =>
+  --   assert query, "tried to delete with no query"
+  --   db.delete @table_name!, query, ...
 
   @select: (query="", ...) =>
     opts = {}
