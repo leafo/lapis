@@ -49,5 +49,8 @@ request = (r) ->
   cmd = "#{req.cmd_mth} #{req.cmd_url}"
   print colors(t)\format status, cmd, flatten_params r.url_params
 
-{ :request, :query }
+migration = (name) ->
+  print colors("%{bright}%{yellow}Migrating: %{reset}%{green}#{name}%{reset}")
+
+{ :request, :query, :migration }
 

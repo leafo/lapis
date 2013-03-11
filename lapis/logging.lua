@@ -60,7 +60,12 @@ request = function(r)
   local cmd = tostring(req.cmd_mth) .. " " .. tostring(req.cmd_url)
   return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end
+local migration
+migration = function(name)
+  return print(colors("%{bright}%{yellow}Migrating: %{reset}%{green}" .. tostring(name) .. "%{reset}"))
+end
 return {
   request = request,
-  query = query
+  query = query,
+  migration = migration
 }
