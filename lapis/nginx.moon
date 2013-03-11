@@ -42,13 +42,9 @@ parse_multipart = ->
 ngx_req = {
   headers: -> ngx.req.get_headers!
   cmd_mth: -> ngx.var.request_method
-  cmd_url: ->
-    url = ngx.var.uri
-    if args = ngx.var.args
-      url = url .. "?" .. ngx.var.args
-    url
+  cmd_url: ->  ngx.var.request_uri
 
-  relpath: -> ngx.var.uri
+  relpath: (t) -> t.parsed_url.path
   scheme: -> ngx.var.scheme
   port: -> ngx.var.server_port
   srv: -> ngx.var.server_addr
@@ -56,9 +52,12 @@ ngx_req = {
   referer: -> ngx.var.http_referer or ""
 
   parsed_url: (t) ->
+    uri = ngx.var.request_uri
+    uri = uri\match("(.-)%?") or uri
+
     {
       scheme: ngx.var.scheme
-      path: ngx.var.uri
+      path: uri
       host: ngx.var.host
       port: ngx.var.http_host\match ":(%d+)$"
       query: ngx.var.args

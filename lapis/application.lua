@@ -353,10 +353,12 @@ do
     end,
     serve = function(self) end,
     default_route = function(self)
-      if self.req.cmd_url:match("./$") then
-        local stripped = self.req.cmd_url:match("^(.+)/+$")
+      if self.req.parsed_url.path:match("./$") then
+        local stripped = self.req.parsed_url.path:match("^(.+)/+$")
         return {
-          redirect_to = stripped,
+          redirect_to = self:build_url(stripped, {
+            query = self.req.parsed_url.query
+          }),
           status = 301
         }
       else
