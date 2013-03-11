@@ -38,6 +38,10 @@ entity_exists = (name) ->
   res = unpack db.select "COUNT(*) as c from pg_class where relname = #{name}"
   res.c > 0
 
+gen_index_name = (...) ->
+  parts = [p for p in *{...} when type(p) == "string"]
+  concat(parts, "_") .. "_idx"
+
 create_table = (name, columns) ->
   buffer = {"CREATE TABLE IF NOT EXISTS #{db.escape_identifier name} ("}
   add = (...) -> append_all buffer, ...
@@ -58,8 +62,7 @@ create_table = (name, columns) ->
   db.query concat buffer
 
 create_index = (tname, ...) ->
-  parts = [p for p in *{tname, ...} when type(p) == "string"]
-  index_name = concat(parts, "_") .. "_idx"
+  index_name = gen_index_name tname, ...
   return if entity_exists index_name
 
   columns, options = extract_options {...}
@@ -72,8 +75,17 @@ create_index = (tname, ...) ->
     append_all buffer, col
     append_all buffer, ", " unless i == #columns
 
-  append_all buffer, ");"
+  append_all buffer, ")"
+
+  if options.where
+    append_all buffer, " WHERE ", options.where
+
+  append_all buffer, ";"
   db.query concat buffer
+
+drop_index = (...) ->
+  index_name = gen_index_name ...
+  db.query "DROP INDEX IF EXISTS #{db.escape_identifier index_name}"
 
 drop_table = (tname) ->
   db.query "DROP TABLE IF EXISTS #{db.escape_identifier tname};"
@@ -109,7 +121,7 @@ if ... == "test"
   rename_table "hello", "world"
 
 {
-  :types, :create_table, :drop_table, :create_index, :add_column, :drop_column
-  :rename_column, :rename_table
+  :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
+  :drop_column, :rename_column, :rename_table
 }
 

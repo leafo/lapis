@@ -61,6 +61,25 @@ entity_exists = function(name)
   local res = unpack(db.select("COUNT(*) as c from pg_class where relname = " .. tostring(name)))
   return res.c > 0
 end
+local gen_index_name
+gen_index_name = function(...)
+  local parts = (function(...)
+    local _accum_0 = { }
+    local _len_0 = 1
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local p = _list_0[_index_0]
+      if type(p) == "string" then
+        _accum_0[_len_0] = p
+        _len_0 = _len_0 + 1
+      end
+    end
+    return _accum_0
+  end)(...)
+  return concat(parts, "_") .. "_idx"
+end
 local create_table
 create_table = function(name, columns)
   local buffer = {
@@ -91,23 +110,7 @@ create_table = function(name, columns)
 end
 local create_index
 create_index = function(tname, ...)
-  local parts = (function(...)
-    local _accum_0 = { }
-    local _len_0 = 1
-    local _list_0 = {
-      tname,
-      ...
-    }
-    for _index_0 = 1, #_list_0 do
-      local p = _list_0[_index_0]
-      if type(p) == "string" then
-        _accum_0[_len_0] = p
-        _len_0 = _len_0 + 1
-      end
-    end
-    return _accum_0
-  end)(...)
-  local index_name = concat(parts, "_") .. "_idx"
+  local index_name = gen_index_name(tname, ...)
   if entity_exists(index_name) then
     return 
   end
@@ -127,8 +130,17 @@ create_index = function(tname, ...)
       append_all(buffer, ", ")
     end
   end
-  append_all(buffer, ");")
+  append_all(buffer, ")")
+  if options.where then
+    append_all(buffer, " WHERE ", options.where)
+  end
+  append_all(buffer, ";")
   return db.query(concat(buffer))
+end
+local drop_index
+drop_index = function(...)
+  local index_name = gen_index_name(...)
+  return db.query("DROP INDEX IF EXISTS " .. tostring(db.escape_identifier(index_name)))
 end
 local drop_table
 drop_table = function(tname)
@@ -178,6 +190,7 @@ return {
   create_table = create_table,
   drop_table = drop_table,
   create_index = create_index,
+  drop_index = drop_index,
   add_column = add_column,
   drop_column = drop_column,
   rename_column = rename_column,
