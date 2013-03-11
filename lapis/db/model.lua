@@ -165,6 +165,10 @@ do
       return _accum_0
     end)()
   end
+  self.delete = function(self, query, ...)
+    assert(query, "tried to delete with no query")
+    return db.delete(self:table_name(), query, ...)
+  end
   self.select = function(self, query, ...)
     if query == nil then
       query = ""
