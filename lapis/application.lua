@@ -154,6 +154,9 @@ do
       end
     end,
     build_url = function(self, path, options)
+      if path:match("^%a+:") then
+        return path
+      end
       local parsed = (function()
         local _tbl_0 = { }
         for k, v in pairs(self.req.parsed_url) do
