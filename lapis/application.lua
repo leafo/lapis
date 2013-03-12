@@ -154,7 +154,7 @@ do
       end
     end,
     build_url = function(self, path, options)
-      if path:match("^%a+:") then
+      if path and path:match("^%a+:") then
         return path
       end
       local parsed = (function()
