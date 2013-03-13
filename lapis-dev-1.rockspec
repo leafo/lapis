@@ -34,6 +34,7 @@ build = {
 		["lapis.config"] = "lapis/config.lua",
 		["lapis.csrf"] = "lapis/csrf.lua",
 		["lapis.db"] = "lapis/db.lua",
+		["lapis.db.migrations"] = "lapis/db/migrations.lua",
 		["lapis.db.model"] = "lapis/db/model.lua",
 		["lapis.db.schema"] = "lapis/db/schema.lua",
 		["lapis.html"] = "lapis/html.lua",
