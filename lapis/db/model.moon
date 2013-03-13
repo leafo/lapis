@@ -143,6 +143,11 @@ class Model
 
   -- create from table of values, return loaded object
   @create: (values) =>
+    if @constraints
+      for key, value in pairs values
+        if err = @_check_constraint key, value, values
+          return nil, err
+
     values._timestamp = true if @timestamp
     res = db.insert @table_name!, values, @primary_keys!
     if res
@@ -163,6 +168,11 @@ class Model
     table_name = db.escape_identifier @table_name!
     res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
     res.c > 0
+
+  @_check_constraint: (key, value, obj) =>
+    return unless @constraints
+    if fn = @constraints[key]
+      fn @, value, key, obj
 
   _primary_cond: =>
     { key, @[key] for key in *{@@primary_keys!} }
@@ -192,6 +202,12 @@ class Model
 
     return if next(columns) == nil
     values = { col, @[col] for col in *columns }
+
+    if @@constraints
+      for key, value in pairs values
+        if err = @@_check_constraint key, value, @
+          return nil, err
+
     values._timestamp = true if @@timestamp
     db.update @@table_name!, values, cond
 

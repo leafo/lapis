@@ -77,6 +77,16 @@ do
         end
         return _tbl_0
       end)()
+      if self.__class.constraints then
+        for key, value in pairs(values) do
+          do
+            local err = self.__class:_check_constraint(key, value, self)
+            if err then
+              return nil, err
+            end
+          end
+        end
+      end
       if self.__class.timestamp then
         values._timestamp = true
       end
@@ -323,6 +333,16 @@ do
     end
   end
   self.create = function(self, values)
+    if self.constraints then
+      for key, value in pairs(values) do
+        do
+          local err = self:_check_constraint(key, value, values)
+          if err then
+            return nil, err
+          end
+        end
+      end
+    end
     if self.timestamp then
       values._timestamp = true
     end
@@ -351,6 +371,17 @@ do
     local table_name = db.escape_identifier(self:table_name())
     local res = unpack(db.select("COUNT(*) as c from " .. tostring(table_name) .. " where " .. tostring(cond)))
     return res.c > 0
+  end
+  self._check_constraint = function(self, key, value, obj)
+    if not (self.constraints) then
+      return 
+    end
+    do
+      local fn = self.constraints[key]
+      if fn then
+        return fn(self, value, key, obj)
+      end
+    end
   end
   if _parent_0 and _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
