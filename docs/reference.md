@@ -45,7 +45,6 @@ directory and run:
   ->	wrote	nginx.conf
   ->	wrote	mime.types
 
-
 Lapis starts you off by writing some basic Nginx configuration. Because your
 application runs directly in Nginx, this configuration is what routes requests
 from Nginx to your Lua code.
@@ -64,33 +63,52 @@ environment. We'll talk about how to configure these things later on.
 
 ### Nginx Configuration
 
-To start out, create a `nginx.conf` file in a new directory. The config file
-lets us control what requests go to Lua. This is powerful because we can still
-serve things like static assets through Nginx, which is very performant. In
-this simple example though, we only have a single location that has all
-requests go to Lua.
+Let's take a look at the configration that `lapis new` has given us. Although
+it's not necessary to look at this immediately, it's important to understand
+when building more advanced applications or even just deploying your
+application to production.
 
-    # nginx.conf
-    worker_processes  1;
+Here is the `nginx.conf` that has been generated:
+
+    worker_processes  ${{NUM_WORKERS}};
     error_log stderr notice;
     daemon off;
+    env LAPIS_ENVIRONMENT;
 
     events {
-      worker_connections 1024;
+        worker_connections 1024;
     }
 
     http {
-      server {
-        listen 8080;
-        lua_code_cache off;
+        include mime.types;
 
-        location / {
-          default_type text/html;
-          content_by_lua_file "web.lua";
+        server {
+            listen ${{PORT}};
+            lua_code_cache off;
+
+            location / {
+                default_type text/html;
+                set $_url "";
+                content_by_lua_file "web.lua";
+            }
+
+            location /static/ {
+                alias static/;
+            }
+
+            location /favicon.ico {
+                alias static/favicon.ico;
+            }
         }
-      }
     }
 
+
+The first thing to notice is that this is not a normal Nginx configuration
+file. You'll notice special `${{VARIABLE}}` syntax. When starting your server
+with Lapis, these variables are replaced with their values pulled from the
+active configuration.
+
+The rest of the syntax is regular Nginx configuration syntax.
 
 There are a couple interesting things here. `error_log stderr notice` and
 `daemon off` lets our server run in the foreground, and print log text to the
@@ -127,20 +145,28 @@ is matched to a function that returns `"Hello World!"`
 The return value of an action determines what is written as the response. In
 the simplest form we can return a string in order to write a string.
 
+> Don't forget to compile the `.moon` files. You can watch the current
+> directory and compile automatically with `moonc -w`.
+
 ## Starting The Server
 
-Now that we have our application ready we can start OpenResty. The following
-might vary depending on your installation, but it might look something like
-this:
+To start your server you can run `lapis server`. The `lapis` binary will
+attempt to find your OpenResty instalation. It will search the following
+directories for an `nginx` binary. (The last one represents anything in your
+`PATH`)
 
-    PATH="/usr/local/openresty/nginx/sbin:$PATH" nginx -p "$(pwd)" -c "nginx.conf"
+    "/usr/local/openresty/nginx/sbin/"
+    "/usr/sbin/"
+    ""
 
-This launches OpenResty (mine happens to be in
-`/usr/local/openresty/nginx/sbin`), telling it to use our config file and use
-the current directory as the prefix path.
+> Remember that you need OpenResty and not a normal installation of Nginx.
+> Lapis will ignore regular Nginx binaries.
 
-We can now navigate to <http://localhost:8080/> to see our application. If it
-doesn't work send me an email and I'll help you out: <leafot@gmail.com>.
+So go ahead and start your server:
+
+    $ lapis server
+
+We can now navigate to <http://localhost:8080/> to see our application.
 
 ## Lapis Applications
 
@@ -149,7 +175,6 @@ Let's start with the basic application from above:
     lapis = require "lapis"
     lapis.serve class extends lapis.Application
       "/": => "Hello World!"
-
 
 ### URL Parameters
 
@@ -179,7 +204,8 @@ an instance of application. But it's not, it's actually an instance of
 
 As we've already seen, the request holds all the parameters in `@params`.
 
-We can the distinct parameters types using `@GET`, `@POST`, and `@url_params`.
+We can the get the distinct parameters types using `@GET`, `@POST`, and
+`@url_params`.
 
 We can also access the instance of the application with `@app`, and the raw
 request and response with `@req` and `@res`.
