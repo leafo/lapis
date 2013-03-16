@@ -1,5 +1,5 @@
 local insert = table.insert
-local scope_meta, configs, config, run_with_scope, merge_set, get
+local scope_meta, configs, config, run_with_scope, merge_set, get_env, get
 scope_meta = {
   __index = (function()
     local set
@@ -80,12 +80,15 @@ merge_set = function(t, k, v)
     t[k] = v
   end
 end
+get_env = function()
+  return os.getenv("LAPIS_ENVIRONMENT") or "development"
+end
 do
   local cache = { }
   local loaded_config = false
   get = function(name)
     if name == nil then
-      name = os.getenv("LAPIS_ENVIRONMENT")
+      name = get_env()
     end
     if not (name) then
       error("missing environment name")

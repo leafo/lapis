@@ -56,11 +56,14 @@ merge_set = (t, k, v) ->
   else
     t[k] = v
 
+get_env = ->
+  os.getenv"LAPIS_ENVIRONMENT" or "development"
+
 get = do
   cache = {}
   loaded_config = false
 
-  (name=os.getenv "LAPIS_ENVIRONMENT") ->
+  (name=get_env!) ->
     error "missing environment name" unless name
 
     unless loaded_config
