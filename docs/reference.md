@@ -274,6 +274,69 @@ Here are some examples of the HTML generation:
       p "Welcome!"
 
 
+### HTML Widgets
+
+The preferred way to write HTML is through widgets. Widgets are classes who are
+only concerned with outputting HTML. They use the same syntax as the `@html`
+shown above helper for writing HTML.
+
+When Lapis loads a widget automatically it does it by package name. For
+example, if it was loading the widget for the name `"index"` it would try to
+load the module `views.index`, and the result of that module should be the
+widget.
+
+This is what a widget looks like:
+
+    -- views/index.moon
+    import Widget from require "lapis.html"
+
+    class Index extends Widget
+      content: =>
+        h1 class: "header", "Hello"
+          div class: "body", ->
+            text "Welcome to my site!"
+
+
+> The name of the widget class is insignificant, but it's worth making one
+> because some systems can auto-generate encapsulating HTML named after the
+> class.
+
+### Rendering A Widget From An Action
+
+The `render` option key is used to render a widget. For example you can render
+the `"index"` widget from our action by returning a table with render set to
+the name of the widget:
+
+    "/": =>
+      render: "index"
+
+If the action has a name, then we can set render to `true` to load the widget
+with the same name as the action:
+
+    [index: "/"]: =>
+      render: true
+
+
+### Passing Data To A Widget
+
+Any `@` variables set in the action can be accessed in the widget. Additionally
+any of the helper functions like `@url_for` are also accessible.
+
+    -- web.moon
+    [index: "/"]: =>
+      @page_title = "Welcome To My Page"
+      render: true
+
+    -- views/index.moon
+    import Widget from require "lapis.html"
+
+    class Index extends Widget
+      content: =>
+      h1 class: "header", @page_title
+        div class: "body", ->
+          text "Welcome to my site!"
+
+
 
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
