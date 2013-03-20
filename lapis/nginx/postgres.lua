@@ -10,6 +10,10 @@ local set_logger
 set_logger = function(l)
   logger = l
 end
+local get_logger
+get_logger = function()
+  return logger
+end
 local NULL = { }
 local raw
 raw = function(val)
@@ -289,6 +293,7 @@ return {
   interpolate_query = interpolate_query,
   set_proxy_location = set_proxy_location,
   set_logger = set_logger,
+  get_logger = get_logger,
   select = _select,
   insert = _insert,
   update = _update,

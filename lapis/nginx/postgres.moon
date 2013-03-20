@@ -26,6 +26,7 @@ proxy_location = "/query"
 set_proxy_location = (loc) -> proxy_location = loc
 
 set_logger = (l) -> logger = l
+get_logger = -> logger
 
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
@@ -215,7 +216,7 @@ if ... == "test"
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query
   :set_proxy_location
-  :set_logger
+  :set_logger, :get_logger
 
   select: _select
   insert: _insert
