@@ -105,12 +105,14 @@ do
       session.write_session(self)
       self:write_cookies()
       do
-        local rpath = self.options.render
-        if rpath then
-          if rpath == true then
-            rpath = self.route_name
+        local widget = self.options.render
+        if widget then
+          if widget == true then
+            widget = self.route_name
           end
-          local widget = require(tostring(self.app.views_prefix) .. "." .. tostring(rpath))
+          if type(widget) == "string" then
+            widget = require(tostring(self.app.views_prefix) .. "." .. tostring(rpath))
+          end
           local view = widget(self.options.locals)
           view:include_helper(self)
           self:write(view)

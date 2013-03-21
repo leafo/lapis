@@ -73,9 +73,10 @@ class Request
     session.write_session @
     @write_cookies!
 
-    if rpath = @options.render
-      rpath = @route_name if rpath == true
-      widget = require "#{@app.views_prefix}.#{rpath}"
+    if widget = @options.render
+      widget = @route_name if widget == true
+      if type(widget) == "string"
+        widget = require "#{@app.views_prefix}.#{rpath}"
 
       view = widget @options.locals
       view\include_helper @
