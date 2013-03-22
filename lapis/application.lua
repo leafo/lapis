@@ -111,7 +111,7 @@ do
             widget = self.route_name
           end
           if type(widget) == "string" then
-            widget = require(tostring(self.app.views_prefix) .. "." .. tostring(rpath))
+            widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
           end
           local view = widget(self.options.locals)
           view:include_helper(self)

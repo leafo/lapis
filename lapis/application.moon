@@ -76,7 +76,7 @@ class Request
     if widget = @options.render
       widget = @route_name if widget == true
       if type(widget) == "string"
-        widget = require "#{@app.views_prefix}.#{rpath}"
+        widget = require "#{@app.views_prefix}.#{widget}"
 
       view = widget @options.locals
       view\include_helper @
