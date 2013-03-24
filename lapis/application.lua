@@ -436,6 +436,33 @@ do
     self.__base.before_filters = self.__base.before_filters or { }
     return table.insert(self.before_filters, fn)
   end
+  self.include = function(self, other_app, opts, into)
+    if into == nil then
+      into = self.__base
+    end
+    local path_prefix = opts and opts.path or other_app.path
+    local name_prefix = opts and opts.name or other_app.name
+    for path, action in pairs(other_app.__base) do
+      local t = type(path)
+      if t == "table" then
+        if path_prefix then
+          local name = next(path)
+          path[name] = path_prefix .. path[name]
+        end
+        if name_prefix then
+          local name = next(path)
+          path[name_prefix .. name] = path[name]
+          path[name] = nil
+        end
+        into[path] = action
+      elseif t == "string" and path:match("^/") then
+        if path_prefix then
+          path = path_prefix .. path
+        end
+        into[path] = action
+      end
+    end
+  end
   if _parent_0 and _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end

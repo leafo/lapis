@@ -262,6 +262,30 @@ class Application
     @__base.before_filters or= {}
     table.insert @before_filters, fn
 
+  -- @inclue other_app, path: "/hello", name: "hello_"
+  @include: (other_app, opts, into=@__base) =>
+    path_prefix = opts and opts.path or other_app.path
+    name_prefix = opts and opts.name or other_app.name
+
+    for path, action in pairs other_app.__base
+      t = type path
+
+      if t == "table"
+        if path_prefix
+          name = next path
+          path[name] = path_prefix .. path[name]
+
+        if name_prefix
+          name = next path
+          path[name_prefix .. name] = path[name]
+          path[name] = nil
+
+        into[path] = action
+      elseif t == "string" and path\match "^/"
+        if path_prefix
+          path = path_prefix .. path
+        into[path] = action
+
   -- Callbacks
   -- run with Request as self, instead of application
 
