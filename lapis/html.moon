@@ -1,6 +1,8 @@
 
 import concat from table
 
+_G = _G
+
 punct = "[%^$()%.%[%]*+%-?]"
 escape_patt = (str) ->
   (str\gsub punct, (p) -> "%"..p)
@@ -80,7 +82,7 @@ class Buffer
       @i, @buffer = old_i, old_buffer
 
   make_scope: =>
-    @scope = setmetatable {}, {
+    @scope = setmetatable { [Buffer]: true }, {
       __index: (scope, name) ->
         default = @old_env[name]
         return default if default != nil
@@ -114,10 +116,12 @@ class Buffer
       out = {fn ...}
     else
       before = @old_env
-      @old_env = getfenv fn
+      -- env[Buffer] is true with we have a broken function
+      -- a function that errored out mid way through a previous render
+      @old_env = env[Buffer] and _G or env
       setfenv fn, @scope
       out = {fn ...}
-      setfenv fn, @old_env
+      setfenv fn, env
       @old_env = before
 
     unpack out

@@ -1,4 +1,5 @@
 local concat = table.concat
+local _G = _G
 local punct = "[%^$()%.%[%]*+%-?]"
 local escape_patt
 escape_patt = function(str)
@@ -103,7 +104,9 @@ do
       end
     end,
     make_scope = function(self)
-      self.scope = setmetatable({ }, {
+      self.scope = setmetatable({
+        [Buffer] = true
+      }, {
         __index = function(scope, name)
           local default = self.old_env[name]
           if default ~= nil then
@@ -167,12 +170,12 @@ do
         }
       else
         local before = self.old_env
-        self.old_env = getfenv(fn)
+        self.old_env = env[Buffer] and _G or env
         setfenv(fn, self.scope)
         out = {
           fn(...)
         }
-        setfenv(fn, self.old_env)
+        setfenv(fn, env)
         self.old_env = before
       end
       return unpack(out)
