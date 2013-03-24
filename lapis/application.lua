@@ -400,11 +400,6 @@ do
       self.router.default_route = function(self)
         return false
       end
-      do
-        local _with_0 = require("lapis.server")
-        self.__class.__base["/static/*"] = _with_0.make_static_handler("static")
-        self.__class.__base["/favicon.ico"] = _with_0.serve_from_static()
-      end
       for path, handler in pairs(self.__class.__base) do
         local t = type(path)
         if t == "table" or t == "string" and path:match("^/") then

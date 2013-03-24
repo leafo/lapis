@@ -210,11 +210,6 @@ class Application
     @router = Router!
     @router.default_route = => false
 
-    with require "lapis.server"
-      -- add static route
-      @@__base["/static/*"] = .make_static_handler "static"
-      @@__base["/favicon.ico"] = .serve_from_static!
-
     for path, handler in pairs @@__base
       t = type path
       if t == "table" or t == "string" and path\match "^/"
