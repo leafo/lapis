@@ -443,23 +443,46 @@ do
     local path_prefix = opts and opts.path or other_app.path
     local name_prefix = opts and opts.name or other_app.name
     for path, action in pairs(other_app.__base) do
-      local t = type(path)
-      if t == "table" then
-        if path_prefix then
-          local name = next(path)
-          path[name] = path_prefix .. path[name]
+      local _continue_0 = false
+      repeat
+        local t = type(path)
+        if t == "table" then
+          if path_prefix then
+            local name = next(path)
+            path[name] = path_prefix .. path[name]
+          end
+          if name_prefix then
+            local name = next(path)
+            path[name_prefix .. name] = path[name]
+            path[name] = nil
+          end
+        elseif t == "string" and path:match("^/") then
+          if path_prefix then
+            path = path_prefix .. path
+          end
+        else
+          _continue_0 = true
+          break
         end
-        if name_prefix then
-          local name = next(path)
-          path[name_prefix .. name] = path[name]
-          path[name] = nil
+        do
+          local before_filters = other_app.before_filters
+          if before_filters then
+            local fn = action
+            action = function(r)
+              local _list_0 = before_filters
+              for _index_0 = 1, #_list_0 do
+                local filter = _list_0[_index_0]
+                filter(r)
+              end
+              return fn(r)
+            end
+          end
         end
         into[path] = action
-      elseif t == "string" and path:match("^/") then
-        if path_prefix then
-          path = path_prefix .. path
-        end
-        into[path] = action
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
   end
