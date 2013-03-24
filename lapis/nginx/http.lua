@@ -12,6 +12,39 @@ local set_proxy_location
 set_proxy_location = function(loc)
   proxy_location = loc
 end
+local encode_query_string
+do
+  local _table_0 = require("lapis.util")
+  encode_query_string = _table_0.encode_query_string
+end
+local simple
+simple = function(req, body)
+  if type(req) == "string" then
+    req = {
+      url = req
+    }
+  end
+  if body then
+    req.method = "POST"
+    req.body = body
+  end
+  if type(req.body) == "table" then
+    req.body = encode_query_string(req.body)
+    req.headers = req.headers or { }
+    req.headers["Content-type"] = "application/x-www-form-urlencoded"
+  end
+  local res = ngx.location.capture(proxy_location, {
+    method = methods[req.method or "GET"],
+    body = req.body,
+    ctx = {
+      headers = req.headers
+    },
+    vars = {
+      _url = req.url
+    }
+  })
+  return res.body, res.status, res.header
+end
 local request
 request = function(url, str_body)
   local return_res_body
@@ -77,6 +110,7 @@ ngx_replace_headers = function(new_headers)
 end
 return {
   request = request,
+  simple = simple,
   set_proxy_location = set_proxy_location,
   ngx_replace_headers = ngx_replace_headers
 }

@@ -48,6 +48,33 @@ methods = {
 
 set_proxy_location = (loc) -> proxy_location = loc
 
+import encode_query_string from require "lapis.util"
+
+-- a simple http interface that doens't user ltn12
+simple = (req, body) ->
+  if type(req) == "string"
+    req = { url: req }
+
+  if body
+    req.method = "POST"
+    req.body = body
+
+  if type(req.body) == "table"
+    req.body = encode_query_string req.body
+    req.headers or= {}
+    req.headers["Content-type"] = "application/x-www-form-urlencoded"
+
+  res = ngx.location.capture proxy_location, {
+    method: methods[req.method or "GET"]
+    body: req.body
+    ctx: {
+      headers: req.headers
+    }
+    vars: { _url: req.url }
+  }
+
+  res.body, res.status, res.header
+
 request = (url, str_body) ->
   local return_res_body
   req = if type(url) == "table"
@@ -104,5 +131,5 @@ ngx_replace_headers = (new_headers=nil) ->
       req.set_header k, v
 
 
-{ :request, :set_proxy_location, :ngx_replace_headers }
+{ :request, :simple, :set_proxy_location, :ngx_replace_headers }
 
