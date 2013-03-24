@@ -67,9 +67,7 @@ class Router
     @@route_grammar\match(path) * -1 / (params) ->
       params, responder, path, name
 
-  url_for: (name, params) =>
-    return params unless name
-
+  fill_path: (path, params) =>
     replace = (s) ->
       param_name = s\sub 2
       if val = params[param_name]
@@ -84,8 +82,12 @@ class Router
         ""
 
     patt = Cs (symbol / replace + 1)^0
-    route = assert @named_routes[name], "Missing route named #{name}"
-    patt\match route
+    patt\match path
+
+  url_for: (name, params) =>
+    return params unless name
+    path = assert @named_routes[name], "Missing route named #{name}"
+    @fill_path path, params
 
   resolve: (route, ...) =>
     @build! unless @p

@@ -55,10 +55,7 @@ do
         return params, responder, path, name
       end
     end,
-    url_for = function(self, name, params)
-      if not (name) then
-        return params
-      end
+    fill_path = function(self, path, params)
       local replace
       replace = function(s)
         local param_name = s:sub(2)
@@ -83,8 +80,14 @@ do
         end
       end
       local patt = Cs((symbol / replace + 1) ^ 0)
-      local route = assert(self.named_routes[name], "Missing route named " .. tostring(name))
-      return patt:match(route)
+      return patt:match(path)
+    end,
+    url_for = function(self, name, params)
+      if not (name) then
+        return params
+      end
+      local path = assert(self.named_routes[name], "Missing route named " .. tostring(name))
+      return self:fill_path(path, params)
     end,
     resolve = function(self, route, ...)
       if not (self.p) then
