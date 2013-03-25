@@ -4,7 +4,7 @@
 json = require "cjson"
 import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding"
 
-generate_token = (req, key, expires=os.time! + 60*60) ->
+generate_token = (req, key, expires=os.time! + 60*60*8) ->
   secret = require"lapis.session".get_secret!
   msg = encode_base64 json.encode { :key, :expires }
   signature = encode_base64 hmac_sha1 secret, msg

@@ -7,7 +7,7 @@ end
 local generate_token
 generate_token = function(req, key, expires)
   if expires == nil then
-    expires = os.time() + 60 * 60
+    expires = os.time() + 60 * 60 * 8
   end
   local secret = require("lapis.session").get_secret()
   local msg = encode_base64(json.encode({
