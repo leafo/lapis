@@ -172,10 +172,11 @@ class Request
         else
           error "Don't know how to write: (#{t}) #{thing}"
 
-  -- TODO: cookie paramaters
   write_cookies: =>
     parts = for k,v in pairs @cookies
       "#{url.escape k}=#{url.escape v}"
+
+    return unless #parts > 0
 
     i = #parts
     parts[i + 1] = "Path=/"

@@ -236,6 +236,9 @@ do
         end
         return _accum_0
       end)()
+      if not (#parts > 0) then
+        return 
+      end
       local i = #parts
       parts[i + 1] = "Path=/"
       parts[i + 2] = "HttpOnly"
