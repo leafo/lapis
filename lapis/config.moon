@@ -3,6 +3,11 @@ import insert from table
 
 local *
 
+default_config = {
+  port: "8080"
+  num_workers: "1"
+}
+
 scope_meta = {
   __index: do
     set = (k, v) =>
@@ -136,5 +141,5 @@ if ... == "test"
 
   moon.p get "cool"
 
-{ :get, :config, :merge_set }
+{ :get, :config, :merge_set, :default_config }
 

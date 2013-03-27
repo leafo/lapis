@@ -10,10 +10,7 @@ do
 end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
-local default_config = {
-  port = "8080",
-  num_workers = "1"
-}
+local default_config = config.default_config
 local log
 log = function(...)
   return print("->", ...)

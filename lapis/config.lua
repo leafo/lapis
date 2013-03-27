@@ -1,5 +1,9 @@
 local insert = table.insert
-local scope_meta, configs, config, run_with_scope, merge_set, get_env, get
+local default_config, scope_meta, configs, config, run_with_scope, merge_set, get_env, get
+default_config = {
+  port = "8080",
+  num_workers = "1"
+}
 scope_meta = {
   __index = (function()
     local set
@@ -179,5 +183,6 @@ end
 return {
   get = get,
   config = config,
-  merge_set = merge_set
+  merge_set = merge_set,
+  default_config = default_config
 }

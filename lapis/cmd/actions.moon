@@ -4,10 +4,7 @@ import find_nginx from require "lapis.cmd.nginx"
 path = require "lapis.cmd.path"
 config = require "lapis.config"
 
-default_config = {
-  port: "8080"
-  num_workers: "1"
-}
+import default_config from config
 
 log = (...) ->
   print "->", ...
