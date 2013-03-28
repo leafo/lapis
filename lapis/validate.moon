@@ -112,4 +112,4 @@ if ... == "test"
   }
 
 
-{ :validate, :assert_valid, :test_input }
+{ :validate, :assert_valid, :test_input, :validate_functions }
