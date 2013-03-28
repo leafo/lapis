@@ -332,10 +332,45 @@ any of the helper functions like `@url_for` are also accessible.
 
     class Index extends Widget
       content: =>
-      h1 class: "header", @page_title
-        div class: "body", ->
-          text "Welcome to my site!"
+        h1 class: "header", @page_title
+          div class: "body", ->
+            text "Welcome to my site!"
 
+
+## Before Filters
+
+Sometimes you want a piece of code to run before every action. A good example
+of this is setting up the user session. We can declare a before filter, or a
+function that runs before every action like so:
+
+    class App extends lapis.Application
+      @before_filter =>
+        if @session.user
+          @current_user = load_user @session.user
+
+      "/": =>
+        "current user is: #{@current_user}"
+
+You are free to register as many as you like by calling `@before_filter`
+multiple times. They will be run in the order they are registered.
+
+## Handling HTTP verbs
+
+It's common to have a single action do different things depending on the HTTP
+verb. Lapis comes with some helpers to make writing these actions simple.
+`respond_to` takes a table indexed by HTTP verb with a value of the function to
+perform when the action receives that verb.
+
+    import respond_to from require "lapis.application"
+
+    class App extends lapis.Application
+      [create_account: "/create_account"]: respond_to {
+        GET: => render: true
+
+        POST: =>
+          create_user @params
+          redirect_to: @url_for "index"
+      }
 
 
 [0]: http://openresty.org/
