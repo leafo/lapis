@@ -193,5 +193,6 @@ end
 return {
   validate = validate,
   assert_valid = assert_valid,
-  test_input = test_input
+  test_input = test_input,
+  validate_functions = validate_functions
 }
