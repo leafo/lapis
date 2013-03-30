@@ -1120,6 +1120,44 @@ instances is created from the name of the included table. In the example above
 the `user_data` property contains the included model instances. (Had it been
 plural the table name would have been made singular)
 
+### Constraints
+
+Often before we insert or update a row we want to check that some conditions
+are met. In Lapis these are called constraints. For example let's say we have a
+user model and users are not allowed to have the name "admin".
+
+We might define it like this:
+
+
+    ```moon
+    import Model from require "lapis.db.models"
+
+    class Users extends Model
+      @constraints: {
+        name: (value) =>
+          if value\lower! == "admin"
+            "User can not be named admin"
+      }
+
+
+    assert Users\create {
+      name: "Admin"
+    }
+    ```
+
+The `@constraints` class variable is a table that maps column name to a
+function that should check if the constraint is broken. If anything truthy is
+returned from the function then the update/insert fails, and that is returned
+as the error message.
+
+In the example above, the call to `assert` will fail with the error `"User can
+not be named admin"`.
+
+The constraint check function is passed 4 arguments. The model class, the value
+of the column being checked, the name of the column being checked, and lastly
+the object being checked. On insertion the object is the table passed to the
+create method. On update the object is the instance of the model.
+
 
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
