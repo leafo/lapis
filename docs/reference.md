@@ -50,9 +50,9 @@ directory and run:
     ->	wrote	mime.types
     ```
 
-Lapis starts you off by writing some basic Nginx configuration. Because your
-application runs directly in Nginx, this configuration is what routes requests
-from Nginx to your Lua code.
+Lapis starts you off by writing some basic Nginx configuration. Your
+application runs directly in Nginx and this configuration is what routes
+requests from Nginx to your Lua code.
 
 Feel free to look at the generated config file (`nginx.conf` is the only
 important file). Here's a brief overview of what it does:
@@ -94,7 +94,6 @@ Here is the `nginx.conf` that has been generated:
 
             location / {
                 default_type text/html;
-                set $_url "";
                 content_by_lua_file "web.lua";
             }
 
@@ -260,6 +259,47 @@ We can then generate the paths using `@url_for`. The first argument is the
 named route, and the second optional argument is the parameters to the route
 pattern.
 
+### Before Filters
+
+Sometimes you want a piece of code to run before every action. A good example
+of this is setting up the user session. We can declare a before filter, or a
+function that runs before every action like so:
+
+    ```moon
+    class App extends lapis.Application
+      @before_filter =>
+        if @session.user
+          @current_user = load_user @session.user
+
+      "/": =>
+        "current user is: #{@current_user}"
+    ```
+
+You are free to add as many as you like by calling `@before_filter`
+multiple times. They will be run in the order they are registered.
+
+### Handling HTTP verbs
+
+It's common to have a single action do different things depending on the HTTP
+verb. Lapis comes with some helpers to make writing these actions simple.
+`respond_to` takes a table indexed by HTTP verb with a value of the function to
+perform when the action receives that verb.
+
+    ```moon
+    import respond_to from require "lapis.application"
+
+    class App extends lapis.Application
+      [create_account: "/create_account"]: respond_to {
+        GET: => render: true
+
+        POST: =>
+          create_user @params
+          redirect_to: @url_for "index"
+      }
+    ```
+
+
+
 ## HTML Generation
 
 ### HTML In Actions
@@ -312,7 +352,7 @@ Here are some examples of the HTML generation:
 
 The preferred way to write HTML is through widgets. Widgets are classes who are
 only concerned with outputting HTML. They use the same syntax as the `@html`
-shown above helper for writing HTML.
+helper shown above for writing HTML.
 
 When Lapis loads a widget automatically it does it by package name. For
 example, if it was loading the widget for the name `"index"` it would try to
@@ -377,45 +417,6 @@ any of the helper functions like `@url_for` are also accessible.
         h1 class: "header", @page_title
         div class: "body", ->
           text "Welcome to my site!"
-    ```
-
-## Before Filters
-
-Sometimes you want a piece of code to run before every action. A good example
-of this is setting up the user session. We can declare a before filter, or a
-function that runs before every action like so:
-
-    ```moon
-    class App extends lapis.Application
-      @before_filter =>
-        if @session.user
-          @current_user = load_user @session.user
-
-      "/": =>
-        "current user is: #{@current_user}"
-    ```
-
-You are free to add as many as you like by calling `@before_filter`
-multiple times. They will be run in the order they are registered.
-
-## Handling HTTP verbs
-
-It's common to have a single action do different things depending on the HTTP
-verb. Lapis comes with some helpers to make writing these actions simple.
-`respond_to` takes a table indexed by HTTP verb with a value of the function to
-perform when the action receives that verb.
-
-    ```moon
-    import respond_to from require "lapis.application"
-
-    class App extends lapis.Application
-      [create_account: "/create_account"]: respond_to {
-        GET: => render: true
-
-        POST: =>
-          create_user @params
-          redirect_to: @url_for "index"
-      }
     ```
 
 
@@ -1307,6 +1308,132 @@ The constraint check function is passed 4 arguments. The model class, the value
 of the column being checked, the name of the column being checked, and lastly
 the object being checked. On insertion the object is the table passed to the
 create method. On update the object is the instance of the model.
+
+
+## Request Object
+
+As we've already seen the request object contains instance variables for all of the request parameters in `@params`. There are a few other properties as well.
+
+* `@req` -- raw request table (generated from `ngx` state)
+* `@res` -- raw response table (used to update `ngx` state)
+* `@app` -- the instance of the application
+* `@cookies` -- the table of cookies, can be assigned to set new cookies. Only
+  supports strings as values
+* `@session` -- signed session table. Can store values of any
+  type that can be JSON encoded. Is backed by cookies
+* `@options` -- set of options that controls how the request is rendered to nginx
+* `@buffer` -- the output buffer
+
+
+When an action is executed the `write` method (described below) is called with
+the return values.
+
+### Request Options
+
+Whenever a table is written, the key/value pairs (when the key is a string) are
+copied into `@options`. For example, in this action the `render` and `status`
+properties are copied.
+
+    ```moon
+    "/": => render: "error", status: 404
+    ```
+
+After the action is finished, the options help determine what is sent to the
+browser.
+
+Here is the list of options that can be written
+
+* `status` -- sets HTTP status code (eg 200, 404, 500, ...)
+* `render` -- causes a view to be rendered with the request. If the value is
+  `true` then the name of the route is used as the view name. Otherwise the value
+  must be a string or a view class.
+* `content_type` -- sets the `Content-type` header
+* `json` -- causes the request to return the json encoded value of the
+  property. The content type is set to `application/json` as well.
+* `layout` -- changes the layout from the default defined by the application
+* `redirect_to` -- sets status to 302 and sets `Location` header to value.
+  Supports both relative and absolute URLs
+
+
+### Cookies
+
+The `@cookies` table in the request lets you read and write cookies. If you try
+to iterate over the table to print the cookies you might notice it's empty:
+
+    ```moon
+    "/": =>
+      for k,v in pairs(@cookies)
+        print k,v
+    ```
+
+The existing cookies are stored in the `__index` of the metatable. This is done
+so we can when tell what cookies have been assigned to during the action
+because they will be directly in the `@cookies` table.
+
+Thus, to set a cookie we just need to assign into the `@cookies` table:
+
+    ```moon
+    "/": =>
+      @cookies.foo = "bar"
+    ```
+
+### Session
+
+The `@session` is a more advanced way to persist data over requests. The
+content of the session is serialized to JSON and stored in store in a specially
+named cookie. The serialized cookie is also signed with you application secret
+so it can't be tampered with. Because it's serialized with JSON you can store
+nested tables and other primitive values.
+
+The session can be set and read the same way as cookies:
+
+    ```moon
+    "/": =>
+      unless @session.current_user
+        @session.current_user = "leaf"
+    ```
+
+### Methods
+
+####  `write(things...)`
+
+Writes all of the arguments. A different actions is done depending on the type
+of each argument.
+
+* `string` -- String is appended to output buffer
+* `function` (or callable table) -- Function is called with the output buffer,
+  result is recursively passed to `write`
+* `table` -- key/value pairs are assigned into `@options`, all other values are
+  recursively passed to `write`
+
+
+#### `url_for(name_or_obj, params)`
+
+Generates a url for `name_or_obj`.
+
+If `name_or_obj` is a string, then the route of that name is looked up and
+filled using the values in params.
+
+For example:
+
+    ```moon
+    [user_data: "/data/:user_id/:data_field"] =>
+
+    "/": =>
+      -- returns: /data/123/height
+      @url_for "user_data", user_id: 123, data_field: "height"
+    ```
+
+If `name_or_obj` is a table, then the `url_params` method is called on the
+object. The arguments passed to `url_params` are the request, followed by all
+the remaining arguments passed to `url_for`. The result of `url_params` is used
+to call `url_for` again.
+
+
+.................................
+
+#### `build_url(path, options)`
+
 
 
 [0]: http://openresty.org/
