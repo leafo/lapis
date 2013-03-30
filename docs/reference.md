@@ -10,7 +10,7 @@ with OpenResty. Lua's coroutines allows you to write synchronous looking code
 that is event driven behind the scenes.
 
 Lapis is early in development but it comes with a url router, html templating
-through a MoonScript DSL, CSRF and session support, a basic Postgres backed
+through a MoonScript DSL, CSRF and session support, a basic PostgreSQL backed
 active record system for working with models and a handful of other useful
 functions needed for developing websites.
 
@@ -19,7 +19,7 @@ This guide hopes to serve as a tutorial and a reference.
 ## Basic Setup
 
 Install OpenResty onto your system. If you're compiling manually it's
-recommended to enable Postgres and Lua JIT. If you're using heroku then you can
+recommended to enable Postgres and Lua JIT. If you're using Heroku then you can
 use the Heroku OpenResy module along with the Lua build pack.
 
 Next install Lapis using LuaRocks. You can find the rockspec [on MoonRocks][3]:
@@ -181,6 +181,13 @@ We can now navigate to <http://localhost:8080/> to see our application.
 
 ## Lapis Applications
 
+When we refer to a Lapis application we are talking about a class that extends
+from `lapis.Application`. The properties of the application make up the routes
+the application can serve and the actions it will perform.
+
+If a property name is a string and begins with a "/" or the property is a table
+then it defines a route. All other properties are methods of the application.
+
 Let's start with the basic application from above:
 
     ```moon
@@ -189,7 +196,12 @@ Let's start with the basic application from above:
       "/": => "Hello World!"
     ```
 
+[Named routes](#named_routes) are constructed using a table as a property name.
+
 ### URL Parameters
+
+Routes can contain special patterns that match parts of the url and put them
+into a request parameter.
 
 Named parameters are a `:` followed by a name. They match all characters
 excluding `/`.
@@ -197,7 +209,6 @@ excluding `/`.
     ```moon
     "/user/:name": => "Hello #{@params.name}"
     ```
-
 
 If we were to go to the path "/user/leaf", `@params.name` would be set to
 `"leaf"`.
@@ -214,9 +225,9 @@ named. The value of the splat is placed into `@params.splat`
 
 ### The Action
 
-The action is the method that response to the request for the matched route. In
-the above example it uses a fat arrow, `=>`, so you might think that `self` is
-an instance of application. But it's not, it's actually an instance of
+An action is the function that is called in reponse to a route matching the
+URL. In the above example it uses a fat arrow, `=>`, so you might think that
+`self` is an instance of application. It's actually an instance of the
 `Request`, a class that abstracts the request from Nginx.
 
 As we've already seen, the request holds all the parameters in `@params`.
@@ -557,9 +568,242 @@ In addition to `assert_valid` there is one more useful validation function:
   yielding the error.
 
 
+## Configuration and Environments
+
+## Database Access
+
+Lapis comes with a set of classes and functions for working with
+[PostgreSQL][5]. In the future other databases might be directly supported.
+
+### Configuring Upstream
+
+Every query is performed asynchronously by sending a request to an Nginx
+upstream. Our single upstream will automatically manage a pool of PostgreSQL
+database connections.
+
+The first step is to add an upstream to our `nginx.conf`. Place the following
+in the `http` block:
+
+    ```nginx
+    upstream database {
+      postgres_server ${{pg POSTGRESQL_URL}};
+    }
+    ```
+
+> The upstream must be named `database` by default.
+
+In this example the `pg` filter is applied to our `POSTGRESQL_URL`
+configuration variable. Let's go ahead and add a value to our `config.moon`
+
+    ```moon
+    config "development", ->
+      postgresql_url "postgres://postgres:@127.0.0.1/my_database"
+    ```
+
+The `pg` filter will convert the PostgreSQL URL to the right format for the
+Nginx PostgreSQL module.
+
+### Making A Query
+
+There are two ways to make queries. The first way is to use the raw query
+interface, a collection of functions to help you write SQL.
+
+The second way is to use the `Model` class, a wrapper around a Lua table that
+helps you synchronize it with a row in a database table.
+
+Here's a base example using the raw query interface:
+
+    ```moon
+    db = require "lapis.db"
+
+    lapis.serve class extends lapis.Application
+      "/": =>
+        res = db.query "select * from my_table where id = ?", 10
+        "ok!"
+    ```
+
+## Query Interface
+
+    ```moon
+    db = require "lapis.db"
+    ```
+
+The `db` module provides the following functions:
+
+#### `query(query, params...)`
+
+Performs a raw query. Returns the result set if successful, returns `nil` if
+failed.
+
+The first argument is the query to perform. If the query contains any `?`s then
+they are replaced in the order they appear with the remaining arguments. The
+remaining arguments are escaped with `escape_literal` before being
+interpolated, making SQL injection impossible.
+
+    ```moon
+    res = db.query "SELECT * FROM hello"
+    res = db.query "UPDATE things SET color = ?", "blue"
+    res = db.query "INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true
+    ```
+
+    ```sql
+    SELECT * FROM hello
+    UPDATE things SET color = 'blue'
+    INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
+    ```
+
+> Due to a limitation in the PostgreSQL Nginx extension, it is not possible to
+> get the error message if the query has failed. You can however see the error
+> in the logs.
+
+#### `select(query, params...)`
+
+The same as `query` except it appends `"SELECT" to the front of the query.
+
+    ```moon
+    res = db.select "* from hello where active = ?", db.FALSE
+    ```
+
+    ```sql
+    SELECT * from hello where active = FALSE
+    ```
+
+#### `insert(table, values, returning...)`
+
+Inserts a row into `table`. `values` is a Lua table of column names and values.
+
+    ```moon
+    db.insert "my_table", {
+      age: 10
+      name: "Hello World"
+    }
+    ```
+
+    ```sql
+    INSERT INTO "my_table" ("age", "name") VALUES (10, 'Hello World')
+    ```
+
+A list of column names to be returned can be given after the value table:
+
+    ```moon
+    res = db.insert "some_other_table", {
+      name: "Hello World"
+    }, "id"
+    ```
+
+    ```sql
+    INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
+    ```
+
+#### `update(table, values, conditions, params...)`
+
+Updates `table` with `values` on all rows that match `conditions`.
+
+    ```moon
+    db.update "the_table", {
+      name: "Dogbert 2.0"
+      active: true
+    }, {
+      id: 100
+    }
+    ```
+
+    ```sql
+    UPDATE "the_table" SET "name" = 'Dogbert 2.0', "active" = TRUE WHERE "id" = 100
+    ```
+
+`conditions` can also be a string, and `params` will be interpolated into it:
+
+    ```moon
+    db.update "the_table", {
+      count: db.raw"count + 1"
+    }, "count < ?", 10
+    ```
+
+    ```sql
+    UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
+    ```
+
+#### `delete(table, conditions, params...)`
+
+Deletes rows from `table` that match `conditions`.
+
+    ```moon
+    db.delete "cats", name: "Roo"
+    ```
+
+    ```sql
+    DELETE FROM "cats" WHERE "name" = 'Roo'
+    ```
+
+`conditions` can also be a string
+
+    ```moon
+    db.delete "cats", "name = ?", "Gato"
+    ```
+
+    ```sql
+    DELETE FROM "cats" WHERE name = 'Gato'
+    ```
+
+#### `raw(str)`
+
+Returns a special value that will be inserted verbatim into query without being
+escaped:
+
+    ```moon
+    db.update "the_table", {
+      count: db.raw"count + 1"
+    }
+
+    db.select "* from another_table where x = ?", db.raw"now()"
+    ```
+
+    ```moon
+    UPDATE "the_table" SET "count" = count + 1
+    SELECT * from another_table where x = now()
+    ```
+
+#### `escape_literal(value)`
+
+Escapes a value for use in a query. A value is any type that can be stored in a
+column. Numbers, strings, and booleans will be escaped accordingly.
+
+    ```moon
+    escaped = db.escape_literal value
+    res = db.query "select * from hello where id = #{escaped}"
+    ```
+
+`escape_literal` is not appropriate for escaping column or table names. See
+`escape_identifier`.
+
+#### `escape_identifier(str)`
+
+Escapes a string for use in a query as an identifier. An identifier is a column
+or table name.
+
+    ```moon
+    table_name = db.escape_literal "table"
+    res = db.query "select * from #{table_name}"
+    ```
+`escape_identifier` is not appropriate for escaping values. See
+`escape_literal` for escaping values.
+
+### Constants
+
+The following constants are also available:
+
+ * `NULL` -- represents `NULL` in SQL
+ * `TRUE` -- represents `TRUE` in SQL
+ * `FALSE` -- represents `FALSE` in SQL
+
+### Models
+
+
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
 [2]: https://github.com/leafo/heroku-buildpack-lua
 [3]: http://rocks.moonscript.org/modules/leafo/lapis
 [4]: http://moonscript.org/reference/#moonc
+[5]: http://www.postgresql.org/
 

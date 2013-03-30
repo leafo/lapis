@@ -280,6 +280,15 @@ if ... == "test" then
     hungry = true
   })
 end
+if ... == "test2" then
+  raw_query = function(str)
+    return print("QUERY:", str)
+  end
+  _update("the_table", {
+    count = raw("count + 1")
+  })
+  _select("* from another_table where x = ?", raw("now()"))
+end
 return {
   query = query,
   raw = raw,
