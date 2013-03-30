@@ -366,15 +366,17 @@ any of the helper functions like `@url_for` are also accessible.
     [index: "/"]: =>
       @page_title = "Welcome To My Page"
       render: true
+    ```
 
+    ```moon
     -- views/index.moon
     import Widget from require "lapis.html"
 
     class Index extends Widget
       content: =>
         h1 class: "header", @page_title
-          div class: "body", ->
-            text "Welcome to my site!"
+        div class: "body", ->
+          text "Welcome to my site!"
     ```
 
 ## Before Filters
@@ -393,7 +395,7 @@ function that runs before every action like so:
         "current user is: #{@current_user}"
     ```
 
-You are free to register as many as you like by calling `@before_filter`
+You are free to add as many as you like by calling `@before_filter`
 multiple times. They will be run in the order they are registered.
 
 ## Handling HTTP verbs
@@ -481,7 +483,7 @@ idiom.
 
     class App extends lapis.Application
       "/": capture_errors =>
-        user = assert_error User\find id: "leafo"
+        user = assert_error Users\find id: "leafo"
         "result: #{result}"
     ```
 
@@ -627,6 +629,8 @@ Here's a base example using the raw query interface:
     ```moon
     db = require "lapis.db"
     ```
+
+### Functions
 
 The `db` module provides the following functions:
 
@@ -840,7 +844,7 @@ If there are multiple primary keys then a array table can be used:
       @primary_key: { "user_id", "followed_user_id" }
     ```
 
-### Finding Rows
+### Finding A Row
 
 For the following examples assume we have the following models:
 
@@ -910,6 +914,18 @@ the last argument with the `fields` key set:
     SELECT created_at as c from "tags" where tag = 'merchant'
     ```
 
+Alternatively if you want to find many rows by their primary key you can use
+the `find_all` method. It takes an array table of primary keys. This method
+only works on tables that have singular primary keys.
+
+    ```moon
+    users = Users\find_all { 1,2,3,4,5 }
+    ```
+
+    ```sql
+    SELECT * from "users" where "id" in (1, 2, 3, 4, 5)
+    ```
+
 ### Inserting Rows
 
 The `create` class method is used to create new rows. It takes a table of
@@ -927,7 +943,7 @@ the value of an auto-incrementing key from the insert statement.
     ```
 
     ```sql
-    INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id" 
+    INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
     ```
 
 ### Updating A Row
@@ -982,6 +998,127 @@ Just call `delete` on the instance:
     ```sql
     DELETE FROM "users" WHERE "id" = 1
     ```
+
+### Timestamps
+
+Because it's common to store creation and update time models have
+support for managing these columns automatically.
+
+When creating your table make sure your table has the following columns:
+
+
+    ```sql
+    CREATE TABLE ... (
+      ...
+      "created_at" timestamp without time zone NOT NULL,
+      "updated_at" timestamp without time zone NOT NULL
+    )
+    ```
+
+Then define your model with the `@timestamp` class variable set to true:
+
+    ```moon
+    class Users extends Model
+      @timestamp: true
+    ```
+
+Whenever `create` and `update` are called the appropriate timestamp column will
+also be set.
+
+
+### Preloading Associations
+
+A common pitfall when using active record type systems is triggering many
+queries inside of a loop. In order to avoid situations like this you should
+load data for as many objects as possible in a single query before looping over
+the data.
+
+We'll need some models to demonstrate: (The columns are annotated in a comment
+above the model).
+
+    ```moon
+    import Model from require "lapis.db.model"
+
+    -- columns: id, name
+    class Users extends Model
+
+    -- columns: id, user_id, text_content
+    class Posts extends Model
+    ```
+
+Given all the posts, we want to find the user for each post. We use the
+`include_in` class method to include instances of that model in the array of
+models instances passed to it.
+
+
+    ```moon
+    posts = Posts\select! -- this gets all the posts
+
+    Users\include_in posts, "user_id"
+
+    print posts[1].user.name -- print the fetched data
+    ```
+
+    ```sql
+    SELECT * from "users" where "id" in (1,2,3,4,5,6)
+    ```
+
+Each post instance is mutated to have a `user` property assigned to it with an
+instance of the `Users` model. The first argument of `include_in` is the array
+table of model instances. The second argument is the column name of the foreign
+key found in the array of model instances that maps to the primary key of the
+class calling the `include_in`.
+
+The name of the inserted property is derived form the name of the foreign key.
+In this case, `user` was derived from the foreign key `user_id`. If we want to
+manually specify the name we can do something like this:
+
+
+    ```moon
+    Users\include_in posts, "user_id", as: "author"
+    ```
+
+Now all the posts will contain a property named `author` with an instance of
+the `Users` model.
+
+Sometimes the relationship is flipped. Instead of the list of model instances
+having the foreign key column, the model we want to include might have it. This
+is common in one-to-one relationships.
+
+Here's another set of example models:
+
+    ```moon
+    import Model from require "lapis.db.model"
+
+    -- columns: id, name
+    class Users extends Model
+
+    -- columns: user_id, twitter_account, facebook_username
+    class UserData extends Model
+    ```
+
+Now let's say we have a collection of users and we want to fetch the associated
+user data:
+
+    ```moon
+    users = Users\select!
+    UserData\include_in users, "user_id", flip: true
+
+    print users[1].user_data.twitter_account
+    ```
+
+    ```sql
+    SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
+    ```
+
+In this example we set the `flip` option to true in the `include_in` method.
+This causes the search to happen against our foreign key, and the ids to be
+pulled from the `id` of the array of model instances.
+
+Additionally, the derived property name that is injected into the model
+instances is created from the name of the included table. In the example above
+the `user_data` property contains the included model instances. (Had it been
+plural the table name would have been made singular)
 
 
 [0]: http://openresty.org/
