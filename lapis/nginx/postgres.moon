@@ -211,16 +211,6 @@ if ... == "test"
 
   -- query "update things set #{encode_assigns(v)} where id = ?", "hello-world"
 
-if ... == "test2"
-  raw_query = (str) -> print "QUERY:", str
-
-
-  _update "the_table", {
-    count: raw"count + 1"
-  }
-
-  _select "* from another_table where x = ?", raw"now()"
-
 {
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query

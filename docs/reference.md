@@ -797,7 +797,191 @@ The following constants are also available:
  * `TRUE` -- represents `TRUE` in SQL
  * `FALSE` -- represents `FALSE` in SQL
 
-### Models
+## Models
+
+Lapis provides a `Model` baseclass for making tables that can be synchronized
+with a database row. The class is used to represent a single table, an instance
+of the class is used to represent a single row of that table.
+
+The most primitive model is a blank model:
+
+    ```moon
+    import Model from require "lapis.db.model"
+
+    class Users extends Model
+    ```
+
+The name of the class is used to determine the name of the table. In this case
+the class name `Users` represents the table `users`. A class name of
+`HelloWorlds` would result in the table name `hello_worlds`. It is customary to
+make the class name plural.
+
+If you want to use a different table name you can overwrite the `@table_name` class method:
+
+    ```moon
+    class Users extends Model
+      @table_name: => "active_users"
+    ```
+
+### Primary Keys
+
+By default all models have the primary key "id". This can be changed by setting
+the `@primary_key` class variable.
+
+    ```moon
+    class Users extends Model
+      @primary_key: "login"
+    ```
+
+If there are multiple primary keys then a array table can be used:
+
+    ```moon
+    class Followings extends Model
+      @primary_key: { "user_id", "followed_user_id" }
+    ```
+
+### Finding Rows
+
+For the following examples assume we have the following models:
+
+    ```moon
+    import Model from require "lapis.db.model"
+
+    class Users extends Model
+
+    class Tags extends Model
+      @primary_key: {"user_id", "tag"}
+    ```
+
+When you want to find a single row the `find` class method is used. In the
+first form it takes a variable number of values, one for each primary key in
+the order the primary keys are specified:
+
+
+    ```moon
+    user = Users\find 23232
+    tag = Tags\find 1234, "programmer"
+    ```
+
+    ```sql
+    SELECT * from "users" where "id" = 23232 limit 1
+    SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
+    ```
+
+`find` returns an instance of the model. In the case of the user, if there was a
+`name` column, then we could access the users name with `user.name`.
+
+We can also pass a table as an argument to `find`. The table will be converted to a `WHERE` clause in the query:
+
+    ```moon
+    user = Users\find email: "person@example.com"
+    ```
+
+    ```sql
+    SELECT * from "users" where "email" = 'person@example.com' limit 1
+    ```
+
+### Finding Many Rows
+
+When searching for multiple rows the `select` class method is used. It works
+similarly to the `select` function from the raw query interface except you
+specify the part of the query after the list of columns to select.
+
+
+    ```moon
+    tags = Tags\select "where tag = ?", "merchant"
+    ```
+
+    ```sql
+    SELECT * from "tags" where tag = 'merchant'
+    ```
+
+Instead of a single instance, an array table of instances is returned.
+
+If you want to restrict what columns are selected you can pass in a table as
+the last argument with the `fields` key set:
+
+
+    ```moon
+    tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
+    ```
+
+    ```sql
+    SELECT created_at as c from "tags" where tag = 'merchant'
+    ```
+
+### Inserting Rows
+
+The `create` class method is used to create new rows. It takes a table of
+column values to create the row with. It returns an instance of the model. The
+create query fetches the values of the primary keys and sets them on the
+instance using the PostgreSQL `RETURN` statement. This is useful for getting
+the value of an auto-incrementing key from the insert statement.
+
+
+    ```moon
+    user = Users\create {
+      login: "superuser"
+      password: "1234"
+    }
+    ```
+
+    ```sql
+    INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id" 
+    ```
+
+### Updating A Row
+
+Instances of models have the `update` method for updating the row. The values
+of the primary keys are used to uniquely identify the row for updating.
+
+The first form of update takes variable arguments. A list of strings that
+represent column names to be updated. The values of the columns are taken from
+the current values in the instance.
+
+    ```moon
+    user = Users\find 1
+    user.login = "uberuser"
+    user.email = "admin@example.com"
+
+    user\update "login", "email"
+    ```
+
+    ```sql
+    UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
+    ```
+
+Alternatively we can pass a table as the first argument of `update`. The keys
+of the table are the column names, and the values are the values to update the
+columns too. The instance is also updated. We can rewrite the above example as:
+
+    ```moon
+    user = Users\find 1
+    user\update {
+      login: "uberuser"
+      email: "admin@example.com"
+    }
+    ```
+
+    ```sql
+    UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
+    ```
+
+> The table argument can also take positional values, which are treated the
+> same as the variable argument form.
+
+### Deleting A Row
+
+Just call `delete` on the instance:
+
+    ```moon
+    user = Users\find 1
+    user\delete!
+    ```
+
+    ```sql
+    DELETE FROM "users" WHERE "id" = 1
+    ```
 
 
 [0]: http://openresty.org/
