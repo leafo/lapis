@@ -49,6 +49,9 @@ class Request
   render: (opts=false) =>
     @options = opts if opts
 
+    session.write_session @
+    @write_cookies!
+
     if obj = @options.json
       @res.headers["Content-type"] = "application/json"
       @res.content = to_json obj
@@ -70,8 +73,6 @@ class Request
     if @options.status
       @res.status = @options.status
 
-    session.write_session @
-    @write_cookies!
 
     if widget = @options.render
       widget = @route_name if widget == true

@@ -72,6 +72,8 @@ do
       if opts then
         self.options = opts
       end
+      session.write_session(self)
+      self:write_cookies()
       do
         local obj = self.options.json
         if obj then
@@ -102,8 +104,6 @@ do
       if self.options.status then
         self.res.status = self.options.status
       end
-      session.write_session(self)
-      self:write_cookies()
       do
         local widget = self.options.render
         if widget then
