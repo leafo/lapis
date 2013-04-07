@@ -67,13 +67,13 @@ class Router
     @@route_grammar\match(path) * -1 / (params) ->
       params, responder, path, name
 
-  fill_path: (path, params) =>
+  fill_path: (path, params, route_name) =>
     replace = (s) ->
       param_name = s\sub 2
       if val = params[param_name]
         if "table" == type val
           if get_key = val.url_key
-            val = get_key(val, name, param_name) or ""
+            val = get_key(val, route_name, param_name) or ""
           else
             obj_name = val.__class and val.__class.__name or type(val)
             error "Don't know how to serialize object for url: #{obj_name}"
@@ -87,7 +87,7 @@ class Router
   url_for: (name, params) =>
     return params unless name
     path = assert @named_routes[name], "Missing route named #{name}"
-    @fill_path path, params
+    @fill_path path, params, name
 
   resolve: (route, ...) =>
     @build! unless @p

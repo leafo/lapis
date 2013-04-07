@@ -55,7 +55,7 @@ do
         return params, responder, path, name
       end
     end,
-    fill_path = function(self, path, params)
+    fill_path = function(self, path, params, route_name)
       local replace
       replace = function(s)
         local param_name = s:sub(2)
@@ -66,7 +66,7 @@ do
               do
                 local get_key = val.url_key
                 if get_key then
-                  val = get_key(val, name, param_name) or ""
+                  val = get_key(val, route_name, param_name) or ""
                 else
                   local obj_name = val.__class and val.__class.__name or type(val)
                   error("Don't know how to serialize object for url: " .. tostring(obj_name))
@@ -87,7 +87,7 @@ do
         return params
       end
       local path = assert(self.named_routes[name], "Missing route named " .. tostring(name))
-      return self:fill_path(path, params)
+      return self:fill_path(path, params, name)
     end,
     resolve = function(self, route, ...)
       if not (self.p) then
