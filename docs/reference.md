@@ -1429,11 +1429,32 @@ object. The arguments passed to `url_params` are the request, followed by all
 the remaining arguments passed to `url_for`. The result of `url_params` is used
 to call `url_for` again.
 
+The values of params are inserted literally into the url if they are strings.
+If the value is a table then the `url_key` method is called and the result is
+used as the url value.
 
-.................................
+For example, consider a `Users` model and generating a URL for it:
 
-#### `build_url(path, options)`
+    ```moon
+    class Users extends Model
+      url_key: (route_name) => @id
+    ```
 
+
+#### `build_url(path, [options])`
+
+Builds an absolute url for the path. The current request's URI is used to build
+the url.
+
+For example, if we are running our server on `localhost:8080`:
+
+
+    ```moon
+    @build_url! --> http://localhost:8080
+    @build_url "hello" --> http://localhost:8080/hello
+
+    @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
+    ```
 
 
 [0]: http://openresty.org/
