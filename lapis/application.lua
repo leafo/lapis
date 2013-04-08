@@ -38,6 +38,18 @@ auto_table = function(fn)
     end
   })
 end
+local run_before_filter
+run_before_filter = function(filter, r)
+  local _write = r.write
+  local written = false
+  r.write = function(...)
+    written = true
+    return _write(...)
+  end
+  filter(r)
+  r.write = nil
+  return written
+end
 local Request
 do
   local _parent_0 = nil
@@ -497,7 +509,9 @@ respond_to = function(tbl)
       do
         local before = tbl.before
         if before then
-          before(self)
+          if run_before_filter(before, self) then
+            return 
+          end
         end
       end
       return fn(self)

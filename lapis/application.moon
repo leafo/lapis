@@ -18,6 +18,17 @@ auto_table = (fn) ->
     setmetatable @, __index: result
     result[name]
 
+run_before_filter = (filter, r) ->
+  _write = r.write
+  written = false
+  r.write = (...) ->
+    written = true
+    _write ...
+
+  filter r
+  r.write = nil
+  written
+
 class Request
   new: (@app, @req, @res) =>
     @buffer = {} -- output buffer
@@ -228,7 +239,7 @@ class Application
 
         if @before_filters
           for filter in *@before_filters
-            filter r
+            return r if run_before_filter filter, r
 
         \write handler r
 
@@ -286,7 +297,7 @@ class Application
         fn = action
         action = (r) ->
           for filter in *before_filters
-            filter r
+            return if run_before_filter filter, r
           fn r
 
       into[path] = action
@@ -323,7 +334,7 @@ respond_to = (tbl) ->
     fn = tbl[@req.cmd_mth]
     if fn
       if before = tbl.before
-        before @
+        return if run_before_filter before, @
       fn @
     else
       error "don't know how to respond to #{@req.cmd_mth}"
