@@ -278,6 +278,20 @@ function that runs before every action like so:
 You are free to add as many as you like by calling `@before_filter`
 multiple times. They will be run in the order they are registered.
 
+If a before filter calls the `@write` method then the action will be canceled.
+For example we can cancel the action and redirect to another page if some
+condition is not met:
+
+    ```
+    class App extends lapis.Application
+      @before_filter =>
+        unless user_meets_requirements!
+          @write redirect_to: @url_for "login"
+
+      "/": =>
+        "Welcome in"
+    ```
+
 ### Handling HTTP verbs
 
 It's common to have a single action do different things depending on the HTTP
@@ -298,7 +312,28 @@ perform when the action receives that verb.
       }
     ```
 
+`respond_to` can also take a before filter of its own that will run before the
+corresponding HTTP verb action. We do this by specifying a `before`
+function. The same semantics of [before
+filters][#lapis-applications-before-filters] apply, so if you call `@write`
+then the rest of the action will not get run.
 
+    ```moon
+    class App extends lapis.Application
+      "/edit_user/:id": respond_to {
+        before: =>
+          @user = Users\find @params.id
+          @write status: 404, "Not Found" unless @user
+
+        GET: =>
+          "Welcome " .. @user.name
+
+        POST: =>
+          @user\update @params.user
+          redirect_to: @url_for "index"
+      }
+
+    ```
 
 ## HTML Generation
 
