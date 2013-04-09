@@ -16,6 +16,7 @@ do
   local _table_0 = require("lapis.util")
   parse_cookie_string, to_json, build_url = _table_0.parse_cookie_string, _table_0.to_json, _table_0.build_url
 end
+local capture_errors, capture_errors_json
 local set_and_truthy
 set_and_truthy = function(val, default)
   if default == nil then
@@ -344,7 +345,9 @@ do
             local _list_0 = self.before_filters
             for _index_0 = 1, #_list_0 do
               local filter = _list_0[_index_0]
-              filter(r)
+              if run_before_filter(filter, r) then
+                return r
+              end
             end
           end
           _with_0:write(handler(r))
@@ -482,7 +485,9 @@ do
               local _list_0 = before_filters
               for _index_0 = 1, #_list_0 do
                 local filter = _list_0[_index_0]
-                filter(r)
+                if run_before_filter(filter, r) then
+                  return 
+                end
               end
               return fn(r)
             end
@@ -503,7 +508,8 @@ do
 end
 local respond_to
 respond_to = function(tbl)
-  return function(self)
+  local out
+  out = function(self)
     local fn = tbl[self.req.cmd_mth]
     if fn then
       do
@@ -519,6 +525,13 @@ respond_to = function(tbl)
       return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
     end
   end
+  do
+    local error_response = tbl.on_error
+    if error_response then
+      out = capture_errors(out, error_response)
+    end
+  end
+  return out
 end
 local default_error_response
 default_error_response = function()
@@ -526,7 +539,6 @@ default_error_response = function()
     render = true
   }
 end
-local capture_errors
 capture_errors = function(fn, error_response)
   if error_response == nil then
     error_response = default_error_response
@@ -555,7 +567,6 @@ capture_errors = function(fn, error_response)
     end
   end
 end
-local capture_errors_json
 capture_errors_json = function(fn)
   return capture_errors(fn, function(self)
     return {

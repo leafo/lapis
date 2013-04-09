@@ -8,6 +8,8 @@ import html_writer from require "lapis.html"
 
 import parse_cookie_string, to_json, build_url from require "lapis.util"
 
+local capture_errors, capture_errors_json
+
 set_and_truthy = (val, default=true) ->
   return default if val == nil
   val
@@ -330,7 +332,7 @@ class Application
     r
 
 respond_to = (tbl) ->
-  =>
+  out = =>
     fn = tbl[@req.cmd_mth]
     if fn
       if before = tbl.before
@@ -339,6 +341,10 @@ respond_to = (tbl) ->
     else
       error "don't know how to respond to #{@req.cmd_mth}"
 
+  if error_response = tbl.on_error
+    out = capture_errors out, error_response
+
+  out
 
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->
