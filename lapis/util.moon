@@ -3,6 +3,7 @@ url = require "socket.url"
 json = require "cjson"
 
 import concat, insert from table
+import floor from math
 
 -- todo: consider renaming to url_escape/url_unescape
 unescape = do
@@ -153,6 +154,82 @@ build_url = (parts) ->
 
   out
 
+time_ago = do
+  -- TODO: make this a dependency
+  local date
+  pcall -> date = require "date"
+
+  (time) ->
+    diff = date.diff date(true), date(time)
+
+    times = {}
+
+    days = floor diff\spandays()
+
+    if days >= 365
+      years = floor diff\spandays() / 365
+      times.years = years
+      insert times, {"years", years}
+
+      diff\addyears -years
+      days -= years * 365
+
+    if days >= 1
+      times.days = days
+      insert times, {"days", days}
+
+      diff\adddays -days
+
+    hours = floor diff\spanhours()
+    if hours >= 1
+      times.hours = hours
+      insert times, {"hours", hours}
+
+      diff\addhours -hours
+
+    minutes = floor diff\spanminutes()
+    if minutes >= 1
+      times.minutes = minutes
+      insert times, {"minutes", minutes}
+
+      diff\addminutes -minutes
+
+    seconds = floor diff\spanseconds()
+    if seconds >= 1
+      times.seconds = seconds
+      insert times, {"seconds", seconds}
+
+      diff\addseconds -seconds
+
+    times
+
+time_ago_in_words = do
+  singular = {
+    years: "year"
+    days: "day"
+    hours: "hour"
+    minutes: "minute"
+    second: "second"
+  }
+
+  (time, parts=1) ->
+    ago = type(time) == "table" and time or time_ago time
+
+    out = ""
+    i = 1
+    while parts > 0
+      parts -= 1
+      segment = ago[i]
+      i += 1
+      break unless segment
+
+      val = segment[2]
+      word = val == 1 and singular[segment[1]] or segment[1]
+      out ..= ", " if #out > 0
+      out ..= val .. " " .. word
+
+    out .. " ago"
+
 if ... == "test"
   require "moon"
   moon.p parse_query_string "hello=wo%22rld"
@@ -190,8 +267,16 @@ if ... == "test"
   print build_url parts
   print url.build parts
 
+  t = os.time! - 34234349
+  moon.p time_ago t
+  print t
+  print time_ago_in_words t
+  print time_ago_in_words t, 2
+  print time_ago_in_words t, 10
+
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
-  :key_filter, :to_json, :json_encodable, :build_url }
+  :key_filter, :to_json, :json_encodable, :build_url, :time_ago,
+  :time_ago_in_words }

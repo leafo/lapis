@@ -1,6 +1,7 @@
 local url = require("socket.url")
 local json = require("cjson")
 local concat, insert = table.concat, table.insert
+local floor = math.floor
 local unescape
 do
   local u = url.unescape
@@ -273,6 +274,97 @@ build_url = function(parts)
   end
   return out
 end
+local time_ago
+do
+  local date
+  pcall(function()
+    date = require("date")
+  end)
+  time_ago = function(time)
+    local diff = date.diff(date(true), date(time))
+    local times = { }
+    local days = floor(diff:spandays())
+    if days >= 365 then
+      local years = floor(diff:spandays() / 365)
+      times.years = years
+      insert(times, {
+        "years",
+        years
+      })
+      diff:addyears(-years)
+      days = days - (years * 365)
+    end
+    if days >= 1 then
+      times.days = days
+      insert(times, {
+        "days",
+        days
+      })
+      diff:adddays(-days)
+    end
+    local hours = floor(diff:spanhours())
+    if hours >= 1 then
+      times.hours = hours
+      insert(times, {
+        "hours",
+        hours
+      })
+      diff:addhours(-hours)
+    end
+    local minutes = floor(diff:spanminutes())
+    if minutes >= 1 then
+      times.minutes = minutes
+      insert(times, {
+        "minutes",
+        minutes
+      })
+      diff:addminutes(-minutes)
+    end
+    local seconds = floor(diff:spanseconds())
+    if seconds >= 1 then
+      times.seconds = seconds
+      insert(times, {
+        "seconds",
+        seconds
+      })
+      diff:addseconds(-seconds)
+    end
+    return times
+  end
+end
+local time_ago_in_words
+do
+  local singular = {
+    years = "year",
+    days = "day",
+    hours = "hour",
+    minutes = "minute",
+    second = "second"
+  }
+  time_ago_in_words = function(time, parts)
+    if parts == nil then
+      parts = 1
+    end
+    local ago = type(time) == "table" and time or time_ago(time)
+    local out = ""
+    local i = 1
+    while parts > 0 do
+      parts = parts - 1
+      local segment = ago[i]
+      i = i + 1
+      if not (segment) then
+        break
+      end
+      local val = segment[2]
+      local word = val == 1 and singular[segment[1]] or segment[1]
+      if #out > 0 then
+        out = out .. ", "
+      end
+      out = out .. (val .. " " .. word)
+    end
+    return out .. " ago"
+  end
+end
 if ... == "test" then
   require("moon")
   moon.p(parse_query_string("hello=wo%22rld"))
@@ -306,6 +398,12 @@ if ... == "test" then
   }
   print(build_url(parts))
   print(url.build(parts))
+  local t = os.time() - 34234349
+  moon.p(time_ago(t))
+  print(t)
+  print(time_ago_in_words(t))
+  print(time_ago_in_words(t, 2))
+  print(time_ago_in_words(t, 10))
 end
 return {
   unescape = unescape,
@@ -324,5 +422,7 @@ return {
   key_filter = key_filter,
   to_json = to_json,
   json_encodable = json_encodable,
-  build_url = build_url
+  build_url = build_url,
+  time_ago = time_ago,
+  time_ago_in_words = time_ago_in_words
 }
