@@ -1491,6 +1491,65 @@ For example, if we are running our server on `localhost:8080`:
     @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
     ```
 
+## Utilities
+
+Utility functions are found in:
+
+```moon
+util = require "lapis.util"
+```
+
+####  `unescape(str)`
+
+Url unescapes string
+
+####  `escape(str)`
+
+Url escapes string
+
+####  `escape_pattern(str)`
+
+Escapes string for use in Lua pattern
+
+####  `parse_query_string(str)`
+
+Parses query string into a table
+
+####  `encode_query_string(tbl)`
+
+Converts a key,value table into a query string
+
+####  `underscore(str)`
+
+Converst CamelCase to camel_case.
+
+####  `slugify(str)`
+
+Converts a string to a slug suitable for a url. Removes all whitespace and
+symbols and replaces them with `-`.
+
+####  `uniquify(tbl)`
+
+Returns a new table from `tbl` where there are no duplicate values.
+
+####  `trim(str)
+
+Trims the whitespace off of both sides of a string.
+
+####  `trim_all(tbl)`
+
+Trims the whitespace off of all values in a table (suitable for hash and array
+tables).
+
+####  `trim_filter(tbl)`
+
+Trims the whitespace off of all values in a table. The entry is removed from
+the table if the result is an empty string.
+
+####  `to_json(obj)`
+
+Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
+
 
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
