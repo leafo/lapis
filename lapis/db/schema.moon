@@ -4,6 +4,8 @@ db = require "lapis.db"
 types = setmetatable {
   serial: "serial NOT NULL"
   varchar: "character varying(255) NOT NULL"
+  varchar_with_default: (default) ->
+    db.interpolate_query "character varying(255) NOT NULL DEFAULT ?", default
   varchar_nullable: "character varying(255)"
   text: "text NOT NULL"
   text_nullable: "text"

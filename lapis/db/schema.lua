@@ -2,6 +2,9 @@ local db = require("lapis.db")
 local types = setmetatable({
   serial = "serial NOT NULL",
   varchar = "character varying(255) NOT NULL",
+  varchar_with_default = function(default)
+    return db.interpolate_query("character varying(255) NOT NULL DEFAULT ?", default)
+  end,
   varchar_nullable = "character varying(255)",
   text = "text NOT NULL",
   text_nullable = "text",
