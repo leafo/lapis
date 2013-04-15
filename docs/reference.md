@@ -1493,6 +1493,8 @@ For example, if we are running our server on `localhost:8080`:
 
 ## Utilities
 
+### Methods
+
 Utility functions are found in:
 
 ```moon
@@ -1549,6 +1551,47 @@ the table if the result is an empty string.
 ####  `to_json(obj)`
 
 Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
+
+### CSRF Protection
+
+CSRF protection provides a way to prevent fraudulent requests that originate
+from other sites that are not your application. The common approach is to
+generate a special token when the user lands on your page, then resubmit that
+token on a subsequent POST request.
+
+In Lapis the token is a cryptographically signed message that the server can
+verify the authenticity of.
+
+Before using any of the cryptographic functions it's important to set your
+application's secret. This is a string that only the application knows about.
+If you application is open source it's worthwhile to not commit this secret.
+
+    ```moon
+    with require "lapis.session"
+      .set_secret "this is my secret string 123456"
+    ```
+
+Now that you have the secret configured, we might create a CSRF protected form like so:
+
+
+  ```moon
+  csrf = require "lapis.csrf"
+
+  class extends lapis.Application
+    [form: "/form"]: respond_to {
+      GET: =>
+        csrf_token = csrf.generate_token @
+        @html =>
+          form method: "POST", action: @url_for("form"), ->
+            input type: "hidden", name: "csrf_token", value: csrf_token
+            input type: "submit"
+
+      POST: capture_errors =>
+        csrf.assert_token @
+        "The form is valid!"
+    }
+  ```
+
 
 
 [0]: http://openresty.org/
