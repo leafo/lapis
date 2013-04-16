@@ -1574,25 +1574,49 @@ If you application is open source it's worthwhile to not commit this secret.
 Now that you have the secret configured, we might create a CSRF protected form like so:
 
 
-  ```moon
-  csrf = require "lapis.csrf"
+    ```moon
+    csrf = require "lapis.csrf"
 
-  class extends lapis.Application
-    [form: "/form"]: respond_to {
-      GET: =>
-        csrf_token = csrf.generate_token @
-        @html =>
-          form method: "POST", action: @url_for("form"), ->
-            input type: "hidden", name: "csrf_token", value: csrf_token
-            input type: "submit"
+    class extends lapis.Application
+      [form: "/form"]: respond_to {
+        GET: =>
+          csrf_token = csrf.generate_token @
+          @html =>
+            form method: "POST", action: @url_for("form"), ->
+              input type: "hidden", name: "csrf_token", value: csrf_token
+              input type: "submit"
 
-      POST: capture_errors =>
-        csrf.assert_token @
-        "The form is valid!"
-    }
-  ```
+        POST: capture_errors =>
+          csrf.assert_token @
+          "The form is valid!"
+      }
+    ```
 
+> If you're using CSRF protected in a lot of actions then it might be helpful
+> to create a before filter that generates the token automatically.
 
+The following functions are part of the CSRF module:
+
+    ```moon
+    csrf = require "lapis.csrf"
+    ```
+
+####  `generate_token(req, key=nil, expires=os.time! + 28800)`
+
+Generates a new CSRF token using the session secret. `key` is an optional piece
+of data you can associate with the request. The token will expire in 8 hours by
+default.
+
+####  `validate_token(req, key)`
+
+Valides the CSRF token located in `req.params.csrf_token`. If the token has a
+key it will be validated against `key`. Returns `true` if it's valid, or `nil`
+and an error message if it's invalid.
+
+####  `assert_token(...)`
+
+First calls `validate_token` with same arguments, then calls `assert_error` if
+validation fails.
 
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
