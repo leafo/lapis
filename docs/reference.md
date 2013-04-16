@@ -1497,9 +1497,9 @@ For example, if we are running our server on `localhost:8080`:
 
 Utility functions are found in:
 
-```moon
-util = require "lapis.util"
-```
+    ```moon
+    util = require "lapis.util"
+    ```
 
 ####  `unescape(str)`
 
@@ -1551,6 +1551,41 @@ the table if the result is an empty string.
 ####  `to_json(obj)`
 
 Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
+
+### Encoding Methods
+
+Encoding functions are found in:
+
+      ```moon
+      encoding = require "lapis.util.encoding"
+      ```
+
+#### `encode_base64(str)`
+
+Base64 encodes a string.
+
+#### `decode_base64(str)`
+
+Base64 decodes a string.
+
+#### `hmac_sha1(secret, str)`
+
+Calculates the hmac-sha1 digest of `str` using `secret`. Returns a binary
+string.
+
+#### `encode_with_secret(object, secret)`
+
+Encodes a Lua object and generates a signature for it. Returns a single string
+that contains the encoded object and signature.
+
+If secret is not provided the session secret is used.
+
+#### `deocde_with_secret(msg_and_sig, secret)`
+
+Decodes a string created by `encode_with_secret`. The decoded object is only
+returned if the signature is correct. Otherwise returns `nil` and an error
+message. The secret must match what was used with `encode_with_secret`.
+Defaults to the session secret.
 
 ### CSRF Protection
 
