@@ -24,9 +24,9 @@ use the Heroku OpenResy module along with the Lua build pack.
 
 Next install Lapis using LuaRocks. You can find the rockspec [on MoonRocks][3]:
 
-    ```bash
-    $ luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis
-    ```
+```bash
+$ luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis
+```
 
 ## Creating An Application
 
@@ -36,19 +36,19 @@ Lapis comes with a command line tool to help you create new projects and start
 your server. To see what Lapis can do, run in your shell:
 
 
-    ```bash
-    $ lapis help
-    ```
+```bash
+$ lapis help
+```
 
 For now though, we'll just be creating a new project. Navigate to a clean
 directory and run:
 
-    ```bash
-    $  lapis new
+```bash
+$  lapis new
 
-    ->	wrote	nginx.conf
-    ->	wrote	mime.types
-    ```
+->	wrote	nginx.conf
+->	wrote	mime.types
+```
 
 Lapis starts you off by writing some basic Nginx configuration. Your
 application runs directly in Nginx and this configuration is what routes
@@ -75,38 +75,38 @@ application to production.
 
 Here is the `nginx.conf` that has been generated:
 
-    ```nginx
-    worker_processes  ${{NUM_WORKERS}};
-    error_log stderr notice;
-    daemon off;
-    env LAPIS_ENVIRONMENT;
+```nginx
+worker_processes  ${{NUM_WORKERS}};
+error_log stderr notice;
+daemon off;
+env LAPIS_ENVIRONMENT;
 
-    events {
-        worker_connections 1024;
-    }
+events {
+    worker_connections 1024;
+}
 
-    http {
-        include mime.types;
+http {
+    include mime.types;
 
-        server {
-            listen ${{PORT}};
-            lua_code_cache off;
+    server {
+        listen ${{PORT}};
+        lua_code_cache off;
 
-            location / {
-                default_type text/html;
-                content_by_lua_file "web.lua";
-            }
+        location / {
+            default_type text/html;
+            content_by_lua_file "web.lua";
+        }
 
-            location /static/ {
-                alias static/;
-            }
+        location /static/ {
+            alias static/;
+        }
 
-            location /favicon.ico {
-                alias static/favicon.ico;
-            }
+        location /favicon.ico {
+            alias static/favicon.ico;
         }
     }
-    ```
+}
+```
 
 
 The first thing to notice is that this is not a normal Nginx configuration
@@ -137,11 +137,11 @@ Instead of making `web.lua`, we'll actually make `web.moon` and let the
 
 Create `web.moon`:
 
-    ```moon
-    lapis = require "lapis"
-    lapis.serve class extends lapis.Application
-      "/": => "Hello World!"
-    ```
+```moon
+lapis = require "lapis"
+lapis.serve class extends lapis.Application
+  "/": => "Hello World!"
+```
 
 That's it! `lapis.serve` takes an application class to serve the request with.
 So we create an anonymous class that extends from `lapis.Application`.
@@ -172,9 +172,9 @@ directories for an `nginx` binary. (The last one represents anything in your
 
 So go ahead and start your server:
 
-    ```bash
-    $ lapis server
-    ```
+```bash
+$ lapis server
+```
 
 We can now navigate to <http://localhost:8080/> to see our application.
 
@@ -189,11 +189,11 @@ then it defines a route. All other properties are methods of the application.
 
 Let's start with the basic application from above:
 
-    ```moon
-    lapis = require "lapis"
-    lapis.serve class extends lapis.Application
-      "/": => "Hello World!"
-    ```
+```moon
+lapis = require "lapis"
+lapis.serve class extends lapis.Application
+  "/": => "Hello World!"
+```
 
 [Named routes](#named_routes) are constructed using a table as a property name.
 
@@ -205,9 +205,9 @@ into a request parameter.
 Named parameters are a `:` followed by a name. They match all characters
 excluding `/`.
 
-    ```moon
-    "/user/:name": => "Hello #{@params.name}"
-    ```
+```moon
+"/user/:name": => "Hello #{@params.name}"
+```
 
 If we were to go to the path "/user/leaf", `@params.name` would be set to
 `"leaf"`.
@@ -218,9 +218,9 @@ the URL parameters, the GET parameters and the POST parameters.
 A splat will match all characters and is represented with a `*`. Splats are not
 named. The value of the splat is placed into `@params.splat`
 
-    ```moon
-    "/things/*": => "Rest of the url: #{@params.splat}"
-    ```
+```moon
+"/things/*": => "Rest of the url: #{@params.splat}"
+```
 
 ### The Action
 
@@ -247,13 +247,13 @@ If the key of the action is a table with a single pair, then the key of that
 table is the name and the value is the pattern. MoonScript gives us convenient
 syntax for representing this:
 
-    ```moon
-    [index: "/"]: =>
-      @url_for "user_profile", name: "leaf"
+```moon
+[index: "/"]: =>
+  @url_for "user_profile", name: "leaf"
 
-    [user_profile: "/user/:name"]: =>
-      "Hello #{@params.name}, go home: #{@url_for "index"}"
-    ```
+[user_profile: "/user/:name"]: =>
+  "Hello #{@params.name}, go home: #{@url_for "index"}"
+```
 
 We can then generate the paths using `@url_for`. The first argument is the
 named route, and the second optional argument is the parameters to the route
@@ -265,15 +265,15 @@ Sometimes you want a piece of code to run before every action. A good example
 of this is setting up the user session. We can declare a before filter, or a
 function that runs before every action like so:
 
-    ```moon
-    class App extends lapis.Application
-      @before_filter =>
-        if @session.user
-          @current_user = load_user @session.user
+```moon
+class App extends lapis.Application
+  @before_filter =>
+    if @session.user
+      @current_user = load_user @session.user
 
-      "/": =>
-        "current user is: #{@current_user}"
-    ```
+  "/": =>
+    "current user is: #{@current_user}"
+```
 
 You are free to add as many as you like by calling `@before_filter`
 multiple times. They will be run in the order they are registered.
@@ -282,15 +282,15 @@ If a before filter calls the `@write` method then the action will be canceled.
 For example we can cancel the action and redirect to another page if some
 condition is not met:
 
-    ```
-    class App extends lapis.Application
-      @before_filter =>
-        unless user_meets_requirements!
-          @write redirect_to: @url_for "login"
+```
+class App extends lapis.Application
+  @before_filter =>
+    unless user_meets_requirements!
+      @write redirect_to: @url_for "login"
 
-      "/": =>
-        "Welcome in"
-    ```
+  "/": =>
+    "Welcome in"
+```
 
 ### Handling HTTP verbs
 
@@ -299,18 +299,18 @@ verb. Lapis comes with some helpers to make writing these actions simple.
 `respond_to` takes a table indexed by HTTP verb with a value of the function to
 perform when the action receives that verb.
 
-    ```moon
-    import respond_to from require "lapis.application"
+```moon
+import respond_to from require "lapis.application"
 
-    class App extends lapis.Application
-      [create_account: "/create_account"]: respond_to {
-        GET: => render: true
+class App extends lapis.Application
+  [create_account: "/create_account"]: respond_to {
+    GET: => render: true
 
-        POST: =>
-          create_user @params
-          redirect_to: @url_for "index"
-      }
-    ```
+    POST: =>
+      create_user @params
+      redirect_to: @url_for "index"
+  }
+```
 
 `respond_to` can also take a before filter of its own that will run before the
 corresponding HTTP verb action. We do this by specifying a `before`
@@ -318,22 +318,22 @@ function. The same semantics of [before
 filters][#lapis-applications-before-filters] apply, so if you call `@write`
 then the rest of the action will not get run.
 
-    ```moon
-    class App extends lapis.Application
-      "/edit_user/:id": respond_to {
-        before: =>
-          @user = Users\find @params.id
-          @write status: 404, "Not Found" unless @user
+```moon
+class App extends lapis.Application
+  "/edit_user/:id": respond_to {
+    before: =>
+      @user = Users\find @params.id
+      @write status: 404, "Not Found" unless @user
 
-        GET: =>
-          "Welcome " .. @user.name
+    GET: =>
+      "Welcome " .. @user.name
 
-        POST: =>
-          @user\update @params.user
-          redirect_to: @url_for "index"
-      }
+    POST: =>
+      @user\update @params.user
+      redirect_to: @url_for "index"
+  }
 
-    ```
+```
 
 ## HTML Generation
 
@@ -342,13 +342,13 @@ then the rest of the action will not get run.
 If we want to generate HTML directly in our action we can use the `@html`
 method:
 
-    ```moon
-    "/": =>
-      @html ->
-        h1 class: "header", "Hello"
-        div class: "body", ->
-          text "Welcome to my site!"
-    ```
+```moon
+"/": =>
+  @html ->
+    h1 class: "header", "Hello"
+    div class: "body", ->
+      text "Welcome to my site!"
+```
 
 HTML templates are written directly as MoonScript code. This is a very powerful
 feature (inspirted by [Erector](http://erector.rubyforge.org/)) that gives us
@@ -363,24 +363,24 @@ and returned as the result of the action.
 
 Here are some examples of the HTML generation:
 
-    ```moon
-    div!                -- <div></div>
-    b "Hello World"     -- <b>Hello World</b>
-    div "hi<br/>"       -- <div>hi&lt;br/&gt;</div>
-    text "Hi!"          -- Hi!
-    raw "<br/>"         -- <br/>
+```moon
+div!                -- <div></div>
+b "Hello World"     -- <b>Hello World</b>
+div "hi<br/>"       -- <div>hi&lt;br/&gt;</div>
+text "Hi!"          -- Hi!
+raw "<br/>"         -- <br/>
 
-    element "table", width: "100%", ->  -- <table width="100%"></table>
+element "table", width: "100%", ->  -- <table width="100%"></table>
 
-    div class: "footer", "The Foot"     -- <div class="footer">The Foot</div>
+div class: "footer", "The Foot"     -- <div class="footer">The Foot</div>
 
-    div ->                              -- <div>Hey</div>
-      text "Hey"
+div ->                              -- <div>Hey</div>
+  text "Hey"
 
-    div class: "header", ->             -- <div class="header"><h2>My Site</h2><p>Welcome!</p></div>
-      h2 "My Site"
-      p "Welcome!"
-    ```
+div class: "header", ->             -- <div class="header"><h2>My Site</h2><p>Welcome!</p></div>
+  h2 "My Site"
+  p "Welcome!"
+```
 
 
 ### HTML Widgets
@@ -396,16 +396,16 @@ widget.
 
 This is what a widget looks like:
 
-    ```moon
-    -- views/index.moon
-    import Widget from require "lapis.html"
+```moon
+-- views/index.moon
+import Widget from require "lapis.html"
 
-    class Index extends Widget
-      content: =>
-        h1 class: "header", "Hello"
-          div class: "body", ->
-            text "Welcome to my site!"
-    ```
+class Index extends Widget
+  content: =>
+    h1 class: "header", "Hello"
+      div class: "body", ->
+        text "Welcome to my site!"
+```
 
 
 > The name of the widget class is insignificant, but it's worth making one
@@ -418,41 +418,41 @@ The `render` option key is used to render a widget. For example you can render
 the `"index"` widget from our action by returning a table with render set to
 the name of the widget:
 
-    ```moon
-    "/": =>
-      render: "index"
-    ```
+```moon
+"/": =>
+  render: "index"
+```
 
 If the action has a name, then we can set render to `true` to load the widget
 with the same name as the action:
 
-    ```moon
-    [index: "/"]: =>
-      render: true
-    ```
+```moon
+[index: "/"]: =>
+  render: true
+```
 
 ### Passing Data To A Widget
 
 Any `@` variables set in the action can be accessed in the widget. Additionally
 any of the helper functions like `@url_for` are also accessible.
 
-    ```moon
-    -- web.moon
-    [index: "/"]: =>
-      @page_title = "Welcome To My Page"
-      render: true
-    ```
+```moon
+-- web.moon
+[index: "/"]: =>
+  @page_title = "Welcome To My Page"
+  render: true
+```
 
-    ```moon
-    -- views/index.moon
-    import Widget from require "lapis.html"
+```moon
+-- views/index.moon
+import Widget from require "lapis.html"
 
-    class Index extends Widget
-      content: =>
-        h1 class: "header", @page_title
-        div class: "body", ->
-          text "Welcome to my site!"
-    ```
+class Index extends Widget
+  content: =>
+    h1 class: "header", @page_title
+    div class: "body", ->
+      text "Welcome to my site!"
+```
 
 
 ## Exception Handling
@@ -470,14 +470,14 @@ Lapis creates an exception handling system using coroutines. We must define the
 scope in which we will capture errors. We do that using the `capture_errors`
 helper. Then we can throw a raw error using `yield_error`.
 
-    ```moon
-    import capture_errors, yield_error from require "lapis.application"
+```moon
+import capture_errors, yield_error from require "lapis.application"
 
-    class App extends lapis.Application
-      "/do_something": capture_errors =>
-        yield_error "something bad happend"
-        "Hello!"
-    ```
+class App extends lapis.Application
+  "/do_something": capture_errors =>
+    yield_error "something bad happend"
+    "Hello!"
+```
 
 What happens when there is an error? The action will stop executing at the
 first error, and then the error handler is run. The default one will set an
@@ -487,19 +487,19 @@ you can then display the errors.
 If you want to have a custom error handler you can invoke `capture_errors` with
 a table: (note that `@errors` is set before the custom handler)
 
-    ```moon
-    class App extends lapis.Application
-      "/do_something": capture_errors {
-        on_error: =>
-          log_errors @errors
-          render: "my_error_page", status: 500
+```moon
+class App extends lapis.Application
+  "/do_something": capture_errors {
+    on_error: =>
+      log_errors @errors
+      render: "my_error_page", status: 500
 
-        =>
-          if @params.bad_thing
-            yield_error "something bad happend"
-          render: true
-      }
-    ```
+    =>
+      if @params.bad_thing
+        yield_error "something bad happend"
+      render: true
+  }
+```
 
 `capture_errors` when called with a table will use the first positional value
 as the action.
@@ -514,14 +514,14 @@ error, otherwise the first argument is returned.
 `assert_error` is very handy with database methods, which make use of this
 idiom.
 
-    ```moon
-    import capture_errors, assert_error from require "lapis.application"
+```moon
+import capture_errors, assert_error from require "lapis.application"
 
-    class App extends lapis.Application
-      "/": capture_errors =>
-        user = assert_error Users\find id: "leafo"
-        "result: #{result}"
-    ```
+class App extends lapis.Application
+  "/": capture_errors =>
+    user = assert_error Users\find id: "leafo"
+    "result: #{result}"
+```
 
 
 ## Input validation
@@ -529,24 +529,24 @@ idiom.
 Lapis comes with a set of validators for working with external inputs. Here's a
 quick example:
 
-    ```moon
-    import capture_errors from require "lapis.application"
-    import assert_valid from require "lapis.validate"
+```moon
+import capture_errors from require "lapis.application"
+import assert_valid from require "lapis.validate"
 
-    class App extends lapis.Application
-      "/create_user": capture_errors =>
+class App extends lapis.Application
+  "/create_user": capture_errors =>
 
-        assert_valid @params, {
-          { "username", exists: true, min_length: 2, max_length: 25 }
-          { "password", exists: true, min_length: 2 }
-          { "password_repeat", equals: @params.password }
-          { "email", exists: true, min_length: 3 }
-          { "accept_terms", equals: "yes", "You must accept the Terms of Service" }
-        }
+    assert_valid @params, {
+      { "username", exists: true, min_length: 2, max_length: 25 }
+      { "password", exists: true, min_length: 2 }
+      { "password_repeat", equals: @params.password }
+      { "email", exists: true, min_length: 3 }
+      { "accept_terms", equals: "yes", "You must accept the Terms of Service" }
+    }
 
-        create_the_user @params
-        render: true
-    ```
+    create_the_user @params
+    render: true
+```
 
 `assert_valid` takes two arguments, a table to be validated, and a second array
 table with a list of validations to perform. Each validation is the following format:
@@ -577,29 +577,29 @@ validation functions as demonstrated in the example above.
 
 Custom validators can be added like so:
 
-    ```moon
-    import validate_functions, assert_valid from require "lapis.validate"
+```moon
+import validate_functions, assert_valid from require "lapis.validate"
 
-    validate_functions.integer_greater_than = (input, min) ->
-      num = tonumber input
-      num and num > min, "%s must be greater than #{min}"
+validate_functions.integer_greater_than = (input, min) ->
+  num = tonumber input
+  num and num > min, "%s must be greater than #{min}"
 
-    import capture_errors from require "lapis.application"
+import capture_errors from require "lapis.application"
 
-    class App extends lapis.Application
-      "/": capture_errors =>
-        assert_valid @params, {
-          { "number", integer_greater_than: 100 }
-        }
-    ```
+class App extends lapis.Application
+  "/": capture_errors =>
+    assert_valid @params, {
+      { "number", integer_greater_than: 100 }
+    }
+```
 
 ### Manual Validation
 
 In addition to `assert_valid` there is one more useful validation function:
 
-    ```moon
-    import validate from require "lapis.validate"
-    ```
+```moon
+import validate from require "lapis.validate"
+```
 
 * `validate(object, validation)` -- takes the same exact arguments as
   `assert_valid`, but returns the either errors or `nil` on failure instead of
@@ -616,9 +616,9 @@ and 8 workers.
 
 The `lapis` command line tool takes a second argument when starting the server:
 
-    ```bash
-    $ lapis server [environment]
-    ```
+```bash
+$ lapis server [environment]
+```
 
 By default the environment is `development`. The environment name only affects
 what configuration is loaded. This has absolutely no effect if you don't have any
@@ -632,20 +632,20 @@ it can't be found it is silently ignored. The `"config"` module is where we
 define out configurations. It's a standard Lua/MoonScript file, so let's create
 it.
 
-    ```moon
-    -- config.moon
-    import config from require "lapis.config"
+```moon
+-- config.moon
+import config from require "lapis.config"
 
-    config "development", ->
-      port 8080
+config "development", ->
+  port 8080
 
 
-    config "production", ->
-      port 80
-      num_workers 4
-      lua_code_cache "off"
+config "production", ->
+  port 80
+  num_workers 4
+  lua_code_cache "off"
 
-    ```
+```
 
 We use the configuration helpers provided in `"lapis.config"` to create our
 configurations. This defines a domain specific language for setting variables.
@@ -664,11 +664,11 @@ for a value before the configuration is checked.
 
 For example, here's a chunk of an Lapis Nginx configuration:
 
-    ```nginx
-    events {
-      worker_connections ${{WORKER_CONNECTIONS}};
-    }
-    ```
+```nginx
+events {
+  worker_connections ${{WORKER_CONNECTIONS}};
+}
+```
 
 When this is compiled, first the environment variable
 `LAPIS_WORKER_CONNECTIONS` is checked. If it doesn't have a value then the
@@ -679,84 +679,84 @@ configuration of the current environment is checked for `worker_connections`.
 The configuration is also made available in the application. We can get access
 to the configuration table like so:
 
-    ```moon
-    config = require("lapis.confg").get!
-    print config.port -- shows the current port
-    ```
+```moon
+config = require("lapis.confg").get!
+print config.port -- shows the current port
+```
 
 The name of the environment is stored in `_name`.
 
-    ```moon
-    print config._name -- development, production, etc...
-    ```
+```moon
+print config._name -- development, production, etc...
+```
 
 ### Configuration Builder Syntax
 
 Here's an example of the configuration DSL (domain specific language) and the
 table it generates:
 
-  ```moon
-  some_function = -> steak "medium_well"
+```moon
+some_function = -> steak "medium_well"
 
-  config "development", ->
-    hello "world"
+config "development", ->
+  hello "world"
 
-    if 20 > 4
-      color "blue"
-    else
-      color "green"
+  if 20 > 4
+    color "blue"
+  else
+    color "green"
 
-    custom_settings ->
-      age 10
-      enabled true
+  custom_settings ->
+    age 10
+    enabled true
 
-    -- tables are merged
-    extra ->
-      name "leaf"
-      mood: "happy"
+  -- tables are merged
+  extra ->
+    name "leaf"
+    mood: "happy"
 
-    extra ->
-      name "beef"
-      shoe_size: 12
-
-      include some_function
-
+  extra ->
+    name "beef"
+    shoe_size: 12
 
     include some_function
 
-    -- a normal table can be passed instead of a function
-    some_list {
-      1,2,3,4
-    }
 
-    -- use set to assign names that are unavailable
-    set "include", "hello"
-  ```
+  include some_function
 
-  ```moon
-  {
-    hello: "world"
-    color: "blue"
-
-    custom_settings: {
-      age: 10
-      enabled: true
-    }
-
-    extra: {
-      name: "beef"
-      mood: "happy"
-      shoe_size: 12
-      steak: "medium_well"
-    }
-
-    steak: "medium_well"
-
-    some_list: { 1,2,3,4 }
-
-    include: "hello"
+  -- a normal table can be passed instead of a function
+  some_list {
+    1,2,3,4
   }
-  ```
+
+  -- use set to assign names that are unavailable
+  set "include", "hello"
+```
+
+```moon
+{
+  hello: "world"
+  color: "blue"
+
+  custom_settings: {
+    age: 10
+    enabled: true
+  }
+
+  extra: {
+    name: "beef"
+    mood: "happy"
+    shoe_size: 12
+    steak: "medium_well"
+  }
+
+  steak: "medium_well"
+
+  some_list: { 1,2,3,4 }
+
+  include: "hello"
+}
+```
 
 ## Database Access
 
@@ -772,21 +772,21 @@ database connections.
 The first step is to add an upstream to our `nginx.conf`. Place the following
 in the `http` block:
 
-    ```nginx
-    upstream database {
-      postgres_server ${{pg POSTGRESQL_URL}};
-    }
-    ```
+```nginx
+upstream database {
+  postgres_server ${{pg POSTGRESQL_URL}};
+}
+```
 
 > The upstream must be named `database` by default.
 
 In this example the `pg` filter is applied to our `POSTGRESQL_URL`
 configuration variable. Let's go ahead and add a value to our `config.moon`
 
-    ```moon
-    config "development", ->
-      postgresql_url "postgres://postgres:@127.0.0.1/my_database"
-    ```
+```moon
+config "development", ->
+  postgresql_url "postgres://postgres:@127.0.0.1/my_database"
+```
 
 The `pg` filter will convert the PostgreSQL URL to the right format for the
 Nginx PostgreSQL module.
@@ -801,20 +801,20 @@ helps you synchronize it with a row in a database table.
 
 Here's a base example using the raw query interface:
 
-    ```moon
-    db = require "lapis.db"
+```moon
+db = require "lapis.db"
 
-    lapis.serve class extends lapis.Application
-      "/": =>
-        res = db.query "select * from my_table where id = ?", 10
-        "ok!"
-    ```
+lapis.serve class extends lapis.Application
+  "/": =>
+    res = db.query "select * from my_table where id = ?", 10
+    "ok!"
+```
 
 ## Query Interface
 
-    ```moon
-    db = require "lapis.db"
-    ```
+```moon
+db = require "lapis.db"
+```
 
 ### Functions
 
@@ -830,17 +830,17 @@ they are replaced in the order they appear with the remaining arguments. The
 remaining arguments are escaped with `escape_literal` before being
 interpolated, making SQL injection impossible.
 
-    ```moon
-    res = db.query "SELECT * FROM hello"
-    res = db.query "UPDATE things SET color = ?", "blue"
-    res = db.query "INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true
-    ```
+```moon
+res = db.query "SELECT * FROM hello"
+res = db.query "UPDATE things SET color = ?", "blue"
+res = db.query "INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true
+```
 
-    ```sql
-    SELECT * FROM hello
-    UPDATE things SET color = 'blue'
-    INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
-    ```
+```sql
+SELECT * FROM hello
+UPDATE things SET color = 'blue'
+INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
+```
 
 > Due to a limitation in the PostgreSQL Nginx extension, it is not possible to
 > get the error message if the query has failed. You can however see the error
@@ -848,121 +848,121 @@ interpolated, making SQL injection impossible.
 
 #### `select(query, params...)`
 
-The same as `query` except it appends `"SELECT" to the front of the query.
+The same as `query` except it appends `"SELECT"` to the front of the query.
 
-    ```moon
-    res = db.select "* from hello where active = ?", db.FALSE
-    ```
+```moon
+res = db.select "* from hello where active = ?", db.FALSE
+```
 
-    ```sql
-    SELECT * from hello where active = FALSE
-    ```
+```sql
+SELECT * from hello where active = FALSE
+```
 
 #### `insert(table, values, returning...)`
 
 Inserts a row into `table`. `values` is a Lua table of column names and values.
 
-    ```moon
-    db.insert "my_table", {
-      age: 10
-      name: "Hello World"
-    }
-    ```
+```moon
+db.insert "my_table", {
+  age: 10
+  name: "Hello World"
+}
+```
 
-    ```sql
-    INSERT INTO "my_table" ("age", "name") VALUES (10, 'Hello World')
-    ```
+```sql
+INSERT INTO "my_table" ("age", "name") VALUES (10, 'Hello World')
+```
 
 A list of column names to be returned can be given after the value table:
 
-    ```moon
-    res = db.insert "some_other_table", {
-      name: "Hello World"
-    }, "id"
-    ```
+```moon
+res = db.insert "some_other_table", {
+  name: "Hello World"
+}, "id"
+```
 
-    ```sql
-    INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
-    ```
+```sql
+INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
+```
 
 #### `update(table, values, conditions, params...)`
 
 Updates `table` with `values` on all rows that match `conditions`.
 
-    ```moon
-    db.update "the_table", {
-      name: "Dogbert 2.0"
-      active: true
-    }, {
-      id: 100
-    }
-    ```
+```moon
+db.update "the_table", {
+  name: "Dogbert 2.0"
+  active: true
+}, {
+  id: 100
+}
+```
 
-    ```sql
-    UPDATE "the_table" SET "name" = 'Dogbert 2.0', "active" = TRUE WHERE "id" = 100
-    ```
+```sql
+UPDATE "the_table" SET "name" = 'Dogbert 2.0', "active" = TRUE WHERE "id" = 100
+```
 
 `conditions` can also be a string, and `params` will be interpolated into it:
 
-    ```moon
-    db.update "the_table", {
-      count: db.raw"count + 1"
-    }, "count < ?", 10
-    ```
+```moon
+db.update "the_table", {
+  count: db.raw"count + 1"
+}, "count < ?", 10
+```
 
-    ```sql
-    UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
-    ```
+```sql
+UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
+```
 
 #### `delete(table, conditions, params...)`
 
 Deletes rows from `table` that match `conditions`.
 
-    ```moon
-    db.delete "cats", name: "Roo"
-    ```
+```moon
+db.delete "cats", name: "Roo"
+```
 
-    ```sql
-    DELETE FROM "cats" WHERE "name" = 'Roo'
-    ```
+```sql
+DELETE FROM "cats" WHERE "name" = 'Roo'
+```
 
 `conditions` can also be a string
 
-    ```moon
-    db.delete "cats", "name = ?", "Gato"
-    ```
+```moon
+db.delete "cats", "name = ?", "Gato"
+```
 
-    ```sql
-    DELETE FROM "cats" WHERE name = 'Gato'
-    ```
+```sql
+DELETE FROM "cats" WHERE name = 'Gato'
+```
 
 #### `raw(str)`
 
 Returns a special value that will be inserted verbatim into query without being
 escaped:
 
-    ```moon
-    db.update "the_table", {
-      count: db.raw"count + 1"
-    }
+```moon
+db.update "the_table", {
+  count: db.raw"count + 1"
+}
 
-    db.select "* from another_table where x = ?", db.raw"now()"
-    ```
+db.select "* from another_table where x = ?", db.raw"now()"
+```
 
-    ```moon
-    UPDATE "the_table" SET "count" = count + 1
-    SELECT * from another_table where x = now()
-    ```
+```moon
+UPDATE "the_table" SET "count" = count + 1
+SELECT * from another_table where x = now()
+```
 
 #### `escape_literal(value)`
 
 Escapes a value for use in a query. A value is any type that can be stored in a
 column. Numbers, strings, and booleans will be escaped accordingly.
 
-    ```moon
-    escaped = db.escape_literal value
-    res = db.query "select * from hello where id = #{escaped}"
-    ```
+```moon
+escaped = db.escape_literal value
+res = db.query "select * from hello where id = #{escaped}"
+```
 
 `escape_literal` is not appropriate for escaping column or table names. See
 `escape_identifier`.
@@ -972,10 +972,11 @@ column. Numbers, strings, and booleans will be escaped accordingly.
 Escapes a string for use in a query as an identifier. An identifier is a column
 or table name.
 
-    ```moon
-    table_name = db.escape_literal "table"
-    res = db.query "select * from #{table_name}"
-    ```
+```moon
+table_name = db.escape_literal "table"
+res = db.query "select * from #{table_name}"
+```
+
 `escape_identifier` is not appropriate for escaping values. See
 `escape_literal` for escaping values.
 
@@ -995,81 +996,82 @@ of the class is used to represent a single row of that table.
 
 The most primitive model is a blank model:
 
-    ```moon
-    import Model from require "lapis.db.model"
+```moon
+import Model from require "lapis.db.model"
 
-    class Users extends Model
-    ```
+class Users extends Model
+```
 
 The name of the class is used to determine the name of the table. In this case
 the class name `Users` represents the table `users`. A class name of
 `HelloWorlds` would result in the table name `hello_worlds`. It is customary to
 make the class name plural.
 
-If you want to use a different table name you can overwrite the `@table_name` class method:
+If you want to use a different table name you can overwrite the `@table_name`
+class method:
 
-    ```moon
-    class Users extends Model
-      @table_name: => "active_users"
-    ```
+```moon
+class Users extends Model
+  @table_name: => "active_users"
+```
 
 ### Primary Keys
 
 By default all models have the primary key "id". This can be changed by setting
 the `@primary_key` class variable.
 
-    ```moon
-    class Users extends Model
-      @primary_key: "login"
-    ```
+```moon
+class Users extends Model
+  @primary_key: "login"
+```
 
 If there are multiple primary keys then a array table can be used:
 
-    ```moon
-    class Followings extends Model
-      @primary_key: { "user_id", "followed_user_id" }
-    ```
+```moon
+class Followings extends Model
+  @primary_key: { "user_id", "followed_user_id" }
+```
 
 ### Finding A Row
 
 For the following examples assume we have the following models:
 
-    ```moon
-    import Model from require "lapis.db.model"
+```moon
+import Model from require "lapis.db.model"
 
-    class Users extends Model
+class Users extends Model
 
-    class Tags extends Model
-      @primary_key: {"user_id", "tag"}
-    ```
+class Tags extends Model
+  @primary_key: {"user_id", "tag"}
+```
 
 When you want to find a single row the `find` class method is used. In the
 first form it takes a variable number of values, one for each primary key in
 the order the primary keys are specified:
 
 
-    ```moon
-    user = Users\find 23232
-    tag = Tags\find 1234, "programmer"
-    ```
+```moon
+user = Users\find 23232
+tag = Tags\find 1234, "programmer"
+```
 
-    ```sql
-    SELECT * from "users" where "id" = 23232 limit 1
-    SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
-    ```
+```sql
+SELECT * from "users" where "id" = 23232 limit 1
+SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
+```
 
 `find` returns an instance of the model. In the case of the user, if there was a
 `name` column, then we could access the users name with `user.name`.
 
 We can also pass a table as an argument to `find`. The table will be converted to a `WHERE` clause in the query:
 
-    ```moon
-    user = Users\find email: "person@example.com"
-    ```
+```moon
+user = Users\find email: "person@example.com"
+```
 
-    ```sql
-    SELECT * from "users" where "email" = 'person@example.com' limit 1
-    ```
+```sql
+SELECT * from "users" where "email" = 'person@example.com' limit 1
+```
 
 ### Finding Many Rows
 
@@ -1078,39 +1080,38 @@ similarly to the `select` function from the raw query interface except you
 specify the part of the query after the list of columns to select.
 
 
-    ```moon
-    tags = Tags\select "where tag = ?", "merchant"
-    ```
+```moon
+tags = Tags\select "where tag = ?", "merchant"
+```
 
-    ```sql
-    SELECT * from "tags" where tag = 'merchant'
-    ```
+```sql
+SELECT * from "tags" where tag = 'merchant'
+```
 
 Instead of a single instance, an array table of instances is returned.
 
 If you want to restrict what columns are selected you can pass in a table as
 the last argument with the `fields` key set:
 
+```moon
+tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
+```
 
-    ```moon
-    tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
-    ```
-
-    ```sql
-    SELECT created_at as c from "tags" where tag = 'merchant'
-    ```
+```sql
+SELECT created_at as c from "tags" where tag = 'merchant'
+```
 
 Alternatively if you want to find many rows by their primary key you can use
 the `find_all` method. It takes an array table of primary keys. This method
 only works on tables that have singular primary keys.
 
-    ```moon
-    users = Users\find_all { 1,2,3,4,5 }
-    ```
+```moon
+users = Users\find_all { 1,2,3,4,5 }
+```
 
-    ```sql
-    SELECT * from "users" where "id" in (1, 2, 3, 4, 5)
-    ```
+```sql
+SELECT * from "users" where "id" in (1, 2, 3, 4, 5)
+```
 
 ### Inserting Rows
 
@@ -1120,17 +1121,16 @@ create query fetches the values of the primary keys and sets them on the
 instance using the PostgreSQL `RETURN` statement. This is useful for getting
 the value of an auto-incrementing key from the insert statement.
 
+```moon
+user = Users\create {
+  login: "superuser"
+  password: "1234"
+}
+```
 
-    ```moon
-    user = Users\create {
-      login: "superuser"
-      password: "1234"
-    }
-    ```
-
-    ```sql
-    INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
-    ```
+```sql
+INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
+```
 
 ### Updating A Row
 
@@ -1141,33 +1141,33 @@ The first form of update takes variable arguments. A list of strings that
 represent column names to be updated. The values of the columns are taken from
 the current values in the instance.
 
-    ```moon
-    user = Users\find 1
-    user.login = "uberuser"
-    user.email = "admin@example.com"
+```moon
+user = Users\find 1
+user.login = "uberuser"
+user.email = "admin@example.com"
 
-    user\update "login", "email"
-    ```
+user\update "login", "email"
+```
 
-    ```sql
-    UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
-    ```
+```sql
+UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
+```
 
 Alternatively we can pass a table as the first argument of `update`. The keys
 of the table are the column names, and the values are the values to update the
 columns too. The instance is also updated. We can rewrite the above example as:
 
-    ```moon
-    user = Users\find 1
-    user\update {
-      login: "uberuser"
-      email: "admin@example.com"
-    }
-    ```
+```moon
+user = Users\find 1
+user\update {
+  login: "uberuser"
+  email: "admin@example.com"
+}
+```
 
-    ```sql
-    UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
-    ```
+```sql
+UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
+```
 
 > The table argument can also take positional values, which are treated the
 > same as the variable argument form.
@@ -1176,14 +1176,14 @@ columns too. The instance is also updated. We can rewrite the above example as:
 
 Just call `delete` on the instance:
 
-    ```moon
-    user = Users\find 1
-    user\delete!
-    ```
+```moon
+user = Users\find 1
+user\delete!
+```
 
-    ```sql
-    DELETE FROM "users" WHERE "id" = 1
-    ```
+```sql
+DELETE FROM "users" WHERE "id" = 1
+```
 
 ### Timestamps
 
@@ -1193,20 +1193,20 @@ support for managing these columns automatically.
 When creating your table make sure your table has the following columns:
 
 
-    ```sql
-    CREATE TABLE ... (
-      ...
-      "created_at" timestamp without time zone NOT NULL,
-      "updated_at" timestamp without time zone NOT NULL
-    )
-    ```
+```sql
+CREATE TABLE ... (
+  ...
+  "created_at" timestamp without time zone NOT NULL,
+  "updated_at" timestamp without time zone NOT NULL
+)
+```
 
 Then define your model with the `@timestamp` class variable set to true:
 
-    ```moon
-    class Users extends Model
-      @timestamp: true
-    ```
+```moon
+class Users extends Model
+  @timestamp: true
+```
 
 Whenever `create` and `update` are called the appropriate timestamp column will
 also be set.
@@ -1222,32 +1222,32 @@ the data.
 We'll need some models to demonstrate: (The columns are annotated in a comment
 above the model).
 
-    ```moon
-    import Model from require "lapis.db.model"
+```moon
+import Model from require "lapis.db.model"
 
-    -- columns: id, name
-    class Users extends Model
+-- columns: id, name
+class Users extends Model
 
-    -- columns: id, user_id, text_content
-    class Posts extends Model
-    ```
+-- columns: id, user_id, text_content
+class Posts extends Model
+```
 
 Given all the posts, we want to find the user for each post. We use the
 `include_in` class method to include instances of that model in the array of
 models instances passed to it.
 
 
-    ```moon
-    posts = Posts\select! -- this gets all the posts
+```moon
+posts = Posts\select! -- this gets all the posts
 
-    Users\include_in posts, "user_id"
+Users\include_in posts, "user_id"
 
-    print posts[1].user.name -- print the fetched data
-    ```
+print posts[1].user.name -- print the fetched data
+```
 
-    ```sql
-    SELECT * from "users" where "id" in (1,2,3,4,5,6)
-    ```
+```sql
+SELECT * from "users" where "id" in (1,2,3,4,5,6)
+```
 
 Each post instance is mutated to have a `user` property assigned to it with an
 instance of the `Users` model. The first argument of `include_in` is the array
@@ -1260,9 +1260,9 @@ In this case, `user` was derived from the foreign key `user_id`. If we want to
 manually specify the name we can do something like this:
 
 
-    ```moon
-    Users\include_in posts, "user_id", as: "author"
-    ```
+```moon
+Users\include_in posts, "user_id", as: "author"
+```
 
 Now all the posts will contain a property named `author` with an instance of
 the `Users` model.
@@ -1273,29 +1273,29 @@ is common in one-to-one relationships.
 
 Here's another set of example models:
 
-    ```moon
-    import Model from require "lapis.db.model"
+```moon
+import Model from require "lapis.db.model"
 
-    -- columns: id, name
-    class Users extends Model
+-- columns: id, name
+class Users extends Model
 
-    -- columns: user_id, twitter_account, facebook_username
-    class UserData extends Model
-    ```
+-- columns: user_id, twitter_account, facebook_username
+class UserData extends Model
+```
 
 Now let's say we have a collection of users and we want to fetch the associated
 user data:
 
-    ```moon
-    users = Users\select!
-    UserData\include_in users, "user_id", flip: true
+```moon
+users = Users\select!
+UserData\include_in users, "user_id", flip: true
 
-    print users[1].user_data.twitter_account
-    ```
+print users[1].user_data.twitter_account
+```
 
-    ```sql
-    SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
-    ```
+```sql
+SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
+```
 
 In this example we set the `flip` option to true in the `include_in` method.
 This causes the search to happen against our foreign key, and the ids to be
@@ -1315,21 +1315,21 @@ user model and users are not allowed to have the name "admin".
 We might define it like this:
 
 
-    ```moon
-    import Model from require "lapis.db.models"
+```moon
+import Model from require "lapis.db.models"
 
-    class Users extends Model
-      @constraints: {
-        name: (value) =>
-          if value\lower! == "admin"
-            "User can not be named admin"
-      }
+class Users extends Model
+  @constraints: {
+    name: (value) =>
+      if value\lower! == "admin"
+        "User can not be named admin"
+  }
 
 
-    assert Users\create {
-      name: "Admin"
-    }
-    ```
+assert Users\create {
+  name: "Admin"
+}
+```
 
 The `@constraints` class variable is a table that maps column name to a
 function that should check if the constraint is broken. If anything truthy is
@@ -1369,9 +1369,9 @@ Whenever a table is written, the key/value pairs (when the key is a string) are
 copied into `@options`. For example, in this action the `render` and `status`
 properties are copied.
 
-    ```moon
-    "/": => render: "error", status: 404
-    ```
+```moon
+"/": => render: "error", status: 404
+```
 
 After the action is finished, the options help determine what is sent to the
 browser.
@@ -1395,11 +1395,11 @@ Here is the list of options that can be written
 The `@cookies` table in the request lets you read and write cookies. If you try
 to iterate over the table to print the cookies you might notice it's empty:
 
-    ```moon
-    "/": =>
-      for k,v in pairs(@cookies)
-        print k,v
-    ```
+```moon
+"/": =>
+  for k,v in pairs(@cookies)
+    print k,v
+```
 
 The existing cookies are stored in the `__index` of the metatable. This is done
 so we can when tell what cookies have been assigned to during the action
@@ -1407,10 +1407,10 @@ because they will be directly in the `@cookies` table.
 
 Thus, to set a cookie we just need to assign into the `@cookies` table:
 
-    ```moon
-    "/": =>
-      @cookies.foo = "bar"
-    ```
+```moon
+"/": =>
+  @cookies.foo = "bar"
+```
 
 ### Session
 
@@ -1422,11 +1422,11 @@ nested tables and other primitive values.
 
 The session can be set and read the same way as cookies:
 
-    ```moon
-    "/": =>
-      unless @session.current_user
-        @session.current_user = "leaf"
-    ```
+```moon
+"/": =>
+  unless @session.current_user
+    @session.current_user = "leaf"
+```
 
 ### Methods
 
@@ -1451,13 +1451,13 @@ filled using the values in params.
 
 For example:
 
-    ```moon
-    [user_data: "/data/:user_id/:data_field"] =>
+```moon
+[user_data: "/data/:user_id/:data_field"] =>
 
-    "/": =>
-      -- returns: /data/123/height
-      @url_for "user_data", user_id: 123, data_field: "height"
-    ```
+"/": =>
+  -- returns: /data/123/height
+  @url_for "user_data", user_id: 123, data_field: "height"
+```
 
 If `name_or_obj` is a table, then the `url_params` method is called on the
 object. The arguments passed to `url_params` are the request, followed by all
@@ -1470,10 +1470,10 @@ used as the url value.
 
 For example, consider a `Users` model and generating a URL for it:
 
-    ```moon
-    class Users extends Model
-      url_key: (route_name) => @id
-    ```
+```moon
+class Users extends Model
+  url_key: (route_name) => @id
+```
 
 
 #### `build_url(path, [options])`
@@ -1483,13 +1483,12 @@ the url.
 
 For example, if we are running our server on `localhost:8080`:
 
+```moon
+@build_url! --> http://localhost:8080
+@build_url "hello" --> http://localhost:8080/hello
 
-    ```moon
-    @build_url! --> http://localhost:8080
-    @build_url "hello" --> http://localhost:8080/hello
-
-    @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
-    ```
+@build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
+```
 
 ## Utilities
 
@@ -1497,9 +1496,9 @@ For example, if we are running our server on `localhost:8080`:
 
 Utility functions are found in:
 
-    ```moon
-    util = require "lapis.util"
-    ```
+```moon
+util = require "lapis.util"
+```
 
 ####  `unescape(str)`
 
@@ -1556,9 +1555,9 @@ Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 
 Encoding functions are found in:
 
-      ```moon
-      encoding = require "lapis.util.encoding"
-      ```
+```moon
+encoding = require "lapis.util.encoding"
+```
 
 #### `encode_base64(str)`
 
@@ -1601,40 +1600,40 @@ Before using any of the cryptographic functions it's important to set your
 application's secret. This is a string that only the application knows about.
 If you application is open source it's worthwhile to not commit this secret.
 
-    ```moon
-    with require "lapis.session"
-      .set_secret "this is my secret string 123456"
-    ```
+```moon
+with require "lapis.session"
+  .set_secret "this is my secret string 123456"
+```
 
 Now that you have the secret configured, we might create a CSRF protected form like so:
 
 
-    ```moon
-    csrf = require "lapis.csrf"
+```moon
+csrf = require "lapis.csrf"
 
-    class extends lapis.Application
-      [form: "/form"]: respond_to {
-        GET: =>
-          csrf_token = csrf.generate_token @
-          @html =>
-            form method: "POST", action: @url_for("form"), ->
-              input type: "hidden", name: "csrf_token", value: csrf_token
-              input type: "submit"
+class extends lapis.Application
+  [form: "/form"]: respond_to {
+    GET: =>
+      csrf_token = csrf.generate_token @
+      @html =>
+        form method: "POST", action: @url_for("form"), ->
+          input type: "hidden", name: "csrf_token", value: csrf_token
+          input type: "submit"
 
-        POST: capture_errors =>
-          csrf.assert_token @
-          "The form is valid!"
-      }
-    ```
+    POST: capture_errors =>
+      csrf.assert_token @
+      "The form is valid!"
+  }
+```
 
 > If you're using CSRF protected in a lot of actions then it might be helpful
 > to create a before filter that generates the token automatically.
 
 The following functions are part of the CSRF module:
 
-    ```moon
-    csrf = require "lapis.csrf"
-    ```
+```moon
+csrf = require "lapis.csrf"
+```
 
 ####  `generate_token(req, key=nil, expires=os.time! + 28800)`
 
