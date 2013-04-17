@@ -282,7 +282,7 @@ If a before filter calls the `@write` method then the action will be canceled.
 For example we can cancel the action and redirect to another page if some
 condition is not met:
 
-```
+```moon
 class App extends lapis.Application
   @before_filter =>
     unless user_meets_requirements!
