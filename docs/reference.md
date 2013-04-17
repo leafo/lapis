@@ -1652,6 +1652,107 @@ and an error message if it's invalid.
 First calls `validate_token` with same arguments, then calls `assert_error` if
 validation fails.
 
+
+### Making HTTP Requests
+
+Lapis comes with a built in module for making asynchronous HTTP requests. The
+way it works is by using the Nginx `proxy_pass` directive on an internal
+action. Because of this, before you can make any requests you need to modify
+your Nginx configuration.
+
+Add the following to your server block:
+
+```nginx
+location /proxy {
+    internal;
+    rewrite_by_lua "
+      local req = ngx.req
+
+      for k,v in pairs(req.get_headers()) do
+        if k ~= 'content-length' then
+          req.clear_header(k)
+        end
+      end
+
+      if ngx.ctx.headers then
+        for k,v in pairs(ngx.ctx.headers) do
+          req.set_header(k, v)
+        end
+      end
+    ";
+
+    resolver 8.8.8.8;
+    proxy_http_version 1.1;
+    proxy_pass $_url;
+}
+```
+
+> This code ensures that the correct headers are set for the new request. The
+> `$_url` variable is used to used to store the target URL.
+
+Now we can use the `lapis.nginx.http` module. There are two methods. `request`
+and `simple`. `request` implements the Lua Socket HTTP request API (complete
+with LTN12).
+
+`simple` is a simplified API with no LTN12:
+
+```moon
+http = require "lapis.nginx.http"
+
+class extends lapis.Application
+  "/": =>
+    -- a simple GET request
+    body, status_code, headers = http\simple "http://leafo.net"
+
+    -- a post request, data table is form encoded and content-type is set to
+    -- application/x-www-form-urlencoded
+    http\simple "http://leafo.net/", {
+      name: "leafo"
+    }
+
+    -- manual invocation of the above request
+    http\simple {
+      url: "http://leafo.net"
+      method: "POST"
+      headers: {
+        "content-type": "application/x-www-form-urlencoded"
+      }
+      body: {
+        name: "leafo"
+      }
+    }
+```
+
+#### `simple(req, body)`
+
+Performs an HTTP request using the internal `/proxy` location.
+
+Returns 3 values, the string result of the request, http status code, and a
+table of headers.
+
+If there is only one argument and it is a string then that argument is treated
+as a URL for a GET request.
+
+If there is a second argument it is set as the body of a POST request. If
+the body is a table it is encoded with `encode_query_string` and the
+`Content-type` header is set to `application/x-www-form-urlencoded`
+
+If the first argument is a table then it is used manually set request
+parameters. I takes the following keys:
+
+ * `url` -- the URL to request
+ * `method` -- `"GET"`, `"POST"`, `"PUT"`, etc...
+ * `body` -- string or table which is encoded
+ * `headers` -- a table of request headers to set
+
+
+#### `request(url_or_table, body)`
+
+Implements a subset of [Lua Socket's
+`http.request`](http://w3.impa.br/~diego/software/luasocket/http.html#request).
+
+Does not support `proxy`, `create`, `step`, or `redirect`.
+
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
 [2]: https://github.com/leafo/heroku-buildpack-lua
