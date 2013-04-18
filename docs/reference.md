@@ -810,6 +810,9 @@ lapis.serve class extends lapis.Application
     "ok!"
 ```
 
+By default all queries will log to the Nginx log. You'll be able to see each
+query as it happens.
+
 ## Query Interface
 
 ```moon
@@ -1568,6 +1571,68 @@ types.integer primary_key: true       --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text null: true                 --> text
 types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMARY KEY
 ```
+
+## Database Migrations
+
+Because requirements typically change over the lifespan of a web application
+it's useful to have a system to make incremental schema changes to the
+database.
+
+Lapis migrations work by storing a table of all the migrations that have run.
+All migrations must have a name. Migrations typically are given a name of the
+current Unix timestamp.
+
+When migrations are run, the migration list is filtered down to those that have
+not been run yet by checking the migrations table. The migrations to be run are
+then sorted by their name in ascending order.
+
+A migration itself is just a normal function that is called. It is expected to
+call the schema functions described above (but it doesn't have to).
+
+### Creating The Migration Table
+
+Before running any migrations you must create the migration table. Do the following:
+
+```moon
+migrations = require "lapis.db.migrations"
+migrations.create_migrations_table!
+```
+
+It will execute the following SQL:
+
+```sql
+CREATE TABLE IF NOT EXISTS "lapis_migrations" (
+  "name" character varying(255) NOT NULL,
+  PRIMARY KEY(name)
+);
+```
+
+### Running Migrations
+
+When organizing migrations it's best to create a module that returns the table
+of our migrations:
+
+```moon
+-- migrations.moon
+import types from require "lapis.db.schema"
+
+{
+  -- add deleted column
+  [1366269069]: =>
+    add_column "users", "deleted", types.boolean
+    add_index "users", "deleted"
+}
+```
+
+Now we can run migrations like so:
+
+```moon
+import run_migrations from require "lapis.db.migrations"
+run_migrations require "migrations"
+```
+
+If you look in your console after running migrations you'll be able to see what
+migrations have been run and their associated SQL.
 
 ## Request Object
 
