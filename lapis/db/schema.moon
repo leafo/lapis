@@ -36,7 +36,7 @@ create_table = (name, columns) ->
     add "\n  "
     if type(c) == "table"
       name, kind = unpack c
-      add db.escape_identifier(name), " ", kind
+      add db.escape_identifier(name), " ", tostring kind
     else
       add c
 
