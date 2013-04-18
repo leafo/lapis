@@ -9,7 +9,7 @@ HTTP requests, database queries and other requests using the modules provided
 with OpenResty. Lua's coroutines allows you to write synchronous looking code
 that is event driven behind the scenes.
 
-Lapis is early in development but it comes with a url router, html templating
+Lapis is early in development but it comes with a URL router, HTML templating
 through a MoonScript DSL, CSRF and session support, a basic PostgreSQL backed
 active record system for working with models and a handful of other useful
 functions needed for developing websites.
@@ -199,7 +199,7 @@ lapis.serve class extends lapis.Application
 
 ### URL Parameters
 
-Routes can contain special patterns that match parts of the url and put them
+Routes can contain special patterns that match parts of the URL and put them
 into a request parameter.
 
 Named parameters are a `:` followed by a name. They match all characters
@@ -333,6 +333,76 @@ class App extends lapis.Application
       redirect_to: @url_for "index"
   }
 
+```
+
+### Sub-Applications
+
+As your web application becomes more complex it helps to break it apart into
+multiple sub-applications. Lapis doesn't place any rules on how you divide your
+application, instead it facilities the combination of applications.
+
+#### `@include(other_application, [opts])`
+
+Let's say we've got a separate application for handling users:
+
+```moon
+-- applications/users.moon
+lapis = require "lapis"
+
+class UsersApplication extends lapis.Application
+  [login: "/login"] => do_login!
+  [logout: "/logout"] => do_logout!
+```
+
+We can include this application into our main one:
+
+```moon
+-- app.moon
+lapis = require "lapis"
+
+class extends lapis.Application
+  @include require "applications.users"
+
+  [index: "/"]: =>
+    @html ->
+      a href: @url_for("login"), "Log in"
+```
+
+In this example `applications/user.moon` is a module that returns the
+sub-application. The `include` class method is used to load this application
+into our root one. `include` copies all the routes of the other application,
+leaving the original untouched.
+
+Before filters of the sub-application are kept associated with the actions from
+that application.
+
+`include` takes an optional second argument, a table of options. The following
+options are available:
+
+* `path` -- The patterns of the routes copied are prefixed with `path`
+* `name` -- The names of all the routes copied are prefixed with `name`
+
+For example, we might prefix the users application. Notice how the name of the
+route and its URL are different:
+
+```moon
+class extends lapis.Application
+  @include require "applications.users", path: "/users", name: "user_"
+
+  "/": =>
+    @url_for("user_login") -- returns "/users/login"
+```
+
+Instead of passing the `path` and `name` prefixes `include`, you can set their
+default values on the application. These only apply when the application is
+included, and have no effect when the application is served.
+
+```moon
+class UsersApplication extends lapis.Application
+  path: "/users"
+  name: "user_"
+
+  -- etc...
 ```
 
 ## HTML Generation
@@ -610,8 +680,8 @@ import validate from require "lapis.validate"
 
 Lapis is designed to run your server in different configurations called
 environments. For example you might have a development configuration with a
-local database url, code caching disabled, and a single worker. Then you might
-have a production configuration with remote database url, code caching enabled,
+local database URL, code caching disabled, and a single worker. Then you might
+have a production configuration with remote database URL, code caching enabled,
 and 8 workers.
 
 The `lapis` command line tool takes a second argument when starting the server:
@@ -1733,7 +1803,7 @@ of each argument.
 
 #### `url_for(name_or_obj, params)`
 
-Generates a url for `name_or_obj`.
+Generates a URL for `name_or_obj`.
 
 If `name_or_obj` is a string, then the route of that name is looked up and
 filled using the values in params.
@@ -1753,9 +1823,9 @@ object. The arguments passed to `url_params` are the request, followed by all
 the remaining arguments passed to `url_for`. The result of `url_params` is used
 to call `url_for` again.
 
-The values of params are inserted literally into the url if they are strings.
+The values of params are inserted literally into the URL if they are strings.
 If the value is a table then the `url_key` method is called and the result is
-used as the url value.
+used as the URL value.
 
 For example, consider a `Users` model and generating a URL for it:
 
@@ -1767,8 +1837,8 @@ class Users extends Model
 
 #### `build_url(path, [options])`
 
-Builds an absolute url for the path. The current request's URI is used to build
-the url.
+Builds an absolute URL for the path. The current request's URI is used to build
+the URL.
 
 For example, if we are running our server on `localhost:8080`:
 
@@ -1791,11 +1861,11 @@ util = require "lapis.util"
 
 ####  `unescape(str)`
 
-Url unescapes string
+URL unescapes string
 
 ####  `escape(str)`
 
-Url escapes string
+URL escapes string
 
 ####  `escape_pattern(str)`
 
@@ -1815,7 +1885,7 @@ Converst CamelCase to camel_case.
 
 ####  `slugify(str)`
 
-Converts a string to a slug suitable for a url. Removes all whitespace and
+Converts a string to a slug suitable for a URL. Removes all whitespace and
 symbols and replaces them with `-`.
 
 ####  `uniquify(tbl)`
@@ -2042,10 +2112,101 @@ Implements a subset of [Lua Socket's
 
 Does not support `proxy`, `create`, `step`, or `redirect`.
 
+
+## Lapis Console
+
+[Lapis Console][6] is a separate project that adds an interactive console to
+your web application. Because Lapis runs inside of the Nginx loop, it's not
+trivial to make a standard terminal based console that behaves the same way as
+the web application. So a console that runs inside of your browser was created,
+letting you reliably execute code in the same way as your web application when
+debugging.
+
+![Lapis Console Screenshot](http://leafo.net/dump/lapis_console.png "Screenshot of the Lapis Console exploring an object.")
+
+Install through LuaRocks:
+
+```bash
+$ luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis_console
+```
+
+### Creating A Console
+
+#### `console.make([opts])`
+
+Lapis console provides an action that you can insert into your application to a
+route of your choosing:
+
+```moon
+lapis = require "lapis"
+console = require "lapis.console"
+
+class extends lapis.Application
+  "/console": console.make!
+```
+
+Now just head to to the `/console` location in your browser to use it. By
+default the action that is created will only run in the `"development"`
+environment.
+
+You can set the `env` option in the first argument to `"all"` to enable in
+every environment, or you can name an environment.
+
+> Be careful about allowing access to the console, a malicious individual could
+> destroy your application and compromise your system if given access.
+
+
+### Tips
+
+The console lets your write and execute a MoonScript program. Multiple lines
+are supported.
+
+The `print` function has been replaced in the console to print to the debug
+output. You can print any type of object and the console will pretty print it.
+Tables can be opened up and other types are color coded.
+
+Any queries that execute during the script are logged to a special portion on
+the bottom of the output.
+
+`@` is equal to the value of the request that is initiating the console. You
+can use this if you are testing a method that needs a request object.
+
+
+## License (MIT)
+
+    Copyright (C) 2013 by Leaf Corcoran
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+
+<div class="footer">
+  <a href="http://leafo.net/lapis">&laquo; Go To Homepage</a>
+  &middot;
+  <a href="https://github.com/leafo/lapis">GitHub Repository</a>
+  &middot;
+  <a href="https://github.com/leafo/lapis/issues">Issues Tracker</a>
+</div>
+
 [0]: http://openresty.org/
 [1]: https://github.com/leafo/heroku-openresty
 [2]: https://github.com/leafo/heroku-buildpack-lua
 [3]: http://rocks.moonscript.org/modules/leafo/lapis
 [4]: http://moonscript.org/reference/#moonc
 [5]: http://www.postgresql.org/
+[6]: https://github.com/leafo/lapis-console
 
