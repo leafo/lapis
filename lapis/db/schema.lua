@@ -1,26 +1,5 @@
 local db = require("lapis.db")
-local types = setmetatable({
-  serial = "serial NOT NULL",
-  varchar = "character varying(255) NOT NULL",
-  varchar_with_default = function(default)
-    return db.interpolate_query("character varying(255) NOT NULL DEFAULT ?", default)
-  end,
-  varchar_nullable = "character varying(255)",
-  text = "text NOT NULL",
-  text_nullable = "text",
-  time = "timestamp without time zone NOT NULL",
-  date = "date NOT NULL",
-  time_nullable = "timestamp without time zone",
-  integer = "integer NOT NULL DEFAULT 0",
-  foreign_key = "integer NOT NULL",
-  foreign_key_nullable = "integer",
-  boolean = "boolean NOT NULL DEFAULT FALSE",
-  numeric = "numeric NOT NULL DEFAULT 0"
-}, {
-  __index = function(self, key)
-    return error("Don't know column type `" .. tostring(key) .. "`")
-  end
-})
+local escape_literal = db.escape_literal
 local concat = table.concat
 local append_all
 append_all = function(t, ...)
@@ -175,6 +154,93 @@ rename_table = function(tname_from, tname_to)
   tname_to = db.escape_identifier(tname_to)
   return db.query("ALTER TABLE " .. tostring(tname_from) .. " RENAME TO " .. tostring(tname_to))
 end
+local ColumnType
+do
+  local _parent_0 = nil
+  local _base_0 = {
+    default_options = {
+      nullable = false
+    },
+    __call = function(self, opts)
+      local out = self.base
+      if not (opts.nullable) then
+        out = out .. " NOT NULL"
+      end
+      do
+        local default = opts.default
+        if default then
+          out = out .. (" DEFAULT " .. escape_literal(default))
+        end
+      end
+      if opts.unique then
+        out = out .. " UNIQUE"
+      end
+      if opts.primary_key then
+        out = out .. " PRIMARY KEY"
+      end
+      return out
+    end,
+    __tostring = function(self)
+      return self:__call(self.default_options)
+    end
+  }
+  _base_0.__index = _base_0
+  if _parent_0 then
+    setmetatable(_base_0, _parent_0.__base)
+  end
+  local _class_0 = setmetatable({
+    __init = function(self, base, default_options)
+      self.base, self.default_options = base, default_options
+    end,
+    __base = _base_0,
+    __name = "ColumnType",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil and _parent_0 then
+        return _parent_0[name]
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0 and _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  ColumnType = _class_0
+end
+local C = ColumnType
+local types = setmetatable({
+  serial = C("serial"),
+  varchar = C("character varying(255)"),
+  text = C("text"),
+  time = C("timestamp without time zone"),
+  date = C("date"),
+  integer = C("integer", {
+    nullable = false,
+    default = 0
+  }),
+  numeric = C("numeric", {
+    nullable = false,
+    default = 0
+  }),
+  boolean = C("boolean", {
+    nullable = false,
+    default = false
+  }),
+  foreign_key = C("integer")
+}, {
+  __index = function(self, key)
+    return error("Don't know column type `" .. tostring(key) .. "`")
+  end
+})
 if ... == "test" then
   db.query = print
   db.select = function()
@@ -188,6 +254,16 @@ if ... == "test" then
   rename_column("hello", "dads", "cats")
   drop_column("hello", "cats")
   rename_table("hello", "world")
+  print(types.integer)
+  print(types.integer({
+    nullable = true
+  }))
+  print(types.integer({
+    nullable = true,
+    default = 100,
+    unique = true
+  }))
+  print(types.serial)
 end
 return {
   types = types,

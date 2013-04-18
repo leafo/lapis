@@ -1,24 +1,7 @@
 
 db = require "lapis.db"
 
-types = setmetatable {
-  serial: "serial NOT NULL"
-  varchar: "character varying(255) NOT NULL"
-  varchar_with_default: (default) ->
-    db.interpolate_query "character varying(255) NOT NULL DEFAULT ?", default
-  varchar_nullable: "character varying(255)"
-  text: "text NOT NULL"
-  text_nullable: "text"
-  time: "timestamp without time zone NOT NULL"
-  date: "date NOT NULL"
-  time_nullable: "timestamp without time zone"
-  integer: "integer NOT NULL DEFAULT 0"
-  foreign_key: "integer NOT NULL"
-  foreign_key_nullable: "integer"
-  boolean: "boolean NOT NULL DEFAULT FALSE"
-  numeric: "numeric NOT NULL DEFAULT 0"
-}, __index: (key) =>
-  error "Don't know column type `#{key}`"
+import escape_literal from db
 
 import concat from table
 append_all = (t, ...) ->
@@ -114,6 +97,44 @@ rename_table = (tname_from, tname_to) ->
   tname_to = db.escape_identifier tname_to
   db.query "ALTER TABLE #{tname_from} RENAME TO #{tname_to}"
 
+class ColumnType
+  default_options: { nullable: false }
+
+  new: (@base, @default_options) =>
+
+  __call: (opts) =>
+    out = @base
+
+    unless opts.nullable
+      out ..= " NOT NULL"
+
+    if default = opts.default
+      out ..= " DEFAULT " .. escape_literal default
+
+    if opts.unique
+      out ..= " UNIQUE"
+
+    if opts.primary_key
+      out ..= " PRIMARY KEY"
+
+    out
+
+  __tostring: => @__call @default_options
+
+C = ColumnType
+types = setmetatable {
+  serial:       C "serial"
+  varchar:      C "character varying(255)"
+  text:         C "text"
+  time:         C "timestamp without time zone"
+  date:         C "date"
+  integer:      C "integer", nullable: false, default: 0
+  numeric:      C "numeric", nullable: false, default: 0
+  boolean:      C "boolean", nullable: false, default: false
+  foreign_key:  C "integer"
+}, __index: (key) =>
+  error "Don't know column type `#{key}`"
+
 if ... == "test"
   db.query = print
   db.select = -> { { c: 0 } }
@@ -122,6 +143,11 @@ if ... == "test"
   rename_column "hello", "dads", "cats"
   drop_column "hello", "cats"
   rename_table "hello", "world"
+
+  print types.integer
+  print types.integer nullable: true
+  print types.integer nullable: true, default: 100, unique: true
+  print types.serial
 
 {
   :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
