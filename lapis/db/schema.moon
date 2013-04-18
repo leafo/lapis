@@ -98,18 +98,21 @@ rename_table = (tname_from, tname_to) ->
   db.query "ALTER TABLE #{tname_from} RENAME TO #{tname_to}"
 
 class ColumnType
-  default_options: { nullable: false }
+  default_options: { null: false }
 
   new: (@base, @default_options) =>
 
   __call: (opts) =>
     out = @base
 
-    unless opts.nullable
+    for k,v in pairs @default_options
+      opts[k] = v unless opts[k] != nil
+
+    unless opts.null
       out ..= " NOT NULL"
 
-    if default = opts.default
-      out ..= " DEFAULT " .. escape_literal default
+    if opts.default != nil
+      out ..= " DEFAULT " .. escape_literal opts.default
 
     if opts.unique
       out ..= " UNIQUE"
@@ -128,9 +131,9 @@ types = setmetatable {
   text:         C "text"
   time:         C "timestamp without time zone"
   date:         C "date"
-  integer:      C "integer", nullable: false, default: 0
-  numeric:      C "numeric", nullable: false, default: 0
-  boolean:      C "boolean", nullable: false, default: false
+  integer:      C "integer", null: false, default: 0
+  numeric:      C "numeric", null: false, default: 0
+  boolean:      C "boolean", null: false, default: false
   foreign_key:  C "integer"
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
@@ -145,8 +148,8 @@ if ... == "test"
   rename_table "hello", "world"
 
   print types.integer
-  print types.integer nullable: true
-  print types.integer nullable: true, default: 100, unique: true
+  print types.integer null: true
+  print types.integer null: true, default: 100, unique: true
   print types.serial
 
 {
