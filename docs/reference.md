@@ -19,8 +19,8 @@ This guide hopes to serve as a tutorial and a reference.
 ## Basic Setup
 
 Install OpenResty onto your system. If you're compiling manually it's
-recommended to enable Postgres and Lua JIT. If you're using Heroku then you can
-use the Heroku OpenResy module along with the Lua build pack.
+recommended to enable PostgreSQL and Lua JIT. If you're using Heroku then you
+can use the Heroku OpenResy module along with the Lua build pack.
 
 Next install Lapis using LuaRocks. You can find the rockspec [on MoonRocks][3]:
 
@@ -54,7 +54,7 @@ Lapis starts you off by writing some basic Nginx configuration. Your
 application runs directly in Nginx and this configuration is what routes
 requests from Nginx to your Lua code.
 
-Feel free to look at the generated config file (`nginx.conf` is the only
+Feel free to look at the generated configuration file (`nginx.conf` is the only
 important file). Here's a brief overview of what it does:
 
  * Any requests inside `/static/` will serve files out of the directory
@@ -68,7 +68,7 @@ environment. We'll talk about how to configure these things later on.
 
 ### Nginx Configuration
 
-Let's take a look at the configration that `lapis new` has given us. Although
+Let's take a look at the configuration that `lapis new` has given us. Although
 it's not necessary to look at this immediately, it's important to understand
 when building more advanced applications or even just deploying your
 application to production.
@@ -110,16 +110,13 @@ http {
 
 
 The first thing to notice is that this is not a normal Nginx configuration
-file. You'll notice special `${{VARIABLE}}` syntax. When starting your server
-with Lapis, these variables are replaced with their values pulled from the
-active configuration.
+file. Special `${{VARIABLE}}` syntax is used by Lapis to inject environment
+settings before starting the server.
 
-The rest of the syntax is regular Nginx configuration syntax.
-
-There are a couple interesting things here. `error_log stderr notice` and
-`daemon off` lets our server run in the foreground, and print log text to the
-console. This is great for development, but worth turning off in a production
-environment.
+There are a couple interesting things provided by the default configuration.
+`error_log stderr notice` and `daemon off` lets our server run in the
+foreground, and print log text to the console. This is great for development,
+but worth turning off in a production environment.
 
 `lua_code_cache off` is also another setting nice for development. It causes
 all Lua modules to be reloaded on each request, so if we change files after
@@ -153,6 +150,8 @@ is matched to a function that returns `"Hello World!"`
 The return value of an action determines what is written as the response. In
 the simplest form we can return a string in order to write a string.
 
+You can read more about what an action can return in [Request Objects](#request-object-request-options).
+
 > Don't forget to compile the `.moon` files. You can watch the current
 > directory and compile automatically with `moonc -w`.
 
@@ -176,7 +175,8 @@ So go ahead and start your server:
 $ lapis server
 ```
 
-We can now navigate to <http://localhost:8080/> to see our application.
+Assuming there are no errors we can now navigate to <http://localhost:8080/> to
+see our application.
 
 ## Lapis Applications
 
@@ -184,8 +184,9 @@ When we refer to a Lapis application we are talking about a class that extends
 from `lapis.Application`. The properties of the application make up the routes
 the application can serve and the actions it will perform.
 
-If a property name is a string and begins with a "/" or the property is a table
-then it defines a route. All other properties are methods of the application.
+If a property name is a string and begins with a `"/"` or the property is a
+table then it defines a route. All other properties are methods of the
+application.
 
 Let's start with the basic application from above:
 
@@ -209,7 +210,7 @@ excluding `/`.
 "/user/:name": => "Hello #{@params.name}"
 ```
 
-If we were to go to the path "/user/leaf", `@params.name` would be set to
+If we were to go to the path `"/user/leaf"`, `@params.name` would be set to
 `"leaf"`.
 
 `@params` holds all the parameters to the action. This is a concatenation of
@@ -313,10 +314,9 @@ class App extends lapis.Application
 ```
 
 `respond_to` can also take a before filter of its own that will run before the
-corresponding HTTP verb action. We do this by specifying a `before`
-function. The same semantics of [before
-filters][#lapis-applications-before-filters] apply, so if you call `@write`
-then the rest of the action will not get run.
+corresponding HTTP verb action. We do this by specifying a `before` function.
+The same semantics of [before filters](#lapis-applications-before-filters)
+apply, so if you call `@write` then the rest of the action will not get run.
 
 ```moon
 class App extends lapis.Application
@@ -387,7 +387,7 @@ route and its URL are different:
 
 ```moon
 class extends lapis.Application
-  @include require "applications.users", path: "/users", name: "user_"
+  @include require("applications.users"), path: "/users", name: "user_"
 
   "/": =>
     @url_for("user_login") -- returns "/users/login"
@@ -421,7 +421,7 @@ method:
 ```
 
 HTML templates are written directly as MoonScript code. This is a very powerful
-feature (inspirted by [Erector](http://erector.rubyforge.org/)) that gives us
+feature (inspired by [Erector](http://erector.rubyforge.org/)) that gives us
 the ability to write templates with high composability and also all the
 features of MoonScript. No need to learn any goofy templating syntax with
 arbitrary restrictions.
@@ -447,7 +447,8 @@ div class: "footer", "The Foot"     -- <div class="footer">The Foot</div>
 div ->                              -- <div>Hey</div>
   text "Hey"
 
-div class: "header", ->             -- <div class="header"><h2>My Site</h2><p>Welcome!</p></div>
+div class: "header", ->             -- <div class="header"><h2>My Site</h2>
+                                    --    <p>Welcome!</p></div>
   h2 "My Site"
   p "Welcome!"
 ```
