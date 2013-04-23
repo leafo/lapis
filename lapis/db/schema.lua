@@ -77,7 +77,7 @@ create_table = function(name, columns)
     if type(c) == "table" then
       local kind
       name, kind = unpack(c)
-      add(db.escape_identifier(name), " ", kind)
+      add(db.escape_identifier(name), " ", tostring(kind))
     else
       add(c)
     end
@@ -159,18 +159,20 @@ do
   local _parent_0 = nil
   local _base_0 = {
     default_options = {
-      nullable = false
+      null = false
     },
     __call = function(self, opts)
       local out = self.base
-      if not (opts.nullable) then
+      for k, v in pairs(self.default_options) do
+        if not (opts[k] ~= nil) then
+          opts[k] = v
+        end
+      end
+      if not (opts.null) then
         out = out .. " NOT NULL"
       end
-      do
-        local default = opts.default
-        if default then
-          out = out .. (" DEFAULT " .. escape_literal(default))
-        end
+      if opts.default ~= nil then
+        out = out .. (" DEFAULT " .. escape_literal(opts.default))
       end
       if opts.unique then
         out = out .. " UNIQUE"
@@ -224,15 +226,15 @@ local types = setmetatable({
   time = C("timestamp without time zone"),
   date = C("date"),
   integer = C("integer", {
-    nullable = false,
+    null = false,
     default = 0
   }),
   numeric = C("numeric", {
-    nullable = false,
+    null = false,
     default = 0
   }),
   boolean = C("boolean", {
-    nullable = false,
+    null = false,
     default = false
   }),
   foreign_key = C("integer")
@@ -256,10 +258,10 @@ if ... == "test" then
   rename_table("hello", "world")
   print(types.integer)
   print(types.integer({
-    nullable = true
+    null = true
   }))
   print(types.integer({
-    nullable = true,
+    null = true,
     default = 100,
     unique = true
   }))
