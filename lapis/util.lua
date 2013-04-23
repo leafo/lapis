@@ -321,7 +321,7 @@ do
       diff:addminutes(-minutes)
     end
     local seconds = floor(diff:spanseconds())
-    if seconds >= 1 then
+    if seconds >= 1 or not next(times) then
       times.seconds = seconds
       insert(times, {
         "seconds",
@@ -404,6 +404,7 @@ if ... == "test" then
   print(time_ago_in_words(t))
   print(time_ago_in_words(t, 2))
   print(time_ago_in_words(t, 10))
+  print(time_ago_in_words(os.time()))
 end
 return {
   unescape = unescape,

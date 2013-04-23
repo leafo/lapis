@@ -195,7 +195,7 @@ time_ago = do
       diff\addminutes -minutes
 
     seconds = floor diff\spanseconds()
-    if seconds >= 1
+    if seconds >= 1 or not next(times)
       times.seconds = seconds
       insert times, {"seconds", seconds}
 
@@ -273,6 +273,7 @@ if ... == "test"
   print time_ago_in_words t
   print time_ago_in_words t, 2
   print time_ago_in_words t, 10
+  print time_ago_in_words os.time!
 
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
