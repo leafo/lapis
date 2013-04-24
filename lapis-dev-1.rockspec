@@ -38,6 +38,7 @@ build = {
 		["lapis.db.model"] = "lapis/db/model.lua",
 		["lapis.db.schema"] = "lapis/db/schema.lua",
 		["lapis.html"] = "lapis/html.lua",
+		["lapis.http"] = "lapis/http.lua",
 		["lapis.logging"] = "lapis/logging.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
 		["lapis.nginx.http"] = "lapis/nginx/http.lua",
