@@ -1,13 +1,13 @@
 
 # Lapis Guide
 
-Lapis is a web framework written in MoonScript. It is designed to be used with
-MoonScript but can also works fine with Lua. Lapis is interesting because it's
-built on top of the Nginx distribution [OpenResty][0]. Your web application is
-run directly inside of Nginx. Nginx's event loop lets you make asynchronous
-HTTP requests, database queries and other requests using the modules provided
-with OpenResty. Lua's coroutines allows you to write synchronous looking code
-that is event driven behind the scenes.
+[Lapis](http://leafo.net/lapis/) is a web framework written in MoonScript. It is
+designed to be used with MoonScript but can also works fine with Lua. Lapis is
+interesting because it's built on top of the Nginx distribution [OpenResty][0].
+Your web application is run directly inside of Nginx. Nginx's event loop lets
+you make asynchronous HTTP requests, database queries and other requests using
+the modules provided with OpenResty. Lua's coroutines allows you to write
+synchronous looking code that is event driven behind the scenes.
 
 Lapis is early in development but it comes with a URL router, HTML templating
 through a MoonScript DSL, CSRF and session support, a basic PostgreSQL backed

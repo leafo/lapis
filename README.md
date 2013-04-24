@@ -2,40 +2,12 @@
 
 A web framework for Lua/MoonScript.
 
-```bash
-$ lapis new
-->	wrote	nginx.conf
-->	wrote	mime.types
-```
-
-```moonscript
--- web.moon
-lapis = require "lapis.init"
-
-lapis.serve class extends lapis.Application
-  "/": =>
-    profile_url = @url_for "user_profile", name: "leafo"
-    @html ->
-      h2 "Welcome!"
-      text "Go to my "
-      a href: profile_url, "profile"
-
-  ⁣[user_profile: "/:name"]: =>
-    @html ->
-      div class: "profile", ->
-        text "Welcome to the profile of ", @params.name
-```
-
-```bash
-$ moonc web.moon
-$ lapis server
-```
+## <http://leafo.net/lapis/>
 
 ## Lapis Powered
 
   * <http://rocks.moonscript.org>
   * <http://itch.io>
-
 
 ## License (MIT)
 
