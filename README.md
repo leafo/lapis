@@ -2,7 +2,7 @@
 
 A web framework for Lua/MoonScript.
 
-## <http://leafo.net/lapis/>
+### <http://leafo.net/lapis/>
 
 ## Lapis Powered
 
