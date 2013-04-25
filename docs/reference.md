@@ -1847,7 +1847,7 @@ For example, if we are running our server on `localhost:8080`:
 @build_url! --> http://localhost:8080
 @build_url "hello" --> http://localhost:8080/hello
 
-@build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
+@build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
 ```
 
 ## Utilities
