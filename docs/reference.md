@@ -853,8 +853,6 @@ upstream database {
 }
 ```
 
-> The upstream must be named `database` by default.
-
 In this example the `pg` filter is applied to our `POSTGRESQL_URL`
 configuration variable. Let's go ahead and add a value to our `config.moon`
 
@@ -875,6 +873,11 @@ location = /query {
   postgres_query $echo_request_body;
 }
 ```
+
+> The location must be named `/query` by default. And `postgres_pass` must
+> match the name of the upstream. In this example we use `database`.
+
+
 
 The `internal` setting is very important. This allows the location to only be
 used within the context of a sub-request.
