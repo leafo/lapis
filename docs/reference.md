@@ -834,14 +834,18 @@ config "development", ->
 Lapis comes with a set of classes and functions for working with
 [PostgreSQL][5]. In the future other databases might be directly supported.
 
-### Configuring The Upstream
+### Configuring The Upstream & Location
 
-Every query is performed asynchronously by sending a request to an Nginx
-upstream. Our single upstream will automatically manage a pool of PostgreSQL
-database connections.
+Every query is performed asynchronously by sending an internal sub-request to a
+special location defined in our Nginx configuration. This location communicates
+with an upstream, which automatically manages a pool of PostgreSQL database
+connections. This is handled by the
+[`ngx_postgres`](https://github.com/FRiCKLE/ngx_postgres) module that is
+bunrequestdled with OpenResty.
 
-The first step is to add an upstream to our `nginx.conf`. Place the following
-in the `http` block:
+First we'll add the upstream to our `nginx.conf`, it's how we specify the
+host and authentication of the database. Place the following in the `http`
+block:
 
 ```nginx
 upstream database {
@@ -861,6 +865,21 @@ config "development", ->
 
 The `pg` filter will convert the PostgreSQL URL to the right format for the
 Nginx PostgreSQL module.
+
+Lastly, we add the location. Place the following in your `server` block:
+
+```nginx
+location = /query {
+  internal;
+  postgres_pass database;
+  postgres_query $echo_request_body;
+}
+```
+
+The `internal` setting is very important. This allows the location to only be
+used within the context of a sub-request.
+
+You're now ready to start making queries.
 
 ### Making A Query
 
