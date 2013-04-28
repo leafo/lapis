@@ -841,7 +841,7 @@ special location defined in our Nginx configuration. This location communicates
 with an upstream, which automatically manages a pool of PostgreSQL database
 connections. This is handled by the
 [`ngx_postgres`](https://github.com/FRiCKLE/ngx_postgres) module that is
-bunrequestdled with OpenResty.
+bundled with OpenResty.
 
 First we'll add the upstream to our `nginx.conf`, it's how we specify the
 host and authentication of the database. Place the following in the `http`
