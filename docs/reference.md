@@ -1,4 +1,3 @@
-
 # Lapis Guide
 
 [Lapis](http://leafo.net/lapis/) is a web framework written in MoonScript. It is
@@ -1961,7 +1960,7 @@ that contains the encoded object and signature.
 
 If secret is not provided the session secret is used.
 
-#### `deocde_with_secret(msg_and_sig, secret)`
+#### `decode_with_secret(msg_and_sig, secret)`
 
 Decodes a string created by `encode_with_secret`. The decoded object is only
 returned if the signature is correct. Otherwise returns `nil` and an error
