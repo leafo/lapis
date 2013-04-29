@@ -452,6 +452,15 @@ div class: "header", ->             -- <div class="header"><h2>My Site</h2>
   p "Welcome!"
 ```
 
+The `element` function is a special builder that takes the name of tag to
+generate as the first argument followed by any attributes and content.
+
+The HTML builder methods have lower precedence than any existing variables, so
+if you have a variable named `div` and you want to make a `<div>` tag you'll need
+to call `element "div"`.
+
+> If you want to create a `<table>` tag you'll need to uses `element` because Lua
+> uses the name `table` for the built in table module.
 
 ### HTML Widgets
 
@@ -524,6 +533,56 @@ class Index extends Widget
       text "Welcome to my site!"
 ```
 
+
+### Layouts
+
+Whenever an action is rendered normally the result is inserted into the
+current layout. The layout is just another widget, but it is used across many
+pages. Typically this is where you would put your `<html>` and `<head>` tags.
+
+Lapis comes with a default layout that looks like this:
+
+```moon
+html = require "lapis.html"
+
+class DefaultLayout extends html.Widget
+  content: =>
+    html_5 ->
+      head -> title @title or "Lapis Page"
+      body -> @content_for "inner"
+```
+
+Use this as a starting point for creating your own layout. The content of your
+page will be injected in the location of the call to `@content_for "inner"`.
+
+We can specify the layout for an entire application or specify it for a
+specific action. For example, if we have our new layout in `views/my_layout.moon`
+
+```moon
+class extends lapis.Application
+	layout: require "views.my_layout"
+```
+
+If we want to set the layout for a specific action we can provide it as part of
+the action's return value.
+
+```moon
+class extends lapis.Application
+	-- the following have the same effect
+	"/home1": =>
+		layout: "my_layout"
+
+	"/home2": =>
+		layout: require "views.my_layout"
+
+	-- this doesn't use a layout
+	"/no_layout": =>
+		layout: false, "No layout rendered!"
+
+```
+
+As demonstrated in the example, passing false will prevent any layout from
+being rendered.
 
 ## Exception Handling
 
