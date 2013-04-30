@@ -19,7 +19,7 @@ This guide hopes to serve as a tutorial and a reference.
 
 Install OpenResty onto your system. If you're compiling manually it's
 recommended to enable PostgreSQL and Lua JIT. If you're using Heroku then you
-can use the Heroku OpenResy module along with the Lua build pack.
+can use the Heroku OpenResty module along with the Lua build pack.
 
 Next install Lapis using LuaRocks. You can find the rockspec [on MoonRocks][3]:
 
