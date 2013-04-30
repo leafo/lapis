@@ -1,6 +1,6 @@
 # Lapis
 
-A web framework for Lua/MoonScript.
+A web framework for Lua/[MoonScript][1].
 
 ### <http://leafo.net/lapis/>
 
@@ -8,6 +8,14 @@ A web framework for Lua/MoonScript.
 
   * <http://rocks.moonscript.org>
   * <http://itch.io>
+
+## Running Tests
+
+Requires [Busted][2] and [MoonScript][1].
+
+```bash
+make test
+```
 
 ## License (MIT)
 
@@ -30,4 +38,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+ [1]: http://moonscript.org
+ [2]: http://olivinelabs.com/busted/
 
