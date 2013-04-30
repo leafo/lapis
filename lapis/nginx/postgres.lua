@@ -219,66 +219,13 @@ _delete = function(table, cond, ...)
   end
   return raw_query(concat(buff))
 end
-if ... == "test" then
-  raw_query = function(str)
-    return print("QUERY:", str)
-  end
-  print(escape_identifier('dad'))
-  print(escape_identifier('select'))
-  print(escape_identifier('love"fish'))
-  local _ = print
-  print(escape_literal(3434))
-  print(escape_literal("cat's soft fur"))
-  _ = print
-  print(interpolate_query("select * from cool where hello = ?", "world"))
-  print(interpolate_query("update x set x = ?", raw("y + 1")))
-  _ = print
-  local v = {
-    hello = "world",
-    age = 34
-  }
-  print(encode_values(v))
-  print(encode_assigns(v))
-  _ = print
-  _select("* from things where id = ?", "cool days")
-  _insert("cats", {
-    age = 123,
-    name = "catter"
-  })
-  _update("cats", {
-    age = raw("age - 10")
-  }, "name = ?", "catter")
-  _update("cats", {
-    age = raw("age - 10")
-  }, {
-    name = NULL
-  })
-  _update("cats", {
-    color = "red"
-  }, {
-    weight = 1200,
-    length = 392
-  })
-  _delete("cats")
-  _delete("cats", "name = ?", "rump")
-  _delete("cats", {
-    name = "rump"
-  })
-  _delete("cats", {
-    name = "rump",
-    dad = "duck"
-  })
-  _insert("cats", {
-    age = 123,
-    name = "catter"
-  }, "age")
-  _insert("cats", {
-    age = 123,
-    name = "catter"
-  }, "age", "name")
-  _insert("cats", {
-    hungry = true
-  })
+local _set_query_fn
+_set_query_fn = function(fn)
+  raw_query = fn
+end
+local _get_query_fn
+_get_query_fn = function()
+  return raw_query
 end
 return {
   query = query,
@@ -294,6 +241,8 @@ return {
   set_proxy_location = set_proxy_location,
   set_logger = set_logger,
   get_logger = get_logger,
+  _get_query_fn = _get_query_fn,
+  _set_query_fn = _set_query_fn,
   select = _select,
   insert = _insert,
   update = _update,

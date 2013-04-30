@@ -171,51 +171,16 @@ _delete = (table, cond, ...) ->
 
   raw_query concat buff
 
-if ... == "test"
-  raw_query = (str) -> print "QUERY:", str
-
-  print escape_identifier 'dad'
-  print escape_identifier 'select'
-  print escape_identifier 'love"fish'
-  print
-  print escape_literal 3434
-  print escape_literal "cat's soft fur"
-  print
-  print interpolate_query "select * from cool where hello = ?", "world"
-  print interpolate_query "update x set x = ?", raw"y + 1"
-  print
-
-  v = { hello: "world", age: 34 }
-
-  print encode_values v
-  print encode_assigns v
-
-  print
-
-  _select "* from things where id = ?", "cool days"
-  _insert "cats", age: 123, name: "catter"
-
-  _update "cats", { age: raw"age - 10" }, "name = ?", "catter"
-  _update "cats", { age: raw"age - 10" }, { name: NULL }
-  _update "cats", { color: "red" }, { weight: 1200, length: 392 }
-
-  _delete "cats"
-  _delete "cats", "name = ?", "rump"
-  _delete "cats", name: "rump"
-  _delete "cats", name: "rump", dad: "duck"
-
-  _insert "cats", { age: 123, name: "catter" }, "age"
-  _insert "cats", { age: 123, name: "catter" }, "age", "name"
-
-  _insert "cats", { hungry: true }
-
-  -- query "update things set #{encode_assigns(v)} where id = ?", "hello-world"
+_set_query_fn = (fn) -> raw_query = fn
+_get_query_fn = -> raw_query
 
 {
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query
   :set_proxy_location
   :set_logger, :get_logger
+
+  :_get_query_fn, :_set_query_fn
 
   select: _select
   insert: _insert
