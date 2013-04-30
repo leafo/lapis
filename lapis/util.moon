@@ -15,7 +15,7 @@ escape = do
   (str) -> (e str)
 
 escape_pattern = do
-  punct = "[%^$()%.%[%]*+%-?]"
+  punct = "[%^$()%.%[%]*+%-?%%]"
   (str) -> (str\gsub punct, (p) -> "%"..p)
 
 inject_tuples = (tbl) ->
@@ -230,54 +230,9 @@ time_ago_in_words = do
 
     out .. " ago"
 
-if ... == "test"
-  require "moon"
-  moon.p parse_query_string "hello=wo%22rld"
-
-  print underscore "ManifestRocks"
-  print camelize underscore "ManifestRocks"
-  print camelize "hello"
-  print camelize "world_wide_i_web"
-
-  encoded = encode_query_string {
-    {"dad", "day"}
-    "hello[hole]": "wor=ld"
-  }
-
-  res = parse_query_string encoded
-  moon.p res
-
-  print to_json {
-    color: "blue"
-    data: {
-      height: 10
-      fn: =>
-    }
-  }
-
-  parts = {
-    path: "/test"
-    scheme: "http"
-    host: "localhost.com"
-    port: "8080"
-    fragment: "cool_thing"
-    query: "dad=days"
-  }
-
-  print build_url parts
-  print url.build parts
-
-  t = os.time! - 34234349
-  moon.p time_ago t
-  print t
-  print time_ago_in_words t
-  print time_ago_in_words t, 2
-  print time_ago_in_words t, 10
-  print time_ago_in_words os.time!
-
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :json_encodable, :build_url, :time_ago,
-  :time_ago_in_words }
+  :time_ago_in_words, :camelize }
