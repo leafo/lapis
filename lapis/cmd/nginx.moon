@@ -44,10 +44,4 @@ compile_config = (config, opts={}) ->
       if value == nil then w else value
   out
 
-if ... == "test"
-  str = [[
-    hello: ${{some_var}}
-  ]]
-  print compile_config str, { some_var: "what's up" }
-
 { :compile_config, :filters, :find_nginx }
