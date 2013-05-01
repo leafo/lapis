@@ -18,7 +18,7 @@ do
 end
 local escape_pattern
 do
-  local punct = "[%^$()%.%[%]*+%-?]"
+  local punct = "[%^$()%.%[%]*+%-?%%]"
   escape_pattern = function(str)
     return (str:gsub(punct, function(p)
       return "%" .. p
@@ -365,47 +365,6 @@ do
     return out .. " ago"
   end
 end
-if ... == "test" then
-  require("moon")
-  moon.p(parse_query_string("hello=wo%22rld"))
-  print(underscore("ManifestRocks"))
-  print(camelize(underscore("ManifestRocks")))
-  print(camelize("hello"))
-  print(camelize("world_wide_i_web"))
-  local encoded = encode_query_string({
-    {
-      "dad",
-      "day"
-    },
-    ["hello[hole]"] = "wor=ld"
-  })
-  local res = parse_query_string(encoded)
-  moon.p(res)
-  print(to_json({
-    color = "blue",
-    data = {
-      height = 10,
-      fn = function(self) end
-    }
-  }))
-  local parts = {
-    path = "/test",
-    scheme = "http",
-    host = "localhost.com",
-    port = "8080",
-    fragment = "cool_thing",
-    query = "dad=days"
-  }
-  print(build_url(parts))
-  print(url.build(parts))
-  local t = os.time() - 34234349
-  moon.p(time_ago(t))
-  print(t)
-  print(time_ago_in_words(t))
-  print(time_ago_in_words(t, 2))
-  print(time_ago_in_words(t, 10))
-  print(time_ago_in_words(os.time()))
-end
 return {
   unescape = unescape,
   escape = escape,
@@ -425,5 +384,6 @@ return {
   json_encodable = json_encodable,
   build_url = build_url,
   time_ago = time_ago,
-  time_ago_in_words = time_ago_in_words
+  time_ago_in_words = time_ago_in_words,
+  camelize = camelize
 }
