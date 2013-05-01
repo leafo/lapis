@@ -62,34 +62,6 @@ write_session = function(r)
     r.cookies[session_name] = s
   end
 end
-if ... == "test" then
-  require("moon")
-  local s = setmetatable({
-    hello = "world"
-  }, {
-    __index = {
-      car = "engine"
-    }
-  })
-  local r = {
-    cookies = { },
-    session = s
-  }
-  set_secret(nil)
-  write_session(r)
-  print("The session")
-  moon.p(r)
-  set_secret("secret")
-  print("Should be empty")
-  moon.p(get_session(r))
-  set_secret("secret")
-  write_session(r)
-  print("Should be full")
-  moon.p(get_session(r))
-  r.cookies.lapis_session = "uhhhh"
-  print("Should be empty")
-  moon.p(get_session(r))
-end
 return {
   get_session = get_session,
   write_session = write_session,
