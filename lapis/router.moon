@@ -67,7 +67,7 @@ class Router
     @@route_grammar\match(path) * -1 / (params) ->
       params, responder, path, name
 
-  fill_path: (path, params, route_name) =>
+  fill_path: (path, params={}, route_name) =>
     replace = (s) ->
       param_name = s\sub 2
       if val = params[param_name]

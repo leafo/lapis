@@ -56,6 +56,9 @@ do
       end
     end,
     fill_path = function(self, path, params, route_name)
+      if params == nil then
+        params = { }
+      end
       local replace
       replace = function(s)
         local param_name = s:sub(2)
