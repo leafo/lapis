@@ -195,7 +195,7 @@ lapis.serve class extends lapis.Application
   "/": => "Hello World!"
 ```
 
-[Named routes](#named_routes) are constructed using a table as a property name.
+[Named routes](#lapis-applications-named-routes) are constructed using a table as a property name.
 
 ### URL Parameters
 
@@ -2290,4 +2290,3 @@ can use this if you are testing a method that needs a request object.
 [4]: http://moonscript.org/reference/#moonc
 [5]: http://www.postgresql.org/
 [6]: https://github.com/leafo/lapis-console
-
