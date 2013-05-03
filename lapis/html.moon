@@ -84,29 +84,32 @@ class Buffer
   make_scope: =>
     @scope = setmetatable { [Buffer]: true }, {
       __index: (scope, name) ->
-        default = @old_env[name]
-        return default if default != nil
+        handler = switch name
+          when "widget"
+            (w) -> w\render @
+          when "capture"
+            (fn) -> table.concat @with_temp -> fn!
+          when "element"
+            (...) -> element @, ...
+          when "text"
+            @\write_escaped
+          when "raw"
+            @\write
 
-        builder = @builders[name]
-        res = if builder != nil
-          (...) -> @call builder, ...
-        else
-          switch name
-            when "widget"
-              (w) -> w\render @
-            when "capture"
-              (fn) -> table.concat @with_temp -> fn!
-            when "element"
-              (...) -> element @, ...
-            when "text"
-              @\write_escaped
-            when "raw"
-              @\write
-            else
-              (...) -> element @, name, ...
+        unless handler
+          default = @old_env[name]
+          return default unless default == nil
 
-        scope[name] = res
-        res
+        unless handler
+          builder = @builders[name]
+          unless builder == nil
+            handler = (...) -> @call builder, ...
+
+        unless handler
+          handler = (...) -> element @, name, ...
+
+        scope[name] = handler
+        handler
     }
 
   call: (fn, ...) =>
