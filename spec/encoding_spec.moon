@@ -1,6 +1,9 @@
 
--- without nginx the library uses crypto
-return unless pcall -> require "crypto"
+unless pcall -> require "crypto"
+  describe "lapis.util.encoding", ->
+    it "should have luacrypto", ->
+      pending "luacrypto is required for util.encoding specs"
+  return
 
 encoding = require "lapis.util.encoding"
 

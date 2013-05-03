@@ -1,4 +1,11 @@
 
+-- without nginx the library uses crypto
+unless pcall -> require "crypto"
+  describe "lapis.session", ->
+    it "should have luacrypto", ->
+      pending "luacrypto is required for session test"
+  return
+
 session = require "lapis.session"
 
 describe "lapis.session", ->
