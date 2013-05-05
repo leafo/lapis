@@ -108,56 +108,60 @@ do
         [Buffer] = true
       }, {
         __index = function(scope, name)
-          local default = self.old_env[name]
-          if default ~= nil then
-            return default
-          end
-          local builder = self.builders[name]
-          local res
-          if builder ~= nil then
-            res = function(...)
-              return self:call(builder, ...)
+          local handler
+          local _exp_0 = name
+          if "widget" == _exp_0 then
+            handler = function(w)
+              return w:render(self)
             end
-          else
-            local _exp_0 = name
-            if "widget" == _exp_0 then
-              res = function(w)
-                return w:render(self)
+          elseif "capture" == _exp_0 then
+            handler = function(fn)
+              return table.concat(self:with_temp(function()
+                return fn()
+              end))
+            end
+          elseif "element" == _exp_0 then
+            handler = function(...)
+              return element(self, ...)
+            end
+          elseif "text" == _exp_0 then
+            handler = (function()
+              local _base_1 = self
+              local _fn_0 = _base_1.write_escaped
+              return function(...)
+                return _fn_0(_base_1, ...)
               end
-            elseif "capture" == _exp_0 then
-              res = function(fn)
-                return table.concat(self:with_temp(function()
-                  return fn()
-                end))
+            end)()
+          elseif "raw" == _exp_0 then
+            handler = (function()
+              local _base_1 = self
+              local _fn_0 = _base_1.write
+              return function(...)
+                return _fn_0(_base_1, ...)
               end
-            elseif "element" == _exp_0 then
-              res = function(...)
-                return element(self, ...)
-              end
-            elseif "text" == _exp_0 then
-              res = (function()
-                local _base_1 = self
-                local _fn_0 = _base_1.write_escaped
-                return function(...)
-                  return _fn_0(_base_1, ...)
-                end
-              end)()
-            elseif "raw" == _exp_0 then
-              res = (function()
-                local _base_1 = self
-                local _fn_0 = _base_1.write
-                return function(...)
-                  return _fn_0(_base_1, ...)
-                end
-              end)()
-            else
-              res = function(...)
-                return element(self, name, ...)
-              end
+            end)()
+          end
+          if not (handler) then
+            local default = self.old_env[name]
+            if not (default == nil) then
+              return default
             end
           end
-          scope[name] = res
-          return res
+          if not (handler) then
+            local builder = self.builders[name]
+            if not (builder == nil) then
+              handler = function(...)
+                return self:call(builder, ...)
+              end
+            end
+          end
+          if not (handler) then
+            handler = function(...)
+              return element(self, name, ...)
+            end
+          end
+          scope[name] = handler
+          return handler
         end
       })
     end,

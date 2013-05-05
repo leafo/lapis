@@ -243,30 +243,6 @@ local types = setmetatable({
     return error("Don't know column type `" .. tostring(key) .. "`")
   end
 })
-if ... == "test" then
-  db.query = print
-  db.select = function()
-    return {
-      {
-        c = 0
-      }
-    }
-  end
-  add_column("hello", "dads", types.integer)
-  rename_column("hello", "dads", "cats")
-  drop_column("hello", "cats")
-  rename_table("hello", "world")
-  print(types.integer)
-  print(types.integer({
-    null = true
-  }))
-  print(types.integer({
-    null = true,
-    default = 100,
-    unique = true
-  }))
-  print(types.serial)
-end
 return {
   types = types,
   create_table = create_table,

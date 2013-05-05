@@ -138,20 +138,6 @@ types = setmetatable {
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
 
-if ... == "test"
-  db.query = print
-  db.select = -> { { c: 0 } }
-
-  add_column "hello", "dads", types.integer
-  rename_column "hello", "dads", "cats"
-  drop_column "hello", "cats"
-  rename_table "hello", "world"
-
-  print types.integer
-  print types.integer null: true
-  print types.integer null: true, default: 100, unique: true
-  print types.serial
-
 {
   :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
   :drop_column, :rename_column, :rename_table

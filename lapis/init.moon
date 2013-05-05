@@ -1,5 +1,4 @@
 
-router = require "lapis.router"
 application = require "lapis.application"
 html = require "lapis.html"
 server = require "lapis.server"

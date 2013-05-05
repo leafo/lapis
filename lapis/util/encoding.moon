@@ -36,13 +36,4 @@ decode_with_secret = (msg_and_sig, secret) ->
 
   json.decode decode_base64 msg
 
-if ... == "test"
-  require "moon"
-  msg = encode_with_secret { color: "red" }
-  print msg
-
-  moon.p decode_with_secret msg
-  print decode_with_secret "hello"
-  print decode_with_secret "hello.world"
-
 { :encode_base64, :decode_base64, :hmac_sha1, :encode_with_secret, :decode_with_secret }

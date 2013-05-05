@@ -45,6 +45,13 @@ config = (environment, fn) ->
   table.insert configs[environment], fn
   nil
 
+reset = (env) ->
+  if env == true
+    for k in pairs configs
+      configs[k] = nil
+  else
+    configs[env] = nil
+
 run_with_scope = (fn, conf) ->
   old_env = getfenv fn
   env = setmetatable { _conf: conf }, scope_meta
@@ -89,57 +96,4 @@ get = do
     cache[name] = conf
     conf
 
-
-if ... == "test"
-  require "moon"
-
-  f = ->
-    burly "dad"
-    color "blue"
-
-  config "basic", ->
-    print "hello world"
-    color "red"
-    port 80
-
-    things ->
-      cool "yes"
-      yes "really"
-
-    include ->
-      height "10px"
-
-    set "not", "yeah"
-
-    set many: "things", are: "set"
-
-    include f
-
-  conf = get "basic"
-  moon.p conf
-
-  print!
-  x = {}
-
-  config "cool", ->
-    hello {
-      one: "thing"
-      leads: "another"
-      nest: {
-        egg: true
-        grass: true
-      }
-    }
-
-    hello {
-       dad: "son"
-       nest: {
-         bird: false
-         grass: false
-       }
-    }
-
-  moon.p get "cool"
-
-{ :get, :config, :merge_set, :default_config }
-
+{ :get, :config, :merge_set, :default_config, :reset }

@@ -72,13 +72,6 @@ compile_config = function(config, opts)
   end)
   return out
 end
-if ... == "test" then
-  local str = [[    hello: ${{some_var}}
-  ]]
-  print(compile_config(str, {
-    some_var = "what's up"
-  }))
-end
 return {
   compile_config = compile_config,
   filters = filters,

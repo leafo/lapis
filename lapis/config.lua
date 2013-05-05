@@ -1,5 +1,5 @@
 local insert = table.insert
-local default_config, scope_meta, configs, config, run_with_scope, merge_set, get_env, get
+local default_config, scope_meta, configs, config, reset, run_with_scope, merge_set, get_env, get
 default_config = {
   port = "8080",
   num_workers = "1"
@@ -63,6 +63,15 @@ config = function(environment, fn)
   configs[environment] = configs[environment] or { }
   table.insert(configs[environment], fn)
   return nil
+end
+reset = function(env)
+  if env == true then
+    for k in pairs(configs) do
+      configs[k] = nil
+    end
+  else
+    configs[env] = nil
+  end
 end
 run_with_scope = function(fn, conf)
   local old_env = getfenv(fn)
@@ -132,57 +141,10 @@ do
     return conf
   end
 end
-if ... == "test" then
-  require("moon")
-  local f
-  f = function()
-    burly("dad")
-    return color("blue")
-  end
-  config("basic", function()
-    print("hello world")
-    color("red")
-    port(80)
-    things(function()
-      cool("yes")
-      return yes("really")
-    end)
-    include(function()
-      return height("10px")
-    end)
-    set("not", "yeah")
-    set({
-      many = "things",
-      are = "set"
-    })
-    return include(f)
-  end)
-  local conf = get("basic")
-  moon.p(conf)
-  print()
-  local x = { }
-  config("cool", function()
-    hello({
-      one = "thing",
-      leads = "another",
-      nest = {
-        egg = true,
-        grass = true
-      }
-    })
-    return hello({
-      dad = "son",
-      nest = {
-        bird = false,
-        grass = false
-      }
-    })
-  end)
-  moon.p(get("cool"))
-end
 return {
   get = get,
   config = config,
   merge_set = merge_set,
-  default_config = default_config
+  default_config = default_config,
+  reset = reset
 }

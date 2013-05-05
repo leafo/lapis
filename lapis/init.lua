@@ -1,4 +1,3 @@
-local router = require("lapis.router")
 local application = require("lapis.application")
 local html = require("lapis.html")
 local server = require("lapis.server")

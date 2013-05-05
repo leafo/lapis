@@ -47,35 +47,5 @@ write_session = (r) ->
 
     r.cookies[session_name] = s
 
-if ... == "test"
-  require "moon"
-
-  s = setmetatable { hello: "world" }, {
-    __index: { car: "engine" }
-  }
-
-  r = { cookies: {}, session: s }
-
-  -- missing key
-  set_secret nil
-  write_session(r)
-  print "The session"
-  moon.p r
-  set_secret "secret"
-
-  print "Should be empty"
-  moon.p get_session r
-
-  -- matched key
-  set_secret "secret"
-  write_session(r)
-  print "Should be full"
-  moon.p get_session r
-
-  -- malformed
-  r.cookies.lapis_session = "uhhhh"
-  print "Should be empty"
-  moon.p get_session r
-
 
 { :get_session, :write_session, :set_secret, :set_session_name, :get_secret }

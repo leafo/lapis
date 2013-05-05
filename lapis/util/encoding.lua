@@ -47,16 +47,6 @@ decode_with_secret = function(msg_and_sig, secret)
   end
   return json.decode(decode_base64(msg))
 end
-if ... == "test" then
-  require("moon")
-  local msg = encode_with_secret({
-    color = "red"
-  })
-  print(msg)
-  moon.p(decode_with_secret(msg))
-  print(decode_with_secret("hello"))
-  print(decode_with_secret("hello.world"))
-end
 return {
   encode_base64 = encode_base64,
   decode_base64 = decode_base64,

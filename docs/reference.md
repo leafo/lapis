@@ -916,11 +916,14 @@ configuration variable. Let's go ahead and add a value to our `config.moon`
 
 ```moon
 config "development", ->
-  postgresql_url "postgres://postgres:@127.0.0.1/my_database"
+  postgresql_url "postgres://pg_user:user_password@127.0.0.1/my_database"
 ```
 
 The `pg` filter will convert the PostgreSQL URL to the right format for the
 Nginx PostgreSQL module.
+
+> Change `pg_user`, `user_password`, `127.0.0.1` and `my_database` to the
+> correct values depending on your requirements.
 
 Lastly, we add the location. Place the following in your `server` block:
 
