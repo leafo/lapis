@@ -2145,16 +2145,16 @@ http = require "lapis.nginx.http"
 class extends lapis.Application
   "/": =>
     -- a simple GET request
-    body, status_code, headers = http\simple "http://leafo.net"
+    body, status_code, headers = http.simple "http://leafo.net"
 
     -- a post request, data table is form encoded and content-type is set to
     -- application/x-www-form-urlencoded
-    http\simple "http://leafo.net/", {
+    http.simple "http://leafo.net/", {
       name: "leafo"
     }
 
     -- manual invocation of the above request
-    http\simple {
+    http.simple {
       url: "http://leafo.net"
       method: "POST"
       headers: {
