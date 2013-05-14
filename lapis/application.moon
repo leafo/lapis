@@ -65,6 +65,9 @@ class Request
     session.write_session @
     @write_cookies!
 
+    if @options.status
+      @res.status = @options.status
+
     if obj = @options.json
       @res.headers["Content-type"] = "application/json"
       @res.content = to_json obj
@@ -82,10 +85,6 @@ class Request
 
       @res\add_header "Location", redirect_url
       @res.status = 302
-
-    if @options.status
-      @res.status = @options.status
-
 
     if widget = @options.render
       widget = @route_name if widget == true
