@@ -87,6 +87,9 @@ do
       end
       session.write_session(self)
       self:write_cookies()
+      if self.options.status then
+        self.res.status = self.options.status
+      end
       do
         local obj = self.options.json
         if obj then
@@ -113,9 +116,6 @@ do
           self.res:add_header("Location", redirect_url)
           self.res.status = 302
         end
-      end
-      if self.options.status then
-        self.res.status = self.options.status
       end
       do
         local widget = self.options.render
