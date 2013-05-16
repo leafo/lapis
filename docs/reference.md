@@ -560,7 +560,7 @@ specific action. For example, if we have our new layout in `views/my_layout.moon
 
 ```moon
 class extends lapis.Application
-	layout: require "views.my_layout"
+  layout: require "views.my_layout"
 ```
 
 If we want to set the layout for a specific action we can provide it as part of
@@ -568,16 +568,16 @@ the action's return value.
 
 ```moon
 class extends lapis.Application
-	-- the following have the same effect
-	"/home1": =>
-		layout: "my_layout"
+  -- the following have the same effect
+  "/home1": =>
+    layout: "my_layout"
 
-	"/home2": =>
-		layout: require "views.my_layout"
+  "/home2": =>
+    layout: require "views.my_layout"
 
-	-- this doesn't use a layout
-	"/no_layout": =>
-		layout: false, "No layout rendered!"
+  -- this doesn't use a layout
+  "/no_layout": =>
+    layout: false, "No layout rendered!"
 
 ```
 
@@ -1732,20 +1732,32 @@ Because requirements typically change over the lifespan of a web application
 it's useful to have a system to make incremental schema changes to the
 database.
 
-Lapis migrations work by storing a table of all the migrations that have run.
-All migrations must have a name. Migrations typically are given a name of the
-current Unix timestamp.
+We define migrations in our code as a table of functions where the key of each
+function in the table is the name of the migration. You are free to name the
+migrations anything but it's suggested to give them Unix timestamps as names:
 
-When migrations are run, the migration list is filtered down to those that have
-not been run yet by checking the migrations table. The migrations to be run are
-then sorted by their name in ascending order.
+```moon
+migrations = {
+  [1368686109]: =>
+    add_column "my_table", "hello", integer
 
-A migration itself is just a normal function that is called. It is expected to
-call the schema functions described above (but it doesn't have to).
+  [1368686843]: =>
+    add_index "my_table", "hello"
+}
+```
+
+A migration function is a plain function. Generally they will call the
+schema functions described above, but they don't have to.
+
+Only the functions that not have already been executed before will be called
+when we tell our migrations to run. The migrations that have already been run
+are stored in the migration table, a database table that holds the names of
+the migrations that have already been run.
 
 ### Creating The Migration Table
 
-Before running any migrations you must create the migration table. Do the following:
+Before running any migrations you must create the migration table. Do the
+following:
 
 ```moon
 migrations = require "lapis.db.migrations"
