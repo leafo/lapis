@@ -9,7 +9,7 @@ class LapisMigrations extends Model
   @exists: (name) =>
     @find tostring name
 
-  create: (name) =>
+  @create: (name) =>
     Model.create @, { name: tostring name }
 
 create_migrations_table = (table_name="lapis_migrations") ->
@@ -31,5 +31,5 @@ run_migrations = (migrations) ->
       fn name
       LapisMigrations\create name
 
-{ :create_migrations_table, :run_migrations }
+{ :create_migrations_table, :run_migrations, :LapisMigrations }
 

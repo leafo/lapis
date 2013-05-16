@@ -9,12 +9,7 @@ local LapisMigrations
 do
   local _parent_0 = Model
   local _base_0 = {
-    primary_key = "name",
-    create = function(self, name)
-      return Model.create(self, {
-        name = tostring(name)
-      })
-    end
+    primary_key = "name"
   }
   _base_0.__index = _base_0
   if _parent_0 then
@@ -48,6 +43,11 @@ do
   local self = _class_0
   self.exists = function(self, name)
     return self:find(tostring(name))
+  end
+  self.create = function(self, name)
+    return Model.create(self, {
+      name = tostring(name)
+    })
   end
   if _parent_0 and _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
@@ -98,5 +98,6 @@ run_migrations = function(migrations)
 end
 return {
   create_migrations_table = create_migrations_table,
-  run_migrations = run_migrations
+  run_migrations = run_migrations,
+  LapisMigrations = LapisMigrations
 }
