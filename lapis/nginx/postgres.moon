@@ -20,10 +20,9 @@ parser = require "rds.parser"
 
 import concat from table
 
-logger = nil
+local raw_query, logger
 
 proxy_location = "/query"
-set_proxy_location = (loc) -> proxy_location = loc
 
 set_logger = (l) -> logger = l
 get_logger = -> logger
@@ -33,6 +32,40 @@ raw = (val) -> {"raw", tostring(val)}
 
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
+
+backends = {
+  default: (_proxy=proxy_location) ->
+    raw_query = (str) ->
+      logger.query str if logger
+      res, m = ngx.location.capture _proxy, {
+        body: str
+      }
+      out = assert parser.parse res.body
+      if resultset = out.resultset
+        return resultset
+      out
+
+  raw: (fn) ->
+    with raw_query
+      raw_query = fn
+
+  "resty.postgres": (opts) ->
+    opts.host or= "127.0.0.1"
+    opts.port or= 5432
+
+    pg = require "lapis.resty.postgres"
+
+    raw_query = (str) ->
+      logger.query str if logger
+      conn = pg\new!
+      conn\set_keepalive 0, 100
+
+      assert conn\connect opts
+      assert conn\query str
+}
+
+set_backend = (name="default", ...) ->
+  assert(backends[name]) ...
 
 format_date = (time) ->
   os.date "!%Y-%m-%d %H:%M:%S", time
@@ -91,12 +124,9 @@ encode_assigns = (t, buffer, join=", ") ->
 
   concat buffer unless have_buffer
 
-raw_query = (str) ->
-  logger.query str if logger
-  res, m = ngx.location.capture proxy_location, {
-    body: str
-  }
-  parser.parse res.body
+raw_query = (...) ->
+  set_backend "default"
+  raw_query ...
 
 query = (str, ...) ->
   if select("#", ...) > 0
@@ -104,11 +134,7 @@ query = (str, ...) ->
   raw_query str
 
 _select = (str, ...) ->
-  res, err = query "SELECT " .. str, ...
-  if res
-    res.resultset
-  else
-    nil, err
+  query "SELECT " .. str, ...
 
 _insert = (tbl, values, ...) ->
   if values._timestamp
@@ -171,16 +197,12 @@ _delete = (table, cond, ...) ->
 
   raw_query concat buff
 
-_set_query_fn = (fn) -> raw_query = fn
-_get_query_fn = -> raw_query
-
 {
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query
-  :set_proxy_location
   :set_logger, :get_logger
 
-  :_get_query_fn, :_set_query_fn
+  :set_backend
 
   select: _select
   insert: _insert

@@ -51,6 +51,11 @@ tests = {
   }
 
   {
+    -> db.select "* from things where id = ?", "cool days"
+    [[SELECT * from things where id = 'cool days']]
+  }
+
+  {
     -> db.insert "cats", age: 123, name: "catter"
     [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123)]]
   }
@@ -186,15 +191,13 @@ tests = {
 }
 
 
-
 local old_query_fn
 describe "lapis.nginx.postgres", ->
   setup ->
-    old_query_fn = db._get_query_fn!
-    db._set_query_fn (q) -> q
+    old_query_fn = db.set_backend "raw", (q) -> q
 
   teardown ->
-    db._set_query_fn old_query_fn
+    db.set_backend "raw", old_query_fn
 
   for group in *tests
     it "should match", ->
@@ -203,12 +206,6 @@ describe "lapis.nginx.postgres", ->
         assert.one_of input, { unpack group, 2 }
       else
         assert.same input, group[2]
-
-  it "should match", ->
-    with_query_fn ((q) -> resultset: q), ->
-      input = db.select "* from things where id = ?", "cool days"
-      output = "SELECT * from things where id = 'cool days'"
-      assert.same input, output
 
   it "should create index", ->
     old_select = db.select

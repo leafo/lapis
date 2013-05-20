@@ -18,13 +18,10 @@ s\set "assertion.one_of.negative",
 assert\register "assertion",
   "one_of", one_of, "assertion.one_of.positive", "assertion.one_of.negative"
 
-with_query_fn = (q, run using db) ->
+with_query_fn = (q, run) ->
   db = require "lapis.nginx.postgres"
-  old = db._get_query_fn!
-  db._set_query_fn q
+  old_query = db.set_backend "raw", q
   with run!
-    db._set_query_fn old
-
-
+    db.set_backend "raw", old_query
 
 { :with_query_fn }

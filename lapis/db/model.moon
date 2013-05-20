@@ -151,9 +151,8 @@ class Model
     values._timestamp = true if @timestamp
     res = db.insert @table_name!, values, @primary_keys!
     if res
-      if res.resultset
-        for k,v in pairs res.resultset[1]
-          values[k] = v
+      for k,v in pairs res[1]
+        values[k] = v
       @load values
     else
       nil, "Failed to create #{@__name}"

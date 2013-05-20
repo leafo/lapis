@@ -348,10 +348,8 @@ do
     end
     local res = db.insert(self:table_name(), values, self:primary_keys())
     if res then
-      if res.resultset then
-        for k, v in pairs(res.resultset[1]) do
-          values[k] = v
-        end
+      for k, v in pairs(res[1]) do
+        values[k] = v
       end
       return self:load(values)
     else

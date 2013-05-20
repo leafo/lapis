@@ -1,11 +1,7 @@
 local parser = require("rds.parser")
 local concat = table.concat
-local logger = nil
+local raw_query, logger
 local proxy_location = "/query"
-local set_proxy_location
-set_proxy_location = function(loc)
-  proxy_location = loc
-end
 local set_logger
 set_logger = function(l)
   logger = l
@@ -24,6 +20,57 @@ raw = function(val)
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
+local backends = {
+  default = function(_proxy)
+    if _proxy == nil then
+      _proxy = proxy_location
+    end
+    raw_query = function(str)
+      if logger then
+        logger.query(str)
+      end
+      local res, m = ngx.location.capture(_proxy, {
+        body = str
+      })
+      local out = assert(parser.parse(res.body))
+      do
+        local resultset = out.resultset
+        if resultset then
+          return resultset
+        end
+      end
+      return out
+    end
+  end,
+  raw = function(fn)
+    do
+      local _with_0 = raw_query
+      raw_query = fn
+      return _with_0
+    end
+  end,
+  ["resty.postgres"] = function(opts)
+    opts.host = opts.host or "127.0.0.1"
+    opts.port = opts.port or 5432
+    local pg = require("lapis.resty.postgres")
+    raw_query = function(str)
+      if logger then
+        logger.query(str)
+      end
+      local conn = pg:new()
+      conn:set_keepalive(0, 100)
+      assert(conn:connect(opts))
+      return assert(conn:query(str))
+    end
+  end
+}
+local set_backend
+set_backend = function(name, ...)
+  if name == nil then
+    name = "default"
+  end
+  return assert(backends[name])(...)
+end
 local format_date
 format_date = function(time)
   return os.date("!%Y-%m-%d %H:%M:%S", time)
@@ -127,15 +174,9 @@ encode_assigns = function(t, buffer, join)
     return concat(buffer)
   end
 end
-local raw_query
-raw_query = function(str)
-  if logger then
-    logger.query(str)
-  end
-  local res, m = ngx.location.capture(proxy_location, {
-    body = str
-  })
-  return parser.parse(res.body)
+raw_query = function(...)
+  set_backend("default")
+  return raw_query(...)
 end
 local query
 query = function(str, ...)
@@ -146,12 +187,7 @@ query = function(str, ...)
 end
 local _select
 _select = function(str, ...)
-  local res, err = query("SELECT " .. str, ...)
-  if res then
-    return res.resultset
-  else
-    return nil, err
-  end
+  return query("SELECT " .. str, ...)
 end
 local _insert
 _insert = function(tbl, values, ...)
@@ -219,14 +255,6 @@ _delete = function(table, cond, ...)
   end
   return raw_query(concat(buff))
 end
-local _set_query_fn
-_set_query_fn = function(fn)
-  raw_query = fn
-end
-local _get_query_fn
-_get_query_fn = function()
-  return raw_query
-end
 return {
   query = query,
   raw = raw,
@@ -238,11 +266,9 @@ return {
   encode_values = encode_values,
   encode_assigns = encode_assigns,
   interpolate_query = interpolate_query,
-  set_proxy_location = set_proxy_location,
   set_logger = set_logger,
   get_logger = get_logger,
-  _get_query_fn = _get_query_fn,
-  _set_query_fn = _set_query_fn,
+  set_backend = set_backend,
   select = _select,
   insert = _insert,
   update = _update,
