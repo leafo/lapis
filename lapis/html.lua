@@ -296,6 +296,29 @@ do
     _get_helper_chain = function(self)
       return rawget(self, helper_key)
     end,
+    _find_helper = function(self, name)
+      do
+        local chain = self:_get_helper_chain()
+        if chain then
+          local _list_0 = chain
+          for _index_0 = 1, #_list_0 do
+            local h = _list_0[_index_0]
+            local helper_val = h[name]
+            if helper_val ~= nil then
+              local value
+              if type(helper_val) == "function" then
+                value = function(w, ...)
+                  return helper_val(h, ...)
+                end
+              else
+                value = helper_val
+              end
+              return value
+            end
+          end
+        end
+      end
+    end,
     include_helper = function(self, helper)
       do
         local helper_chain = self[helper_key]
@@ -328,7 +351,6 @@ do
       local index = meta.__index
       local index_is_fn = type(index) == "function"
       local seen_helpers = { }
-      local helper_chain = self:_get_helper_chain()
       local scope = setmetatable({ }, {
         __tostring = meta.__tostring,
         __index = function(scope, key)
@@ -346,23 +368,12 @@ do
             scope[key] = wrapped
             return wrapped
           end
-          if value == nil and not seen_helpers[key] and helper_chain then
-            local _list_0 = helper_chain
-            for _index_0 = 1, #_list_0 do
-              local h = _list_0[_index_0]
-              local helper_val = h[key]
-              if helper_val then
-                if type(helper_val) == "function" then
-                  value = function(w, ...)
-                    return helper_val(h, ...)
-                  end
-                else
-                  value = helper_val
-                end
-                seen_helpers[key] = true
-                scope[key] = value
-                return value
-              end
+          if value == nil and not seen_helpers[key] then
+            local helper_value = self:_find_helper(key)
+            seen_helpers[key] = true
+            if helper_value ~= nil then
+              scope[key] = helper_value
+              return helper_value
             end
           end
           return value

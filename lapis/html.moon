@@ -182,6 +182,19 @@ class Widget
   _set_helper_chain: (chain) => rawset @, helper_key, chain
   _get_helper_chain: => rawget @, helper_key
 
+  _find_helper: (name) =>
+    if chain = @_get_helper_chain!
+      for h in *chain
+        helper_val = h[name]
+        if helper_val != nil
+          -- call functions in scope of helper
+          value = if type(helper_val) == "function"
+            (w, ...) -> helper_val h, ...
+          else
+            helper_val
+
+          return value
+
   -- insert table onto end of helper_chain
   include_helper: (helper) =>
     if helper_chain = @[helper_key]
@@ -211,7 +224,6 @@ class Widget
     index_is_fn = type(index) == "function"
 
     seen_helpers = {}
-    helper_chain = @_get_helper_chain!
     scope = setmetatable {}, {
       __tostring: meta.__tostring
       __index: (scope, key) ->
@@ -227,19 +239,12 @@ class Widget
           return wrapped
 
         -- look for helper
-        if value == nil and not seen_helpers[key] and helper_chain
-          for h in *helper_chain
-            helper_val = h[key]
-            if helper_val
-              -- call functions in scope of helper
-              value = if type(helper_val) == "function"
-                (w, ...) -> helper_val h, ...
-              else
-                helper_val
-
-              seen_helpers[key] = true
-              scope[key] = value
-              return value
+        if value == nil and not seen_helpers[key]
+          helper_value = @_find_helper key
+          seen_helpers[key] = true
+          if helper_value != nil
+            scope[key] = helper_value
+            return helper_value
 
         value
     }
