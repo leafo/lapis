@@ -66,3 +66,35 @@ describe "lapis.html", ->
     input = render_widget w
     assert.same input, [[<div>What&#039;s up! id: 10</div>]]
 
+
+  it "helpers should resolve correctly ", ->
+    class Base extends Widget
+      one: 1
+      two: 2
+      three: 3
+
+    class Sub extends Base
+      two: 20
+      three: 30
+      four: 40
+
+      content: =>
+        text @one
+        text @two
+        text @three
+        text @four
+        text @five
+
+    w = Sub!
+    w\include_helper {
+      one: 100
+      two: 200
+      four: 400
+      five: 500
+    }
+
+    buff = {}
+    w\render buff
+
+    assert.same {"1", "20", "30", "40", "500"}, buff
+
