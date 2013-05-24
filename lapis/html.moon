@@ -194,6 +194,12 @@ class Widget
     @_buffer\write_escaped @[name]
 
   content: => -- implement me
+
+  render_to_string: (...) =>
+    buffer = {}
+    @render buffer, ...
+    concat buffer
+
   render: (buffer, ...) =>
     @_buffer = if buffer.__class == Buffer
       buffer

@@ -533,6 +533,34 @@ class Index extends Widget
       text "Welcome to my site!"
 ```
 
+### Rendering Widgets Manually
+
+Widgets can also be rendered manually by instantiating them and calling the
+`render` method.
+
+```moon
+Index = require "views.index"
+
+widget = Index page_title: "Hello World"
+print widget\render_to_string!
+```
+
+If you want to use helpers like `@url_for` you also need to include them in the
+widget instance. Any object can be included as a helper, and it's methods will
+be made available inside of the widget.
+
+```moon
+html = require "lapis.html"
+class SomeWidget extends html.Widget
+	content: =>
+		a href: @url_for("test"), "Test Page"
+
+class extends lapis.Application
+	[test: "/test_render"]: =>
+		widget = SomeWidget!
+		widget\add_helper @
+		widget\render_to_string!
+```
 
 ### Layouts
 

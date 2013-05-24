@@ -313,6 +313,11 @@ do
       return self._buffer:write_escaped(self[name])
     end,
     content = function(self) end,
+    render_to_string = function(self, ...)
+      local buffer = { }
+      self:render(buffer, ...)
+      return concat(buffer)
+    end,
     render = function(self, buffer, ...)
       if buffer.__class == Buffer then
         self._buffer = buffer
