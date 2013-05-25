@@ -1,4 +1,5 @@
 local encode_base64, decode_base64, hmac_sha1
+local config = require("lapis.config").get()
 if ngx then
   do
     local _obj_0 = ngx
@@ -24,19 +25,23 @@ else
 end
 local encode_with_secret
 encode_with_secret = function(object, secret, sep)
+  if secret == nil then
+    secret = config.secret
+  end
   if sep == nil then
     sep = "."
   end
   local json = require("cjson")
-  secret = secret or require("lapis.session").get_secret()
   local msg = encode_base64(json.encode(object))
   local signature = encode_base64(hmac_sha1(secret, msg))
   return msg .. sep .. signature
 end
 local decode_with_secret
 decode_with_secret = function(msg_and_sig, secret)
+  if secret == nil then
+    secret = config.secret
+  end
   local json = require("cjson")
-  secret = secret or require("lapis.session").get_secret()
   local msg, sig = msg_and_sig:match("^(.*)%.(.*)$")
   if not (msg) then
     return nil, "invalid message"

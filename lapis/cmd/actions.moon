@@ -4,8 +4,6 @@ import find_nginx from require "lapis.cmd.nginx"
 path = require "lapis.cmd.path"
 config = require "lapis.config"
 
-import default_config from config
-
 log = (...) ->
   print "->", ...
 
@@ -57,7 +55,7 @@ tasks = {
         return
 
       -- load app config
-      vars = setmetatable config.get(environment), __index: default_config
+      vars = config.get environment
 
       -- compile config
       import compile_config from require "lapis.cmd.nginx"

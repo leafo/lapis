@@ -1,4 +1,7 @@
 
+test::
+	busted -p _spec.moon$
+
 local: build
 	luarocks make --local lapis-dev-1.rockspec
 
@@ -11,5 +14,3 @@ build::
 watch:: build
 	moonc -w lapis
 
-test::
-	busted -p _spec.moon$

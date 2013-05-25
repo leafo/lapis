@@ -3,12 +3,22 @@ config = require "lapis.config"
 
 _G.do_nothing = ->
 
+extend = (first, ...) ->
+  for i = 1, select "#", ...
+    for k,v in pairs select i, ...
+      first[k] = v
+
+  first
+
+with_default = (c) ->
+  extend {}, config.default_config, c
+
 describe "lapis.config", ->
   before_each ->
     config.reset true
 
   it "should create empty config", ->
-    assert.same config.get"hello", { _name: "hello" }
+    assert.same config.get"hello", with_default { _name: "hello" }
 
   it "should create correct object", ->
     f = ->
@@ -34,7 +44,7 @@ describe "lapis.config", ->
       include f
 
     input = config.get "basic"
-    assert.same input, {
+    assert.same input, with_default {
       _name: "basic"
 
       color: "blue"
@@ -70,7 +80,7 @@ describe "lapis.config", ->
       }
 
     input = config.get "cool"
-    assert.same input, {
+    assert.same input, with_default {
       _name: "cool"
       hello: {
         nest: {
@@ -94,4 +104,4 @@ describe "lapis.config", ->
 
       unset "one", "four", "three"
 
-    assert.same config.get"yeah", { _name: "yeah" }
+    assert.same config.get"yeah", with_default { _name: "yeah" }

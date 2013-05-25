@@ -1,7 +1,10 @@
 local insert = table.insert
-local default_config, scope_meta, configs, config, reset, run_with_scope, merge_set, get_env, get
+local default_env, default_config, scope_meta, configs, config, reset, run_with_scope, merge_set, get_env, get
+default_env = "development"
 default_config = {
   port = "8080",
+  secret = "please-change-me",
+  session_name = "lapis_session",
   num_workers = "1"
 }
 scope_meta = {
@@ -94,7 +97,7 @@ merge_set = function(t, k, v)
   end
 end
 get_env = function()
-  return os.getenv("LAPIS_ENVIRONMENT") or "development"
+  return os.getenv("LAPIS_ENVIRONMENT") or default_env
 end
 do
   local cache = { }
@@ -118,25 +121,24 @@ do
     if cache[name] then
       return cache[name]
     end
-    local conf
+    local conf = (function()
+      local _tbl_0 = { }
+      for k, v in pairs(default_config) do
+        _tbl_0[k] = v
+      end
+      return _tbl_0
+    end)()
+    conf._name = name
     do
       local fns = configs[name]
       if fns then
-        do
-          local _with_0 = { }
-          local c = _with_0
-          local _list_0 = fns
-          for _index_0 = 1, #_list_0 do
-            local fn = _list_0[_index_0]
-            run_with_scope(fn, c)
-          end
-          conf = _with_0
+        local _list_0 = fns
+        for _index_0 = 1, #_list_0 do
+          local fn = _list_0[_index_0]
+          run_with_scope(fn, conf)
         end
-      else
-        conf = { }
       end
     end
-    conf._name = name
     cache[name] = conf
     return conf
   end

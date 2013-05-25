@@ -3,8 +3,12 @@ import insert from table
 
 local *
 
+default_env = "development"
+
 default_config = {
   port: "8080"
+  secret: "please-change-me"
+  session_name: "lapis_session"
   num_workers: "1"
 }
 
@@ -69,7 +73,7 @@ merge_set = (t, k, v) ->
     t[k] = v
 
 get_env = ->
-  os.getenv"LAPIS_ENVIRONMENT" or "development"
+  os.getenv"LAPIS_ENVIRONMENT" or default_env
 
 get = do
   cache = {}
@@ -85,14 +89,13 @@ get = do
         error err
 
     return cache[name] if cache[name]
-    conf = if fns = configs[name]
-      with c = {}
-        for fn in *fns
-          run_with_scope fn, c
-    else
-      {}
 
+    conf = { k,v for k,v in pairs(default_config) }
     conf._name = name
+    if fns = configs[name]
+      for fn in *fns
+        run_with_scope fn, conf
+
     cache[name] = conf
     conf
 

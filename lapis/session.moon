@@ -4,22 +4,16 @@
 json = require "cjson"
 import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding"
 
-secret = "please-change-me"
-session_name = "lapis_session"
-
-set_secret = (s) -> secret = s
-set_session_name = (s) -> session_name = s
-
-get_secret = -> secret
+config = require"lapis.config".get!
 
 hmac = (str) ->
-  encode_base64 hmac_sha1 secret, str
+  encode_base64 hmac_sha1 config.secret, str
 
 get_session = (r) ->
-  cookie = r.cookies[session_name]
+  cookie = r.cookies[config.session_name]
   return {} unless cookie
 
-  if secret
+  if config.secret
     real_cookie, sig = cookie\match "^(.*)\n%-%-(.*)$"
     unless real_cookie and sig == hmac real_cookie
       return {}
@@ -42,10 +36,9 @@ write_session = (r) ->
       s[k] = v
 
     s = encode_base64 json.encode s
-    if secret
+    if config.secret
       s ..= "\n--#{hmac s}"
 
-    r.cookies[session_name] = s
+    r.cookies[config.session_name] = s
 
-
-{ :get_session, :write_session, :set_secret, :set_session_name, :get_secret }
+{ :get_session, :write_session }

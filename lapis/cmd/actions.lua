@@ -10,7 +10,6 @@ do
 end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
-local default_config = config.default_config
 local log
 log = function(...)
   return print("->", ...)
@@ -70,9 +69,7 @@ tasks = {
         print("Aborting, can not find an installation of OpenResty")
         return 
       end
-      local vars = setmetatable(config.get(environment), {
-        __index = default_config
-      })
+      local vars = config.get(environment)
       local compile_config
       do
         local _table_0 = require("lapis.cmd.nginx")

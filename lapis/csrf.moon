@@ -4,21 +4,21 @@
 json = require "cjson"
 import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding"
 
+config = require"lapis.config".get!
+
 generate_token = (req, key, expires=os.time! + 60*60*8) ->
-  secret = require"lapis.session".get_secret!
   msg = encode_base64 json.encode { :key, :expires }
-  signature = encode_base64 hmac_sha1 secret, msg
+  signature = encode_base64 hmac_sha1 config.secret, msg
   msg .. "." .. signature
 
 validate_token = (req, key) ->
-  secret = require"lapis.session".get_secret!
   token = req.params.csrf_token
   return nil, "missing csrf token" unless token
 
   msg, sig = token\match "^(.*)%.(.*)$"
   sig = ngx.decode_base64 sig
 
-  unless sig == ngx.hmac_sha1(secret, msg)
+  unless sig == ngx.hmac_sha1(config.secret, msg)
     return nil, "invalid csrf token"
 
   msg = json.decode ngx.decode_base64 msg

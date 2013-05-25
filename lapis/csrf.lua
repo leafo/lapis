@@ -4,29 +4,28 @@ do
   local _table_0 = require("lapis.util.encoding")
   encode_base64, decode_base64, hmac_sha1 = _table_0.encode_base64, _table_0.decode_base64, _table_0.hmac_sha1
 end
+local config = require("lapis.config").get()
 local generate_token
 generate_token = function(req, key, expires)
   if expires == nil then
     expires = os.time() + 60 * 60 * 8
   end
-  local secret = require("lapis.session").get_secret()
   local msg = encode_base64(json.encode({
     key = key,
     expires = expires
   }))
-  local signature = encode_base64(hmac_sha1(secret, msg))
+  local signature = encode_base64(hmac_sha1(config.secret, msg))
   return msg .. "." .. signature
 end
 local validate_token
 validate_token = function(req, key)
-  local secret = require("lapis.session").get_secret()
   local token = req.params.csrf_token
   if not (token) then
     return nil, "missing csrf token"
   end
   local msg, sig = token:match("^(.*)%.(.*)$")
   sig = ngx.decode_base64(sig)
-  if not (sig == ngx.hmac_sha1(secret, msg)) then
+  if not (sig == ngx.hmac_sha1(config.secret, msg)) then
     return nil, "invalid csrf token"
   end
   msg = json.decode(ngx.decode_base64(msg))

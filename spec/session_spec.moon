@@ -9,10 +9,12 @@ unless pcall -> require "crypto"
 session = require "lapis.session"
 
 describe "lapis.session", ->
+  config = require"lapis.config".get!
+
   local req
 
   before_each ->
-    session.set_secret "the-secret"
+    config.secret = "the-secret"
     req = {
       cookies: {}
       session: setmetatable { hello: "world" }, {
@@ -21,16 +23,16 @@ describe "lapis.session", ->
     }
 
   it "should write unsigned session", ->
-    session.set_secret nil
+    config.secret = nil
     session.write_session req
     assert.same session.get_session(req), {
       hello: "world", car: "engine"
     }
 
   it "should not read unsigned session with secret", ->
-    session.set_secret nil
+    config.secret = nil
     session.write_session req
-    session.set_secret "hello"
+    config.secret = "hello"
     assert.same session.get_session(req), {}
 
   it "should write signed session", ->
@@ -41,7 +43,7 @@ describe "lapis.session", ->
 
   it "should not read incorrect secret", ->
     session.write_session req
-    session.set_secret "not-the-secret"
+    config.secret = "not-the-secret"
     assert.same session.get_session(req), {}
 
   it "should not fail on malformed session", ->

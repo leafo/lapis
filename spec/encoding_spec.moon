@@ -8,8 +8,10 @@ unless pcall -> require "crypto"
 encoding = require "lapis.util.encoding"
 
 describe "lapis.util.encoding", ->
+  config = require"lapis.config".get!
+
   before_each ->
-    require"lapis.session".set_secret "the-secret"
+    config.secret = "the-secret"
 
   it "should encode message", ->
     encoded = encoding.encode_with_secret { color: "red" }
@@ -23,7 +25,7 @@ describe "lapis.util.encoding", ->
 
   it "should not decode with incorrect secret", ->
     encoded = encoding.encode_with_secret { color: "red" }
-    require"lapis.session".set_secret "not-the-secret"
+    config.secret = "not-the-secret"
     assert.same { encoding.decode_with_secret encoded }, {nil, "invalid message secret"}
 
 
