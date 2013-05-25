@@ -25,7 +25,7 @@ describe "lapis.config", ->
       burly "dad"
       color "blue"
 
-    config.config "basic", ->
+    config "basic", ->
       do_nothing!
       color "red"
       port 80
@@ -61,7 +61,7 @@ describe "lapis.config", ->
     }
 
   it "should create correct object", ->
-    config.config "cool", ->
+    config "cool", ->
       hello {
         one: "thing"
         leads: "another"
@@ -95,7 +95,7 @@ describe "lapis.config", ->
     }
 
   it "should unset", ->
-    config.config "yeah", ->
+    config "yeah", ->
       hello "world"
       hello!
 
@@ -105,3 +105,14 @@ describe "lapis.config", ->
       unset "one", "four", "three"
 
     assert.same config.get"yeah", with_default { _name: "yeah" }
+
+  it "should set multiple environments", ->
+    config {"multi_a", "multi_b"}, ->
+      pants "cool"
+
+    assert.same config.get"multi_a".pants, "cool"
+    assert.same config.get"multi_b".pants, "cool"
+
+
+
+

@@ -63,6 +63,14 @@ scope_meta = {
 }
 configs = { }
 config = function(environment, fn)
+  if type(environment) == "table" then
+    local _list_0 = environment
+    for _index_0 = 1, #_list_0 do
+      local env = _list_0[_index_0]
+      config(env, fn)
+    end
+    return 
+  end
   configs[environment] = configs[environment] or { }
   table.insert(configs[environment], fn)
   return nil
@@ -143,10 +151,14 @@ do
     return conf
   end
 end
-return {
+return setmetatable({
   get = get,
   config = config,
   merge_set = merge_set,
   default_config = default_config,
   reset = reset
-}
+}, {
+  __call = function(self, ...)
+    return config(...)
+  end
+})

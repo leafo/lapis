@@ -45,6 +45,11 @@ scope_meta = {
 
 configs = {}
 config = (environment, fn) ->
+  if type(environment) == "table"
+    for env in *environment
+      config env, fn
+    return
+
   configs[environment] or= {}
   table.insert configs[environment], fn
   nil
@@ -99,4 +104,9 @@ get = do
     cache[name] = conf
     conf
 
-{ :get, :config, :merge_set, :default_config, :reset }
+setmetatable {
+  :get, :config, :merge_set, :default_config, :reset
+}, {
+  __call: (...) => config ...
+}
+
