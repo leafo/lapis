@@ -552,14 +552,14 @@ be made available inside of the widget.
 ```moon
 html = require "lapis.html"
 class SomeWidget extends html.Widget
-	content: =>
-		a href: @url_for("test"), "Test Page"
+  content: =>
+    a href: @url_for("test"), "Test Page"
 
 class extends lapis.Application
-	[test: "/test_render"]: =>
-		widget = SomeWidget!
-		widget\add_helper @
-		widget\render_to_string!
+  [test: "/test_render"]: =>
+    widget = SomeWidget!
+    widget\add_helper @
+    widget\render_to_string!
 ```
 
 ### Layouts
@@ -812,6 +812,14 @@ of them.
 A configuration is just a plain table. Use the special builder syntax above to
 construct the configuration tables.
 
+We can configure multiple environments at once by passing in an array table for
+evironment names:
+
+```moon
+config {"development", "production"}, ->
+  session_name "my_app_session"
+```
+
 ### Configurations and Nginx
 
 The values in the configuration are used when compiling `nginx.conf`.
@@ -845,6 +853,20 @@ The name of the environment is stored in `_name`.
 
 ```moon
 print config._name -- development, production, etc...
+```
+
+### Default Configuration
+
+All configurations come with some default values, these are them in table
+syntax:
+
+```moon
+default_config = {
+  port: "8080"
+  secret: "please-change-me"
+  session_name: "lapis_session"
+  num_workers: "1"
+}
 ```
 
 ### Configuration Builder Syntax
@@ -1911,6 +1933,20 @@ The session can be set and read the same way as cookies:
     @session.current_user = "leaf"
 ```
 
+By default the session is stored in a cookie called `lapis_session`. You can
+overwrite the name of the session using the `session_name` [configuration
+variable](#configuration-and-environments). Sessions are signed with your
+application secret, which is stored in the configuration value `secret`. It is
+highly recommended to change this from the default.
+
+```moon
+import config from require "lapis.config"
+
+config "development", ->
+  session_name "my_app_session"
+  secret "this is my secret string 123456"
+```
+
 ### Methods
 
 ####  `write(things...)`
@@ -2055,19 +2091,16 @@ Base64 decodes a string.
 Calculates the hmac-sha1 digest of `str` using `secret`. Returns a binary
 string.
 
-#### `encode_with_secret(object, secret)`
+#### `encode_with_secret(object, secret=config.secret)`
 
 Encodes a Lua object and generates a signature for it. Returns a single string
 that contains the encoded object and signature.
 
-If secret is not provided the session secret is used.
-
-#### `decode_with_secret(msg_and_sig, secret)`
+#### `decode_with_secret(msg_and_sig, secret=config.secret)`
 
 Decodes a string created by `encode_with_secret`. The decoded object is only
 returned if the signature is correct. Otherwise returns `nil` and an error
 message. The secret must match what was used with `encode_with_secret`.
-Defaults to the session secret.
 
 ### CSRF Protection
 
@@ -2082,13 +2115,17 @@ verify the authenticity of.
 Before using any of the cryptographic functions it's important to set your
 application's secret. This is a string that only the application knows about.
 If you application is open source it's worthwhile to not commit this secret.
+The secret is set in [your configuration](#configuration-and-environments) like so:
 
 ```moon
-with require "lapis.session"
-  .set_secret "this is my secret string 123456"
+import config from require "lapis.config"
+
+config "development", ->
+  secret "this is my secret string 123456"
 ```
 
-Now that you have the secret configured, we might create a CSRF protected form like so:
+Now that you have the secret configured, we might create a CSRF protected form
+like so:
 
 
 ```moon
