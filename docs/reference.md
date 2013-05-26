@@ -29,7 +29,7 @@ $ luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis
 
 ## Creating An Application
 
-### `lapis` command line tool
+### `lapis` Command Line Tool
 
 Lapis comes with a command line tool to help you create new projects and start
 your server. To see what Lapis can do, run in your shell:
@@ -2331,6 +2331,117 @@ the bottom of the output.
 
 `@` is equal to the value of the request that is initiating the console. You
 can use this if you are testing a method that needs a request object.
+
+
+## Lapis in Lua
+
+Although this documentation is written in MoonScript, you're free to use
+regular Lua to write Lapis applications as well. Because Lapis depends heavily
+on MoonScript's object system you must use a Lua-MoonScript class library. This
+is included in the module called `lapis.lua`.
+
+Here's a quck primer to making and working with classes:
+
+```lua
+local lua = require "lapis.lua"
+
+-- basic class
+local Hello = lua.class("Hello", {
+  other_value = 200,
+
+  new = function(self)
+    print("Creating new Hello")
+    self.value = 100
+  end,
+
+  speak = function(self)
+    print("Here are my values: " .. self.value .. " and " .. self.other_value)
+  end,
+
+  class_name = function(self)
+    return self.__class.__name
+  end
+})
+
+local hello = Hello()
+hello:speak()
+print("class name:", hello:class_name()) -- Hello
+
+-- inheritance
+local HelloSub = lua.class("HelloSub", {
+  new = function(self)
+    print("Creating a new HelloSub")
+    self:super("new")
+  end,
+
+  speak = function(self)
+    print("Getting ready to speak")
+    self:super("speak")
+    print("Done speaking")
+  end
+
+}, Hello)
+
+local hello_sub = HelloSub()
+hello_sub:speak()
+print("class name:", hello_sub:class_name()) -- HelloSub
+```
+
+### Lapis Example
+
+Now that we know how to interact with MoonScript classes within Lua, using
+Lapis should be straight forward:
+
+
+```lua
+local lua = require "lapis.lua"
+local lapis = require "lapis.init"
+
+local app = lua.class({
+  ["/"] = function(self)
+    return self:html(function()
+      a({ href = self:url_for("user", { name = "leafo" }) }, "Go to profile")
+    end)
+  end,
+
+  [{user = "/user/:name"}] = function(self)
+    return self:html(function()
+      h1(self.params.name)
+      p("Welcome to " .. self.params.name .. "'s profile")
+    end)
+  end,
+
+  ["/test.json"] = function(self)
+    return {
+      json = { status = "ok" }
+    }
+  end,
+
+}, lapis.Application)
+
+lapis.serve(app)
+```
+
+And if you're curious, here's the same application written in MoonScript:
+
+```moon
+lapis = require "lapis.init"
+
+class App extends lapis.Application
+  "/": =>
+    @html->
+      a href: @url_for("user", name: "leafo"), "Go to profile"
+
+  [user: "/user/:name"]: =>
+    @html ->
+      h1 @params.name
+      p "Welcome to #{@params.name}'s profile"
+  
+  "/test.json": =>
+    json: { status: "ok" }
+
+lapis.serve App
+```
 
 
 ## License (MIT)
