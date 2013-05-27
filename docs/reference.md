@@ -510,6 +510,18 @@ with the same name as the action:
   render: true
 ```
 
+By default `views.` is appended to the front of the widget name and then loaded
+using Lua's `require` function. The `views` prefix can be customized by
+overwriting the `views_prefix` member of your application subclass:
+
+```moon
+class Application extends lapis.Application
+  views_prefix: "app_views"
+
+  -- will use "app_views.home" as the view
+  [home: "/home"]: => render: true
+```
+
 ### Passing Data To A Widget
 
 Any `@` variables set in the action can be accessed in the widget. Additionally
