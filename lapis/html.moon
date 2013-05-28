@@ -7,7 +7,7 @@ punct = "[%^$()%.%[%]*+%-?]"
 escape_patt = (str) ->
   (str\gsub punct, (p) -> "%"..p)
 
-html_encode_entities = {
+html_escape_entities = {
   ['&']: '&amp;'
   ['<']: '&lt;'
   ['>']: '&gt;'
@@ -15,23 +15,19 @@ html_encode_entities = {
   ["'"]: '&#039;'
 }
 
-html_decode_entities = {}
-for key,value in pairs html_encode_entities
-  html_decode_entities[value] = key
+html_unescape_entities = {}
+for key,value in pairs html_escape_entities
+  html_unescape_entities[value] = key
 
-html_encode_pattern = "[" .. concat([escape_patt char for char in pairs html_encode_entities]) .. "]"
+html_escape_pattern = "[" .. concat([escape_patt char for char in pairs html_escape_entities]) .. "]"
 
-encode = (text) ->
-  (text\gsub html_encode_pattern, html_encode_entities)
+escape = (text) ->
+  (text\gsub html_escape_pattern, html_escape_entities)
 
-escape = encode
-
-decode = (text) ->
+unescape = (text) ->
   (text\gsub "(&[^&]-;)", (enc) ->
-    decoded = html_decode_entities[enc]
+    decoded = html_unescape_entities[enc]
     decoded if decoded else enc)
-
-unescape = decode
 
 strip_tags = (html) ->
   html\gsub "<[^>]+>", ""

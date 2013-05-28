@@ -7,35 +7,34 @@ escape_patt = function(str)
     return "%" .. p
   end))
 end
-local html_encode_entities = {
+local html_escape_entities = {
   ['&'] = '&amp;',
   ['<'] = '&lt;',
   ['>'] = '&gt;',
   ['"'] = '&quot;',
   ["'"] = '&#039;'
 }
-local html_decode_entities = { }
-for key, value in pairs(html_encode_entities) do
-  html_decode_entities[value] = key
+local html_unescape_entities = { }
+for key, value in pairs(html_escape_entities) do
+  html_unescape_entities[value] = key
 end
-local html_encode_pattern = "[" .. concat((function()
+local html_escape_pattern = "[" .. concat((function()
   local _accum_0 = { }
   local _len_0 = 1
-  for char in pairs(html_encode_entities) do
+  for char in pairs(html_escape_entities) do
     _accum_0[_len_0] = escape_patt(char)
     _len_0 = _len_0 + 1
   end
   return _accum_0
 end)()) .. "]"
-local encode
-encode = function(text)
-  return (text:gsub(html_encode_pattern, html_encode_entities))
+local escape
+escape = function(text)
+  return (text:gsub(html_escape_pattern, html_escape_entities))
 end
-local escape = encode
-local decode
-decode = function(text)
+local unescape
+unescape = function(text)
   return (text:gsub("(&[^&]-;)", function(enc)
-    local decoded = html_decode_entities[enc]
+    local decoded = html_unescape_entities[enc]
     if decoded then
       return decoded
     else
@@ -43,7 +42,6 @@ decode = function(text)
     end
   end))
 end
-local unescape = decode
 local strip_tags
 strip_tags = function(html)
   return html:gsub("<[^>]+>", "")
