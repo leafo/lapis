@@ -108,7 +108,7 @@ create_index = function(tname, ...)
   end
   append_all(buffer, " INDEX ON " .. tostring(db.escape_identifier(tname)) .. " (")
   for i, col in ipairs(columns) do
-    append_all(buffer, col)
+    append_all(buffer, db.escape_identifier(col))
     if not (i == #columns) then
       append_all(buffer, ", ")
     end

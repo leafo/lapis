@@ -58,7 +58,7 @@ create_index = (tname, ...) ->
   append_all buffer, " INDEX ON #{db.escape_identifier tname} ("
 
   for i, col in ipairs columns
-    append_all buffer, col
+    append_all buffer, db.escape_identifier(col)
     append_all buffer, ", " unless i == #columns
 
   append_all buffer, ")"
