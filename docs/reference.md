@@ -1759,9 +1759,11 @@ import types from require "lapis.db.schema"
 
 types.boolean       --> boolean NOT NULL DEFAULT FALSE
 types.date          --> date NOT NULL
+types.double        --> double precision NOT NULL DEFAULT 0
 types.foreign_key   --> integer NOT NULL
 types.integer       --> integer NOT NULL DEFAULT 0
 types.numeric       --> numeric NOT NULL DEFAULT 0
+types.real          --> real NOT NULL DEFAULT 0
 types.serial        --> serial NOT NULL
 types.text          --> text NOT NULL
 types.time          --> timestamp without time zone NOT NULL

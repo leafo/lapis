@@ -233,6 +233,14 @@ local types = setmetatable({
     null = false,
     default = 0
   }),
+  real = C("real", {
+    null = false,
+    default = 0
+  }),
+  double = C("double precision", {
+    null = false,
+    default = 0
+  }),
   boolean = C("boolean", {
     null = false,
     default = false

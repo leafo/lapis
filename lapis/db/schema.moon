@@ -133,6 +133,8 @@ types = setmetatable {
   date:         C "date"
   integer:      C "integer", null: false, default: 0
   numeric:      C "numeric", null: false, default: 0
+  real:         C "real", null: false, default: 0
+  double:       C "double precision", null: false, default: 0
   boolean:      C "boolean", null: false, default: false
   foreign_key:  C "integer"
 }, __index: (key) =>
