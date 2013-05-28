@@ -398,8 +398,8 @@ included, and have no effect when the application is served.
 
 ```moon
 class UsersApplication extends lapis.Application
-  path: "/users"
-  name: "user_"
+  @path: "/users"
+  @name: "user_"
 
   -- etc...
 ```
