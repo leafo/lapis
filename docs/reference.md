@@ -447,8 +447,7 @@ div ->                              -- <div>Hey</div>
   text "Hey"
 
 div class: "header", ->             -- <div class="header"><h2>My Site</h2>
-                                    --    <p>Welcome!</p></div>
-  h2 "My Site"
+  h2 "My Site"                      --    <p>Welcome!</p></div>
   p "Welcome!"
 ```
 
@@ -623,6 +622,38 @@ class extends lapis.Application
 
 As demonstrated in the example, passing false will prevent any layout from
 being rendered.
+
+### HTML Module
+
+
+```moon
+html = require "lapis.html"
+```
+
+#### `render_html(fn)`
+
+Runs the function, `fn` in the HTML rendering context as described above.
+Returns the resulting HTML. The HTML context will automatically convert any
+reference to an undefined global variable into a function that will render the
+appropriate tag.
+
+```moon
+import render_html from require "lapis.html"
+
+print render_html ->
+  div class: "item", ->
+    strong "Hello!"
+```
+
+### `escape(str)`
+
+Escapes any HTML special characters in the string. The following are escaped:
+
+ * `&` -- `&amp;`
+ * `<` -- `&lt;`
+ * `>` -- `&gt;`
+ * `"` -- `&quot;`
+ * `'` -- `&#039;`
 
 ## Exception Handling
 
@@ -2450,7 +2481,7 @@ class App extends lapis.Application
     @html ->
       h1 @params.name
       p "Welcome to #{@params.name}'s profile"
-  
+
   "/test.json": =>
     json: { status: "ok" }
 

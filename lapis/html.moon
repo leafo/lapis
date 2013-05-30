@@ -250,5 +250,5 @@ class Widget
     setmetatable @, meta
     nil
 
-{ :Widget, :html_writer, :render_html }
+{ :Widget, :html_writer, :render_html, :escape, :unescape }
 
