@@ -1607,7 +1607,7 @@ The first argument to `create_table` is the name of the table and the second
 argument is an array table that describes the table.
 
 ```moon
-db = require "lapis.nginx.postgres"
+db = require "lapis.db"
 schema = require "lapis.db.schema"
 
 import create_table, types from schema
