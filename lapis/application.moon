@@ -84,7 +84,7 @@ class Request
         redirect_url  = @build_url redirect_url
 
       @res\add_header "Location", redirect_url
-      @res.status = 302
+      @res.status or= 302
 
     if widget = @options.render
       widget = @route_name if widget == true

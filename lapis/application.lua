@@ -114,7 +114,7 @@ do
             redirect_url = self:build_url(redirect_url)
           end
           self.res:add_header("Location", redirect_url)
-          self.res.status = 302
+          self.res.status = self.res.status or 302
         end
       end
       do
