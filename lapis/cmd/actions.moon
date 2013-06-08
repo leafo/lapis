@@ -67,7 +67,7 @@ tasks = {
 
       os.execute "touch logs/error.log"
       os.execute "touch logs/access.log"
-      os.execute "LAPIS_ENVIRONMENT='#{environment}' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"'
+      os.execute "LAPIS_ENVIRONMENT='#{environment}' " .. nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"'
   }
 
   {
