@@ -8,10 +8,7 @@ if ngx then
 else
   local mime = require("mime")
   local b64, unb64
-  do
-    local _obj_0 = mime
-    b64, unb64 = _obj_0.b64, _obj_0.unb64
-  end
+  b64, unb64 = mime.b64, mime.unb64
   encode_base64 = function(...)
     return (b64(...))
   end

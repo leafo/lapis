@@ -194,6 +194,17 @@ tests = {
   }
 
   {
+    -> util.trim_filter {
+      hello: " hi"
+      world: " hi"
+      yeah: "       "
+    }, {"hello", "yeah"}, 0
+
+    { hello: "hi", yeah: 0 }
+  }
+
+
+  {
     ->
       util.key_filter {
         hello: "world"

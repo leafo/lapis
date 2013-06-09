@@ -430,5 +430,7 @@ end
 return {
   Widget = Widget,
   html_writer = html_writer,
-  render_html = render_html
+  render_html = render_html,
+  escape = escape,
+  unescape = unescape
 }

@@ -5,6 +5,8 @@ json = require "cjson"
 import concat, insert from table
 import floor from math
 
+local *
+
 -- todo: consider renaming to url_escape/url_unescape
 unescape = do
   u = url.unescape
@@ -99,11 +101,16 @@ trim_all = (tbl) ->
   tbl
 
 -- remove empty string (all whitespace) values from table
-trim_filter = (tbl) ->
+-- optionaly apply a key filter with second arg
+-- set the value to replace empty strings with empty_val
+trim_filter = (tbl, keys, empty_val) ->
+  key_filter tbl, unpack keys if keys
+
   for k,v in pairs tbl
     if type(v) == "string"
       trimmed = trim v
-      tbl[k] = if trimmed == "" then nil else trimmed
+      tbl[k] = if trimmed == "" then empty_val else trimmed
+
   tbl
 
 -- remove all keys except those passed in

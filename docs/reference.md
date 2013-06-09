@@ -2106,10 +2106,39 @@ Trims the whitespace off of both sides of a string.
 Trims the whitespace off of all values in a table (suitable for hash and array
 tables).
 
-####  `trim_filter(tbl)`
+The table is modified in place.
+
+####  `trim_filter(tbl, [{keys ...}], [empty_val=nil])`
 
 Trims the whitespace off of all values in a table. The entry is removed from
 the table if the result is an empty string.
+
+If an array table `keys` is supplied then any other keys not in that list are
+removed (with `nil`, not the `empty_val`)
+
+If `empty_val` is provided then the whitespace only values are replaced with
+that value instead of `nil`
+
+The table is modified in place.
+
+```moon
+db = require "lapis.db"
+import trim_filter from require "lapis.util"
+
+unknown_input = {
+  username: "  hello  "
+  level: "admin"
+  description: " "
+}
+
+trim_filter unknown_input, {"username", "description"}, db.NULL
+
+-- unknown input is now:
+-- {
+--   username: "hello"
+--   description: db.NULL
+-- }
+```
 
 ####  `to_json(obj)`
 

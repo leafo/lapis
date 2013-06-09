@@ -2,21 +2,19 @@ local url = require("socket.url")
 local json = require("cjson")
 local concat, insert = table.concat, table.insert
 local floor = math.floor
-local unescape
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words
 do
   local u = url.unescape
   unescape = function(str)
     return (u(str))
   end
 end
-local escape
 do
   local e = url.escape
   escape = function(str)
     return (e(str))
   end
 end
-local escape_pattern
 do
   local punct = "[%^$()%.%[%]*+%-?%%]"
   escape_pattern = function(str)
@@ -25,7 +23,6 @@ do
     end))
   end
 end
-local inject_tuples
 inject_tuples = function(tbl)
   local _list_0 = tbl
   for _index_0 = 1, #_list_0 do
@@ -33,7 +30,6 @@ inject_tuples = function(tbl)
     tbl[tuple[1]] = tuple[2] or true
   end
 end
-local parse_query_string
 do
   local C, P, S, Ct
   do
@@ -54,7 +50,6 @@ do
     end
   end
 end
-local encode_query_string
 encode_query_string = function(t, sep)
   if sep == nil then
     sep = "&"
@@ -63,10 +58,7 @@ encode_query_string = function(t, sep)
   local buf = { }
   for k, v in pairs(t) do
     if type(k) == "number" and type(v) == "table" then
-      do
-        local _obj_0 = v
-        k, v = _obj_0[1], _obj_0[2]
-      end
+      k, v = v[1], v[2]
     end
     buf[i + 1] = escape(k)
     buf[i + 2] = "="
@@ -77,7 +69,6 @@ encode_query_string = function(t, sep)
   buf[i] = nil
   return concat(buf)
 end
-local parse_content_disposition
 do
   local C, R, P, S, Ct, Cg
   do
@@ -100,7 +91,6 @@ do
     end
   end
 end
-local parse_cookie_string
 parse_cookie_string = function(str)
   if not (str) then
     return { }
@@ -113,11 +103,9 @@ parse_cookie_string = function(str)
     return _tbl_0
   end)()
 end
-local slugify
 slugify = function(str)
   return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", "")):lower()
 end
-local underscore
 underscore = function(str)
   local words = (function()
     local _accum_0 = { }
@@ -130,7 +118,6 @@ underscore = function(str)
   end)()
   return concat(words, "_")
 end
-local camelize
 do
   local patt = "[^" .. tostring(escape_pattern("_")) .. "]+"
   camelize = function(str)
@@ -145,7 +132,6 @@ do
     end)())
   end
 end
-local uniquify
 uniquify = function(list)
   local seen = { }
   return (function()
@@ -173,11 +159,9 @@ uniquify = function(list)
     return _accum_0
   end)()
 end
-local trim
 trim = function(str)
   return tostring(str):match("^%s*(.-)%s*$")
 end
-local trim_all
 trim_all = function(tbl)
   for k, v in pairs(tbl) do
     if type(v) == "string" then
@@ -186,13 +170,15 @@ trim_all = function(tbl)
   end
   return tbl
 end
-local trim_filter
-trim_filter = function(tbl)
+trim_filter = function(tbl, keys, empty_val)
+  if keys then
+    key_filter(tbl, unpack(keys))
+  end
   for k, v in pairs(tbl) do
     if type(v) == "string" then
       local trimmed = trim(v)
       if trimmed == "" then
-        tbl[k] = nil
+        tbl[k] = empty_val
       else
         tbl[k] = trimmed
       end
@@ -200,7 +186,6 @@ trim_filter = function(tbl)
   end
   return tbl
 end
-local key_filter
 key_filter = function(tbl, ...)
   local set = (function(...)
     local _tbl_0 = { }
@@ -220,7 +205,6 @@ key_filter = function(tbl, ...)
   end
   return tbl
 end
-local json_encodable
 json_encodable = function(obj, seen)
   if seen == nil then
     seen = { }
@@ -243,11 +227,9 @@ json_encodable = function(obj, seen)
     return obj
   end
 end
-local to_json
 to_json = function(obj)
   return json.encode(json_encodable(obj))
 end
-local build_url
 build_url = function(parts)
   local out = parts.path or ""
   if parts.query then
@@ -274,7 +256,6 @@ build_url = function(parts)
   end
   return out
 end
-local time_ago
 do
   local date
   pcall(function()
@@ -332,7 +313,6 @@ do
     return times
   end
 end
-local time_ago_in_words
 do
   local singular = {
     years = "year",
