@@ -743,7 +743,7 @@ a table: (note that `@errors` is set before the custom handler)
 class App extends lapis.Application
   "/do_something": capture_errors {
     on_error: =>
-      log_errors @errors
+      log_errors @errors -- you would supply the log_errors method
       render: "my_error_page", status: 500
 
     =>
@@ -755,6 +755,24 @@ class App extends lapis.Application
 
 `capture_errors` when called with a table will use the first positional value
 as the action.
+
+If you're building a JSON API then another method is provided,
+`capture_errors_json`, which renders the errors in a JSON object like so:
+
+
+```moon
+import capture_errors_json, yield_error from require "lapis.application"
+
+class App extends lapis.Application
+  "/": capture_errors_json =>
+    yield_error "something bad happend"
+```
+
+Would render (with the correct content type):
+
+```json
+{ errors: ["something bad happend"] }
+```
 
 ### `assert_error`
 
