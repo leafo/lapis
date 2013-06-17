@@ -2010,6 +2010,15 @@ Here is the list of options that can be written
   Supports both relative and absolute URLs
 
 
+When rendering JSON make sure to use the `json` render option. It will
+automatically set the correct content type and disable the layout:
+
+```moon
+class extends lapis.Application
+  "/hello": =>
+    json: { hello: "world!" }
+```
+
 ### Cookies
 
 The `@cookies` table in the request lets you read and write cookies. If you try
