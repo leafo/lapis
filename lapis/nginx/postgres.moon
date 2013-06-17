@@ -27,6 +27,8 @@ proxy_location = "/query"
 set_logger = (l) -> logger = l
 get_logger = -> logger
 
+set_logger require "lapis.logging"
+
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
 

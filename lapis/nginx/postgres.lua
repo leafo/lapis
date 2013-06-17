@@ -10,6 +10,7 @@ local get_logger
 get_logger = function()
   return logger
 end
+set_logger(require("lapis.logging"))
 local NULL = { }
 local raw
 raw = function(val)

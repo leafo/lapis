@@ -1,5 +1,4 @@
 local db = require("lapis.db")
-db.set_logger(require("lapis.logging"))
 local underscore, escape_pattern, uniquify
 do
   local _table_0 = require("lapis.util")

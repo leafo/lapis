@@ -58,7 +58,10 @@ encode_query_string = function(t, sep)
   local buf = { }
   for k, v in pairs(t) do
     if type(k) == "number" and type(v) == "table" then
-      k, v = v[1], v[2]
+      do
+        local _obj_0 = v
+        k, v = _obj_0[1], _obj_0[2]
+      end
     end
     buf[i + 1] = escape(k)
     buf[i + 2] = "="

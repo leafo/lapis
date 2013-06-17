@@ -1,6 +1,5 @@
 
 db = require "lapis.db"
-db.set_logger require "lapis.logging"
 
 import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
