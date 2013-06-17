@@ -404,6 +404,58 @@ class UsersApplication extends lapis.Application
   -- etc...
 ```
 
+### Default Action
+
+When a request does not match an action that you have defined a pattern for it
+will fall back on running the default action. The default action that Lapis
+provides looks like this:
+
+```moon
+default_route: =>
+  -- strip trailing /
+  if @req.parsed_url.path\match "./$"
+    stripped = @req.parsed_url.path\match "^(.+)/+$"
+    redirect_to: @build_url(stripped, query: @req.parsed_url.query), status: 301
+  else
+    @app.handle_404 @
+```
+
+If it notices a trailing `/` on the end of the URL it will attempt to redirect
+to a version without the trailing slash. Other wise it will call the
+`handle_404` method on the application.
+
+This method, `default_route`, is just a normal method on your application. You
+can override it to do whatever you like. For example this adds logging:
+
+```moon
+class extends lapis.Application
+  default_route: =>
+    ngx.log ngx.NOTICE, "User hit unknown path #{@req.parsed_url.path}"
+    @super!
+```
+
+You'll notice in the default method, another method, `handle_404` is
+referenced. This is also provided and looks like this:
+
+```moon
+handle_404: =>
+  error "Failed to find route: #{@req.cmd_url}"
+```
+
+This will trigger a 500 error and a stack trace on every invalid request. If
+you want to make a proper 404 page this is where you would do it.
+
+Overriding the `handle_404` method instead of `default_route` allows us to
+create a custom 404 page while still keeping the trailing slash removal code.
+
+Here's a simple 404 handler that just prints the text `"Not Found!"`
+
+```moon
+class extends lapis.Application
+  default_route: =>
+    status: 404, layout: false, "Not Found!"
+```
+
 ## HTML Generation
 
 ### HTML In Actions
