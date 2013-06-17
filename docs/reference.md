@@ -1967,7 +1967,8 @@ migrations have been run and their associated SQL.
 
 ## Request Object
 
-As we've already seen the request object contains instance variables for all of the request parameters in `@params`. There are a few other properties as well.
+As we've already seen the request object contains instance variables for all of
+the request parameters in `@params`. There are a few other properties as well.
 
 * `@req` -- raw request table (generated from `ngx` state)
 * `@res` -- raw response table (used to update `ngx` state)
@@ -1976,9 +1977,9 @@ As we've already seen the request object contains instance variables for all of 
   supports strings as values
 * `@session` -- signed session table. Can store values of any
   type that can be JSON encoded. Is backed by cookies
-* `@options` -- set of options that controls how the request is rendered to nginx
+* `@options` -- set of options that controls how the request is rendered to Nginx
 * `@buffer` -- the output buffer
-
+* `@route_name` -- the name of the route that matched the request if it has one
 
 When an action is executed the `write` method (described below) is called with
 the return values.
@@ -1998,16 +1999,17 @@ browser.
 
 Here is the list of options that can be written
 
-* `status` -- sets HTTP status code (eg 200, 404, 500, ...)
+* `status` -- sets HTTP status code (eg. 200, 404, 500, ...)
 * `render` -- causes a view to be rendered with the request. If the value is
   `true` then the name of the route is used as the view name. Otherwise the value
   must be a string or a view class.
 * `content_type` -- sets the `Content-type` header
-* `json` -- causes the request to return the json encoded value of the
+* `json` -- causes the request to return the JSON encoded value of the
   property. The content type is set to `application/json` as well.
 * `layout` -- changes the layout from the default defined by the application
 * `redirect_to` -- sets status to 302 and sets `Location` header to value.
-  Supports both relative and absolute URLs
+  Supports both relative and absolute URLs. (Combine with `status` to perform
+  301 redirect)
 
 
 When rendering JSON make sure to use the `json` render option. It will
@@ -2143,36 +2145,36 @@ Utility functions are found in:
 util = require "lapis.util"
 ```
 
-####  `unescape(str)`
+#### `unescape(str)`
 
 URL unescapes string
 
-####  `escape(str)`
+#### `escape(str)`
 
 URL escapes string
 
-####  `escape_pattern(str)`
+#### `escape_pattern(str)`
 
 Escapes string for use in Lua pattern
 
-####  `parse_query_string(str)`
+#### `parse_query_string(str)`
 
 Parses query string into a table
 
-####  `encode_query_string(tbl)`
+#### `encode_query_string(tbl)`
 
 Converts a key,value table into a query string
 
-####  `underscore(str)`
+#### `underscore(str)`
 
 Converst CamelCase to camel_case.
 
-####  `slugify(str)`
+#### `slugify(str)`
 
 Converts a string to a slug suitable for a URL. Removes all whitespace and
 symbols and replaces them with `-`.
 
-####  `uniquify(tbl)`
+#### `uniquify(tbl)`
 
 Returns a new table from `tbl` where there are no duplicate values.
 
@@ -2180,14 +2182,14 @@ Returns a new table from `tbl` where there are no duplicate values.
 
 Trims the whitespace off of both sides of a string.
 
-####  `trim_all(tbl)`
+#### `trim_all(tbl)`
 
 Trims the whitespace off of all values in a table (suitable for hash and array
 tables).
 
 The table is modified in place.
 
-####  `trim_filter(tbl, [{keys ...}], [empty_val=nil])`
+#### `trim_filter(tbl, [{keys ...}], [empty_val=nil])`
 
 Trims the whitespace off of all values in a table. The entry is removed from
 the table if the result is an empty string.
@@ -2219,7 +2221,7 @@ trim_filter unknown_input, {"username", "description"}, db.NULL
 -- }
 ```
 
-####  `to_json(obj)`
+#### `to_json(obj)`
 
 Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 
