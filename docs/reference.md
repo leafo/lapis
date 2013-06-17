@@ -625,6 +625,9 @@ class extends lapis.Application
     widget\render_to_string!
 ```
 
+You should avoid rendering widgets manually when possible, and instead use the
+`render` [request option](#request-object-request-options).
+
 ### Layouts
 
 Whenever an action is rendered normally the result is inserted into the
