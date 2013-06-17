@@ -40,6 +40,7 @@ build = {
 		["lapis.html"] = "lapis/html.lua",
 		["lapis.http"] = "lapis/http.lua",
 		["lapis.logging"] = "lapis/logging.lua",
+		["lapis.lua"] = "lapis/lua.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
 		["lapis.nginx.http"] = "lapis/nginx/http.lua",
 		["lapis.nginx.postgres"] = "lapis/nginx/postgres.lua",
