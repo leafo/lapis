@@ -90,6 +90,14 @@ parse_flags = function(...)
   return flags, unpack(filtered)
 end
 local tasks
+local get_task
+get_task = function(name)
+  for k, v in ipairs(tasks) do
+    if v.name == name then
+      return v
+    end
+  end
+end
 tasks = {
   default = "help",
   {
@@ -118,7 +126,7 @@ tasks = {
   {
     name = "server",
     usage = "server [environment]",
-    help = "start the server",
+    help = "build config and start server",
     function(environment)
       if environment == nil then
         environment = "development"
@@ -128,6 +136,21 @@ tasks = {
         print("Aborting, can not find an installation of OpenResty")
         return 
       end
+      get_task("build")[1](environment)
+      path.mkdir("logs")
+      os.execute("touch logs/error.log")
+      os.execute("touch logs/access.log")
+      return os.execute("LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
+    end
+  },
+  {
+    name = "build",
+    usage = "build [environment]",
+    help = "build the config",
+    function(environment)
+      if environment == nil then
+        environment = "development"
+      end
       local vars = config.get(environment)
       local compile_config
       do
@@ -135,11 +158,7 @@ tasks = {
         compile_config = _obj_0.compile_config
       end
       local compiled = compile_config(path.read_file("nginx.conf"), vars)
-      path.write_file("nginx.conf.compiled", compiled)
-      path.mkdir("logs")
-      os.execute("touch logs/error.log")
-      os.execute("touch logs/access.log")
-      return os.execute("LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
+      return path.write_file("nginx.conf.compiled", compiled)
     end
   },
   {
@@ -176,14 +195,6 @@ tasks = {
     end
   }
 }
-local get_task
-get_task = function(name)
-  for k, v in ipairs(tasks) do
-    if v.name == name then
-      return v
-    end
-  end
-end
 local execute
 execute = function(args)
   local task_name = args[1] or tasks.default

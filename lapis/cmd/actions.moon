@@ -50,6 +50,11 @@ parse_flags = (...) ->
   flags, unpack filtered
 
 local tasks
+
+get_task = (name) ->
+  for k,v in ipairs tasks
+    return v if v.name == name
+
 tasks = {
   default: "help"
 
@@ -81,7 +86,7 @@ tasks = {
   {
     name: "server"
     usage: "server [environment]"
-    help: "start the server"
+    help: "build config and start server"
 
     (environment="development") ->
       nginx = find_nginx!
@@ -89,14 +94,7 @@ tasks = {
         print "Aborting, can not find an installation of OpenResty"
         return
 
-      -- load app config
-      vars = config.get environment
-
-      -- compile config
-      import compile_config from require "lapis.cmd.nginx"
-      compiled = compile_config path.read_file"nginx.conf", vars
-
-      path.write_file "nginx.conf.compiled", compiled
+      get_task("build")[1] environment
 
       path.mkdir "logs"
 
@@ -104,6 +102,22 @@ tasks = {
       os.execute "touch logs/access.log"
       os.execute "LAPIS_ENVIRONMENT='#{environment}' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"'
   }
+
+  {
+    name: "build"
+    usage: "build [environment]"
+    help: "build the config"
+
+    (environment="development") ->
+      -- load app config
+      vars = config.get environment
+      -- compile config
+      import compile_config from require "lapis.cmd.nginx"
+      compiled = compile_config path.read_file"nginx.conf", vars
+
+      path.write_file "nginx.conf.compiled", compiled
+  }
+
 
   {
     name: "help"
@@ -124,10 +138,6 @@ tasks = {
       print!
   }
 }
-
-get_task = (name) ->
-  for k,v in ipairs tasks
-    return v if v.name == name
 
 execute = (args) ->
   task_name = args[1] or tasks.default
