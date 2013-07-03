@@ -63,14 +63,10 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
+  setmetatable(_base_0, _parent_0.__base)
   local _class_0 = setmetatable({
     __init = function(self, ...)
-      if _parent_0 then
-        return _parent_0.__init(self, ...)
-      end
+      return _parent_0.__init(self, ...)
     end,
     __base = _base_0,
     __name = "ErrorPage",
@@ -78,7 +74,7 @@ do
   }, {
     __index = function(cls, name)
       local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
+      if val == nil then
         return _parent_0[name]
       else
         return val
@@ -91,7 +87,7 @@ do
     end
   })
   _base_0.__class = _class_0
-  if _parent_0 and _parent_0.__inherited then
+  if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
   ErrorPage = _class_0

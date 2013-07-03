@@ -1,4 +1,8 @@
-local concat = table.concat
+local concat
+do
+  local _obj_0 = table
+  concat = _obj_0.concat
+end
 local _G = _G
 local punct = "[%^$()%.%[%]*+%-?]"
 local escape_patt
@@ -80,7 +84,6 @@ element = function(buffer, name, ...)
 end
 local Buffer
 do
-  local _parent_0 = nil
   local _base_0 = {
     builders = {
       html_5 = function(...)
@@ -192,9 +195,8 @@ do
         if "string" == _exp_0 then
           self:write(escape(thing))
         elseif "table" == _exp_0 then
-          local _list_1 = thing
-          for _index_1 = 1, #_list_1 do
-            local chunk = _list_1[_index_1]
+          for _index_1 = 1, #thing do
+            local chunk = thing[_index_1]
             self:write_escaped(chunk)
           end
         else
@@ -218,9 +220,8 @@ do
         elseif "nil" == _exp_0 then
           local _ = nil
         elseif "table" == _exp_0 then
-          local _list_1 = thing
-          for _index_1 = 1, #_list_1 do
-            local chunk = _list_1[_index_1]
+          for _index_1 = 1, #thing do
+            local chunk = thing[_index_1]
             self:write(chunk)
           end
         elseif "function" == _exp_0 then
@@ -233,9 +234,6 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
     __init = function(self, buffer)
       self.buffer = buffer
@@ -244,17 +242,9 @@ do
       return self:make_scope()
     end,
     __base = _base_0,
-    __name = "Buffer",
-    __parent = _parent_0
+    __name = "Buffer"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -262,9 +252,6 @@ do
     end
   })
   _base_0.__class = _class_0
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
   Buffer = _class_0
 end
 local html_writer
@@ -286,7 +273,6 @@ local helper_key = setmetatable({ }, {
 })
 local Widget
 do
-  local _parent_0 = nil
   local _base_0 = {
     _set_helper_chain = function(self, chain)
       return rawset(self, helper_key, chain)
@@ -298,9 +284,8 @@ do
       do
         local chain = self:_get_helper_chain()
         if chain then
-          local _list_0 = chain
-          for _index_0 = 1, #_list_0 do
-            local h = _list_0[_index_0]
+          for _index_0 = 1, #chain do
+            local h = chain[_index_0]
             local helper_val = h[name]
             if helper_val ~= nil then
               local value
@@ -386,9 +371,6 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
     __init = function(self, opts)
       if opts then
@@ -398,17 +380,9 @@ do
       end
     end,
     __base = _base_0,
-    __name = "Widget",
-    __parent = _parent_0
+    __name = "Widget"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -421,9 +395,6 @@ do
     cls.__base.__call = function(self, ...)
       return self:render(...)
     end
-  end
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
   end
   Widget = _class_0
 end

@@ -1,12 +1,12 @@
 local columnize
 do
-  local _table_0 = require("lapis.cmd.util")
-  columnize = _table_0.columnize
+  local _obj_0 = require("lapis.cmd.util")
+  columnize = _obj_0.columnize
 end
 local find_nginx
 do
-  local _table_0 = require("lapis.cmd.nginx")
-  find_nginx = _table_0.find_nginx
+  local _obj_0 = require("lapis.cmd.nginx")
+  find_nginx = _obj_0.find_nginx
 end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
@@ -72,8 +72,8 @@ tasks = {
       local vars = config.get(environment)
       local compile_config
       do
-        local _table_0 = require("lapis.cmd.nginx")
-        compile_config = _table_0.compile_config
+        local _obj_0 = require("lapis.cmd.nginx")
+        compile_config = _obj_0.compile_config
       end
       local compiled = compile_config(path.read_file("nginx.conf"), vars)
       path.write_file("nginx.conf.compiled", compiled)
@@ -103,9 +103,8 @@ tasks = {
       print(columnize((function()
         local _accum_0 = { }
         local _len_0 = 1
-        local _list_0 = tasks
-        for _index_0 = 1, #_list_0 do
-          local t = _list_0[_index_0]
+        for _index_0 = 1, #tasks do
+          local t = tasks[_index_0]
           _accum_0[_len_0] = {
             t.usage or t.name,
             t.help
@@ -129,7 +128,8 @@ end
 local execute
 execute = function(args)
   local task_name = args[1] or tasks.default
-  local task_args = (function()
+  local task_args
+  do
     local _accum_0 = { }
     local _len_0 = 1
     for i, a in ipairs(args) do
@@ -138,8 +138,8 @@ execute = function(args)
         _len_0 = _len_0 + 1
       end
     end
-    return _accum_0
-  end)()
+    task_args = _accum_0
+  end
   do
     local task = get_task(task_name)
     if task then

@@ -1,5 +1,9 @@
 local parser = require("rds.parser")
-local concat = table.concat
+local concat
+do
+  local _obj_0 = table
+  concat = _obj_0.concat
+end
 local raw_query, logger
 local proxy_location = "/query"
 local set_logger
@@ -45,9 +49,8 @@ local backends = {
   end,
   raw = function(fn)
     do
-      local _with_0 = raw_query
       raw_query = fn
-      return _with_0
+      return raw_query
     end
   end,
   ["resty.postgres"] = function(opts)
@@ -121,7 +124,8 @@ local encode_values
 encode_values = function(t, buffer)
   local have_buffer = buffer
   buffer = buffer or { }
-  local tuples = (function()
+  local tuples
+  do
     local _accum_0 = { }
     local _len_0 = 1
     for k, v in pairs(t) do
@@ -131,14 +135,13 @@ encode_values = function(t, buffer)
       }
       _len_0 = _len_0 + 1
     end
-    return _accum_0
-  end)()
+    tuples = _accum_0
+  end
   local cols = concat((function()
     local _accum_0 = { }
     local _len_0 = 1
-    local _list_0 = tuples
-    for _index_0 = 1, #_list_0 do
-      local pair = _list_0[_index_0]
+    for _index_0 = 1, #tuples do
+      local pair = tuples[_index_0]
       _accum_0[_len_0] = escape_identifier(pair[1])
       _len_0 = _len_0 + 1
     end
@@ -147,9 +150,8 @@ encode_values = function(t, buffer)
   local vals = concat((function()
     local _accum_0 = { }
     local _len_0 = 1
-    local _list_0 = tuples
-    for _index_0 = 1, #_list_0 do
-      local pair = _list_0[_index_0]
+    for _index_0 = 1, #tuples do
+      local pair = tuples[_index_0]
       _accum_0[_len_0] = escape_literal(pair[2])
       _len_0 = _len_0 + 1
     end

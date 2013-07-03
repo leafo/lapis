@@ -1,7 +1,19 @@
-local insert = table.insert
+local insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 require("lpeg")
-local R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
-local C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
+local R, S, V, P
+do
+  local _obj_0 = lpeg
+  R, S, V, P = _obj_0.R, _obj_0.S, _obj_0.V, _obj_0.P
+end
+local C, Cs, Ct, Cmt, Cg, Cb, Cc
+do
+  local _obj_0 = lpeg
+  C, Cs, Ct, Cmt, Cg, Cb, Cc = _obj_0.C, _obj_0.Cs, _obj_0.Ct, _obj_0.Cmt, _obj_0.Cg, _obj_0.Cb, _obj_0.Cc
+end
 local reduce
 reduce = function(items, fn)
   if #items == 1 then
@@ -16,7 +28,6 @@ end
 local Router
 do
   local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, symbol, chunk
-  local _parent_0 = nil
   local _base_0 = {
     add_route = function(self, route, responder)
       self.p = nil
@@ -105,26 +116,15 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
     __init = function(self)
       self.routes = { }
       self.named_routes = { }
     end,
     __base = _base_0,
-    __name = "Router",
-    __parent = _parent_0
+    __name = "Router"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -155,9 +155,6 @@ do
       return a * b
     end)
     return Ct(patt)
-  end
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
   end
   Router = _class_0
 end

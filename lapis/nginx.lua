@@ -2,18 +2,16 @@ local url = require("socket.url")
 local upload = require("resty.upload")
 local escape_pattern, parse_content_disposition, build_url
 do
-  local _table_0 = require("lapis.util")
-  escape_pattern, parse_content_disposition, build_url = _table_0.escape_pattern, _table_0.parse_content_disposition, _table_0.build_url
+  local _obj_0 = require("lapis.util")
+  escape_pattern, parse_content_disposition, build_url = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url
 end
 local flatten_params
 flatten_params = function(t)
-  return (function()
-    local _tbl_0 = { }
-    for k, v in pairs(t) do
-      _tbl_0[k] = type(v) == "table" and v[#v] or v
-    end
-    return _tbl_0
-  end)()
+  local _tbl_0 = { }
+  for k, v in pairs(t) do
+    _tbl_0[k] = type(v) == "table" and v[#v] or v
+  end
+  return _tbl_0
 end
 local parse_multipart
 parse_multipart = function()
@@ -33,9 +31,8 @@ parse_multipart = function()
         do
           local params = parse_content_disposition(value)
           if params then
-            local _list_0 = params
-            for _index_0 = 1, #_list_0 do
-              local tuple = _list_0[_index_0]
+            for _index_0 = 1, #params do
+              local tuple = params[_index_0]
               current[tuple[1]] = tuple[2]
             end
           end
@@ -123,10 +120,9 @@ lazy_tbl = function(tbl, index)
       local fn = index[key]
       if fn then
         do
-          local _with_0 = fn(self)
-          local res = _with_0
+          local res = fn(self)
           self[key] = res
-          return _with_0
+          return res
         end
       end
     end
@@ -138,14 +134,13 @@ build_request = function(unlazy)
     unlazy = false
   end
   do
-    local _with_0 = lazy_tbl({ }, ngx_req)
-    local t = _with_0
+    local t = lazy_tbl({ }, ngx_req)
     if unlazy then
       for k in pairs(ngx_req) do
         local _ = t[k]
       end
     end
-    return _with_0
+    return t
   end
 end
 local build_response

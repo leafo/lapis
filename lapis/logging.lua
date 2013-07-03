@@ -1,5 +1,9 @@
 local colors = require("ansicolors")
-local insert = table.insert
+local insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local flatten_params_helper
 flatten_params_helper = function(params, out, sep)
   if out == nil then
@@ -40,7 +44,8 @@ query = function(q)
 end
 local request
 request = function(r)
-  local req, res = r.req, r.res
+  local req, res
+  req, res = r.req, r.res
   local status
   if res.statusline then
     status = res.statusline:match(" (%d+) ")

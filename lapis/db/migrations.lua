@@ -2,8 +2,8 @@ local db = require("lapis.db")
 local logger = require("lapis.logging")
 local Model
 do
-  local _table_0 = require("lapis.db.model")
-  Model = _table_0.Model
+  local _obj_0 = require("lapis.db.model")
+  Model = _obj_0.Model
 end
 local LapisMigrations
 do
@@ -12,14 +12,10 @@ do
     primary_key = "name"
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
+  setmetatable(_base_0, _parent_0.__base)
   local _class_0 = setmetatable({
     __init = function(self, ...)
-      if _parent_0 then
-        return _parent_0.__init(self, ...)
-      end
+      return _parent_0.__init(self, ...)
     end,
     __base = _base_0,
     __name = "LapisMigrations",
@@ -27,7 +23,7 @@ do
   }, {
     __index = function(cls, name)
       local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
+      if val == nil then
         return _parent_0[name]
       else
         return val
@@ -49,7 +45,7 @@ do
       name = tostring(name)
     })
   end
-  if _parent_0 and _parent_0.__inherited then
+  if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
   LapisMigrations = _class_0
@@ -60,7 +56,8 @@ create_migrations_table = function(table_name)
     table_name = "lapis_migrations"
   end
   local schema = require("lapis.db.schema")
-  local create_table, types = schema.create_table, schema.types
+  local create_table, types
+  create_table, types = schema.create_table, schema.types
   return create_table(table_name, {
     {
       "name",
@@ -71,7 +68,8 @@ create_migrations_table = function(table_name)
 end
 local run_migrations
 run_migrations = function(migrations)
-  local tuples = (function()
+  local tuples
+  do
     local _accum_0 = { }
     local _len_0 = 1
     for k, v in pairs(migrations) do
@@ -81,8 +79,8 @@ run_migrations = function(migrations)
       }
       _len_0 = _len_0 + 1
     end
-    return _accum_0
-  end)()
+    tuples = _accum_0
+  end
   table.sort(tuples, function(a, b)
     return a[1] < b[1]
   end)

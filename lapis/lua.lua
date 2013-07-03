@@ -11,9 +11,7 @@ _class = function(name, tbl, extend)
       local _parent_0 = extend
       local _base_0 = { }
       _base_0.__index = _base_0
-      if _parent_0 then
-        setmetatable(_base_0, _parent_0.__base)
-      end
+      setmetatable(_base_0, _parent_0.__base)
       local _class_0 = setmetatable({
         __init = tbl and tbl.new,
         __base = _base_0,
@@ -22,7 +20,7 @@ _class = function(name, tbl, extend)
       }, {
         __index = function(cls, name)
           local val = rawget(_base_0, name)
-          if val == nil and _parent_0 then
+          if val == nil then
             return _parent_0[name]
           else
             return val
@@ -35,33 +33,21 @@ _class = function(name, tbl, extend)
         end
       })
       _base_0.__class = _class_0
-      if _parent_0 and _parent_0.__inherited then
+      if _parent_0.__inherited then
         _parent_0.__inherited(_parent_0, _class_0)
       end
       cls = _class_0
     end
   else
     do
-      local _parent_0 = nil
       local _base_0 = { }
       _base_0.__index = _base_0
-      if _parent_0 then
-        setmetatable(_base_0, _parent_0.__base)
-      end
       local _class_0 = setmetatable({
         __init = tbl and tbl.new,
         __base = _base_0,
-        __name = "cls",
-        __parent = _parent_0
+        __name = "cls"
       }, {
-        __index = function(cls, name)
-          local val = rawget(_base_0, name)
-          if val == nil and _parent_0 then
-            return _parent_0[name]
-          else
-            return val
-          end
-        end,
+        __index = _base_0,
         __call = function(cls, ...)
           local _self_0 = setmetatable({}, _base_0)
           cls.__init(_self_0, ...)
@@ -69,9 +55,6 @@ _class = function(name, tbl, extend)
         end
       })
       _base_0.__class = _class_0
-      if _parent_0 and _parent_0.__inherited then
-        _parent_0.__inherited(_parent_0, _class_0)
-      end
       cls = _class_0
     end
   end

@@ -1,7 +1,8 @@
 local application = require("lapis.application")
 local html = require("lapis.html")
 local server = require("lapis.server")
-local Application = application.Application
+local Application
+Application = application.Application
 local serve
 serve = function(app_cls, port)
   if port == nil then

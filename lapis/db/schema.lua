@@ -1,6 +1,11 @@
 local db = require("lapis.db")
-local escape_literal = db.escape_literal
-local concat = table.concat
+local escape_literal
+escape_literal = db.escape_literal
+local concat
+do
+  local _obj_0 = table
+  concat = _obj_0.concat
+end
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do
@@ -10,14 +15,13 @@ end
 local extract_options
 extract_options = function(cols)
   local options = { }
-  cols = (function()
+  do
     local _accum_0 = { }
     local _len_0 = 1
-    local _list_0 = cols
-    for _index_0 = 1, #_list_0 do
+    for _index_0 = 1, #cols do
       local _continue_0 = false
       repeat
-        local col = _list_0[_index_0]
+        local col = cols[_index_0]
         if type(col) == "table" then
           for k, v in pairs(col) do
             options[k] = v
@@ -34,8 +38,8 @@ extract_options = function(cols)
         break
       end
     end
-    return _accum_0
-  end)()
+    cols = _accum_0
+  end
   return cols, options
 end
 local entity_exists
@@ -46,7 +50,8 @@ entity_exists = function(name)
 end
 local gen_index_name
 gen_index_name = function(...)
-  local parts = (function(...)
+  local parts
+  do
     local _accum_0 = { }
     local _len_0 = 1
     local _list_0 = {
@@ -59,8 +64,8 @@ gen_index_name = function(...)
         _len_0 = _len_0 + 1
       end
     end
-    return _accum_0
-  end)(...)
+    parts = _accum_0
+  end
   return concat(parts, "_") .. "_idx"
 end
 local create_table
@@ -156,7 +161,6 @@ rename_table = function(tname_from, tname_to)
 end
 local ColumnType
 do
-  local _parent_0 = nil
   local _base_0 = {
     default_options = {
       null = false
@@ -187,25 +191,14 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
     __init = function(self, base, default_options)
       self.base, self.default_options = base, default_options
     end,
     __base = _base_0,
-    __name = "ColumnType",
-    __parent = _parent_0
+    __name = "ColumnType"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -213,9 +206,6 @@ do
     end
   })
   _base_0.__class = _class_0
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
   ColumnType = _class_0
 end
 local C = ColumnType

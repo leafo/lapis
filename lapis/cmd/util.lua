@@ -1,21 +1,23 @@
-local insert, concat = table.insert, table.concat
+local insert, concat
+do
+  local _obj_0 = table
+  insert, concat = _obj_0.insert, _obj_0.concat
+end
 local escape_pattern
 do
-  local _table_0 = require("lapis.util")
-  escape_pattern = _table_0.escape_pattern
+  local _obj_0 = require("lapis.util")
+  escape_pattern = _obj_0.escape_pattern
 end
 local split
 split = function(str, delim)
   str = str .. delim
-  return (function()
-    local _accum_0 = { }
-    local _len_0 = 1
-    for part in str:gmatch("(.-)" .. escape_pattern(delim)) do
-      _accum_0[_len_0] = part
-      _len_0 = _len_0 + 1
-    end
-    return _accum_0
-  end)()
+  local _accum_0 = { }
+  local _len_0 = 1
+  for part in str:gmatch("(.-)" .. escape_pattern(delim)) do
+    _accum_0[_len_0] = part
+    _len_0 = _len_0 + 1
+  end
+  return _accum_0
 end
 local wrap_text
 wrap_text = function(text, indent, max_width)
@@ -60,18 +62,17 @@ columnize = function(rows, indent, padding)
     padding = 4
   end
   local max = 0
-  local _list_0 = rows
-  for _index_0 = 1, #_list_0 do
-    local row = _list_0[_index_0]
+  for _index_0 = 1, #rows do
+    local row = rows[_index_0]
     max = math.max(max, #row[1])
   end
   local left_width = indent + padding + max
-  local formatted = (function()
+  local formatted
+  do
     local _accum_0 = { }
     local _len_0 = 1
-    local _list_1 = rows
-    for _index_0 = 1, #_list_1 do
-      local row = _list_1[_index_0]
+    for _index_0 = 1, #rows do
+      local row = rows[_index_0]
       local padd = (max - #row[1]) + padding
       local _value_0 = concat({
         (" "):rep(indent),
@@ -82,8 +83,8 @@ columnize = function(rows, indent, padding)
       _accum_0[_len_0] = _value_0
       _len_0 = _len_0 + 1
     end
-    return _accum_0
-  end)()
+    formatted = _accum_0
+  end
   return concat(formatted, "\n")
 end
 if ... == "test" then

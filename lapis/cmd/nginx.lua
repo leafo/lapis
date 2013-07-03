@@ -11,9 +11,8 @@ do
     if nginx_path then
       return nginx_path
     end
-    local _list_0 = nginx_search_paths
-    for _index_0 = 1, #_list_0 do
-      local prefix = _list_0[_index_0]
+    for _index_0 = 1, #nginx_search_paths do
+      local prefix = nginx_search_paths[_index_0]
       local cmd = tostring(prefix) .. tostring(nginx_bin) .. " -v 2>&1"
       local handle = io.popen(cmd)
       local out = handle:read()

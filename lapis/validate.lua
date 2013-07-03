@@ -1,4 +1,8 @@
-local insert = table.insert
+local insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local validate_functions = {
   exists = function(input)
     return input and input ~= "", "%s must be provided"
@@ -31,9 +35,8 @@ local validate_functions = {
     local choices = {
       ...
     }
-    local _list_0 = choices
-    for _index_0 = 1, #_list_0 do
-      local choice = _list_0[_index_0]
+    for _index_0 = 1, #choices do
+      local choice = choices[_index_0]
       if input == choice then
         return true
       end
@@ -54,11 +57,10 @@ end
 local validate
 validate = function(object, validations)
   local errors = { }
-  local _list_0 = validations
-  for _index_0 = 1, #_list_0 do
+  for _index_0 = 1, #validations do
     local _continue_0 = false
     repeat
-      local v = _list_0[_index_0]
+      local v = validations[_index_0]
       local key = v[1]
       local error_msg = v[2]
       local input = object[key]

@@ -8,7 +8,8 @@ end
 local make_static_handler
 make_static_handler = function(root)
   return function(self)
-    local req, res = self.req, self.res
+    local req, res
+    req, res = self.req, self.res
     req.relpath = self.params.splat
     if current() == "xavante" then
       local handler = xavante.filehandler(root)

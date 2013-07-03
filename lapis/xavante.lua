@@ -2,8 +2,8 @@ require("xavante")
 require("xavante.filehandler")
 local parse_query_string
 do
-  local _table_0 = require("lapis.util")
-  parse_query_string = _table_0.parse_query_string
+  local _obj_0 = require("lapis.util")
+  parse_query_string = _obj_0.parse_query_string
 end
 local make_server
 make_server = function(port, handler)

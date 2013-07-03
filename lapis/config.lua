@@ -1,4 +1,8 @@
-local insert = table.insert
+local insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local default_env, default_config, scope_meta, configs, config, reset, run_with_scope, merge_set, get_env, get
 default_env = "development"
 default_config = {
@@ -29,14 +33,13 @@ scope_meta = {
         return val
       end
       do
-        local _with_0
         local _exp_0 = name
         if "set" == _exp_0 then
-          _with_0 = function(...)
+          val = function(...)
             return set(self, ...)
           end
         elseif "unset" == _exp_0 then
-          _with_0 = function(...)
+          val = function(...)
             local _list_0 = {
               ...
             }
@@ -46,17 +49,16 @@ scope_meta = {
             end
           end
         elseif "include" == _exp_0 then
-          _with_0 = function(fn)
+          val = function(fn)
             return run_with_scope(fn, self._conf)
           end
         else
-          _with_0 = function(v)
+          val = function(v)
             return set(self, name, v)
           end
         end
-        val = _with_0
         self[name] = val
-        return _with_0
+        return val
       end
     end
   end)()
@@ -64,9 +66,8 @@ scope_meta = {
 configs = { }
 config = function(environment, fn)
   if type(environment) == "table" then
-    local _list_0 = environment
-    for _index_0 = 1, #_list_0 do
-      local env = _list_0[_index_0]
+    for _index_0 = 1, #environment do
+      local env = environment[_index_0]
       config(env, fn)
     end
     return 
@@ -129,20 +130,20 @@ do
     if cache[name] then
       return cache[name]
     end
-    local conf = (function()
+    local conf
+    do
       local _tbl_0 = { }
       for k, v in pairs(default_config) do
         _tbl_0[k] = v
       end
-      return _tbl_0
-    end)()
+      conf = _tbl_0
+    end
     conf._name = name
     do
       local fns = configs[name]
       if fns then
-        local _list_0 = fns
-        for _index_0 = 1, #_list_0 do
-          local fn = _list_0[_index_0]
+        for _index_0 = 1, #fns do
+          local fn = fns[_index_0]
           run_with_scope(fn, conf)
         end
       end

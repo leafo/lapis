@@ -3,18 +3,18 @@ local url = require("socket.url")
 local session = require("lapis.session")
 local Router
 do
-  local _table_0 = require("lapis.router")
-  Router = _table_0.Router
+  local _obj_0 = require("lapis.router")
+  Router = _obj_0.Router
 end
 local html_writer
 do
-  local _table_0 = require("lapis.html")
-  html_writer = _table_0.html_writer
+  local _obj_0 = require("lapis.html")
+  html_writer = _obj_0.html_writer
 end
 local parse_cookie_string, to_json, build_url
 do
-  local _table_0 = require("lapis.util")
-  parse_cookie_string, to_json, build_url = _table_0.parse_cookie_string, _table_0.to_json, _table_0.build_url
+  local _obj_0 = require("lapis.util")
+  parse_cookie_string, to_json, build_url = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url
 end
 local capture_errors, capture_errors_json
 local set_and_truthy
@@ -53,7 +53,6 @@ run_before_filter = function(filter, r)
 end
 local Request
 do
-  local _parent_0 = nil
   local _base_0 = {
     add_params = function(self, params, name)
       self[name] = params
@@ -172,13 +171,14 @@ do
       if path and path:match("^%a+:") then
         return path
       end
-      local parsed = (function()
+      local parsed
+      do
         local _tbl_0 = { }
         for k, v in pairs(self.req.parsed_url) do
           _tbl_0[k] = v
         end
-        return _tbl_0
-      end)()
+        parsed = _tbl_0
+      end
       parsed.query = nil
       if path then
         local _path, query = path:match("^(.-)%?(.*)$")
@@ -240,15 +240,16 @@ do
       end
     end,
     write_cookies = function(self)
-      local parts = (function()
+      local parts
+      do
         local _accum_0 = { }
         local _len_0 = 1
         for k, v in pairs(self.cookies) do
           _accum_0[_len_0] = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
           _len_0 = _len_0 + 1
         end
-        return _accum_0
-      end)()
+        parts = _accum_0
+      end
       if not (#parts > 0) then
         return 
       end
@@ -259,9 +260,8 @@ do
         local extra = self.app.cookie_attributes
         if extra then
           i = i + 3
-          local _list_0 = extra
-          for _index_0 = 1, #_list_0 do
-            local p = _list_0[_index_0]
+          for _index_0 = 1, #extra do
+            local p = extra[_index_0]
             parts[i] = p
             i = i + 1
           end
@@ -285,9 +285,6 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
     __init = function(self, app, req, res)
       self.app, self.req, self.res = app, req, res
@@ -302,17 +299,9 @@ do
       end)
     end,
     __base = _base_0,
-    __name = "Request",
-    __parent = _parent_0
+    __name = "Request"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -320,14 +309,10 @@ do
     end
   })
   _base_0.__class = _class_0
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
   Request = _class_0
 end
 local Application
 do
-  local _parent_0 = nil
   local _base_0 = {
     Request = Request,
     layout = require("lapis.views.layout"),
@@ -409,9 +394,6 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
     __init = function(self)
       self.router = Router()
@@ -426,17 +408,9 @@ do
       end
     end,
     __base = _base_0,
-    __name = "Application",
-    __parent = _parent_0
+    __name = "Application"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -482,9 +456,8 @@ do
           if before_filters then
             local fn = action
             action = function(r)
-              local _list_0 = before_filters
-              for _index_0 = 1, #_list_0 do
-                local filter = _list_0[_index_0]
+              for _index_0 = 1, #before_filters do
+                local filter = before_filters[_index_0]
                 if run_before_filter(filter, r) then
                   return 
                 end
@@ -500,9 +473,6 @@ do
         break
       end
     end
-  end
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
   end
   Application = _class_0
 end

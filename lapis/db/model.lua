@@ -1,26 +1,27 @@
 local db = require("lapis.db")
 local underscore, escape_pattern, uniquify
 do
-  local _table_0 = require("lapis.util")
-  underscore, escape_pattern, uniquify = _table_0.underscore, _table_0.escape_pattern, _table_0.uniquify
+  local _obj_0 = require("lapis.util")
+  underscore, escape_pattern, uniquify = _obj_0.underscore, _obj_0.escape_pattern, _obj_0.uniquify
 end
-local insert, concat = table.insert, table.concat
+local insert, concat
+do
+  local _obj_0 = table
+  insert, concat = _obj_0.insert, _obj_0.concat
+end
 local Model
 do
-  local _parent_0 = nil
   local _base_0 = {
     _primary_cond = function(self)
-      return (function()
-        local _tbl_0 = { }
-        local _list_0 = {
-          self.__class:primary_keys()
-        }
-        for _index_0 = 1, #_list_0 do
-          local key = _list_0[_index_0]
-          _tbl_0[key] = self[key]
-        end
-        return _tbl_0
-      end)()
+      local _tbl_0 = { }
+      local _list_0 = {
+        self.__class:primary_keys()
+      }
+      for _index_0 = 1, #_list_0 do
+        local key = _list_0[_index_0]
+        _tbl_0[key] = self[key]
+      end
+      return _tbl_0
     end,
     url_key = function(self)
       return concat((function()
@@ -44,7 +45,7 @@ do
       local cond = self:_primary_cond()
       local columns
       if type(first) == "table" then
-        columns = (function()
+        do
           local _accum_0 = { }
           local _len_0 = 1
           for k, v in pairs(first) do
@@ -56,8 +57,8 @@ do
             end
             _len_0 = _len_0 + 1
           end
-          return _accum_0
-        end)()
+          columns = _accum_0
+        end
       else
         columns = {
           first,
@@ -67,15 +68,15 @@ do
       if next(columns) == nil then
         return 
       end
-      local values = (function()
+      local values
+      do
         local _tbl_0 = { }
-        local _list_0 = columns
-        for _index_0 = 1, #_list_0 do
-          local col = _list_0[_index_0]
+        for _index_0 = 1, #columns do
+          local col = columns[_index_0]
           _tbl_0[col] = self[col]
         end
-        return _tbl_0
-      end)()
+        values = _tbl_0
+      end
       if self.__class.constraints then
         for key, value in pairs(values) do
           do
@@ -93,27 +94,12 @@ do
     end
   }
   _base_0.__index = _base_0
-  if _parent_0 then
-    setmetatable(_base_0, _parent_0.__base)
-  end
   local _class_0 = setmetatable({
-    __init = function(self, ...)
-      if _parent_0 then
-        return _parent_0.__init(self, ...)
-      end
-    end,
+    __init = function() end,
     __base = _base_0,
-    __name = "Model",
-    __parent = _parent_0
+    __name = "Model"
   }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil and _parent_0 then
-        return _parent_0[name]
-      else
-        return val
-      end
-    end,
+    __index = _base_0,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -133,13 +119,11 @@ do
   end
   self.encode_key = function(self, ...)
     if type(self.primary_key) == "table" then
-      return (function(...)
-        local _tbl_0 = { }
-        for i, k in ipairs(self.primary_key) do
-          _tbl_0[k] = select(i, ...)
-        end
-        return _tbl_0
-      end)(...)
+      local _tbl_0 = { }
+      for i, k in ipairs(self.primary_key) do
+        _tbl_0[k] = select(i, ...)
+      end
+      return _tbl_0
     else
       return {
         [self.primary_key] = ...
@@ -162,17 +146,14 @@ do
     return setmetatable(tbl, self.__base)
   end
   self.load_all = function(self, tbls)
-    return (function()
-      local _accum_0 = { }
-      local _len_0 = 1
-      local _list_0 = tbls
-      for _index_0 = 1, #_list_0 do
-        local t = _list_0[_index_0]
-        _accum_0[_len_0] = self:load(t)
-        _len_0 = _len_0 + 1
-      end
-      return _accum_0
-    end)()
+    local _accum_0 = { }
+    local _len_0 = 1
+    for _index_0 = 1, #tbls do
+      local t = tbls[_index_0]
+      _accum_0[_len_0] = self:load(t)
+      _len_0 = _len_0 + 1
+    end
+    return _accum_0
   end
   self.select = function(self, query, ...)
     if query == nil then
@@ -202,22 +183,21 @@ do
     end
     local flip = opts and opts.flip
     local src_key = flip and "id" or foreign_key
-    local include_ids = (function()
+    local include_ids
+    do
       local _accum_0 = { }
       local _len_0 = 1
-      local _list_0 = other_records
-      for _index_0 = 1, #_list_0 do
+      for _index_0 = 1, #other_records do
         local _continue_0 = false
         repeat
-          local record = _list_0[_index_0]
+          local record = other_records[_index_0]
           do
-            local _with_0 = record[src_key]
-            local id = _with_0
+            local id = record[src_key]
             if not (id) then
               _continue_0 = true
               break
             end
-            _accum_0[_len_0] = _with_0
+            _accum_0[_len_0] = id
           end
           _len_0 = _len_0 + 1
           _continue_0 = true
@@ -226,16 +206,15 @@ do
           break
         end
       end
-      return _accum_0
-    end)()
+      include_ids = _accum_0
+    end
     if next(include_ids) then
       include_ids = uniquify(include_ids)
       local flat_ids = concat((function()
         local _accum_0 = { }
         local _len_0 = 1
-        local _list_0 = include_ids
-        for _index_0 = 1, #_list_0 do
-          local id = _list_0[_index_0]
+        for _index_0 = 1, #include_ids do
+          local id = include_ids[_index_0]
           _accum_0[_len_0] = db.escape_literal(id)
           _len_0 = _len_0 + 1
         end
@@ -253,9 +232,8 @@ do
         local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")")
         if res then
           local records = { }
-          local _list_0 = res
-          for _index_0 = 1, #_list_0 do
-            local t = _list_0[_index_0]
+          for _index_0 = 1, #res do
+            local t = res[_index_0]
             records[t[find_by]] = self:load(t)
           end
           local field_name
@@ -267,9 +245,8 @@ do
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end
-          local _list_1 = other_records
-          for _index_0 = 1, #_list_1 do
-            local other = _list_1[_index_0]
+          for _index_0 = 1, #other_records do
+            local other = other_records[_index_0]
             other[field_name] = records[other[src_key]]
           end
         end
@@ -290,9 +267,8 @@ do
     local flat_ids = concat((function()
       local _accum_0 = { }
       local _len_0 = 1
-      local _list_0 = ids
-      for _index_0 = 1, #_list_0 do
-        local id = _list_0[_index_0]
+      for _index_0 = 1, #ids do
+        local id = ids[_index_0]
         _accum_0[_len_0] = db.escape_literal(id)
         _len_0 = _len_0 + 1
       end
@@ -303,9 +279,8 @@ do
     do
       local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
       if res then
-        local _list_0 = res
-        for _index_0 = 1, #_list_0 do
-          local r = _list_0[_index_0]
+        for _index_0 = 1, #res do
+          local r = res[_index_0]
           self:load(r)
         end
         return res
@@ -379,9 +354,6 @@ do
         return fn(self, value, key, obj)
       end
     end
-  end
-  if _parent_0 and _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
   end
   Model = _class_0
 end

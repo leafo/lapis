@@ -14,8 +14,8 @@ set_proxy_location = function(loc)
 end
 local encode_query_string
 do
-  local _table_0 = require("lapis.util")
-  encode_query_string = _table_0.encode_query_string
+  local _obj_0 = require("lapis.util")
+  encode_query_string = _obj_0.encode_query_string
 end
 local simple
 simple = function(req, body)
@@ -95,7 +95,11 @@ ngx_replace_headers = function(new_headers)
   if new_headers == nil then
     new_headers = nil
   end
-  local req = ngx.req
+  local req
+  do
+    local _obj_0 = ngx
+    req = _obj_0.req
+  end
   new_headers = new_headers or ngx.ctx.headers
   for k, v in pairs(req.get_headers()) do
     if k ~= 'content-length' then

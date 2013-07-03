@@ -1,8 +1,8 @@
 local json = require("cjson")
 local encode_base64, decode_base64, hmac_sha1
 do
-  local _table_0 = require("lapis.util.encoding")
-  encode_base64, decode_base64, hmac_sha1 = _table_0.encode_base64, _table_0.decode_base64, _table_0.hmac_sha1
+  local _obj_0 = require("lapis.util.encoding")
+  encode_base64, decode_base64, hmac_sha1 = _obj_0.encode_base64, _obj_0.decode_base64, _obj_0.hmac_sha1
 end
 local config = require("lapis.config").get()
 local generate_token
@@ -41,8 +41,8 @@ local assert_token
 assert_token = function(...)
   local assert_error
   do
-    local _table_0 = require("lapis.application")
-    assert_error = _table_0.assert_error
+    local _obj_0 = require("lapis.application")
+    assert_error = _obj_0.assert_error
   end
   return assert_error(validate_token(...))
 end

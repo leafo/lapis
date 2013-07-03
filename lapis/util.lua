@@ -1,7 +1,15 @@
 local url = require("socket.url")
 local json = require("cjson")
-local concat, insert = table.concat, table.insert
-local floor = math.floor
+local concat, insert
+do
+  local _obj_0 = table
+  concat, insert = _obj_0.concat, _obj_0.insert
+end
+local floor
+do
+  local _obj_0 = math
+  floor = _obj_0.floor
+end
 local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words
 do
   local u = url.unescape
@@ -24,29 +32,27 @@ do
   end
 end
 inject_tuples = function(tbl)
-  local _list_0 = tbl
-  for _index_0 = 1, #_list_0 do
-    local tuple = _list_0[_index_0]
+  for _index_0 = 1, #tbl do
+    local tuple = tbl[_index_0]
     tbl[tuple[1]] = tuple[2] or true
   end
 end
 do
   local C, P, S, Ct
   do
-    local _table_0 = require("lpeg")
-    C, P, S, Ct = _table_0.C, _table_0.P, _table_0.S, _table_0.Ct
+    local _obj_0 = require("lpeg")
+    C, P, S, Ct = _obj_0.C, _obj_0.P, _obj_0.S, _obj_0.Ct
   end
   local chunk = C((P(1) - S("=&")) ^ 1)
   local tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
   local query = S("?#") ^ -1 * Ct(tuple * (P("&") * tuple) ^ 0)
   parse_query_string = function(str)
     do
-      local _with_0 = query:match(str)
-      local out = _with_0
+      local out = query:match(str)
       if out then
         inject_tuples(out)
       end
-      return _with_0
+      return out
     end
   end
 end
@@ -58,10 +64,7 @@ encode_query_string = function(t, sep)
   local buf = { }
   for k, v in pairs(t) do
     if type(k) == "number" and type(v) == "table" then
-      do
-        local _obj_0 = v
-        k, v = _obj_0[1], _obj_0[2]
-      end
+      k, v = v[1], v[2]
     end
     buf[i + 1] = escape(k)
     buf[i + 2] = "="
@@ -75,8 +78,8 @@ end
 do
   local C, R, P, S, Ct, Cg
   do
-    local _table_0 = require("lpeg")
-    C, R, P, S, Ct, Cg = _table_0.C, _table_0.R, _table_0.P, _table_0.S, _table_0.Ct, _table_0.Cg
+    local _obj_0 = require("lpeg")
+    C, R, P, S, Ct, Cg = _obj_0.C, _obj_0.R, _obj_0.P, _obj_0.S, _obj_0.Ct, _obj_0.Cg
   end
   local white = S(" \t") ^ 0
   local token = C((R("az", "AZ", "09") + S("._-")) ^ 1)
@@ -85,12 +88,11 @@ do
   local patt = Ct(Cg(token, "type") * (white * P(";") * param) ^ 0)
   parse_content_disposition = function(str)
     do
-      local _with_0 = patt:match(str)
-      local out = _with_0
+      local out = patt:match(str)
       if out then
         inject_tuples(out)
       end
-      return _with_0
+      return out
     end
   end
 end
@@ -98,27 +100,26 @@ parse_cookie_string = function(str)
   if not (str) then
     return { }
   end
-  return (function()
-    local _tbl_0 = { }
-    for key, value in str:gmatch("([^=%s]*)=([^;]*)") do
-      _tbl_0[key] = unescape(value)
-    end
-    return _tbl_0
-  end)()
+  local _tbl_0 = { }
+  for key, value in str:gmatch("([^=%s]*)=([^;]*)") do
+    _tbl_0[key] = unescape(value)
+  end
+  return _tbl_0
 end
 slugify = function(str)
   return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", "")):lower()
 end
 underscore = function(str)
-  local words = (function()
+  local words
+  do
     local _accum_0 = { }
     local _len_0 = 1
     for word in str:gmatch("%L*%l+") do
       _accum_0[_len_0] = word:lower()
       _len_0 = _len_0 + 1
     end
-    return _accum_0
-  end)()
+    words = _accum_0
+  end
   return concat(words, "_")
 end
 do
@@ -140,11 +141,10 @@ uniquify = function(list)
   return (function()
     local _accum_0 = { }
     local _len_0 = 1
-    local _list_0 = list
-    for _index_0 = 1, #_list_0 do
+    for _index_0 = 1, #list do
       local _continue_0 = false
       repeat
-        local item = _list_0[_index_0]
+        local item = list[_index_0]
         if seen[item] then
           _continue_0 = true
           break
@@ -190,7 +190,8 @@ trim_filter = function(tbl, keys, empty_val)
   return tbl
 end
 key_filter = function(tbl, ...)
-  local set = (function(...)
+  local set
+  do
     local _tbl_0 = { }
     local _list_0 = {
       ...
@@ -199,8 +200,8 @@ key_filter = function(tbl, ...)
       local val = _list_0[_index_0]
       _tbl_0[val] = true
     end
-    return _tbl_0
-  end)(...)
+    set = _tbl_0
+  end
   for k, v in pairs(tbl) do
     if not (set[k]) then
       tbl[k] = nil
@@ -216,13 +217,11 @@ json_encodable = function(obj, seen)
   if "table" == _exp_0 then
     if not (seen[obj]) then
       seen[obj] = true
-      return (function()
-        local _tbl_0 = { }
-        for k, v in pairs(obj) do
-          _tbl_0[k] = json_encodable(v)
-        end
-        return _tbl_0
-      end)()
+      local _tbl_0 = { }
+      for k, v in pairs(obj) do
+        _tbl_0[k] = json_encodable(v)
+      end
+      return _tbl_0
     end
   elseif "function" == _exp_0 or "userdata" == _exp_0 or "thread" == _exp_0 then
     return nil
