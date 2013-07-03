@@ -10,6 +10,7 @@ do
 end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
+local colors = require("ansicolors")
 local log
 log = function(...)
   return print("->", ...)
@@ -38,22 +39,80 @@ annotate = function(obj, verbs)
   })
 end
 path = annotate(path, {
-  mkdir = "made directory",
-  write_file = "wrote"
+  mkdir = colors("%{bright}%{magenta}made directory%{reset}"),
+  write_file = colors("%{bright}%{yellow}wrote%{reset}")
 })
+local write_file_safe
+write_file_safe = function(file, content)
+  if path.exists(file) then
+    return 
+  end
+  return path.write_file(file, content)
+end
+local parse_flags
+parse_flags = function(...)
+  local input = {
+    ...
+  }
+  local flags = { }
+  local filtered
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for _index_0 = 1, #input do
+      local _continue_0 = false
+      repeat
+        local arg = input[_index_0]
+        do
+          local flag = arg:match("^%-%-?(.+)$")
+          if flag then
+            local k, v = flag:match("(.-)=(.*)")
+            if k then
+              flags[k] = v
+            else
+              flags[flag] = true
+            end
+            _continue_0 = true
+            break
+          end
+        end
+        local _value_0 = arg
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    filtered = _accum_0
+  end
+  return flags, unpack(filtered)
+end
 local tasks
 tasks = {
   default = "help",
   {
     name = "new",
     help = "create a new lapis project in the current directory",
-    function()
+    function(...)
+      local flags = parse_flags(...)
       if path.exists("nginx.conf") then
-        print("Aborting, nginx.conf already exists")
+        print(colors("%{bright}%{red}Aborting:%{reset} nginx.conf already exists"))
         return 
       end
-      path.write_file("nginx.conf", require("lapis.cmd.templates.config"))
-      return path.write_file("mime.types", require("lapis.cmd.templates.mime_types"))
+      write_file_safe("nginx.conf", require("lapis.cmd.templates.config"))
+      write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
+      write_file_safe("web.moon", require("lapis.cmd.templates.web"))
+      if flags.git then
+        write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(flags))
+      end
+      if flags.tup then
+        local tup_files = require("lapis.cmd.templates.tup")
+        for fname, content in pairs(tup_files) do
+          write_file_safe(fname, content)
+        end
+      end
     end
   },
   {

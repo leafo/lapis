@@ -4,6 +4,8 @@ import find_nginx from require "lapis.cmd.nginx"
 path = require "lapis.cmd.path"
 config = require "lapis.config"
 
+colors = require "ansicolors"
+
 log = (...) ->
   print "->", ...
 
@@ -24,9 +26,28 @@ annotate = (obj, verbs) ->
   }
 
 path = annotate path, {
-  mkdir: "made directory"
-  write_file: "wrote"
+  mkdir: colors "%{bright}%{magenta}made directory%{reset}"
+  write_file: colors "%{bright}%{yellow}wrote%{reset}"
 }
+
+write_file_safe = (file, content) ->
+  return if path.exists file
+  path.write_file file, content
+
+parse_flags = (...) ->
+  input = {...}
+  flags = {}
+  filtered = for arg in *input
+    if flag = arg\match "^%-%-?(.+)$"
+      k,v = flag\match "(.-)=(.*)"
+      if k
+        flags[k] = v
+      else
+        flags[flag] = true
+      continue
+    arg
+
+  flags, unpack filtered
 
 local tasks
 tasks = {
@@ -35,19 +56,33 @@ tasks = {
   {
     name: "new"
     help: "create a new lapis project in the current directory"
-    ->
+
+    (...) ->
+      flags = parse_flags ...
+
       if path.exists "nginx.conf"
-        print "Aborting, nginx.conf already exists"
+        print colors "%{bright}%{red}Aborting:%{reset} nginx.conf already exists"
         return
 
-      path.write_file "nginx.conf", require "lapis.cmd.templates.config"
-      path.write_file "mime.types", require "lapis.cmd.templates.mime_types"
+      write_file_safe "nginx.conf", require "lapis.cmd.templates.config"
+      write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
+      write_file_safe "web.moon", require "lapis.cmd.templates.web"
+
+      if flags.git
+        write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") flags
+
+      if flags.tup
+        tup_files = require "lapis.cmd.templates.tup"
+        for fname, content in pairs tup_files
+          write_file_safe fname, content
+
   }
 
   {
     name: "server"
     usage: "server [environment]"
     help: "start the server"
+
     (environment="development") ->
       nginx = find_nginx!
       unless nginx
