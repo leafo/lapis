@@ -71,19 +71,30 @@ compile_config = function(config, opts)
   end)
   return out
 end
+local get_pid
+get_pid = function()
+  local pidfile = io.open("logs/nginx.pid")
+  if not (pidfile) then
+    return 
+  end
+  local pid = pidfile:read("*a")
+  pidfile:close()
+  return pid:match("[^%s]+")
+end
 local send_hup
 send_hup = function()
-  local handle = io.popen([[ps a -o pid,cmd | grep 'nginx: master process' | grep "$(pwd)"]])
-  local pid = tonumber(handle:read("*a"):match("^%d+"))
-  handle:close()
-  if pid then
-    os.execute("kill -HUP " .. tostring(pid))
-    return pid
+  do
+    local pid = get_pid()
+    if pid then
+      os.execute("kill -HUP " .. tostring(pid))
+      return pid
+    end
   end
 end
 return {
   compile_config = compile_config,
   filters = filters,
   find_nginx = find_nginx,
-  send_hup = send_hup
+  send_hup = send_hup,
+  get_pid = get_pid
 }
