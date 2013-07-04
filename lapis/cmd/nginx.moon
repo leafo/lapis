@@ -44,4 +44,15 @@ compile_config = (config, opts={}) ->
       if value == nil then w else value
   out
 
-{ :compile_config, :filters, :find_nginx }
+
+send_hup = ->
+  handle = io.popen [[ps a -o pid,cmd | grep 'nginx: master process' | grep "$(pwd)"]]
+  pid = tonumber handle\read("*a")\match "^%d+"
+  handle\close!
+
+  if pid
+    os.execute "kill -HUP #{pid}"
+    pid
+
+
+{ :compile_config, :filters, :find_nginx, :send_hup }

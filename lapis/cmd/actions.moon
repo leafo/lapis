@@ -34,6 +34,18 @@ write_file_safe = (file, content) ->
   return if path.exists file
   path.write_file file, content
 
+write_config_for = (environment, out_fname="nginx.conf.compiled") ->
+  config = require "lapis.config"
+  import compile_config from require "lapis.cmd.nginx"
+
+  vars = config.get environment
+  compiled = compile_config path.read_file"nginx.conf", vars
+  path.write_file "nginx.conf.compiled", compiled
+
+fail_with_message = (msg) ->
+  print colors "%{bright}%{red}Aborting:%{reset} " .. msg
+  os.exit 1
+
 parse_flags = (...) ->
   input = {...}
   flags = {}
@@ -66,8 +78,7 @@ tasks = {
       flags = parse_flags ...
 
       if path.exists "nginx.conf"
-        print colors "%{bright}%{red}Aborting:%{reset} nginx.conf already exists"
-        return
+        fail_with_message "nginx.conf already exists"
 
       write_file_safe "nginx.conf", require "lapis.cmd.templates.config"
       write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
@@ -90,11 +101,11 @@ tasks = {
 
     (environment="development") ->
       nginx = find_nginx!
-      unless nginx
-        print "Aborting, can not find an installation of OpenResty"
-        return
 
-      get_task("build")[1] environment
+      unless nginx
+        fail_with_message "can not find an installation of OpenResty"
+
+      write_config_for environment
 
       path.mkdir "logs"
 
@@ -106,18 +117,29 @@ tasks = {
   {
     name: "build"
     usage: "build [environment]"
-    help: "build the config"
+    help: "build the config, send HUP if server running"
 
     (environment="development") ->
-      -- load app config
-      vars = config.get environment
-      -- compile config
-      import compile_config from require "lapis.cmd.nginx"
-      compiled = compile_config path.read_file"nginx.conf", vars
+      write_config_for environment
 
-      path.write_file "nginx.conf.compiled", compiled
+      import send_hup from require "lapis.cmd.nginx"
+      pid = send_hup!
+      print colors "%{green}HUP #{pid}" if pid
   }
 
+  {
+    name: "hup"
+    usage: "hup"
+    help: "send HUP signal to running server"
+
+    ->
+      import send_hup from require "lapis.cmd.nginx"
+      pid = send_hup!
+      if pid
+        print colors "%{green}HUP #{pid}"
+      else
+        fail_with_message "failed to find nginx process"
+  }
 
   {
     name: "help"

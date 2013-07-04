@@ -71,8 +71,19 @@ compile_config = function(config, opts)
   end)
   return out
 end
+local send_hup
+send_hup = function()
+  local handle = io.popen([[ps a -o pid,cmd | grep 'nginx: master process' | grep "$(pwd)"]])
+  local pid = tonumber(handle:read("*a"):match("^%d+"))
+  handle:close()
+  if pid then
+    os.execute("kill -HUP " .. tostring(pid))
+    return pid
+  end
+end
 return {
   compile_config = compile_config,
   filters = filters,
-  find_nginx = find_nginx
+  find_nginx = find_nginx,
+  send_hup = send_hup
 }

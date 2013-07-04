@@ -49,6 +49,26 @@ write_file_safe = function(file, content)
   end
   return path.write_file(file, content)
 end
+local write_config_for
+write_config_for = function(environment, out_fname)
+  if out_fname == nil then
+    out_fname = "nginx.conf.compiled"
+  end
+  config = require("lapis.config")
+  local compile_config
+  do
+    local _obj_0 = require("lapis.cmd.nginx")
+    compile_config = _obj_0.compile_config
+  end
+  local vars = config.get(environment)
+  local compiled = compile_config(path.read_file("nginx.conf"), vars)
+  return path.write_file("nginx.conf.compiled", compiled)
+end
+local fail_with_message
+fail_with_message = function(msg)
+  print(colors("%{bright}%{red}Aborting:%{reset} " .. msg))
+  return os.exit(1)
+end
 local parse_flags
 parse_flags = function(...)
   local input = {
@@ -106,8 +126,7 @@ tasks = {
     function(...)
       local flags = parse_flags(...)
       if path.exists("nginx.conf") then
-        print(colors("%{bright}%{red}Aborting:%{reset} nginx.conf already exists"))
-        return 
+        fail_with_message("nginx.conf already exists")
       end
       write_file_safe("nginx.conf", require("lapis.cmd.templates.config"))
       write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
@@ -133,10 +152,9 @@ tasks = {
       end
       local nginx = find_nginx()
       if not (nginx) then
-        print("Aborting, can not find an installation of OpenResty")
-        return 
+        fail_with_message("can not find an installation of OpenResty")
       end
-      get_task("build")[1](environment)
+      write_config_for(environment)
       path.mkdir("logs")
       os.execute("touch logs/error.log")
       os.execute("touch logs/access.log")
@@ -146,19 +164,39 @@ tasks = {
   {
     name = "build",
     usage = "build [environment]",
-    help = "build the config",
+    help = "build the config, send HUP if server running",
     function(environment)
       if environment == nil then
         environment = "development"
       end
-      local vars = config.get(environment)
-      local compile_config
+      write_config_for(environment)
+      local send_hup
       do
         local _obj_0 = require("lapis.cmd.nginx")
-        compile_config = _obj_0.compile_config
+        send_hup = _obj_0.send_hup
       end
-      local compiled = compile_config(path.read_file("nginx.conf"), vars)
-      return path.write_file("nginx.conf.compiled", compiled)
+      local pid = send_hup()
+      if pid then
+        return print(colors("%{green}HUP " .. tostring(pid)))
+      end
+    end
+  },
+  {
+    name = "hup",
+    usage = "hup",
+    help = "send HUP signal to running server",
+    function()
+      local send_hup
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        send_hup = _obj_0.send_hup
+      end
+      local pid = send_hup()
+      if pid then
+        return print(colors("%{green}HUP " .. tostring(pid)))
+      else
+        return fail_with_message("failed to find nginx process")
+      end
     end
   },
   {
