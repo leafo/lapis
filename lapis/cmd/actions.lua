@@ -11,10 +11,7 @@ end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
 local colors = require("ansicolors")
-local log
-log = function(...)
-  return print("->", ...)
-end
+local log = print
 local annotate
 annotate = function(obj, verbs)
   return setmetatable({ }, {
@@ -184,6 +181,7 @@ tasks = {
   {
     name = "hup",
     usage = "hup",
+    hidden = true,
     help = "send HUP signal to running server",
     function()
       local send_hup
@@ -221,11 +219,13 @@ tasks = {
         local _len_0 = 1
         for _index_0 = 1, #tasks do
           local t = tasks[_index_0]
-          _accum_0[_len_0] = {
-            t.usage or t.name,
-            t.help
-          }
-          _len_0 = _len_0 + 1
+          if not t.hidden then
+            _accum_0[_len_0] = {
+              t.usage or t.name,
+              t.help
+            }
+            _len_0 = _len_0 + 1
+          end
         end
         return _accum_0
       end)()))

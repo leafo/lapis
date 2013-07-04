@@ -6,9 +6,7 @@ config = require "lapis.config"
 
 colors = require "ansicolors"
 
-log = (...) ->
-  print "->", ...
-
+log = print
 annotate = (obj, verbs) ->
   setmetatable {}, {
     __newindex: (name, value) =>
@@ -130,6 +128,7 @@ tasks = {
   {
     name: "hup"
     usage: "hup"
+    hidden: true
     help: "send HUP signal to running server"
 
     ->
@@ -156,7 +155,7 @@ tasks = {
       print!
       print "Available actions:"
       print!
-      print columnize [ { t.usage or t.name, t.help } for t in *tasks ]
+      print columnize [ { t.usage or t.name, t.help } for t in *tasks when not t.hidden ]
       print!
   }
 }
