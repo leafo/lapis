@@ -46,6 +46,21 @@ columnize = (rows, indent=2, padding=4) ->
 
   concat formatted, "\n"
 
+random_string = do
+  math.randomseed os.time!
+  import random from math
+  random_char = ->
+    switch random 1,3
+      when 1
+        random 65, 90
+      when 2
+        random 97, 122
+      when 3
+        random 48, 57
+
+  (length) ->
+    string.char unpack [ random_char! for i=1,length ]
+
 if ... == "test"
   print columnize {
     {"hello", "here is some info"}
@@ -54,4 +69,4 @@ if ... == "test"
     {"else", "yeah yeah yeah not so much okay goodbye"}
   }
 
-{ :columnize, :split }
+{ :columnize, :split, :random_string }

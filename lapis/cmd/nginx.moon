@@ -56,4 +56,71 @@ send_hup = ->
     os.execute "kill -HUP #{pid}"
     pid
 
-{ :compile_config, :filters, :find_nginx, :send_hup, :get_pid }
+execute_on_server = (code, env) ->
+  path = require "lapis.cmd.path"
+
+  config = require "lapis.config"
+  import compile_config from require "lapis.cmd.nginx"
+
+  vars = config.get environment
+  compiled = compile_config path.read_file"nginx.conf", vars
+
+  code = code\gsub '"', '\\"'
+
+  import random_string from require "lapis.cmd.util"
+  command_url = "/#{random_string 20}"
+
+  inserted_server = false
+  replace_server = (server) ->
+    return "" if inserted_server
+    inserted_server = true
+    [[
+      server {
+        listen ]] .. vars.port .. [[;
+
+        location = ]] .. command_url .. [[ {
+          default_type 'text/plain';
+          allow 127.0.0.1;
+          deny all;
+
+          content_by_lua "
+            ]] .. code .. [[
+
+          ";
+        }
+
+        location / {
+          return 503;
+        }
+      }
+    ]]
+
+  lpeg = require "lpeg"
+
+  import R, S, V, P, V from lpeg
+  import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
+
+  white = S" \t\r\n"^0
+  parse = P {
+    V"root"
+    balanced: P"{" * (V"balanced" + (1 - P"}"))^0 * P"}"
+    server_block: S" \t"^0 * P"server" * white * V"balanced" / replace_server
+    root: Cs (V"server_block" + 1)^1 * -1
+  }
+
+  temp_config = parse\match compiled
+  assert inserted_server, "Failed to find server directive in config"
+
+  path.write_file "nginx.conf.compiled", temp_config
+
+  import send_hup from require "lapis.cmd.nginx"
+  assert send_hup!, "Failed to find server"
+
+  os.execute "sleep 0.1" -- wait for workers to reload
+
+  http = require "socket.http"
+  res, code = http.request "http://127.0.0.1:#{vars.port}/#{command_url}"
+  res
+
+
+{ :compile_config, :filters, :find_nginx, :send_hup, :get_pid, :execute_on_server }

@@ -180,7 +180,6 @@ tasks = {
   },
   {
     name = "hup",
-    usage = "hup",
     hidden = true,
     help = "send HUP signal to running server",
     function()
@@ -195,6 +194,26 @@ tasks = {
       else
         return fail_with_message("failed to find nginx process")
       end
+    end
+  },
+  {
+    name = "exec",
+    usage = "exec <lua-string>",
+    help = "execute Lua on the server",
+    function(code, environment)
+      if environment == nil then
+        environment = "development"
+      end
+      if not (code) then
+        fail_with_message("missing lua-string: exec <lua-string>")
+      end
+      local execute_on_server
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        execute_on_server = _obj_0.execute_on_server
+      end
+      print(execute_on_server(code))
+      return get_task("build")[1]()
     end
   },
   {

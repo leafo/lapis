@@ -3,17 +3,11 @@ do
   local _obj_0 = table
   insert = _obj_0.insert
 end
-require("lpeg")
+local lpeg = require("lpeg")
 local R, S, V, P
-do
-  local _obj_0 = lpeg
-  R, S, V, P = _obj_0.R, _obj_0.S, _obj_0.V, _obj_0.P
-end
+R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
 local C, Cs, Ct, Cmt, Cg, Cb, Cc
-do
-  local _obj_0 = lpeg
-  C, Cs, Ct, Cmt, Cg, Cb, Cc = _obj_0.C, _obj_0.Cs, _obj_0.Ct, _obj_0.Cmt, _obj_0.Cg, _obj_0.Cb, _obj_0.Cc
-end
+C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
 local reduce
 reduce = function(items, fn)
   if #items == 1 then

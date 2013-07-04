@@ -127,7 +127,6 @@ tasks = {
 
   {
     name: "hup"
-    usage: "hup"
     hidden: true
     help: "send HUP signal to running server"
 
@@ -138,6 +137,21 @@ tasks = {
         print colors "%{green}HUP #{pid}"
       else
         fail_with_message "failed to find nginx process"
+  }
+
+  {
+    name: "exec"
+    usage: "exec <lua-string>"
+    help: "execute Lua on the server"
+
+    (code, environment="development") ->
+      fail_with_message("missing lua-string: exec <lua-string>") unless code
+      import execute_on_server from require "lapis.cmd.nginx"
+
+      print execute_on_server code
+
+      -- restore config and hup
+      get_task("build")[1]!
   }
 
   {
