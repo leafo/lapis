@@ -218,6 +218,27 @@ tests = {
     -> "^%()[12332]+$"\match(util.escape_pattern "^%()[12332]+$") and true
     true
   }
+
+  {
+    -> util.title_case "hello"
+    "Hello"
+  }
+
+  {
+    -> util.title_case "hello world"
+    "Hello World"
+  }
+
+  {
+    -> util.title_case "hello-world"
+    "Hello-world"
+  }
+
+  {
+    -> util.title_case "What my 200 Dollar thing You love to eat"
+    "What My 200 Dollar Thing You Love To Eat"
+  }
+
 }
 
 describe "lapis.nginx.postgres", ->
