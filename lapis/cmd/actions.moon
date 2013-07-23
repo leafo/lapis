@@ -175,10 +175,11 @@ tasks = {
           io.stdout:write(str .. "\n")
           ngx.say(str)
         end
+        local migrations = require("lapis.db.migrations")
 
-        local run_migrations = require("lapis.db.migrations").run_migrations
         local success, err = pcall(function()
-          run_migrations(require("migrations"))
+          migrations.create_migrations_table()
+          migrations.run_migrations(require("migrations"))
         end)
 
         if not success then
