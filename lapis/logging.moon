@@ -52,5 +52,13 @@ request = (r) ->
 migration = (name) ->
   print colors("%{bright}%{yellow}Migrating: %{reset}%{green}#{name}%{reset}")
 
-{ :request, :query, :migration }
+migration_summary = (count) ->
+  noun = if count == 1
+    "migration"
+  else
+    "migrations"
+
+  print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
+
+{ :request, :query, :migration, :migration_summary }
 

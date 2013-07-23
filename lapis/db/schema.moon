@@ -142,6 +142,6 @@ types = setmetatable {
 
 {
   :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
-  :drop_column, :rename_column, :rename_table
+  :drop_column, :rename_column, :rename_table, :entity_exists
 }
 

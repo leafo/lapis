@@ -56,15 +56,17 @@ create_migrations_table = function(table_name)
     table_name = "lapis_migrations"
   end
   local schema = require("lapis.db.schema")
-  local create_table, types
-  create_table, types = schema.create_table, schema.types
-  return create_table(table_name, {
-    {
-      "name",
-      types.varchar
-    },
-    "PRIMARY KEY(name)"
-  })
+  local create_table, types, entity_exists
+  create_table, types, entity_exists = schema.create_table, schema.types, schema.entity_exists
+  if not (entity_exists(table_name)) then
+    return create_table(table_name, {
+      {
+        "name",
+        types.varchar
+      },
+      "PRIMARY KEY(name)"
+    })
+  end
 end
 local run_migrations
 run_migrations = function(migrations)
@@ -84,15 +86,28 @@ run_migrations = function(migrations)
   table.sort(tuples, function(a, b)
     return a[1] < b[1]
   end)
+  local exists
+  do
+    local _tbl_0 = { }
+    local _list_0 = LapisMigrations:select()
+    for _index_0 = 1, #_list_0 do
+      local m = _list_0[_index_0]
+      _tbl_0[m.name] = true
+    end
+    exists = _tbl_0
+  end
+  local count = 0
   for _, _des_0 in ipairs(tuples) do
     local name, fn
     name, fn = _des_0[1], _des_0[2]
-    if not (LapisMigrations:exists(name)) then
+    if not (exists[tostring(name)]) then
       logger.migration(name)
       fn(name)
       LapisMigrations:create(name)
+      count = count + 1
     end
   end
+  return logger.migration_summary(count)
 end
 return {
   create_migrations_table = create_migrations_table,

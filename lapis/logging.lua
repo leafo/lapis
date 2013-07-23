@@ -69,8 +69,19 @@ local migration
 migration = function(name)
   return print(colors("%{bright}%{yellow}Migrating: %{reset}%{green}" .. tostring(name) .. "%{reset}"))
 end
+local migration_summary
+migration_summary = function(count)
+  local noun
+  if count == 1 then
+    noun = "migration"
+  else
+    noun = "migrations"
+  end
+  return print(colors("%{bright}%{yellow}Ran%{reset} " .. tostring(count) .. " %{bright}%{yellow}" .. tostring(noun)))
+end
 return {
   request = request,
   query = query,
-  migration = migration
+  migration = migration,
+  migration_summary = migration_summary
 }

@@ -250,5 +250,6 @@ return {
   add_column = add_column,
   drop_column = drop_column,
   rename_column = rename_column,
-  rename_table = rename_table
+  rename_table = rename_table,
+  entity_exists = entity_exists
 }
