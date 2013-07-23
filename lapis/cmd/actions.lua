@@ -166,7 +166,7 @@ tasks = {
       path.mkdir("logs")
       os.execute("touch logs/error.log")
       os.execute("touch logs/access.log")
-      return os.execute("LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. nginx .. ' -p "$(pwd)" -c "nginx.conf.compiled"')
+      return os.execute("LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"')
     end
   },
   {
