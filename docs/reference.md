@@ -1905,7 +1905,7 @@ function in the table is the name of the migration. You are free to name the
 migrations anything but it's suggested to give them Unix timestamps as names:
 
 ```moon
-migrations = {
+{
   [1368686109]: =>
     add_column "my_table", "hello", integer
 
@@ -1919,13 +1919,46 @@ schema functions described above, but they don't have to.
 
 Only the functions that not have already been executed before will be called
 when we tell our migrations to run. The migrations that have already been run
-are stored in the migration table, a database table that holds the names of
-the migrations that have already been run.
+are stored in the migrations table, a database table that holds the names of
+the migrations that have already been run. Migrations are run in the order of
+their keys sorted ascending.
 
-### Creating The Migration Table
+### Running Migrations
 
-Before running any migrations you must create the migration table. Do the
-following:
+The Lapis command line tool has a special command for running migrations. It's
+called `lapis migrate`.
+
+This command expects a module called `migrations` that returns a table of
+migrations in the format described above.
+
+Let's create this file with a single migration as an example.
+
+```moon
+-- migrations.moon
+
+import create_table, types from require "lapis.db.schema"
+
+{
+  [1]: =>
+    create_table "articles", {
+      { "id", types.serial }
+      { "title", types.text }
+      { "content", types.text }
+
+      "PRIMARY KEY (id)"
+    }
+}
+```
+
+After creating the file, ensure that it is compiled to Lua and run `lapis
+migrate`. The command will first create the migrations table if it doesn't
+exist yet then it will run every migration that hasn't been executed yet.
+
+Read more about [the migrate command](#command-line-interface-lapis-migrate).
+
+### Manually Running Migrations
+
+We can manually create the migrations table using the following code:
 
 ```moon
 migrations = require "lapis.db.migrations"
@@ -1941,32 +1974,12 @@ CREATE TABLE IF NOT EXISTS "lapis_migrations" (
 );
 ```
 
-### Running Migrations
-
-When organizing migrations it's best to create a module that returns the table
-of our migrations:
-
-```moon
--- migrations.moon
-import types from require "lapis.db.schema"
-
-{
-  -- add deleted column
-  [1366269069]: =>
-    add_column "users", "deleted", types.boolean
-    add_index "users", "deleted"
-}
-```
-
 Now we can run migrations like so:
 
 ```moon
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
 ```
-
-If you look in your console after running migrations you'll be able to see what
-migrations have been run and their associated SQL.
 
 ## Request Object
 
@@ -2431,6 +2444,108 @@ Implements a subset of [Lua Socket's
 
 Does not support `proxy`, `create`, `step`, or `redirect`.
 
+## Command Line Interface
+
+The Lapis command line interface gives you a couple of handful tools for
+working with Lapis projects.
+
+For any commands that require an environment as an argument, if no environment
+is specified then the default environment is used. If the file
+`lapis_environment.lua` exists in the directory, then the return value of that
+file will be used, otherwise it is `development`.
+
+For example, if you have a production deployment, you might add the following file:
+
+```lua
+-- lapis_environment.lua
+return "production"
+```
+
+### `lapis new`
+
+```bash
+$ lapis new [--git] [--tup]
+```
+
+The `new` command will create a blank Lapis project in the current directory.
+By default it creates the following files:
+
+* `nginx.conf`
+* `mime.types`
+* `web.moon`
+
+You're encouraged to look at all of these files and customize them to your
+needs.
+
+You can tell it to generate additional files using the following flags:
+
+`--git` generates a `.gitignore` file containing the following:
+
+    *.lua
+    logs/
+    nginx.conf.compiled
+
+`--tup` -- generates `Tupfile` and `Tuprules.tup` for use with
+[Tup](http://gittup.org/tup/) build system. The rules file contains a rule for
+building MoonScript files to Lua.
+
+### `lapis server`
+
+```bash
+$ lapis server [environment]
+```
+
+This command is a wrapper around starting OpenResty. It firsts builds the
+config, ensures logs exist, then starts the sever with the correct environment.
+
+Lapis ensures that it runs a version of Nginx that is OpenResty. It will search
+`$PATH` and any common OpenResty installation directories to find the correct
+binary.
+
+After finding the correct binary it will run a command similar to this to start
+the server:
+
+```bash
+$ LAPIS_ENVIRONMENT='<environment>' nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
+```
+
+
+### `lapis build`
+
+```bash
+$ lapis build [environment]
+```
+
+Rebuilds the config. If the server is currently running then a `HUP` signal
+will be sent to it. This causes the configuration to be reloaded. By default
+Nginx does not see changes to the config file while it is running. By executing
+`lapis build` you will tell Nginx to reload the config without having to
+restart the server.
+
+This is the best approach when deploying a new version of your code to
+production. You'll be able to reload everything without dropping any requests.
+
+You can read more in the [Nginx manual](http://wiki.nginx.org/CommandLine#Loading_a_New_Configuration_Using_Signals).
+
+### `lapis migrate`
+
+```bash
+$ lapis migrate [environment]
+```
+
+This will run any outstanding migrations. The server must be running for this
+command to work. It will also create the migrations table if it does not exist
+yet.
+
+This command expects a `migrations` module as described in [Running
+Migrations](#database-migrations-running-migrations).
+
+It executes on the server approximately this code:
+
+```moon
+import run_migrations from require "lapis.db.migrations"
+run_migrations require "migrations"
+```
 
 ## Lapis Console
 
