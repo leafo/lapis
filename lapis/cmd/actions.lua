@@ -117,7 +117,14 @@ get_task = function(name)
 end
 local default_environment
 default_environment = function()
-  return "development"
+  local env = "development"
+  pcall(function()
+    env = require("lapis_environment")
+  end)
+  default_environment = function()
+    return env
+  end
+  return default_environment()
 end
 tasks = {
   default = "help",
@@ -255,7 +262,7 @@ tasks = {
     name = "help",
     help = "show this text",
     function()
-      print("Lapis " .. tostring(require("lapis.version")))
+      print(colors("Lapis " .. tostring(require("lapis.version"))))
       print("usage: lapis <action> [arguments]")
       do
         local nginx = find_nginx()
@@ -265,6 +272,7 @@ tasks = {
           print("can not find installation of OpenResty")
         end
       end
+      print("default environment: " .. tostring(default_environment()))
       print()
       print("Available actions:")
       print()

@@ -65,7 +65,12 @@ get_task = (name) ->
   for k,v in ipairs tasks
     return v if v.name == name
 
-default_environment = -> "development"
+default_environment = ->
+  env = "development"
+  pcall -> env = require "lapis_environment"
+
+  default_environment = -> env
+  default_environment!
 
 tasks = {
   default: "help"
@@ -190,13 +195,15 @@ tasks = {
     help: "show this text"
 
     ->
-      print "Lapis #{require "lapis.version"}"
+      print colors "Lapis #{require "lapis.version"}"
       print "usage: lapis <action> [arguments]"
+
       if nginx = find_nginx!
         print "using nginx: #{nginx}"
       else
         print "can not find installation of OpenResty"
 
+      print "default environment: #{default_environment!}"
       print!
       print "Available actions:"
       print!
