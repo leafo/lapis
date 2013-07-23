@@ -10,7 +10,7 @@ do
   local _obj_0 = math
   floor = _obj_0.floor
 end
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case
 do
   local u = url.unescape
   unescape = function(str)
@@ -347,6 +347,14 @@ do
     return out .. " ago"
   end
 end
+do
+  local upper = string.upper
+  title_case = (function(str)
+    return str:gsub("%S+", function(chunk)
+      return chunk:gsub("^.", string.upper)
+    end)
+  end)
+end
 return {
   unescape = unescape,
   escape = escape,
@@ -367,5 +375,6 @@ return {
   build_url = build_url,
   time_ago = time_ago,
   time_ago_in_words = time_ago_in_words,
-  camelize = camelize
+  camelize = camelize,
+  title_case = title_case
 }
