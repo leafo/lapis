@@ -59,13 +59,15 @@ send_hup = ->
 execute_on_server = (code, env) ->
   path = require "lapis.cmd.path"
 
+  assert loadstring code -- syntax check code
+
   config = require "lapis.config"
   import compile_config from require "lapis.cmd.nginx"
 
   vars = config.get environment
   compiled = compile_config path.read_file"nginx.conf", vars
 
-  code = code\gsub '"', '\\"'
+  code = code\gsub("\\", "\\\\")\gsub('"', '\\"')
 
   import random_string from require "lapis.cmd.util"
   command_url = "/#{random_string 20}"
@@ -91,6 +93,12 @@ execute_on_server = (code, env) ->
 
         location / {
           return 503;
+        }
+
+        location = /query {
+          internal;
+          postgres_pass database;
+          postgres_query $echo_request_body;
         }
       }
     ]]

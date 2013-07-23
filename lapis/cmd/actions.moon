@@ -65,6 +65,8 @@ get_task = (name) ->
   for k,v in ipairs tasks
     return v if v.name == name
 
+default_environment = -> "development"
+
 tasks = {
   default: "help"
 
@@ -97,7 +99,7 @@ tasks = {
     usage: "server [environment]"
     help: "build config and start server"
 
-    (environment="development") ->
+    (environment=default_environment!) ->
       nginx = find_nginx!
 
       unless nginx
@@ -115,9 +117,9 @@ tasks = {
   {
     name: "build"
     usage: "build [environment]"
-    help: "build the config, send HUP if server running"
+    help: "build config, send HUP if server running"
 
-    (environment="development") ->
+    (environment=default_environment!) ->
       write_config_for environment
 
       import send_hup from require "lapis.cmd.nginx"
@@ -144,14 +146,43 @@ tasks = {
     usage: "exec <lua-string>"
     help: "execute Lua on the server"
 
-    (code, environment="development") ->
+    (code, environment=default_environment!) ->
       fail_with_message("missing lua-string: exec <lua-string>") unless code
       import execute_on_server from require "lapis.cmd.nginx"
 
       print execute_on_server code
 
       -- restore config and hup
-      get_task("build")[1]!
+      get_task("build")[1] environment
+  }
+
+  {
+    name: "migrate"
+    usage: "migrate [environment]"
+    help: "run migrations"
+
+    (environment=default_environment!) ->
+      import execute_on_server from require "lapis.cmd.nginx"
+
+      print execute_on_server [[
+        print = function(...)
+          local str = table.concat({...}, "\t")
+          io.stdout:write(str .. "\n")
+          ngx.say(str)
+        end
+
+        local run_migrations = require("lapis.db.migrations").run_migrations
+        local success, err = pcall(function()
+          run_migrations(require("migrations"))
+        end)
+
+        if not success then
+          print(err)
+        end
+      ]]
+
+      -- restore config and hup
+      get_task("build")[1] environment
   }
 
   {

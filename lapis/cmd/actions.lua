@@ -115,6 +115,10 @@ get_task = function(name)
     end
   end
 end
+local default_environment
+default_environment = function()
+  return "development"
+end
 tasks = {
   default = "help",
   {
@@ -145,7 +149,7 @@ tasks = {
     help = "build config and start server",
     function(environment)
       if environment == nil then
-        environment = "development"
+        environment = default_environment()
       end
       local nginx = find_nginx()
       if not (nginx) then
@@ -161,10 +165,10 @@ tasks = {
   {
     name = "build",
     usage = "build [environment]",
-    help = "build the config, send HUP if server running",
+    help = "build config, send HUP if server running",
     function(environment)
       if environment == nil then
-        environment = "development"
+        environment = default_environment()
       end
       write_config_for(environment)
       local send_hup
@@ -202,7 +206,7 @@ tasks = {
     help = "execute Lua on the server",
     function(code, environment)
       if environment == nil then
-        environment = "development"
+        environment = default_environment()
       end
       if not (code) then
         fail_with_message("missing lua-string: exec <lua-string>")
@@ -213,7 +217,38 @@ tasks = {
         execute_on_server = _obj_0.execute_on_server
       end
       print(execute_on_server(code))
-      return get_task("build")[1]()
+      return get_task("build")[1](environment)
+    end
+  },
+  {
+    name = "migrate",
+    usage = "migrate [environment]",
+    help = "run migrations",
+    function(environment)
+      if environment == nil then
+        environment = default_environment()
+      end
+      local execute_on_server
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        execute_on_server = _obj_0.execute_on_server
+      end
+      print(execute_on_server([[        print = function(...)
+          local str = table.concat({...}, "\t")
+          io.stdout:write(str .. "\n")
+          ngx.say(str)
+        end
+
+        local run_migrations = require("lapis.db.migrations").run_migrations
+        local success, err = pcall(function()
+          run_migrations(require("migrations"))
+        end)
+
+        if not success then
+          print(err)
+        end
+      ]]))
+      return get_task("build")[1](environment)
     end
   },
   {

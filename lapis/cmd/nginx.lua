@@ -94,6 +94,7 @@ end
 local execute_on_server
 execute_on_server = function(code, env)
   local path = require("lapis.cmd.path")
+  assert(loadstring(code))
   local config = require("lapis.config")
   do
     local _obj_0 = require("lapis.cmd.nginx")
@@ -101,7 +102,7 @@ execute_on_server = function(code, env)
   end
   local vars = config.get(environment)
   local compiled = compile_config(path.read_file("nginx.conf"), vars)
-  code = code:gsub('"', '\\"')
+  code = code:gsub("\\", "\\\\"):gsub('"', '\\"')
   local random_string
   do
     local _obj_0 = require("lapis.cmd.util")
@@ -130,6 +131,12 @@ execute_on_server = function(code, env)
 
         location / {
           return 503;
+        }
+
+        location = /query {
+          internal;
+          postgres_pass database;
+          postgres_query $echo_request_body;
         }
       }
     ]]
