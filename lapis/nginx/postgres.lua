@@ -299,7 +299,7 @@ do
       end
       return name, val
     end)
-    grammar = Ct(clause ^ 0)
+    grammar = white * Ct(clause ^ 0)
   end
   parse_clause = function(clause)
     if not (grammar) then

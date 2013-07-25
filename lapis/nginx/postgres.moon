@@ -229,7 +229,7 @@ parse_clause = do
 
       name, val
 
-    grammar = Ct clause^0
+    grammar = white * Ct clause^0
 
   (clause) ->
     make_grammar! unless grammar
