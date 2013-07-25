@@ -51,6 +51,15 @@ class Model
     if res = db.select "#{fields} from #{tbl_name} #{query}"
       @load_all res
 
+  @count: (clause, ...) =>
+    tbl_name = db.escape_identifier @table_name!
+    query = "COUNT(*) as c from #{tbl_name}"
+
+    if clause
+      query ..= " where " .. db.interpolate_query clause, ...
+
+    unpack(db.select query).c
+
   -- include references to this model in a list of records based on a foreign
   -- key
   -- Examples:
@@ -58,7 +67,7 @@ class Model
   -- -- Models
   -- Users { id, name }
   -- Games { id, user_id, title }
-  -- 
+  --
   -- -- Have games, inlcude users
   -- games = Games\select!
   -- Users\include_in games, "user_id"

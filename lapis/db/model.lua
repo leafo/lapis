@@ -177,6 +177,14 @@ do
       end
     end
   end
+  self.count = function(self, clause, ...)
+    local tbl_name = db.escape_identifier(self:table_name())
+    local query = "COUNT(*) as c from " .. tostring(tbl_name)
+    if clause then
+      query = query .. (" where " .. db.interpolate_query(clause, ...))
+    end
+    return unpack(db.select(query)).c
+  end
   self.include_in = function(self, other_records, foreign_key, opts)
     if type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
