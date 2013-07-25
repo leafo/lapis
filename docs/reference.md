@@ -621,7 +621,7 @@ class SomeWidget extends html.Widget
 class extends lapis.Application
   [test: "/test_render"]: =>
     widget = SomeWidget!
-    widget\add_helper @
+    widget\include_helper @
     widget\render_to_string!
 ```
 
