@@ -188,6 +188,37 @@ tests = {
     [[DROP INDEX IF EXISTS "user_data_one_two_three_idx"]]
   }
 
+
+  {
+    -> db.parse_clause ""
+    {}
+  }
+
+  {
+    -> db.parse_clause "where something = TRUE"
+    {
+      where: "something = TRUE"
+    }
+  }
+
+  {
+    -> db.parse_clause "where something = TRUE order by things asc"
+    {
+      where: "something = TRUE "
+      order: "things asc"
+    }
+  }
+
+
+  {
+    -> db.parse_clause "where something = 'order by cool' having yeah order by \"limit\" asc"
+    {
+      having: "yeah "
+      where: "something = 'order by cool' "
+      order: '"limit" asc'
+    }
+  }
+
 }
 
 

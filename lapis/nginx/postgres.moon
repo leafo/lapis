@@ -199,9 +199,46 @@ _delete = (table, cond, ...) ->
 
   raw_query concat buff
 
+parse_clause = do
+  local grammar
+  make_grammar = ->
+    keywords = {"where", "group", "having", "order", "limit", "offset"}
+    for v in *keywords
+      keywords[v] = true
+
+    import P, R, C, S, Cmt, Ct, Cg from require "lpeg"
+
+    alpha = R("az", "AZ", "__")
+    alpha_num = alpha + R("09")
+    white = S" \t\r\n"^0
+    word = alpha_num^1
+
+    single_string = P"'" * (P"''" + (P(1) - P"'"))^0 * P"'"
+    double_string = P'"' * (P'""' + (P(1) - P'"'))^0 * P'"'
+    strings = single_string + double_string
+
+    keyword = Cmt word, (src, pos, cap) ->
+      if keywords[cap\lower!]
+        true, cap
+
+    keyword = keyword * white
+
+    clause = Ct (keyword * C (strings + (word + P(1) - keyword))^1) / (name, val) ->
+      if name == "group" or name == "order"
+        val = val\match "^%s*by%s*(.*)$"
+
+      name, val
+
+    grammar = Ct clause^0
+
+  (clause) ->
+    make_grammar! unless grammar
+    if out = grammar\match clause
+      { unpack t for t in *out }
+
 {
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
-  :encode_values, :encode_assigns, :interpolate_query
+  :encode_values, :encode_assigns, :interpolate_query, :parse_clause
   :set_logger, :get_logger
 
   :set_backend
