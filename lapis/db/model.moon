@@ -4,6 +4,8 @@ db = require "lapis.db"
 import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
 
+local *
+
 class Model
   @timestamp: false
   @primary_key: "id"
@@ -181,6 +183,9 @@ class Model
     if fn = @constraints[key]
       fn @, value, key, obj
 
+  @paginated: (...) =>
+    Paginator @, ...
+
   _primary_cond: =>
     { key, @[key] for key in *{@@primary_keys!} }
 
@@ -218,5 +223,40 @@ class Model
     values._timestamp = true if @@timestamp
     db.update @@table_name!, values, cond
 
-{ :Model }
+
+
+class Paginator
+  per_page: 10
+
+  new: (@model, clause, ...) =>
+    param_count = select "#", ...
+
+    opts = if param_count > 0
+      last = select param_count, ...
+      type(last) == "table" and last
+
+    @per_page = @model.per_page
+    @per_page = opts.per_page if opts
+
+    @_clause = db.interpolate_query clause, ...
+
+  get_all: =>
+    @model\select @_clause
+
+  -- 1 indexed page
+  get_page: (page) =>
+    page = (math.max 1, tonumber(page) or 0) - 1
+    @model\select @_clause .. [[
+      limit ?
+      offset ?
+    ]], @per_page, @per_page * page
+
+  num_pages: =>
+    math.ceil @total_items! / @per_page
+
+  total_items: =>
+    @_count or= @model\count db.parse_clause(@_clause).where
+    @_count
+
+{ :Model, :Paginator }
 

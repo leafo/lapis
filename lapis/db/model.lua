@@ -9,7 +9,7 @@ do
   local _obj_0 = table
   insert, concat = _obj_0.insert, _obj_0.concat
 end
-local Model
+local Model, Paginator
 do
   local _base_0 = {
     _primary_cond = function(self)
@@ -363,8 +363,61 @@ do
       end
     end
   end
+  self.paginated = function(self, ...)
+    return Paginator(self, ...)
+  end
   Model = _class_0
 end
+do
+  local _base_0 = {
+    per_page = 10,
+    get_all = function(self)
+      return self.model:select(self._clause)
+    end,
+    get_page = function(self, page)
+      page = (math.max(1, tonumber(page) or 0)) - 1
+      return self.model:select(self._clause .. [[      limit ?
+      offset ?
+    ]], self.per_page, self.per_page * page)
+    end,
+    num_pages = function(self)
+      return math.ceil(self:total_items() / self.per_page)
+    end,
+    total_items = function(self)
+      self._count = self._count or self.model:count(db.parse_clause(self._clause).where)
+      return self._count
+    end
+  }
+  _base_0.__index = _base_0
+  local _class_0 = setmetatable({
+    __init = function(self, model, clause, ...)
+      self.model = model
+      local param_count = select("#", ...)
+      local opts
+      if param_count > 0 then
+        local last = select(param_count, ...)
+        opts = type(last) == "table" and last
+      end
+      self.per_page = self.model.per_page
+      if opts then
+        self.per_page = opts.per_page
+      end
+      self._clause = db.interpolate_query(clause, ...)
+    end,
+    __base = _base_0,
+    __name = "Paginator"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  Paginator = _class_0
+end
 return {
-  Model = Model
+  Model = Model,
+  Paginator = Paginator
 }
