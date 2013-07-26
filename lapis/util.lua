@@ -349,11 +349,11 @@ do
 end
 do
   local upper = string.upper
-  title_case = (function(str)
-    return str:gsub("%S+", function(chunk)
+  title_case = function(str)
+    return (str:gsub("%S+", function(chunk)
       return chunk:gsub("^.", string.upper)
-    end)
-  end)
+    end))
+  end
 end
 return {
   unescape = unescape,

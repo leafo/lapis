@@ -239,8 +239,8 @@ time_ago_in_words = do
 
 title_case = do
   upper = string.upper
-  ((str) ->
-    str\gsub "%S+", (chunk) ->
+  (str) ->
+    (str\gsub "%S+", (chunk) ->
       chunk\gsub "^.", string.upper)
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
