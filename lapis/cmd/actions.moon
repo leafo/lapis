@@ -213,15 +213,33 @@ tasks = {
   }
 }
 
+format_error = (msg) ->
+  colors "%{bright red}Error:%{reset} #{msg}"
+
 execute = (args) ->
   task_name = args[1] or tasks.default
   task_args = [a for i, a in ipairs args when i > 1]
 
-  if task = get_task(task_name)
-    assert(task[1], "action `#{task_name}' not implemented") unpack task_args
-  else
-    print "Error: unknown command `#{task_name}'"
+  task = get_task(task_name)
+
+  unless task
+    print format_error "unknown command `#{task_name}'"
     get_task("help")[1] unpack task_args
+    return
+
+  fn = assert(task[1], "action `#{task_name}' not implemented")
+  xpcall (-> fn unpack task_args), (err) ->
+    flags = parse_flags unpack task_args
+    err = err\match("^.-:.-:.(.*)$") or err unless flags.trace
+    msg = colors "%{bright red}Error:%{reset} #{err}"
+    if flags.trace
+      print debug.traceback msg, 2
+    else
+      print msg
+      print " * Run with --trace to see traceback"
+      print " * Report issues to https://github.com/leafo/lapis/issues"
+
+    os.exit 1
 
 { :tasks, :execute }
 

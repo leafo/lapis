@@ -296,6 +296,10 @@ tasks = {
     end
   }
 }
+local format_error
+format_error = function(msg)
+  return colors("%{bright red}Error:%{reset} " .. tostring(msg))
+end
 local execute
 execute = function(args)
   local task_name = args[1] or tasks.default
@@ -311,15 +315,30 @@ execute = function(args)
     end
     task_args = _accum_0
   end
-  do
-    local task = get_task(task_name)
-    if task then
-      return assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")(unpack(task_args))
-    else
-      print("Error: unknown command `" .. tostring(task_name) .. "'")
-      return get_task("help")[1](unpack(task_args))
-    end
+  local task = get_task(task_name)
+  if not (task) then
+    print(format_error("unknown command `" .. tostring(task_name) .. "'"))
+    get_task("help")[1](unpack(task_args))
+    return 
   end
+  local fn = assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")
+  return xpcall((function()
+    return fn(unpack(task_args))
+  end), function(err)
+    local flags = parse_flags(unpack(task_args))
+    if not (flags.trace) then
+      err = err:match("^.-:.-:.(.*)$") or err
+    end
+    local msg = colors("%{bright red}Error:%{reset} " .. tostring(err))
+    if flags.trace then
+      print(debug.traceback(msg, 2))
+    else
+      print(msg)
+      print(" * Run with --trace to see traceback")
+      print(" * Report issues to https://github.com/leafo/lapis/issues")
+    end
+    return os.exit(1)
+  end)
 end
 return {
   tasks = tasks,
