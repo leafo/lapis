@@ -50,6 +50,28 @@ local strip_tags
 strip_tags = function(html)
   return html:gsub("<[^>]+>", "")
 end
+local void_tags = {
+  "area",
+  "base",
+  "br",
+  "col",
+  "command",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "keygen",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr"
+}
+for _index_0 = 1, #void_tags do
+  local tag = void_tags[_index_0]
+  void_tags[tag] = true
+end
 local element_attributes
 element_attributes = function(buffer, t)
   if not (type(t) == "table") then
@@ -76,6 +98,27 @@ element = function(buffer, name, ...)
     local _with_0 = buffer
     _with_0:write("<", name)
     element_attributes(buffer, inner[1])
+    if void_tags[name] then
+      local has_content = false
+      for _index_0 = 1, #inner do
+        local thing = inner[_index_0]
+        local t = type(thing)
+        local _exp_0 = t
+        if "string" == _exp_0 then
+          has_content = true
+          break
+        elseif "table" == _exp_0 then
+          if thing[1] then
+            has_content = true
+            break
+          end
+        end
+      end
+      if not (has_content) then
+        _with_0:write("/>")
+        return buffer
+      end
+    end
     _with_0:write(">")
     _with_0:write_escaped(inner)
     _with_0:write("</", name, ">")

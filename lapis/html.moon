@@ -32,6 +32,28 @@ unescape = (text) ->
 strip_tags = (html) ->
   html\gsub "<[^>]+>", ""
 
+void_tags = {
+    "area"
+    "base"
+    "br"
+    "col"
+    "command"
+    "embed"
+    "hr"
+    "img"
+    "input"
+    "keygen"
+    "link"
+    "meta"
+    "param"
+    "source"
+    "track"
+    "wbr"
+}
+
+for tag in *void_tags
+  void_tags[tag] = true
+
 ------------------
 
 element_attributes = (buffer, t) ->
@@ -51,6 +73,25 @@ element = (buffer, name, ...) ->
   with buffer
     \write "<", name
     element_attributes(buffer, inner[1])
+
+    if void_tags[name]
+      -- check if it has content
+      has_content = false
+      for thing in *inner
+        t = type thing
+        switch t
+          when "string"
+            has_content = true
+            break
+          when "table"
+            if thing[1]
+              has_content = true
+              break
+
+      unless has_content
+        \write "/>"
+        return buffer
+
     \write ">"
     \write_escaped inner
     \write "</", name, ">"

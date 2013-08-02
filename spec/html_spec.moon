@@ -16,13 +16,15 @@ describe "lapis.html", ->
 
       text capture -> div "this is captured"
 
+      link rel: "icon", type: "image/png", href: "dad"
+
       raw "<div>raw test</div>"
       text "<div>raw test</div>"
 
       html_5 ->
         div "what is going on there?"
 
-    assert.same input, [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]]
+    assert.same [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<link rel="icon"href="dad"type="image/png"/><div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]], input
 
   it "should render the widget", ->
     class TestWidget extends Widget
