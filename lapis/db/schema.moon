@@ -124,12 +124,25 @@ class ColumnType
 
   __tostring: => @__call @default_options
 
+
+class TimeType extends ColumnType
+  __tostring: ColumnType.__tostring
+
+  __call: (opts) =>
+    base = @base
+    @base = base .. " with timezone" if opts.timezone
+
+    with ColumnType.__call @, opts
+      @base = base
+
+
 C = ColumnType
+T = TimeType
 types = setmetatable {
   serial:       C "serial"
   varchar:      C "character varying(255)"
   text:         C "text"
-  time:         C "timestamp without time zone"
+  time:         T "timestamp"
   date:         C "date"
   integer:      C "integer", null: false, default: 0
   numeric:      C "numeric", null: false, default: 0

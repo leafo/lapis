@@ -159,6 +159,17 @@ tests = {
   }
 
   {
+    -> tostring schema.types.time
+    "timestamp NOT NULL"
+  }
+
+  {
+    -> tostring schema.types.time timezone: true
+    "timestamp with timezone NOT NULL"
+  }
+
+
+  {
     ->
       import foreign_key, boolean, varchar, text from schema.types
       schema.create_table "user_data", {

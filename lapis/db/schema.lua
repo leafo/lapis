@@ -208,12 +208,60 @@ do
   _base_0.__class = _class_0
   ColumnType = _class_0
 end
+local TimeType
+do
+  local _parent_0 = ColumnType
+  local _base_0 = {
+    __tostring = ColumnType.__tostring,
+    __call = function(self, opts)
+      local base = self.base
+      if opts.timezone then
+        self.base = base .. " with timezone"
+      end
+      do
+        local _with_0 = ColumnType.__call(self, opts)
+        self.base = base
+        return _with_0
+      end
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  local _class_0 = setmetatable({
+    __init = function(self, ...)
+      return _parent_0.__init(self, ...)
+    end,
+    __base = _base_0,
+    __name = "TimeType",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        return _parent_0[name]
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  TimeType = _class_0
+end
 local C = ColumnType
+local T = TimeType
 local types = setmetatable({
   serial = C("serial"),
   varchar = C("character varying(255)"),
   text = C("text"),
-  time = C("timestamp without time zone"),
+  time = T("timestamp"),
   date = C("date"),
   integer = C("integer", {
     null = false,

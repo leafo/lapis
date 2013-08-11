@@ -1,6 +1,5 @@
 # Lapis
 
-
 A web framework for Lua/[MoonScript][1].
 
 ### <http://leafo.net/lapis/>
