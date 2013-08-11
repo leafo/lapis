@@ -216,7 +216,7 @@ do
     __call = function(self, opts)
       local base = self.base
       if opts.timezone then
-        self.base = base .. " with timezone"
+        self.base = base .. " with time zone"
       end
       do
         local _with_0 = ColumnType.__call(self, opts)

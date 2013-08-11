@@ -130,7 +130,7 @@ class TimeType extends ColumnType
 
   __call: (opts) =>
     base = @base
-    @base = base .. " with timezone" if opts.timezone
+    @base = base .. " with time zone" if opts.timezone
 
     with ColumnType.__call @, opts
       @base = base

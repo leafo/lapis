@@ -165,7 +165,7 @@ tests = {
 
   {
     -> tostring schema.types.time timezone: true
-    "timestamp with timezone NOT NULL"
+    "timestamp with time zone NOT NULL"
   }
 
 
