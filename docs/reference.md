@@ -1738,7 +1738,7 @@ SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 50
 
 Returns the total number of pages.
 
-### `total_items()`
+#### `total_items()`
 
 Gets the total number of items that can be returned. The paginator will parse
 the query and remove all clauses except for the `WHERE` when issuing a `COUNT`.
