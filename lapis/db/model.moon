@@ -42,9 +42,14 @@ class Model
   @select: (query="", ...) =>
     opts = {}
     param_count = select "#", ...
+
     if param_count > 0
       last = select param_count, ...
       opts = last if type(last) == "table"
+
+    if type(query) == "table"
+      opts = query
+      query = ""
 
     query = db.interpolate_query query, ...
     tbl_name = db.escape_identifier @table_name!

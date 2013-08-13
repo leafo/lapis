@@ -167,6 +167,10 @@ do
         opts = last
       end
     end
+    if type(query) == "table" then
+      opts = query
+      query = ""
+    end
     query = db.interpolate_query(query, ...)
     local tbl_name = db.escape_identifier(self:table_name())
     local fields = opts.fields or "*"
