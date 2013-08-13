@@ -25,6 +25,10 @@ validate_functions = {
       input = tostring(input)
       input\match(three) or input\match(six), "%s must be a color"
 
+  is_timestamp: (input) ->
+    month, day, hour, min, sec = input and input\match "^%d+%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)$"
+    month != nil, "%s is not a valid timestamp"
+
   equals: (input, value) ->
     input == value, "%s must match"
 

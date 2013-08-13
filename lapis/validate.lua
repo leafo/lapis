@@ -28,6 +28,10 @@ local validate_functions = {
       return input:match(three) or input:match(six), "%s must be a color"
     end
   end)(),
+  is_timestamp = function(input)
+    local month, day, hour, min, sec = input and input:match("^%d+%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)$")
+    return month ~= nil, "%s is not a valid timestamp"
+  end,
   equals = function(input, value)
     return input == value, "%s must match"
   end,
