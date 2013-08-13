@@ -1667,6 +1667,89 @@ of the column being checked, the name of the column being checked, and lastly
 the object being checked. On insertion the object is the table passed to the
 create method. On update the object is the instance of the model.
 
+### Pagination
+
+Models come with a helper method for paginating a query that may return many
+results, the method is called `paginated`. The arguments are the
+same as the `select` method but instead of the result it returns a special
+`Paginator` object.
+
+For example, say we have the following table and model:
+
+```moon
+create_table "users", {
+  { "id", schema.types.serial }
+  { "name", schema.types.varchar }
+  { "group_id", schema.types.integer }
+
+  "PRIMARY KEY(id)"
+}
+
+class Users extends Model
+
+```
+
+We can create a paginator like so:
+
+```moon
+paginated = Users\paginated [[where group_id = ? order by name asc]], 123
+```
+
+We can set the number of items per page by passing a table as the last
+argument with a `per_page` field:
+
+```moon
+paginated_alt = Users\paginated [[where group_id = ?]], 4, per_page: 100
+```
+
+The paginator has the following methods:
+
+**get_all()**
+
+Gets all the items that the query can return, is the same as calling the
+`select` method directly. Returns an array table of model instances.
+
+```moon
+users = paginated\get_all!
+```
+
+```sql
+SELECT * from "users" where group_id = 123 order by name asc
+```
+
+**get_page(page_num)**
+
+Gets `page_num`th page, where pages are 1 indexed. The number of items per page
+is controlled by the `per_page` option, and defaults to 10. Returns an array
+table of model instances.
+
+```moon
+page1 = paginated\get_page 1
+page6 = paginated\get_page 6
+```
+
+```sql
+SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 0
+SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 50
+```
+
+**num_pages()**
+
+Returns the total number of pages.
+
+**total_items()**
+
+Gets the total number of items that can be returned. The paginator will parse
+the query and remove all clauses except for the `WHERE` when issuing a `COUNT`.
+
+```moon
+users = paginated\total_items!
+```
+
+```sql
+SELECT COUNT(*) as c from "users" where group_id = 123
+```
+
 ## Database Schemas
 
 Lapis comes with a collection of tools for creating your database schema inside
@@ -2556,7 +2639,6 @@ to start Nginx as a daemon. If you are running the server in the foreground you
 can stop it using Ctrl-C.
 
 It works by sending a TERM signal to the Nginx master process.
-
 
 ## Lapis Console
 

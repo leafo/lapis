@@ -66,4 +66,3 @@ describe "lapis.db.model.", ->
       'SELECT * from "things" order by name asc limit 25 offset 50 '
     }, queries
 
-
