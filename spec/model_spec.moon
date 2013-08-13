@@ -50,6 +50,31 @@ describe "lapis.db.model.", ->
       'SELECT hello, world from "things" where id = 1234'
     }, queries
 
+
+  it "should find", ->
+    class Things extends Model
+
+    Things\find "hello"
+    Things\find cat: true, weight: 120
+
+    Things\find_all { 1,2,3,4,5 }
+    Things\find_all { "yeah" }
+    Things\find_all { }
+
+    class Things2 extends Model
+      @primary_key: {"hello", "world"}
+
+    Things2\find 1,2
+
+
+    assert.same {
+      [[SELECT * from "things" where "id" = 'hello' limit 1]]
+      [[SELECT * from "things" where "cat" = TRUE and "weight" = 120 limit 1]]
+      [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
+      [[SELECT * from "things" where "id" in ('yeah')]]
+      [[SELECT * from "things" where "world" = 2 and "hello" = 1 limit 1]]
+    }, queries
+
   it "should paginate", ->
     query_mock['COUNT%(%*%)'] = {{ c: 127 }}
 
@@ -84,17 +109,24 @@ describe "lapis.db.model.", ->
 
     assert.same { id: 101, color: "blue" }, thing
 
+    class TimedThings extends Model
+      @timestamp: true
+
+    thing2 = TimedThings\create hello: "world"
+
     class OtherThings extends Model
       @primary_key: {"id_a", "id_b"}
 
     query_mock['INSERT'] = { { id_a: "hello", id_b: "world" } }
 
-    thing2 = OtherThings\create id_a: 120, height: "400px"
+    thing3 = OtherThings\create id_a: 120, height: "400px"
 
-    assert.same { id_a: "hello", id_b: "world", height: "400px"}, thing2
+    assert.same { id_a: "hello", id_b: "world", height: "400px"}, thing3
+
 
     assert.same {
       [[INSERT INTO "things" ("color") VALUES ('blue') RETURNING "id"]]
+      [[INSERT INTO "timed_things" ("hello", "created_at", "updated_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
       [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
     }, queries
 
@@ -102,26 +134,49 @@ describe "lapis.db.model.", ->
   it "should update model", ->
     class Things extends Model
 
-    thing = Things\load {}
+    thing = Things\load { id: 12 }
     thing\update color: "green", height: 100
 
-    assert.same { height: 100, color: "green" }, thing
+    assert.same { height: 100, color: "green", id: 12 }, thing
 
     thing2 = Things\load { age: 2000, sprit: true }
     thing2\update "age"
 
 
     class TimedThings extends Model
+      @primary_key: {"a", "b"}
       @timestamp: true
 
-    thing3 = TimedThings\load {}
+    thing3 = TimedThings\load { a: 2, b: 3 }
     thing3\update! -- does nothing
     -- thing3\update "what" -- should error set to null
     thing3\update great: true -- need a way to stub date before testing
 
     assert.same {
-      [[UPDATE "things" SET "height" = 100, "color" = 'green']]
-      [[UPDATE "things" SET "age" = 2000]]
-      [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE]]
+      [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
+      [[UPDATE "things" SET "age" = 2000 WHERE "id" = NULL]]
+      [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "a" = 2 AND "b" = 3]]
+    }, queries
+
+  it "should delete model", ->
+    class Things extends Model
+
+    thing = Things\load { id: 2 }
+    thing\delete!
+
+    thing = Things\load { }
+    thing\delete!
+
+
+    class Things2 extends Model
+      @primary_key: {"key1", "key2"}
+
+    thing = Things2\load { key1: "blah blag", key2: 4821 }
+    thing\delete!
+
+    assert.same {
+      [[DELETE FROM "things" WHERE "id" = 2]]
+      [[DELETE FROM "things" WHERE "id" = NULL]]
+      [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
     }, queries
 
