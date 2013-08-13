@@ -3,10 +3,10 @@ do
   local _obj_0 = require("lapis.cmd.util")
   columnize = _obj_0.columnize
 end
-local find_nginx
+local find_nginx, start_nginx
 do
   local _obj_0 = require("lapis.cmd.nginx")
-  find_nginx = _obj_0.find_nginx
+  find_nginx, start_nginx = _obj_0.find_nginx, _obj_0.start_nginx
 end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
@@ -163,10 +163,7 @@ tasks = {
         fail_with_message("can not find an installation of OpenResty")
       end
       write_config_for(environment)
-      path.mkdir("logs")
-      os.execute("touch logs/error.log")
-      os.execute("touch logs/access.log")
-      return os.execute("LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"')
+      return start_nginx(environment)
     end
   },
   {
@@ -202,6 +199,24 @@ tasks = {
       local pid = send_hup()
       if pid then
         return print(colors("%{green}HUP " .. tostring(pid)))
+      else
+        return fail_with_message("failed to find nginx process")
+      end
+    end
+  },
+  {
+    name = "term",
+    hidden = true,
+    help = "send TERM signal to shut down running server",
+    function()
+      local send_term
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        send_term = _obj_0.send_term
+      end
+      local pid = send_term()
+      if pid then
+        return print(colors("%{green}TERM " .. tostring(pid)))
       else
         return fail_with_message("failed to find nginx process")
       end

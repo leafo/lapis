@@ -1,3 +1,4 @@
+local path = require("lapis.cmd.path")
 local find_nginx
 do
   local nginx_bin = "nginx"
@@ -33,6 +34,27 @@ local filters = {
     return ("%s dbname=%s user=%s password=%s"):format(host, db, user, password)
   end
 }
+local start_nginx
+start_nginx = function(environment, background)
+  if background == nil then
+    background = false
+  end
+  local nginx = find_nginx()
+  if not (nginx) then
+    return nil, "can't find nginx"
+  end
+  path.mkdir("logs")
+  os.execute("touch logs/error.log")
+  os.execute("touch logs/access.log")
+  local cmd = nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"'
+  if environment then
+    cmd = "LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. cmd
+  end
+  if background then
+    cmd = cmd .. " &"
+  end
+  return os.execute(cmd)
+end
 local compile_config
 compile_config = function(config, opts)
   if opts == nil then
@@ -91,9 +113,19 @@ send_hup = function()
     end
   end
 end
+local send_term
+send_term = function()
+  do
+    local pid = get_pid()
+    if pid then
+      os.execute("kill " .. tostring(pid))
+      return pid
+    end
+  end
+end
 local execute_on_server
 execute_on_server = function(code, env)
-  local path = require("lapis.cmd.path")
+  path = require("lapis.cmd.path")
   assert(loadstring(code))
   local config = require("lapis.config")
   do
@@ -156,10 +188,6 @@ execute_on_server = function(code, env)
   local temp_config = parse:match(compiled)
   assert(inserted_server, "Failed to find server directive in config")
   path.write_file("nginx.conf.compiled", temp_config)
-  do
-    local _obj_0 = require("lapis.cmd.nginx")
-    send_hup = _obj_0.send_hup
-  end
   assert(send_hup(), "Failed to find server")
   os.execute("sleep 0.1")
   local http = require("socket.http")
@@ -171,7 +199,9 @@ return {
   compile_config = compile_config,
   filters = filters,
   find_nginx = find_nginx,
+  start_nginx = start_nginx,
   send_hup = send_hup,
+  send_term = send_term,
   get_pid = get_pid,
   execute_on_server = execute_on_server
 }

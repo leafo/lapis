@@ -1,4 +1,6 @@
 
+path = require "lapis.cmd.path"
+
 find_nginx = do
   nginx_bin = "nginx"
   nginx_search_paths = {
@@ -27,6 +29,24 @@ filters = {
     "%s dbname=%s user=%s password=%s"\format host, db, user, password
 }
 
+start_nginx = (environment, background=false) ->
+  nginx = find_nginx!
+  return nil, "can't find nginx" unless nginx
+
+  path.mkdir "logs"
+  os.execute "touch logs/error.log"
+  os.execute "touch logs/access.log"
+
+  cmd =  nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"'
+
+  if environment
+    cmd = "LAPIS_ENVIRONMENT='#{environment}' " .. cmd
+
+  if background
+    cmd = cmd .. " &"
+
+  os.execute cmd
+
 compile_config = (config, opts={}) ->
   env = setmetatable {}, __index: (key) =>
     v = os.getenv "LAPIS_" .. key\upper!
@@ -54,6 +74,11 @@ get_pid = ->
 send_hup = ->
   if pid = get_pid!
     os.execute "kill -HUP #{pid}"
+    pid
+
+send_term = ->
+  if pid = get_pid!
+    os.execute "kill #{pid}"
     pid
 
 execute_on_server = (code, env) ->
@@ -121,7 +146,6 @@ execute_on_server = (code, env) ->
 
   path.write_file "nginx.conf.compiled", temp_config
 
-  import send_hup from require "lapis.cmd.nginx"
   assert send_hup!, "Failed to find server"
 
   os.execute "sleep 0.1" -- wait for workers to reload
@@ -131,4 +155,5 @@ execute_on_server = (code, env) ->
   res
 
 
-{ :compile_config, :filters, :find_nginx, :send_hup, :get_pid, :execute_on_server }
+{ :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
+  :get_pid, :execute_on_server }
