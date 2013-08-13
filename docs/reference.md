@@ -1669,18 +1669,19 @@ create method. On update the object is the instance of the model.
 
 ### Pagination
 
-Models come with a helper method for paginating a query that may return many
-results, the method is called `paginated`. The arguments are the
-same as the `select` method but instead of the result it returns a special
-`Paginator` object.
+Using the `paginated` method on models we can easily paginate through a query
+that might otherwise return many results. The arguments are the same as the
+`select` method but instead of the result it returns a special `Paginator`
+object.
 
-For example, say we have the following table and model:
+For example, say we have the following table and model: (For documentation on
+creating tables see the [next section](#database-schemas-creating-and-dropping-tables))
 
 ```moon
 create_table "users", {
-  { "id", schema.types.serial }
-  { "name", schema.types.varchar }
-  { "group_id", schema.types.integer }
+  { "id", types.serial }
+  { "name", types.varchar }
+  { "group_id", types.integer }
 
   "PRIMARY KEY(id)"
 }
@@ -1704,7 +1705,7 @@ paginated_alt = Users\paginated [[where group_id = ?]], 4, per_page: 100
 
 The paginator has the following methods:
 
-**get_all()**
+#### `get_all()`
 
 Gets all the items that the query can return, is the same as calling the
 `select` method directly. Returns an array table of model instances.
@@ -1717,7 +1718,7 @@ users = paginated\get_all!
 SELECT * from "users" where group_id = 123 order by name asc
 ```
 
-**get_page(page_num)**
+#### `get_page(page_num)`
 
 Gets `page_num`th page, where pages are 1 indexed. The number of items per page
 is controlled by the `per_page` option, and defaults to 10. Returns an array
@@ -1733,11 +1734,11 @@ SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 0
 SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 50
 ```
 
-**num_pages()**
+#### `num_pages()`
 
 Returns the total number of pages.
 
-**total_items()**
+### `total_items()`
 
 Gets the total number of items that can be returned. The paginator will parse
 the query and remove all clauses except for the `WHERE` when issuing a `COUNT`.
