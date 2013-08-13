@@ -43,7 +43,7 @@ start_nginx = (environment, background=false) ->
     cmd = "LAPIS_ENVIRONMENT='#{environment}' " .. cmd
 
   if background
-    cmd = cmd .. " &"
+    cmd = cmd .. " > /dev/null 2>&1 &"
 
   os.execute cmd
 
@@ -64,6 +64,14 @@ compile_config = (config, opts={}) ->
       if value == nil then w else value
   out
 
+write_config_for = (environment, out_fname="nginx.conf.compiled") ->
+  config = require "lapis.config"
+  import compile_config from require "lapis.cmd.nginx"
+
+  vars = config.get environment
+  compiled = compile_config path.read_file"nginx.conf", vars
+  path.write_file "nginx.conf.compiled", compiled
+
 get_pid = ->
   pidfile = io.open "logs/nginx.pid"
   return unless pidfile
@@ -81,16 +89,34 @@ send_term = ->
     os.execute "kill #{pid}"
     pid
 
-execute_on_server = (code, env) ->
-  path = require "lapis.cmd.path"
+with_server = (environment, fn) ->
+  -- try to hijack it
+  fresh_server = unless send_hup!
+    start_nginx environment, true
+    true
 
+  os.execute "sleep 0.1" -- wait for workers to load
+
+  -- make sure it's running
+  return nil, "nginx failed to start, check error log" unless get_pid!
+
+  out = { fn! }
+
+  if fresh_server
+    send_term!
+  else
+    write_config_for environment
+    send_hup!
+
+  unpack out
+
+execute_on_server = (code, environment) ->
   assert loadstring code -- syntax check code
 
   config = require "lapis.config"
-  import compile_config from require "lapis.cmd.nginx"
-
   vars = config.get environment
-  compiled = compile_config path.read_file"nginx.conf", vars
+
+  compiled = compile_config path.read_file("nginx.conf"), vars
 
   code = code\gsub("\\", "\\\\")\gsub('"', '\\"')
 
@@ -146,14 +172,10 @@ execute_on_server = (code, env) ->
 
   path.write_file "nginx.conf.compiled", temp_config
 
-  assert send_hup!, "Failed to find server"
-
-  os.execute "sleep 0.1" -- wait for workers to reload
-
-  http = require "socket.http"
-  res, code = http.request "http://127.0.0.1:#{vars.port}/#{command_url}"
-  res
-
+  assert with_server environment, ->
+    http = require "socket.http"
+    res, code = http.request "http://127.0.0.1:#{vars.port}/#{command_url}"
+    res
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :execute_on_server }
+  :get_pid, :execute_on_server, :write_config_for }

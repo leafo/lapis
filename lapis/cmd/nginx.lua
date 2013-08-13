@@ -51,7 +51,7 @@ start_nginx = function(environment, background)
     cmd = "LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. cmd
   end
   if background then
-    cmd = cmd .. " &"
+    cmd = cmd .. " > /dev/null 2>&1 &"
   end
   return os.execute(cmd)
 end
@@ -93,6 +93,20 @@ compile_config = function(config, opts)
   end)
   return out
 end
+local write_config_for
+write_config_for = function(environment, out_fname)
+  if out_fname == nil then
+    out_fname = "nginx.conf.compiled"
+  end
+  local config = require("lapis.config")
+  do
+    local _obj_0 = require("lapis.cmd.nginx")
+    compile_config = _obj_0.compile_config
+  end
+  local vars = config.get(environment)
+  local compiled = compile_config(path.read_file("nginx.conf"), vars)
+  return path.write_file("nginx.conf.compiled", compiled)
+end
 local get_pid
 get_pid = function()
   local pidfile = io.open("logs/nginx.pid")
@@ -123,15 +137,32 @@ send_term = function()
     end
   end
 end
+local with_server
+with_server = function(environment, fn)
+  local fresh_server
+  if not (send_hup()) then
+    start_nginx(environment, true)
+    fresh_server = true
+  end
+  os.execute("sleep 0.1")
+  if not (get_pid()) then
+    return nil, "nginx failed to start, check error log"
+  end
+  local out = {
+    fn()
+  }
+  if fresh_server then
+    send_term()
+  else
+    write_config_for(environment)
+    send_hup()
+  end
+  return unpack(out)
+end
 local execute_on_server
-execute_on_server = function(code, env)
-  path = require("lapis.cmd.path")
+execute_on_server = function(code, environment)
   assert(loadstring(code))
   local config = require("lapis.config")
-  do
-    local _obj_0 = require("lapis.cmd.nginx")
-    compile_config = _obj_0.compile_config
-  end
   local vars = config.get(environment)
   local compiled = compile_config(path.read_file("nginx.conf"), vars)
   code = code:gsub("\\", "\\\\"):gsub('"', '\\"')
@@ -188,12 +219,12 @@ execute_on_server = function(code, env)
   local temp_config = parse:match(compiled)
   assert(inserted_server, "Failed to find server directive in config")
   path.write_file("nginx.conf.compiled", temp_config)
-  assert(send_hup(), "Failed to find server")
-  os.execute("sleep 0.1")
-  local http = require("socket.http")
-  local res
-  res, code = http.request("http://127.0.0.1:" .. tostring(vars.port) .. "/" .. tostring(command_url))
-  return res
+  return assert(with_server(environment, function()
+    local http = require("socket.http")
+    local res
+    res, code = http.request("http://127.0.0.1:" .. tostring(vars.port) .. "/" .. tostring(command_url))
+    return res
+  end))
 end
 return {
   compile_config = compile_config,
@@ -203,5 +234,6 @@ return {
   send_hup = send_hup,
   send_term = send_term,
   get_pid = get_pid,
-  execute_on_server = execute_on_server
+  execute_on_server = execute_on_server,
+  write_config_for = write_config_for
 }

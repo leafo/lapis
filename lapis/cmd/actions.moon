@@ -1,6 +1,6 @@
 
 import columnize from require "lapis.cmd.util"
-import find_nginx, start_nginx from require "lapis.cmd.nginx"
+import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 
 path = require "lapis.cmd.path"
 config = require "lapis.config"
@@ -32,14 +32,6 @@ path = annotate path, {
 write_file_safe = (file, content) ->
   return if path.exists file
   path.write_file file, content
-
-write_config_for = (environment, out_fname="nginx.conf.compiled") ->
-  config = require "lapis.config"
-  import compile_config from require "lapis.cmd.nginx"
-
-  vars = config.get environment
-  compiled = compile_config path.read_file"nginx.conf", vars
-  path.write_file "nginx.conf.compiled", compiled
 
 fail_with_message = (msg) ->
   print colors "%{bright}%{red}Aborting:%{reset} " .. msg
@@ -166,10 +158,10 @@ tasks = {
       fail_with_message("missing lua-string: exec <lua-string>") unless code
       import execute_on_server from require "lapis.cmd.nginx"
 
-      print execute_on_server code
+      unless get_pid!
+        print colors "%{green}Using temporary server..."
 
-      -- restore config and hup
-      get_task("build")[1] environment
+      print execute_on_server code, environment
   }
 
   {
@@ -179,6 +171,9 @@ tasks = {
 
     (environment=default_environment!) ->
       import execute_on_server from require "lapis.cmd.nginx"
+
+      unless get_pid!
+        print colors "%{green}Using temporary server..."
 
       print execute_on_server [[
         print = function(...)
@@ -196,10 +191,7 @@ tasks = {
         if not success then
           print(err)
         end
-      ]]
-
-      -- restore config and hup
-      get_task("build")[1] environment
+      ]], environment
   }
 
   {

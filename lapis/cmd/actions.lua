@@ -3,10 +3,10 @@ do
   local _obj_0 = require("lapis.cmd.util")
   columnize = _obj_0.columnize
 end
-local find_nginx, start_nginx
+local find_nginx, start_nginx, write_config_for, get_pid
 do
   local _obj_0 = require("lapis.cmd.nginx")
-  find_nginx, start_nginx = _obj_0.find_nginx, _obj_0.start_nginx
+  find_nginx, start_nginx, write_config_for, get_pid = _obj_0.find_nginx, _obj_0.start_nginx, _obj_0.write_config_for, _obj_0.get_pid
 end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
@@ -45,21 +45,6 @@ write_file_safe = function(file, content)
     return 
   end
   return path.write_file(file, content)
-end
-local write_config_for
-write_config_for = function(environment, out_fname)
-  if out_fname == nil then
-    out_fname = "nginx.conf.compiled"
-  end
-  config = require("lapis.config")
-  local compile_config
-  do
-    local _obj_0 = require("lapis.cmd.nginx")
-    compile_config = _obj_0.compile_config
-  end
-  local vars = config.get(environment)
-  local compiled = compile_config(path.read_file("nginx.conf"), vars)
-  return path.write_file("nginx.conf.compiled", compiled)
 end
 local fail_with_message
 fail_with_message = function(msg)
@@ -238,8 +223,10 @@ tasks = {
         local _obj_0 = require("lapis.cmd.nginx")
         execute_on_server = _obj_0.execute_on_server
       end
-      print(execute_on_server(code))
-      return get_task("build")[1](environment)
+      if not (get_pid()) then
+        print(colors("%{green}Using temporary server..."))
+      end
+      return print(execute_on_server(code, environment))
     end
   },
   {
@@ -255,7 +242,10 @@ tasks = {
         local _obj_0 = require("lapis.cmd.nginx")
         execute_on_server = _obj_0.execute_on_server
       end
-      print(execute_on_server([[        print = function(...)
+      if not (get_pid()) then
+        print(colors("%{green}Using temporary server..."))
+      end
+      return print(execute_on_server([[        print = function(...)
           local str = table.concat({...}, "\t")
           io.stdout:write(str .. "\n")
           ngx.say(str)
@@ -270,8 +260,7 @@ tasks = {
         if not success then
           print(err)
         end
-      ]]))
-      return get_task("build")[1](environment)
+      ]], environment))
     end
   },
   {
