@@ -191,8 +191,7 @@ tasks = {
   },
   {
     name = "term",
-    hidden = true,
-    help = "send TERM signal to shut down running server",
+    help = "sends TERM signal to shut down a running server",
     function()
       local send_term
       do

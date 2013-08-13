@@ -136,8 +136,7 @@ tasks = {
 
   {
     name: "term"
-    hidden: true
-    help: "send TERM signal to shut down running server"
+    help: "sends TERM signal to shut down a running server"
 
     ->
       import send_term from require "lapis.cmd.nginx"

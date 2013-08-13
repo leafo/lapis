@@ -2522,6 +2522,9 @@ Nginx does not see changes to the config file while it is running. By executing
 `lapis build` you will tell Nginx to reload the config without having to
 restart the server.
 
+As a side effect all the Nginx workers are restarted, so your application code
+is also reloaded.
+
 This is the best approach when deploying a new version of your code to
 production. You'll be able to reload everything without dropping any requests.
 
@@ -2533,9 +2536,8 @@ You can read more in the [Nginx manual](http://wiki.nginx.org/CommandLine#Loadin
 $ lapis migrate [environment]
 ```
 
-This will run any outstanding migrations. The server must be running for this
-command to work. It will also create the migrations table if it does not exist
-yet.
+This will run any outstanding migrations. It will also create the migrations
+table if it does not exist yet.
 
 This command expects a `migrations` module as described in [Running
 Migrations](#database-migrations-running-migrations).
@@ -2546,6 +2548,15 @@ It executes on the server approximately this code:
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
 ```
+
+### `lapis term`
+
+This will shut down a running server. This is useful if you've instructed Lapis
+to start Nginx as a daemon. If you are running the server in the foreground you
+can stop it using Ctrl-C.
+
+It works by sending a TERM signal to the Nginx master process.
+
 
 ## Lapis Console
 
