@@ -192,7 +192,14 @@ class Model
     Paginator @, ...
 
   _primary_cond: =>
-    { key, @[key] for key in *{@@primary_keys!} }
+    cond = {}
+    for key in *{@@primary_keys!}
+      val = @[key]
+      val = db.NULL if val == nil
+
+      cond[key] = val
+
+    cond
 
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 

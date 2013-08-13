@@ -13,15 +13,19 @@ local Model, Paginator
 do
   local _base_0 = {
     _primary_cond = function(self)
-      local _tbl_0 = { }
+      local cond = { }
       local _list_0 = {
         self.__class:primary_keys()
       }
       for _index_0 = 1, #_list_0 do
         local key = _list_0[_index_0]
-        _tbl_0[key] = self[key]
+        local val = self[key]
+        if val == nil then
+          val = db.NULL
+        end
+        cond[key] = val
       end
-      return _tbl_0
+      return cond
     end,
     url_key = function(self)
       return concat((function()
