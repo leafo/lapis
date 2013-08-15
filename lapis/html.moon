@@ -2,6 +2,7 @@
 import concat from table
 
 _G = _G
+import type, pairs, ipairs, tostring from _G
 
 punct = "[%^$()%.%[%]*+%-?]"
 escape_patt = (str) ->
@@ -123,7 +124,14 @@ class Buffer
       __index: (scope, name) ->
         handler = switch name
           when "widget"
-            (w) -> w\render @
+            (w) ->
+              w._parent = @widget
+
+              -- add helpers from parents
+              for helper in *@widget\_get_helper_chain!
+                w\include_helper helper
+
+              w\render @
           when "capture"
             (fn) -> table.concat @with_temp -> fn!
           when "element"
@@ -214,7 +222,9 @@ class Widget
   new: (opts) =>
     -- copy in options
     if opts
-      @[k] = v for k,v in pairs opts
+      for k,v in pairs opts
+        if type(k) == "string"
+          @[k] = v
 
   _set_helper_chain: (chain) => rawset @, helper_key, chain
   _get_helper_chain: => rawget @, helper_key
@@ -256,6 +266,9 @@ class Widget
     else
       Buffer buffer
 
+    old_widget = @_buffer.widget
+    @_buffer.widget = @
+
     meta = getmetatable @
     index = meta.__index
     index_is_fn = type(index) == "function"
@@ -289,6 +302,8 @@ class Widget
     setmetatable @, __index: scope
     @content ...
     setmetatable @, meta
+
+    @_buffer.widget = old_widget
     nil
 
 { :Widget, :html_writer, :render_html, :escape, :unescape }

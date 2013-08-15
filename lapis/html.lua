@@ -4,6 +4,8 @@ do
   concat = _obj_0.concat
 end
 local _G = _G
+local type, pairs, ipairs, tostring
+type, pairs, ipairs, tostring = _G.type, _G.pairs, _G.ipairs, _G.tostring
 local punct = "[%^$()%.%[%]*+%-?]"
 local escape_patt
 escape_patt = function(str)
@@ -156,6 +158,12 @@ do
           local _exp_0 = name
           if "widget" == _exp_0 then
             handler = function(w)
+              w._parent = self.widget
+              local _list_0 = self.widget:_get_helper_chain()
+              for _index_0 = 1, #_list_0 do
+                local helper = _list_0[_index_0]
+                w:include_helper(helper)
+              end
               return w:render(self)
             end
           elseif "capture" == _exp_0 then
@@ -373,6 +381,8 @@ do
       else
         self._buffer = Buffer(buffer)
       end
+      local old_widget = self._buffer.widget
+      self._buffer.widget = self
       local meta = getmetatable(self)
       local index = meta.__index
       local index_is_fn = type(index) == "function"
@@ -410,6 +420,7 @@ do
       })
       self:content(...)
       setmetatable(self, meta)
+      self._buffer.widget = old_widget
       return nil
     end
   }
@@ -418,7 +429,9 @@ do
     __init = function(self, opts)
       if opts then
         for k, v in pairs(opts) do
-          self[k] = v
+          if type(k) == "string" then
+            self[k] = v
+          end
         end
       end
     end,

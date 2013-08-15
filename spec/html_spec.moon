@@ -68,6 +68,27 @@ describe "lapis.html", ->
     input = render_widget w
     assert.same input, [[<div>What&#039;s up! id: 10</div>]]
 
+  it "helper should pass to sub widget", ->
+    class Fancy extends Widget
+      content: =>
+        text @cool_message!
+        text @thing
+
+    class Test extends Widget
+      content: =>
+        first ->
+          widget Fancy @
+
+        second ->
+          widget Fancy!
+
+    w = Test thing: "THING"
+    w\include_helper {
+      cool_message: =>
+        "so-cool"
+    }
+    assert.same [[<first>so-coolTHING</first><second>so-cool</second>]],
+      render_widget w
 
   it "helpers should resolve correctly ", ->
     class Base extends Widget
