@@ -214,3 +214,19 @@ describe "lapis.db.model.", ->
 
     assert.same { }, queries
 
+  it "should include other association", ->
+    class Things extends Model
+
+    class ThingItems extends Model
+
+    things = [Things\load { id: i, thing_id: 100 + i } for i=1,10]
+
+    ThingItems\include_in things, "thing_id"
+    ThingItems\include_in things, "thing_id", flip: true
+
+    assert.same {
+      [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
+      [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]]
+    }, queries
+
+
