@@ -180,3 +180,37 @@ describe "lapis.db.model.", ->
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
     }, queries
 
+
+  it "should check unique constraint", ->
+    class Things extends Model
+
+    query_mock['COUNT%(%*%)'] = {{ c: 127 }}
+
+    assert.same true, Things\check_unique_constraint "name", "world"
+
+    query_mock['COUNT%(%*%)'] = {{ c: 0 }}
+
+    assert.same false, Things\check_unique_constraint color: "red", height: 10
+
+
+    assert.same {
+      [[SELECT COUNT(*) as c from "things" where "name" = 'world']]
+      [[SELECT COUNT(*) as c from "things" where "height" = 10 and "color" = 'red']]
+    }, queries
+
+
+  it "should prevent update/insert", ->
+    query_mock['INSERT'] = { { id: 101 } }
+
+    class Things extends Model
+      @constraints: {
+        name: (val) => val == "hello" and "name can't be hello"
+      }
+
+    assert.same { nil, "name can't be hello"}, { Things\create name: "hello" }
+
+    thing = Things\load { id: 0, name: "hello" }
+    assert.same { nil, "name can't be hello"}, { thing\update "name" }
+
+    assert.same { }, queries
+
