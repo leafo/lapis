@@ -349,8 +349,8 @@ Let's say we've got a separate application for handling users:
 lapis = require "lapis"
 
 class UsersApplication extends lapis.Application
-  [login: "/login"] => do_login!
-  [logout: "/logout"] => do_logout!
+  [login: "/login"]: do_login!
+  [logout: "/logout"]: do_logout!
 ```
 
 We can include this application into our main one:
