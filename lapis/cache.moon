@@ -1,18 +1,23 @@
 
+import sort, concat from table
+
+cache_key = (path, params) ->
+  params = [k.. ":" .. v for k,v in pairs @GET]
+  sort params
+  params = concat params, "-"
+  path .. "#" .. params
+
 cached = (dict_name, fn) ->
   unless type(fn) == "function"
     fn = dict_name
     dict_name = "page_cache"
 
   =>
-    params = [k.. ":" .. v for k,v in pairs @GET]
-    table.sort params
-    params = table.concat params, "-"
-    cache_key = @req.parsed_url.path .. "#" .. params
+    key = cache_key @req.parsed_url.path, @GET
 
     dict = ngx.shared[dict_name]
 
-    if cache_value = dict\get cache_key
+    if cache_value = dict\get key
       ngx.header["x-memory-cache-hit"] = "1"
       cache_value = json.decode(cache_value)
       return cache_value
@@ -28,12 +33,14 @@ cached = (dict_name, fn) ->
         }
         @res.content
       }
-      dict\set cache_key, to_cache
+      dict\set key, to_cache
       ngx.header["x-memory-cache-save"] = "1"
       nil
 
     fn @
 
-
+delete = (key, dict_name="page_cache") ->
+  dict = ngx.shared[dict_name]
+  dict\delete "key"
 
 { :cached }
