@@ -1,8 +1,10 @@
 
+json = require "cjson"
+
 import sort, concat from table
 
 cache_key = (path, params) ->
-  params = [k.. ":" .. v for k,v in pairs @GET]
+  params = [k.. ":" .. v for k,v in pairs params]
   sort params
   params = concat params, "-"
   path .. "#" .. params
