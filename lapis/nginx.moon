@@ -1,13 +1,14 @@
 
-url = require "socket.url"
-upload = require "resty.upload"
-import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
+import escape_pattern, parse_content_disposition, build_url
+  from require "lapis.util"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
 
 parse_multipart = ->
   out = {}
+  upload = require "resty.upload"
+
   input = upload\new 8192
 
   current = { content: {} }

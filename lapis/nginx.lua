@@ -1,5 +1,3 @@
-local url = require("socket.url")
-local upload = require("resty.upload")
 local escape_pattern, parse_content_disposition, build_url
 do
   local _obj_0 = require("lapis.util")
@@ -16,6 +14,7 @@ end
 local parse_multipart
 parse_multipart = function()
   local out = { }
+  local upload = require("resty.upload")
   local input = upload:new(8192)
   local current = {
     content = { }
