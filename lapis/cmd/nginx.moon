@@ -118,6 +118,23 @@ execute_on_server = (code, environment) ->
 
   compiled = compile_config path.read_file("nginx.conf"), vars
 
+  -- wrap code
+  code = [[
+    print = function(...)
+      local str = table.concat({...}, "\t")
+      io.stdout:write(str .. "\n")
+      ngx.say(str)
+    end
+
+    local success, err = pcall(function()
+     ]] .. code .. [[
+    end)
+
+    if not success then
+      print(err)
+    end
+  ]]
+
   code = code\gsub("\\", "\\\\")\gsub('"', '\\"')
 
   import random_string from require "lapis.cmd.util"

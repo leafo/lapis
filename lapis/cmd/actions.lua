@@ -244,21 +244,9 @@ tasks = {
       if not (get_pid()) then
         print(colors("%{green}Using temporary server..."))
       end
-      return print(execute_on_server([[        print = function(...)
-          local str = table.concat({...}, "\t")
-          io.stdout:write(str .. "\n")
-          ngx.say(str)
-        end
-        local migrations = require("lapis.db.migrations")
-
-        local success, err = pcall(function()
-          migrations.create_migrations_table()
-          migrations.run_migrations(require("migrations"))
-        end)
-
-        if not success then
-          print(err)
-        end
+      return print(execute_on_server([[        local migrations = require("lapis.db.migrations")
+        migrations.create_migrations_table()
+        migrations.run_migrations(require("migrations"))
       ]], environment))
     end
   },
