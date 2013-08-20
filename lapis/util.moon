@@ -243,8 +243,23 @@ title_case = do
     (str\gsub "%S+", (chunk) ->
       chunk\gsub "^.", string.upper)
 
+
+autoload = (prefix, t) ->
+  setmetatable t, __index: (mod_name) =>
+    local mod
+
+    pcall ->
+      mod = require prefix .. "." .. mod_name
+
+    unless mod
+      pcall ->
+        mod = require prefix .. "." .. underscore mod_name
+
+    @[mod_name] = mod
+    mod
+
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :json_encodable, :build_url, :time_ago,
-  :time_ago_in_words, :camelize, :title_case }
+  :time_ago_in_words, :camelize, :title_case, :autoload }

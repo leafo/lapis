@@ -1,3 +1,4 @@
+local json = require("cjson")
 local sort, concat
 do
   local _obj_0 = table
@@ -8,7 +9,7 @@ cache_key = function(path, params)
   do
     local _accum_0 = { }
     local _len_0 = 1
-    for k, v in pairs(self.GET) do
+    for k, v in pairs(params) do
       _accum_0[_len_0] = k .. ":" .. v
       _len_0 = _len_0 + 1
     end

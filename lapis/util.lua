@@ -10,7 +10,7 @@ do
   local _obj_0 = math
   floor = _obj_0.floor
 end
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload
 do
   local u = url.unescape
   unescape = function(str)
@@ -355,6 +355,23 @@ do
     end))
   end
 end
+autoload = function(prefix, t)
+  return setmetatable(t, {
+    __index = function(self, mod_name)
+      local mod
+      pcall(function()
+        mod = require(prefix .. "." .. mod_name)
+      end)
+      if not (mod) then
+        pcall(function()
+          mod = require(prefix .. "." .. underscore(mod_name))
+        end)
+      end
+      self[mod_name] = mod
+      return mod
+    end
+  })
+end
 return {
   unescape = unescape,
   escape = escape,
@@ -376,5 +393,6 @@ return {
   time_ago = time_ago,
   time_ago_in_words = time_ago_in_words,
   camelize = camelize,
-  title_case = title_case
+  title_case = title_case,
+  autoload = autoload
 }

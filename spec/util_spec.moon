@@ -250,6 +250,16 @@ describe "lapis.nginx.postgres", ->
       else
         assert.same input, group[2]
 
+  it "should autoload", ->
+    package.loaded["things.hello_world"] = "yeah"
+    package.loaded["things.cool_thing"] = "cool"
 
+    mod = util.autoload "things", {}
+    assert.equal "yeah", mod.HelloWorld
+    assert.equal "cool", mod.cool_thing
 
+    assert.equal nil, mod.not_here
+    assert.equal nil, mod.not_here
+
+    assert.equal "cool", mod.cool_thing
 
