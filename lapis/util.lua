@@ -356,6 +356,9 @@ do
   end
 end
 autoload = function(prefix, t)
+  if t == nil then
+    t = { }
+  end
   return setmetatable(t, {
     __index = function(self, mod_name)
       local mod

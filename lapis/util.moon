@@ -244,7 +244,7 @@ title_case = do
       chunk\gsub "^.", string.upper)
 
 
-autoload = (prefix, t) ->
+autoload = (prefix, t={}) ->
   setmetatable t, __index: (mod_name) =>
     local mod
 
