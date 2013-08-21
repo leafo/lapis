@@ -1,4 +1,4 @@
-
+-- shared memory interface in Lua
 
 -- get
 -- get_stale
@@ -47,14 +47,19 @@ class Dict
     @store = {}
     @flags = {}
 
+make_shared = ->
+  setmetatable {}, __index: (key) =>
+    with d = Dict!
+      @[key] = d
+
 setup = ->
-  export ngx = {
-    shared: setmetatable {}, __index: (key) =>
-      with d = Dict!
-        @[key] = d
+  stack = require "lapis.spec.stack"
+  stack.push {
+    shared: make_shared!
   }
 
 teardown = ->
-  export ngx = nil
+  stack = require "lapis.spec.stack"
+  stack.pop!
 
-{ :setup, :teardown }
+{ :setup, :teardown, :make_shared }

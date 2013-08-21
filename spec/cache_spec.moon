@@ -1,37 +1,28 @@
-mock_shared = require "spec.mock_shared"
-cache = require "lapis.cache"
+lapis = require "lapis"
 
-r = {
-  GET: {}
-  res: {
-    headers: {
-      "Content-type": "text/html"
-    }
-  }
-
-  req: {
-    parsed_url: {
-      path: "/hello"
-    }
-  }
-}
+mock_shared = require "lapis.spec.shared"
+import mock_request from require "lapis.spec.request"
+import cached from require "lapis.cache"
 
 
 describe "lapis.cache", ->
-  setup ->
-    mock_shared.setup!
-
-  teardown ->
-    mock_shared.teardown!
+  before_each -> mock_shared.setup!
+  after_each -> mock_shared.teardown!
 
   it "should cache a page", ->
     counter = 0
 
-    action = cache.cached =>
-      counter += 1
-      "hello #{counter}"
+    class App extends lapis.Application
+      "/hello": cached =>
+        counter += 1
+        "hello #{counter}"
 
-    action r
+    status, first_body, first_headers = mock_request App!, "/hello"
+    assert.same 200, status
 
+    status, second_body, second_headers = mock_request App!, "/hello"
+    assert.same 200, status
+
+    assert.same first_body, second_body
 
 
