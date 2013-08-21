@@ -1,15 +1,13 @@
 
+lapis = require "lapis"
+
 import mock_request from require "lapis.spec.request"
 
--- class Application
---   "/hello": =>
+class App extends lapis.Application
+  "/hello": =>
 
 describe "application", ->
   it "should mock a request", ->
-    res = mock_request {
-      dispatch: (req, res) ->
-        ngx.say "hi"
-    }, "/hello"
-
-    assert.same "hi\n", res
+    assert.same 200, (mock_request App!, "/hello")
+    assert.same 500, (mock_request App!, "/world")
 
