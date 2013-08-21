@@ -23,6 +23,7 @@ mock_request = function(app, url, opts)
   if opts == nil then
     opts = { }
   end
+  local stack = require("lapis.spec.stack")
   local parse_query_string, encode_query_string
   do
     local _obj_0 = require("lapis.util")
@@ -99,7 +100,7 @@ mock_request = function(app, url, opts)
     end
     return accum
   end
-  ngx = {
+  stack.push({
     print = function(...)
       local args = flatten({
         ...
@@ -183,9 +184,9 @@ mock_request = function(app, url, opts)
         return opts.post or { }
       end
     }
-  }
+  })
   local response = nginx.dispatch(app)
-  ngx = old_ngx
+  stack.pop()
   logger.request = old_logger
   return response.status or 200, concat(buffer), out_headers
 end

@@ -1,4 +1,5 @@
 
+
 normalize_headers = do
   normalize = (header) ->
     header\lower!\gsub "-", "_"
@@ -8,6 +9,8 @@ normalize_headers = do
       rawget @, normalize name
 
 mock_request = (app, url, opts={}) ->
+  stack = require "lapis.spec.stack"
+
   import parse_query_string, encode_query_string from require "lapis.util"
   import insert, concat from table
 
@@ -74,7 +77,7 @@ mock_request = (app, url, opts={}) ->
 
     accum
 
-  export ngx = {
+  stack.push {
     print: (...) ->
       args = flatten { ... }
       str = [tostring a for a in *args]
@@ -130,8 +133,10 @@ mock_request = (app, url, opts={}) ->
     }
   }
 
+
   response = nginx.dispatch app
-  export ngx = old_ngx
+  stack.pop!
+
   logger.request = old_logger
   response.status or 200, concat(buffer), out_headers
 
