@@ -2197,7 +2197,7 @@ filled using the values in params.
 For example:
 
 ```moon
-[user_data: "/data/:user_id/:data_field"] =>
+[user_data: "/data/:user_id/:data_field"]: =>
 
 "/": =>
   -- returns: /data/123/height
