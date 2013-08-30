@@ -2528,6 +2528,65 @@ Implements a subset of [Lua Socket's
 
 Does not support `proxy`, `create`, `step`, or `redirect`.
 
+## Testing
+
+Lapis comes with utilities for mocking requests so you can test your
+application using unit tests that run outside of Nginx.
+
+You are free to use any testing framework you like, but in these examples we'll
+be using [Busted](http://olivinelabs.com/busted/).
+
+### Mocking A Request
+
+Before you can test an application it must be available in a module that can be
+`require`d. This means you should separate the call to `lapis.serve` and the
+definition of your application class. It's recommended to put a single
+application in it's own file and then have your Nginx Lua/MoonScript entry code
+require that model.
+
+In these examples we'll just define the application in the same file for
+simplicity.
+
+The method we are interested in for mocking a request is called `mock_request`
+defined in `lapis.spec.request`:
+
+```moon
+import mock_request from require "lapis.spec.request"
+
+status, body, headers = mock_request(app_instance, url, options)
+```
+
+For example, to test a basic application with Busted we could do:
+
+```moon
+lapis = require "lapis"
+
+import mock_request from require "lapis.spec.request"
+
+class App extends lapis.Application
+  "/hello": => "welcome to my page"
+
+describe "my application", ->
+  it "should make a request", ->
+		status, body = mock_request App!, "/hello"
+
+    assert.same 200, status
+    assert.truthy body\match "welcome"
+```
+
+`mock_request` simulates an `ngx` variable from the Lua Nginx module and
+executes the application. The `options` argument of `mock_request` can be used
+to control the kind of request that is simulated. It takes the following
+options in a table:
+
+* `get` --  A table of GET parameters to add to the url
+* `post` -- A table of POST parameters (does not change the method)
+* `method` -- The HTTP method to use
+* `headers` -- Addition HTTP request headers
+* `host` -- The host the mocked server (defaults to `"localhost"`)
+* `port` -- The port of the mocked server (defaults to `80`)
+* `scheme` -- The scheme of the mocked server (defaults to `"http"`)
+
 ## Command Line Interface
 
 The Lapis command line interface gives you a couple of handful tools for
