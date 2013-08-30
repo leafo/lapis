@@ -14,11 +14,10 @@ http {
 
     server {
         listen ${{PORT}};
-        lua_code_cache off;
+        lua_code_cache ${{CODE_CACHE}};
 
         location / {
             default_type text/html;
-            set $_url "";
             content_by_lua_file "web.lua";
         }
 

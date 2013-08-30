@@ -9,6 +9,7 @@ default_config = {
   port: "8080"
   secret: "please-change-me"
   session_name: "lapis_session"
+  code_cache: "off"
   num_workers: "1"
 }
 
