@@ -21,7 +21,9 @@ do
       end
       return true
     end,
-    delete = function(self) end,
+    delete = function(self, key)
+      return self:set(key, nil)
+    end,
     incr = function(self, key, value)
       if self.store[key] == nil then
         return nil, "not found"
@@ -29,6 +31,15 @@ do
       local new_val = self.store[key] + value
       self.store[key] = new_val
       return new_val
+    end,
+    get_keys = function(self)
+      local _accum_0 = { }
+      local _len_0 = 1
+      for k in pairs(self.store) do
+        _accum_0[_len_0] = k
+        _len_0 = _len_0 + 1
+      end
+      return _accum_0
     end,
     flush_all = function(self)
       self.store = { }

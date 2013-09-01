@@ -58,9 +58,42 @@ delete = function(key, dict_name)
   if dict_name == nil then
     dict_name = "page_cache"
   end
+  if type(key) == "table" then
+    key = cache_key(unpack(key))
+  end
   local dict = ngx.shared[dict_name]
-  return dict:delete("key")
+  return dict:delete(key)
+end
+local delete_path
+delete_path = function(path, dict_name)
+  if dict_name == nil then
+    dict_name = "page_cache"
+  end
+  local escape_pattern
+  do
+    local _obj_0 = require("lapis.util")
+    escape_pattern = _obj_0.escape_pattern
+  end
+  local dict = ngx.shared[dict_name]
+  local _list_0 = dict:get_keys()
+  for _index_0 = 1, #_list_0 do
+    local key = _list_0[_index_0]
+    if key:match("^" .. escape_pattern(path) .. "#") then
+      dict:delete(key)
+    end
+  end
+end
+local delete_all
+delete_all = function(dict_name)
+  if dict_name == nil then
+    dict_name = "page_cache"
+  end
+  return ngx.shared[dict_name]:flush_all()
 end
 return {
-  cached = cached
+  cached = cached,
+  delete = delete,
+  delete_path = delete_path,
+  delete_all = delete_all,
+  cache_key = cache_key
 }

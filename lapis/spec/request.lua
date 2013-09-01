@@ -190,7 +190,18 @@ mock_request = function(app, url, opts)
   logger.request = old_logger
   return response.status or 200, concat(buffer), out_headers
 end
+local assert_request
+assert_request = function(...)
+  local res = {
+    mock_request(...)
+  }
+  if res[1] == 500 then
+    assert(false, "Request failed: " .. res[2])
+  end
+  return unpack(res)
+end
 return {
   mock_request = mock_request,
+  assert_request = assert_request,
   normalize_headers = normalize_headers
 }

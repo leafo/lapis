@@ -16,6 +16,9 @@ local validate_functions = {
   max_length = function(input, len)
     return #tostring(input or "") <= len, "%s must be at most " .. tostring(len) .. " chars"
   end,
+  is_file = function(input)
+    return type(input) == "table" and input.filename ~= "" and input.content ~= "", "Missing file"
+  end,
   is_integer = function(input)
     return tostring(input):match("^%d+$"), "%s must be an integer"
   end,
