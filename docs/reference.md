@@ -2416,7 +2416,7 @@ class extends lapis.Application
   }
 ```
 
-> If you're using CSRF protected in a lot of actions then it might be helpful
+> If you're using CSRF protection in a lot of actions then it might be helpful
 > to create a before filter that generates the token automatically.
 
 The following functions are part of the CSRF module:
@@ -2543,7 +2543,7 @@ Implements a subset of [Lua Socket's
 
 Does not support `proxy`, `create`, `step`, or `redirect`.
 
-## Caching
+### Caching
 
 Lapis comes with a simple memory cache for caching the entire result of an
 action keyed on the parameters it receives. This is useful for speeding up the
@@ -2563,7 +2563,7 @@ lua_shared_dict page_cache 15m;
 
 Now we are ready to start using the caching module, `lapis.cache`.
 
-### cached([dict_name], fn)
+#### `cached([dict_name], fn)`
 
 Wraps an action to use the cache.
 
@@ -2593,7 +2593,7 @@ sure the cache is working.
 `dict_name` defaults to `"page_cache"`, there must be an associated shared
 dictionary defined in the Nginx configuration.
 
-### delete(key, [dict_name="page_cache"])
+#### `delete(key, [dict_name="page_cache"])`
 
 Deletes an entry from the cache. Key can either be a plain string, or a tuple
 of `{path, params}` that will be encoded as the key.
@@ -2603,11 +2603,11 @@ cache = require "lapis.cache"
 cache.delete { "/hello", { hello: "world" } }
 ```
 
-### delete_all([dict_name="page_cache"])
+#### `delete_all([dict_name="page_cache"])`
 
 Deletes all entires from the cache.
 
-### delete_path(path, [dict_name="page_cache"])
+#### `delete_path(path, [dict_name="page_cache"])`
 
 Deletes all entries for a specific path.
 
@@ -2625,6 +2625,7 @@ For example, let's create the following form:
 
 ```moon
 import Widget from require "lapis.html"
+
 class MyForm extends Widget
   content: =>
     form {
@@ -2662,10 +2663,10 @@ class extends lapis.Application
 
 An uploaded file is loaded entirely into memory, so you should be careful about
 the memory requirements of your application. Nginx limits the size of uploads
-through the [`client_max_body_size`
-directive](http://wiki.nginx.org/HttpCoreModule#client_max_body_size). It's
-only 1 megabyte by default, so if you plan to allow uploads greater than that
-you should set a new value in your Nginx configuration.
+through the
+[`client_max_body_size`](http://wiki.nginx.org/HttpCoreModule#client_max_body_size)
+directive. It's only 1 megabyte by default, so if you plan to allow uploads
+greater than that you should set a new value in your Nginx configuration.
 
 ## Testing
 
