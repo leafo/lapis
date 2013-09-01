@@ -2357,6 +2357,20 @@ Decodes a string created by `encode_with_secret`. The decoded object is only
 returned if the signature is correct. Otherwise returns `nil` and an error
 message. The secret must match what was used with `encode_with_secret`.
 
+#### `autoload(prefix, tbl={})`
+
+Makes it so accessing an unset value in `tbl` will run a `require` to search
+for the value. Useful for autoloading components split across many files.
+Overwrites `__index` metamethod. The result of the require is stored in the
+table.
+
+```
+models = autoload("models")
+
+models.HelloWorld --> will require "models.hello_world"
+models.foo_bar --> will require "models.foo_bar"
+```
+
 ### CSRF Protection
 
 CSRF protection provides a way to prevent fraudulent requests that originate
@@ -2568,7 +2582,7 @@ class App extends lapis.Application
 
 describe "my application", ->
   it "should make a request", ->
-		status, body = mock_request App!, "/hello"
+    status, body = mock_request App!, "/hello"
 
     assert.same 200, status
     assert.truthy body\match "welcome"
