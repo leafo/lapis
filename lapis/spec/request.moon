@@ -140,4 +140,12 @@ mock_request = (app, url, opts={}) ->
   logger.request = old_logger
   response.status or 200, concat(buffer), out_headers
 
-{ :mock_request, :normalize_headers }
+assert_request = (...) ->
+  res = {mock_request ...}
+
+  if res[1] == 500
+    assert false, "Request failed: " .. res[2]
+
+  unpack res
+
+{ :mock_request, :assert_request, :normalize_headers }

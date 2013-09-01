@@ -33,7 +33,8 @@ class Dict
       @set key, ...
     true
 
-  delete: =>
+  delete: (key) =>
+    @set key, nil
 
   incr: (key, value) =>
     if @store[key] == nil
@@ -42,6 +43,9 @@ class Dict
     new_val = @store[key] + value
     @store[key] = new_val
     new_val
+
+  get_keys: =>
+    [k for k in pairs @store]
 
   flush_all: =>
     @store = {}

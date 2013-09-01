@@ -1,9 +1,10 @@
 lapis = require "lapis"
 
 mock_shared = require "lapis.spec.shared"
-import mock_request from require "lapis.spec.request"
-import cached from require "lapis.cache"
+import assert_request from require "lapis.spec.request"
 
+cache = require "lapis.cache"
+import cached from cache
 
 describe "lapis.cache", ->
   before_each -> mock_shared.setup!
@@ -17,12 +18,55 @@ describe "lapis.cache", ->
         counter += 1
         "hello #{counter}"
 
-    status, first_body, first_headers = mock_request App!, "/hello"
-    assert.same 200, status
-
-    status, second_body, second_headers = mock_request App!, "/hello"
-    assert.same 200, status
+    _, first_body = assert_request App!, "/hello"
+    _, second_body = assert_request App!, "/hello"
 
     assert.same first_body, second_body
+
+
+  it "should cache a page based on params", ->
+    counters = setmetatable {}, __index: => 0
+
+    class App extends lapis.Application
+      layout: false
+
+      "/sure": cached =>
+        counters.sure += 1
+        "howdy doody"
+
+      "/hello": cached =>
+        counters[@params.counter_key] += 1
+        "hello #{counters[@params.counter_key]}"
+
+
+    _, a_body = assert_request App!, "/hello?counter_key=one&yes=dog"
+    _, b_body = assert_request App!, "/hello?yes=dog&counter_key=one"
+    assert.same a_body, b_body
+
+    assert_request App!, "/hello?yes=dog&counter_key=two"
+
+    assert.same counters, { one: 1, two: 1 }
+
+    assert_request App!, "/sure"
+    assert_request App!, "/sure"
+
+    assert.same counters, { one: 1, two: 1, sure: 1}
+
+    cache.delete_path "/hello"
+
+    assert_request App!, "/hello?counter_key=one&yes=dog"
+    assert_request App!, "/hello?yes=dog&counter_key=two"
+    assert_request App!, "/sure"
+
+    assert.same counters, { one: 2, two: 2, sure: 1}
+
+    cache.delete_all!
+
+    assert_request App!, "/hello?counter_key=one&yes=dog"
+    assert_request App!, "/hello?yes=dog&counter_key=two"
+    assert_request App!, "/sure"
+
+    assert.same counters, { one: 3, two: 3, sure: 2}
+
 
 

@@ -1,3 +1,7 @@
+-- Add the following to your http block in nginx config:
+--
+-- lua_shared_dict page_cache 15m;
+--
 
 json = require "cjson"
 
@@ -42,7 +46,21 @@ cached = (dict_name, fn) ->
     fn @
 
 delete = (key, dict_name="page_cache") ->
-  dict = ngx.shared[dict_name]
-  dict\delete "key"
+  if type(key) == "table"
+    key = cache_key unpack key
 
-{ :cached }
+  dict = ngx.shared[dict_name]
+  dict\delete key
+
+delete_path = (path, dict_name="page_cache") ->
+  import escape_pattern from require "lapis.util"
+
+  dict = ngx.shared[dict_name]
+  for key in *dict\get_keys!
+    if key\match "^" .. escape_pattern(path) .. "#"
+      dict\delete key
+
+delete_all = (dict_name="page_cache") ->
+  ngx.shared[dict_name]\flush_all!
+
+{ :cached, :delete, :delete_path, :delete_all, :cache_key }
