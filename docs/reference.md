@@ -2365,7 +2365,7 @@ for the value. Useful for autoloading components split across many files.
 Overwrites `__index` metamethod. The result of the require is stored in the
 table.
 
-```
+```moon
 models = autoload("models")
 
 models.HelloWorld --> will require "models.hello_world"
