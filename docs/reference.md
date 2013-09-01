@@ -2542,6 +2542,79 @@ Implements a subset of [Lua Socket's
 
 Does not support `proxy`, `create`, `step`, or `redirect`.
 
+## Caching
+
+Lapis comes with a simple memory cache for caching the entire result of an
+action keyed on the parameters it receives. This is useful for speeding up the
+rendering of rarely changing pages because all database calls and HTML methods
+can be skipped.
+
+The Lapis cache uses the [shared dictionary
+API](http://wiki.nginx.org/HttpLuaModule#lua_shared_dict) from HttpLuaModule.
+The first thing you'll need to do is create a shared dictionary in your Nginx
+configuration.
+
+Add the following to your `http` block to create a 15mb cache:
+
+```nginx
+lua_shared_dict page_cache 15m;
+```
+
+Now we are ready to start using the caching module, `lapis.cache`.
+
+### cached([dict_name], fn)
+
+Wraps an action to use the cache.
+
+```moon
+import cached from require "lapis.cache"
+
+class extends lapis.Application
+  [my_page: "/hello/world"]: cached =>
+    "hello world!"
+```
+
+The first request to `/hello/world` will run the action and store the result in
+the cache, all subsequent requests will skip the action and return the text
+stored in the cache.
+
+The cache will remember not only the raw text output, but also the content
+type.
+
+The cache key also takes into account any GET parameters, so a request to
+`/hello/world?one=two` is stored in a separate cache slot. Multiple parameters
+are sorted so they can come in any order and still match the same cache key.
+
+When the cache is hit, a special response header is set to 1,
+`x-memory-cache-hit`. This is useful for debugging your application to make
+sure the cache is working.
+
+`dict_name` defaults to `"page_cache"`, there must be an associated shared
+dictionary defined in the Nginx configuration.
+
+### delete(key, [dict_name="page_cache"])
+
+Deletes an entry from the cache. Key can either be a plain string, or a tuple
+of `{path, params}` that will be encoded as the key.
+
+```moon
+cache = require "lapis.cache"
+cache.delete { "/hello", { hello: "world" } }
+```
+
+### delete_all([dict_name="page_cache"])
+
+Deletes all entires from the cache.
+
+### delete_path(path, [dict_name="page_cache"])
+
+Deletes all entries for a specific path.
+
+```moon
+cache = require "lapis.cache"
+cache.delete_path "/hello"
+```
+
 ## Testing
 
 Lapis comes with utilities for mocking requests so you can test your
