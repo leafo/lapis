@@ -5,6 +5,7 @@ validate_functions = {
   exists: (input) ->
     input and input != "", "%s must be provided"
 
+  -- TODO: remove this in favor of is_file
   file_exists: (input) ->
     type(input) == "table" and input.filename != "" and input.content != "", "Missing file"
 
@@ -13,6 +14,9 @@ validate_functions = {
 
   max_length: (input, len) ->
     #tostring(input or "") <= len, "%s must be at most #{len} chars"
+
+  is_file: (input) ->
+    type(input) == "table" and input.filename != "" and input.content != "", "Missing file"
 
   is_integer: (input) ->
     tostring(input)\match"^%d+$", "%s must be an integer"

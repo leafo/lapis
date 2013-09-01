@@ -844,6 +844,7 @@ validation functions as demonstrated in the example above.
 * `max_length: Max_Length` -- value must be at most `Max_Length` chars
 * `is_integer: true` -- value matches integer pattern
 * `is_color: true` -- value matches CSS hex color (eg. `#1234AA`)
+* `is_file: true` -- value is an uploaded file, see [File Uploads](#utilities-file-uploads)
 * `equals: String` -- value is equal to String
 * `one_of: {A, B, C, ...}` -- value is equal to one of the elements in the array table
 
@@ -2614,6 +2615,57 @@ Deletes all entries for a specific path.
 cache = require "lapis.cache"
 cache.delete_path "/hello"
 ```
+
+### File Uploads
+
+File uploads can be handled with a multipart form and accessing the file from
+the `@params` of the request.
+
+For example, let's create the following form:
+
+```moon
+import Widget from require "lapis.html"
+class MyForm extends Widget
+  content: =>
+    form {
+      action: "/my_action"
+      method: "POST"
+      enctype: "multipart/form-data"
+    }, ->
+      input type: "file", name: "uploaded_file"
+      input type: "submit"
+```
+
+When the form is submitted, the file is stored as a table with `filename` and
+`content` properties in `@params` under the name of the form input:
+
+```moon
+class extends lapis.Application
+  "/my_action": =>
+    if file = @params.uploaded_file
+      "Uploaded #{file.filename}, #{#file.content}bytes"
+
+```
+
+A validation exists for ensuring that a param is an uploaded file, it's called
+`is_file`:
+
+```moon
+class extends lapis.Application
+  "/my_action": capture_errors =>
+    assert_valid @params, {
+      uploaded_file: { is_file: true }
+    }
+
+    -- file is ready to be used...
+```
+
+An uploaded file is loaded entirely into memory, so you should be careful about
+the memory requirements of your application. Nginx limits the size of uploads
+through the [`client_max_body_size`
+directive](http://wiki.nginx.org/HttpCoreModule#client_max_body_size). It's
+only 1 megabyte by default, so if you plan to allow uploads greater than that
+you should set a new value in your Nginx configuration.
 
 ## Testing
 
