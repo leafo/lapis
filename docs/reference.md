@@ -2655,7 +2655,7 @@ A validation exists for ensuring that a param is an uploaded file, it's called
 class extends lapis.Application
   "/my_action": capture_errors =>
     assert_valid @params, {
-      uploaded_file: { is_file: true }
+      { "uploaded_file", is_file: true }
     }
 
     -- file is ready to be used...
