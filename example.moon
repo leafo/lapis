@@ -1,12 +1,12 @@
 
 lapis = require "lapis"
-import Model from require "lapis.models"
+import Model from require "lapis.db.model"
 import respond_to, capture_errors from require "lapis.application"
 csrf = require "lapis.csrf"
 
 class Users extends Model
 
-class extends lapis.Application
+class App extends lapis.Application
   -- Execute code before every action
   @before_filter =>
     @csrf_token = csrf.generate_token @
@@ -39,4 +39,4 @@ class extends lapis.Application
           input type: "text", name: "username"
   }
 
-
+lapis.serve(App)
