@@ -244,19 +244,25 @@ title_case = do
       chunk\gsub "^.", string.upper)
 
 
-autoload = (prefix, t={}) ->
-  setmetatable t, __index: (mod_name) =>
-    local mod
+autoload = do
+  run = (fn) ->
+    success, err = pcall fn
+    if not success and not err\match "not found:"
+      error err
 
-    pcall ->
-      mod = require prefix .. "." .. mod_name
+  (prefix, t={}) ->
+    setmetatable t, __index: (mod_name) =>
+      local mod
 
-    unless mod
-      pcall ->
-        mod = require prefix .. "." .. underscore mod_name
+      run ->
+        mod = require prefix .. "." .. mod_name
 
-    @[mod_name] = mod
-    mod
+      unless mod
+        run ->
+          mod = require prefix .. "." .. underscore mod_name
+
+      @[mod_name] = mod
+      mod
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,

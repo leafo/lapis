@@ -355,25 +355,34 @@ do
     end))
   end
 end
-autoload = function(prefix, t)
-  if t == nil then
-    t = { }
-  end
-  return setmetatable(t, {
-    __index = function(self, mod_name)
-      local mod
-      pcall(function()
-        mod = require(prefix .. "." .. mod_name)
-      end)
-      if not (mod) then
-        pcall(function()
-          mod = require(prefix .. "." .. underscore(mod_name))
-        end)
-      end
-      self[mod_name] = mod
-      return mod
+do
+  local run
+  run = function(fn)
+    local success, err = pcall(fn)
+    if not success and not err:match("not found:") then
+      return error(err)
     end
-  })
+  end
+  autoload = function(prefix, t)
+    if t == nil then
+      t = { }
+    end
+    return setmetatable(t, {
+      __index = function(self, mod_name)
+        local mod
+        run(function()
+          mod = require(prefix .. "." .. mod_name)
+        end)
+        if not (mod) then
+          run(function()
+            mod = require(prefix .. "." .. underscore(mod_name))
+          end)
+        end
+        self[mod_name] = mod
+        return mod
+      end
+    })
+  end
 end
 return {
   unescape = unescape,
