@@ -30,7 +30,7 @@ write_session = (r) ->
     s = {}
 
     -- triggers auto_table to load the current session if it hasn't yet
-    r.session.hello
+    r.session[{}]
 
     if index = getmetatable(r.session).__index
       for k,v in pairs index
