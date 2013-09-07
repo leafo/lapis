@@ -6,19 +6,13 @@ session = require "lapis.session"
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
 
-import parse_cookie_string, to_json, build_url from require "lapis.util"
+import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
 
 local capture_errors, capture_errors_json
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
   val
-
-auto_table = (fn) ->
-  setmetatable {}, __index: (name) =>
-    result = fn!
-    setmetatable @, __index: result
-    result[name]
 
 run_before_filter = (filter, r) ->
   _write = r.write

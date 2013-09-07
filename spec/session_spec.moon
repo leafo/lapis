@@ -8,6 +8,8 @@ unless pcall -> require "crypto"
 
 session = require "lapis.session"
 
+import auto_table from require "lapis.util"
+
 describe "lapis.session", ->
   config = require"lapis.config".get!
 
@@ -49,4 +51,10 @@ describe "lapis.session", ->
   it "should not fail on malformed session", ->
     req.cookies.lapis_session = "uhhhh"
     assert.same session.get_session(req), {}
+
+  it "should write unloaded auto_table session", ->
+    req.session = auto_table -> { hello: "world" }
+    req.session.foo = "bar"
+    session.write_session req
+    assert.same session.get_session(req), { hello: "world", foo: "bar" }
 

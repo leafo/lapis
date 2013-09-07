@@ -264,8 +264,14 @@ autoload = do
       @[mod_name] = mod
       mod
 
+auto_table = (fn) ->
+  setmetatable {}, __index: (name) =>
+    result = fn!
+    setmetatable @, __index: result
+    result[name]
+
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :json_encodable, :build_url, :time_ago,
-  :time_ago_in_words, :camelize, :title_case, :autoload }
+  :time_ago_in_words, :camelize, :title_case, :autoload, :auto_table }
