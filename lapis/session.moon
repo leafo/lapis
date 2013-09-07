@@ -28,6 +28,10 @@ write_session = (r) ->
   -- see if the session has changed
   if nil != next r.session
     s = {}
+
+    -- triggers auto_table to load the current session if it hasn't yet
+    r.session.hello
+
     if index = getmetatable(r.session).__index
       for k,v in pairs index
         s[k] = v
