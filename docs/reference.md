@@ -962,7 +962,7 @@ The configuration is also made available in the application. We can get access
 to the configuration table like so:
 
 ```moon
-config = require("lapis.confg").get!
+config = require("lapis.config").get!
 print config.port -- shows the current port
 ```
 
