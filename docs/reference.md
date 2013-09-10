@@ -730,7 +730,7 @@ import capture_errors, yield_error from require "lapis.application"
 
 class App extends lapis.Application
   "/do_something": capture_errors =>
-    yield_error "something bad happend"
+    yield_error "something bad happened"
     "Hello!"
 ```
 
@@ -751,7 +751,7 @@ class App extends lapis.Application
 
     =>
       if @params.bad_thing
-        yield_error "something bad happend"
+        yield_error "something bad happened"
       render: true
   }
 ```
@@ -768,13 +768,13 @@ import capture_errors_json, yield_error from require "lapis.application"
 
 class App extends lapis.Application
   "/": capture_errors_json =>
-    yield_error "something bad happend"
+    yield_error "something bad happened"
 ```
 
 Would render (with the correct content type):
 
 ```json
-{ errors: ["something bad happend"] }
+{ errors: ["something bad happened"] }
 ```
 
 ### `assert_error`
