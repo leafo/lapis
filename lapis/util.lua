@@ -10,7 +10,7 @@ do
   local _obj_0 = math
   floor = _obj_0.floor
 end
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table
 do
   local u = url.unescape
   unescape = function(str)
@@ -356,12 +356,16 @@ do
   end
 end
 do
-  local run
-  run = function(fn)
-    local success, err = pcall(fn)
-    if not success and not err:match("not found:") then
-      return error(err)
+  local try_require
+  try_require = function(mod_name)
+    local mod
+    local success, err = pcall(function()
+      mod = require(mod_name)
+    end)
+    if not success and not err:match("module '" .. tostring(mod_name) .. "' not found:") then
+      error(err)
     end
+    return mod
   end
   autoload = function(prefix, t)
     if t == nil then
@@ -370,19 +374,26 @@ do
     return setmetatable(t, {
       __index = function(self, mod_name)
         local mod
-        run(function()
-          mod = require(prefix .. "." .. mod_name)
-        end)
+        mod = try_require(prefix .. "." .. mod_name)
         if not (mod) then
-          run(function()
-            mod = require(prefix .. "." .. underscore(mod_name))
-          end)
+          mod = try_require(prefix .. "." .. underscore(mod_name))
         end
         self[mod_name] = mod
         return mod
       end
     })
   end
+end
+auto_table = function(fn)
+  return setmetatable({ }, {
+    __index = function(self, name)
+      local result = fn()
+      setmetatable(self, {
+        __index = result
+      })
+      return result[name]
+    end
+  })
 end
 return {
   unescape = unescape,
@@ -406,5 +417,6 @@ return {
   time_ago_in_words = time_ago_in_words,
   camelize = camelize,
   title_case = title_case,
-  autoload = autoload
+  autoload = autoload,
+  auto_table = auto_table
 }

@@ -245,21 +245,24 @@ title_case = do
 
 
 autoload = do
-  run = (fn) ->
-    success, err = pcall fn
-    if not success and not err\match "not found:"
+  try_require = (mod_name) ->
+    local mod
+    success, err = pcall ->
+      mod = require mod_name
+
+    if not success and not err\match "module '#{mod_name}' not found:"
       error err
+
+    mod
 
   (prefix, t={}) ->
     setmetatable t, __index: (mod_name) =>
       local mod
 
-      run ->
-        mod = require prefix .. "." .. mod_name
+      mod = try_require prefix .. "." .. mod_name
 
       unless mod
-        run ->
-          mod = require prefix .. "." .. underscore mod_name
+        mod = try_require prefix .. "." .. underscore mod_name
 
       @[mod_name] = mod
       mod

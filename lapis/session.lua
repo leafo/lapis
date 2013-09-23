@@ -31,6 +31,7 @@ local write_session
 write_session = function(r)
   if nil ~= next(r.session) then
     local s = { }
+    local _ = r.session[{ }]
     do
       local index = getmetatable(r.session).__index
       if index then

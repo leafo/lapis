@@ -11,10 +11,10 @@ do
   local _obj_0 = require("lapis.html")
   html_writer = _obj_0.html_writer
 end
-local parse_cookie_string, to_json, build_url
+local parse_cookie_string, to_json, build_url, auto_table
 do
   local _obj_0 = require("lapis.util")
-  parse_cookie_string, to_json, build_url = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url
+  parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
 local capture_errors, capture_errors_json
 local set_and_truthy
@@ -26,18 +26,6 @@ set_and_truthy = function(val, default)
     return default
   end
   return val
-end
-local auto_table
-auto_table = function(fn)
-  return setmetatable({ }, {
-    __index = function(self, name)
-      local result = fn()
-      setmetatable(self, {
-        __index = result
-      })
-      return result[name]
-    end
-  })
 end
 local run_before_filter
 run_before_filter = function(filter, r)
