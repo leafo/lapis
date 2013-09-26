@@ -119,7 +119,7 @@ class Request
     else
       @app.router\url_for first, ...
 
-  -- @build_url! --> http://example.com:8080/current/path
+  -- @build_url! --> http://example.com:8080
   -- @build_url "hello_world" --> http://example.com:8080/hello_world
   -- @build_url "hello_world?color=blue" --> http://example.com:8080/hello_world?color=blue
   -- @build_url "cats", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
