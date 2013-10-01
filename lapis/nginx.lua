@@ -171,7 +171,7 @@ dispatch = function(app)
     ngx.status = res.status
   end
   if res.content then
-    ngx.say(res.content)
+    ngx.print(res.content)
   end
   return res
 end

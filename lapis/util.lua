@@ -388,9 +388,7 @@ auto_table = function(fn)
   return setmetatable({ }, {
     __index = function(self, name)
       local result = fn()
-      setmetatable(self, {
-        __index = result
-      })
+      getmetatable(self).__index = result
       return result[name]
     end
   })

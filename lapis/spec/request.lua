@@ -72,8 +72,10 @@ mock_request = function(app, url, opts)
   local request_method = opts.method or "GET"
   local scheme = opts.scheme or "http"
   local server_port = opts.port or 80
+  local prev_request = normalize_headers(opts.prev or { })
   local headers = {
-    Host = host
+    Host = host,
+    Cookie = prev_request.set_cookie
   }
   if opts.headers then
     for k, v in pairs(opts.headers) do

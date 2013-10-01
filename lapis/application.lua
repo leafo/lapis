@@ -282,9 +282,7 @@ do
       self.cookies = auto_table(function()
         return parse_cookie_string(self.req.headers.cookie)
       end)
-      self.session = auto_table(function()
-        return session.get_session(self)
-      end)
+      self.session = session.lazy_session(self)
     end,
     __base = _base_0,
     __name = "Request"
