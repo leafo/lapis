@@ -11,7 +11,7 @@ describe "application", ->
     assert.same 200, (mock_request App!, "/hello")
     assert.same 500, (mock_request App!, "/world")
 
-class SesssionApp extends lapis.Application
+class SessionApp extends lapis.Application
   layout: false
 
   "/set_session/:value": =>
@@ -23,6 +23,6 @@ class SesssionApp extends lapis.Application
 -- tests a series of requests
 describe "session app", ->
   it "should set and read session", ->
-    _, _, h = mock_request SesssionApp!, "/set_session/greetings"
-    status, res = mock_request SesssionApp!, "/get_session", prev: h
+    _, _, h = mock_request SessionApp!, "/set_session/greetings"
+    status, res = mock_request SessionApp!, "/get_session", prev: h
     assert.same "greetings", res
