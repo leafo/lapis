@@ -32,7 +32,7 @@ class Request
     @options = {}
 
     @cookies = auto_table -> parse_cookie_string @req.headers.cookie
-    @session = auto_table -> session.get_session self
+    @session = session.lazy_session @
 
   add_params: (params, name) =>
     self[name] = params

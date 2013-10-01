@@ -6,8 +6,17 @@ import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding
 
 config = require"lapis.config".get!
 
+import insert from table
+import setmetatable, getmetatable, rawset, rawget from _G
+
 hmac = (str) ->
   encode_base64 hmac_sha1 config.secret, str
+
+encode_session = (tbl) ->
+  s = encode_base64 json.encode tbl
+  if config.secret
+    s ..= "\n--#{hmac s}"
+  s
 
 get_session = (r) ->
   cookie = r.cookies[config.session_name]
@@ -24,25 +33,48 @@ get_session = (r) ->
 
   session or {}
 
+-- r.session should be a `lazy_session`
 write_session = (r) ->
+  current = r.session
+  current_mt = getmetatable current
+
   -- see if the session has changed
-  if nil != next r.session
+  if next(current) != nil or current_mt[1]
     s = {}
 
     -- triggers auto_table to load the current session if it hasn't yet
-    r.session[{}]
+    current[s]
 
-    if index = getmetatable(r.session).__index
+    -- copy old session
+    if index = current_mt.__index
       for k,v in pairs index
         s[k] = v
 
-    for k,v in pairs r.session
+    -- copy new values
+    for k,v in pairs current
       s[k] = v
 
-    s = encode_base64 json.encode s
-    if config.secret
-      s ..= "\n--#{hmac s}"
+    -- copy an deleted values
+    for name in *current_mt
+      s[name] = nil if rawget(current, name) == nil
 
-    r.cookies[config.session_name] = s
+    r.cookies[config.session_name] = encode_session(s)
 
-{ :get_session, :write_session }
+lazy_session = do
+
+  __newindex = (key, val) =>
+    insert getmetatable(@), key
+    rawset @, key, val
+
+  __index = (key) =>
+    mt = getmetatable @
+    s = get_session mt.req
+    mt.__index = s
+    s[key]
+
+  (req) ->
+    setmetatable {}, {
+      :__index, :__newindex, :req
+    }
+
+{ :get_session, :write_session, :encode_session, :lazy_session }
