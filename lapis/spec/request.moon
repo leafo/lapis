@@ -53,8 +53,11 @@ mock_request = (app, url, opts={}) ->
   server_port = opts.port or 80
 
 
+  prev_request = normalize_headers(opts.prev or {})
+
   headers = {
     Host: host
+    Cookie: prev_request.set_cookie
   }
 
   if opts.headers
