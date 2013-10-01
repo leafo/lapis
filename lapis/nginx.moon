@@ -117,7 +117,7 @@ dispatch = (app) ->
   res = build_response!
   app\dispatch res.req, res
   ngx.status = res.status if res.status
-  ngx.say res.content if res.content
+  ngx.print res.content if res.content
   res
 
 debug = (thing) ->
