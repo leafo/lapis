@@ -36,6 +36,7 @@ build = {
 		["lapis.cmd.templates.web"] = "lapis/cmd/templates/web.lua",
 		["lapis.cmd.util"] = "lapis/cmd/util.lua",
 		["lapis.config"] = "lapis/config.lua",
+		["lapis.config.current"] = "lapis/config/current.lua",
 		["lapis.csrf"] = "lapis/csrf.lua",
 		["lapis.db"] = "lapis/db.lua",
 		["lapis.db.migrations"] = "lapis/db/migrations.lua",
