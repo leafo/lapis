@@ -270,7 +270,7 @@ autoload = do
 auto_table = (fn) ->
   setmetatable {}, __index: (name) =>
     result = fn!
-    setmetatable @, __index: result
+    getmetatable(@).__index = result
     result[name]
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
