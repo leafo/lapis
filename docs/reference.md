@@ -2726,6 +2726,17 @@ options in a table:
 * `host` -- The host the mocked server (defaults to `"localhost"`)
 * `port` -- The port of the mocked server (defaults to `80`)
 * `scheme` -- The scheme of the mocked server (defaults to `"http"`)
+* `prev` -- A table of the response headers from a previous `mock_request`
+
+
+If you want to simulate a series of requests that use persistant data like
+cookies or sessions you can use the `prev` option in the table. It takes the
+headers returned from a previous request.
+
+```moon
+r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
+r1_status, r1_res = mock_request SessionApp!, "/second_url", prev: r1_headers
+```
 
 ## Command Line Interface
 
