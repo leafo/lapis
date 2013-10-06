@@ -72,6 +72,10 @@ mock_request = function(app, url, opts)
   local request_method = opts.method or "GET"
   local scheme = opts.scheme or "http"
   local server_port = opts.port or 80
+  local http_host = host
+  if not (server_port == 80) then
+    http_host = http_host .. ":" .. tostring(server_port)
+  end
   local prev_request = normalize_headers(opts.prev or { })
   local headers = {
     Host = host,
@@ -131,6 +135,7 @@ mock_request = function(app, url, opts)
     header = out_headers,
     var = setmetatable({
       host = host,
+      http_host = http_host,
       request_method = request_method,
       request_uri = request_uri,
       scheme = scheme,

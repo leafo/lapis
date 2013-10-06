@@ -171,17 +171,7 @@ do
       if path then
         local _path, query = path:match("^(.-)%?(.*)$")
         path = _path or path
-        if query then
-          path = _path
-          do
-            local old_query = parsed.query
-            if old_query then
-              parsed.query = old_query .. "&" .. query
-            else
-              parsed.query = query
-            end
-          end
-        end
+        parsed.query = query
       end
       parsed.path = path
       if parsed.port == "80" then

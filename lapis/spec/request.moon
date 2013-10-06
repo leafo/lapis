@@ -52,6 +52,9 @@ mock_request = (app, url, opts={}) ->
   scheme = opts.scheme or "http"
   server_port = opts.port or 80
 
+  http_host = host
+  unless server_port == 80
+    http_host ..= ":#{server_port}"
 
   prev_request = normalize_headers(opts.prev or {})
 
@@ -95,6 +98,7 @@ mock_request = (app, url, opts={}) ->
 
     var: setmetatable {
       :host
+      :http_host
       :request_method
       :request_uri
       :scheme

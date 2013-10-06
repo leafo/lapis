@@ -133,14 +133,7 @@ class Request
     if path
       _path, query = path\match("^(.-)%?(.*)$")
       path = _path or path
-
-      if query
-        path = _path
-        -- join the queries
-        parsed.query = if old_query = parsed.query
-          old_query .. "&" .. query
-        else
-          query
+      parsed.query = query
 
     parsed.path = path
 
