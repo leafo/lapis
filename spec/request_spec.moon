@@ -1,7 +1,7 @@
 
 lapis = require "lapis"
 
-import mock_request from require "lapis.spec.request"
+import mock_request, mock_action from require "lapis.spec.request"
 
 class App extends lapis.Application
   "/hello": =>
@@ -26,3 +26,9 @@ describe "session app", ->
     _, _, h = mock_request SessionApp!, "/set_session/greetings"
     status, res = mock_request SessionApp!, "/get_session", prev: h
     assert.same "greetings", res
+
+
+describe "mock action", ->
+  assert.same "hello", mock_action "/hello", {}, ->
+    "hello"
+

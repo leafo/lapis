@@ -151,4 +151,17 @@ assert_request = (...) ->
 
   unpack res
 
-{ :mock_request, :assert_request, :normalize_headers }
+-- makes an anonymous application to mock a single action
+-- returns the result of the function instead of the request
+mock_action = (url, opts, fn) ->
+  import Application from require "lapis.application"
+  local ret
+  class A extends Application
+    "/*": (...) ->
+      ret = { fn ... }
+      nil
+
+  assert_request A!, url, opts
+  unpack ret
+
+{ :mock_request, :assert_request, :normalize_headers, :mock_action }

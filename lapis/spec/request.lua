@@ -202,8 +202,61 @@ assert_request = function(...)
   end
   return unpack(res)
 end
+local mock_action
+mock_action = function(url, opts, fn)
+  local Application
+  do
+    local _obj_0 = require("lapis.application")
+    Application = _obj_0.Application
+  end
+  local ret
+  local A
+  do
+    local _parent_0 = Application
+    local _base_0 = {
+      ["/*"] = function(...)
+        ret = {
+          fn(...)
+        }
+        return nil
+      end
+    }
+    _base_0.__index = _base_0
+    setmetatable(_base_0, _parent_0.__base)
+    local _class_0 = setmetatable({
+      __init = function(self, ...)
+        return _parent_0.__init(self, ...)
+      end,
+      __base = _base_0,
+      __name = "A",
+      __parent = _parent_0
+    }, {
+      __index = function(cls, name)
+        local val = rawget(_base_0, name)
+        if val == nil then
+          return _parent_0[name]
+        else
+          return val
+        end
+      end,
+      __call = function(cls, ...)
+        local _self_0 = setmetatable({}, _base_0)
+        cls.__init(_self_0, ...)
+        return _self_0
+      end
+    })
+    _base_0.__class = _class_0
+    if _parent_0.__inherited then
+      _parent_0.__inherited(_parent_0, _class_0)
+    end
+    A = _class_0
+  end
+  assert_request(A(), url, opts)
+  return unpack(ret)
+end
 return {
   mock_request = mock_request,
   assert_request = assert_request,
-  normalize_headers = normalize_headers
+  normalize_headers = normalize_headers,
+  mock_action = mock_action
 }

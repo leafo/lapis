@@ -10,11 +10,15 @@ local C, Cs, Ct, Cmt, Cg, Cb, Cc
 C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
 local reduce
 reduce = function(items, fn)
-  if #items == 1 then
+  local count = #items
+  if count == 0 then
+    error("reducing 0 item list")
+  end
+  if count == 1 then
     return items[1]
   end
   local left = fn(items[1], items[2])
-  for i = 3, #items do
+  for i = 3, count do
     left = fn(left, items[i])
   end
   return left

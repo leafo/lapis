@@ -12,9 +12,11 @@ import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
 
 reduce = (items, fn) ->
-  return items[1] if #items == 1
+  count = #items
+  error "reducing 0 item list" if count == 0
+  return items[1] if count == 1
   left = fn items[1], items[2]
-  for i = 3, #items
+  for i = 3, count
     left = fn left, items[i]
   left
 
