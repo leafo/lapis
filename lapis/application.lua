@@ -359,7 +359,7 @@ do
         layout = false,
         content_type = "text/html",
         self.app.error_page({
-          staus = 500,
+          status = 500,
           err = err,
           trace = trace
         })
