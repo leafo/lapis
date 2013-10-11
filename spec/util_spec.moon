@@ -263,3 +263,46 @@ describe "lapis.nginx.postgres", ->
 
     assert.equal "cool", mod.cool_thing
 
+describe "lapis.util.mixin", ->
+  it "should mixin mixins", ->
+    import insert from table
+    log = {}
+
+    class Mixin
+      new: =>
+        insert log, "initializing Mixin"
+        @thing = { "hello" }
+
+      pop: =>
+
+      add_one: (num) =>
+        insert log, "Before add_one (Mixin), #{num}"
+
+    class Mixin2
+      new: =>
+        insert log, "initializing Mixin2"
+
+      add_one: (num) =>
+        insert log, "Before add_one (Mixin2), #{num}"
+
+    class One
+      util.mixin Mixin
+      util.mixin Mixin2
+
+      add_one: (num) =>
+        num + 1
+
+      new: =>
+        insert log, "initializing One"
+
+    o = One!
+    assert.equal o\add_one(12), 13
+    assert.same log, {
+      "initializing One"
+      "initializing Mixin"
+      "initializing Mixin2"
+      "Before add_one (Mixin2), 12"
+      "Before add_one (Mixin), 12"
+    }
+
+
