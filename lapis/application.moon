@@ -311,7 +311,7 @@ class Application
       status: 500
       layout: false
       content_type: "text/html"
-      @app.error_page { staus: 500, :err, :trace }
+      @app.error_page { status: 500, :err, :trace }
     }
     r\render!
     logger.request r
