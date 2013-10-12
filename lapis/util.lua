@@ -10,7 +10,7 @@ do
   local _obj_0 = math
   floor = _obj_0.floor
 end
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin
 do
   local u = url.unescape
   unescape = function(str)
@@ -393,6 +393,66 @@ auto_table = function(fn)
     end
   })
 end
+do
+  local get_local
+  get_local = function(search_name, level)
+    if level == nil then
+      level = 1
+    end
+    level = level + 1
+    local i = 1
+    while true do
+      local name, val = debug.getlocal(level, i)
+      if not (name) then
+        break
+      end
+      if name == search_name then
+        return val
+      end
+      i = i + 1
+    end
+  end
+  local empty_func = string.dump(function() end)
+  mixin = function(mix)
+    local cls = get_local("self", 2)
+    local base = cls.__base
+    for member_name, member_val in pairs(mix.__base) do
+      local _continue_0 = false
+      repeat
+        if member_name:match("^__") then
+          _continue_0 = true
+          break
+        end
+        do
+          local existing = base[member_name]
+          if existing then
+            if type(existing) == "function" and type(member_val) == "function" then
+              base[member_name] = function(...)
+                member_val(...)
+                return existing(...)
+              end
+            else
+              base[member_name] = member_val
+            end
+          else
+            base[member_name] = member_val
+          end
+        end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    if mix.__init and string.dump(mix.__init) ~= empty_func then
+      local old_ctor = cls.__init
+      cls.__init = function(...)
+        old_ctor(...)
+        return mix.__init(...)
+      end
+    end
+  end
+end
 return {
   unescape = unescape,
   escape = escape,
@@ -416,5 +476,6 @@ return {
   camelize = camelize,
   title_case = title_case,
   autoload = autoload,
-  auto_table = auto_table
+  auto_table = auto_table,
+  mixin = mixin
 }
