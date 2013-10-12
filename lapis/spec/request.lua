@@ -259,9 +259,49 @@ mock_action = function(url, opts, fn)
   assert_request(A(), url, opts)
   return unpack(ret)
 end
+local server_loaded = 0
+local load_test_server
+load_test_server = function(env)
+  if env == nil then
+    env = "test"
+  end
+  server_loaded = server_loaded + 1
+  if server_loaded > 1 then
+    return 
+  end
+  local write_config_for, send_hup
+  do
+    local _obj_0 = require("lapis.cmd.nginx")
+    write_config_for, send_hup = _obj_0.write_config_for, _obj_0.send_hup
+  end
+  write_config_for(env)
+  send_hup()
+  return socket.sleep(0.1)
+end
+local close_test_server
+close_test_server = function(env)
+  server_loaded = server_loaded - 1
+  if not (server_loaded) then
+    return 
+  end
+end
+local request
+request = function(url)
+  if not (server_loaded > 0) then
+    error("The test server is not loaded!")
+  end
+  local socket = require("socket")
+  local config = require("lapis.config").get("test")
+  local http = require("socket.http")
+  local res, code = http.request("http://127.0.0.1:" .. tostring(config.port) .. "/" .. tostring(url or ""))
+  return res
+end
 return {
   mock_request = mock_request,
   assert_request = assert_request,
   normalize_headers = normalize_headers,
-  mock_action = mock_action
+  mock_action = mock_action,
+  request = request,
+  load_test_server = load_test_server,
+  close_test_server = close_test_server
 }

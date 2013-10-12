@@ -168,4 +168,30 @@ mock_action = (url, opts, fn) ->
   assert_request A!, url, opts
   unpack ret
 
-{ :mock_request, :assert_request, :normalize_headers, :mock_action }
+server_loaded = 0
+
+load_test_server = (env="test") ->
+  server_loaded += 1
+  return if server_loaded > 1
+  import write_config_for, send_hup from require "lapis.cmd.nginx"
+
+  write_config_for env
+  send_hup!
+  socket.sleep 0.1
+
+close_test_server = (env) ->
+  server_loaded -= 1
+  return unless server_loaded
+
+-- hits the server in test environment
+request = (url) ->
+  error "The test server is not loaded!" unless server_loaded > 0
+  socket = require "socket"
+  config = require("lapis.config").get "test"
+  http = require "socket.http"
+
+  res, code = http.request "http://127.0.0.1:#{config.port}/#{url or ""}"
+  res
+
+{ :mock_request, :assert_request, :normalize_headers, :mock_action, :request,
+  :load_test_server, :close_test_server }
