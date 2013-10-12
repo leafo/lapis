@@ -91,7 +91,13 @@ compile_config = function(config, opts)
       end
     end
   end)
-  return out
+  local env_header
+  if opts._name then
+    env_header = "env LAPIS_ENVIRONMENT=" .. tostring(opts._name) .. ";\n"
+  else
+    env_header = "env LAPIS_ENVIRONMENT;\n"
+  end
+  return env_header .. out
 end
 local write_config_for
 write_config_for = function(environment, out_fname)

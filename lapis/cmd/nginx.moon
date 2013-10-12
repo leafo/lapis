@@ -62,7 +62,13 @@ compile_config = (config, opts={}) ->
     else
       value = env[name]
       if value == nil then w else value
-  out
+
+  env_header = if opts._name
+    "env LAPIS_ENVIRONMENT=#{opts._name};\n"
+  else
+    "env LAPIS_ENVIRONMENT;\n"
+
+  env_header .. out
 
 write_config_for = (environment, out_fname="nginx.conf.compiled") ->
   config = require "lapis.config"
