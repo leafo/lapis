@@ -1,5 +1,10 @@
 
+CONFIG_PATH = "nginx.conf"
+COMPILED_CONFIG_PATH = "nginx.conf.compiled"
+
 path = require "lapis.cmd.path"
+
+local *
 
 find_nginx = do
   nginx_bin = "nginx"
@@ -29,7 +34,7 @@ filters = {
     "%s dbname=%s user=%s password=%s"\format host, db, user, password
 }
 
-start_nginx = (environment, background=false) ->
+start_nginx = (background=false) ->
   nginx = find_nginx!
   return nil, "can't find nginx" unless nginx
 
@@ -37,10 +42,7 @@ start_nginx = (environment, background=false) ->
   os.execute "touch logs/error.log"
   os.execute "touch logs/access.log"
 
-  cmd =  nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"'
-
-  if environment
-    cmd = "LAPIS_ENVIRONMENT='#{environment}' " .. cmd
+  cmd = nginx .. ' -p "$(pwd)"/ -c "' .. COMPILED_CONFIG_PATH .. '"'
 
   if background
     cmd = cmd .. " > /dev/null 2>&1 &"
@@ -70,13 +72,13 @@ compile_config = (config, opts={}) ->
 
   env_header .. out
 
-write_config_for = (environment, out_fname="nginx.conf.compiled") ->
-  config = require "lapis.config"
-  import compile_config from require "lapis.cmd.nginx"
+write_config_for = (environment) ->
+  if type(environment) == "string"
+    config = require "lapis.config"
+    environment = config.get environment
 
-  vars = config.get environment
-  compiled = compile_config path.read_file"nginx.conf", vars
-  path.write_file "nginx.conf.compiled", compiled
+  compiled = compile_config path.read_file(CONFIG_PATH), environment
+  path.write_file COMPILED_CONFIG_PATH, compiled
 
 get_pid = ->
   pidfile = io.open "logs/nginx.pid"
@@ -95,10 +97,67 @@ send_term = ->
     os.execute "kill #{pid}"
     pid
 
+pushed_server = nil
+push_server = (environment, process_fn) ->
+  pid = get_pid!
+  error "Already pushed a server" if pushed_server
+
+  socket = require "socket"
+
+  existing_config = path.read_file COMPILED_CONFIG_PATH
+
+  -- get a free port
+  sock = socket.bind "*", 0
+  _, port = sock\getsockname!
+  sock\close!
+
+  if type(environment) == "string"
+    environment = require("lapis.config").get environment
+
+  -- Override the port with our temporary one
+  -- TODO: this will fail when LAPIS_PORT set
+  environment = setmetatable { :port }, __index: environment
+
+  write_config_for environment
+
+  if pid
+    send_hup!
+  else
+    start_nginx true
+
+  max_tries = 100
+  while true
+    status = socket.connect "127.0.0.1", port
+    if status
+      break
+
+    max_tries -= 1
+    error "Timed out waiting for server to start" if max_tries == 0
+    socket.sleep 0
+
+  pushed_server = {
+    previous: existing_config
+    name: environment.__name
+    :port, :pid
+  }
+
+  pushed_server
+
+pop_server = ->
+  error "no server was pushed" unless pushed_server
+  path.write_file COMPILED_CONFIG_PATH, assert pushed_server.previous
+
+  if pushed_server.pid
+    send_hup!
+  else
+    send_term!
+
+  pushed_server = nil
+
 with_server = (environment, fn) ->
   -- try to hijack it
   fresh_server = unless send_hup!
-    start_nginx environment, true
+    start_nginx true
     true
 
   os.execute "sleep 0.1" -- wait for workers to load
@@ -122,7 +181,7 @@ execute_on_server = (code, environment) ->
   config = require "lapis.config"
   vars = config.get environment
 
-  compiled = compile_config path.read_file("nginx.conf"), vars
+  compiled = compile_config path.read_file(CONFIG_PATH), vars
 
   -- wrap code
   code = [[
@@ -193,7 +252,7 @@ execute_on_server = (code, environment) ->
   temp_config = parse\match compiled
   assert inserted_server, "Failed to find server directive in config"
 
-  path.write_file "nginx.conf.compiled", temp_config
+  path.write_file COMPILED_CONFIG_PATH, temp_config
 
   assert with_server environment, ->
     http = require "socket.http"
@@ -201,4 +260,4 @@ execute_on_server = (code, environment) ->
     res
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :execute_on_server, :write_config_for }
+  :get_pid, :execute_on_server, :write_config_for, :push_server, :pop_server }

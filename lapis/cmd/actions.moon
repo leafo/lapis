@@ -104,7 +104,7 @@ tasks = {
         fail_with_message "can not find an installation of OpenResty"
 
       write_config_for environment
-      start_nginx environment
+      start_nginx!
   }
 
   {

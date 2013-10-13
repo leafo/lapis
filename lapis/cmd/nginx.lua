@@ -1,5 +1,7 @@
+local CONFIG_PATH = "nginx.conf"
+local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
-local find_nginx
+local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, pushed_server, push_server, pop_server, with_server, execute_on_server
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -25,7 +27,7 @@ do
     end
   end
 end
-local filters = {
+filters = {
   pg = function(url)
     local user, password, host, db = url:match("^postgres://(.*):(.*)@(.*)/(.*)$")
     if not (user) then
@@ -34,8 +36,7 @@ local filters = {
     return ("%s dbname=%s user=%s password=%s"):format(host, db, user, password)
   end
 }
-local start_nginx
-start_nginx = function(environment, background)
+start_nginx = function(background)
   if background == nil then
     background = false
   end
@@ -46,16 +47,12 @@ start_nginx = function(environment, background)
   path.mkdir("logs")
   os.execute("touch logs/error.log")
   os.execute("touch logs/access.log")
-  local cmd = nginx .. ' -p "$(pwd)"/ -c "nginx.conf.compiled"'
-  if environment then
-    cmd = "LAPIS_ENVIRONMENT='" .. tostring(environment) .. "' " .. cmd
-  end
+  local cmd = nginx .. ' -p "$(pwd)"/ -c "' .. COMPILED_CONFIG_PATH .. '"'
   if background then
     cmd = cmd .. " > /dev/null 2>&1 &"
   end
   return os.execute(cmd)
 end
-local compile_config
 compile_config = function(config, opts)
   if opts == nil then
     opts = { }
@@ -99,21 +96,14 @@ compile_config = function(config, opts)
   end
   return env_header .. out
 end
-local write_config_for
-write_config_for = function(environment, out_fname)
-  if out_fname == nil then
-    out_fname = "nginx.conf.compiled"
+write_config_for = function(environment)
+  if type(environment) == "string" then
+    local config = require("lapis.config")
+    environment = config.get(environment)
   end
-  local config = require("lapis.config")
-  do
-    local _obj_0 = require("lapis.cmd.nginx")
-    compile_config = _obj_0.compile_config
-  end
-  local vars = config.get(environment)
-  local compiled = compile_config(path.read_file("nginx.conf"), vars)
-  return path.write_file("nginx.conf.compiled", compiled)
+  local compiled = compile_config(path.read_file(CONFIG_PATH), environment)
+  return path.write_file(COMPILED_CONFIG_PATH, compiled)
 end
-local get_pid
 get_pid = function()
   local pidfile = io.open("logs/nginx.pid")
   if not (pidfile) then
@@ -123,7 +113,6 @@ get_pid = function()
   pidfile:close()
   return pid:match("[^%s]+")
 end
-local send_hup
 send_hup = function()
   do
     local pid = get_pid()
@@ -133,7 +122,6 @@ send_hup = function()
     end
   end
 end
-local send_term
 send_term = function()
   do
     local pid = get_pid()
@@ -143,11 +131,67 @@ send_term = function()
     end
   end
 end
-local with_server
+pushed_server = nil
+push_server = function(environment, process_fn)
+  local pid = get_pid()
+  if pushed_server then
+    error("Already pushed a server")
+  end
+  local socket = require("socket")
+  local existing_config = path.read_file(COMPILED_CONFIG_PATH)
+  local sock = socket.bind("*", 0)
+  local _, port = sock:getsockname()
+  sock:close()
+  if type(environment) == "string" then
+    environment = require("lapis.config").get(environment)
+  end
+  environment = setmetatable({
+    port = port
+  }, {
+    __index = environment
+  })
+  write_config_for(environment)
+  if pid then
+    send_hup()
+  else
+    start_nginx(true)
+  end
+  local max_tries = 100
+  while true do
+    local status = socket.connect("127.0.0.1", port)
+    if status then
+      break
+    end
+    max_tries = max_tries - 1
+    if max_tries == 0 then
+      error("Timed out waiting for server to start")
+    end
+    socket.sleep(0)
+  end
+  pushed_server = {
+    previous = existing_config,
+    name = environment.__name,
+    port = port,
+    pid = pid
+  }
+  return pushed_server
+end
+pop_server = function()
+  if not (pushed_server) then
+    error("no server was pushed")
+  end
+  path.write_file(COMPILED_CONFIG_PATH, assert(pushed_server.previous))
+  if pushed_server.pid then
+    send_hup()
+  else
+    send_term()
+  end
+  pushed_server = nil
+end
 with_server = function(environment, fn)
   local fresh_server
   if not (send_hup()) then
-    start_nginx(environment, true)
+    start_nginx(true)
     fresh_server = true
   end
   os.execute("sleep 0.1")
@@ -165,12 +209,11 @@ with_server = function(environment, fn)
   end
   return unpack(out)
 end
-local execute_on_server
 execute_on_server = function(code, environment)
   assert(loadstring(code))
   local config = require("lapis.config")
   local vars = config.get(environment)
-  local compiled = compile_config(path.read_file("nginx.conf"), vars)
+  local compiled = compile_config(path.read_file(CONFIG_PATH), vars)
   code = [[    print = function(...)
       local str = table.concat({...}, "\t")
       io.stdout:write(str .. "\n")
@@ -237,7 +280,7 @@ execute_on_server = function(code, environment)
   })
   local temp_config = parse:match(compiled)
   assert(inserted_server, "Failed to find server directive in config")
-  path.write_file("nginx.conf.compiled", temp_config)
+  path.write_file(COMPILED_CONFIG_PATH, temp_config)
   return assert(with_server(environment, function()
     local http = require("socket.http")
     local res
@@ -254,5 +297,7 @@ return {
   send_term = send_term,
   get_pid = get_pid,
   execute_on_server = execute_on_server,
-  write_config_for = write_config_for
+  write_config_for = write_config_for,
+  push_server = push_server,
+  pop_server = pop_server
 }

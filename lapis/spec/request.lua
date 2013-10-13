@@ -260,40 +260,41 @@ mock_action = function(url, opts, fn)
   return unpack(ret)
 end
 local server_loaded = 0
+local server_port = nil
 local load_test_server
-load_test_server = function(env)
-  if env == nil then
-    env = "test"
-  end
+load_test_server = function()
   server_loaded = server_loaded + 1
-  if server_loaded > 1 then
+  if not (server_loaded == 1) then
     return 
   end
-  local write_config_for, send_hup
+  local push_server
   do
     local _obj_0 = require("lapis.cmd.nginx")
-    write_config_for, send_hup = _obj_0.write_config_for, _obj_0.send_hup
+    push_server = _obj_0.push_server
   end
-  write_config_for(env)
-  send_hup()
-  return socket.sleep(0.1)
+  local server = assert(push_server("test"), "Failed to start test server")
+  server_port = server.port
 end
 local close_test_server
-close_test_server = function(env)
+close_test_server = function()
   server_loaded = server_loaded - 1
-  if not (server_loaded) then
+  if not (server_loaded == 0) then
     return 
   end
+  local pop_server
+  do
+    local _obj_0 = require("lapis.cmd.nginx")
+    pop_server = _obj_0.pop_server
+  end
+  return pop_server()
 end
 local request
 request = function(url)
   if not (server_loaded > 0) then
     error("The test server is not loaded!")
   end
-  local socket = require("socket")
-  local config = require("lapis.config").get("test")
   local http = require("socket.http")
-  local res, code = http.request("http://127.0.0.1:" .. tostring(config.port) .. "/" .. tostring(url or ""))
+  local res, code = http.request("http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""))
   return res
 end
 return {
