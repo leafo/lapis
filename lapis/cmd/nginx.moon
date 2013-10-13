@@ -72,12 +72,16 @@ compile_config = (config, opts={}) ->
 
   env_header .. out
 
-write_config_for = (environment) ->
+write_config_for = (environment, process_fn, ...) ->
   if type(environment) == "string"
     config = require "lapis.config"
     environment = config.get environment
 
   compiled = compile_config path.read_file(CONFIG_PATH), environment
+
+  if process_fn
+    compiled = process_fn compiled, ...
+
   path.write_file COMPILED_CONFIG_PATH, compiled
 
 get_pid = ->
@@ -118,7 +122,7 @@ push_server = (environment, process_fn) ->
   -- TODO: this will fail when LAPIS_PORT set
   environment = setmetatable { :port }, __index: environment
 
-  write_config_for environment
+  write_config_for environment, process_fn, port
 
   if pid
     send_hup!
@@ -154,34 +158,16 @@ pop_server = ->
 
   pushed_server = nil
 
+-- helper to push and pop in one go
 with_server = (environment, fn) ->
-  -- try to hijack it
-  fresh_server = unless send_hup!
-    start_nginx true
-    true
-
-  os.execute "sleep 0.1" -- wait for workers to load
-
-  -- make sure it's running
-  return nil, "nginx failed to start, check error log" unless get_pid!
-
+  push_server environment
   out = { fn! }
-
-  if fresh_server
-    send_term!
-  else
-    write_config_for environment
-    send_hup!
-
+  pop_server!
   unpack out
 
+--
 execute_on_server = (code, environment) ->
   assert loadstring code -- syntax check code
-
-  config = require "lapis.config"
-  vars = config.get environment
-
-  compiled = compile_config path.read_file(CONFIG_PATH), vars
 
   -- wrap code
   code = [[
@@ -202,62 +188,57 @@ execute_on_server = (code, environment) ->
 
   code = code\gsub("\\", "\\\\")\gsub('"', '\\"')
 
-  import random_string from require "lapis.cmd.util"
-  command_url = "/#{random_string 20}"
+  pushed = push_server environment, (compiled_config, port) ->
+    -- override the config, replacing the first server with an action that runs
+    -- the code and remove all the others
+    inserted_server = false
+    replace_server = (server) ->
+      return "" if inserted_server
+      inserted_server = true
+      [[
+        server {
+          listen ]] .. port .. [[;
 
-  inserted_server = false
-  replace_server = (server) ->
-    return "" if inserted_server
-    inserted_server = true
-    [[
-      server {
-        listen ]] .. vars.port .. [[;
+          location = / {
+            default_type 'text/plain';
+            allow 127.0.0.1;
+            deny all;
 
-        location = ]] .. command_url .. [[ {
-          default_type 'text/plain';
-          allow 127.0.0.1;
-          deny all;
+            content_by_lua "
+              ]] .. code .. [[
 
-          content_by_lua "
-            ]] .. code .. [[
+            ";
+          }
 
-          ";
+          location = /query {
+            internal;
+            postgres_pass database;
+            postgres_query $echo_request_body;
+          }
         }
+      ]]
 
-        location / {
-          return 503;
-        }
+    lpeg = require "lpeg"
 
-        location = /query {
-          internal;
-          postgres_pass database;
-          postgres_query $echo_request_body;
-        }
-      }
-    ]]
+    import R, S, V, P, V from lpeg
+    import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
 
-  lpeg = require "lpeg"
+    white = S" \t\r\n"^0
+    parse = P {
+      V"root"
+      balanced: P"{" * (V"balanced" + (1 - P"}"))^0 * P"}"
+      server_block: S" \t"^0 * P"server" * white * V"balanced" / replace_server
+      root: Cs (V"server_block" + 1)^1 * -1
+    }
 
-  import R, S, V, P, V from lpeg
-  import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
+    compiled_config = parse\match compiled_config
+    assert compiled_config, "Failed to find server directive in config"
 
-  white = S" \t\r\n"^0
-  parse = P {
-    V"root"
-    balanced: P"{" * (V"balanced" + (1 - P"}"))^0 * P"}"
-    server_block: S" \t"^0 * P"server" * white * V"balanced" / replace_server
-    root: Cs (V"server_block" + 1)^1 * -1
-  }
+  http = require "socket.http"
+  res, code = http.request "http://127.0.0.1:#{pushed.port}/"
+  pop_server!
 
-  temp_config = parse\match compiled
-  assert inserted_server, "Failed to find server directive in config"
-
-  path.write_file COMPILED_CONFIG_PATH, temp_config
-
-  assert with_server environment, ->
-    http = require "socket.http"
-    res, code = http.request "http://127.0.0.1:#{vars.port}/#{command_url}"
-    res
+  res
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
   :get_pid, :execute_on_server, :write_config_for, :push_server, :pop_server }

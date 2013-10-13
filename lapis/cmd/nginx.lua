@@ -96,12 +96,15 @@ compile_config = function(config, opts)
   end
   return env_header .. out
 end
-write_config_for = function(environment)
+write_config_for = function(environment, process_fn, ...)
   if type(environment) == "string" then
     local config = require("lapis.config")
     environment = config.get(environment)
   end
   local compiled = compile_config(path.read_file(CONFIG_PATH), environment)
+  if process_fn then
+    compiled = process_fn(compiled, ...)
+  end
   return path.write_file(COMPILED_CONFIG_PATH, compiled)
 end
 get_pid = function()
@@ -150,7 +153,7 @@ push_server = function(environment, process_fn)
   }, {
     __index = environment
   })
-  write_config_for(environment)
+  write_config_for(environment, process_fn, port)
   if pid then
     send_hup()
   else
@@ -189,31 +192,15 @@ pop_server = function()
   pushed_server = nil
 end
 with_server = function(environment, fn)
-  local fresh_server
-  if not (send_hup()) then
-    start_nginx(true)
-    fresh_server = true
-  end
-  os.execute("sleep 0.1")
-  if not (get_pid()) then
-    return nil, "nginx failed to start, check error log"
-  end
+  push_server(environment)
   local out = {
     fn()
   }
-  if fresh_server then
-    send_term()
-  else
-    write_config_for(environment)
-    send_hup()
-  end
+  pop_server()
   return unpack(out)
 end
 execute_on_server = function(code, environment)
   assert(loadstring(code))
-  local config = require("lapis.config")
-  local vars = config.get(environment)
-  local compiled = compile_config(path.read_file(CONFIG_PATH), vars)
   code = [[    print = function(...)
       local str = table.concat({...}, "\t")
       io.stdout:write(str .. "\n")
@@ -228,65 +215,55 @@ execute_on_server = function(code, environment)
     end
   ]]
   code = code:gsub("\\", "\\\\"):gsub('"', '\\"')
-  local random_string
-  do
-    local _obj_0 = require("lapis.cmd.util")
-    random_string = _obj_0.random_string
-  end
-  local command_url = "/" .. tostring(random_string(20))
-  local inserted_server = false
-  local replace_server
-  replace_server = function(server)
-    if inserted_server then
-      return ""
+  local pushed = push_server(environment, function(compiled_config, port)
+    local inserted_server = false
+    local replace_server
+    replace_server = function(server)
+      if inserted_server then
+        return ""
+      end
+      inserted_server = true
+      return [[        server {
+          listen ]] .. port .. [[;
+
+          location = / {
+            default_type 'text/plain';
+            allow 127.0.0.1;
+            deny all;
+
+            content_by_lua "
+              ]] .. code .. [[
+            ";
+          }
+
+          location = /query {
+            internal;
+            postgres_pass database;
+            postgres_query $echo_request_body;
+          }
+        }
+      ]]
     end
-    inserted_server = true
-    return [[      server {
-        listen ]] .. vars.port .. [[;
-
-        location = ]] .. command_url .. [[ {
-          default_type 'text/plain';
-          allow 127.0.0.1;
-          deny all;
-
-          content_by_lua "
-            ]] .. code .. [[
-          ";
-        }
-
-        location / {
-          return 503;
-        }
-
-        location = /query {
-          internal;
-          postgres_pass database;
-          postgres_query $echo_request_body;
-        }
-      }
-    ]]
-  end
-  local lpeg = require("lpeg")
-  local R, S, V, P
-  R, S, V, P, V = lpeg.R, lpeg.S, lpeg.V, lpeg.P, lpeg.V
-  local C, Cs, Ct, Cmt, Cg, Cb, Cc
-  C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
-  local white = S(" \t\r\n") ^ 0
-  local parse = P({
-    V("root"),
-    balanced = P("{") * (V("balanced") + (1 - P("}"))) ^ 0 * P("}"),
-    server_block = S(" \t") ^ 0 * P("server") * white * V("balanced") / replace_server,
-    root = Cs((V("server_block") + 1) ^ 1 * -1)
-  })
-  local temp_config = parse:match(compiled)
-  assert(inserted_server, "Failed to find server directive in config")
-  path.write_file(COMPILED_CONFIG_PATH, temp_config)
-  return assert(with_server(environment, function()
-    local http = require("socket.http")
-    local res
-    res, code = http.request("http://127.0.0.1:" .. tostring(vars.port) .. "/" .. tostring(command_url))
-    return res
-  end))
+    local lpeg = require("lpeg")
+    local R, S, V, P
+    R, S, V, P, V = lpeg.R, lpeg.S, lpeg.V, lpeg.P, lpeg.V
+    local C, Cs, Ct, Cmt, Cg, Cb, Cc
+    C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
+    local white = S(" \t\r\n") ^ 0
+    local parse = P({
+      V("root"),
+      balanced = P("{") * (V("balanced") + (1 - P("}"))) ^ 0 * P("}"),
+      server_block = S(" \t") ^ 0 * P("server") * white * V("balanced") / replace_server,
+      root = Cs((V("server_block") + 1) ^ 1 * -1)
+    })
+    compiled_config = parse:match(compiled_config)
+    return assert(compiled_config, "Failed to find server directive in config")
+  end)
+  local http = require("socket.http")
+  local res
+  res, code = http.request("http://127.0.0.1:" .. tostring(pushed.port) .. "/")
+  pop_server()
+  return res
 end
 return {
   compile_config = compile_config,

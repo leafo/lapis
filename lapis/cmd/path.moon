@@ -24,6 +24,7 @@ filename = (path) ->
   (path\match"([^/]*)$")
 
 write_file = (path, content) ->
+  assert content, "trying to write file with no content"
   with io.open path, "w"
     \write content
     \close!
