@@ -289,12 +289,21 @@ close_test_server = function()
   return pop_server()
 end
 local request
-request = function(url)
-  if not (server_loaded > 0) then
-    error("The test server is not loaded!")
+do
+  local ltn12 = require("ltn12")
+  request = function(url)
+    if not (server_loaded > 0) then
+      error("The test server is not loaded!")
+    end
+    local http = require("socket.http")
+    local buffer = { }
+    local res, status, headers = http.request({
+      url = "http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""),
+      redirect = false,
+      sink = ltn12.sink.table(buffer)
+    })
+    return table.concat(buffer), status, normalize_headers(headers)
   end
-  local http = require("socket.http")
-  return http.request("http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""))
 end
 return {
   mock_request = mock_request,

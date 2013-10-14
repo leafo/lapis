@@ -186,10 +186,22 @@ close_test_server = ->
   pop_server!
 
 -- hits the server in test environment
-request = (url) ->
-  error "The test server is not loaded!" unless server_loaded > 0
-  http = require "socket.http"
-  http.request "http://127.0.0.1:#{server_port}/#{url or ""}"
+request =do
+  ltn12 = require "ltn12"
+
+  (url) ->
+    error "The test server is not loaded!" unless server_loaded > 0
+    http = require "socket.http"
+
+    buffer = {}
+    res, status, headers = http.request {
+      url: "http://127.0.0.1:#{server_port}/#{url or ""}"
+      redirect: false
+      sink: ltn12.sink.table buffer
+    }
+
+    table.concat(buffer), status, normalize_headers(headers)
+
 
 { :mock_request, :assert_request, :normalize_headers, :mock_action, :request,
   :load_test_server, :close_test_server }
