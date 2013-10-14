@@ -207,18 +207,23 @@ with_server = function(environment, fn)
 end
 execute_on_server = function(code, environment)
   assert(loadstring(code))
-  code = [[    print = function(...)
+  code = [[    local buffer = {}
+
+    print = function(...)
       local str = table.concat({...}, "\t")
       io.stdout:write(str .. "\n")
-      ngx.say(str)
+      table.insert(buffer, str)
     end
 
     local success, err = pcall(function()
      ]] .. code .. [[    end)
 
     if not success then
+      ngx.status = 500
       print(err)
     end
+
+    ngx.print(table.concat(buffer, "\n"))
   ]]
   code = code:gsub("\\", "\\\\"):gsub('"', '\\"')
   local pushed = push_server(environment, function(compiled_config, port)
@@ -266,8 +271,8 @@ execute_on_server = function(code, environment)
     return assert(compiled_config, "Failed to find server directive in config")
   end)
   local http = require("socket.http")
-  local res
-  res, code = http.request("http://127.0.0.1:" .. tostring(pushed.port) .. "/")
+  local res, headers
+  res, code, headers = http.request("http://127.0.0.1:" .. tostring(pushed.port) .. "/")
   pop_server()
   return res
 end
