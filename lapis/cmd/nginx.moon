@@ -247,10 +247,8 @@ execute_on_server = (code, environment) ->
 
   http = require "socket.http"
   res, code, headers = http.request "http://127.0.0.1:#{pushed.port}/"
-
   pop_server!
-
-  res
+  res, code, headers
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
   :get_pid, :execute_on_server, :write_config_for, :push_server, :pop_server }

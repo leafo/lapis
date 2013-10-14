@@ -274,7 +274,7 @@ execute_on_server = function(code, environment)
   local res, headers
   res, code, headers = http.request("http://127.0.0.1:" .. tostring(pushed.port) .. "/")
   pop_server()
-  return res
+  return res, code, headers
 end
 return {
   compile_config = compile_config,
