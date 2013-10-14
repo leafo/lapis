@@ -189,9 +189,7 @@ close_test_server = ->
 request = (url) ->
   error "The test server is not loaded!" unless server_loaded > 0
   http = require "socket.http"
-
-  res, code = http.request "http://127.0.0.1:#{server_port}/#{url or ""}"
-  res
+  http.request "http://127.0.0.1:#{server_port}/#{url or ""}"
 
 { :mock_request, :assert_request, :normalize_headers, :mock_action, :request,
   :load_test_server, :close_test_server }

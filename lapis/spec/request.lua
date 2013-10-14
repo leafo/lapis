@@ -294,8 +294,7 @@ request = function(url)
     error("The test server is not loaded!")
   end
   local http = require("socket.http")
-  local res, code = http.request("http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""))
-  return res
+  return http.request("http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""))
 end
 return {
   mock_request = mock_request,
