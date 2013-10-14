@@ -24,15 +24,30 @@ close_test_server = ->
   pop_server!
 
 -- hits the server in test environment
-request = (url) ->
+request = (url, opts={}) ->
   error "The test server is not loaded!" unless server_loaded > 0
   http = require "socket.http"
+
+  headers = {}
+  method = opts.method
+
+  source = if data = opts.post or opts.data
+    method or= "POST" if opts.post
+
+    if type(data) == "table"
+      import encode_query_string from require "lapis.util"
+      headers["Content-type"] = "application/x-www-form-urlencoded"
+      data = encode_query_string data
+
+    headers["Content-length"] = #data
+    ltn12.source.string(data)
 
   buffer = {}
   res, status, headers = http.request {
     url: "http://127.0.0.1:#{server_port}/#{url or ""}"
     redirect: false
     sink: ltn12.sink.table buffer
+    :headers, :method, :source
   }
 
   table.concat(buffer), status, normalize_headers(headers)

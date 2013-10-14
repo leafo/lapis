@@ -36,16 +36,45 @@ close_test_server = function()
   return pop_server()
 end
 local request
-request = function(url)
+request = function(url, opts)
+  if opts == nil then
+    opts = { }
+  end
   if not (server_loaded > 0) then
     error("The test server is not loaded!")
   end
   local http = require("socket.http")
+  local headers = { }
+  local method = opts.method
+  local source
+  do
+    local data = opts.post or opts.data
+    if data then
+      if opts.post then
+        method = method or "POST"
+      end
+      if type(data) == "table" then
+        local encode_query_string
+        do
+          local _obj_0 = require("lapis.util")
+          encode_query_string = _obj_0.encode_query_string
+        end
+        headers["Content-type"] = "application/x-www-form-urlencoded"
+        data = encode_query_string(data)
+      end
+      headers["Content-length"] = #data
+      source = ltn12.source.string(data)
+    end
+  end
   local buffer = { }
-  local res, status, headers = http.request({
+  local res, status
+  res, status, headers = http.request({
     url = "http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""),
     redirect = false,
-    sink = ltn12.sink.table(buffer)
+    sink = ltn12.sink.table(buffer),
+    headers = headers,
+    method = method,
+    source = source
   })
   return table.concat(buffer), status, normalize_headers(headers)
 end
