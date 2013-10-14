@@ -258,6 +258,23 @@ _delete = function(table, cond, ...)
   end
   return raw_query(concat(buff))
 end
+local _truncate
+_truncate = function(...)
+  local tables = concat((function(...)
+    local _accum_0 = { }
+    local _len_0 = 1
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local t = _list_0[_index_0]
+      _accum_0[_len_0] = escape_identifier(t)
+      _len_0 = _len_0 + 1
+    end
+    return _accum_0
+  end)(...), ", ")
+  return raw_query("TRUNCATE " .. tables .. " RESTART IDENTITY")
+end
 local parse_clause
 do
   local grammar
@@ -337,5 +354,6 @@ return {
   select = _select,
   insert = _insert,
   update = _update,
-  delete = _delete
+  delete = _delete,
+  truncate = _truncate
 }

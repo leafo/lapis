@@ -199,6 +199,11 @@ _delete = (table, cond, ...) ->
 
   raw_query concat buff
 
+-- truncate many tables
+_truncate = (...) ->
+  tables = concat [escape_identifier t for t in *{...}], ", "
+  raw_query "TRUNCATE " .. tables .. " RESTART IDENTITY"
+
 parse_clause = do
   local grammar
   make_grammar = ->
@@ -247,4 +252,5 @@ parse_clause = do
   insert: _insert
   update: _update
   delete: _delete
+  truncate: _truncate
 }
