@@ -57,7 +57,11 @@ run_on_server = function(fn)
     execute_on_server = _obj_0.execute_on_server
   end
   local encoded = ("%q"):format(string.dump(fn))
-  return execute_on_server("\n    local json = require 'cjson'\n    local fn = loadstring(" .. tostring(encoded) .. ")\n    ngx.print(json.encode({fn()}))\n  ", TEST_ENV)
+  local res, code, headers = execute_on_server("\n    local logger = require 'lapis.logging'\n    local json = require 'cjson'\n\n    local queries = {}\n\n    logger.query = function(q)\n      io.stdout:write('\\nGOT QUERY: ' .. q .. '\\n')\n      table.insert(queries, q)\n    end\n\n    local fn = loadstring(" .. tostring(encoded) .. ")\n    local res = {fn()}\n    ngx.header.x_queries = json.encode(queries)\n    ngx.print(json.encode(res))\n  ", TEST_ENV)
+  if code ~= 200 then
+    error(res)
+  end
+  return unpack(json.decode(res))
 end
 return {
   load_test_server = load_test_server,

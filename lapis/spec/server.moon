@@ -40,11 +40,27 @@ request = (url) ->
 run_on_server = (fn) ->
   import execute_on_server from require "lapis.cmd.nginx"
   encoded = "%q"\format string.dump(fn)
-  execute_on_server "
+  res, code, headers = execute_on_server "
+    local logger = require 'lapis.logging'
     local json = require 'cjson'
+
+    local queries = {}
+
+    logger.query = function(q)
+      io.stdout:write('\\nGOT QUERY: ' .. q .. '\\n')
+      table.insert(queries, q)
+    end
+
     local fn = loadstring(#{encoded})
-    ngx.print(json.encode({fn()}))
+    local res = {fn()}
+    ngx.header.x_queries = json.encode(queries)
+    ngx.print(json.encode(res))
   ", TEST_ENV
+
+  if code != 200
+    error res
+
+  unpack json.decode res
 
 {
   :load_test_server
