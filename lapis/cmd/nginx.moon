@@ -101,10 +101,22 @@ send_term = ->
     os.execute "kill #{pid}"
     pid
 
-pushed_server = nil
+
+wait_for_server = (port) ->
+  socket = require "socket"
+  max_tries = 1000
+  while true
+    status = socket.connect "127.0.0.1", port
+    if status
+      break
+
+    max_tries -= 1
+    error "Timed out waiting for server to start" if max_tries == 0
+    socket.sleep 0.001
+
+server_stack = nil
 push_server = (environment, process_fn) ->
   pid = get_pid!
-  error "Already pushed a server" if pushed_server
 
   socket = require "socket"
 
@@ -129,34 +141,28 @@ push_server = (environment, process_fn) ->
   else
     start_nginx true
 
-  max_tries = 100
-  while true
-    status = socket.connect "127.0.0.1", port
-    if status
-      break
+  wait_for_server port
 
-    max_tries -= 1
-    error "Timed out waiting for server to start" if max_tries == 0
-    socket.sleep 0
-
-  pushed_server = {
-    previous: existing_config
+  server_stack = {
     name: environment.__name
-    :port, :pid
+    previous: server_stack
+    :port, :pid, :existing_config
   }
 
-  pushed_server
+  server_stack
 
 pop_server = ->
-  error "no server was pushed" unless pushed_server
-  path.write_file COMPILED_CONFIG_PATH, assert pushed_server.previous
+  error "no server was pushed" unless server_stack
+  path.write_file COMPILED_CONFIG_PATH, assert server_stack.existing_config
 
-  if pushed_server.pid
+  if server_stack.pid
     send_hup!
   else
     send_term!
 
-  pushed_server = nil
+  server_stack = server_stack.previous
+  wait_for_server server_stack.port if server_stack
+  server_stack
 
 -- helper to push and pop in one go
 with_server = (environment, fn) ->

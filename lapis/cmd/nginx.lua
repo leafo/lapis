@@ -1,7 +1,7 @@
 local CONFIG_PATH = "nginx.conf"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, pushed_server, push_server, pop_server, with_server, execute_on_server
+local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, wait_for_server, server_stack, push_server, pop_server, with_server, execute_on_server
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -134,12 +134,24 @@ send_term = function()
     end
   end
 end
-pushed_server = nil
+wait_for_server = function(port)
+  local socket = require("socket")
+  local max_tries = 1000
+  while true do
+    local status = socket.connect("127.0.0.1", port)
+    if status then
+      break
+    end
+    max_tries = max_tries - 1
+    if max_tries == 0 then
+      error("Timed out waiting for server to start")
+    end
+    socket.sleep(0.001)
+  end
+end
+server_stack = nil
 push_server = function(environment, process_fn)
   local pid = get_pid()
-  if pushed_server then
-    error("Already pushed a server")
-  end
   local socket = require("socket")
   local existing_config = path.read_file(COMPILED_CONFIG_PATH)
   local sock = socket.bind("*", 0)
@@ -159,37 +171,31 @@ push_server = function(environment, process_fn)
   else
     start_nginx(true)
   end
-  local max_tries = 100
-  while true do
-    local status = socket.connect("127.0.0.1", port)
-    if status then
-      break
-    end
-    max_tries = max_tries - 1
-    if max_tries == 0 then
-      error("Timed out waiting for server to start")
-    end
-    socket.sleep(0)
-  end
-  pushed_server = {
-    previous = existing_config,
+  wait_for_server(port)
+  server_stack = {
     name = environment.__name,
+    previous = server_stack,
     port = port,
-    pid = pid
+    pid = pid,
+    existing_config = existing_config
   }
-  return pushed_server
+  return server_stack
 end
 pop_server = function()
-  if not (pushed_server) then
+  if not (server_stack) then
     error("no server was pushed")
   end
-  path.write_file(COMPILED_CONFIG_PATH, assert(pushed_server.previous))
-  if pushed_server.pid then
+  path.write_file(COMPILED_CONFIG_PATH, assert(server_stack.existing_config))
+  if server_stack.pid then
     send_hup()
   else
     send_term()
   end
-  pushed_server = nil
+  server_stack = server_stack.previous
+  if server_stack then
+    wait_for_server(server_stack.port)
+  end
+  return server_stack
 end
 with_server = function(environment, fn)
   push_server(environment)
