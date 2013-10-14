@@ -61,8 +61,15 @@ run_on_server = (fn) ->
 
     local queries = {}
 
+    local old_log = logger.query
     logger.query = function(q)
-      io.stdout:write('\\nGOT QUERY: ' .. q .. '\\n')
+      local old_print = print
+      print = function(...)
+        local buff = {...}
+        io.stdout:write(table.concat(buff, '\\t') .. '\\n')
+      end
+      old_log(q)
+      print = old_print
       table.insert(queries, q)
     end
 
