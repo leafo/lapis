@@ -61,6 +61,16 @@ random_string = do
   (length) ->
     string.char unpack [ random_char! for i=1,length ]
 
+get_free_port = ->
+  socket = require "socket"
+
+  sock = socket.bind "*", 0
+  _, port = sock\getsockname!
+  sock\close!
+
+  port
+
+
 if ... == "test"
   print columnize {
     {"hello", "here is some info"}
@@ -69,4 +79,4 @@ if ... == "test"
     {"else", "yeah yeah yeah not so much okay goodbye"}
   }
 
-{ :columnize, :split, :random_string }
+{ :columnize, :split, :random_string, :get_free_port }

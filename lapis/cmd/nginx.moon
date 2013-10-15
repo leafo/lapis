@@ -3,6 +3,7 @@ CONFIG_PATH = "nginx.conf"
 COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 
 path = require "lapis.cmd.path"
+import get_free_port from require "lapis.cmd.util"
 
 local *
 
@@ -240,22 +241,21 @@ class AttachedServer
     table.concat buffer
 
 
-attach_server = (environment, process_fn=process_config) ->
+attach_server = (environment, env_overrides) ->
   pid = get_pid!
-
-  socket = require "socket"
 
   existing_config = path.read_file COMPILED_CONFIG_PATH
 
-  -- get a free port
-  sock = socket.bind "*", 0
-  _, port = sock\getsockname!
-  sock\close!
+  port = get_free_port!
 
   if type(environment) == "string"
     environment = require("lapis.config").get environment
 
-  write_config_for environment, process_fn, port
+  if env_overrides
+    assert not getmetatable(env_overrides), "env_overrides already has metatable, aborting"
+    setmetatable env_overrides, __index: environment
+
+  write_config_for environment, process_config, port
 
   if pid
     send_hup!
