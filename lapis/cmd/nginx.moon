@@ -101,21 +101,92 @@ send_term = ->
     os.execute "kill #{pid}"
     pid
 
+-- injects a debug server into the config
+process_config = (cfg, port) ->
+  cfg\gsub "%f[%a]http%s-{", [[
+    http {
+      server {
+        allow 127.0.0.1;
+        deny all;
+        listen ]] .. port .. [[;
 
-wait_for_server = (port) ->
-  socket = require "socket"
-  max_tries = 1000
-  while true
-    status = socket.connect "127.0.0.1", port
-    if status
-      break
+        location = /http_query {
+          postgres_pass database;
+          set_decode_base64 $query $http_x_query;
+          log_by_lua '
+            local logger = require "lapis.logging"
+            logger.query(ngx.var.query)
+          ';
+          postgres_query $query;
+          rds_json on;
+        }
 
-    max_tries -= 1
-    error "Timed out waiting for server to start" if max_tries == 0
-    socket.sleep 0.001
+        location = /query {
+          internal;
+          postgres_pass database;
+          postgres_query $echo_request_body;
+        }
+
+        location = /code {
+          # TODO...
+        }
+      }
+  ]]
 
 server_stack = nil
-push_server = (environment, process_fn) ->
+
+class AttachedServer
+  new: (opts) =>
+    for k,v in pairs opts
+      @[k] = v
+
+  wait_until_ready: =>
+    socket = require "socket"
+    max_tries = 1000
+    while true
+      status = socket.connect "127.0.0.1", @port
+      if status
+        break
+
+      max_tries -= 1
+      error "Timed out waiting for server to start" if max_tries == 0
+      socket.sleep 0.001
+
+  detach: =>
+    path.write_file COMPILED_CONFIG_PATH, assert @existing_config
+
+    if @fresh
+      send_term!
+    else
+      send_hup!
+
+    server_stack = @previous
+    if server_stack
+      server_stack\wait_until_ready!
+
+    server_stack
+
+  query: (q) =>
+    ltn12 = require "ltn12"
+    http = require "socket.http"
+    mime = require "mime"
+    json = require "cjson"
+
+    buffer = {}
+    http.request {
+      url: "http://127.0.0.1:#{@port}/http_query"
+      sink: ltn12.sink.table(buffer)
+      headers: {
+        "x-query": mime.b64 q
+      }
+    }
+
+    json.decode table.concat buffer
+
+  exec: (lua_code) =>
+
+
+attach_server = (environment, process_fn=process_config) ->
   pid = get_pid!
 
   socket = require "socket"
@@ -130,10 +201,6 @@ push_server = (environment, process_fn) ->
   if type(environment) == "string"
     environment = require("lapis.config").get environment
 
-  -- Override the port with our temporary one
-  -- TODO: this will fail when LAPIS_PORT set
-  environment = setmetatable { :port }, __index: environment
-
   write_config_for environment, process_fn, port
 
   if pid
@@ -141,35 +208,21 @@ push_server = (environment, process_fn) ->
   else
     start_nginx true
 
-  wait_for_server port
-
-  server_stack = {
+  server = AttachedServer {
     name: environment.__name
     previous: server_stack
-    :port, :pid, :existing_config
+    fresh: not pid
+    :port, :existing_config
   }
 
-  server_stack
+  server\wait_until_ready!
+  server_stack = server
+  server
 
-pop_server = ->
+detach_server = ->
   error "no server was pushed" unless server_stack
-  path.write_file COMPILED_CONFIG_PATH, assert server_stack.existing_config
+  server_stack\detach!
 
-  if server_stack.pid
-    send_hup!
-  else
-    send_term!
-
-  server_stack = server_stack.previous
-  wait_for_server server_stack.port if server_stack
-  server_stack
-
--- helper to push and pop in one go
-with_server = (environment, fn) ->
-  push_server environment
-  out = { fn! }
-  pop_server!
-  unpack out
 
 --
 execute_on_server = (code, environment) ->
@@ -251,4 +304,4 @@ execute_on_server = (code, environment) ->
   res, code, headers
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :execute_on_server, :write_config_for, :push_server, :pop_server }
+  :get_pid, :execute_on_server, :write_config_for, :attach_server, :detach_server }

@@ -1,7 +1,7 @@
 local CONFIG_PATH = "nginx.conf"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, wait_for_server, server_stack, push_server, pop_server, with_server, execute_on_server
+local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server, execute_on_server
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -134,23 +134,108 @@ send_term = function()
     end
   end
 end
-wait_for_server = function(port)
-  local socket = require("socket")
-  local max_tries = 1000
-  while true do
-    local status = socket.connect("127.0.0.1", port)
-    if status then
-      break
-    end
-    max_tries = max_tries - 1
-    if max_tries == 0 then
-      error("Timed out waiting for server to start")
-    end
-    socket.sleep(0.001)
-  end
+process_config = function(cfg, port)
+  return cfg:gsub("%f[%a]http%s-{", [[    http {
+      server {
+        allow 127.0.0.1;
+        deny all;
+        listen ]] .. port .. [[;
+
+        location = /http_query {
+          postgres_pass database;
+          set_decode_base64 $query $http_x_query;
+          log_by_lua '
+            local logger = require "lapis.logging"
+            logger.query(ngx.var.query)
+          ';
+          postgres_query $query;
+          rds_json on;
+        }
+
+        location = /query {
+          internal;
+          postgres_pass database;
+          postgres_query $echo_request_body;
+        }
+
+        location = /code {
+          # TODO...
+        }
+      }
+  ]])
 end
 server_stack = nil
-push_server = function(environment, process_fn)
+do
+  local _base_0 = {
+    wait_until_ready = function(self)
+      local socket = require("socket")
+      local max_tries = 1000
+      while true do
+        local status = socket.connect("127.0.0.1", self.port)
+        if status then
+          break
+        end
+        max_tries = max_tries - 1
+        if max_tries == 0 then
+          error("Timed out waiting for server to start")
+        end
+        socket.sleep(0.001)
+      end
+    end,
+    detach = function(self)
+      path.write_file(COMPILED_CONFIG_PATH, assert(self.existing_config))
+      if self.fresh then
+        send_term()
+      else
+        send_hup()
+      end
+      server_stack = self.previous
+      if server_stack then
+        server_stack:wait_until_ready()
+      end
+      return server_stack
+    end,
+    query = function(self, q)
+      local ltn12 = require("ltn12")
+      local http = require("socket.http")
+      local mime = require("mime")
+      local json = require("cjson")
+      local buffer = { }
+      http.request({
+        url = "http://127.0.0.1:" .. tostring(self.port) .. "/http_query",
+        sink = ltn12.sink.table(buffer),
+        headers = {
+          ["x-query"] = mime.b64(q)
+        }
+      })
+      return json.decode(table.concat(buffer))
+    end,
+    exec = function(self, lua_code) end
+  }
+  _base_0.__index = _base_0
+  local _class_0 = setmetatable({
+    __init = function(self, opts)
+      for k, v in pairs(opts) do
+        self[k] = v
+      end
+    end,
+    __base = _base_0,
+    __name = "AttachedServer"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  AttachedServer = _class_0
+end
+attach_server = function(environment, process_fn)
+  if process_fn == nil then
+    process_fn = process_config
+  end
   local pid = get_pid()
   local socket = require("socket")
   local existing_config = path.read_file(COMPILED_CONFIG_PATH)
@@ -160,50 +245,28 @@ push_server = function(environment, process_fn)
   if type(environment) == "string" then
     environment = require("lapis.config").get(environment)
   end
-  environment = setmetatable({
-    port = port
-  }, {
-    __index = environment
-  })
   write_config_for(environment, process_fn, port)
   if pid then
     send_hup()
   else
     start_nginx(true)
   end
-  wait_for_server(port)
-  server_stack = {
+  local server = AttachedServer({
     name = environment.__name,
     previous = server_stack,
+    fresh = not pid,
     port = port,
-    pid = pid,
     existing_config = existing_config
-  }
-  return server_stack
+  })
+  server:wait_until_ready()
+  server_stack = server
+  return server
 end
-pop_server = function()
+detach_server = function()
   if not (server_stack) then
     error("no server was pushed")
   end
-  path.write_file(COMPILED_CONFIG_PATH, assert(server_stack.existing_config))
-  if server_stack.pid then
-    send_hup()
-  else
-    send_term()
-  end
-  server_stack = server_stack.previous
-  if server_stack then
-    wait_for_server(server_stack.port)
-  end
-  return server_stack
-end
-with_server = function(environment, fn)
-  push_server(environment)
-  local out = {
-    fn()
-  }
-  pop_server()
-  return unpack(out)
+  return server_stack:detach()
 end
 execute_on_server = function(code, environment)
   assert(loadstring(code))
@@ -286,6 +349,6 @@ return {
   get_pid = get_pid,
   execute_on_server = execute_on_server,
   write_config_for = write_config_for,
-  push_server = push_server,
-  pop_server = pop_server
+  attach_server = attach_server,
+  detach_server = detach_server
 }
