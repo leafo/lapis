@@ -13,7 +13,11 @@ load_test_server = ->
   return unless server_loaded == 1
 
   import attach_server from require "lapis.cmd.nginx"
-  current_server = attach_server TEST_ENV
+  import get_free_port from require "lapis.cmd.util"
+
+  port = get_free_port!
+  current_server = attach_server TEST_ENV, { :port }
+  current_server.app_port = port
 
 -- TODO: if _TEST (inside of busted) keep the server running?
 close_test_server = ->
@@ -26,7 +30,6 @@ close_test_server = ->
 request = (url, opts={}) ->
   error "The test server is not loaded!" unless server_loaded > 0
   http = require "socket.http"
-  server_port = require("lapis.config").get(TEST_ENV).port
 
   headers = {}
   method = opts.method
@@ -44,12 +47,13 @@ request = (url, opts={}) ->
 
   buffer = {}
   res, status, headers = http.request {
-    url: "http://127.0.0.1:#{server_port}/#{url or ""}"
+    url: "http://127.0.0.1:#{current_server.app_port}/#{url or ""}"
     redirect: false
     sink: ltn12.sink.table buffer
     :headers, :method, :source
   }
 
+  assert res, status
   table.concat(buffer), status, normalize_headers(headers)
 
 {

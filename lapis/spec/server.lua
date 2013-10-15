@@ -19,7 +19,16 @@ load_test_server = function()
     local _obj_0 = require("lapis.cmd.nginx")
     attach_server = _obj_0.attach_server
   end
-  current_server = attach_server(TEST_ENV)
+  local get_free_port
+  do
+    local _obj_0 = require("lapis.cmd.util")
+    get_free_port = _obj_0.get_free_port
+  end
+  local port = get_free_port()
+  current_server = attach_server(TEST_ENV, {
+    port = port
+  })
+  current_server.app_port = port
 end
 local close_test_server
 close_test_server = function()
@@ -39,7 +48,6 @@ request = function(url, opts)
     error("The test server is not loaded!")
   end
   local http = require("socket.http")
-  local server_port = require("lapis.config").get(TEST_ENV).port
   local headers = { }
   local method = opts.method
   local source
@@ -65,13 +73,14 @@ request = function(url, opts)
   local buffer = { }
   local res, status
   res, status, headers = http.request({
-    url = "http://127.0.0.1:" .. tostring(server_port) .. "/" .. tostring(url or ""),
+    url = "http://127.0.0.1:" .. tostring(current_server.app_port) .. "/" .. tostring(url or ""),
     redirect = false,
     sink = ltn12.sink.table(buffer),
     headers = headers,
     method = method,
     source = source
   })
+  assert(res, status)
   return table.concat(buffer), status, normalize_headers(headers)
 end
 return {

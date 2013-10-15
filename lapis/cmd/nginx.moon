@@ -253,7 +253,7 @@ attach_server = (environment, env_overrides) ->
 
   if env_overrides
     assert not getmetatable(env_overrides), "env_overrides already has metatable, aborting"
-    setmetatable env_overrides, __index: environment
+    environment = setmetatable env_overrides, __index: environment
 
   write_config_for environment, process_config, port
 

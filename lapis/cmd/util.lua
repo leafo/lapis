@@ -118,6 +118,14 @@ do
     end)()))
   end
 end
+local get_free_port
+get_free_port = function()
+  local socket = require("socket")
+  local sock = socket.bind("*", 0)
+  local _, port = sock:getsockname()
+  sock:close()
+  return port
+end
 if ... == "test" then
   print(columnize({
     {
@@ -141,5 +149,6 @@ end
 return {
   columnize = columnize,
   split = split,
-  random_string = random_string
+  random_string = random_string,
+  get_free_port = get_free_port
 }

@@ -1,6 +1,11 @@
 local CONFIG_PATH = "nginx.conf"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
+local get_free_port
+do
+  local _obj_0 = require("lapis.cmd.util")
+  get_free_port = _obj_0.get_free_port
+end
 local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server
 do
   local nginx_bin = "nginx"
@@ -283,20 +288,20 @@ do
   _base_0.__class = _class_0
   AttachedServer = _class_0
 end
-attach_server = function(environment, process_fn)
-  if process_fn == nil then
-    process_fn = process_config
-  end
+attach_server = function(environment, env_overrides)
   local pid = get_pid()
-  local socket = require("socket")
   local existing_config = path.read_file(COMPILED_CONFIG_PATH)
-  local sock = socket.bind("*", 0)
-  local _, port = sock:getsockname()
-  sock:close()
+  local port = get_free_port()
   if type(environment) == "string" then
     environment = require("lapis.config").get(environment)
   end
-  write_config_for(environment, process_fn, port)
+  if env_overrides then
+    assert(not getmetatable(env_overrides), "env_overrides already has metatable, aborting")
+    environment = setmetatable(env_overrides, {
+      __index = environment
+    })
+  end
+  write_config_for(environment, process_config, port)
   if pid then
     send_hup()
   else
