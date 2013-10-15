@@ -155,12 +155,14 @@ tasks = {
 
     (code, environment=default_environment!) ->
       fail_with_message("missing lua-string: exec <lua-string>") unless code
-      import execute_on_server from require "lapis.cmd.nginx"
+      import attach_server from require "lapis.cmd.nginx"
 
       unless get_pid!
         print colors "%{green}Using temporary server..."
 
-      print execute_on_server code, environment
+      server = attach_server environment
+      print server\exec code
+      server\detach!
   }
 
   {
@@ -169,16 +171,19 @@ tasks = {
     help: "run migrations"
 
     (environment=default_environment!) ->
-      import execute_on_server from require "lapis.cmd.nginx"
+      import attach_server from require "lapis.cmd.nginx"
 
       unless get_pid!
         print colors "%{green}Using temporary server..."
 
-      print execute_on_server [[
+
+      server = attach_server environment
+      print server\exec [[
         local migrations = require("lapis.db.migrations")
         migrations.create_migrations_table()
         migrations.run_migrations(require("migrations"))
-      ]], environment
+      ]]
+      server\detach!
   }
 
   {

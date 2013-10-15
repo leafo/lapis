@@ -217,15 +217,17 @@ tasks = {
       if not (code) then
         fail_with_message("missing lua-string: exec <lua-string>")
       end
-      local execute_on_server
+      local attach_server
       do
         local _obj_0 = require("lapis.cmd.nginx")
-        execute_on_server = _obj_0.execute_on_server
+        attach_server = _obj_0.attach_server
       end
       if not (get_pid()) then
         print(colors("%{green}Using temporary server..."))
       end
-      return print(execute_on_server(code, environment))
+      local server = attach_server(environment)
+      print(server:exec(code))
+      return server:detach()
     end
   },
   {
@@ -236,18 +238,20 @@ tasks = {
       if environment == nil then
         environment = default_environment()
       end
-      local execute_on_server
+      local attach_server
       do
         local _obj_0 = require("lapis.cmd.nginx")
-        execute_on_server = _obj_0.execute_on_server
+        attach_server = _obj_0.attach_server
       end
       if not (get_pid()) then
         print(colors("%{green}Using temporary server..."))
       end
-      return print(execute_on_server([[        local migrations = require("lapis.db.migrations")
+      local server = attach_server(environment)
+      print(server:exec([[        local migrations = require("lapis.db.migrations")
         migrations.create_migrations_table()
         migrations.run_migrations(require("migrations"))
-      ]], environment))
+      ]]))
+      return server:detach()
     end
   },
   {
