@@ -6,27 +6,27 @@ ltn12 = require "ltn12"
 json = require "cjson"
 
 server_loaded = 0
-server_port = nil
+current_server = nil
 
 load_test_server = ->
   server_loaded += 1
   return unless server_loaded == 1
 
-  import push_server from require "lapis.cmd.nginx"
-  server = assert push_server(TEST_ENV), "Failed to start test server"
-  server_port = server.port
+  import attach_server from require "lapis.cmd.nginx"
+  current_server = attach_server TEST_ENV
 
 -- TODO: if _TEST (inside of busted) keep the server running?
 close_test_server = ->
   server_loaded -= 1
   return unless server_loaded == 0
-  import pop_server from require "lapis.cmd.nginx"
-  pop_server!
+  current_server\detach!
+  current_server = nil
 
 -- hits the server in test environment
 request = (url, opts={}) ->
   error "The test server is not loaded!" unless server_loaded > 0
   http = require "socket.http"
+  server_port = require("lapis.config").get(TEST_ENV).port
 
   headers = {}
   method = opts.method
@@ -53,6 +53,7 @@ request = (url, opts={}) ->
   table.concat(buffer), status, normalize_headers(headers)
 
 run_on_server = (fn) ->
+  error "not anymore"
   import execute_on_server from require "lapis.cmd.nginx"
   encoded = "%q"\format string.dump(fn)
   res, code, headers = execute_on_server "
