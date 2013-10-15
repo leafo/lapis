@@ -1,7 +1,7 @@
 local CONFIG_PATH = "nginx.conf"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server, execute_on_server
+local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -135,6 +135,29 @@ send_term = function()
   end
 end
 process_config = function(cfg, port)
+  local run_code_action = [[    ngx.req.read_body()
+
+    -- hijack print to write to buffer
+    local old_print = print
+
+    local buffer = {}
+    print = function(...)
+      local str = table.concat({...}, "\t")
+      io.stdout:write(str .. "\n")
+      table.insert(buffer, str)
+    end
+
+    local success, err = pcall(loadstring(ngx.var.request_body))
+
+    if not success then
+      ngx.status = 500
+      print(err)
+    end
+
+    ngx.print(table.concat(buffer, "\n"))
+    print = old_print
+  ]]
+  run_code_action = run_code_action:gsub("\\", "\\\\"):gsub('"', '\\"')
   return cfg:gsub("%f[%a]http%s-{", [[    http {
       server {
         allow 127.0.0.1;
@@ -158,8 +181,12 @@ process_config = function(cfg, port)
           postgres_query $echo_request_body;
         }
 
-        location = /code {
-          # TODO...
+        location = /run_lua {
+          client_body_buffer_size 10m;
+          client_max_body_size 10m;
+          content_by_lua "
+            ]] .. run_code_action .. [[
+          ";
         }
       }
   ]])
@@ -210,7 +237,21 @@ do
       })
       return json.decode(table.concat(buffer))
     end,
-    exec = function(self, lua_code) end
+    exec = function(self, lua_code)
+      assert(loadstring(lua_code))
+      local ltn12 = require("ltn12")
+      local http = require("socket.http")
+      local buffer = { }
+      http.request({
+        url = "http://127.0.0.1:" .. tostring(self.port) .. "/run_lua",
+        sink = ltn12.sink.table(buffer),
+        source = ltn12.source.string(lua_code),
+        headers = {
+          ["content-length"] = #lua_code
+        }
+      })
+      return table.concat(buffer)
+    end
   }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
@@ -268,77 +309,6 @@ detach_server = function()
   end
   return server_stack:detach()
 end
-execute_on_server = function(code, environment)
-  assert(loadstring(code))
-  code = [[    local buffer = {}
-
-    print = function(...)
-      local str = table.concat({...}, "\t")
-      io.stdout:write(str .. "\n")
-      table.insert(buffer, str)
-    end
-
-    local success, err = pcall(function()
-     ]] .. code .. [[    end)
-
-    if not success then
-      ngx.status = 500
-      print(err)
-    end
-
-    ngx.print(table.concat(buffer, "\n"))
-  ]]
-  code = code:gsub("\\", "\\\\"):gsub('"', '\\"')
-  local pushed = push_server(environment, function(compiled_config, port)
-    local inserted_server = false
-    local replace_server
-    replace_server = function(server)
-      if inserted_server then
-        return ""
-      end
-      inserted_server = true
-      return [[        server {
-          listen ]] .. port .. [[;
-
-          location = / {
-            default_type 'text/plain';
-            allow 127.0.0.1;
-            deny all;
-
-            content_by_lua "
-              ]] .. code .. [[
-            ";
-          }
-
-          location = /query {
-            internal;
-            postgres_pass database;
-            postgres_query $echo_request_body;
-          }
-        }
-      ]]
-    end
-    local lpeg = require("lpeg")
-    local R, S, V, P
-    R, S, V, P, V = lpeg.R, lpeg.S, lpeg.V, lpeg.P, lpeg.V
-    local C, Cs, Ct, Cmt, Cg, Cb, Cc
-    C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
-    local white = S(" \t\r\n") ^ 0
-    local parse = P({
-      V("root"),
-      balanced = P("{") * (V("balanced") + (1 - P("}"))) ^ 0 * P("}"),
-      server_block = S(" \t") ^ 0 * P("server") * white * V("balanced") / replace_server,
-      root = Cs((V("server_block") + 1) ^ 1 * -1)
-    })
-    compiled_config = parse:match(compiled_config)
-    return assert(compiled_config, "Failed to find server directive in config")
-  end)
-  local http = require("socket.http")
-  local res, headers
-  res, code, headers = http.request("http://127.0.0.1:" .. tostring(pushed.port) .. "/")
-  pop_server()
-  return res, code, headers
-end
 return {
   compile_config = compile_config,
   filters = filters,
@@ -347,7 +317,6 @@ return {
   send_hup = send_hup,
   send_term = send_term,
   get_pid = get_pid,
-  execute_on_server = execute_on_server,
   write_config_for = write_config_for,
   attach_server = attach_server,
   detach_server = detach_server

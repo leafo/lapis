@@ -103,6 +103,33 @@ send_term = ->
 
 -- injects a debug server into the config
 process_config = (cfg, port) ->
+  run_code_action = [[
+    ngx.req.read_body()
+
+    -- hijack print to write to buffer
+    local old_print = print
+
+    local buffer = {}
+    print = function(...)
+      local str = table.concat({...}, "\t")
+      io.stdout:write(str .. "\n")
+      table.insert(buffer, str)
+    end
+
+    local success, err = pcall(loadstring(ngx.var.request_body))
+
+    if not success then
+      ngx.status = 500
+      print(err)
+    end
+
+    ngx.print(table.concat(buffer, "\n"))
+    print = old_print
+  ]]
+
+  -- escape for nginx config
+  run_code_action = run_code_action\gsub("\\", "\\\\")\gsub('"', '\\"')
+
   cfg\gsub "%f[%a]http%s-{", [[
     http {
       server {
@@ -127,8 +154,13 @@ process_config = (cfg, port) ->
           postgres_query $echo_request_body;
         }
 
-        location = /code {
-          # TODO...
+        location = /run_lua {
+          client_body_buffer_size 10m;
+          client_max_body_size 10m;
+          content_by_lua "
+            ]] .. run_code_action .. [[
+
+          ";
         }
       }
   ]]
@@ -184,6 +216,22 @@ class AttachedServer
     json.decode table.concat buffer
 
   exec: (lua_code) =>
+    assert loadstring lua_code -- syntax check code
+
+    ltn12 = require "ltn12"
+    http = require "socket.http"
+
+    buffer = {}
+    http.request {
+      url: "http://127.0.0.1:#{@port}/run_lua"
+      sink: ltn12.sink.table buffer
+      source: ltn12.source.string lua_code
+      headers: {
+        "content-length": #lua_code
+      }
+    }
+
+    table.concat buffer
 
 
 attach_server = (environment, process_fn=process_config) ->
@@ -223,85 +271,5 @@ detach_server = ->
   error "no server was pushed" unless server_stack
   server_stack\detach!
 
-
---
-execute_on_server = (code, environment) ->
-  assert loadstring code -- syntax check code
-
-  -- wrap code
-  code = [[
-    local buffer = {}
-
-    print = function(...)
-      local str = table.concat({...}, "\t")
-      io.stdout:write(str .. "\n")
-      table.insert(buffer, str)
-    end
-
-    local success, err = pcall(function()
-     ]] .. code .. [[
-    end)
-
-    if not success then
-      ngx.status = 500
-      print(err)
-    end
-
-    ngx.print(table.concat(buffer, "\n"))
-  ]]
-
-  code = code\gsub("\\", "\\\\")\gsub('"', '\\"')
-
-  pushed = push_server environment, (compiled_config, port) ->
-    -- override the config, replacing the first server with an action that runs
-    -- the code and remove all the others
-    inserted_server = false
-    replace_server = (server) ->
-      return "" if inserted_server
-      inserted_server = true
-      [[
-        server {
-          listen ]] .. port .. [[;
-
-          location = / {
-            default_type 'text/plain';
-            allow 127.0.0.1;
-            deny all;
-
-            content_by_lua "
-              ]] .. code .. [[
-
-            ";
-          }
-
-          location = /query {
-            internal;
-            postgres_pass database;
-            postgres_query $echo_request_body;
-          }
-        }
-      ]]
-
-    lpeg = require "lpeg"
-
-    import R, S, V, P, V from lpeg
-    import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
-
-    white = S" \t\r\n"^0
-    parse = P {
-      V"root"
-      balanced: P"{" * (V"balanced" + (1 - P"}"))^0 * P"}"
-      server_block: S" \t"^0 * P"server" * white * V"balanced" / replace_server
-      root: Cs (V"server_block" + 1)^1 * -1
-    }
-
-    compiled_config = parse\match compiled_config
-    assert compiled_config, "Failed to find server directive in config"
-
-  http = require "socket.http"
-  res, code, headers = http.request "http://127.0.0.1:#{pushed.port}/"
-  pop_server!
-  res, code, headers
-
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :execute_on_server, :write_config_for, :attach_server, :detach_server }
+  :get_pid, :write_config_for, :attach_server, :detach_server }
