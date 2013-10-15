@@ -9,6 +9,7 @@ do
   local _obj_0 = table
   insert, concat = _obj_0.insert, _obj_0.concat
 end
+local cjson = require("cjson")
 local Model, Paginator
 do
   local _base_0 = {
@@ -143,7 +144,7 @@ do
   end
   self.load = function(self, tbl)
     for k, v in pairs(tbl) do
-      if v == ngx.null then
+      if ngx and v == ngx.null or v == cjson.null then
         tbl[k] = nil
       end
     end

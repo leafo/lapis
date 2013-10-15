@@ -220,6 +220,8 @@ do
       if server_stack then
         server_stack:wait_until_ready()
       end
+      local db = require("lapis.nginx.postgres")
+      db.set_backend("raw", self.old_backend)
       return server_stack
     end,
     query = function(self, q)
@@ -259,6 +261,14 @@ do
       for k, v in pairs(opts) do
         self[k] = v
       end
+      local db = require("lapis.nginx.postgres")
+      self.old_backend = db.set_backend("raw", (function()
+        local _base_1 = self
+        local _fn_0 = _base_1.query
+        return function(...)
+          return _fn_0(_base_1, ...)
+        end
+      end)())
     end,
     __base = _base_0,
     __name = "AttachedServer"

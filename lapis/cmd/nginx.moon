@@ -172,6 +172,9 @@ class AttachedServer
     for k,v in pairs opts
       @[k] = v
 
+    db = require "lapis.nginx.postgres"
+    @old_backend = db.set_backend "raw", @\query
+
   wait_until_ready: =>
     socket = require "socket"
     max_tries = 1000
@@ -195,6 +198,9 @@ class AttachedServer
     server_stack = @previous
     if server_stack
       server_stack\wait_until_ready!
+
+    db = require "lapis.nginx.postgres"
+    db.set_backend "raw", @old_backend
 
     server_stack
 

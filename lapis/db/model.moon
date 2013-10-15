@@ -4,6 +4,8 @@ db = require "lapis.db"
 import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
 
+cjson = require "cjson"
+
 local *
 
 class Model
@@ -29,7 +31,10 @@ class Model
 
   @load: (tbl) =>
     for k,v in pairs tbl
-      tbl[k] = nil if v == ngx.null
+      -- clear null values
+      if ngx and v == ngx.null or v == cjson.null
+        tbl[k] = nil
+
     setmetatable tbl, @__base
 
   @load_all: (tbls) =>
