@@ -8,7 +8,11 @@ truncate_tables = (...) ->
     else
       t
 
-  db.truncate unpack tables
+  for table in *tables
+    db.delete table
+
+  -- truncate is slow, so delete is used instead
+  -- db.truncate unpack tables
 
 {
   :truncate_tables

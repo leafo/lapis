@@ -19,7 +19,10 @@ truncate_tables = function(...)
     end
     tables = _accum_0
   end
-  return db.truncate(unpack(tables))
+  for _index_0 = 1, #tables do
+    local table = tables[_index_0]
+    db.delete(table)
+  end
 end
 return {
   truncate_tables = truncate_tables
