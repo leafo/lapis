@@ -294,6 +294,28 @@ do
     layout = require("lapis.views.layout"),
     error_page = require("lapis.views.error"),
     views_prefix = "views",
+    build_router = function(self)
+      self.router = Router()
+      self.router.default_route = function(self)
+        return false
+      end
+      local add_routes
+      add_routes = function(cls)
+        do
+          local parent = cls.__parent
+          if parent then
+            add_routes(parent)
+          end
+        end
+        for path, handler in pairs(cls.__base) do
+          local t = type(path)
+          if t == "table" or t == "string" and path:match("^/") then
+            self.router:add_route(path, self:wrap_handler(handler))
+          end
+        end
+      end
+      return add_routes(self.__class)
+    end,
     wrap_handler = function(self, handler)
       return function(params, path, name, r)
         do
@@ -372,16 +394,7 @@ do
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
     __init = function(self)
-      self.router = Router()
-      self.router.default_route = function(self)
-        return false
-      end
-      for path, handler in pairs(self.__class.__base) do
-        local t = type(path)
-        if t == "table" or t == "string" and path:match("^/") then
-          self.router:add_route(path, self:wrap_handler(handler))
-        end
-      end
+      return self:build_router()
     end,
     __base = _base_0,
     __name = "Application"

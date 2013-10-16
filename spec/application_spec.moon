@@ -1,7 +1,7 @@
 
 lapis = require "lapis"
 
-import mock_action from require "lapis.spec.request"
+import mock_action, mock_request from require "lapis.spec.request"
 
 mock_app = (...) ->
   mock_action lapis.Application, ...
@@ -34,3 +34,36 @@ describe "request:build_url", ->
     assert.same "http://leafo.net",
       mock_app "/hello", { host: "leaf", port: 2000 }, =>
         @build_url "http://leafo.net"
+
+
+describe "application inheritance", ->
+  local result
+
+  before_each ->
+    result = nil
+
+  class BaseApp extends lapis.Application
+    "/yeah": => result = "base yeah"
+    [test_route: "/hello/:var"]: => result = "base test"
+
+  class ChildApp extends BaseApp
+    "/yeah": => result = "child yeah"
+    "/thing": => result = "child thing"
+
+  it "should find route in base app", ->
+    status, buffer, headers = mock_request ChildApp!, "/hello/world", {}
+    assert.same 200, status
+    assert.same "base test", result
+
+  it "should generate url from route in base", ->
+    url = mock_action ChildApp, =>
+      @url_for "test_route", var: "foobar"
+
+    assert.same url, "/hello/foobar"
+
+  it "should override route in base class", ->
+    pending "fix this"
+    -- status, buffer, headers = mock_request ChildApp!, "/yeah", {}
+    -- assert.same 200, status
+    -- assert.same "child yeah", result
+
