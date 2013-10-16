@@ -2738,6 +2738,42 @@ r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
 r1_status, r1_res = mock_request SessionApp!, "/second_url", prev: r1_headers
 ```
 
+### Using The Test Server
+
+While mocking a request is useful it doesn't give you access to the entire
+stack that your application uses. For that reason you can spawn up a *test*
+server which you can issue real HTTP requests to.
+
+The test server runs inside of the `test` environment (compared to
+`development` and `production`). This enables you to have a separate database
+connection for tests so you are free to delete and create rows in the database
+without messing up your development state.
+
+
+The two functions that control the test server are `load_test_server` and
+`close_test_server`, and they can be found in `"lapis.spec.server"`.
+
+If you are using Busted then you might use these functions as follows:
+
+```moon
+import load_test_server, close_test_server from require "lapis.spec.server"
+
+describe "my_site", ->
+  setup ->
+    load_test_server!
+
+  teardown ->
+    close_test_server!
+
+  -- write some test that use the server here
+```
+
+The test server will either spawn a new Nginx if one isn't running, or it will
+take over your development server until `close_test_server` is called. Taking
+over the development server useful for seeing the raw Nginx output in the
+console.
+
+
 ## Command Line Interface
 
 The Lapis command line interface gives you a couple of handful tools for
