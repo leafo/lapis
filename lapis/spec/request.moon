@@ -154,15 +154,28 @@ assert_request = (...) ->
 
   unpack res
 
--- makes an anonymous application to mock a single action
--- returns the result of the function instead of the request
-mock_action = (url, opts, fn) ->
-  import Application from require "lapis.application"
+-- returns the result of running fn in the context of a mocked request
+-- mock_action App, -> "hello"
+-- mock_action App, "/path", -> "hello"
+-- mock_action App, "/path", { host: "cool"}, -> "hello"
+mock_action = (app_cls, url, opts, fn) ->
+  if type(url) == "function" and opts == nil
+    fn = url
+    url = "/"
+    opts = {}
+
+  if type(opts) == "function" and fn == nil
+    fn = opts
+    opts = {}
+
   local ret
-  class A extends Application
-    "/*": (...) ->
-      ret = { fn ... }
-      nil
+  handler = (...) ->
+    ret = { fn ... }
+    layout: false
+
+  class A extends app_cls
+    "/*": handler
+    "/": handler
 
   assert_request A!, url, opts
   unpack ret

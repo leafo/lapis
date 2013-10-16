@@ -208,23 +208,32 @@ assert_request = function(...)
   return unpack(res)
 end
 local mock_action
-mock_action = function(url, opts, fn)
-  local Application
-  do
-    local _obj_0 = require("lapis.application")
-    Application = _obj_0.Application
+mock_action = function(app_cls, url, opts, fn)
+  if type(url) == "function" and opts == nil then
+    fn = url
+    url = "/"
+    opts = { }
+  end
+  if type(opts) == "function" and fn == nil then
+    fn = opts
+    opts = { }
   end
   local ret
+  local handler
+  handler = function(...)
+    ret = {
+      fn(...)
+    }
+    return {
+      layout = false
+    }
+  end
   local A
   do
-    local _parent_0 = Application
+    local _parent_0 = app_cls
     local _base_0 = {
-      ["/*"] = function(...)
-        ret = {
-          fn(...)
-        }
-        return nil
-      end
+      ["/*"] = handler,
+      ["/"] = handler
     }
     _base_0.__index = _base_0
     setmetatable(_base_0, _parent_0.__base)

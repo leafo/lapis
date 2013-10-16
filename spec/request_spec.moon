@@ -29,6 +29,6 @@ describe "session app", ->
 
 
 describe "mock action", ->
-  assert.same "hello", mock_action "/hello", {}, ->
+  assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
     "hello"
 
