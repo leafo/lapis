@@ -2773,7 +2773,6 @@ take over your development server until `close_test_server` is called. Taking
 over the development server useful for seeing the raw Nginx output in the
 console.
 
-
 To make HTTP request to the test server you can use the helper function
 `request` found in `"lapis.spec.server"`. For example we might write a test to
 make sure `/` loads without errors:
@@ -2791,10 +2790,22 @@ describe "my_site", ->
     close_test_server!
 
   it "should load /", ->
-    
+    body, status, headers = request "/"
+    assert.same 200, status
 
 ```
 
+While the test server is running we are also free to make queries and use
+models. Database queries are transparently sent over HTTP to the test server
+and executed inside of Nginx.
+
+For example, we could write a basic unit test for a model:
+
+```moon
+  it "should create a User", ->
+    import Users from require "models"
+    assert Users\create name: "leafo"
+```
 
 
 ## Command Line Interface
