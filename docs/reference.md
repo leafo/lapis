@@ -2774,6 +2774,29 @@ over the development server useful for seeing the raw Nginx output in the
 console.
 
 
+To make HTTP request to the test server you can use the helper function
+`request` found in `"lapis.spec.server"`. For example we might write a test to
+make sure `/` loads without errors:
+
+
+```moon
+import load_test_server, close_test_server, request
+  from require "lapis.spec.server"
+
+describe "my_site", ->
+  setup ->
+    load_test_server!
+
+  teardown ->
+    close_test_server!
+
+  it "should load /", ->
+    
+
+```
+
+
+
 ## Command Line Interface
 
 The Lapis command line interface gives you a couple of handful tools for
