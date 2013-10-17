@@ -19,7 +19,7 @@ do
   end
 end
 local mock_request
-mock_request = function(app, url, opts)
+mock_request = function(app_cls, url, opts)
   if opts == nil then
     opts = { }
   end
@@ -192,6 +192,7 @@ mock_request = function(app, url, opts)
       end
     }
   })
+  local app = app_cls.__base and app_cls() or app_cls
   local response = nginx.dispatch(app)
   stack.pop()
   logger.request = old_logger
@@ -265,7 +266,7 @@ mock_action = function(app_cls, url, opts, fn)
     end
     A = _class_0
   end
-  assert_request(A(), url, opts)
+  assert_request(A, url, opts)
   return unpack(ret)
 end
 return {

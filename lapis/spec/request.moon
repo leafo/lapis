@@ -7,7 +7,10 @@ normalize_headers = do
     setmetatable {normalize(k), v for k,v in pairs t}, __index: (name) =>
       rawget @, normalize name
 
-mock_request = (app, url, opts={}) ->
+-- returns the result of request using app
+-- mock_request App, "/hello"
+-- mock_request App, "/hello", { host: "leafo.net" }
+mock_request = (app_cls, url, opts={}) ->
   stack = require "lapis.spec.stack"
 
   import parse_query_string, encode_query_string from require "lapis.util"
@@ -139,6 +142,8 @@ mock_request = (app, url, opts={}) ->
     }
   }
 
+  -- if app is already an instance just use it
+  app = app_cls.__base and app_cls! or app_cls
 
   response = nginx.dispatch app
   stack.pop!
@@ -157,7 +162,7 @@ assert_request = (...) ->
 -- returns the result of running fn in the context of a mocked request
 -- mock_action App, -> "hello"
 -- mock_action App, "/path", -> "hello"
--- mock_action App, "/path", { host: "cool"}, -> "hello"
+-- mock_action App, "/path", { host: "leafo.net"}, -> "hello"
 mock_action = (app_cls, url, opts, fn) ->
   if type(url) == "function" and opts == nil
     fn = url
@@ -177,7 +182,7 @@ mock_action = (app_cls, url, opts, fn) ->
     "/*": handler
     "/": handler
 
-  assert_request A!, url, opts
+  assert_request A, url, opts
   unpack ret
 
 { :mock_request, :assert_request, :normalize_headers, :mock_action }

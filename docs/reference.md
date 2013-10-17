@@ -2693,7 +2693,7 @@ defined in `lapis.spec.request`:
 ```moon
 import mock_request from require "lapis.spec.request"
 
-status, body, headers = mock_request(app_instance, url, options)
+status, body, headers = mock_request(app, url, options)
 ```
 
 For example, to test a basic application with Busted we could do:
@@ -2708,7 +2708,7 @@ class App extends lapis.Application
 
 describe "my application", ->
   it "should make a request", ->
-    status, body = mock_request App!, "/hello"
+    status, body = mock_request App, "/hello"
 
     assert.same 200, status
     assert.truthy body\match "welcome"

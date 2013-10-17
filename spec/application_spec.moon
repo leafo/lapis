@@ -51,7 +51,7 @@ describe "application inheritance", ->
     "/thing": => result = "child thing"
 
   it "should find route in base app", ->
-    status, buffer, headers = mock_request ChildApp!, "/hello/world", {}
+    status, buffer, headers = mock_request ChildApp, "/hello/world", {}
     assert.same 200, status
     assert.same "base test", result
 
@@ -62,7 +62,7 @@ describe "application inheritance", ->
     assert.same url, "/hello/foobar"
 
   it "should override route in base class", ->
-    status, buffer, headers = mock_request ChildApp!, "/yeah", {}
+    status, buffer, headers = mock_request ChildApp, "/yeah", {}
     assert.same 200, status
     assert.same "child yeah", result
 
