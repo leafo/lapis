@@ -62,8 +62,7 @@ describe "application inheritance", ->
     assert.same url, "/hello/foobar"
 
   it "should override route in base class", ->
-    pending "fix this"
-    -- status, buffer, headers = mock_request ChildApp!, "/yeah", {}
-    -- assert.same 200, status
-    -- assert.same "child yeah", result
+    status, buffer, headers = mock_request ChildApp!, "/yeah", {}
+    assert.same 200, status
+    assert.same "child yeah", result
 

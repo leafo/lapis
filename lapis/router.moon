@@ -55,7 +55,10 @@ class Router
     if type(route) == "table"
       name = next route
       route = route[name]
-      @named_routes[name] = route
+
+      -- keep existing route
+      unless @named_routes[name]
+        @named_routes[name] = route
 
     insert @routes, { route, responder, name }
 

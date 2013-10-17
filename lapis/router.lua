@@ -33,7 +33,9 @@ do
       if type(route) == "table" then
         name = next(route)
         route = route[name]
-        self.named_routes[name] = route
+        if not (self.named_routes[name]) then
+          self.named_routes[name] = route
+        end
       end
       return insert(self.routes, {
         route,

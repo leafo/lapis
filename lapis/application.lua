@@ -287,16 +287,16 @@ do
       end
       local add_routes
       add_routes = function(cls)
-        do
-          local parent = cls.__parent
-          if parent then
-            add_routes(parent)
-          end
-        end
         for path, handler in pairs(cls.__base) do
           local t = type(path)
           if t == "table" or t == "string" and path:match("^/") then
             self.router:add_route(path, self:wrap_handler(handler))
+          end
+        end
+        do
+          local parent = cls.__parent
+          if parent then
+            return add_routes(parent)
           end
         end
       end

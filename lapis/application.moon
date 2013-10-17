@@ -209,13 +209,13 @@ class Application
     @router.default_route = => false
 
     add_routes = (cls) ->
-      if parent = cls.__parent
-        add_routes parent
-
       for path, handler in pairs cls.__base
         t = type path
         if t == "table" or t == "string" and path\match "^/"
           @router\add_route path, @wrap_handler handler
+
+      if parent = cls.__parent
+        add_routes parent
 
     add_routes @@
 
