@@ -173,22 +173,16 @@ class Request
           error "Don't know how to write: (#{t}) #{thing}"
 
   write_cookies: =>
-    parts = for k,v in pairs @cookies
-      "#{url.escape k}=#{url.escape v}"
+    return unless next @cookies
+    extra = @app.cookie_attributes
 
-    return unless #parts > 0
+    if extra
+      extra = "; " .. table.concat @app.cookie_attributes, "; "
 
-    i = #parts
-    parts[i + 1] = "Path=/"
-    parts[i + 2] = "HttpOnly"
-
-    if extra = @app.cookie_attributes
-      i += 3
-      for p in *extra
-        parts[i] = p
-        i += 1
-
-    @res\add_header "Set-cookie", table.concat parts, "; "
+    for k,v in pairs @cookies
+      cookie = "#{url.escape k}=#{url.escape v}; Path=/; HttpOnly"
+      cookie ..= extra if extra
+      @res\add_header "Set-cookie", cookie
 
   _debug: =>
     @buffer = {

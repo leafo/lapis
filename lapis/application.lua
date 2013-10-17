@@ -218,34 +218,20 @@ do
       end
     end,
     write_cookies = function(self)
-      local parts
-      do
-        local _accum_0 = { }
-        local _len_0 = 1
-        for k, v in pairs(self.cookies) do
-          _accum_0[_len_0] = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
-          _len_0 = _len_0 + 1
-        end
-        parts = _accum_0
-      end
-      if not (#parts > 0) then
+      if not (next(self.cookies)) then
         return 
       end
-      local i = #parts
-      parts[i + 1] = "Path=/"
-      parts[i + 2] = "HttpOnly"
-      do
-        local extra = self.app.cookie_attributes
-        if extra then
-          i = i + 3
-          for _index_0 = 1, #extra do
-            local p = extra[_index_0]
-            parts[i] = p
-            i = i + 1
-          end
-        end
+      local extra = self.app.cookie_attributes
+      if extra then
+        extra = "; " .. table.concat(self.app.cookie_attributes, "; ")
       end
-      return self.res:add_header("Set-cookie", table.concat(parts, "; "))
+      for k, v in pairs(self.cookies) do
+        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v)) .. "; Path=/; HttpOnly"
+        if extra then
+          cookie = cookie .. extra
+        end
+        self.res:add_header("Set-cookie", cookie)
+      end
     end,
     _debug = function(self)
       self.buffer = {

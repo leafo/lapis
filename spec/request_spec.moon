@@ -52,7 +52,11 @@ describe "cookies", ->
 
   it "should write multiple cookies", ->
     _, _, h = mock_request CookieApp!, "/many"
-    assert.same "cow=one%20cool%20%3bcookie; world=454545; Path=/; HttpOnly", h["Set-cookie"]
+
+    assert.same {
+      'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
+      'world=454545; Path=/; HttpOnly'
+    }, h["Set-cookie"]
 
   it "should write a cookie with cookie attributes", ->
     _, _, h = mock_request CookieApp2!, "/"
