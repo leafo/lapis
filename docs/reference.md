@@ -78,7 +78,6 @@ Here is the `nginx.conf` that has been generated:
 worker_processes  ${{NUM_WORKERS}};
 error_log stderr notice;
 daemon off;
-env LAPIS_ENVIRONMENT;
 
 events {
     worker_connections 1024;
@@ -2870,9 +2869,8 @@ After finding the correct binary it will run a command similar to this to start
 the server:
 
 ```bash
-$ LAPIS_ENVIRONMENT='<environment>' nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
+$ nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
 ```
-
 
 ### `lapis build`
 
