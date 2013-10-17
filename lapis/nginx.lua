@@ -153,6 +153,7 @@ build_response = function()
         self.headers[k] = v
       elseif "table" == _exp_0 then
         old[#old + 1] = v
+        self.headers[k] = old
       else
         self.headers[k] = {
           old,

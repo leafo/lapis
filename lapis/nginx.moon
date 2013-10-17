@@ -107,6 +107,7 @@ build_response = ->
           @headers[k] = v
         when "table"
           old[#old + 1] = v
+          @headers[k] = old
         else
           @headers[k] = {old, v}
 
