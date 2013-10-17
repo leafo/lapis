@@ -81,7 +81,7 @@ request = function(url, opts)
     source = source
   })
   assert(res, status)
-  return table.concat(buffer), status, normalize_headers(headers)
+  return status, table.concat(buffer), normalize_headers(headers)
 end
 return {
   load_test_server = load_test_server,

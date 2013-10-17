@@ -54,7 +54,7 @@ request = (url, opts={}) ->
   }
 
   assert res, status
-  table.concat(buffer), status, normalize_headers(headers)
+  status, table.concat(buffer), normalize_headers(headers)
 
 {
   :load_test_server

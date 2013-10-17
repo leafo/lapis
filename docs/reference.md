@@ -2790,7 +2790,7 @@ describe "my_site", ->
     close_test_server!
 
   it "should load /", ->
-    body, status, headers = request "/"
+    status, body, headers = request "/"
     assert.same 200, status
 
 ```
