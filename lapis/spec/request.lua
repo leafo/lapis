@@ -69,7 +69,7 @@ mock_request = function(app_cls, url, opts)
     request_uri = request_uri .. ("?" .. url_query)
   end
   local host = opts.host or "localhost"
-  local request_method = opts.method or "GET"
+  local request_method = opts.method or (opts.post and "POST") or "GET"
   local scheme = opts.scheme or "http"
   local server_port = opts.port or 80
   local http_host = host

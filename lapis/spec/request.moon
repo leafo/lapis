@@ -50,7 +50,7 @@ mock_request = (app_cls, url, opts={}) ->
     request_uri ..= "?" .. url_query
 
   host = opts.host or "localhost"
-  request_method = opts.method or "GET"
+  request_method = opts.method or (opts.post and "POST") or "GET"
   scheme = opts.scheme or "http"
   server_port = opts.port or 80
 

@@ -2720,8 +2720,8 @@ to control the kind of request that is simulated. It takes the following
 options in a table:
 
 * `get` --  A table of GET parameters to add to the url
-* `post` -- A table of POST parameters (does not change the method)
-* `method` -- The HTTP method to use
+* `post` -- A table of POST parameters (sets default method to `"POST"`)
+* `method` -- The HTTP method to use (defaults to `"GET"`)
 * `headers` -- Addition HTTP request headers
 * `host` -- The host the mocked server (defaults to `"localhost"`)
 * `port` -- The port of the mocked server (defaults to `80`)
