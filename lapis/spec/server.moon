@@ -18,6 +18,7 @@ load_test_server = ->
   port = get_free_port!
   current_server = attach_server TEST_ENV, { :port }
   current_server.app_port = port
+  current_server
 
 -- TODO: if _TEST (inside of busted) keep the server running?
 close_test_server = ->

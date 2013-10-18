@@ -29,6 +29,7 @@ load_test_server = function()
     port = port
   })
   current_server.app_port = port
+  return current_server
 end
 local close_test_server
 close_test_server = function()
