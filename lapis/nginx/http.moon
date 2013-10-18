@@ -37,6 +37,8 @@ ltn12 = require "ltn12"
 
 proxy_location = "/proxy"
 
+ngx = ngx or {}
+
 methods = {
   "GET": ngx.HTTP_GET
   "HEAD": ngx.HTTP_HEAD

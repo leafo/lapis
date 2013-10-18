@@ -1,5 +1,6 @@
 local ltn12 = require("ltn12")
 local proxy_location = "/proxy"
+local ngx = ngx or { }
 local methods = {
   ["GET"] = ngx.HTTP_GET,
   ["HEAD"] = ngx.HTTP_HEAD,
@@ -96,10 +97,7 @@ ngx_replace_headers = function(new_headers)
     new_headers = nil
   end
   local req
-  do
-    local _obj_0 = ngx
-    req = _obj_0.req
-  end
+  req = ngx.req
   new_headers = new_headers or ngx.ctx.headers
   for k, v in pairs(req.get_headers()) do
     if k ~= 'content-length' then
