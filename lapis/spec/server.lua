@@ -71,6 +71,11 @@ request = function(url, opts)
       source = ltn12.source.string(data)
     end
   end
+  if opts.headers then
+    for k, v in pairs(opts.headers) do
+      headers[k] = v
+    end
+  end
   local buffer = { }
   local res, status
   res, status, headers = http.request({

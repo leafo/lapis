@@ -46,6 +46,10 @@ request = (url, opts={}) ->
     headers["Content-length"] = #data
     ltn12.source.string(data)
 
+  if opts.headers
+    for k,v in pairs opts.headers
+      headers[k] = v
+
   buffer = {}
   res, status, headers = http.request {
     url: "http://127.0.0.1:#{current_server.app_port}/#{url or ""}"
@@ -53,6 +57,7 @@ request = (url, opts={}) ->
     sink: ltn12.sink.table buffer
     :headers, :method, :source
   }
+
 
   assert res, status
   status, table.concat(buffer), normalize_headers(headers)
