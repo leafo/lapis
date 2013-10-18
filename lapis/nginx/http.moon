@@ -37,16 +37,11 @@ ltn12 = require "ltn12"
 
 proxy_location = "/proxy"
 
-ngx = ngx or {}
-
-methods = {
-  "GET": ngx.HTTP_GET
-  "HEAD": ngx.HTTP_HEAD
-  "PUT": ngx.HTTP_PUT
-  "POST": ngx.HTTP_POST
-  "DELETE": ngx.HTTP_DELETE
-  "OPTIONS": ngx.HTTP_OPTIONS
-}
+-- methods.get -> ngx.HTTP_GET
+methods = setmetatable {}, __index: (name) =>
+  id = ngx["HTTP_#{name\upper!}"]
+  @[name] = id
+  id
 
 set_proxy_location = (loc) -> proxy_location = loc
 
@@ -133,5 +128,5 @@ ngx_replace_headers = (new_headers=nil) ->
       req.set_header k, v
 
 
-{ :request, :simple, :set_proxy_location, :ngx_replace_headers }
+{ :request, :simple, :set_proxy_location, :ngx_replace_headers, :methods }
 

@@ -1,14 +1,12 @@
 local ltn12 = require("ltn12")
 local proxy_location = "/proxy"
-local ngx = ngx or { }
-local methods = {
-  ["GET"] = ngx.HTTP_GET,
-  ["HEAD"] = ngx.HTTP_HEAD,
-  ["PUT"] = ngx.HTTP_PUT,
-  ["POST"] = ngx.HTTP_POST,
-  ["DELETE"] = ngx.HTTP_DELETE,
-  ["OPTIONS"] = ngx.HTTP_OPTIONS
-}
+local methods = setmetatable({ }, {
+  __index = function(self, name)
+    local id = ngx["HTTP_" .. tostring(name:upper())]
+    self[name] = id
+    return id
+  end
+})
 local set_proxy_location
 set_proxy_location = function(loc)
   proxy_location = loc
@@ -97,7 +95,10 @@ ngx_replace_headers = function(new_headers)
     new_headers = nil
   end
   local req
-  req = ngx.req
+  do
+    local _obj_0 = ngx
+    req = _obj_0.req
+  end
   new_headers = new_headers or ngx.ctx.headers
   for k, v in pairs(req.get_headers()) do
     if k ~= 'content-length' then
@@ -114,5 +115,6 @@ return {
   request = request,
   simple = simple,
   set_proxy_location = set_proxy_location,
-  ngx_replace_headers = ngx_replace_headers
+  ngx_replace_headers = ngx_replace_headers,
+  methods = methods
 }
