@@ -41,7 +41,10 @@ close_test_server = function()
   current_server = nil
 end
 local request
-request = function(url, opts)
+request = function(path, opts)
+  if path == nil then
+    path = ""
+  end
   if opts == nil then
     opts = { }
   end
@@ -71,6 +74,12 @@ request = function(url, opts)
       source = ltn12.source.string(data)
     end
   end
+  local url_host, url_path = path:match("^https?://([^/]+)(.*)$")
+  if url_host then
+    headers.Host = url_host
+    path = url_path
+  end
+  path = path:gsub("^/", "")
   if opts.headers then
     for k, v in pairs(opts.headers) do
       headers[k] = v
@@ -79,7 +88,7 @@ request = function(url, opts)
   local buffer = { }
   local res, status
   res, status, headers = http.request({
-    url = "http://127.0.0.1:" .. tostring(current_server.app_port) .. "/" .. tostring(url or ""),
+    url = "http://127.0.0.1:" .. tostring(current_server.app_port) .. "/" .. tostring(path),
     redirect = false,
     sink = ltn12.sink.table(buffer),
     headers = headers,

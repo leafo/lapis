@@ -28,7 +28,7 @@ close_test_server = ->
   current_server = nil
 
 -- hits the server in test environment
-request = (url, opts={}) ->
+request = (path="", opts={}) ->
   error "The test server is not loaded!" unless server_loaded > 0
   http = require "socket.http"
 
@@ -46,18 +46,25 @@ request = (url, opts={}) ->
     headers["Content-length"] = #data
     ltn12.source.string(data)
 
+  -- if the path is a url then extract host and path
+  url_host, url_path = path\match "^https?://([^/]+)(.*)$"
+  if url_host
+    headers.Host = url_host
+    path = url_path
+
+  path = path\gsub "^/", ""
+
   if opts.headers
     for k,v in pairs opts.headers
       headers[k] = v
 
   buffer = {}
   res, status, headers = http.request {
-    url: "http://127.0.0.1:#{current_server.app_port}/#{url or ""}"
+    url: "http://127.0.0.1:#{current_server.app_port}/#{path}"
     redirect: false
     sink: ltn12.sink.table buffer
     :headers, :method, :source
   }
-
 
   assert res, status
   status, table.concat(buffer), normalize_headers(headers)
