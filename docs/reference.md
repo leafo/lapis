@@ -3006,7 +3006,7 @@ lapis = require "lapis.init"
 
 class App extends lapis.Application
   "/": =>
-    @html->
+    @html ->
       a href: @url_for("user", name: "leafo"), "Go to profile"
 
   [user: "/user/:name"]: =>
