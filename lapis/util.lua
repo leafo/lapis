@@ -10,7 +10,7 @@ do
   local _obj_0 = math
   floor = _obj_0.floor
 end
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin
 do
   local u = url.unescape
   unescape = function(str)
@@ -394,6 +394,62 @@ auto_table = function(fn)
   })
 end
 do
+  local empty_func = string.dump(function() end)
+  local is_filled_function
+  is_filled_function = function(fn)
+    return fn and string.dump(fn) ~= empty_func
+  end
+  local combine_before
+  combine_before = function(existing, new)
+    return function(...)
+      new(...)
+      return existing(...)
+    end
+  end
+  mixin_class = function(target, to_mix, combine_methods)
+    if combine_methods == nil then
+      combine_methods = combine_before
+    end
+    local base = target.__base
+    for member_name, member_val in pairs(to_mix.__base) do
+      local _continue_0 = false
+      repeat
+        if member_name:match("^__") then
+          _continue_0 = true
+          break
+        end
+        do
+          local existing = base[member_name]
+          if existing then
+            if type(existing) == "function" and type(member_val) == "function" then
+              base[member_name] = combine_methods(existing, member_val)
+              _continue_0 = true
+              break
+            end
+          end
+        end
+        base[member_name] = member_val
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    local new_ctor = to_mix.__init
+    if is_filled_function(new_ctor) then
+      local old_ctor = target.__init
+      if is_filled_function(old_ctor) then
+        target.__init = function(...)
+          old_ctor(...)
+          return new_ctor(...)
+        end
+      else
+        target.__init = new_ctor
+      end
+    end
+  end
+end
+do
   local get_local
   get_local = function(search_name, level)
     if level == nil then
@@ -412,44 +468,14 @@ do
       i = i + 1
     end
   end
-  local empty_func = string.dump(function() end)
-  mixin = function(mix)
-    local cls = get_local("self", 2)
-    local base = cls.__base
-    for member_name, member_val in pairs(mix.__base) do
-      local _continue_0 = false
-      repeat
-        if member_name:match("^__") then
-          _continue_0 = true
-          break
-        end
-        do
-          local existing = base[member_name]
-          if existing then
-            if type(existing) == "function" and type(member_val) == "function" then
-              base[member_name] = function(...)
-                member_val(...)
-                return existing(...)
-              end
-            else
-              base[member_name] = member_val
-            end
-          else
-            base[member_name] = member_val
-          end
-        end
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
-    if mix.__init and string.dump(mix.__init) ~= empty_func then
-      local old_ctor = cls.__init
-      cls.__init = function(...)
-        old_ctor(...)
-        return mix.__init(...)
-      end
+  mixin = function(...)
+    local target = get_local("self", 2)
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local to_mix = _list_0[_index_0]
+      mixin_class(target, to_mix)
     end
   end
 end
@@ -477,5 +503,6 @@ return {
   title_case = title_case,
   autoload = autoload,
   auto_table = auto_table,
+  mixin_class = mixin_class,
   mixin = mixin
 }
