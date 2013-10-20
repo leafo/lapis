@@ -219,6 +219,10 @@ class Widget
   @__inherited: (cls) =>
     cls.__base.__call = (...) => @render ...
 
+  @include: (other_cls) =>
+    import mixin_class from require "lapis.util"
+    mixin_class @, other_cls
+
   new: (opts) =>
     -- copy in options
     if opts

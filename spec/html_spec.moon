@@ -121,3 +121,20 @@ describe "lapis.html", ->
 
     assert.same {"1", "20", "30", "40", "500"}, buff
 
+
+  it "should include methods from mixin", ->
+    class TestMixin
+      thing: ->
+        div class: "the_thing", ->
+          text "hello world"
+
+    class SomeWidget extends Widget
+      @include TestMixin
+
+      content: =>
+        div class: "outer", ->
+          @thing!
+
+    assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
+      render_widget SomeWidget!
+

@@ -296,13 +296,13 @@ describe "lapis.util.mixin", ->
         insert log, "initializing One"
 
     o = One!
-    assert.equal o\add_one(12), 13
-    assert.same log, {
+    assert.equal 13, o\add_one(12)
+    assert.same {
       "initializing One"
       "initializing Mixin"
       "initializing Mixin2"
       "Before add_one (Mixin2), 12"
       "Before add_one (Mixin), 12"
-    }
+    }, log
 
 

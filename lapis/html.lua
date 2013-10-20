@@ -452,6 +452,14 @@ do
       return self:render(...)
     end
   end
+  self.include = function(self, other_cls)
+    local mixin_class
+    do
+      local _obj_0 = require("lapis.util")
+      mixin_class = _obj_0.mixin_class
+    end
+    return mixin_class(self, other_cls)
+  end
   Widget = _class_0
 end
 return {
