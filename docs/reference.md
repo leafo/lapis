@@ -1311,6 +1311,12 @@ The following constants are also available:
  * `TRUE` -- represents `TRUE` in SQL
  * `FALSE` -- represents `FALSE` in SQL
 
+```moon
+db.update "the_table", {
+  name: db.NULL
+}
+```
+
 ## Models
 
 Lapis provides a `Model` baseclass for making tables that can be synchronized
