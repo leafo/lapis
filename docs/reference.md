@@ -1319,9 +1319,10 @@ db.update "the_table", {
 
 ## Models
 
-Lapis provides a `Model` baseclass for making tables that can be synchronized
-with a database row. The class is used to represent a single table, an instance
-of the class is used to represent a single row of that table.
+Lapis provides a `Model` baseclass for making Lua tables that can be
+synchronized with a database row. The class is used to represent a single
+database table, an instance of the class is used to represent a single row of
+that table.
 
 The most primitive model is a blank model:
 
