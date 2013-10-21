@@ -509,7 +509,7 @@ The HTML builder methods have lower precedence than any existing variables, so
 if you have a variable named `div` and you want to make a `<div>` tag you'll need
 to call `element "div"`.
 
-> If you want to create a `<table>` tag you'll need to uses `element` because Lua
+> If you want to create a `<table>` tag you'll need to use `element` because Lua
 > uses the name `table` for the built in table module.
 
 ### HTML Widgets
