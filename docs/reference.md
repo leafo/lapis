@@ -2746,7 +2746,7 @@ r1_status, r1_res = mock_request SessionApp!, "/second_url", prev: r1_headers
 
 ### Using The Test Server
 
-While mocking a request is useful it doesn't give you access to the entire
+While mocking a request is useful, it doesn't give you access to the entire
 stack that your application uses. For that reason you can spawn up a *test*
 server which you can issue real HTTP requests to.
 
