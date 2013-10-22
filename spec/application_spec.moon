@@ -6,7 +6,6 @@ import mock_action, mock_request from require "lapis.spec.request"
 mock_app = (...) ->
   mock_action lapis.Application, ...
 
-
 describe "application", ->
   action1 = ->
   action2 = ->
@@ -48,7 +47,6 @@ describe "request:build_url", ->
     assert.same "http://leafo.net",
       mock_app "/hello", { host: "leaf", port: 2000 }, =>
         @build_url "http://leafo.net"
-
 
 describe "application inheritance", ->
   local result
