@@ -1,12 +1,7 @@
 
 lapis = require "lapis"
 
-import mock_request, mock_action from require "lapis.spec.request"
-
-assert_request = (...) ->
-  ret = { mock_request ... }
-  assert.same 200, ret[1]
-  unpack ret
+import mock_request, mock_action, assert_request from require "lapis.spec.request"
 
 class App extends lapis.Application
   "/hello": =>
