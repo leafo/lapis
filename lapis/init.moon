@@ -1,25 +1,24 @@
 
 application = require "lapis.application"
-html = require "lapis.html"
-server = require "lapis.server"
 
 import Application from application
+import dispatch from require "lapis.nginx"
+
+app_cache = {}
 
 serve = (app_cls, port = 80) ->
-  app = app_cls!
+  app = app_cache[app_cls]
 
-  switch server.current!
-    when "xavante"
-      x = require "lapis.xavante"
-      s = x.make_server port, x.wrap_dispatch app\dispatch
-      s.start!
-    when "nginx"
-      n = require "lapis.nginx"
-      n.dispatch app
+  unless app
+    app = if type(app_cls) == "string"
+      require(app_cls)!
     else
-      error "Don't know how to serve: #{server.current!}"
+      app_cls!
+
+    app_cache[app_cls] = app
+
+  dispatch app
 
 {
-  :server, :serve, :html, :application
-  :Application
+  :serve, :application, :Application, :app_cache
 }

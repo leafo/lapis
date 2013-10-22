@@ -63,7 +63,6 @@ build = {
 		["lapis.version"] = "lapis/version.lua",
 		["lapis.views.error"] = "lapis/views/error.lua",
 		["lapis.views.layout"] = "lapis/views/layout.lua",
-		["lapis.xavante"] = "lapis/xavante.lua",
 	},
 	install = {
 		bin = { "bin/lapis" }

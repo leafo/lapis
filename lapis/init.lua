@@ -1,36 +1,31 @@
 local application = require("lapis.application")
-local html = require("lapis.html")
-local server = require("lapis.server")
 local Application
 Application = application.Application
+local dispatch
+do
+  local _obj_0 = require("lapis.nginx")
+  dispatch = _obj_0.dispatch
+end
+local app_cache = { }
 local serve
 serve = function(app_cls, port)
   if port == nil then
     port = 80
   end
-  local app = app_cls()
-  local _exp_0 = server.current()
-  if "xavante" == _exp_0 then
-    local x = require("lapis.xavante")
-    local s = x.make_server(port, x.wrap_dispatch((function()
-      local _base_0 = app
-      local _fn_0 = _base_0.dispatch
-      return function(...)
-        return _fn_0(_base_0, ...)
-      end
-    end)()))
-    return s.start()
-  elseif "nginx" == _exp_0 then
-    local n = require("lapis.nginx")
-    return n.dispatch(app)
-  else
-    return error("Don't know how to serve: " .. tostring(server.current()))
+  local app = app_cache[app_cls]
+  if not (app) then
+    if type(app_cls) == "string" then
+      app = require(app_cls)()
+    else
+      app = app_cls()
+    end
+    app_cache[app_cls] = app
   end
+  return dispatch(app)
 end
 return {
-  server = server,
   serve = serve,
-  html = html,
   application = application,
-  Application = Application
+  Application = Application,
+  app_cache = app_cache
 }
