@@ -6,6 +6,20 @@ import mock_action, mock_request from require "lapis.spec.request"
 mock_app = (...) ->
   mock_action lapis.Application, ...
 
+
+describe "application", ->
+  action1 = ->
+  action2 = ->
+
+  class SomeApp extends lapis.Application
+    [hello: "/cool-dad"]: action1
+    [world: "/another-dad"]: action2
+
+  it "should find the action", ->
+    assert.same action1, (SomeApp\find_action "hello")
+    assert.same action2, (SomeApp\find_action "world")
+    assert.same nil, (SomeApp\find_action "nothing")
+
 describe "request:build_url", ->
   it "should build url", ->
     assert.same "http://localhost", mock_app "/hello", {}, =>

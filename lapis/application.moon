@@ -199,6 +199,21 @@ class Application
   layout: require"lapis.views.layout"
   error_page: require"lapis.views.error"
 
+  -- find action for named route in this application
+  @find_action: (name) =>
+    @_named_route_cache or= {}
+    route = @_named_route_cache[name]
+
+    -- update the cache
+    unless route
+      for app_route in pairs @__base
+        if type(app_route) == "table"
+          app_route_name = next app_route
+          @_named_route_cache[app_route_name] = app_route
+          route = app_route if app_route_name == name
+
+    route and @[route], route
+
   views_prefix: "views"
 
   new: =>

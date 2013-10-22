@@ -394,6 +394,22 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
+  self.find_action = function(self, name)
+    self._named_route_cache = self._named_route_cache or { }
+    local route = self._named_route_cache[name]
+    if not (route) then
+      for app_route in pairs(self.__base) do
+        if type(app_route) == "table" then
+          local app_route_name = next(app_route)
+          self._named_route_cache[app_route_name] = app_route
+          if app_route_name == name then
+            route = app_route
+          end
+        end
+      end
+    end
+    return route and self[route], route
+  end
   self.before_filter = function(self, fn)
     self.__base.before_filters = self.__base.before_filters or { }
     return table.insert(self.before_filters, fn)
