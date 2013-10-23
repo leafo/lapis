@@ -1,7 +1,7 @@
 
 lapis = require "lapis"
 
-import mock_action, mock_request from require "lapis.spec.request"
+import mock_action, mock_request, assert_request from require "lapis.spec.request"
 
 mock_app = (...) ->
   mock_action lapis.Application, ...
@@ -78,3 +78,40 @@ describe "application inheritance", ->
     assert.same 200, status
     assert.same "child yeah", result
 
+describe "application error capturing", ->
+  import capture_errors, capture_errors_json, assert_error,
+    yield_error from require "lapis.application"
+
+  it "should capture error", ->
+    result = "no"
+    errors = nil
+
+    class ErrorApp extends lapis.Application
+      "/error_route": capture_errors {
+        on_error: =>
+          errors = @errors
+
+        =>
+          yield_error "something bad happened!"
+          result = "yes"
+      }
+
+    assert_request ErrorApp, "/error_route"
+
+    assert.same "no", result
+    assert.same {"something bad happened!"}, errors
+
+
+  it "should capture error as json", ->
+    result = "no"
+
+    class ErrorApp extends lapis.Application
+      "/error_route": capture_errors_json =>
+        yield_error "something bad happened!"
+        result = "yes"
+
+    status, body, headers = assert_request ErrorApp, "/error_route"
+
+    assert.same "no", result
+    assert.same [[{"errors":["something bad happened!"]}]], body
+    assert.same "application_json", headers["Content-type"]
