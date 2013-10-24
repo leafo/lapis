@@ -92,18 +92,19 @@ element_attributes = function(buffer, t)
   return nil
 end
 local element
-element = function(buffer, name, ...)
-  local inner = {
-    ...
-  }
+element = function(buffer, name, attrs, ...)
   do
     local _with_0 = buffer
     _with_0:write("<", name)
-    element_attributes(buffer, inner[1])
+    element_attributes(buffer, attrs)
     if void_tags[name] then
       local has_content = false
-      for _index_0 = 1, #inner do
-        local thing = inner[_index_0]
+      local _list_0 = {
+        attrs,
+        ...
+      }
+      for _index_0 = 1, #_list_0 do
+        local thing = _list_0[_index_0]
         local t = type(thing)
         local _exp_0 = t
         if "string" == _exp_0 then
@@ -122,7 +123,7 @@ element = function(buffer, name, ...)
       end
     end
     _with_0:write(">")
-    _with_0:write_escaped(inner)
+    _with_0:write_escaped(attrs, ...)
     _with_0:write("</", name, ">")
     return _with_0
   end
@@ -236,52 +237,44 @@ do
       end
       return unpack(out)
     end,
-    write_escaped = function(self, ...)
-      local _list_0 = {
-        ...
-      }
-      for _index_0 = 1, #_list_0 do
-        local thing = _list_0[_index_0]
-        local _exp_0 = type(thing)
-        if "string" == _exp_0 then
-          self:write(escape(thing))
-        elseif "table" == _exp_0 then
-          for _index_1 = 1, #thing do
-            local chunk = thing[_index_1]
-            self:write_escaped(chunk)
-          end
-        else
-          self:write(thing)
+    write_escaped = function(self, thing, next_thing, ...)
+      local _exp_0 = type(thing)
+      if "string" == _exp_0 then
+        self:write(escape(thing))
+      elseif "table" == _exp_0 then
+        for _index_0 = 1, #thing do
+          local chunk = thing[_index_0]
+          self:write_escaped(chunk)
         end
+      else
+        self:write(thing)
       end
-      return nil
+      if next_thing then
+        return self:write_escaped(next_thing, ...)
+      end
     end,
-    write = function(self, ...)
-      local _list_0 = {
-        ...
-      }
-      for _index_0 = 1, #_list_0 do
-        local thing = _list_0[_index_0]
-        local _exp_0 = type(thing)
-        if "string" == _exp_0 then
-          self.i = self.i + 1
-          self.buffer[self.i] = thing
-        elseif "number" == _exp_0 then
-          self:write(tostring(thing))
-        elseif "nil" == _exp_0 then
-          local _ = nil
-        elseif "table" == _exp_0 then
-          for _index_1 = 1, #thing do
-            local chunk = thing[_index_1]
-            self:write(chunk)
-          end
-        elseif "function" == _exp_0 then
-          self:call(thing)
-        else
-          error("don't know how to handle: " .. type(thing))
+    write = function(self, thing, next_thing, ...)
+      local _exp_0 = type(thing)
+      if "string" == _exp_0 then
+        self.i = self.i + 1
+        self.buffer[self.i] = thing
+      elseif "number" == _exp_0 then
+        self:write(tostring(thing))
+      elseif "nil" == _exp_0 then
+        local _ = nil
+      elseif "table" == _exp_0 then
+        for _index_0 = 1, #thing do
+          local chunk = thing[_index_0]
+          self:write(chunk)
         end
+      elseif "function" == _exp_0 then
+        self:call(thing)
+      else
+        error("don't know how to handle: " .. type(thing))
       end
-      return nil
+      if next_thing then
+        return self:write(next_thing, ...)
+      end
     end
   }
   _base_0.__index = _base_0

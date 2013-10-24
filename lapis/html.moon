@@ -69,16 +69,14 @@ element_attributes = (buffer, t) ->
       buffer\write k, "=", '"', escape(tostring(v)), '"'
   nil
 
-element = (buffer, name, ...) ->
-  inner = {...}
+element = (buffer, name, attrs, ...) ->
   with buffer
     \write "<", name
-    element_attributes(buffer, inner[1])
-
+    element_attributes(buffer, attrs)
     if void_tags[name]
       -- check if it has content
       has_content = false
-      for thing in *inner
+      for thing in *{attrs, ...}
         t = type thing
         switch t
           when "string"
@@ -94,7 +92,7 @@ element = (buffer, name, ...) ->
         return buffer
 
     \write ">"
-    \write_escaped inner
+    \write_escaped attrs, ...
     \write "</", name, ">"
 
 class Buffer
@@ -174,36 +172,38 @@ class Buffer
 
     unpack out
 
-  write_escaped: (...) =>
-    for thing in *{...}
-      switch type thing
-        when "string"
-          @write escape thing
-        when "table"
-          for chunk in *thing
-            @write_escaped chunk
-        else
-          @write thing
-    nil
+  write_escaped: (thing, next_thing, ...) =>
+    switch type thing
+      when "string"
+        @write escape thing
+      when "table"
+        for chunk in *thing
+          @write_escaped chunk
+      else
+        @write thing
 
-  write: (...) =>
-    for thing in *{...}
-      switch type thing
-        when "string"
-          @i += 1
-          @buffer[@i] = thing
-        when "number"
-          @write tostring thing
-        when "nil"
-          nil -- ignore
-        when "table"
-          for chunk in *thing
-            @write chunk
-        when "function"
-          @call thing
-        else
-          error "don't know how to handle: " .. type(thing)
-    nil
+    if next_thing -- keep the tail call
+      @write_escaped next_thing, ...
+
+  write: (thing, next_thing, ...) =>
+    switch type thing
+      when "string"
+        @i += 1
+        @buffer[@i] = thing
+      when "number"
+        @write tostring thing
+      when "nil"
+        nil -- ignore
+      when "table"
+        for chunk in *thing
+          @write chunk
+      when "function"
+        @call thing
+      else
+        error "don't know how to handle: " .. type(thing)
+
+    if next_thing -- keep tail call
+      @write next_thing, ...
 
 html_writer = (fn) ->
   (buffer) -> Buffer(buffer)\write fn
