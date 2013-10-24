@@ -8,7 +8,7 @@ render_widget = (w) ->
 
 describe "lapis.html", ->
   it "should render html", ->
-    input = render_html ->
+    output = render_html ->
       b "what is going on?"
 
       div ->
@@ -24,7 +24,30 @@ describe "lapis.html", ->
       html_5 ->
         div "what is going on there?"
 
-    assert.same [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<link rel="icon"href="dad"type="image/png"/><div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]], input
+    assert.same [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<link rel="icon"href="dad"type="image/png"/><div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]], output
+
+  it "should render more html", ->
+    output = render_html ->
+      element "leaf", {"hello"}, "world"
+      element "leaf", "one", "two", "three"
+      element "leaf", {hello: "world", "a"}, { no: "show", "b", "c" }
+
+      leaf {"hello"}, "world"
+      leaf "one", "two", "three"
+      leaf {hello: "world", "a"}, { no: "show", "b", "c" }
+
+    assert.same [[<leaf>helloworld</leaf><leaf>onetwothree</leaf><leaf hello="world">abc</leaf><leaf>helloworld</leaf><leaf>onetwothree</leaf><leaf hello="world">abc</leaf>]], output
+
+  it "should capture", ->
+    local capture_out
+    output = render_html ->
+      text "hello"
+      capture_out = capture ->
+        div "This is the capture"
+      text "world"
+
+    assert.same "helloworld", output
+    assert.same "<div>This is the capture</div>", capture_out
 
   it "should render the widget", ->
     class TestWidget extends Widget
