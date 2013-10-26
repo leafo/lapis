@@ -2001,7 +2001,7 @@ migrations anything but it's suggested to give them Unix timestamps as names:
     add_column "my_table", "hello", integer
 
   [1368686843]: =>
-    add_index "my_table", "hello"
+    create_index "my_table", "hello"
 }
 ```
 
