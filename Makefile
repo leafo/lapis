@@ -14,3 +14,7 @@ build::
 watch:: build
 	moonc -w lapis
 
+clean::
+	rm -f lapis/*.lua
+	rm -f lapis/*/*.lua
+	rm -f lapis/*/*/*.lua
