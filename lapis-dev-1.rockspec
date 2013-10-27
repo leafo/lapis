@@ -7,7 +7,7 @@ source = {
 
 description = {
 	summary = "A web framework for MoonScript & Lua",
-	homepage = "http://leafo.net",
+	homepage = "http://leafo.net/lapis",
 	maintainer = "Leaf Corcoran <leafot@gmail.com>",
 	license = "MIT"
 }
