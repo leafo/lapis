@@ -451,6 +451,9 @@ do
       local _obj_0 = require("lapis.util")
       mixin_class = _obj_0.mixin_class
     end
+    if type(other_cls) == "string" then
+      other_cls = require(other_cls)
+    end
     return mixin_class(self, other_cls)
   end
   Widget = _class_0

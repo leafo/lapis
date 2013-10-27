@@ -221,6 +221,7 @@ class Widget
 
   @include: (other_cls) =>
     import mixin_class from require "lapis.util"
+    other_cls = require other_cls if type(other_cls) == "string"
     mixin_class @, other_cls
 
   new: (opts) =>

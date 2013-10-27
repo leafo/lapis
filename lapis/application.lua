@@ -418,6 +418,9 @@ do
     if into == nil then
       into = self.__base
     end
+    if type(other_app) == "string" then
+      other_app = require(other_app)
+    end
     local path_prefix = opts and opts.path or other_app.path
     local name_prefix = opts and opts.name or other_app.name
     for path, action in pairs(other_app.__base) do

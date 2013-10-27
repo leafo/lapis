@@ -374,6 +374,16 @@ leaving the original untouched.
 Before filters of the sub-application are kept associated with the actions from
 that application.
 
+In addition to passing in an actual application object, you can also pass in a
+string and it will `require`d automatically. The above include statement could
+be rewritten as:
+
+```moon
+class extends lapis.Application
+  @include "applications.users"
+  -- ...
+```
+
 `include` takes an optional second argument, a table of options. The following
 options are available:
 
@@ -676,6 +686,29 @@ class extends lapis.Application
 
 As demonstrated in the example, passing false will prevent any layout from
 being rendered.
+
+### Widget Methods
+
+#### `@@include(other_class)`
+
+Class method that copies the methods from another class into this widget.
+Useful for mixin in shared functionality across multiple widgets.
+
+```moon
+class MyHelpers
+  item_list: (items) =>
+    ul ->
+      for item in *items
+        li item
+
+
+class SomeWidget extends html.Widget
+  @include MyHelpers
+
+  content: =>
+    @item_list {"hello", "world"}
+```
+
 
 ### HTML Module
 
