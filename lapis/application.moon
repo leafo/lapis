@@ -325,7 +325,6 @@ class Application
   handle_404: =>
     error "Failed to find route: #{@req.cmd_url}"
 
-  -- self is Request that errrored
   handle_error: (err, trace) =>
     r = @app.Request self, @req, @res
     r\write {
