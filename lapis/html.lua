@@ -391,8 +391,12 @@ do
           end
           if type(value) == "function" then
             local wrapped
-            wrapped = function(...)
-              return self._buffer:call(value, ...)
+            if Widget.__base[key] and key ~= "content" then
+              wrapped = value
+            else
+              wrapped = function(...)
+                return self._buffer:call(value, ...)
+              end
             end
             scope[key] = wrapped
             return wrapped

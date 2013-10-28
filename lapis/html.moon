@@ -289,7 +289,11 @@ class Widget
 
         -- run method in buffer scope
         if type(value) == "function"
-          wrapped = (...) -> @_buffer\call value, ...
+          wrapped = if Widget.__base[key] and key != "content"
+            value
+          else
+            (...) -> @_buffer\call value, ...
+
           scope[key] = wrapped
           return wrapped
 
