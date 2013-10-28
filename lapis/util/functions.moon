@@ -1,4 +1,6 @@
 
+import next, loadstring, debug, string, setmetatable, rawget from _G
+
 clone_function = if debug.upvaluejoin
   (fn) ->
     dumped = string.dump fn
@@ -30,18 +32,17 @@ else
 locks = setmetatable {}, {
   __mode: "k"
   __index: (name) =>
-    val = { len: 0 }
-    @[name] = val
-    val
+    list = setmetatable {}, { __mode: "k" }
+    @[name] = list
+    list
 }
 
 locked_fn = (fn) ->
   -- look for existing lock
   list = locks[fn]
-  clone = list[list.len]
+  clone = next list
   if clone
-    list[list.len] = nil
-    list.len -= 1
+    list[clone] = nil
     clone
   else
     with c = clone_function fn
@@ -49,8 +50,7 @@ locked_fn = (fn) ->
 
 release_fn = (fn) ->
   list = locks[rawget locks, fn]
-  list.len += 1
-  list[list.len] = fn
+  list[fn] = true
   true
 
 { :clone_function, :locked_fn, :release_fn, _locks: locks }

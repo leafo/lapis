@@ -1,3 +1,8 @@
+local next, loadstring, debug, string, setmetatable, rawget
+do
+  local _obj_0 = _G
+  next, loadstring, debug, string, setmetatable, rawget = _obj_0.next, _obj_0.loadstring, _obj_0.debug, _obj_0.string, _obj_0.setmetatable, _obj_0.rawget
+end
 local clone_function
 if debug.upvaluejoin then
   clone_function = function(fn)
@@ -33,20 +38,19 @@ end
 local locks = setmetatable({ }, {
   __mode = "k",
   __index = function(self, name)
-    local val = {
-      len = 0
-    }
-    self[name] = val
-    return val
+    local list = setmetatable({ }, {
+      __mode = "k"
+    })
+    self[name] = list
+    return list
   end
 })
 local locked_fn
 locked_fn = function(fn)
   local list = locks[fn]
-  local clone = list[list.len]
+  local clone = next(list)
   if clone then
-    list[list.len] = nil
-    list.len = list.len - 1
+    list[clone] = nil
     return clone
   else
     do
@@ -59,8 +63,7 @@ end
 local release_fn
 release_fn = function(fn)
   local list = locks[rawget(locks, fn)]
-  list.len = list.len + 1
-  list[list.len] = fn
+  list[fn] = true
   return true
 end
 return {
