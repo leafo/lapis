@@ -4,8 +4,13 @@ do
   concat = _obj_0.concat
 end
 local _G = _G
-local type, pairs, ipairs, tostring
-type, pairs, ipairs, tostring = _G.type, _G.pairs, _G.ipairs, _G.tostring
+local type, pairs, ipairs, tostring, getfenv, setfenv
+type, pairs, ipairs, tostring, getfenv, setfenv = _G.type, _G.pairs, _G.ipairs, _G.tostring, _G.getfenv, _G.setfenv
+local locked_fn, release_fn
+do
+  local _obj_0 = require("lapis.util.functions")
+  locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
+end
 local punct = "[%^$()%.%[%]*+%-?]"
 local escape_patt
 escape_patt = function(str)
@@ -169,9 +174,7 @@ do
             end
           elseif "capture" == _exp_0 then
             handler = function(fn)
-              return table.concat(self:with_temp(function()
-                return fn()
-              end))
+              return table.concat(self:with_temp(fn))
             end
           elseif "element" == _exp_0 then
             handler = function(...)
@@ -220,21 +223,18 @@ do
     end,
     call = function(self, fn, ...)
       local env = getfenv(fn)
-      local out = nil
       if env == self.scope then
-        out = {
-          fn(...)
-        }
-      else
-        local before = self.old_env
-        self.old_env = env[Buffer] and _G or env
-        setfenv(fn, self.scope)
-        out = {
-          fn(...)
-        }
-        setfenv(fn, env)
-        self.old_env = before
+        return fn()
       end
+      local before = self.old_env
+      self.old_env = env
+      local clone = locked_fn(fn)
+      setfenv(clone, self.scope)
+      local out = {
+        clone(...)
+      }
+      release_fn(clone)
+      self.old_env = before
       return unpack(out)
     end,
     write_escaped = function(self, thing, next_thing, ...)

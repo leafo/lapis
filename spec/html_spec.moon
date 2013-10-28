@@ -16,7 +16,7 @@ describe "lapis.html", ->
 
       text capture -> div "this is captured"
 
-      link rel: "icon", type: "image/png", href: "dad"
+      link rel: "icon" -- , type: "image/png", href: "dad"-- can't have multiple because of hash ordering
 
       raw "<div>raw test</div>"
       text "<div>raw test</div>"
@@ -24,7 +24,7 @@ describe "lapis.html", ->
       html_5 ->
         div "what is going on there?"
 
-    assert.same [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<link rel="icon"href="dad"type="image/png"/><div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]], output
+    assert.same [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<link rel="icon"/><div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]], output
 
   it "should render more html", ->
     output = render_html ->

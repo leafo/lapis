@@ -2,7 +2,9 @@
 import concat from table
 
 _G = _G
-import type, pairs, ipairs, tostring from _G
+import type, pairs, ipairs, tostring, getfenv, setfenv from _G
+
+import locked_fn, release_fn from require "lapis.util.functions"
 
 punct = "[%^$()%.%[%]*+%-?]"
 escape_patt = (str) ->
@@ -131,7 +133,7 @@ class Buffer
 
               w\render @
           when "capture"
-            (fn) -> table.concat @with_temp -> fn!
+            (fn) -> table.concat @with_temp fn
           when "element"
             (...) -> element @, ...
           when "text"
@@ -157,19 +159,18 @@ class Buffer
 
   call: (fn, ...) =>
     env = getfenv fn
-    out = nil
     if env == @scope
-      out = {fn ...}
-    else
-      before = @old_env
-      -- env[Buffer] is true with we have a broken function
-      -- a function that errored out mid way through a previous render
-      @old_env = env[Buffer] and _G or env
-      setfenv fn, @scope
-      out = {fn ...}
-      setfenv fn, env
-      @old_env = before
+      return fn!
 
+    before = @old_env
+
+    @old_env = env
+    clone = locked_fn fn
+    setfenv clone, @scope
+    out = {clone ...}
+
+    release_fn clone
+    @old_env = before
     unpack out
 
   write_escaped: (thing, next_thing, ...) =>
