@@ -38,6 +38,12 @@ describe "lapis.html", ->
 
     assert.same [[<leaf>helloworld</leaf><leaf>onetwothree</leaf><leaf hello="world">abc</leaf><leaf>helloworld</leaf><leaf>onetwothree</leaf><leaf hello="world">abc</leaf>]], output
 
+  -- attributes are unordered so we don't check output (for now)
+  it "should render multiple attributes", ->
+    render_html ->
+      link rel: "icon", type: "image/png", href: "dad"
+      pre id: "hello", class: "things", style: [[border: image("http://leafo.net")]]
+
   it "should capture", ->
     local capture_out
     output = render_html ->
