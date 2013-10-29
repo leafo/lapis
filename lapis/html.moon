@@ -1,4 +1,3 @@
-
 import concat from table
 
 _G = _G
@@ -16,6 +15,7 @@ html_escape_entities = {
   ['>']: '&gt;'
   ['"']: '&quot;'
   ["'"]: '&#039;'
+  [" "]: '&nbsp;
 }
 
 html_unescape_entities = {}
