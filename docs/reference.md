@@ -1736,11 +1736,29 @@ We can create a paginator like so:
 paginated = Users\paginated [[where group_id = ? order by name asc]], 123
 ```
 
-We can set the number of items per page by passing a table as the last
-argument with a `per_page` field:
+A paginator can be configured by passing a table as the last argument.
+The following options are supported:
+
+`per_page`: sets the number of items per page
 
 ```moon
 paginated_alt = Users\paginated [[where group_id = ?]], 4, per_page: 100
+```
+
+`prepare_results`: a function that is passed the results of `get_page` and
+`get_all` for processing before they are returned. This is useful for bundling
+preloading information into the paginator. The prepare function takes 1
+argument, the results, and it must return the results after they have been
+processed:
+
+
+```moon
+preloaded = Posts\paginated [[where category = ?]], "cats", {
+  pre_page: 10
+  prepare_results: (posts) ->
+    Users\include_in posts, "user_id"
+    posts
+}
 ```
 
 The paginator has the following methods:
