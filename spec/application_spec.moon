@@ -78,6 +78,17 @@ describe "application inheritance", ->
     assert.same 200, status
     assert.same "child yeah", result
 
+describe "application inline html", ->
+  class HtmlApp extends lapis.Application
+    layout: false
+
+    "/": =>
+      @html -> div "hello world"
+
+  it "should render html", ->
+    status, body = assert_request HtmlApp, "/"
+    assert.same "<div>hello world</div>", body
+
 describe "application error capturing", ->
   import capture_errors, capture_errors_json, assert_error,
     yield_error from require "lapis.application"
