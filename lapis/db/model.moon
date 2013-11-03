@@ -254,7 +254,7 @@ class Paginator
 
     @per_page = @model.per_page
     @per_page = opts.per_page if opts
-    @prepare_results = opts.prepare_results if opts.prepare_results
+    @prepare_results = opts.prepare_results if opts and opts.prepare_results
 
     @_clause = db.interpolate_query clause, ...
 

@@ -414,7 +414,7 @@ do
       if opts then
         self.per_page = opts.per_page
       end
-      if opts.prepare_results then
+      if opts and opts.prepare_results then
         self.prepare_results = opts.prepare_results
       end
       self._clause = db.interpolate_query(clause, ...)
