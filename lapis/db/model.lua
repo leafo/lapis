@@ -381,13 +381,13 @@ do
   local _base_0 = {
     per_page = 10,
     get_all = function(self)
-      return self.model:select(self._clause)
+      return self.prepare_results(self.model:select(self._clause))
     end,
     get_page = function(self, page)
       page = (math.max(1, tonumber(page) or 0)) - 1
-      return self.model:select(self._clause .. [[      limit ?
+      return self.prepare_results(self.model:select(self._clause .. [[      limit ?
       offset ?
-    ]], self.per_page, self.per_page * page)
+    ]], self.per_page, self.per_page * page))
     end,
     num_pages = function(self)
       return math.ceil(self:total_items() / self.per_page)
@@ -395,6 +395,9 @@ do
     total_items = function(self)
       self._count = self._count or self.model:count(db.parse_clause(self._clause).where)
       return self._count
+    end,
+    prepare_results = function(...)
+      return ...
     end
   }
   _base_0.__index = _base_0
@@ -410,6 +413,9 @@ do
       self.per_page = self.model.per_page
       if opts then
         self.per_page = opts.per_page
+      end
+      if opts.prepare_results then
+        self.prepare_results = opts.prepare_results
       end
       self._clause = db.interpolate_query(clause, ...)
     end,

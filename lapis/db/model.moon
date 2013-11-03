@@ -254,16 +254,17 @@ class Paginator
 
     @per_page = @model.per_page
     @per_page = opts.per_page if opts
+    @prepare_results = opts.prepare_results if opts.prepare_results
 
     @_clause = db.interpolate_query clause, ...
 
   get_all: =>
-    @model\select @_clause
+    @.prepare_results @model\select @_clause
 
   -- 1 indexed page
   get_page: (page) =>
     page = (math.max 1, tonumber(page) or 0) - 1
-    @model\select @_clause .. [[
+    @.prepare_results @model\select @_clause .. [[
       limit ?
       offset ?
     ]], @per_page, @per_page * page
@@ -274,6 +275,8 @@ class Paginator
   total_items: =>
     @_count or= @model\count db.parse_clause(@_clause).where
     @_count
+
+  prepare_results: (...) -> ...
 
 { :Model, :Paginator }
 
