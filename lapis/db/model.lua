@@ -381,7 +381,7 @@ do
   local _base_0 = {
     per_page = 10,
     get_all = function(self)
-      return self.prepare_results(self.model:select(self._clause))
+      return self.prepare_results(self.model:select(self._clause, self.opts))
     end,
     get_page = function(self, page)
       page = (math.max(1, tonumber(page) or 0)) - 1
