@@ -93,12 +93,17 @@ describe "lapis.db.model.", ->
 
     p2\get_page 3
 
+    -- TODO: make clause optional
+    p3 = Things\paginated "", fields: "hello, world", per_page: 12
+    p3\get_page 2
+
     assert.same {
       'SELECT * from "things" where group_id = 123 order by name asc'
       'SELECT COUNT(*) as c from "things" where group_id = 123 '
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 0 '
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 30 '
       'SELECT * from "things" order by name asc limit 25 offset 50 '
+      'SELECT hello, world from "things" limit 12 offset 12 '
     }, queries
 
   it "should create model", ->
