@@ -257,9 +257,10 @@ class Paginator
     @prepare_results = opts.prepare_results if opts and opts.prepare_results
 
     @_clause = db.interpolate_query clause, ...
+    @opts = opts
 
   get_all: =>
-    @.prepare_results @model\select @_clause
+    @.prepare_results @model\select @_clause, @opts
 
   -- 1 indexed page
   get_page: (page) =>
@@ -267,7 +268,7 @@ class Paginator
     @.prepare_results @model\select @_clause .. [[
       limit ?
       offset ?
-    ]], @per_page, @per_page * page
+    ]], @per_page, @per_page * page, @opts
 
   num_pages: =>
     math.ceil @total_items! / @per_page

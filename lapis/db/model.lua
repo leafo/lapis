@@ -387,7 +387,7 @@ do
       page = (math.max(1, tonumber(page) or 0)) - 1
       return self.prepare_results(self.model:select(self._clause .. [[      limit ?
       offset ?
-    ]], self.per_page, self.per_page * page))
+    ]], self.per_page, self.per_page * page, self.opts))
     end,
     num_pages = function(self)
       return math.ceil(self:total_items() / self.per_page)
@@ -418,6 +418,7 @@ do
         self.prepare_results = opts.prepare_results
       end
       self._clause = db.interpolate_query(clause, ...)
+      self.opts = opts
     end,
     __base = _base_0,
     __name = "Paginator"
