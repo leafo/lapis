@@ -465,6 +465,14 @@ class extends lapis.Application
     status: 404, layout: false, "Not Found!"
 ```
 
+### Class Methods
+
+#### `@find_action(action_name)`
+
+Returns the function of the action that has the name specified by
+`action_name`.
+
+
 ## HTML Generation
 
 ### HTML In Actions
