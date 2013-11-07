@@ -6,7 +6,7 @@ do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port = _obj_0.get_free_port
 end
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server
+local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -120,6 +120,15 @@ get_pid = function()
   local pid = pidfile:read("*a")
   pidfile:close()
   return pid:match("[^%s]+")
+end
+send_signal = function(signal)
+  do
+    local pid = get_pid()
+    if pid then
+      os.execute("kill -s " .. tostring(signal) .. " " .. tostring(pid))
+      return pid
+    end
+  end
 end
 send_hup = function()
   do
@@ -334,5 +343,6 @@ return {
   get_pid = get_pid,
   write_config_for = write_config_for,
   attach_server = attach_server,
-  detach_server = detach_server
+  detach_server = detach_server,
+  send_signal = send_signal
 }

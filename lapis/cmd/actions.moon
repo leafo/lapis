@@ -149,6 +149,22 @@ tasks = {
   }
 
   {
+    name: "signal"
+    hidden: true
+    help: "send arbitrary signal to running server"
+
+    (signal) ->
+      assert signal, "Missing signal"
+      import send_signal from require "lapis.cmd.nginx"
+
+      pid = send_signal signal
+      if pid
+        print colors "%{green}Sent #{signal} to #{pid}"
+      else
+        fail_with_message "failed to find nginx process"
+  }
+
+  {
     name: "exec"
     usage: "exec <lua-string>"
     help: "execute Lua on the server"

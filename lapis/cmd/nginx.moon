@@ -92,6 +92,11 @@ get_pid = ->
   pidfile\close!
   pid\match "[^%s]+"
 
+send_signal = (signal) ->
+  if pid = get_pid!
+    os.execute "kill -s #{signal} #{pid}"
+    pid
+
 send_hup = ->
   if pid = get_pid!
     os.execute "kill -HUP #{pid}"
@@ -278,4 +283,4 @@ detach_server = ->
   server_stack\detach!
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :write_config_for, :attach_server, :detach_server }
+  :get_pid, :write_config_for, :attach_server, :detach_server, :send_signal }
