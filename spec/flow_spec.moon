@@ -54,3 +54,19 @@ describe "lapis.flow", ->
     flow\check_base_object!
     flow\check_self flow
 
+
+  it "should let flows inherit each other", ->
+    class BaseFlow extends Flow
+      the_data: 100
+      the_method: =>
+        @the_data
+
+    class ChildFlow extends BaseFlow
+      the_method: =>
+        super! + 11
+
+      proxy_to_message: => @get_msg!
+
+    flow = ChildFlow base_object
+    assert.same 111, flow\the_method!
+    assert.same "hello", flow\proxy_to_message!
