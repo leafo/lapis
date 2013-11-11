@@ -1,4 +1,3 @@
-local parser = require("rds.parser")
 local concat
 do
   local _obj_0 = table
@@ -30,6 +29,7 @@ local backends = {
     if _proxy == nil then
       _proxy = proxy_location
     end
+    local parser = require("rds.parser")
     raw_query = function(str)
       if logger then
         logger.query(str)

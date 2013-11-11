@@ -16,7 +16,6 @@
 -- }
 --
 
-parser = require "rds.parser"
 
 import concat from table
 
@@ -37,6 +36,7 @@ FALSE = raw"FALSE"
 
 backends = {
   default: (_proxy=proxy_location) ->
+    parser = require "rds.parser"
     raw_query = (str) ->
       logger.query str if logger
       res, m = ngx.location.capture _proxy, {
