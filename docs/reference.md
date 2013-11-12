@@ -2787,7 +2787,7 @@ options in a table:
 * `get` --  A table of GET parameters to add to the url
 * `post` -- A table of POST parameters (sets default method to `"POST"`)
 * `method` -- The HTTP method to use (defaults to `"GET"`)
-* `headers` -- Addition HTTP request headers
+* `headers` -- Additional HTTP request headers
 * `host` -- The host the mocked server (defaults to `"localhost"`)
 * `port` -- The port of the mocked server (defaults to `80`)
 * `scheme` -- The scheme of the mocked server (defaults to `"http"`)
@@ -2838,10 +2838,23 @@ take over your development server until `close_test_server` is called. Taking
 over the development server useful for seeing the raw Nginx output in the
 console.
 
+While the test server is running we are free to make queries and use
+models. Database queries are transparently sent over HTTP to the test server
+and executed inside of Nginx.
+
+For example, we could write a basic unit test for a model:
+
+```moon
+  it "should create a User", ->
+    import Users from require "models"
+    assert Users\create name: "leafo"
+```
+
+#### `request(path, options={})`
+
 To make HTTP request to the test server you can use the helper function
 `request` found in `"lapis.spec.server"`. For example we might write a test to
 make sure `/` loads without errors:
-
 
 ```moon
 import load_test_server, close_test_server, request
@@ -2860,18 +2873,21 @@ describe "my_site", ->
 
 ```
 
-While the test server is running we are also free to make queries and use
-models. Database queries are transparently sent over HTTP to the test server
-and executed inside of Nginx.
+`path` is either a path of a full URL to request against the test server. If it
+is a full URL then the hostname of the URL is extracted and inserted as the
+host header.
 
-For example, we could write a basic unit test for a model:
+The `options` argument can be used to further configure the request. It
+supports the following options in the table:
 
-```moon
-  it "should create a User", ->
-    import Users from require "models"
-    assert Users\create name: "leafo"
-```
+* `post` -- A table of POST parameters. Sets default method to `"POST"`,
+  encodes the table as the body of the request and sets the `Content-type`
+  header to `application/x-www-form-urlencoded`
+* `method` -- The HTTP method to use (defaults to `"GET"`)
+* `headers` -- Additional HTTP request headers
 
+The function has three return values: the status code as a number, the body of
+the response and any response headers in a table.
 
 ## Command Line Interface
 
