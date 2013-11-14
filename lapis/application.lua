@@ -471,31 +471,42 @@ do
   Application = _class_0
 end
 local respond_to
-respond_to = function(tbl)
-  local out
-  out = function(self)
-    local fn = tbl[self.req.cmd_mth]
-    if fn then
-      do
-        local before = tbl.before
-        if before then
-          if run_before_filter(before, self) then
-            return 
+do
+  local default_head
+  default_head = function()
+    return {
+      layout = false
+    }
+  end
+  respond_to = function(tbl)
+    if not (tbl.HEAD) then
+      tbl.HEAD = default_head
+    end
+    local out
+    out = function(self)
+      local fn = tbl[self.req.cmd_mth]
+      if fn then
+        do
+          local before = tbl.before
+          if before then
+            if run_before_filter(before, self) then
+              return 
+            end
           end
         end
+        return fn(self)
+      else
+        return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
       end
-      return fn(self)
-    else
-      return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
     end
-  end
-  do
-    local error_response = tbl.on_error
-    if error_response then
-      out = capture_errors(out, error_response)
+    do
+      local error_response = tbl.on_error
+      if error_response then
+        out = capture_errors(out, error_response)
+      end
     end
+    return out
   end
-  return out
 end
 local default_error_response
 default_error_response = function()

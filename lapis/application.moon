@@ -337,20 +337,25 @@ class Application
     logger.request r
     r
 
-respond_to = (tbl) ->
-  out = =>
-    fn = tbl[@req.cmd_mth]
-    if fn
-      if before = tbl.before
-        return if run_before_filter before, @
-      fn @
-    else
-      error "don't know how to respond to #{@req.cmd_mth}"
+respond_to = do
+  default_head = -> layout: false -- render nothing
 
-  if error_response = tbl.on_error
-    out = capture_errors out, error_response
+  (tbl) ->
+    tbl.HEAD = default_head unless tbl.HEAD
 
-  out
+    out = =>
+      fn = tbl[@req.cmd_mth]
+      if fn
+        if before = tbl.before
+          return if run_before_filter before, @
+        fn @
+      else
+        error "don't know how to respond to #{@req.cmd_mth}"
+
+    if error_response = tbl.on_error
+      out = capture_errors out, error_response
+
+    out
 
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->
