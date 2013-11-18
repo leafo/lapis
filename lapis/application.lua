@@ -104,6 +104,12 @@ do
           self.res.status = self.res.status or 302
         end
       end
+      local has_layout = self.app.layout and set_and_truthy(self.options.layout, true)
+      if has_layout then
+        self.layout_opts = {
+          inner = nil
+        }
+      end
       do
         local widget = self.options.render
         if widget then
@@ -118,7 +124,7 @@ do
           self:write(view)
         end
       end
-      if self.app.layout and set_and_truthy(self.options.layout, true) then
+      if has_layout then
         local inner = self.buffer
         self.buffer = { }
         local layout_path = self.options.layout
@@ -128,11 +134,10 @@ do
         else
           layout_cls = self.app.layout
         end
-        local layout = layout_cls({
-          inner = function()
-            return raw(inner)
-          end
-        })
+        self.layout_opts.inner = self.layout_opts.inner or function()
+          return raw(inner)
+        end
+        local layout = layout_cls(self.layout_opts)
         layout:include_helper(self)
         layout:render(self.buffer)
       end

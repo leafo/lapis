@@ -80,6 +80,10 @@ class Request
       @res\add_header "Location", redirect_url
       @res.status or= 302
 
+    has_layout = @app.layout and set_and_truthy(@options.layout, true)
+    @layout_opts = if has_layout
+      { inner: nil }
+
     if widget = @options.render
       widget = @route_name if widget == true
       if type(widget) == "string"
@@ -90,7 +94,7 @@ class Request
 
       @write view
 
-    if @app.layout and set_and_truthy(@options.layout, true)
+    if has_layout
       inner = @buffer
       @buffer = {}
 
@@ -100,7 +104,9 @@ class Request
       else
         @app.layout
 
-      layout = layout_cls inner: -> raw inner
+      @layout_opts.inner or= -> raw inner
+
+      layout = layout_cls @layout_opts
       layout\include_helper @
       layout\render @buffer
 

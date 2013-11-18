@@ -167,3 +167,16 @@ describe "lapis.html", ->
     assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
       render_widget SomeWidget!
 
+  it "should set layout opt", ->
+    class TheWidget extends Widget
+      content: =>
+        @content_for "title", -> div "hello world"
+        @content_for "another", "yeah"
+
+    widget = TheWidget!
+    helper = { layout_opts: {} }
+    widget\include_helper helper
+    out = render_widget widget
+
+    assert.same { another: "yeah", title: "<div>hello world</div>" }, helper.layout_opts
+

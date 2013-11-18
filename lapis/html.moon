@@ -256,8 +256,15 @@ class Widget
       @_set_helper_chain { helper }
     nil
 
-  content_for: (name) =>
-    @_buffer\write_escaped @[name]
+  content_for: (name, val) =>
+    if val
+      if helper = @_get_helper_chain![1]
+        helper.layout_opts[name] = if type(val) == "string"
+          val
+        else
+          getfenv(val).capture val
+    else
+      @_buffer\write_escaped @[name]
 
   content: => -- implement me
 

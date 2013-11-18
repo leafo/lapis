@@ -359,8 +359,21 @@ do
       end
       return nil
     end,
-    content_for = function(self, name)
-      return self._buffer:write_escaped(self[name])
+    content_for = function(self, name, val)
+      if val then
+        do
+          local helper = self:_get_helper_chain()[1]
+          if helper then
+            if type(val) == "string" then
+              helper.layout_opts[name] = val
+            else
+              helper.layout_opts[name] = getfenv(val).capture(val)
+            end
+          end
+        end
+      else
+        return self._buffer:write_escaped(self[name])
+      end
     end,
     content = function(self) end,
     render_to_string = function(self, ...)
