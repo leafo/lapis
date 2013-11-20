@@ -41,13 +41,9 @@ strip_tags = (html) ->
 element_attributes = (buffer, t) ->
   return unless type(t) == "table"
 
-  padded = false
   for k,v in pairs t
     if type(k) == "string" and not k\match "^__"
-      if not padded
-        buffer\write " "
-        padded = true
-      buffer\write k, "=", '"', escape(tostring(v)), '"'
+      buffer\write " ", k, "=", '"', escape(tostring(v)), '"'
   nil
 
 element = (buffer, name, ...) ->
