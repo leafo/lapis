@@ -49,6 +49,12 @@ local validate_functions = {
       end
     end
     return false, "%s must be one of " .. tostring(table.concat(choices, ", "))
+  end,
+  type = function(input, kind)
+    if type(input) == kind then
+      return true
+    end
+    return false, "%s must be a " .. kind
   end
 }
 local test_input

@@ -41,6 +41,10 @@ validate_functions = {
     for choice in *choices
       return true if input == choice
     false, "%s must be one of #{table.concat choices, ", "}"
+
+  type: (input, kind) ->
+    return true if type(input) == kind
+    false, "%s must be a " .. kind
 }
 
 test_input = (input, func, args) ->
