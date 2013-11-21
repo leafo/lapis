@@ -67,7 +67,14 @@ request = (path="", opts={}) ->
   }
 
   assert res, status
-  status, table.concat(buffer), normalize_headers(headers)
+  body = table.concat buffer
+
+  if opts.expect == "json"
+    json = require "cjson"
+    unless pcall -> body = json.decode body
+      error "expected to get json from #{path}"
+
+  status, body, normalize_headers(headers)
 
 {
   :load_test_server

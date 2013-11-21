@@ -96,7 +96,16 @@ request = function(path, opts)
     source = source
   })
   assert(res, status)
-  return status, table.concat(buffer), normalize_headers(headers)
+  local body = table.concat(buffer)
+  if opts.expect == "json" then
+    json = require("cjson")
+    if not (pcall(function()
+      body = json.decode(body)
+    end)) then
+      error("expected to get json from " .. tostring(path))
+    end
+  end
+  return status, body, normalize_headers(headers)
 end
 return {
   load_test_server = load_test_server,
