@@ -886,6 +886,7 @@ validation functions as demonstrated in the example above.
 * `is_color: true` -- value matches CSS hex color (eg. `#1234AA`)
 * `is_file: true` -- value is an uploaded file, see [File Uploads](#utilities-file-uploads)
 * `equals: String` -- value is equal to String
+* `type: String` -- type of value is equal to String
 * `one_of: {A, B, C, ...}` -- value is equal to one of the elements in the array table
 
 
@@ -2885,6 +2886,9 @@ supports the following options in the table:
   header to `application/x-www-form-urlencoded`
 * `method` -- The HTTP method to use (defaults to `"GET"`)
 * `headers` -- Additional HTTP request headers
+* `expect` -- What type of response to expect, currently only supports
+  `"json"`. It will parse the body automatically into a Lua table or throw an
+  error if the body is not valid JSON.
 
 The function has three return values: the status code as a number, the body of
 the response and any response headers in a table.
