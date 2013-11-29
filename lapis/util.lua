@@ -247,6 +247,10 @@ local to_json
 to_json = function(obj)
   return json.encode(json_encodable(obj))
 end
+local from_json
+from_json = function(obj)
+  return json.decode(obj)
+end
 local build_url
 build_url = function(parts)
   local out = parts.path or ""
@@ -422,6 +426,7 @@ return {
   trim_filter = trim_filter,
   key_filter = key_filter,
   to_json = to_json,
+  from_json = from_json,
   json_encodable = json_encodable,
   build_url = build_url,
   time_ago = time_ago,

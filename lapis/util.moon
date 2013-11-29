@@ -125,6 +125,7 @@ json_encodable = (obj, seen={}) ->
       obj
 
 to_json = (obj) -> json.encode json_encodable obj
+from_json = (obj) -> json.decode obj
 
 -- {
 --     [path] = "/test"
@@ -279,5 +280,5 @@ if ... == "test"
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
-  :key_filter, :to_json, :json_encodable, :build_url, :time_ago,
+  :key_filter, :to_json, :from_json, :json_encodable, :build_url, :time_ago,
   :time_ago_in_words }

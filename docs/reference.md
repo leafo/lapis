@@ -216,6 +216,8 @@ If we were to go to the path `"/user/leaf"`, `@params.name` would be set to
 `@params` holds all the parameters to the action. This is a concatenation of
 the URL parameters, the GET parameters and the POST parameters.
 
+If the client application sends HTTP header content-type set to 'application/json' the body will be decoded from JSON into a lua table and inserted into @params.
+
 A splat will match all characters and is represented with a `*`. Splats are not
 named. The value of the splat is placed into `@params.splat`
 
@@ -1741,6 +1743,15 @@ As we've already seen the request object contains instance variables for all of 
 * `@options` -- set of options that controls how the request is rendered to nginx
 * `@buffer` -- the output buffer
 
+### @req
+
+The raw request table `@req` wraps some of the ngx functions. Here is a list of utility functions available
+
+ * `@req.headers` -- Request headers table 
+ * `@req.parsed_url` -- Request parsed url.. A table with scheme, path, host, port and query.
+ * `@req.params_post` -- Request POST parameters table
+ * `@req.params_get` -- Request GET parameters table
+
 
 When an action is executed the `write` method (described below) is called with
 the return values.
@@ -1932,6 +1943,10 @@ the table if the result is an empty string.
 ####  `to_json(obj)`
 
 Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
+
+####  `from_json(str)`
+
+Convers JSON to table, using lua cjson.
 
 ### Encoding Methods
 

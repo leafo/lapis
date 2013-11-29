@@ -1,5 +1,6 @@
 upload = require "resty.upload"
 import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
+import from_json from require "lapis.util"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
@@ -70,7 +71,11 @@ ngx_req = {
       parse_multipart!
     else
       ngx.req.read_body!
-      flatten_params ngx.req.get_post_args!
+      -- parse json if required
+      if t.headers['content-type'] and t.headers['content-type'] == 'application/json'
+        flatten_params from_json ngx.req.get_body_data!
+      else
+        flatten_params ngx.req.get_post_args!
 
   params_get: ->
     flatten_params ngx.req.get_uri_args!
