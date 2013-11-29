@@ -1,5 +1,3 @@
-
-url = require "socket.url"
 upload = require "resty.upload"
 import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
 

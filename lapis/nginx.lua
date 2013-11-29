@@ -1,4 +1,3 @@
-local url = require("socket.url")
 local upload = require("resty.upload")
 local escape_pattern, parse_content_disposition, build_url
 do
