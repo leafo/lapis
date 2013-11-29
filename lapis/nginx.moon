@@ -1,6 +1,4 @@
-
-import escape_pattern, parse_content_disposition, build_url
-  from require "lapis.util"
+import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
