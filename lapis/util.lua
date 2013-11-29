@@ -10,7 +10,7 @@ do
   local _obj_0 = math
   floor = _obj_0.floor
 end
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin
 do
   local u = url.unescape
   unescape = function(str)
@@ -231,6 +231,9 @@ json_encodable = function(obj, seen)
 end
 to_json = function(obj)
   return json.encode(json_encodable(obj))
+end
+from_json = function(obj)
+  return json.decode(obj)
 end
 build_url = function(parts)
   local out = parts.path or ""
@@ -495,6 +498,7 @@ return {
   trim_filter = trim_filter,
   key_filter = key_filter,
   to_json = to_json,
+  from_json = from_json,
   json_encodable = json_encodable,
   build_url = build_url,
   time_ago = time_ago,
