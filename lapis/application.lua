@@ -524,7 +524,7 @@ capture_errors = function(fn, error_response)
     error_response = default_error_response
   end
   if type(fn) == "table" then
-    error_response = fn.on_error
+    error_response = error_response or fn.on_error
     fn = fn[1]
   end
   return function(self, ...)

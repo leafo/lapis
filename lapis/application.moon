@@ -366,7 +366,7 @@ respond_to = do
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->
   if type(fn) == "table"
-    error_response = fn.on_error
+    error_response or= fn.on_error
     fn = fn[1]
 
   (...) =>
