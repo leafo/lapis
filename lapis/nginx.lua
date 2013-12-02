@@ -15,12 +15,16 @@ local parse_multipart
 parse_multipart = function()
   local out = { }
   local upload = require("resty.upload")
-  local input = upload:new(8192)
+  local input, err = upload:new(8192)
+  if not (input) then
+    return nil, err
+  end
   local current = {
     content = { }
   }
   while true do
-    local t, res, err = input:read()
+    local t, res
+    t, res, err = input:read()
     local _exp_0 = t
     if "body" == _exp_0 then
       table.insert(current.content, res)
@@ -52,7 +56,7 @@ parse_multipart = function()
         content = { }
       }
     else
-      error("failed to read upload input")
+      return nil, err or "failed to read upload"
     end
     if t == "eof" then
       break
@@ -104,7 +108,7 @@ local ngx_req = {
   end,
   params_post = function(t)
     if (t.headers["content-type"] or ""):match(escape_pattern("multipart/form-data")) then
-      return parse_multipart()
+      return parse_multipart() or { }
     else
       ngx.req.read_body()
       return flatten_params(ngx.req.get_post_args())

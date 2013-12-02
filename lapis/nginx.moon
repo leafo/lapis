@@ -9,7 +9,8 @@ parse_multipart = ->
   out = {}
   upload = require "resty.upload"
 
-  input = upload\new 8192
+  input, err = upload\new 8192
+  return nil, err unless input
 
   current = { content: {} }
   while true
@@ -36,7 +37,7 @@ parse_multipart = ->
 
         current = { content: {} }
       else
-        error "failed to read upload input"
+        return nil, err or "failed to read upload"
 
     break if t == "eof"
 
@@ -72,7 +73,7 @@ ngx_req = {
   params_post: (t) ->
     -- parse multipart if required
     if (t.headers["content-type"] or "")\match escape_pattern "multipart/form-data"
-      parse_multipart!
+      parse_multipart! or {}
     else
       ngx.req.read_body!
       flatten_params ngx.req.get_post_args!
