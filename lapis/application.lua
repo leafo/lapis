@@ -110,19 +110,17 @@ do
           inner = nil
         }
       end
-      do
-        local widget = self.options.render
-        if widget then
-          if widget == true then
-            widget = self.route_name
-          end
-          if type(widget) == "string" then
-            widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
-          end
-          local view = widget(self.options.locals)
-          view:include_helper(self)
-          self:write(view)
+      local widget = self.options.render
+      if widget == true then
+        widget = self.route_name
+      end
+      if widget then
+        if type(widget) == "string" then
+          widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
         end
+        local view = widget(self.options.locals)
+        view:include_helper(self)
+        self:write(view)
       end
       if has_layout then
         local inner = self.buffer
@@ -524,7 +522,7 @@ capture_errors = function(fn, error_response)
     error_response = default_error_response
   end
   if type(fn) == "table" then
-    error_response = error_response or fn.on_error
+    error_response = fn.on_error or error_response
     fn = fn[1]
   end
   return function(self, ...)
