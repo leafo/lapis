@@ -12,6 +12,8 @@ parse_multipart = ->
   input, err = upload\new 8192
   return nil, err unless input
 
+  input\set_timeout 1000 -- 1 sec
+
   current = { content: {} }
   while true
     t, res, err = input\read!
@@ -36,10 +38,10 @@ parse_multipart = ->
             out[current.name] = current.content
 
         current = { content: {} }
+      when "eof"
+        break
       else
         return nil, err or "failed to read upload"
-
-    break if t == "eof"
 
   out
 

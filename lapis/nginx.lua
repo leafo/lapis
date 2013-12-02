@@ -19,6 +19,7 @@ parse_multipart = function()
   if not (input) then
     return nil, err
   end
+  input:set_timeout(1000)
   local current = {
     content = { }
   }
@@ -55,11 +56,10 @@ parse_multipart = function()
       current = {
         content = { }
       }
+    elseif "eof" == _exp_0 then
+      break
     else
       return nil, err or "failed to read upload"
-    end
-    if t == "eof" then
-      break
     end
   end
   return out
