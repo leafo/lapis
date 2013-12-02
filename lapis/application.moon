@@ -84,8 +84,11 @@ class Request
     @layout_opts = if has_layout
       { inner: nil }
 
-    if widget = @options.render
-      widget = @route_name if widget == true
+
+    widget = @options.render
+    widget = @route_name if widget == true
+
+    if widget
       if type(widget) == "string"
         widget = require "#{@app.views_prefix}.#{widget}"
 
