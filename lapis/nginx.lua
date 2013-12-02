@@ -51,6 +51,8 @@ parse_multipart = function()
       current = {
         content = { }
       }
+    else
+      error("failed to read upload input")
     end
     if t == "eof" then
       break

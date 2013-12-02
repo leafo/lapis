@@ -35,6 +35,8 @@ parse_multipart = ->
             out[current.name] = current.content
 
         current = { content: {} }
+      else
+        error "failed to read upload input"
 
     break if t == "eof"
 
