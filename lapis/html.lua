@@ -84,14 +84,9 @@ element_attributes = function(buffer, t)
   if not (type(t) == "table") then
     return 
   end
-  local padded = false
   for k, v in pairs(t) do
     if type(k) == "string" and not k:match("^__") then
-      if not padded then
-        buffer:write(" ")
-        padded = true
-      end
-      buffer:write(k, "=", '"', escape(tostring(v)), '"')
+      buffer:write(" ", k, "=", '"', escape(tostring(v)), '"')
     end
   end
   return nil
