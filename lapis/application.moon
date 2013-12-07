@@ -8,7 +8,7 @@ import html_writer from require "lapis.html"
 
 import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
 
-json_safe = require "cjson.safe"
+json = require "cjson"
 
 local capture_errors, capture_errors_json, respond_to
 
@@ -449,7 +449,8 @@ json_params = (fn) ->
   (...) =>
     if content_type = @req.headers["content-type"]
       if content_type\lower! == "application/json"
-        obj, err = json_safe.decode ngx.req.get_body_data!
+        local obj
+        pcall -> obj, err = json.decode ngx.req.get_body_data!
         @add_params obj, "json" if obj
 
     fn @, ...

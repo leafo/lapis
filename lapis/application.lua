@@ -16,7 +16,7 @@ do
   local _obj_0 = require("lapis.util")
   parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
-local json_safe = require("cjson.safe")
+local json = require("cjson")
 local capture_errors, capture_errors_json, respond_to
 local set_and_truthy
 set_and_truthy = function(val, default)
@@ -633,7 +633,11 @@ json_params = function(fn)
       local content_type = self.req.headers["content-type"]
       if content_type then
         if content_type:lower() == "application/json" then
-          local obj, err = json_safe.decode(ngx.req.get_body_data())
+          local obj
+          pcall(function()
+            local err
+            obj, err = json.decode(ngx.req.get_body_data())
+          end)
           if obj then
             self:add_params(obj, "json")
           end
