@@ -46,6 +46,11 @@ tests = {
   }
 
   {
+    -> db.encode_assigns thing: db.NULL
+    [["thing" IS NULL]]
+  }
+
+  {
     -> db.interpolate_query "update x set x = ?", db.raw"y + 1"
     "update x set x = y + 1"
   }
@@ -67,7 +72,7 @@ tests = {
 
   {
     -> db.update "cats", { age: db.raw"age - 10" }, { name: db.NULL }
-    [[UPDATE "cats" SET "age" = age - 10 WHERE "name" = NULL]]
+    [[UPDATE "cats" SET "age" = age - 10 WHERE "name" IS NULL]]
   }
 
   {
@@ -247,7 +252,7 @@ describe "lapis.nginx.postgres", ->
       if #group > 2
         assert.one_of input, { unpack group, 2 }
       else
-        assert.same input, group[2]
+        assert.same group[2], input
 
   it "should create index", ->
     old_select = db.select

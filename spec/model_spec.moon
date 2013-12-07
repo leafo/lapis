@@ -159,7 +159,7 @@ describe "lapis.db.model.", ->
 
     assert.same {
       [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
-      [[UPDATE "things" SET "age" = 2000 WHERE "id" = NULL]]
+      [[UPDATE "things" SET "age" = 2000 WHERE "id" IS NULL]]
       [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "a" = 2 AND "b" = 3]]
     }, queries
 
@@ -181,7 +181,7 @@ describe "lapis.db.model.", ->
 
     assert.same {
       [[DELETE FROM "things" WHERE "id" = 2]]
-      [[DELETE FROM "things" WHERE "id" = NULL]]
+      [[DELETE FROM "things" WHERE "id" IS NULL]]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
     }, queries
 

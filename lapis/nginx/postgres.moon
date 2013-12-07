@@ -121,7 +121,11 @@ encode_assigns = (t, buffer, join=", ") ->
   buffer or= {}
 
   for k,v in pairs t
-    append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
+    if v == NULL
+      append_all buffer, escape_identifier(k), " IS NULL", join
+    else
+      append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
+
   buffer[#buffer] = nil
 
   concat buffer unless have_buffer
