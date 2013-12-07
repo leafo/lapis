@@ -170,7 +170,11 @@ encode_assigns = function(t, buffer, join)
   local have_buffer = buffer
   buffer = buffer or { }
   for k, v in pairs(t) do
-    append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
+    if v == NULL then
+      append_all(buffer, escape_identifier(k), " IS NULL", join)
+    else
+      append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
+    end
   end
   buffer[#buffer] = nil
   if not (have_buffer) then
