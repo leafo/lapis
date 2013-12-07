@@ -2753,7 +2753,7 @@ greater than that you should set a new value in your Nginx configuration.
 The following functions are part of the `lapis.application` module:
 
 ```moon
-lapis = require "lapis.application"
+application = require "lapis.application"
 ```
 
 #### `fn = respond_to(verbs_to_fn={})`
