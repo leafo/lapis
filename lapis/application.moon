@@ -10,7 +10,7 @@ import parse_cookie_string, to_json, build_url, auto_table from require "lapis.u
 
 json_safe = require "cjson.safe"
 
-local capture_errors, capture_errors_json
+local capture_errors, capture_errors_json, respond_to
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -230,15 +230,57 @@ class Application
   new: =>
     @build_router!
 
+  match: (route_name, path, handler) =>
+    if handler == nil
+      handler = path
+      path = route_name
+      route_name = nil
+
+    key = if route_name
+      {[route_name]: path}
+    else
+      path
+
+    @[key] = handler
+
+    @router = nil
+    handler
+
+  for meth in *{"get", "post", "delete", "put"}
+    upper_meth = meth\upper!
+    @__base[meth] = (route_name, path, handler) =>
+      if handler == nil
+        handler = path
+        path = route_name
+        route_name = nil
+
+      @responders or= {}
+      existing = @responders[route_name or path]
+      tbl = { [upper_meth]: handler }
+
+      if existing
+        setmetatable tbl, __index: (key) =>
+          existing if key\match "%u"
+
+      responder = respond_to tbl
+      @responders[route_name or path] = responder
+      @match route_name, path, responder
+
   build_router: =>
     @router = Router!
     @router.default_route = => false
 
+    add_route = (path, handler) ->
+      t = type path
+      if t == "table" or t == "string" and path\match "^/"
+        @router\add_route path, @wrap_handler handler
+
     add_routes = (cls) ->
       for path, handler in pairs cls.__base
-        t = type path
-        if t == "table" or t == "string" and path\match "^/"
-          @router\add_route path, @wrap_handler handler
+        add_route path, handler
+
+      for path, handler in pairs @
+        add_route path, handler
 
       if parent = cls.__parent
         add_routes parent
@@ -366,7 +408,7 @@ respond_to = do
     if error_response = tbl.on_error
       out = capture_errors out, error_response
 
-    out
+    out, tbl
 
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->

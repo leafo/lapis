@@ -17,7 +17,7 @@ do
   parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
 local json_safe = require("cjson.safe")
-local capture_errors, capture_errors_json
+local capture_errors, capture_errors_json, respond_to
 local set_and_truthy
 set_and_truthy = function(val, default)
   if default == nil then
@@ -284,18 +284,43 @@ do
     layout = require("lapis.views.layout"),
     error_page = require("lapis.views.error"),
     views_prefix = "views",
+    match = function(self, route_name, path, handler)
+      if handler == nil then
+        handler = path
+        path = route_name
+        route_name = nil
+      end
+      local key
+      if route_name then
+        key = {
+          [route_name] = path
+        }
+      else
+        key = path
+      end
+      self[key] = handler
+      self.router = nil
+      return handler
+    end,
     build_router = function(self)
       self.router = Router()
       self.router.default_route = function(self)
         return false
       end
+      local add_route
+      add_route = function(path, handler)
+        local t = type(path)
+        if t == "table" or t == "string" and path:match("^/") then
+          return self.router:add_route(path, self:wrap_handler(handler))
+        end
+      end
       local add_routes
       add_routes = function(cls)
         for path, handler in pairs(cls.__base) do
-          local t = type(path)
-          if t == "table" or t == "string" and path:match("^/") then
-            self.router:add_route(path, self:wrap_handler(handler))
-          end
+          add_route(path, handler)
+        end
+        for path, handler in pairs(self) do
+          add_route(path, handler)
         end
         do
           local parent = cls.__parent
@@ -414,6 +439,40 @@ do
     end
     return route and self[route], route
   end
+  local _list_0 = {
+    "get",
+    "post",
+    "delete",
+    "put"
+  }
+  for _index_0 = 1, #_list_0 do
+    local meth = _list_0[_index_0]
+    local upper_meth = meth:upper()
+    self.__base[meth] = function(self, route_name, path, handler)
+      if handler == nil then
+        handler = path
+        path = route_name
+        route_name = nil
+      end
+      self.responders = self.responders or { }
+      local existing = self.responders[route_name or path]
+      local tbl = {
+        [upper_meth] = handler
+      }
+      if existing then
+        setmetatable(tbl, {
+          __index = function(self, key)
+            if key:match("%u") then
+              return existing
+            end
+          end
+        })
+      end
+      local responder = respond_to(tbl)
+      self.responders[route_name or path] = responder
+      return self:match(route_name, path, responder)
+    end
+  end
   self.before_filter = function(self, fn)
     self.__base.before_filters = self.__base.before_filters or { }
     return table.insert(self.before_filters, fn)
@@ -474,7 +533,6 @@ do
   end
   Application = _class_0
 end
-local respond_to
 do
   local default_head
   default_head = function()
@@ -509,7 +567,7 @@ do
         out = capture_errors(out, error_response)
       end
     end
-    return out
+    return out, tbl
   end
 end
 local default_error_response

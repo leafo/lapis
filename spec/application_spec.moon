@@ -126,3 +126,36 @@ describe "application error capturing", ->
     assert.same "no", result
     assert.same [[{"errors":["something bad happened!"]}]], body
     assert.same "application/json", headers["Content-type"]
+
+describe "instance app", ->
+  it "should match a route", ->
+    local res
+    app = lapis.Application!
+    app\match "/", => res = "root"
+    app\match "/user/:id", => res = @params.id
+
+    app\build_router!
+
+    assert_request app, "/"
+    assert.same "root", res
+
+    assert_request app, "/user/124"
+    assert.same "124", res
+
+  it "should should respond to verb", ->
+    local res
+    app = lapis.Application!
+    app\match "/one", ->
+    app\get "/hello", => res = "get"
+    app\post "/hello", => res = "post"
+    app\match "two", ->
+
+    app\build_router!
+
+    assert_request app, "/hello"
+    assert.same "get", res
+
+    assert_request app, "/hello", post: {}
+    assert.same "post", res
+
+
