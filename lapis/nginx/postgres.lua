@@ -350,6 +350,7 @@ return {
   parse_clause = parse_clause,
   set_logger = set_logger,
   get_logger = get_logger,
+  format_date = format_date,
   set_backend = set_backend,
   select = _select,
   insert = _insert,

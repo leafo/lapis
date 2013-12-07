@@ -244,7 +244,7 @@ parse_clause = do
 {
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
   :encode_values, :encode_assigns, :interpolate_query, :parse_clause
-  :set_logger, :get_logger
+  :set_logger, :get_logger, :format_date
 
   :set_backend
 
