@@ -155,6 +155,9 @@ mock_request = function(app_cls, url, opts)
     }),
     req = {
       read_body = function() end,
+      get_body_data = function()
+        return opts.body or encode_query_string(opts.post)
+      end,
       get_headers = function()
         return headers
       end,

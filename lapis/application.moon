@@ -8,6 +8,8 @@ import html_writer from require "lapis.html"
 
 import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
 
+json_safe = require "cjson.safe"
+
 local capture_errors, capture_errors_json
 
 set_and_truthy = (val, default=true) ->
@@ -401,9 +403,19 @@ assert_error = (thing, msg) ->
   yield_error msg unless thing
   thing
 
+
+json_params = (fn) ->
+  (...) =>
+    if content_type = @req.headers["content-type"]
+      if content_type\lower! == "application/json"
+        obj, err = json_safe.decode ngx.req.get_body_data!
+        @add_params obj, "json" if obj
+
+    fn @, ...
+
 {
   :Request, :Application, :respond_to
   :capture_errors, :capture_errors_json
-  :assert_error, :yield_error
+  :json_params, :assert_error, :yield_error
 }
 

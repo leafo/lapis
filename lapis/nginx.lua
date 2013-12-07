@@ -3,11 +3,6 @@ do
   local _obj_0 = require("lapis.util")
   escape_pattern, parse_content_disposition, build_url = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url
 end
-local from_json
-do
-  local _obj_0 = require("lapis.util")
-  from_json = _obj_0.from_json
-end
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }
@@ -116,11 +111,7 @@ local ngx_req = {
       return parse_multipart() or { }
     else
       ngx.req.read_body()
-      if t.headers['content-type'] and t.headers['content-type'] == 'application/json' then
-        return flatten_params(from_json(ngx.req.get_body_data()))
-      else
-        return flatten_params(ngx.req.get_post_args())
-      end
+      return flatten_params(ngx.req.get_post_args())
     end
   end,
   params_get = function()
