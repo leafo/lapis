@@ -31,6 +31,34 @@ describe "mock action", ->
   assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
     "hello"
 
+describe "json request", ->
+  it "should parse json body", ->
+    local res
+    class SomeApp extends lapis.Application
+      "/": =>
+        res = @params.thing
+
+    assert_request SomeApp, "/", {
+      headers: {
+        "content-type": "application/json"
+      }
+      body: '{"thing": 1234}'
+    }
+
+    assert.same 1234, res
+
+  it "should not fail on invalid json", ->
+    class SomeApp extends lapis.Application
+      "/": =>
+
+    assert_request SomeApp, "/", {
+      headers: {
+        "content-type": "application/json"
+      }
+      body: 'helloworldland'
+    }
+
+
 describe "cookies", ->
   class CookieApp extends lapis.Application
     layout: false
