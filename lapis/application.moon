@@ -403,7 +403,6 @@ assert_error = (thing, msg) ->
   yield_error msg unless thing
   thing
 
-
 json_params = (fn) ->
   (...) =>
     if content_type = @req.headers["content-type"]

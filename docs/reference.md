@@ -214,8 +214,6 @@ If we were to go to the path `"/user/leaf"`, `@params.name` would be set to
 `@params` holds all the parameters to the action. This is a concatenation of
 the URL parameters, the GET parameters and the POST parameters.
 
-If the client application sends HTTP header content-type set to 'application/json' the body will be decoded from JSON into a lua table and inserted into @params.
-
 A splat will match all characters and is represented with a `*`. Splats are not
 named. The value of the splat is placed into `@params.splat`
 
@@ -2750,6 +2748,95 @@ through the
 directive. It's only 1 megabyte by default, so if you plan to allow uploads
 greater than that you should set a new value in your Nginx configuration.
 
+### Application Helpers
+
+The following functions are part of the `lapis.application` module:
+
+```moon
+lapis = require "lapis.application"
+```
+
+#### `fn = respond_to(verbs_to_fn={})`
+
+`verbs_to_fn` is a table of functions that maps a HTTP verb to a corresponding
+function. Returns a new function that dispatches to the correct function in the
+table based on the verb of the request. See
+[Handling HTTP verbs](#lapis-applications-handling-http-verbs)
+
+If an action for `HEAD` does not exist Lapis provides the following function to
+render nothing:
+
+```moon
+-> { layout: false }
+```
+
+If the request is a verb that is not handled then the Lua `error` function
+is called and a 500 page is generated.
+
+A special `before` key can be set to a function that should run before any
+other action. If `@write` is called inside the before function then the regular
+handler will not be called.
+
+#### `safe_fn = capture_errors(fn_or_tbl)`
+
+Wraps a function to catch errors sent by `yield_error` or `assert_error`. See
+[Exception Handling](#exception-handling) for more information.
+
+If the first argument is a function then that function is called on request and
+the following default error handler is used:
+
+```moon
+-> { render: true }
+```
+
+If a table is the first argument then the `1`st element of the table is used as
+the action and value of `on_error` is used as the error handler.
+
+When an error is yielded then the `@errors` variable is set on the current
+request and the error handler is called.
+
+#### `safe_fn = capture_errors_json(fn)`
+
+A wrapper for `capture_errors` that passes in the following error handler:
+
+```moon
+=> { json: { errors: @errors } }
+```
+
+#### `yield_error(error_message)`
+
+Yields a single error message to be captured by `capture_errors`
+
+
+#### `obj, msg, ... = assert_error(obj, msg, ...)`
+
+Works like Lua's `assert` but instead of triggering a Lua error it triggers an
+error to be captured by `capture_errors`
+
+
+#### `wrapped_fn = json_params(fn)`
+
+Return a new function that will parse the body of the request as JSON and
+inject it into `@params` if the `content-type` is set to `application/json`.
+
+```moon
+import json_params from require "lapis.application"
+
+class JsonApp extends lapis.Application
+  "/json": json_params =>
+    @params.value
+```
+
+```bash
+$ curl \
+  -H "Content-type: application/json" \
+  -d '{"value": "hello"}' \
+  'https://localhost:8080/json'
+```
+
+The unmerged params can also be accessed from `@json`. If there was an error
+parsing the JSON then `@json` will be `nil` and the request will continue.
+
 ## Testing
 
 Lapis comes with utilities for mocking requests so you can test your
@@ -2803,6 +2890,7 @@ options in a table:
 
 * `get` --  A table of GET parameters to add to the url
 * `post` -- A table of POST parameters (sets default method to `"POST"`)
+h
 * `method` -- The HTTP method to use (defaults to `"GET"`)
 * `headers` -- Additional HTTP request headers
 * `host` -- The host the mocked server (defaults to `"localhost"`)
