@@ -448,7 +448,8 @@ assert_error = (thing, msg) ->
 json_params = (fn) ->
   (...) =>
     if content_type = @req.headers["content-type"]
-      if content_type\lower! == "application/json"
+      -- Header often ends with ;UTF-8
+      if string.find(content_type\lower!, "application/json")
         local obj
         pcall -> obj, err = json.decode ngx.req.get_body_data!
         @add_params obj, "json" if obj

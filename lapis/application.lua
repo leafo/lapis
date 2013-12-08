@@ -632,7 +632,7 @@ json_params = function(fn)
     do
       local content_type = self.req.headers["content-type"]
       if content_type then
-        if content_type:lower() == "application/json" then
+        if string.find(content_type:lower(), "application/json") then
           local obj
           pcall(function()
             local err
