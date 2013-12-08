@@ -833,7 +833,7 @@ import capture_errors, assert_error from require "lapis.application"
 class App extends lapis.Application
   "/": capture_errors =>
     user = assert_error Users\find id: "leafo"
-    "result: #{result}"
+    "result: #{user.id}"
 ```
 
 
