@@ -69,10 +69,10 @@ describe "lapis.db.model.", ->
 
     assert.same {
       [[SELECT * from "things" where "id" = 'hello' limit 1]]
-      [[SELECT * from "things" where "cat" = TRUE and "weight" = 120 limit 1]]
+      [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
       [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
       [[SELECT * from "things" where "id" in ('yeah')]]
-      [[SELECT * from "things" where "world" = 2 and "hello" = 1 limit 1]]
+      [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
     }, queries
 
   it "should paginate", ->
@@ -200,7 +200,7 @@ describe "lapis.db.model.", ->
 
     assert.same {
       [[SELECT COUNT(*) as c from "things" where "name" = 'world']]
-      [[SELECT COUNT(*) as c from "things" where "height" = 10 and "color" = 'red']]
+      [[SELECT COUNT(*) as c from "things" where "height" = 10 AND "color" = 'red']]
     }, queries
 
 

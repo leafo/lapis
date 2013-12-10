@@ -116,7 +116,20 @@ encode_values = (t, buffer) ->
   concat buffer unless have_buffer
 
 -- col1 = val1, col2 = val2, col3 = val3
-encode_assigns = (t, buffer, join=", ") ->
+encode_assigns = (t, buffer) ->
+  join = ", "
+  have_buffer = buffer
+  buffer or= {}
+
+  for k,v in pairs t
+    append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
+
+  buffer[#buffer] = nil
+
+  concat buffer unless have_buffer
+
+encode_clause = (t, buffer)->
+  join = " AND "
   have_buffer = buffer
   buffer or= {}
 
@@ -170,7 +183,7 @@ add_cond = (buffer, cond, ...) ->
   append_all buffer, " WHERE "
   switch type cond
     when "table"
-      encode_assigns cond, buffer, " AND "
+      encode_clause cond, buffer
     when "string"
       append_all buffer, interpolate_query cond, ...
 
@@ -247,8 +260,8 @@ parse_clause = do
 
 {
   :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
-  :encode_values, :encode_assigns, :interpolate_query, :parse_clause
-  :set_logger, :get_logger, :format_date
+  :encode_values, :encode_assigns, :encode_clause, :interpolate_query
+  :parse_clause, :set_logger, :get_logger, :format_date
 
   :set_backend
 

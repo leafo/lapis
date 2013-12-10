@@ -163,10 +163,21 @@ encode_values = function(t, buffer)
   end
 end
 local encode_assigns
-encode_assigns = function(t, buffer, join)
-  if join == nil then
-    join = ", "
+encode_assigns = function(t, buffer)
+  local join = ", "
+  local have_buffer = buffer
+  buffer = buffer or { }
+  for k, v in pairs(t) do
+    append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
   end
+  buffer[#buffer] = nil
+  if not (have_buffer) then
+    return concat(buffer)
+  end
+end
+local encode_clause
+encode_clause = function(t, buffer)
+  local join = " AND "
   local have_buffer = buffer
   buffer = buffer or { }
   for k, v in pairs(t) do
@@ -229,7 +240,7 @@ add_cond = function(buffer, cond, ...)
   append_all(buffer, " WHERE ")
   local _exp_0 = type(cond)
   if "table" == _exp_0 then
-    return encode_assigns(cond, buffer, " AND ")
+    return encode_clause(cond, buffer)
   elseif "string" == _exp_0 then
     return append_all(buffer, interpolate_query(cond, ...))
   end
@@ -350,6 +361,7 @@ return {
   escape_identifier = escape_identifier,
   encode_values = encode_values,
   encode_assigns = encode_assigns,
+  encode_clause = encode_clause,
   interpolate_query = interpolate_query,
   parse_clause = parse_clause,
   set_logger = set_logger,

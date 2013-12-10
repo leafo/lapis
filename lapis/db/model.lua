@@ -311,9 +311,9 @@ do
     end
     local cond
     if "table" == type(first) then
-      cond = db.encode_assigns((...), nil, " and ")
+      cond = db.encode_clause((...))
     else
-      cond = db.encode_assigns(self:encode_key(...), nil, " and ")
+      cond = db.encode_clause(self:encode_key(...))
     end
     local table_name = db.escape_identifier(self:table_name())
     do
@@ -356,7 +356,7 @@ do
         [name] = value
       }
     end
-    local cond = db.encode_assigns(t, nil, " and ")
+    local cond = db.encode_clause(t)
     local table_name = db.escape_identifier(self:table_name())
     local res = unpack(db.select("COUNT(*) as c from " .. tostring(table_name) .. " where " .. tostring(cond)))
     return res.c > 0

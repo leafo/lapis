@@ -47,8 +47,15 @@ tests = {
 
   {
     -> db.encode_assigns thing: db.NULL
+    [["thing" = NULL]]
+  }
+
+  {
+    -> db.encode_clause thing: db.NULL
     [["thing" IS NULL]]
   }
+
+
 
   {
     -> db.interpolate_query "update x set x = ?", db.raw"y + 1"
@@ -73,6 +80,11 @@ tests = {
   {
     -> db.update "cats", { age: db.raw"age - 10" }, { name: db.NULL }
     [[UPDATE "cats" SET "age" = age - 10 WHERE "name" IS NULL]]
+  }
+
+  {
+    -> db.update "cats", { age: db.NULL }, { name: db.NULL }
+    [[UPDATE "cats" SET "age" = NULL WHERE "name" IS NULL]]
   }
 
   {

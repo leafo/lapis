@@ -152,9 +152,9 @@ class Model
     error "(#{@table_name!}) trying to find with no conditions" if first == nil
 
     cond = if "table" == type first
-      db.encode_assigns (...), nil, " and "
+      db.encode_clause (...)
     else
-      db.encode_assigns @encode_key(...), nil, " and "
+      db.encode_clause @encode_key(...)
 
     table_name = db.escape_identifier @table_name!
 
@@ -183,7 +183,7 @@ class Model
     else
       { [name]: value }
 
-    cond = db.encode_assigns t, nil, " and "
+    cond = db.encode_clause t
     table_name = db.escape_identifier @table_name!
     res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
     res.c > 0
