@@ -61,6 +61,10 @@ describe "lapis.db.model.", ->
     Things\find_all { "yeah" }
     Things\find_all { }
 
+    Things\find_all { 1,2,4 }, "dad"
+    Things\find_all { 1,2,4 }, fields: "hello"
+    Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
+
     class Things2 extends Model
       @primary_key: {"hello", "world"}
 
@@ -72,6 +76,9 @@ describe "lapis.db.model.", ->
       [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
       [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
       [[SELECT * from "things" where "id" in ('yeah')]]
+      [[SELECT * from "things" where "dad" in (1, 2, 4)]]
+      [[SELECT hello from "things" where "id" in (1, 2, 4)]]
+      [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
       [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
     }, queries
 

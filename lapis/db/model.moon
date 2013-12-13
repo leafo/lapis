@@ -134,6 +134,13 @@ class Model
     other_records
 
   @find_all: (ids, by_key=@primary_key) =>
+    fields = "*"
+
+    -- parse opts
+    if type(by_key) == "table"
+      fields = by_key.fields or fields
+      by_key = by_key.key or @primary_key
+
     if type(by_key) == "table"
       error "find_all must have a singular key to search"
 
@@ -142,7 +149,7 @@ class Model
     primary = db.escape_identifier by_key
     tbl_name = db.escape_identifier @table_name!
 
-    if res = db.select "* from #{tbl_name} where #{primary} in (#{flat_ids})"
+    if res = db.select fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
       @load r for r in *res
       res
 

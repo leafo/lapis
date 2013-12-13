@@ -275,6 +275,11 @@ do
     if by_key == nil then
       by_key = self.primary_key
     end
+    local fields = "*"
+    if type(by_key) == "table" then
+      fields = by_key.fields or fields
+      by_key = by_key.key or self.primary_key
+    end
     if type(by_key) == "table" then
       error("find_all must have a singular key to search")
     end
@@ -294,7 +299,7 @@ do
     local primary = db.escape_identifier(by_key)
     local tbl_name = db.escape_identifier(self:table_name())
     do
-      local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
+      local res = db.select(fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
       if res then
         for _index_0 = 1, #res do
           local r = res[_index_0]
