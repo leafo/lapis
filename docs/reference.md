@@ -1050,11 +1050,11 @@ config "development", ->
   -- tables are merged
   extra ->
     name "leaf"
-    mood: "happy"
+    mood "happy"
 
   extra ->
     name "beef"
-    shoe_size: 12
+    shoe_size 12
 
     include some_function
 
