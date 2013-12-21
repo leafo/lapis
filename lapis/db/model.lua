@@ -198,6 +198,7 @@ do
     if type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
     end
+    local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip
     local src_key = flip and "id" or foreign_key
     local include_ids
@@ -246,7 +247,7 @@ do
       local tbl_name = db.escape_identifier(self:table_name())
       local find_by_escaped = db.escape_identifier(find_by)
       do
-        local res = db.select("* from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")")
+        local res = db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")")
         if res then
           local records = { }
           for _index_0 = 1, #res do

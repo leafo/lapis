@@ -95,6 +95,8 @@ class Model
     if type(@primary_key) == "table"
       error "model must have singular primary key to include"
 
+    fields = opts and opts.fields or "*"
+
     flip = opts and opts.flip
 
     src_key = flip and "id" or foreign_key
@@ -114,7 +116,7 @@ class Model
       tbl_name = db.escape_identifier @table_name!
       find_by_escaped = db.escape_identifier find_by
 
-      if res = db.select "* from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+      if res = db.select "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
         records = {}
         for t in *res
           records[t[find_by]] = @load t
