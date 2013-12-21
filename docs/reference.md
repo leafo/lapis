@@ -1338,7 +1338,7 @@ Escapes a string for use in a query as an identifier. An identifier is a column
 or table name.
 
 ```moon
-table_name = db.escape_literal "table"
+table_name = db.escape_identifier "table"
 res = db.query "select * from #{table_name}"
 ```
 
