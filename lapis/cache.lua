@@ -4,6 +4,7 @@ do
   local _obj_0 = table
   sort, concat = _obj_0.sort, _obj_0.concat
 end
+local default_dict_name = "page_cache"
 local cache_key
 cache_key = function(path, params)
   do
@@ -20,10 +21,12 @@ cache_key = function(path, params)
   return path .. "#" .. params
 end
 local cached
-cached = function(dict_name, fn)
-  if not (type(fn) == "function") then
-    fn = dict_name
-    dict_name = "page_cache"
+cached = function(fn_or_tbl)
+  local fn, exptime, dict_name = fn_or_tbl, 0, default_dict_name
+  if type(fn) == "table" then
+    exptime = fn.exptime or exptime
+    dict_name = fn.dict or dict_name
+    fn = fn_or_tbl[1]
   end
   return function(self)
     local key = cache_key(self.req.parsed_url.path, self.GET)
@@ -46,7 +49,7 @@ cached = function(dict_name, fn)
         },
         self.res.content
       })
-      dict:set(key, to_cache)
+      dict:set(key, to_cache, exptime)
       ngx.header["x-memory-cache-save"] = "1"
       return nil
     end

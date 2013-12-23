@@ -7,16 +7,21 @@ json = require "cjson"
 
 import sort, concat from table
 
+default_dict_name = "page_cache"
+
 cache_key = (path, params) ->
   params = [k.. ":" .. v for k,v in pairs params]
   sort params
   params = concat params, "-"
   path .. "#" .. params
 
-cached = (dict_name, fn) ->
-  unless type(fn) == "function"
-    fn = dict_name
-    dict_name = "page_cache"
+
+cached = (fn_or_tbl) ->
+  fn, exptime, dict_name = fn_or_tbl, 0, default_dict_name
+  if type(fn) == "table"
+    exptime = fn.exptime or exptime
+    dict_name = fn.dict or dict_name
+    fn = fn_or_tbl[1]
 
   =>
     key = cache_key @req.parsed_url.path, @GET
@@ -39,7 +44,7 @@ cached = (dict_name, fn) ->
         }
         @res.content
       }
-      dict\set key, to_cache
+      dict\set key, to_cache, exptime
       ngx.header["x-memory-cache-save"] = "1"
       nil
 
