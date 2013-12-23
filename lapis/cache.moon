@@ -17,13 +17,17 @@ cache_key = (path, params) ->
 
 
 cached = (fn_or_tbl) ->
-  fn, exptime, dict_name = fn_or_tbl, 0, default_dict_name
+  fn, exptime, dict_name, cond = fn_or_tbl, 0, default_dict_name
   if type(fn) == "table"
     exptime = fn.exptime or exptime
     dict_name = fn.dict or dict_name
+    cond = fn.when
     fn = fn_or_tbl[1]
 
   =>
+    if cond and not cond @
+      return fn @
+
     key = cache_key @req.parsed_url.path, @GET
 
     dict = ngx.shared[dict_name]

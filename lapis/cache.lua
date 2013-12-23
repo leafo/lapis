@@ -22,13 +22,17 @@ cache_key = function(path, params)
 end
 local cached
 cached = function(fn_or_tbl)
-  local fn, exptime, dict_name = fn_or_tbl, 0, default_dict_name
+  local fn, exptime, dict_name, cond = fn_or_tbl, 0, default_dict_name
   if type(fn) == "table" then
     exptime = fn.exptime or exptime
     dict_name = fn.dict or dict_name
+    cond = fn.when
     fn = fn_or_tbl[1]
   end
   return function(self)
+    if cond and not cond(self) then
+      return fn(self)
+    end
     local key = cache_key(self.req.parsed_url.path, self.GET)
     local dict = ngx.shared[dict_name]
     do

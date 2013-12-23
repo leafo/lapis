@@ -24,6 +24,24 @@ describe "lapis.cache", ->
     assert.same first_body, second_body
 
 
+  it "should skip cache with when", ->
+    count = 0
+
+    class App extends lapis.Application
+      layout: false
+
+      "/hoi": cached {
+        when: => false
+        =>
+          count += 1
+          "hello #{count}"
+      }
+
+    for i=1,3
+      _, body = assert_request App!, "/hoi"
+      assert.same "hello #{i}", body
+
+
   it "should cache a page based on params", ->
     counters = setmetatable {}, __index: => 0
 
