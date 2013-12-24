@@ -54,7 +54,8 @@ cached = function(fn_or_tbl)
       local to_cache = json.encode({
         {
           content_type = self.res.headers["Content-type"],
-          layout = false
+          layout = false,
+          status = self.res.status
         },
         self.res.content
       })

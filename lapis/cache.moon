@@ -51,6 +51,7 @@ cached = (fn_or_tbl) ->
         {
           content_type: @res.headers["Content-type"]
           layout: false -- layout is already part of content
+          status: @res.status
         }
         @res.content
       }
