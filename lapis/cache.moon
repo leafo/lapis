@@ -9,26 +9,32 @@ import sort, concat from table
 
 default_dict_name = "page_cache"
 
-cache_key = (path, params) ->
+cache_key = (path, params, r) ->
   params = [k.. ":" .. v for k,v in pairs params]
   sort params
   params = concat params, "-"
   path .. "#" .. params
 
-
 cached = (fn_or_tbl) ->
-  fn, exptime, dict_name, cond = fn_or_tbl, 0, default_dict_name
+  fn = fn_or_tbl
+  exptime = 0
+  dict_name = default_dict_name
+  _cache_key = cache_key
+  cond = nil
+
   if type(fn) == "table"
     exptime = fn.exptime or exptime
     dict_name = fn.dict or dict_name
     cond = fn.when
-    fn = fn_or_tbl[1]
+    _cache_key = fn.cache_key or _cache_key
+
+    fn = fn[1]
 
   =>
     if cond and not cond @
       return fn @
 
-    key = cache_key @req.parsed_url.path, @GET
+    key = _cache_key @req.parsed_url.path, @GET, @
 
     dict = ngx.shared[dict_name]
 

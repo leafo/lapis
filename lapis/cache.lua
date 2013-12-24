@@ -6,7 +6,7 @@ do
 end
 local default_dict_name = "page_cache"
 local cache_key
-cache_key = function(path, params)
+cache_key = function(path, params, r)
   do
     local _accum_0 = { }
     local _len_0 = 1
@@ -22,18 +22,23 @@ cache_key = function(path, params)
 end
 local cached
 cached = function(fn_or_tbl)
-  local fn, exptime, dict_name, cond = fn_or_tbl, 0, default_dict_name
+  local fn = fn_or_tbl
+  local exptime = 0
+  local dict_name = default_dict_name
+  local _cache_key = cache_key
+  local cond = nil
   if type(fn) == "table" then
     exptime = fn.exptime or exptime
     dict_name = fn.dict or dict_name
     cond = fn.when
-    fn = fn_or_tbl[1]
+    _cache_key = fn.cache_key or _cache_key
+    fn = fn[1]
   end
   return function(self)
     if cond and not cond(self) then
       return fn(self)
     end
-    local key = cache_key(self.req.parsed_url.path, self.GET)
+    local key = _cache_key(self.req.parsed_url.path, self.GET, self)
     local dict = ngx.shared[dict_name]
     do
       local cache_value = dict:get(key)
