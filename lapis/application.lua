@@ -359,7 +359,7 @@ do
         r = self.Request(self, req, res)
         if not (self.router:resolve(req.parsed_url.path, r)) then
           local handler = self:wrap_handler(self.default_route)
-          r:write(handler({ }, nil, "default_route", r))
+          handler({ }, nil, "default_route", r)
         end
         r:render()
         return logger.request(r)

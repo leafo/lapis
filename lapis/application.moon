@@ -310,7 +310,7 @@ class Application
         unless @router\resolve req.parsed_url.path, r
           -- run default route if nothing matched
           handler = @wrap_handler self.default_route
-          r\write handler {}, nil, "default_route", r
+          handler {}, nil, "default_route", r
 
         r\render!
         logger.request r),
