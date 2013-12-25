@@ -2643,7 +2643,7 @@ lua_shared_dict page_cache 15m;
 
 Now we are ready to start using the caching module, `lapis.cache`.
 
-#### `cached([dict_name], fn)`
+#### `cached(fn_or_tbl)`
 
 Wraps an action to use the cache.
 
@@ -2660,7 +2660,7 @@ the cache, all subsequent requests will skip the action and return the text
 stored in the cache.
 
 The cache will remember not only the raw text output, but also the content
-type.
+type and status code.
 
 The cache key also takes into account any GET parameters, so a request to
 `/hello/world?one=two` is stored in a separate cache slot. Multiple parameters
@@ -2670,8 +2670,29 @@ When the cache is hit, a special response header is set to 1,
 `x-memory-cache-hit`. This is useful for debugging your application to make
 sure the cache is working.
 
-`dict_name` defaults to `"page_cache"`, there must be an associated shared
-dictionary defined in the Nginx configuration.
+Instead of passing a function as the action of the cache you can also pass in a
+table. When passing in a table the function must be the first numerically
+indexed item in the table.
+
+The table supports the following options:
+
+* `dict_name` -- override the name of the shared dictionary used (defaults to `"page_cache"`)
+* `exptime` -- how long in seconds the cache should stay alive, 0 is forever (defaults to `0`)
+* `cache_key` -- set a custom function for generating the cache key (default is described above)
+* `when` -- a function that should return truthy a value if the page should be cached. Receives the request object as first argument (defaults to `nil`)
+
+For example, you could implement microcaching, where the page is cached for a
+short period of time, like so:
+
+```moon
+import cached from require "lapis.cache"
+
+class extends lapis.Application
+  "/microcached": cached {
+		exptime: 1
+		=> "hello world!"
+	}
+```
 
 #### `delete(key, [dict_name="page_cache"])`
 
