@@ -196,18 +196,17 @@ describe "lapis.db.model.", ->
   it "should check unique constraint", ->
     class Things extends Model
 
-    query_mock['COUNT%(%*%)'] = {{ c: 127 }}
+    query_mock['SELECT 1'] = {{ yes: 1 }}
 
     assert.same true, Things\check_unique_constraint "name", "world"
 
-    query_mock['COUNT%(%*%)'] = {{ c: 0 }}
+    query_mock['SELECT 1'] = {}
 
     assert.same false, Things\check_unique_constraint color: "red", height: 10
 
-
     assert.same {
-      [[SELECT COUNT(*) as c from "things" where "name" = 'world']]
-      [[SELECT COUNT(*) as c from "things" where "height" = 10 AND "color" = 'red']]
+      [[SELECT 1 from "things" where "name" = 'world' limit 1]]
+      [[SELECT 1 from "things" where "height" = 10 AND "color" = 'red' limit 1]]
     }, queries
 
 

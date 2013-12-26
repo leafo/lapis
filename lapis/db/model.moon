@@ -194,8 +194,7 @@ class Model
 
     cond = db.encode_clause t
     table_name = db.escape_identifier @table_name!
-    res = unpack db.select "COUNT(*) as c from #{table_name} where #{cond}"
-    res.c > 0
+    nil != unpack db.select "1 from #{table_name} where #{cond} limit 1"
 
   @_check_constraint: (key, value, obj) =>
     return unless @constraints

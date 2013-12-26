@@ -364,8 +364,7 @@ do
     end
     local cond = db.encode_clause(t)
     local table_name = db.escape_identifier(self:table_name())
-    local res = unpack(db.select("COUNT(*) as c from " .. tostring(table_name) .. " where " .. tostring(cond)))
-    return res.c > 0
+    return nil ~= unpack(db.select("1 from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
   end
   self._check_constraint = function(self, key, value, obj)
     if not (self.constraints) then
