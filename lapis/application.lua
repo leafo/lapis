@@ -236,20 +236,6 @@ do
         end
         self.res:add_header("Set-cookie", cookie)
       end
-    end,
-    _debug = function(self)
-      self.buffer = {
-        "<html>",
-        "req:",
-        "<pre>",
-        moon.dump(self.req),
-        "</pre>",
-        "res:",
-        "<pre>",
-        moon.dump(self.res),
-        "</pre>",
-        "</html>"
-      }
     end
   }
   _base_0.__index = _base_0

@@ -1,5 +1,5 @@
 
-import concat from table
+import concat, insert from table
 
 _G = _G
 import type, pairs, ipairs, tostring, getfenv, setfenv from _G

@@ -1,7 +1,7 @@
-local concat
+local concat, insert
 do
   local _obj_0 = table
-  concat = _obj_0.concat
+  concat, insert = _obj_0.concat, _obj_0.insert
 end
 local _G = _G
 local type, pairs, ipairs, tostring, getfenv, setfenv

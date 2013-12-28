@@ -124,12 +124,6 @@ dispatch = (app) ->
   ngx.print res.content if res.content
   res
 
-debug = (thing) ->
-  require "moon"
-  ngx.say "debug <pre>"
-  ngx.say moon.dump thing
-  ngx.say "<pre>"
-
-{ :build_request, :build_response, :dispatch, :debug }
+{ :build_request, :build_response, :dispatch }
 
 

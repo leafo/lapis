@@ -182,16 +182,8 @@ dispatch = function(app)
   end
   return res
 end
-local debug
-debug = function(thing)
-  require("moon")
-  ngx.say("debug <pre>")
-  ngx.say(moon.dump(thing))
-  return ngx.say("<pre>")
-end
 return {
   build_request = build_request,
   build_response = build_response,
-  dispatch = dispatch,
-  debug = debug
+  dispatch = dispatch
 }

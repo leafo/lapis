@@ -4,7 +4,7 @@ do
   local _obj_0 = table
   insert = _obj_0.insert
 end
-local flatten_params_helper
+local flatten_params_helper, flatten_params, query, request, migration, migration_summary
 flatten_params_helper = function(params, out, sep)
   if out == nil then
     out = { }
@@ -34,15 +34,12 @@ flatten_params_helper = function(params, out, sep)
   insert(out, " }")
   return out
 end
-local flatten_params
 flatten_params = function(params)
   return table.concat(flatten_params_helper(params))
 end
-local query
 query = function(q)
   return print(colors("%{bright}%{cyan}SQL: %{reset}%{magenta}" .. tostring(q) .. "%{reset}"))
 end
-local request
 request = function(r)
   local req, res
   req, res = r.req, r.res
@@ -65,11 +62,9 @@ request = function(r)
   local cmd = tostring(req.cmd_mth) .. " " .. tostring(req.cmd_url)
   return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end
-local migration
 migration = function(name)
   return print(colors("%{bright}%{yellow}Migrating: %{reset}%{green}" .. tostring(name) .. "%{reset}"))
 end
-local migration_summary
 migration_summary = function(count)
   local noun
   if count == 1 then

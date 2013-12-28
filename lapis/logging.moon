@@ -2,6 +2,8 @@
 colors = require "ansicolors"
 import insert from table
 
+local *
+
 flatten_params_helper = (params, out = {}, sep= ", ")->
   return {"{}"} unless params
 

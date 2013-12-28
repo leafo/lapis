@@ -195,15 +195,6 @@ class Request
       cookie ..= extra if extra
       @res\add_header "Set-cookie", cookie
 
-  _debug: =>
-    @buffer = {
-      "<html>", "req:", "<pre>"
-      moon.dump @req
-      "</pre>", "res:", "<pre>"
-      moon.dump @res
-      "</pre>", "</html>"
-    }
-
 
 class Application
   Request: Request
