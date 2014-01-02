@@ -30,6 +30,8 @@ set_logger require "lapis.logging"
 
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
+is_raw = (val) ->
+  type(val) == "table" and val[1] == "raw" and val[2]
 
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
@@ -259,9 +261,9 @@ parse_clause = do
       { unpack t for t in *out }
 
 {
-  :query, :raw, :NULL, :TRUE, :FALSE, :escape_literal, :escape_identifier
-  :encode_values, :encode_assigns, :encode_clause, :interpolate_query
-  :parse_clause, :set_logger, :get_logger, :format_date
+  :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
+  :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
+  :interpolate_query, :parse_clause, :set_logger, :get_logger, :format_date,
 
   :set_backend
 
