@@ -1763,7 +1763,7 @@ processed:
 
 ```moon
 preloaded = Posts\paginated [[where category = ?]], "cats", {
-  pre_page: 10
+  per_page: 10
   prepare_results: (posts) ->
     Users\include_in posts, "user_id"
     posts

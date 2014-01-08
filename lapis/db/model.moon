@@ -186,6 +186,7 @@ class Model
     else
       nil, "Failed to create #{@__name}"
 
+  -- returns true if something is using the cond
   @check_unique_constraint: (name, value) =>
     t = if type(name) == "table"
       name
