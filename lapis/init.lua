@@ -8,16 +8,16 @@ do
 end
 local app_cache = { }
 local serve
-serve = function(app_cls, port)
-  if port == nil then
-    port = 80
-  end
+serve = function(app_cls)
   local app = app_cache[app_cls]
   if not (app) then
     if type(app_cls) == "string" then
       app = require(app_cls)()
-    else
+    elseif app_cls.__base then
       app = app_cls()
+    else
+      app_cls:build_router()
+      app = app_cls
     end
     app_cache[app_cls] = app
   end

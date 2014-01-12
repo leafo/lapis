@@ -3038,7 +3038,7 @@ return "production"
 ### `lapis new`
 
 ```bash
-$ lapis new [--git] [--tup]
+$ lapis new [--git] [--tup] [--lua]
 ```
 
 The `new` command will create a blank Lapis project in the current directory.
@@ -3062,6 +3062,8 @@ You can tell it to generate additional files using the following flags:
 `--tup` -- generates `Tupfile` and `Tuprules.tup` for use with
 [Tup](http://gittup.org/tup/) build system. The rules file contains a rule for
 building MoonScript files to Lua.
+
+`--lua` -- generates a skeleton Lua app instead of MoonScript.
 
 ### `lapis server`
 
