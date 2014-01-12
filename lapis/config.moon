@@ -3,6 +3,9 @@ import insert from table
 
 local *
 
+config_cache = {} -- the final merged config by environment
+configs = {} -- lists of fns/tables to build config by environment
+
 default_env = "development"
 
 default_config = {
@@ -13,25 +16,36 @@ default_config = {
   num_workers: "1"
 }
 
-scope_meta = {
-  __index: do
-    set = (k, v) =>
-      if type(k) == "table"
-        for sub_k, sub_v in pairs k
-          merge_set @_conf, sub_k, sub_v
-      else
-        if type(v) == "function"
-          @_conf[k] = run_with_scope v, {}
-        else
-          merge_set @_conf, k, v
+merge_set = (t, k, v) ->
+  existing = t[k]
+  if type(v) == "table"
+    if type(existing) != "table"
+      existing = {}
+      t[k] = existing
 
-    (name) =>
+    for sub_k, sub_v in pairs v
+      merge_set existing, sub_k, sub_v
+  else
+    t[k] = v
+
+set = (conf, k, v) ->
+  if type(k) == "table"
+    for sub_k, sub_v in pairs k
+      merge_set conf, sub_k, sub_v
+  else
+    if type(v) == "function"
+      conf[k] = run_with_scope v, {}
+    else
+      merge_set conf, k, v
+
+scope_meta = {
+  __index: (name) =>
       val = _G[name]
       return val unless val == nil
 
       with val = switch name
           when "set"
-            (...) -> set @, ...
+            (...) -> set @_conf, ...
           when "unset"
             (...) ->
               for k in *{...}
@@ -39,12 +53,11 @@ scope_meta = {
           when "include"
             (fn) -> run_with_scope fn, @_conf
           else
-            (v) -> set @, name, v
+            (v) -> set @_conf, name, v
 
         @[name] = val
 }
 
-configs = {}
 config = (environment, fn) ->
   if type(environment) == "table"
     for env in *environment
@@ -59,8 +72,11 @@ reset = (env) ->
   if env == true
     for k in pairs configs
       configs[k] = nil
+    for k in pairs config_cache
+      config_cache[k] = nil
   else
     configs[env] = nil
+    config_cache[env] = nil
 
 run_with_scope = (fn, conf) ->
   old_env = getfenv fn
@@ -70,21 +86,11 @@ run_with_scope = (fn, conf) ->
   setfenv fn, old_env
   conf
 
-merge_set = (t, k, v) ->
-  existing = t[k]
-  if existing and type(existing) == "table" and type(v) == "table"
-    for sub_k, sub_v in pairs v
-      merge_set existing, sub_k, sub_v
-  else
-    t[k] = v
-
 get_env = ->
   os.getenv"LAPIS_ENVIRONMENT" or default_env
 
 get = do
-  cache = {}
   loaded_config = false
-
   (name=get_env!) ->
     error "missing environment name" unless name
 
@@ -94,15 +100,19 @@ get = do
       unless success or err\match "module 'config' not found"
         error err
 
-    return cache[name] if cache[name]
+    return config_cache[name] if config_cache[name]
 
     conf = { k,v for k,v in pairs(default_config) }
     conf._name = name
     if fns = configs[name]
       for fn in *fns
-        run_with_scope fn, conf
+        switch type(fn)
+          when "function"
+            run_with_scope fn, conf
+          when "table"
+            set conf, fn
 
-    cache[name] = conf
+    config_cache[name] = conf
     conf
 
 setmetatable {

@@ -114,5 +114,42 @@ describe "lapis.config", ->
     assert.same config.get"multi_b".pants, "cool"
 
 
+  it "should set with table literal", ->
+    config {"cool", "dad"}, {
+      yes: true
+      thing: {
+        one: "two"
+        three: "four"
+      }
+    }
+
+    config "cool", {
+      no: false
+      thing: {
+        one: "five"
+        two: "six"
+      }
+    }
+
+    assert.same with_default({
+      _name: "cool"
+      yes: true
+      no: false
+      thing: {
+        one: "five"
+        two: "six"
+        three: "four"
+      }
+    }), config.get "cool"
+
+    assert.same with_default({
+      _name: "dad"
+      yes: true
+      thing: {
+        one: "two"
+        three: "four"
+      }
+    }), config.get "dad"
+
 
 
