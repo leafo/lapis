@@ -80,7 +80,11 @@ tasks = {
 
       write_file_safe "nginx.conf", require "lapis.cmd.templates.config"
       write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
-      write_file_safe "web.moon", require "lapis.cmd.templates.web"
+
+      if flags.lua
+        write_file_safe "web.lua", require "lapis.cmd.templates.web_lua"
+      else
+        write_file_safe "web.moon", require "lapis.cmd.templates.web"
 
       if flags.git
         write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") flags

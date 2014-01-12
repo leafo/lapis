@@ -34,6 +34,7 @@ build = {
 		["lapis.cmd.templates.mime_types"] = "lapis/cmd/templates/mime_types.lua",
 		["lapis.cmd.templates.tup"] = "lapis/cmd/templates/tup.lua",
 		["lapis.cmd.templates.web"] = "lapis/cmd/templates/web.lua",
+		["lapis.cmd.templates.web_lua"] = "lapis/cmd/templates/web_lua.lua",
 		["lapis.cmd.util"] = "lapis/cmd/util.lua",
 		["lapis.config"] = "lapis/config.lua",
 		["lapis.csrf"] = "lapis/csrf.lua",
