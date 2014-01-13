@@ -25,7 +25,8 @@ do
       local handle = io.popen(cmd)
       local out = handle:read()
       handle:close()
-      if out:match("^nginx version: ngx_openresty/") then
+      local matched = out:match("^nginx version: ngx_openresty/") or out:match("^nginx version: openresty/")
+      if matched then
         nginx_path = tostring(prefix) .. tostring(nginx_bin)
         return nginx_path
       end
