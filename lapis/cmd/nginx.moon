@@ -24,7 +24,9 @@ find_nginx = do
       out = handle\read!
       handle\close!
 
-      if out\match "^nginx version: ngx_openresty/"
+      matched = out\match "^nginx version: ngx_openresty/" or out\match "^nginx version: openresty/"
+
+      if matched
         nginx_path = "#{prefix}#{nginx_bin}"
         return nginx_path
 
