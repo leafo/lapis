@@ -270,6 +270,10 @@ do
     layout = require("lapis.views.layout"),
     error_page = require("lapis.views.error"),
     views_prefix = "views",
+    enable = function(self, feature)
+      local fn = require("lapis.features." .. tostring(feature))
+      return fn(self)
+    end,
     match = function(self, route_name, path, handler)
       if handler == nil then
         handler = path

@@ -221,6 +221,10 @@ class Application
   new: =>
     @build_router!
 
+  enable: (feature) =>
+    fn = require "lapis.features.#{feature}"
+    fn @
+
   match: (route_name, path, handler) =>
     if handler == nil
       handler = path
