@@ -10,8 +10,11 @@ do
   local _obj_0 = require("lapis.util.functions")
   locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
 end
-loadkit.register("etlua", function(file)
-  local fn = assert(etlua.compile(file:read("*a")))
+loadkit.register("etlua", function(file, mod, fname)
+  local fn, err = etlua.compile(file:read("*a"))
+  if not (fn) then
+    error("[" .. tostring(fname) .. "] " .. tostring(err))
+  end
   local TemplateWidget
   do
     local _parent_0 = Widget

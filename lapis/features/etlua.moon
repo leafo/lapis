@@ -5,8 +5,11 @@ loadkit = require "loadkit"
 import Widget from require "lapis.html"
 import locked_fn, release_fn from require "lapis.util.functions"
 
-loadkit.register "etlua", (file) ->
-  fn = assert etlua.compile file\read "*a"
+loadkit.register "etlua", (file, mod, fname) ->
+  fn, err = etlua.compile file\read "*a"
+
+  unless fn
+    error "[#{fname}] #{err}"
 
   class TemplateWidget extends Widget
     render: (buffer) =>
