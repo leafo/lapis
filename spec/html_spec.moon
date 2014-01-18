@@ -183,6 +183,11 @@ describe "lapis.html", ->
   it "should render content for", ->
     class TheLayout extends Widget
       content: =>
+        assert.truthy @has_content_for "title"
+        assert.truthy @has_content_for "inner"
+        assert.truthy @has_content_for "footer"
+        assert.falsy @has_content_for "hello"
+
         div class: "title", ->
           @content_for "title"
 

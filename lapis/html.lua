@@ -360,15 +360,18 @@ do
           local helper = self:_get_helper_chain()[1]
           if helper then
             if type(val) == "string" then
-              helper.layout_opts[name] = val
+              helper.layout_opts[name] = escape(val)
             else
               helper.layout_opts[name] = getfenv(val).capture(val)
             end
           end
         end
       else
-        return self._buffer:write_escaped(self[name])
+        return self._buffer:write(self[name])
       end
+    end,
+    has_content_for = function(self, name)
+      return not not self[name]
     end,
     content = function(self) end,
     render_to_string = function(self, ...)

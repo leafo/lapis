@@ -262,6 +262,9 @@ class Widget
     else
       @_buffer\write @[name]
 
+  has_content_for: (name) =>
+    not not @[name]
+
   content: => -- implement me
 
   render_to_string: (...) =>
