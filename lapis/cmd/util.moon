@@ -29,7 +29,7 @@ wrap_text = (text, indent=0, max_width=80) ->
 
   concat lines, "\n" .. (" ")\rep indent
 
-columnize = (rows, indent=2, padding=4) ->
+columnize = (rows, indent=2, padding=4, wrap=true) ->
   max = 0
   max = math.max max, #row[1] for row in *rows
 
@@ -41,7 +41,7 @@ columnize = (rows, indent=2, padding=4) ->
       (" ")\rep indent
       row[1]
       (" ")\rep padd
-      wrap_text row[2], left_width
+      wrap and wrap_text(row[2], left_width) or row[2]
     }
 
   concat formatted, "\n"

@@ -54,12 +54,15 @@ wrap_text = function(text, indent, max_width)
   return concat(lines, "\n" .. (" "):rep(indent))
 end
 local columnize
-columnize = function(rows, indent, padding)
+columnize = function(rows, indent, padding, wrap)
   if indent == nil then
     indent = 2
   end
   if padding == nil then
     padding = 4
+  end
+  if wrap == nil then
+    wrap = true
   end
   local max = 0
   for _index_0 = 1, #rows do
@@ -78,7 +81,7 @@ columnize = function(rows, indent, padding)
         (" "):rep(indent),
         row[1],
         (" "):rep(padd),
-        wrap_text(row[2], left_width)
+        wrap and wrap_text(row[2], left_width) or row[2]
       })
       _accum_0[_len_0] = _value_0
       _len_0 = _len_0 + 1
