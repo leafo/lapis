@@ -180,3 +180,31 @@ describe "lapis.html", ->
 
     assert.same { another: "yeah", title: "<div>hello world</div>" }, helper.layout_opts
 
+  it "should render content for", ->
+    class TheLayout extends Widget
+      content: =>
+        div class: "title", ->
+          @content_for "title"
+
+        @content_for "inner"
+        @content_for "footer"
+
+    class TheWidget extends Widget
+      content: =>
+        @content_for "title", -> div "hello world"
+        @content_for "footer", "The's footer"
+        div "what the heck?"
+
+
+    layout_opts = {}
+
+    inner = {}
+    view = TheWidget!
+    view\include_helper { :layout_opts }
+    view inner
+
+    layout_opts.inner = -> raw inner
+
+    assert.same [[<div class="title">&lt;div&gt;hello world&lt;/div&gt;</div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
+
+
