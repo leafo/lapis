@@ -205,6 +205,6 @@ describe "lapis.html", ->
 
     layout_opts.inner = -> raw inner
 
-    assert.same [[<div class="title">&lt;div&gt;hello world&lt;/div&gt;</div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
+    assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
 
 

@@ -256,11 +256,11 @@ class Widget
     if val
       if helper = @_get_helper_chain![1]
         helper.layout_opts[name] = if type(val) == "string"
-          val
+          escape val
         else
           getfenv(val).capture val
     else
-      @_buffer\write_escaped @[name]
+      @_buffer\write @[name]
 
   content: => -- implement me
 
