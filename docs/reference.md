@@ -800,7 +800,7 @@ print render_html ->
     strong "Hello!"
 ```
 
-### `escape(str)`
+#### `escape(str)`
 
 Escapes any HTML special characters in the string. The following are escaped:
 
