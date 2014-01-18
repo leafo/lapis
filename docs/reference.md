@@ -718,6 +718,66 @@ class SomeWidget extends html.Widget
 ```
 
 
+#### `@content_for(name, [content])`
+
+`content_for` is used for sending HTML or strings from the view to the layout.
+You've probably already seen `@content_for "inner"` if you've looked at
+layouts. By default the content of the view is placed in the content block
+called `"inner"`.
+
+You can create arbitrary content blocks from the view by calling `@content_for`
+with a name and some content:
+
+```moon
+class MyView extends Widget
+  content: =>
+    @content_for "title", "This is the title of my page!"
+
+    @content_for "footer", ->
+      div class: "custom_footer", "The Footer"
+
+```
+
+You can use either strings or builder functions as the content.
+
+To access the content from the layout call `@content_for` without the content
+argument:
+
+```moon
+class MyLayout extends Widget
+  content: =>
+    html ->
+      body ->
+        div class: "title", ->
+          @content_for "title"
+
+        @content_for "inner"
+        @content_for "footer"
+```
+
+If a string is used as the value of a content block then it will be escaped
+before written to the buffer. If you want to insert a raw string then you can
+use a builder function in conjunction with the `raw` function:
+
+```moon
+@content_for "footer", ->
+  raw "<pre>this wont' be escaped</pre>"
+```
+
+#### `@has_content_for(name)`
+
+Checks to see if content for `name` is set.
+
+```moon
+class MyView extends Widget
+  content: =>
+    if @has_content_for "things"
+      @content_for "things"
+    else
+      div ->
+        text "default content"
+```
+
 ### HTML Module
 
 
@@ -2152,7 +2212,7 @@ the request parameters in `@params`. There are a few other properties as well.
 
 The raw request table `@req` wraps some of the ngx functions. Here is a list of utility functions available
 
- * `@req.headers` -- Request headers table 
+ * `@req.headers` -- Request headers table
  * `@req.parsed_url` -- Request parsed url.. A table with scheme, path, host, port and query.
  * `@req.params_post` -- Request POST parameters table
  * `@req.params_get` -- Request GET parameters table
@@ -2689,9 +2749,9 @@ import cached from require "lapis.cache"
 
 class extends lapis.Application
   "/microcached": cached {
-		exptime: 1
-		=> "hello world!"
-	}
+    exptime: 1
+    => "hello world!"
+  }
 ```
 
 #### `delete(key, [dict_name="page_cache"])`
