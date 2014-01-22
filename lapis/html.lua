@@ -134,9 +134,13 @@ do
     builders = {
       html_5 = function(...)
         raw('<!DOCTYPE HTML>')
-        raw('<html lang="en">')
-        text(...)
-        return raw('</html>')
+        if type((...)) == "table" then
+          return html(...)
+        else
+          return html({
+            lang = "en"
+          }, ...)
+        end
       end
     },
     with_temp = function(self, fn)

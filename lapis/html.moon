@@ -97,9 +97,10 @@ class Buffer
   builders: {
     html_5: (...) ->
       raw '<!DOCTYPE HTML>'
-      raw '<html lang="en">'
-      text ...
-      raw '</html>'
+      if type((...)) == "table"
+        html ...
+      else
+        html lang: "en", ...
   }
 
   new: (@buffer) =>
