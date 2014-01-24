@@ -31,7 +31,7 @@ create `my_app.lua`:
 -- my_app.lua
 local lapis = require "lapis"
 
-local app = lapis.Application!
+local app = lapis.Application()
 
 app:get("/", function(req)
   return "Hello world"
@@ -85,7 +85,7 @@ table:
 local lapis = require "lapis"
 local config = require("lapis.config").get!
 
-local app = lapis.Application!
+local app = lapis.Application()
 
 app:get("/", function(req)
   return config.greeting .. " from port " .. config.port
