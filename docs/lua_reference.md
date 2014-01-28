@@ -1,6 +1,6 @@
-# Lapis Lua Guide
+# Lapis Lua guide
 
-## Creating An Application
+## Creating an application
 
 Start a new project in the current directory busing by typing into your
 console:
@@ -10,7 +10,7 @@ $ lapis new --lua
 ```
 
 The default `nginx.conf` reads a file called `web.lua` for your application.
-Let's start by creating that.
+Lets start by creating that.
 
 The job of `web.lua` is to load to serve our application. Typically your
 application will be a separate Lua module defined in another file, so we just
@@ -93,6 +93,52 @@ end)
 
 return app
 ```
+
+
+## Creating a view
+
+Now that we can create basic pages we'll likely want to render something a bit
+more complex. Lapis comes with support for [etlua][1], an Lua templating
+language that lets you insert Lua mixed in with text and HTML.
+
+A view is a file that is responsible for generating the HTML. Typically your
+action will prepare all the data for your view and then tell it to render.
+
+By default Lapis searches for views in `views/` directory. Lets create a new
+view there, `index.etlua`. We won't use any of etlua's special markup just yet,
+so it will look like a normal HTML file.
+
+```erb
+<!-- views/index.etlua -->
+<h1>Hello world</h1>
+<p>Welcome to my page</p>
+```
+
+You'll notice that `<html>`, `<head>`, and `<body>` tags aren't there. The view
+typically renders the inside of the page, and the layout is responsible for
+what goes around it. We'll look at layouts further down.
+
+Now lets create the application which renders our view:
+
+```lua
+-- my_app.lua
+local lapis = require "lapis"
+local app = lapis.Application()
+app:enable("etlua")
+
+app:get("/", function(req)
+  return { render: "index" }
+end)
+
+return app
+```
+
+Before using `etlua` you have to enable is with the method call
+`app:enable("etlua")`.
+
+
+  [1]: https://github.com/leafo/etlua
+
 
 
 
