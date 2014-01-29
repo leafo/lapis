@@ -379,13 +379,16 @@ do
     handle_404 = function(self)
       return error("Failed to find route: " .. tostring(self.req.cmd_url))
     end,
-    handle_error = function(self, err, trace)
+    handle_error = function(self, err, trace, error_page)
+      if error_page == nil then
+        error_page = self.app.error_page
+      end
       local r = self.app.Request(self, self.req, self.res)
       r:write({
         status = 500,
         layout = false,
         content_type = "text/html",
-        self.app.error_page({
+        error_page({
           status = 500,
           err = err,
           trace = trace

@@ -373,13 +373,13 @@ class Application
   handle_404: =>
     error "Failed to find route: #{@req.cmd_url}"
 
-  handle_error: (err, trace) =>
+  handle_error: (err, trace, error_page=@app.error_page) =>
     r = @app.Request self, @req, @res
     r\write {
       status: 500
       layout: false
       content_type: "text/html"
-      @app.error_page { status: 500, :err, :trace }
+      error_page { status: 500, :err, :trace }
     }
     r\render!
     logger.request r
