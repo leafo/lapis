@@ -41,7 +41,10 @@ local backends = {
       local res, m = ngx.location.capture(_proxy, {
         body = str
       })
-      local out = assert(parser.parse(res.body))
+      local out, err = parser.parse(res.body)
+      if not (out) then
+        error(tostring(err) .. ": " .. tostring(str))
+      end
       do
         local resultset = out.resultset
         if resultset then

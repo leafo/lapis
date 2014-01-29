@@ -44,7 +44,9 @@ backends = {
       res, m = ngx.location.capture _proxy, {
         body: str
       }
-      out = assert parser.parse res.body
+      out, err = parser.parse res.body
+      error "#{err}: #{str}" unless out
+
       if resultset = out.resultset
         return resultset
       out
