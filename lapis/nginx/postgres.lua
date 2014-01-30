@@ -219,8 +219,8 @@ _insert = function(tbl, values, ...)
   if values._timestamp then
     values._timestamp = nil
     local time = format_date()
-    values.created_at = time
-    values.updated_at = time
+    values.created_at = values.created_at or time
+    values.updated_at = values.updated_at or time
   end
   local buff = {
     "INSERT INTO ",
@@ -256,7 +256,7 @@ local _update
 _update = function(table, values, cond, ...)
   if values._timestamp then
     values._timestamp = nil
-    values.updated_at = format_date()
+    values.updated_at = values.updated_at or format_date()
   end
   local buff = {
     "UPDATE ",
