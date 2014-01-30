@@ -164,8 +164,8 @@ _insert = (tbl, values, ...) ->
     values._timestamp = nil
     time = format_date!
 
-    values.created_at = time
-    values.updated_at = time
+    values.created_at or= time
+    values.updated_at or= time
 
   buff = {
     "INSERT INTO "
@@ -194,7 +194,7 @@ add_cond = (buffer, cond, ...) ->
 _update = (table, values, cond, ...) ->
   if values._timestamp
     values._timestamp = nil
-    values.updated_at = format_date!
+    values.updated_at or= format_date!
 
   buff = {
     "UPDATE "
