@@ -2,7 +2,7 @@
 etlua = require "etlua"
 loadkit = require "loadkit"
 
-import Widget from require "lapis.html"
+import Widget, Buffer from require "lapis.html"
 import locked_fn, release_fn from require "lapis.util.functions"
 
 loadkit.register "etlua", (file, mod, fname) ->
@@ -16,7 +16,10 @@ loadkit.register "etlua", (file, mod, fname) ->
       if val
         super name, val
       else
-        @[name]
+        if val = @[name]
+          buffer = Buffer {}
+          buffer\write val
+          table.concat buffer.buffer
 
     render: (buffer) =>
       seen_helpers = {}

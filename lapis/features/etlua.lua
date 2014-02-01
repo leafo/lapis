@@ -1,9 +1,9 @@
 local etlua = require("etlua")
 local loadkit = require("loadkit")
-local Widget
+local Widget, Buffer
 do
   local _obj_0 = require("lapis.html")
-  Widget = _obj_0.Widget
+  Widget, Buffer = _obj_0.Widget, _obj_0.Buffer
 end
 local locked_fn, release_fn
 do
@@ -23,7 +23,14 @@ return loadkit.register("etlua", function(file, mod, fname)
         if val then
           return _parent_0.content_for(self, name, val)
         else
-          return self[name]
+          do
+            val = self[name]
+            if val then
+              local buffer = Buffer({ })
+              buffer:write(val)
+              return table.concat(buffer.buffer)
+            end
+          end
         end
       end,
       render = function(self, buffer)

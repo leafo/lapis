@@ -323,5 +323,5 @@ class Widget
     @_buffer.widget = old_widget
     nil
 
-{ :Widget, :html_writer, :render_html, :escape, :unescape }
+{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape }
 

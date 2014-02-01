@@ -479,6 +479,7 @@ do
 end
 return {
   Widget = Widget,
+  Buffer = Buffer,
   html_writer = html_writer,
   render_html = render_html,
   escape = escape,
