@@ -58,7 +58,9 @@ return loadkit.register("etlua", function(file, mod, fname)
             end
           end
         })
-        parser:run(fn, scope, buffer)
+        local clone = locked_fn(fn)
+        parser:run(clone, scope, buffer)
+        release_fn(clone)
         return nil
       end
     }
