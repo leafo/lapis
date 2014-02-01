@@ -33,7 +33,7 @@ local lapis = require "lapis"
 
 local app = lapis.Application()
 
-app:get("/", function(req)
+app:get("/", function(self)
   return "Hello world"
 end)
 
@@ -87,7 +87,7 @@ local config = require("lapis.config").get!
 
 local app = lapis.Application()
 
-app:get("/", function(req)
+app:get("/", function(self)
   return config.greeting .. " from port " .. config.port
 end)
 
@@ -123,18 +123,72 @@ Now lets create the application which renders our view:
 ```lua
 -- my_app.lua
 local lapis = require "lapis"
-local app = lapis.Application()
-app:enable("etlua")
+require "lapis.features.etlua"
 
-app:get("/", function(req)
+local app = lapis.Application()
+
+app:get("/", function(self)
   return { render: "index" }
 end)
 
 return app
 ```
 
-Before using `etlua` you have to enable is with the method call
-`app:enable("etlua")`.
+`etlua` is not enabled by default, you must enable it by requiring
+`"lapis.features.etlua"`.
+
+We use the `render` parameter of our action's return value to instruct what
+template to use when rendering the page. In this case `"index"` refers to the
+file at `views.index`.
+
+Running the server and navigating to it in the browser should show our rendered
+template.
+
+### Working with `etlua`
+
+`etlua` comes with the following tags for injecting Lua into your templates:
+
+* `<% lua_code %>` runs Lua code verbatim
+* `<%= lua_expression %>` writes result of expression to output, HTML escaped
+* `<%- lua_expression %>` same as above but with no HTML escaping
+
+
+In the following example we assign some data in the action, then print it out
+in our view:
+
+```lua
+-- my_app.lua
+local lapis = require "lapis"
+require "lapis.features.etlua"
+
+local app = lapis.Application()
+
+app:get("/", function(self)
+  self.my_favorite_things = {
+    "Cats",
+    "Horses",
+    "Skateboards"
+  }
+
+  return { render: "list" }
+end)
+
+return app
+```
+
+```erb
+<!-- views/list.etlua -->
+<h1>Here are my favorite things</h1>
+<ol>
+  <% for i, thing in pairs() do %>
+    <li><%= thing %></li>
+  <% end %>
+</ol>
+```
+
+### Creating a layout
+
+A layout is a separate shared template that wraps the content of every paged.
 
 
   [1]: https://github.com/leafo/etlua

@@ -26,5 +26,3 @@ loadkit.register "etlua", (file, mod, fname) ->
 
       table.insert buffer, fn scope
 
-(app) -> -- nothing to do
-

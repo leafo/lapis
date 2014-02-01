@@ -10,7 +10,7 @@ do
   local _obj_0 = require("lapis.util.functions")
   locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
 end
-loadkit.register("etlua", function(file, mod, fname)
+return loadkit.register("etlua", function(file, mod, fname)
   local fn, err = etlua.compile(file:read("*a"))
   if not (fn) then
     error("[" .. tostring(fname) .. "] " .. tostring(err))
@@ -68,4 +68,3 @@ loadkit.register("etlua", function(file, mod, fname)
     return _class_0
   end
 end)
-return function(app) end
