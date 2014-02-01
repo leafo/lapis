@@ -1,14 +1,18 @@
 
-etlua = require "etlua"
+import Parser from require "etlua"
 loadkit = require "loadkit"
 
 import Widget, Buffer from require "lapis.html"
 import locked_fn, release_fn from require "lapis.util.functions"
 
-loadkit.register "etlua", (file, mod, fname) ->
-  fn, err = etlua.compile file\read "*a"
+parser = Parser!
 
-  unless fn
+loadkit.register "etlua", (file, mod, fname) ->
+  lua_code, err = parser\compile_to_lua file\read "*a"
+  fn, err = unless err
+    parser\load lua_code
+
+  if err
     error "[#{fname}] #{err}"
 
   class TemplateWidget extends Widget
@@ -33,5 +37,6 @@ loadkit.register "etlua", (file, mod, fname) ->
               return helper_value
       }
 
-      table.insert buffer, fn scope
+      parser\run fn, scope, buffer
+      nil
 

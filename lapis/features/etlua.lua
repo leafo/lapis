@@ -1,4 +1,8 @@
-local etlua = require("etlua")
+local Parser
+do
+  local _obj_0 = require("etlua")
+  Parser = _obj_0.Parser
+end
 local loadkit = require("loadkit")
 local Widget, Buffer
 do
@@ -10,9 +14,14 @@ do
   local _obj_0 = require("lapis.util.functions")
   locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
 end
+local parser = Parser()
 return loadkit.register("etlua", function(file, mod, fname)
-  local fn, err = etlua.compile(file:read("*a"))
-  if not (fn) then
+  local lua_code, err = parser:compile_to_lua(file:read("*a"))
+  local fn
+  if not (err) then
+    fn, err = parser:load(lua_code)
+  end
+  if err then
     error("[" .. tostring(fname) .. "] " .. tostring(err))
   end
   local TemplateWidget
@@ -49,7 +58,8 @@ return loadkit.register("etlua", function(file, mod, fname)
             end
           end
         })
-        return table.insert(buffer, fn(scope))
+        parser:run(fn, scope, buffer)
+        return nil
       end
     }
     _base_0.__index = _base_0
