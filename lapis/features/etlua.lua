@@ -19,9 +19,18 @@ return loadkit.register("etlua", function(file, mod, fname)
   do
     local _parent_0 = Widget
     local _base_0 = {
+      content_for = function(self, name, val)
+        if val then
+          return _parent_0.content_for(self, name, val)
+        else
+          return self[name]
+        end
+      end,
       render = function(self, buffer)
         local seen_helpers = { }
-        local scope = setmetatable({ }, {
+        local scope = setmetatable({
+          self = self
+        }, {
           __index = function(scope, key)
             if not seen_helpers[key] then
               local helper_value = self:_find_helper(key)

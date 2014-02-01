@@ -12,9 +12,15 @@ loadkit.register "etlua", (file, mod, fname) ->
     error "[#{fname}] #{err}"
 
   class TemplateWidget extends Widget
+    content_for: (name, val) =>
+      if val
+        super name, val
+      else
+        @[name]
+
     render: (buffer) =>
       seen_helpers = {}
-      scope = setmetatable {}, {
+      scope = setmetatable { self: @ }, {
         __index: (scope, key) ->
           if not seen_helpers[key]
             helper_value = @_find_helper key
