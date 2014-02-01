@@ -42,15 +42,47 @@ return loadkit.register("etlua", function(file, mod, fname)
           end
         end
       end,
+      _find_helper = function(self, name)
+        do
+          local chain = self:_get_helper_chain()
+          if chain then
+            for _index_0 = 1, #chain do
+              local h = chain[_index_0]
+              local helper_val = h[name]
+              if helper_val ~= nil then
+                local value
+                if type(helper_val) == "function" then
+                  value = function(...)
+                    return helper_val(h, ...)
+                  end
+                else
+                  value = helper_val
+                end
+                return value
+              end
+            end
+          end
+        end
+        local val = self[name]
+        if val ~= nil then
+          local real_value
+          if type(val) == "function" then
+            real_value = function(...)
+              return val(self, ...)
+            end
+          else
+            real_value = val
+          end
+          return real_value
+        end
+      end,
       render = function(self, buffer)
         local seen_helpers = { }
-        local scope = setmetatable({
-          self = self
-        }, {
+        local scope = setmetatable({ }, {
           __index = function(scope, key)
             if not seen_helpers[key] then
-              local helper_value = self:_find_helper(key)
               seen_helpers[key] = true
+              local helper_value = self:_find_helper(key)
               if helper_value ~= nil then
                 scope[key] = helper_value
                 return helper_value
