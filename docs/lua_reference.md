@@ -83,7 +83,7 @@ table:
 ```lua
 -- my_app.lua
 local lapis = require "lapis"
-local config = require("lapis.config").get!
+local config = require("lapis.config").get()
 
 local app = lapis.Application()
 
@@ -188,7 +188,26 @@ return app
 
 ### Creating a layout
 
-A layout is a separate shared template that wraps the content of every paged.
+A layout is a separate shared template that wraps the content of every page.
+Lapis comes with a basic layout to get you started but you'll most likely want
+to create something custom.
+
+We'll write the layout in etlua just like our views. Create `views/layout.etlua`:
+
+```erb
+<!-- views/layout.etlua -->
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= page_title or "My Page" %></title>
+</head>
+<body>
+  <h1>Greetings</h1>
+  <%- content_for("inner") %>
+</body>
+</html>
+```
 
 
   [1]: https://github.com/leafo/etlua
