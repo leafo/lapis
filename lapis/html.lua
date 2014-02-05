@@ -162,21 +162,21 @@ do
           local handler
           local _exp_0 = name
           if "widget" == _exp_0 then
-            handler = (function()
+            do
               local _base_1 = self
               local _fn_0 = _base_1.render_widget
-              return function(...)
+              handler = function(...)
                 return _fn_0(_base_1, ...)
               end
-            end)()
+            end
           elseif "render" == _exp_0 then
-            handler = (function()
+            do
               local _base_1 = self
               local _fn_0 = _base_1.render
-              return function(...)
+              handler = function(...)
                 return _fn_0(_base_1, ...)
               end
-            end)()
+            end
           elseif "capture" == _exp_0 then
             handler = function(fn)
               return table.concat(self:with_temp(fn))
@@ -186,21 +186,21 @@ do
               return element(self, ...)
             end
           elseif "text" == _exp_0 then
-            handler = (function()
+            do
               local _base_1 = self
               local _fn_0 = _base_1.write_escaped
-              return function(...)
+              handler = function(...)
                 return _fn_0(_base_1, ...)
               end
-            end)()
+            end
           elseif "raw" == _exp_0 then
-            handler = (function()
+            do
               local _base_1 = self
               local _fn_0 = _base_1.write
-              return function(...)
+              handler = function(...)
                 return _fn_0(_base_1, ...)
               end
-            end)()
+            end
           end
           if not (handler) then
             local default = self.old_env[name]
