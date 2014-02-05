@@ -122,13 +122,22 @@ class Buffer
         handler = switch name
           when "widget"
             (w) ->
-              w._parent = @widget
+              if current = @widget
+                w\_inherit_helpers current
 
-              -- add helpers from parents
-              for helper in *@widget\_get_helper_chain!
-                w\include_helper helper
-
+              -- widget knows how to reuse Buffer
               w\render @
+
+          when "render"
+            (mod) ->
+              widget = require mod
+
+              if current = @widget
+                w\_inherit_helpers current
+
+              widget!\render @buffer
+              @i = #@buffer
+
           when "capture"
             (fn) -> table.concat @with_temp fn
           when "element"
@@ -244,6 +253,12 @@ class Widget
             helper_val
 
           return value
+
+  _inherit_helpers: (other) =>
+    @_parent = other
+    -- add helpers from parents
+    for helper in *other\_get_helper_chain!
+      @include_helper helper
 
   -- insert table onto end of helper_chain
   include_helper: (helper) =>

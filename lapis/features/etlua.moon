@@ -60,7 +60,6 @@ loadkit.register "etlua", (file, mod, fname) ->
               return helper_value
       }
 
-
       clone = locked_fn fn
       parser\run clone, scope, buffer
       release_fn clone

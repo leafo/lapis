@@ -163,13 +163,25 @@ do
           local _exp_0 = name
           if "widget" == _exp_0 then
             handler = function(w)
-              w._parent = self.widget
-              local _list_0 = self.widget:_get_helper_chain()
-              for _index_0 = 1, #_list_0 do
-                local helper = _list_0[_index_0]
-                w:include_helper(helper)
+              do
+                local current = self.widget
+                if current then
+                  w:_inherit_helpers(current)
+                end
               end
               return w:render(self)
+            end
+          elseif "render" == _exp_0 then
+            handler = function(mod)
+              local widget = require(mod)
+              do
+                local current = self.widget
+                if current then
+                  w:_inherit_helpers(current)
+                end
+              end
+              widget():render(self.buffer)
+              self.i = #self.buffer
             end
           elseif "capture" == _exp_0 then
             handler = function(fn)
@@ -343,6 +355,14 @@ do
             end
           end
         end
+      end
+    end,
+    _inherit_helpers = function(self, other)
+      self._parent = other
+      local _list_0 = other:_get_helper_chain()
+      for _index_0 = 1, #_list_0 do
+        local helper = _list_0[_index_0]
+        self:include_helper(helper)
       end
     end,
     include_helper = function(self, helper)
