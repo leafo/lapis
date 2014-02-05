@@ -121,23 +121,9 @@ class Buffer
       __index: (scope, name) ->
         handler = switch name
           when "widget"
-            (w) ->
-              if current = @widget
-                w\_inherit_helpers current
-
-              -- widget knows how to reuse Buffer
-              w\render @
-
+            @\render_widget
           when "render"
-            (mod) ->
-              widget = require mod
-
-              if current = @widget
-                w\_inherit_helpers current
-
-              widget!\render @buffer
-              @i = #@buffer
-
+            @\render
           when "capture"
             (fn) -> table.concat @with_temp fn
           when "element"
@@ -162,6 +148,22 @@ class Buffer
         scope[name] = handler
         handler
     }
+
+  render: (mod_name) =>
+    widget = require mod_name
+
+    if current = @widget
+      w\_inherit_helpers current
+
+    widget!\render @buffer
+    @i = #@buffer
+
+  render_widget: (w) =>
+    if current = @widget
+      w\_inherit_helpers current
+
+    -- widget knows how to reuse Buffer
+    w\render @
 
   call: (fn, ...) =>
     env = getfenv fn

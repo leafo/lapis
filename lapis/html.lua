@@ -162,27 +162,21 @@ do
           local handler
           local _exp_0 = name
           if "widget" == _exp_0 then
-            handler = function(w)
-              do
-                local current = self.widget
-                if current then
-                  w:_inherit_helpers(current)
-                end
+            handler = (function()
+              local _base_1 = self
+              local _fn_0 = _base_1.render_widget
+              return function(...)
+                return _fn_0(_base_1, ...)
               end
-              return w:render(self)
-            end
+            end)()
           elseif "render" == _exp_0 then
-            handler = function(mod)
-              local widget = require(mod)
-              do
-                local current = self.widget
-                if current then
-                  w:_inherit_helpers(current)
-                end
+            handler = (function()
+              local _base_1 = self
+              local _fn_0 = _base_1.render
+              return function(...)
+                return _fn_0(_base_1, ...)
               end
-              widget():render(self.buffer)
-              self.i = #self.buffer
-            end
+            end)()
           elseif "capture" == _exp_0 then
             handler = function(fn)
               return table.concat(self:with_temp(fn))
@@ -231,6 +225,26 @@ do
           return handler
         end
       })
+    end,
+    render = function(self, mod_name)
+      local widget = require(mod_name)
+      do
+        local current = self.widget
+        if current then
+          w:_inherit_helpers(current)
+        end
+      end
+      widget():render(self.buffer)
+      self.i = #self.buffer
+    end,
+    render_widget = function(self, w)
+      do
+        local current = self.widget
+        if current then
+          w:_inherit_helpers(current)
+        end
+      end
+      return w:render(self)
     end,
     call = function(self, fn, ...)
       local env = getfenv(fn)
