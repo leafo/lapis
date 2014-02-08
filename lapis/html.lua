@@ -228,15 +228,7 @@ do
     end,
     render = function(self, mod_name)
       local widget = require(mod_name)
-      local w = widget()
-      do
-        local current = self.widget
-        if current then
-          w:_inherit_helpers(current)
-        end
-      end
-      w:render(self.buffer)
-      self.i = #self.buffer
+      return self:render_widget(widget())
     end,
     render_widget = function(self, w)
       do
@@ -374,10 +366,14 @@ do
     end,
     _inherit_helpers = function(self, other)
       self._parent = other
-      local _list_0 = other:_get_helper_chain()
-      for _index_0 = 1, #_list_0 do
-        local helper = _list_0[_index_0]
-        self:include_helper(helper)
+      do
+        local other_helpers = other:_get_helper_chain()
+        if other_helpers then
+          for _index_0 = 1, #other_helpers do
+            local helper = other_helpers[_index_0]
+            self:include_helper(helper)
+          end
+        end
       end
     end,
     include_helper = function(self, helper)

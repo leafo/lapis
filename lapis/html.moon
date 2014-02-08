@@ -151,19 +151,11 @@ class Buffer
 
   render: (mod_name) =>
     widget = require mod_name
-    w = widget!
-
-    if current = @widget
-      w\_inherit_helpers current
-
-    w\render @buffer
-    @i = #@buffer
+    @render_widget widget!
 
   render_widget: (w) =>
     if current = @widget
       w\_inherit_helpers current
-
-    -- widget knows how to reuse Buffer
     w\render @
 
   call: (fn, ...) =>
@@ -260,8 +252,9 @@ class Widget
   _inherit_helpers: (other) =>
     @_parent = other
     -- add helpers from parents
-    for helper in *other\_get_helper_chain!
-      @include_helper helper
+    if other_helpers = other\_get_helper_chain!
+      for helper in *other_helpers
+        @include_helper helper
 
   -- insert table onto end of helper_chain
   include_helper: (helper) =>
