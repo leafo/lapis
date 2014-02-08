@@ -228,13 +228,14 @@ do
     end,
     render = function(self, mod_name)
       local widget = require(mod_name)
+      local w = widget()
       do
         local current = self.widget
         if current then
           w:_inherit_helpers(current)
         end
       end
-      widget():render(self.buffer)
+      w:render(self.buffer)
       self.i = #self.buffer
     end,
     render_widget = function(self, w)

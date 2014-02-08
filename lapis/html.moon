@@ -151,11 +151,12 @@ class Buffer
 
   render: (mod_name) =>
     widget = require mod_name
+    w = widget!
 
     if current = @widget
       w\_inherit_helpers current
 
-    widget!\render @buffer
+    w\render @buffer
     @i = #@buffer
 
   render_widget: (w) =>
