@@ -1,7 +1,7 @@
-local Parser
+local Parser, Compiler
 do
   local _obj_0 = require("etlua")
-  Parser = _obj_0.Parser
+  Parser, Compiler = _obj_0.Parser, _obj_0.Compiler
 end
 local loadkit = require("loadkit")
 local Widget, Buffer
@@ -15,8 +15,57 @@ do
   locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
 end
 local parser = Parser()
+local BufferCompiler
+do
+  local _parent_0 = Compiler
+  local _base_0 = {
+    header = function(self)
+      return self:push("local _tostring, _escape, _b = ...\n", "local _b_buffer = _b.buffer\n", "local _b_i\n")
+    end,
+    increment = function(self)
+      self:push("_b_i = _b.i + 1\n")
+      return self:push("_b.i = _b_i\n")
+    end,
+    assign = function(self, ...)
+      self:push("_b_buffer[_b_i] = ", ...)
+      if ... then
+        return self:push("\n")
+      end
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  local _class_0 = setmetatable({
+    __init = function(self, ...)
+      return _parent_0.__init(self, ...)
+    end,
+    __base = _base_0,
+    __name = "BufferCompiler",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        return _parent_0[name]
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  BufferCompiler = _class_0
+end
 return loadkit.register("etlua", function(file, mod, fname)
-  local lua_code, err = parser:compile_to_lua(file:read("*a"))
+  local lua_code, err = parser:compile_to_lua(file:read("*a"), BufferCompiler)
+  print(lua_code)
   local fn
   if not (err) then
     fn, err = parser:load(lua_code)
@@ -35,9 +84,8 @@ return loadkit.register("etlua", function(file, mod, fname)
           do
             val = self[name]
             if val then
-              local buffer = Buffer({ })
-              buffer:write(val)
-              return table.concat(buffer.buffer)
+              self._buffer:write(val)
+              return ""
             end
           end
         end
@@ -77,6 +125,11 @@ return loadkit.register("etlua", function(file, mod, fname)
         end
       end,
       render = function(self, buffer)
+        if buffer.__class == Buffer then
+          self._buffer = buffer
+        else
+          self._buffer = Buffer(buffer)
+        end
         local seen_helpers = { }
         local scope = setmetatable({ }, {
           __index = function(scope, key)
@@ -91,7 +144,8 @@ return loadkit.register("etlua", function(file, mod, fname)
           end
         })
         local clone = locked_fn(fn)
-        parser:run(clone, scope, buffer)
+        parser:run(clone, scope, self._buffer)
+        require("moon").p(self._buffer)
         release_fn(clone)
         return nil
       end

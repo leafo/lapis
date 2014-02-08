@@ -1,5 +1,5 @@
 
-import Parser from require "etlua"
+import Parser, Compiler from require "etlua"
 loadkit = require "loadkit"
 
 import Widget, Buffer from require "lapis.html"
@@ -7,8 +7,24 @@ import locked_fn, release_fn from require "lapis.util.functions"
 
 parser = Parser!
 
+class BufferCompiler extends Compiler
+  header: =>
+    @push "local _tostring, _escape, _b = ...\n",
+      "local _b_buffer = _b.buffer\n",
+      "local _b_i\n"
+
+  increment: =>
+    @push "_b_i = _b.i + 1\n"
+    @push "_b.i = _b_i\n"
+
+  assign: (...) =>
+    @push "_b_buffer[_b_i] = ", ...
+    @push "\n" if ...
+
 loadkit.register "etlua", (file, mod, fname) ->
-  lua_code, err = parser\compile_to_lua file\read "*a"
+  lua_code, err = parser\compile_to_lua file\read("*a"), BufferCompiler
+  print lua_code
+
   fn, err = unless err
     parser\load lua_code
 
@@ -21,9 +37,8 @@ loadkit.register "etlua", (file, mod, fname) ->
         super name, val
       else
         if val = @[name]
-          buffer = Buffer {}
-          buffer\write val
-          table.concat buffer.buffer
+          @_buffer\write val
+          ""
 
     _find_helper: (name) =>
       if chain = @_get_helper_chain!
@@ -49,6 +64,11 @@ loadkit.register "etlua", (file, mod, fname) ->
         return real_value
 
     render: (buffer) =>
+      @_buffer = if buffer.__class == Buffer
+        buffer
+      else
+        Buffer buffer
+
       seen_helpers = {}
       scope = setmetatable { }, {
         __index: (scope, key) ->
@@ -61,7 +81,8 @@ loadkit.register "etlua", (file, mod, fname) ->
       }
 
       clone = locked_fn fn
-      parser\run clone, scope, buffer
+      parser\run clone, scope, @_buffer
+      require("moon").p @_buffer
       release_fn clone
       nil
 
