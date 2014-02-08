@@ -642,8 +642,9 @@ class extends lapis.Application
     widget\render_to_string!
 ```
 
-You should avoid rendering widgets manually when possible, and instead use the
-`render` [request option](#request-object-request-options).
+You should avoid rendering widgets manually when possible. When in an action
+use the `render` [request option](#request-object-request-options). When in
+another widget use the `widget` helper function.
 
 ### Layouts
 
@@ -679,14 +680,14 @@ the action's return value.
 
 ```moon
 class extends lapis.Application
-  -- the following have the same effect
+  -- the following two have the same effect
   "/home1": =>
     layout: "my_layout"
 
   "/home2": =>
     layout: require "views.my_layout"
 
-  -- this doesn't use a layout
+  -- this doesn't use a layout at all
   "/no_layout": =>
     layout: false, "No layout rendered!"
 
