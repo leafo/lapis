@@ -95,5 +95,22 @@ describe "lapis.etlua", ->
         color: "green"
       }
 
-      assert.same [[<div class="widget">color:green</div><div class="etlua">color: green</div>]], w\render_to_string!
+      assert.same [[<div class="widget">color:green</div><div class="etlua">color: green</div>]],
+        w\render_to_string!
+
+    it "should let etlua render widget", ->
+      class SomeWidget extends Widget
+        content: =>
+          div class: "hello_world"
+
+      tpl = EtluaWidget\load [[before<% widget(SomeWidget) %>after]]
+      w = tpl { :SomeWidget }
+      assert.same [[before<div class="hello_world"></div>after]],
+        w\render_to_string!
+
+    it "should let etlua call render helper", ->
+      tpl = EtluaWidget\load [[before<% render("spec.templates.moon_test") %>after]]
+      assert.same [[before<div class="greeting">hello world</div>after]],
+        tpl\render_to_string!
+
 

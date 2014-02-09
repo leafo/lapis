@@ -55,6 +55,12 @@ class EtluaWidget extends Widget
 
           return value
 
+    switch name
+      when "render"
+        return @_buffer\render
+      when "widget"
+        return @_buffer\render_widget
+
     -- look on self
     val = @[name]
     if val != nil
