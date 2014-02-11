@@ -95,6 +95,7 @@ class Request
         widget = require "#{@app.views_prefix}.#{widget}"
 
       view = widget @options.locals
+      @layout_opts.view_widget = view if @layout_opts
       view\include_helper @
 
       @write view

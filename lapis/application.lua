@@ -120,6 +120,9 @@ do
           widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
         end
         local view = widget(self.options.locals)
+        if self.layout_opts then
+          self.layout_opts.view_widget = view
+        end
         view:include_helper(self)
         self:write(view)
       end
