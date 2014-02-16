@@ -26,6 +26,12 @@ upstream database {
 In this example the `pg` filter is applied to our `POSTGRESQL_URL`
 configuration variable. Let's go ahead and add a value to our `config.moon`
 
+```lua
+config("development", {
+  postgresql_url = "postgres://pg_user:user_password@127.0.0.1/my_database"
+})
+```
+
 ```moon
 config "development", ->
   postgresql_url "postgres://pg_user:user_password@127.0.0.1/my_database"
@@ -67,10 +73,23 @@ helps you synchronize it with a row in a database table.
 
 Here's a base example using the raw query interface:
 
+```lua
+local lapis = require "lapis"
+local db = require("lapis.db")
+
+local app = lapis.Application()
+
+app:get("/", function()
+  local res = db.query("select * from my_table where id = ?", 10)
+  return "ok!"
+end)
+```
+
 ```moon
+lapis = require "lapis"
 db = require "lapis.db"
 
-lapis.serve class extends lapis.Application
+class extends lapis.Application
   "/": =>
     res = db.query "select * from my_table where id = ?", 10
     "ok!"
@@ -80,6 +99,10 @@ By default all queries will log to the Nginx log. You'll be able to see each
 query as it happens.
 
 ## Query Interface
+
+```lua
+local db = require("lapis.db")
+```
 
 ```moon
 db = require "lapis.db"
@@ -99,6 +122,14 @@ they are replaced in the order they appear with the remaining arguments. The
 remaining arguments are escaped with `escape_literal` before being
 interpolated, making SQL injection impossible.
 
+```lua
+local res
+
+res = db.query("SELECT * FROM hello")
+res = db.query("UPDATE things SET color = ?", "blue")
+res = db.query("INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true)
+```
+
 ```moon
 res = db.query "SELECT * FROM hello"
 res = db.query "UPDATE things SET color = ?", "blue"
@@ -112,12 +143,16 @@ INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 ```
 
 > Due to a limitation in the PostgreSQL Nginx extension, it is not possible to
-> get the error message if the query has failed. You can however see the error
-> in the logs.
+> get the error message in your code. You can however see the error in the
+> logs.
 
 #### `select(query, params...)`
 
 The same as `query` except it appends `"SELECT"` to the front of the query.
+
+```lua
+local res = db.select("* from hello where active = ?", db.FALSE)
+```
 
 ```moon
 res = db.select "* from hello where active = ?", db.FALSE
@@ -130,6 +165,14 @@ SELECT * from hello where active = FALSE
 #### `insert(table, values, returning...)`
 
 Inserts a row into `table`. `values` is a Lua table of column names and values.
+
+```lua
+db.insert("my_table", {
+  age = 10,
+  name = "Hello World"
+})
+```
+
 
 ```moon
 db.insert "my_table", {
@@ -144,6 +187,12 @@ INSERT INTO "my_table" ("age", "name") VALUES (10, 'Hello World')
 
 A list of column names to be returned can be given after the value table:
 
+```lua
+local res = db.insert("some_other_table", {
+  name = "Hello World"
+}, "id")
+```
+
 ```moon
 res = db.insert "some_other_table", {
   name: "Hello World"
@@ -157,6 +206,16 @@ INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
 #### `update(table, values, conditions, params...)`
 
 Updates `table` with `values` on all rows that match `conditions`.
+
+```lua
+db.update("the_table", {
+  name = "Dogbert 2.0",
+  active = true
+}, {
+  id = 100
+})
+
+```
 
 ```moon
 db.update "the_table", {
@@ -173,6 +232,12 @@ UPDATE "the_table" SET "name" = 'Dogbert 2.0', "active" = TRUE WHERE "id" = 100
 
 `conditions` can also be a string, and `params` will be interpolated into it:
 
+```lua
+db.update("the_table", {
+  count = db.raw("count + 1")
+}, "count < ?", 10)
+```
+
 ```moon
 db.update "the_table", {
   count: db.raw"count + 1"
@@ -187,6 +252,10 @@ UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
 
 Deletes rows from `table` that match `conditions`.
 
+```lua
+db.delete("cats", { name: "Roo"})
+```
+
 ```moon
 db.delete "cats", name: "Roo"
 ```
@@ -196,6 +265,10 @@ DELETE FROM "cats" WHERE "name" = 'Roo'
 ```
 
 `conditions` can also be a string
+
+```moon
+db.delete("cats", "name = ?", "Gato")
+```
 
 ```moon
 db.delete "cats", "name = ?", "Gato"
@@ -210,6 +283,14 @@ DELETE FROM "cats" WHERE name = 'Gato'
 Returns a special value that will be inserted verbatim into query without being
 escaped:
 
+```lua
+db.update("the_table", {
+  count = db.raw("count + 1")
+})
+
+db.select("* from another_table where x = ?", db.raw("now()"))
+```
+
 ```moon
 db.update "the_table", {
   count: db.raw"count + 1"
@@ -218,7 +299,7 @@ db.update "the_table", {
 db.select "* from another_table where x = ?", db.raw"now()"
 ```
 
-```moon
+```sql
 UPDATE "the_table" SET "count" = count + 1
 SELECT * from another_table where x = now()
 ```
@@ -227,6 +308,11 @@ SELECT * from another_table where x = now()
 
 Escapes a value for use in a query. A value is any type that can be stored in a
 column. Numbers, strings, and booleans will be escaped accordingly.
+
+```lua
+local escaped = db.escape_literal(value)
+local res = db.query("select * from hello where id = " .. escaped")
+```
 
 ```moon
 escaped = db.escape_literal value
@@ -240,6 +326,11 @@ res = db.query "select * from hello where id = #{escaped}"
 
 Escapes a string for use in a query as an identifier. An identifier is a column
 or table name.
+
+```lua
+local table_name = db.escape_identifier("table")
+local res = db.query("select * from " .. table_name)
+```
 
 ```moon
 table_name = db.escape_identifier "table"
@@ -256,6 +347,13 @@ The following constants are also available:
  * `NULL` -- represents `NULL` in SQL
  * `TRUE` -- represents `TRUE` in SQL
  * `FALSE` -- represents `FALSE` in SQL
+
+
+```lua
+db.update("the_table", {
+  name = db.NULL
+})
+```
 
 ```moon
 db.update "the_table", {
