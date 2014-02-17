@@ -240,4 +240,13 @@ describe "lapis.db.model.", ->
       [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]]
     }, queries
 
+  it "should create model with extend syntax", ->
+    m = Model\extend "TheThings", {
+      timestamp: true
+      primary_key: {"hello", "world"}
+    }
+
+    assert.same "the_things", m\table_name!
+    assert.same {"hello", "world"}, { m\primary_keys! }
+
 

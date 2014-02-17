@@ -205,6 +205,13 @@ class Model
   @paginated: (...) =>
     Paginator @, ...
 
+  -- alternative to MoonScript inheritance
+  @extend: (name, tbl) =>
+    lua = require "lapis.lua"
+    with cls = lua.class name, tbl, @
+      .primary_key = tbl.primary_key
+      .timestamp = tbl.timestamp
+
   _primary_cond: =>
     cond = {}
     for key in *{@@primary_keys!}
