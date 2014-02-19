@@ -116,7 +116,12 @@ class Model
       tbl_name = db.escape_identifier @table_name!
       find_by_escaped = db.escape_identifier find_by
 
-      if res = db.select "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+      query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+
+      if opts and opts.where
+        query ..= " and " .. db.encode_clause opts.where
+
+      if res = db.select query
         records = {}
         for t in *res
           records[t[find_by]] = @load t

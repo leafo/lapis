@@ -234,10 +234,14 @@ describe "lapis.db.model.", ->
 
     ThingItems\include_in things, "thing_id"
     ThingItems\include_in things, "thing_id", flip: true
+    ThingItems\include_in things, "thing_id", where: { dad: true }
+    ThingItems\include_in things, "thing_id", fields: "one, two, three"
 
     assert.same {
       [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
       [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]]
+      [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110) and "dad" = TRUE]]
+      [[SELECT one, two, three from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
     }, queries
 
   it "should create model with extend syntax", ->
