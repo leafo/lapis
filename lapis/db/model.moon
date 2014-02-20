@@ -1,4 +1,3 @@
-
 db = require "lapis.db"
 
 import underscore, escape_pattern, uniquify from require "lapis.util"
@@ -11,6 +10,7 @@ local *
 class Model
   @timestamp: false
   @primary_key: "id"
+  @schema: "public"
 
   @primary_keys: =>
     if type(@primary_key) == "table"
@@ -42,7 +42,10 @@ class Model
 
   -- @delete: (query, ...) =>
   --   assert query, "tried to delete with no query"
-  --   db.delete @table_name!, query, ...
+       tbl_name = db.escape_identifier @table_name!
+       schema_name = db.escape_identifier @schema
+       full_name = tbl_name .. "." .. schema_name
+  --   db.delete full_name, query, ...
 
   @select: (query="", ...) =>
     opts = {}
@@ -58,14 +61,16 @@ class Model
 
     query = db.interpolate_query query, ...
     tbl_name = db.escape_identifier @table_name!
+    schema_name = db.escape_identifier @schema
 
     fields = opts.fields or "*"
-    if res = db.select "#{fields} from #{tbl_name} #{query}"
+    if res = db.select "#{fields} from #{schema_name}.#{tbl_name} #{query}"
       @load_all res
 
   @count: (clause, ...) =>
     tbl_name = db.escape_identifier @table_name!
-    query = "COUNT(*) as c from #{tbl_name}"
+    schema_name = db.escape_identifier @schema
+    query = "COUNT(*) as c from #{schema_name}.#{tbl_name}"
 
     if clause
       query ..= " where " .. db.interpolate_query clause, ...
@@ -114,9 +119,10 @@ class Model
         @primary_key
 
       tbl_name = db.escape_identifier @table_name!
+      schema_name = db.escape_identifier @schema
       find_by_escaped = db.escape_identifier find_by
 
-      query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+      query = "#{fields} from #{schema_name}.#{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
 
       if opts and opts.where
         query ..= " and " .. db.encode_clause opts.where
@@ -155,8 +161,9 @@ class Model
     flat_ids = concat [db.escape_literal id for id in *ids], ", "
     primary = db.escape_identifier by_key
     tbl_name = db.escape_identifier @table_name!
+    schema_name = db.escape_identifier @schema
 
-    if res = db.select fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
+    if res = db.select fields .. " from #{schema_name}.#{tbl_name} where #{primary} in (#{flat_ids})"
       @load r for r in *res
       res
 
@@ -171,8 +178,9 @@ class Model
       db.encode_clause @encode_key(...)
 
     table_name = db.escape_identifier @table_name!
+    schema_name = db.escape_identifier @schema
 
-    if result = unpack db.select "* from #{table_name} where #{cond} limit 1"
+    if result = unpack db.select "* from #{schema_name}.#{table_name} where #{cond} limit 1"
       @load result
 
   -- create from table of values, return loaded object
@@ -183,7 +191,10 @@ class Model
           return nil, err
 
     values._timestamp = true if @timestamp
-    res = db.insert @table_name!, values, @primary_keys!
+    tbl_name = db.escape_identifier @table_name!
+    schema_name = db.escape_identifier @schema
+    full_name = tbl_name .. "." .. schema_name
+    res = db.insert full_name, values, @primary_keys!
     if res
       for k,v in pairs res[1]
         values[k] = v
@@ -200,7 +211,8 @@ class Model
 
     cond = db.encode_clause t
     table_name = db.escape_identifier @table_name!
-    nil != unpack db.select "1 from #{table_name} where #{cond} limit 1"
+    schema_name = db.escape_identifier @schema
+    nil != unpack db.select "1 from #{schema}.#{table_name} where #{cond} limit 1"
 
   @_check_constraint: (key, value, obj) =>
     return unless @constraints
@@ -230,7 +242,10 @@ class Model
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 
   delete: =>
-    db.delete @@table_name!, @_primary_cond!
+    tbl_name = db.escape_identifier @@table_name!
+    schema_name = db.escape_identifier @schema
+    full_name = tbl_name .. "." .. schema_name
+    db.delete full_name, @_primary_cond!
 
   -- thing\update "col1", "col2", "col3"
   -- thing\update {
@@ -259,7 +274,10 @@ class Model
           return nil, err
 
     values._timestamp = true if @@timestamp
-    db.update @@table_name!, values, cond
+    tbl_name = db.escape_identifier @@table_name!
+    schema_name = db.escape_identifier @schema
+    full_name = tbl_name .. "." .. schema_name
+    db.update full_name, values, cond
 
 
 
