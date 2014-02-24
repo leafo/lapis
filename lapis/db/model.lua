@@ -246,8 +246,12 @@ do
       end
       local tbl_name = db.escape_identifier(self:table_name())
       local find_by_escaped = db.escape_identifier(find_by)
+      local query = tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")"
+      if opts and opts.where then
+        query = query .. (" and " .. db.encode_clause(opts.where))
+      end
       do
-        local res = db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")")
+        local res = db.select(query)
         if res then
           local records = { }
           for _index_0 = 1, #res do
@@ -379,6 +383,18 @@ do
   end
   self.paginated = function(self, ...)
     return Paginator(self, ...)
+  end
+  self.extend = function(self, table_name, tbl)
+    local lua = require("lapis.lua")
+    do
+      local cls = lua.class(table_name, tbl, self)
+      cls.table_name = function()
+        return table_name
+      end
+      cls.primary_key = tbl.primary_key
+      cls.timestamp = tbl.timestamp
+      return cls
+    end
   end
   Model = _class_0
 end

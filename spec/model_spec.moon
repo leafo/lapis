@@ -245,7 +245,7 @@ describe "lapis.db.model.", ->
     }, queries
 
   it "should create model with extend syntax", ->
-    m = Model\extend "TheThings", {
+    m = Model\extend "the_things", {
       timestamp: true
       primary_key: {"hello", "world"}
     }

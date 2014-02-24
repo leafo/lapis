@@ -111,7 +111,11 @@ create_index = function(tname, ...)
   if options.unique then
     append_all(buffer, " UNIQUE")
   end
-  append_all(buffer, " INDEX ON " .. tostring(db.escape_identifier(tname)) .. " (")
+  append_all(buffer, " INDEX ON " .. tostring(db.escape_identifier(tname)))
+  if options.method then
+    append_all(buffer, " USING ", options.method)
+  end
+  append_all(buffer, " (")
   for i, col in ipairs(columns) do
     append_all(buffer, db.escape_identifier(col))
     if not (i == #columns) then
@@ -119,6 +123,9 @@ create_index = function(tname, ...)
     end
   end
   append_all(buffer, ")")
+  if options.tablespace then
+    append_all(buffer, " TABLESPACE ", options.tablespace)
+  end
   if options.where then
     append_all(buffer, " WHERE ", options.where)
   end
