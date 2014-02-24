@@ -370,6 +370,13 @@ that table.
 
 The most primitive model is a blank model:
 
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users")
+```
+
 ```moon
 import Model from require "lapis.db.model"
 
@@ -384,6 +391,7 @@ make the class name plural.
 If you want to use a different table name you can overwrite the `@table_name`
 class method:
 
+
 ```moon
 class Users extends Model
   @table_name: => "active_users"
@@ -394,12 +402,25 @@ class Users extends Model
 By default all models have the primary key "id". This can be changed by setting
 the `@primary_key` class variable.
 
+
+```lua
+local Users = Model:extend("users", {
+  primary_key = "login"
+})
+```
+
 ```moon
 class Users extends Model
   @primary_key: "login"
 ```
 
 If there are multiple primary keys then a array table can be used:
+
+```lua
+local Followings = Model:extend("followings", {
+  primary_key = { "user_id", "followed_user_id" }
+})
+```
 
 ```moon
 class Followings extends Model
@@ -409,6 +430,18 @@ class Followings extends Model
 ### Finding A Row
 
 For the following examples assume we have the following models:
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users")
+
+local Tags = Model:extend("tags", {
+  primary_key = {"user_id", "tag"}
+})
+
+```
+
 
 ```moon
 import Model from require "lapis.db.model"
@@ -423,6 +456,10 @@ When you want to find a single row the `find` class method is used. In the
 first form it takes a variable number of values, one for each primary key in
 the order the primary keys are specified:
 
+```lua
+local user = Users:find(23232)
+local tag = Tags:find(1234, "programmer")
+```
 
 ```moon
 user = Users\find 23232
@@ -439,6 +476,11 @@ SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
 
 We can also pass a table as an argument to `find`. The table will be converted to a `WHERE` clause in the query:
 
+
+```lua
+local user = Users:find({ email = "person@example.com"})
+```
+
 ```moon
 user = Users\find email: "person@example.com"
 ```
@@ -453,6 +495,9 @@ When searching for multiple rows the `select` class method is used. It works
 similarly to the `select` function from the raw query interface except you
 specify the part of the query after the list of columns to select.
 
+```lua
+local tags = Tags:select("where tag = ?", "merchant")
+```
 
 ```moon
 tags = Tags\select "where tag = ?", "merchant"
@@ -467,6 +512,10 @@ Instead of a single instance, an array table of instances is returned.
 If you want to restrict what columns are selected you can pass in a table as
 the last argument with the `fields` key set:
 
+```lua
+local tags = Tags:select("where tag = ?", "merchant", { fields = "created_at as c" })
+```
+
 ```moon
 tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
 ```
@@ -478,6 +527,10 @@ SELECT created_at as c from "tags" where tag = 'merchant'
 Alternatively if you want to find many rows by their primary key you can use
 the `find_all` method. It takes an array table of primary keys. This method
 only works on tables that have singular primary keys.
+
+```lua
+local users = Users:find_all({ 1,2,3,4,5 })
+```
 
 ```moon
 users = Users\find_all { 1,2,3,4,5 }
@@ -494,6 +547,13 @@ column values to create the row with. It returns an instance of the model. The
 create query fetches the values of the primary keys and sets them on the
 instance using the PostgreSQL `RETURN` statement. This is useful for getting
 the value of an auto-incrementing key from the insert statement.
+
+```lua
+local user = Users:create({
+  login = "superuser",
+  password = "1234"
+})
+```
 
 ```moon
 user = Users\create {
@@ -515,6 +575,13 @@ The first form of update takes variable arguments. A list of strings that
 represent column names to be updated. The values of the columns are taken from
 the current values in the instance.
 
+```lua
+local user = Users:find(1)
+user.login = "uberuser"
+user.email = "admin@example.com"
+user:update("login", "email")
+```
+
 ```moon
 user = Users\find 1
 user.login = "uberuser"
@@ -530,6 +597,14 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 Alternatively we can pass a table as the first argument of `update`. The keys
 of the table are the column names, and the values are the values to update the
 columns too. The instance is also updated. We can rewrite the above example as:
+
+```lua
+local user = Users:find(1)
+user:update({
+  login = "uberuser",
+  email = "admin@example.com",
+})
+```
 
 ```moon
 user = Users\find 1
@@ -549,6 +624,11 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 ### Deleting A Row
 
 Just call `delete` on the instance:
+
+```lua
+local user = Users:find(1)
+user:delete()
+```
 
 ```moon
 user = Users\find 1
@@ -577,6 +657,12 @@ CREATE TABLE ... (
 
 Then define your model with the `@timestamp` class variable set to true:
 
+```lua
+local Users = Model:extend("users", {
+  timestamp = true
+})
+```
+
 ```moon
 class Users extends Model
   @timestamp: true
@@ -596,13 +682,21 @@ the data.
 We'll need some models to demonstrate: (The columns are annotated in a comment
 above the model).
 
+```lua
+local Model = require("lapis.db.model").Model
+
+-- table with columns: id, name
+local Users = Model:extend("users")
+local Posts = Model:extend("posts")
+```
+
 ```moon
 import Model from require "lapis.db.model"
 
--- columns: id, name
+-- table with columns: id, name
 class Users extends Model
 
--- columns: id, user_id, text_content
+-- table with columns: id, user_id, text_content
 class Posts extends Model
 ```
 
@@ -610,6 +704,12 @@ Given all the posts, we want to find the user for each post. We use the
 `include_in` class method to include instances of that model in the array of
 models instances passed to it.
 
+```lua
+local posts = Posts:select() -- this gets all the posts
+Users:include_in(posts, "user_id")
+
+print(posts[1].user.name) -- print the fetched data
+```
 
 ```moon
 posts = Posts\select! -- this gets all the posts
@@ -620,6 +720,7 @@ print posts[1].user.name -- print the fetched data
 ```
 
 ```sql
+SELECT * from "posts"
 SELECT * from "users" where "id" in (1,2,3,4,5,6)
 ```
 
@@ -634,6 +735,10 @@ In this case, `user` was derived from the foreign key `user_id`. If we want to
 manually specify the name we can do something like this:
 
 
+```lua
+Users:include_in(posts, "user_id", { as: "author" })
+```
+
 ```moon
 Users\include_in posts, "user_id", as: "author"
 ```
@@ -647,6 +752,17 @@ is common in one-to-one relationships.
 
 Here's another set of example models:
 
+```lua
+local Model = require("lapis.db.model").Model
+
+-- table with columns: id, name
+local Users = Model:extend("users")
+
+-- table with columns: user_id, twitter_account, facebook_username
+local UserData = Model:extend("user_data")
+
+```
+
 ```moon
 import Model from require "lapis.db.model"
 
@@ -659,6 +775,13 @@ class UserData extends Model
 
 Now let's say we have a collection of users and we want to fetch the associated
 user data:
+
+```lua
+local users = Users:select()
+UserData:include_in(users, "user_id", { flip: true })
+
+print(users[1].user_data.twitter_account)
+```
 
 ```moon
 users = Users\select!
