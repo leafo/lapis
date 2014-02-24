@@ -393,6 +393,7 @@ do
       end
       cls.primary_key = tbl.primary_key
       cls.timestamp = tbl.timestamp
+      cls.constraints = tbl.constraints
       return cls
     end
   end

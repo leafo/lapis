@@ -811,6 +811,24 @@ user model and users are not allowed to have the name "admin".
 
 We might define it like this:
 
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  constraints = {
+    name = function(value)
+      if value:lower() == "admin"
+        return "User can not be named admin"
+      end
+    end
+  }
+})
+
+assert(Users:create({
+  name = "Admin"
+}))
+
+```
 
 ```moon
 import Model from require "lapis.db.models"

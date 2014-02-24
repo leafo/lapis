@@ -248,9 +248,13 @@ describe "lapis.db.model.", ->
     m = Model\extend "the_things", {
       timestamp: true
       primary_key: {"hello", "world"}
+      constraints: {
+        hello: =>
+      }
     }
 
     assert.same "the_things", m\table_name!
     assert.same {"hello", "world"}, { m\primary_keys! }
+    assert.truthy m.constraints.hello
 
 

@@ -217,6 +217,7 @@ class Model
       .table_name = -> table_name
       .primary_key = tbl.primary_key
       .timestamp = tbl.timestamp
+      .constraints = tbl.constraints
 
   _primary_cond: =>
     cond = {}
