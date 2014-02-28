@@ -1,12 +1,12 @@
 local CONFIG_PATH = "nginx.conf"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
-local get_free_port
+local get_free_port, default_environment
 do
   local _obj_0 = require("lapis.cmd.util")
-  get_free_port = _obj_0.get_free_port
+  get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
 end
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server
+local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server, run_with_server
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -334,6 +334,15 @@ detach_server = function()
   end
   return server_stack:detach()
 end
+run_with_server = function(fn)
+  local port = get_free_port()
+  local current_server = attach_server(default_environment(), {
+    port = port
+  })
+  current_server.app_port = port
+  fn()
+  return current_server:detach()
+end
 return {
   compile_config = compile_config,
   filters = filters,
@@ -345,5 +354,6 @@ return {
   write_config_for = write_config_for,
   attach_server = attach_server,
   detach_server = detach_server,
-  send_signal = send_signal
+  send_signal = send_signal,
+  run_with_server = run_with_server
 }

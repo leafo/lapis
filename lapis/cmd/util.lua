@@ -129,6 +129,17 @@ get_free_port = function()
   sock:close()
   return port
 end
+local default_environment
+default_environment = function()
+  local env = "development"
+  pcall(function()
+    env = require("lapis_environment")
+  end)
+  default_environment = function()
+    return env
+  end
+  return default_environment()
+end
 if ... == "test" then
   print(columnize({
     {
@@ -153,5 +164,6 @@ return {
   columnize = columnize,
   split = split,
   random_string = random_string,
-  get_free_port = get_free_port
+  get_free_port = get_free_port,
+  default_environment = default_environment
 }

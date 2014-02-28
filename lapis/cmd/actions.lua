@@ -1,7 +1,7 @@
-local columnize
+local default_environment, columnize
 do
   local _obj_0 = require("lapis.cmd.util")
-  columnize = _obj_0.columnize
+  default_environment, columnize = _obj_0.default_environment, _obj_0.columnize
 end
 local find_nginx, start_nginx, write_config_for, get_pid
 do
@@ -99,17 +99,6 @@ get_task = function(name)
       return v
     end
   end
-end
-local default_environment
-default_environment = function()
-  local env = "development"
-  pcall(function()
-    env = require("lapis_environment")
-  end)
-  default_environment = function()
-    return env
-  end
-  return default_environment()
 end
 tasks = {
   default = "help",

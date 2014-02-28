@@ -1,5 +1,5 @@
 
-import columnize from require "lapis.cmd.util"
+import default_environment, columnize from require "lapis.cmd.util"
 import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 
 path = require "lapis.cmd.path"
@@ -57,13 +57,6 @@ local tasks
 get_task = (name) ->
   for k,v in ipairs tasks
     return v if v.name == name
-
-default_environment = ->
-  env = "development"
-  pcall -> env = require "lapis_environment"
-
-  default_environment = -> env
-  default_environment!
 
 tasks = {
   default: "help"

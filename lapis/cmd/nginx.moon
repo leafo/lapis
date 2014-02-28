@@ -3,7 +3,7 @@ CONFIG_PATH = "nginx.conf"
 COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 
 path = require "lapis.cmd.path"
-import get_free_port from require "lapis.cmd.util"
+import get_free_port, default_environment from require "lapis.cmd.util"
 
 local *
 
@@ -284,5 +284,16 @@ detach_server = ->
   error "no server was pushed" unless server_stack
   server_stack\detach!
 
+
+-- combines attach_server and detach_server to run code with temporary server
+run_with_server = (fn) ->
+  port = get_free_port!
+  current_server = attach_server default_environment!, { :port }
+  current_server.app_port = port
+  fn!
+  current_server\detach!
+
+
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :write_config_for, :attach_server, :detach_server, :send_signal }
+  :get_pid, :write_config_for, :attach_server, :detach_server, :send_signal,
+  :run_with_server }
