@@ -6,8 +6,6 @@ local *
 config_cache = {} -- the final merged config by environment
 configs = {} -- lists of fns/tables to build config by environment
 
-default_env = "development"
-
 default_config = {
   port: "8080"
   secret: "please-change-me"
@@ -87,7 +85,7 @@ run_with_scope = (fn, conf) ->
   conf
 
 get_env = ->
-  os.getenv"LAPIS_ENVIRONMENT" or default_env
+  os.getenv"LAPIS_ENVIRONMENT" or require("lapis.cmd.util").default_environment!
 
 get = do
   loaded_config = false

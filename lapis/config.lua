@@ -3,10 +3,9 @@ do
   local _obj_0 = table
   insert = _obj_0.insert
 end
-local config_cache, configs, default_env, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get
+local config_cache, configs, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get
 config_cache = { }
 configs = { }
-default_env = "development"
 default_config = {
   port = "8080",
   secret = "please-change-me",
@@ -113,7 +112,7 @@ run_with_scope = function(fn, conf)
   return conf
 end
 get_env = function()
-  return os.getenv("LAPIS_ENVIRONMENT") or default_env
+  return os.getenv("LAPIS_ENVIRONMENT") or require("lapis.cmd.util").default_environment()
 end
 do
   local loaded_config = false
