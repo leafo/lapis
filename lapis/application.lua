@@ -616,11 +616,11 @@ yield_error = function(msg)
   })
 end
 local assert_error
-assert_error = function(thing, msg)
+assert_error = function(thing, msg, ...)
   if not (thing) then
     yield_error(msg)
   end
-  return thing
+  return thing, msg, ...
 end
 local json_params
 json_params = function(fn)

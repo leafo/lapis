@@ -437,9 +437,9 @@ capture_errors_json = (fn) ->
 yield_error = (msg) ->
   coroutine.yield "error", {msg}
 
-assert_error = (thing, msg) ->
+assert_error = (thing, msg, ...) ->
   yield_error msg unless thing
-  thing
+  thing, msg, ...
 
 json_params = (fn) ->
   (...) =>
