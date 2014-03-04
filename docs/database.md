@@ -79,7 +79,7 @@ local db = require("lapis.db")
 
 local app = lapis.Application()
 
-app:get("/", function()
+app:match("/", function()
   local res = db.query("select * from my_table where id = ?", 10)
   return "ok!"
 end)
