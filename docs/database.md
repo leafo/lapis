@@ -1,10 +1,11 @@
 
-## Database Access
+# Database Access
 
 Lapis comes with a set of classes and functions for working with
-[PostgreSQL][5]. In the future other databases might be directly supported.
+[PostgreSQL](http://www.postgresql.org/). In the future other databases might
+be directly supported.
 
-### Configuring The Upstream & Location
+## Establishing A Connection
 
 Every query is performed asynchronously by sending an internal sub-request to a
 special location defined in our Nginx configuration. This location communicates
@@ -63,7 +64,7 @@ used within the context of a sub-request.
 
 You're now ready to start making queries.
 
-### Making A Query
+## Making A Query
 
 There are two ways to make queries. The first way is to use the raw query
 interface, a collection of functions to help you write SQL.
@@ -383,24 +384,34 @@ import Model from require "lapis.db.model"
 class Users extends Model
 ```
 
+<p class="for_lua">
+The first argument to <code>extend</code> is the name of the table to associate
+the model to.
+</p>
+
+<p class="for_moon">
 The name of the class is used to determine the name of the table. In this case
-the class name `Users` represents the table `users`. A class name of
-`HelloWorlds` would result in the table name `hello_worlds`. It is customary to
-make the class name plural.
+the class name <code>Users</code> represents the table <code>users</code>. A
+class name of <code>HelloWorlds</code> would result in the table name
+<code>hello_worlds</code>. It is customary to make the class name plural.
+</p>
 
-If you want to use a different table name you can overwrite the `@table_name`
-class method:
-
+<p class="for_moon">
+If you want to use a different table name you can overwrite the
+<code>@table_name</code> class method:
+</p>
 
 ```moon
 class Users extends Model
   @table_name: => "active_users"
 ```
 
+
 ### Primary Keys
 
 By default all models have the primary key "id". This can be changed by setting
-the `@primary_key` class variable.
+the <span class="for_moon">`@primary_key`</span><span
+class="for_lua">`self.primary_key`</span> class variable.
 
 
 ```lua
@@ -478,7 +489,7 @@ We can also pass a table as an argument to `find`. The table will be converted t
 
 
 ```lua
-local user = Users:find({ email = "person@example.com"})
+local user = Users:find({ email = "person@example.com" })
 ```
 
 ```moon
@@ -655,7 +666,9 @@ CREATE TABLE ... (
 )
 ```
 
-Then define your model with the `@timestamp` class variable set to true:
+Then define your model with the <span class="for_moon">`@timestamp` class
+variable</span><span class="for_moon">`timestamp` property</span> set to
+true:
 
 ```lua
 local Users = Model:extend("users", {
@@ -846,7 +859,7 @@ assert Users\create {
 }
 ```
 
-The `@constraints` class variable is a table that maps column name to a
+The <span class="for_moon">`@constraints` class variable</span><span class="for_lua">`constraints` property</span> is a table that maps column name to a
 function that should check if the constraint is broken. If anything truthy is
 returned from the function then the update/insert fails, and that is returned
 as the error message.
