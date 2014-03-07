@@ -141,11 +141,13 @@ class Model
     other_records
 
   @find_all: (ids, by_key=@primary_key) =>
+    where = nil
     fields = "*"
 
     -- parse opts
     if type(by_key) == "table"
       fields = by_key.fields or fields
+      where = by_key.where
       by_key = by_key.key or @primary_key
 
     if type(by_key) == "table"
@@ -156,7 +158,12 @@ class Model
     primary = db.escape_identifier by_key
     tbl_name = db.escape_identifier @table_name!
 
-    if res = db.select fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
+    query = fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
+
+    if where
+      query ..= " and " .. db.encode_clause where
+
+    if res = db.select query
       @load r for r in *res
       res
 

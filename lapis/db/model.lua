@@ -280,9 +280,11 @@ do
     if by_key == nil then
       by_key = self.primary_key
     end
+    local where = nil
     local fields = "*"
     if type(by_key) == "table" then
       fields = by_key.fields or fields
+      where = by_key.where
       by_key = by_key.key or self.primary_key
     end
     if type(by_key) == "table" then
@@ -303,8 +305,12 @@ do
     end)(), ", ")
     local primary = db.escape_identifier(by_key)
     local tbl_name = db.escape_identifier(self:table_name())
+    local query = fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")"
+    if where then
+      query = query .. (" and " .. db.encode_clause(where))
+    end
     do
-      local res = db.select(fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
+      local res = db.select(query)
       if res then
         for _index_0 = 1, #res do
           local r = res[_index_0]

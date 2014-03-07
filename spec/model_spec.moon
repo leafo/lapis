@@ -65,6 +65,15 @@ describe "lapis.db.model.", ->
     Things\find_all { 1,2,4 }, fields: "hello"
     Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
 
+    Things\find_all { 1,2,4 }, {
+      fields: "hello, world"
+      key: "dad"
+      where: {
+        color: "blue"
+        height: "10px"
+      }
+    }
+
     class Things2 extends Model
       @primary_key: {"hello", "world"}
 
@@ -79,6 +88,7 @@ describe "lapis.db.model.", ->
       [[SELECT * from "things" where "dad" in (1, 2, 4)]]
       [[SELECT hello from "things" where "id" in (1, 2, 4)]]
       [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
+      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
       [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
     }, queries
 
