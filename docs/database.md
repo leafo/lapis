@@ -551,6 +551,55 @@ users = Users\find_all { 1,2,3,4,5 }
 SELECT * from "users" where "id" in (1, 2, 3, 4, 5)
 ```
 
+If you need to find many rows for another column other than the primary key you
+can pass in the optional second argument:
+
+
+```lua
+local users = UserProfile:find_all({ 1,2,3,4,5 }, "user_id")
+```
+
+```moon
+users = UserProfile\find_all { 1,2,3,4,5 }, "user_id"
+```
+
+```sql
+SELECT * from "UserProfile" where "user_id" in (1, 2, 3, 4, 5)
+```
+
+The second argument can also be a table of options. The following properties
+are supported:
+
+* `key` -- Specify the column name to find by, same effect as passing in string as second argument
+* `fields` -- Comma separated list of column names to fetch instead of the default `*`
+* `where` -- A table of additional `where` clauses for the query
+
+For example:
+
+```lua
+local users = UserProfile:find_all({1,2,3,4}, {
+  key = "user_id",
+  fields = "user_id, twitter_account",
+  where = {
+    public = true
+  }
+})
+```
+
+```moon
+users = UserProfile\find_all {1,2,3,4}, {
+  key: "user_id"
+  fields: "user_id, twitter_account"
+  where: {
+    public: true
+  }
+}
+```
+
+```sql
+SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
+```
+
 ### Inserting Rows
 
 The `create` class method is used to create new rows. It takes a table of
