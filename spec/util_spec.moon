@@ -124,6 +124,24 @@ tests = {
   }
 
   {
+    -> util.time_ago os.time! + 34234349
+
+    {
+      {"years", 1}
+      {"days", 31}
+      {"hours", 5}
+      {"minutes", 32}
+      {"seconds", 29}
+      years: 1
+      days: 31
+      hours: 5
+      minutes: 32
+      seconds: 29
+    }
+  }
+
+
+  {
     -> util.time_ago_in_words os.time! - 34234349
     "1 year ago"
   }

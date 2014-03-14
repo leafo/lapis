@@ -168,7 +168,14 @@ time_ago = do
   pcall -> date = require "date"
 
   (time) ->
-    diff = date.diff date(true), date(time)
+    sooner = date time
+    later = date true
+    flip = false
+
+    if later < sooner
+      sooner, later = later, sooner
+
+    diff = date.diff later, sooner
 
     times = {}
 
@@ -209,7 +216,7 @@ time_ago = do
 
       diff\addseconds -seconds
 
-    times
+    times, true
 
 time_ago_in_words = do
   singular = {
@@ -220,7 +227,7 @@ time_ago_in_words = do
     second: "second"
   }
 
-  (time, parts=1) ->
+  (time, parts=1, suffix="ago") ->
     ago = type(time) == "table" and time or time_ago time
 
     out = ""
@@ -236,7 +243,7 @@ time_ago_in_words = do
       out ..= ", " if #out > 0
       out ..= val .. " " .. word
 
-    out .. " ago"
+    out .. " " .. suffix
 
 title_case = do
   upper = string.upper
