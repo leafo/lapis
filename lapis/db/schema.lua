@@ -129,7 +129,7 @@ create_index = function(tname, ...)
   if options.unique then
     append_all(buffer, " UNIQUE")
   end
-  append_all(buffer, " INDEX ON " .. tostring(db.escape_identifier(tname)))
+  append_all(buffer, " INDEX ", db.escape_identifier(index_name), " ON ", db.escape_identifier(tname))
   if options.method then
     append_all(buffer, " USING ", options.method)
   end

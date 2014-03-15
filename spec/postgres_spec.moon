@@ -283,14 +283,14 @@ describe "lapis.nginx.postgres", ->
     old_select = db.select
     db.select = -> { { c: 0 } }
     input = schema.create_index "user_data", "one", "two"
-    assert.same input, 'CREATE INDEX ON "user_data" ("one", "two");'
+    assert.same input, [[CREATE INDEX "user_data_one_two_idx" ON "user_data" ("one", "two");]]
     db.select = old_select
 
   it "should create index with expression", ->
     old_select = db.select
     db.select = -> { { c: 0 } }
     input = schema.create_index "user_data", db.raw("lower(name)"), "height"
-    assert.same input, 'CREATE INDEX ON "user_data" (lower(name), "height");'
+    assert.same input, [[CREATE INDEX "user_data_lower_name_height_idx" ON "user_data" (lower(name), "height");]]
     db.select = old_select
 
 

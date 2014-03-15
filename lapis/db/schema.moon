@@ -65,7 +65,10 @@ create_index = (tname, ...) ->
 
   buffer = {"CREATE"}
   append_all buffer, " UNIQUE" if options.unique
-  append_all buffer, " INDEX ON #{db.escape_identifier tname}"
+
+  append_all buffer, " INDEX ",
+    db.escape_identifier(index_name),
+    " ON ", db.escape_identifier tname
 
   if options.method
     append_all buffer, " USING ", options.method
