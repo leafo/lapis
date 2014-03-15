@@ -58,10 +58,28 @@ gen_index_name = function(...)
       ...
     }
     for _index_0 = 1, #_list_0 do
-      local p = _list_0[_index_0]
-      if type(p) == "string" then
-        _accum_0[_len_0] = p
+      local _continue_0 = false
+      repeat
+        local p = _list_0[_index_0]
+        local _exp_0 = type(p)
+        if "string" == _exp_0 then
+          _accum_0[_len_0] = p
+        elseif "table" == _exp_0 then
+          if p[1] == "raw" then
+            _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
+          else
+            _continue_0 = true
+            break
+          end
+        else
+          _continue_0 = true
+          break
+        end
         _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
     parts = _accum_0
@@ -306,5 +324,6 @@ return {
   drop_column = drop_column,
   rename_column = rename_column,
   rename_table = rename_table,
-  entity_exists = entity_exists
+  entity_exists = entity_exists,
+  gen_index_name = gen_index_name
 }

@@ -24,7 +24,18 @@ entity_exists = (name) ->
   res.c > 0
 
 gen_index_name = (...) ->
-  parts = [p for p in *{...} when type(p) == "string"]
+  parts = for p in *{...}
+    switch type(p)
+      when "string"
+        p
+      when "table"
+        if p[1] == "raw"
+          p[2]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
+        else
+          continue
+      else
+        continue
+
   concat(parts, "_") .. "_idx"
 
 create_table = (name, columns) ->
@@ -162,6 +173,6 @@ types = setmetatable {
 
 {
   :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
-  :drop_column, :rename_column, :rename_table, :entity_exists
+  :drop_column, :rename_column, :rename_table, :entity_exists, :gen_index_name
 }
 

@@ -251,6 +251,15 @@ tests = {
     }
   }
 
+  {
+    -> schema.gen_index_name "hello", "world"
+    "hello_world_idx"
+  }
+
+  {
+    -> schema.gen_index_name "yes", "please", db.raw "upper(dad)"
+    "yes_please_upper_dad_idx"
+  }
 }
 
 
