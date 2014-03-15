@@ -286,6 +286,14 @@ describe "lapis.nginx.postgres", ->
     assert.same input, 'CREATE INDEX ON "user_data" ("one", "two");'
     db.select = old_select
 
+  it "should create index with expression", ->
+    old_select = db.select
+    db.select = -> { { c: 0 } }
+    input = schema.create_index "user_data", db.raw("lower(name)"), "height"
+    assert.same input, 'CREATE INDEX ON "user_data" (lower(name), "height");'
+    db.select = old_select
+
+
   it "should create not create duplicate index", ->
     old_select = db.select
     db.select = -> { { c: 1 } }
