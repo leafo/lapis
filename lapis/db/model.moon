@@ -150,7 +150,7 @@ class Model
       where = by_key.where
       by_key = by_key.key or @primary_key
 
-    if type(by_key) == "table"
+    if type(by_key) == "table" and by_key[1] != "raw"
       error "find_all must have a singular key to search"
 
     return {} if #ids == 0

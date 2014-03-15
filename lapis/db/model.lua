@@ -287,7 +287,7 @@ do
       where = by_key.where
       by_key = by_key.key or self.primary_key
     end
-    if type(by_key) == "table" then
+    if type(by_key) == "table" and by_key[1] ~= "raw" then
       error("find_all must have a singular key to search")
     end
     if #ids == 0 then
