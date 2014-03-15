@@ -22,7 +22,7 @@ extract_options = function(cols)
       local _continue_0 = false
       repeat
         local col = cols[_index_0]
-        if type(col) == "table" then
+        if type(col) == "table" and col[1] ~= "raw" then
           for k, v in pairs(col) do
             options[k] = v
           end

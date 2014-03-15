@@ -10,7 +10,7 @@ append_all = (t, ...) ->
 extract_options = (cols) ->
   options = {}
   cols = for col in *cols
-    if type(col) == "table"
+    if type(col) == "table" and col[1] != "raw"
       for k,v in pairs col
         options[k] = v
       continue
