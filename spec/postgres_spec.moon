@@ -21,6 +21,10 @@ tests = {
     '"love""fish"'
   }
   {
+    -> db.escape_identifier db.raw "hello(world)"
+    "hello(world)"
+  }
+  {
     -> db.escape_literal 3434
     "3434"
   }

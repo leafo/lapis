@@ -14,6 +14,11 @@ get_logger = function()
   return logger
 end
 set_logger(require("lapis.logging"))
+local type, tostring, pairs, select
+do
+  local _obj_0 = _G
+  type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
+end
 local NULL = { }
 local raw
 raw = function(val)
@@ -94,6 +99,9 @@ append_all = function(t, ...)
 end
 local escape_identifier
 escape_identifier = function(ident)
+  if type(ident) == "table" and ident[1] == "raw" then
+    return ident[2]
+  end
   ident = tostring(ident)
   return '"' .. (ident:gsub('"', '""')) .. '"'
 end

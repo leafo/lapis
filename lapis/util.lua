@@ -267,7 +267,13 @@ do
     date = require("date")
   end)
   time_ago = function(time)
-    local diff = date.diff(date(true), date(time))
+    local sooner = date(time)
+    local later = date(true)
+    local flip = false
+    if later < sooner then
+      sooner, later = later, sooner
+    end
+    local diff = date.diff(later, sooner)
     local times = { }
     local days = floor(diff:spandays())
     if days >= 365 then
@@ -315,7 +321,7 @@ do
       })
       diff:addseconds(-seconds)
     end
-    return times
+    return times, true
   end
 end
 do
@@ -326,9 +332,12 @@ do
     minutes = "minute",
     second = "second"
   }
-  time_ago_in_words = function(time, parts)
+  time_ago_in_words = function(time, parts, suffix)
     if parts == nil then
       parts = 1
+    end
+    if suffix == nil then
+      suffix = "ago"
     end
     local ago = type(time) == "table" and time or time_ago(time)
     local out = ""
@@ -347,7 +356,7 @@ do
       end
       out = out .. (val .. " " .. word)
     end
-    return out .. " ago"
+    return out .. " " .. suffix
   end
 end
 do

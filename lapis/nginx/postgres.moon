@@ -28,6 +28,8 @@ get_logger = -> logger
 
 set_logger require "lapis.logging"
 
+import type, tostring, pairs, select from _G
+
 NULL = {}
 raw = (val) -> {"raw", tostring(val)}
 is_raw = (val) ->
@@ -81,6 +83,9 @@ append_all = (t, ...) ->
     t[#t + 1] = select i, ...
 
 escape_identifier = (ident) ->
+  if type(ident) == "table" and ident[1] == "raw"
+    return ident[2]
+
   ident = tostring ident
   '"' ..  (ident\gsub '"', '""') .. '"'
 
