@@ -326,7 +326,7 @@ class Application
     table.insert @before_filters, fn
 
   -- copies all actions into this application, preserves before filters
-  -- @inclue other_app, path: "/hello", name: "hello_"
+  -- @include other_app, path: "/hello", name: "hello_"
   @include: (other_app, opts, into=@__base) =>
     if type(other_app) == "string"
       other_app = require other_app
