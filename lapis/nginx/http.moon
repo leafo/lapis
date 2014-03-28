@@ -47,7 +47,7 @@ set_proxy_location = (loc) -> proxy_location = loc
 
 import encode_query_string from require "lapis.util"
 
--- a simple http interface that doesn't user ltn12
+-- a simple http interface that doesn't use ltn12
 simple = (req, body) ->
   if type(req) == "string"
     req = { url: req }
