@@ -11,6 +11,7 @@ do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
     "/usr/local/openresty/nginx/sbin/",
+    "/usr/local/opt/openresty/bin/",
     "/usr/sbin/",
     ""
   }
