@@ -80,7 +80,7 @@ class Model
   -- Users { id, name }
   -- Games { id, user_id, title }
   --
-  -- -- Have games, inlcude users
+  -- -- Have games, include users
   -- games = Games\select!
   -- Users\include_in games, "user_id"
   --

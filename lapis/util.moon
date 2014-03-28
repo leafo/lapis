@@ -101,7 +101,7 @@ trim_all = (tbl) ->
   tbl
 
 -- remove empty string (all whitespace) values from table
--- optionaly apply a key filter with second arg
+-- optionally apply a key filter with second arg
 -- set the value to replace empty strings with empty_val
 trim_filter = (tbl, keys, empty_val) ->
   key_filter tbl, unpack keys if keys
