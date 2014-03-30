@@ -20,6 +20,17 @@ cache_key = function(path, params, r)
   params = concat(params, "-")
   return path .. "#" .. params
 end
+local get_dict
+get_dict = function(dict_name, ...)
+  local _exp_0 = type(dict_name)
+  if "string" == _exp_0 then
+    return ngx.shared[dict_name]
+  elseif "function" == _exp_0 then
+    return dict_name(...)
+  else
+    return dict_name
+  end
+end
 local cached
 cached = function(fn_or_tbl)
   local fn = fn_or_tbl
@@ -39,7 +50,7 @@ cached = function(fn_or_tbl)
       return fn(self)
     end
     local key = _cache_key(self.req.parsed_url.path, self.GET, self)
-    local dict = ngx.shared[dict_name]
+    local dict = get_dict(dict_name, self)
     do
       local cache_value = dict:get(key)
       if cache_value then
