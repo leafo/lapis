@@ -70,13 +70,14 @@ get_free_port = ->
 
   port
 
+default_environment = do
+  _env = nil
+  ->
+    if _env == nil
+      _env = "development"
+      pcall -> _env = require "lapis_environment"
 
-default_environment = ->
-  env = "development"
-  pcall -> env = require "lapis_environment"
-
-  default_environment = -> env
-  default_environment!
+    _env
 
 if ... == "test"
   print columnize {

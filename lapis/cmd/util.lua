@@ -130,15 +130,17 @@ get_free_port = function()
   return port
 end
 local default_environment
-default_environment = function()
-  local env = "development"
-  pcall(function()
-    env = require("lapis_environment")
-  end)
+do
+  local _env = nil
   default_environment = function()
-    return env
+    if _env == nil then
+      _env = "development"
+      pcall(function()
+        _env = require("lapis_environment")
+      end)
+    end
+    return _env
   end
-  return default_environment()
 end
 if ... == "test" then
   print(columnize({
