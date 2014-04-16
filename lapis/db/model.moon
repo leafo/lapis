@@ -92,12 +92,11 @@ class Model
   -- specify as: "name" to set the key of the included objects in each item
   -- from the source list
   @include_in: (other_records, foreign_key, opts) =>
-    if type(@primary_key) == "table"
-      error "model must have singular primary key to include"
-
     fields = opts and opts.fields or "*"
-
     flip = opts and opts.flip
+
+    if not flip and type(@primary_key) == "table"
+      error "model must have singular primary key to include"
 
     src_key = flip and "id" or foreign_key
     include_ids = for record in *other_records
