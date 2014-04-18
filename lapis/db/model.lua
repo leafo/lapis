@@ -341,9 +341,9 @@ do
   end
   self.create = function(self, values)
     if self.constraints then
-      for key, value in pairs(values) do
+      for key in pairs(self.constraints) do
         do
-          local err = self:_check_constraint(key, value, values)
+          local err = self:_check_constraint(key, values[key], values)
           if err then
             return nil, err
           end

@@ -145,7 +145,6 @@ describe "lapis.db.model.", ->
 
     assert.same { id_a: "hello", id_b: "world", height: "400px"}, thing3
 
-
     assert.same {
       [[INSERT INTO "things" ("color") VALUES ('blue') RETURNING "id"]]
       [[INSERT INTO "timed_things" ("hello", "created_at", "updated_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
@@ -220,20 +219,6 @@ describe "lapis.db.model.", ->
     }, queries
 
 
-  it "should prevent update/insert", ->
-    query_mock['INSERT'] = { { id: 101 } }
-
-    class Things extends Model
-      @constraints: {
-        name: (val) => val == "hello" and "name can't be hello"
-      }
-
-    assert.same { nil, "name can't be hello"}, { Things\create name: "hello" }
-
-    thing = Things\load { id: 0, name: "hello" }
-    assert.same { nil, "name can't be hello"}, { thing\update "name" }
-
-    assert.same { }, queries
 
   it "should include other association", ->
     class Things extends Model
@@ -266,5 +251,30 @@ describe "lapis.db.model.", ->
     assert.same "the_things", m\table_name!
     assert.same {"hello", "world"}, { m\primary_keys! }
     assert.truthy m.constraints.hello
+
+  describe "constraints", ->
+    it "should prevent update/insert for failed constraint", ->
+      query_mock['INSERT'] = { { id: 101 } }
+
+      class Things extends Model
+        @constraints: {
+          name: (val) => val == "hello" and "name can't be hello"
+        }
+
+      assert.same { nil, "name can't be hello"}, { Things\create name: "hello" }
+
+      thing = Things\load { id: 0, name: "hello" }
+      assert.same { nil, "name can't be hello"}, { thing\update "name" }
+
+      assert.same { }, queries
+
+    it "should prevent create for missing field", ->
+      class Things extends Model
+        @constraints: {
+          name: (val) =>
+            "missing `name`" unless val
+        }
+
+      assert.same { nil, "missing `name`"}, { Things\create! }
 
 

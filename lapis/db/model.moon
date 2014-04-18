@@ -184,8 +184,8 @@ class Model
   -- create from table of values, return loaded object
   @create: (values) =>
     if @constraints
-      for key, value in pairs values
-        if err = @_check_constraint key, value, values
+      for key in pairs @constraints
+        if err = @_check_constraint key, values and values[key], values
           return nil, err
 
     values._timestamp = true if @timestamp
