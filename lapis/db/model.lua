@@ -343,7 +343,7 @@ do
     if self.constraints then
       for key in pairs(self.constraints) do
         do
-          local err = self:_check_constraint(key, values[key], values)
+          local err = self:_check_constraint(key, values and values[key], values)
           if err then
             return nil, err
           end
