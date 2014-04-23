@@ -1341,7 +1341,7 @@ debugging.
 Install through LuaRocks:
 
 ```bash
-$ luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis_console
+$ luarocks install --server=http://rocks.moonscript.org lapis-console
 ```
 
 ### Creating A Console
