@@ -13,7 +13,6 @@ local get_logger
 get_logger = function()
   return logger
 end
-set_logger(require("lapis.logging"))
 local type, tostring, pairs, select
 do
   local _obj_0 = _G
@@ -33,12 +32,21 @@ is_raw = function(val)
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
+local init_logger
+init_logger = function()
+  local config = require("lapis.config").get()
+  if config.log_queries == false then
+    return 
+  end
+  return set_logger(require("lapis.logging"))
+end
 local backends = {
   default = function(_proxy)
     if _proxy == nil then
       _proxy = proxy_location
     end
     local parser = require("rds.parser")
+    init_logger()
     raw_query = function(str)
       if logger then
         logger.query(str)
@@ -60,12 +68,14 @@ local backends = {
     end
   end,
   raw = function(fn)
+    init_logger()
     do
       raw_query = fn
       return raw_query
     end
   end,
   ["resty.postgres"] = function(opts)
+    init_logger()
     opts.host = opts.host or "127.0.0.1"
     opts.port = opts.port or 5432
     local pg = require("lapis.resty.postgres")

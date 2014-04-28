@@ -16,7 +16,6 @@
 -- }
 --
 
-
 import concat from table
 
 local raw_query, logger
@@ -25,8 +24,6 @@ proxy_location = "/query"
 
 set_logger = (l) -> logger = l
 get_logger = -> logger
-
-set_logger require "lapis.logging"
 
 import type, tostring, pairs, select from _G
 
@@ -38,9 +35,15 @@ is_raw = (val) ->
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
 
+init_logger = ->
+  config = require("lapis.config").get!
+  return if config.log_queries == false
+  set_logger require "lapis.logging"
+
 backends = {
   default: (_proxy=proxy_location) ->
     parser = require "rds.parser"
+    init_logger!
     raw_query = (str) ->
       logger.query str if logger
       res, m = ngx.location.capture _proxy, {
@@ -54,10 +57,13 @@ backends = {
       out
 
   raw: (fn) ->
+    init_logger!
     with raw_query
       raw_query = fn
 
   "resty.postgres": (opts) ->
+    init_logger!
+
     opts.host or= "127.0.0.1"
     opts.port or= 5432
 
