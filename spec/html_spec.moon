@@ -212,4 +212,15 @@ describe "lapis.html", ->
 
     assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
 
+  it "should instantiate widget class when passed to widget helper", ->
+    class SomeWidget extends Widget
+      content: =>
+        @color = "blue"
+        -- assert.Not.same @, SomeWidget
+        text "hello!"
+
+    render_html ->
+      widget SomeWidget
+
+    assert.same nil, SomeWidget.color
 

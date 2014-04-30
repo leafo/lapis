@@ -231,6 +231,9 @@ do
       return self:render_widget(widget())
     end,
     render_widget = function(self, w)
+      if w.__init and w.__base then
+        w = w()
+      end
       do
         local current = self.widget
         if current then
