@@ -19,11 +19,11 @@ validate_token = (req, key) ->
   sig = ngx.decode_base64 sig
 
   unless sig == ngx.hmac_sha1(config.secret, msg)
-    return nil, "invalid csrf token"
+    return nil, "invalid csrf token (bad sig)"
 
   msg = json.decode ngx.decode_base64 msg
 
-  return nil, "invalid csrf token" unless msg.key == key
+  return nil, "invalid csrf token (bad key)" unless msg.key == key
   return nil, "csrf token expired" unless not msg.expires or msg.expires > os.time!
   true
 
