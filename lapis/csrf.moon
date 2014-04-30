@@ -16,6 +16,8 @@ validate_token = (req, key) ->
   return nil, "missing csrf token" unless token
 
   msg, sig = token\match "^(.*)%.(.*)$"
+  return nil, "malformed csrf token" unless msg
+
   sig = ngx.decode_base64 sig
 
   unless sig == ngx.hmac_sha1(config.secret, msg)

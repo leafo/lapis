@@ -24,13 +24,16 @@ validate_token = function(req, key)
     return nil, "missing csrf token"
   end
   local msg, sig = token:match("^(.*)%.(.*)$")
+  if not (msg) then
+    return nil, "malformed csrf token"
+  end
   sig = ngx.decode_base64(sig)
   if not (sig == ngx.hmac_sha1(config.secret, msg)) then
-    return nil, "invalid csrf token"
+    return nil, "invalid csrf token (bad sig)"
   end
   msg = json.decode(ngx.decode_base64(msg))
   if not (msg.key == key) then
-    return nil, "invalid csrf token"
+    return nil, "invalid csrf token (bad key)"
   end
   if not (not msg.expires or msg.expires > os.time()) then
     return nil, "csrf token expired"
