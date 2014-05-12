@@ -32,9 +32,15 @@ find_nginx = do
         return nginx_path
 
 filters = {
-  pg: (url) ->
-    user, password, host, db = url\match "^postgres://(.*):(.*)@(.*)/(.*)$"
-    error "failed to parse postgres server url" unless user
+  pg: (val) ->
+    user, password, host, db = switch type(val)
+      when "table"
+        db = assert val.database, "missing database name in postgres connect object"
+        val.user or "postgres", val.password or "", val.host or "127.0.0.1", db
+      when "string"
+        url\match "^postgres://(.*):(.*)@(.*)/(.*)$"
+
+    error "failed to create postgres connect string" unless user
     "%s dbname=%s user=%s password=%s"\format host, db, user, password
 }
 

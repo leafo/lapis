@@ -35,10 +35,17 @@ do
   end
 end
 filters = {
-  pg = function(url)
-    local user, password, host, db = url:match("^postgres://(.*):(.*)@(.*)/(.*)$")
+  pg = function(val)
+    local user, password, host, db
+    local _exp_0 = type(val)
+    if "table" == _exp_0 then
+      db = assert(val.database, "missing database name in postgres connect object")
+      user, password, host, db = val.user or "postgres", val.password or "", val.host or "127.0.0.1", db
+    elseif "string" == _exp_0 then
+      user, password, host, db = url:match("^postgres://(.*):(.*)@(.*)/(.*)$")
+    end
     if not (user) then
-      error("failed to parse postgres server url")
+      error("failed to create postgres connect string")
     end
     return ("%s dbname=%s user=%s password=%s"):format(host, db, user, password)
   end
