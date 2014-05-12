@@ -61,21 +61,25 @@ backends = {
     with raw_query
       raw_query = fn
 
-  "resty.postgres": (opts) ->
+  pgmoon: ->
     init_logger!
 
-    opts.host or= "127.0.0.1"
-    opts.port or= 5432
-
-    pg = require "lapis.resty.postgres"
+    config = require("lapis.config").get!
+    pg_config = assert config.postgres, "missing postgres configuration"
 
     raw_query = (str) ->
-      logger.query str if logger
-      conn = pg\new!
-      conn\set_keepalive 0, 100
+      pgmoon = ngx.ctx.pgmoon
+      unless pgmoon
+        import Postgres from require "pgmoon"
+        pgmoon = Postgres pg_config.user, pg_config.database,
+          pg_config.host, pg_config.port
+        assert pgmoon\connect!
+        ngx.ctx.pgmoon = pgmoon
+        -- ngx.ctx.after_render = ->
+        --   pgmoon\keepalive!
 
-      assert conn\connect opts
-      assert conn\query str
+      logger.query "[PGMOON] #{str}" if logger
+      pgmoon\query str
 }
 
 set_backend = (name="default", ...) ->
@@ -159,7 +163,9 @@ encode_clause = (t, buffer)->
   concat buffer unless have_buffer
 
 raw_query = (...) ->
-  set_backend "default"
+  config = require("lapis.config").get!
+  default_backend = config.postgres and config.postgres.backend or "default"
+  set_backend default_backend
   raw_query ...
 
 query = (str, ...) ->

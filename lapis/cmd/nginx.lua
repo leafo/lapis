@@ -39,7 +39,7 @@ filters = {
     local user, password, host, db
     local _exp_0 = type(val)
     if "table" == _exp_0 then
-      db = assert(val.database, "missing database name in postgres connect object")
+      db = assert(val.database, "missing database name")
       user, password, host, db = val.user or "postgres", val.password or "", val.host or "127.0.0.1", db
     elseif "string" == _exp_0 then
       user, password, host, db = url:match("^postgres://(.*):(.*)@(.*)/(.*)$")
@@ -285,13 +285,31 @@ do
         self[k] = v
       end
       local db = require("lapis.nginx.postgres")
-      self.old_backend = db.set_backend("raw", (function()
-        local _base_1 = self
-        local _fn_0 = _base_1.query
-        return function(...)
-          return _fn_0(_base_1, ...)
+      local pg_config = self.environment.postgres
+      if pg_config and pg_config.backend == "pgmoon" then
+        local Postgres
+        do
+          local _obj_0 = require("pgmoon")
+          Postgres = _obj_0.Postgres
         end
-      end)())
+        local pgmoon = Postgres(pg_config.user, pg_config.database, pg_config.host, pg_config.port)
+        assert(pgmoon:connect())
+        self.old_backend = db.set_backend("raw", (function()
+          local _base_1 = pgmoon
+          local _fn_0 = _base_1.query
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)())
+      else
+        self.old_backend = db.set_backend("raw", (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.query
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)())
+      end
     end,
     __base = _base_0,
     __name = "AttachedServer"
@@ -326,7 +344,7 @@ attach_server = function(environment, env_overrides)
     start_nginx(true)
   end
   local server = AttachedServer({
-    name = environment.__name,
+    environment = environment,
     previous = server_stack,
     fresh = not pid,
     port = port,

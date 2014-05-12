@@ -35,7 +35,7 @@ filters = {
   pg: (val) ->
     user, password, host, db = switch type(val)
       when "table"
-        db = assert val.database, "missing database name in postgres connect object"
+        db = assert val.database, "missing database name"
         val.user or "postgres", val.password or "", val.host or "127.0.0.1", db
       when "string"
         url\match "^postgres://(.*):(.*)@(.*)/(.*)$"
@@ -188,7 +188,15 @@ class AttachedServer
       @[k] = v
 
     db = require "lapis.nginx.postgres"
-    @old_backend = db.set_backend "raw", @\query
+    pg_config = @environment.postgres
+    if pg_config and pg_config.backend == "pgmoon"
+      import Postgres from require "pgmoon"
+      pgmoon = Postgres pg_config.user, pg_config.database,
+        pg_config.host, pg_config.port
+      assert pgmoon\connect!
+      @old_backend = db.set_backend "raw", pgmoon\query
+    else
+      @old_backend = db.set_backend "raw", @\query
 
   wait_until_ready: =>
     socket = require "socket"
@@ -277,7 +285,7 @@ attach_server = (environment, env_overrides) ->
     start_nginx true
 
   server = AttachedServer {
-    name: environment.__name
+    :environment
     previous: server_stack
     fresh: not pid
     :port, :existing_config
