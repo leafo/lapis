@@ -74,9 +74,10 @@ backends = {
         pgmoon = Postgres pg_config.user, pg_config.database,
           pg_config.host, pg_config.port
         assert pgmoon\connect!
+
         ngx.ctx.pgmoon = pgmoon
-        -- ngx.ctx.after_render = ->
-        --   pgmoon\keepalive!
+        ngx.ctx.after_render = ->
+          pgmoon\keepalive!
 
       logger.query "[PGMOON] #{str}" if logger
       pgmoon\query str

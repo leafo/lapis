@@ -89,6 +89,9 @@ local backends = {
         pgmoon = Postgres(pg_config.user, pg_config.database, pg_config.host, pg_config.port)
         assert(pgmoon:connect())
         ngx.ctx.pgmoon = pgmoon
+        ngx.ctx.after_render = function()
+          return pgmoon:keepalive()
+        end
       end
       if logger then
         logger.query("[PGMOON] " .. tostring(str))

@@ -180,6 +180,9 @@ dispatch = function(app)
   if res.content then
     ngx.print(res.content)
   end
+  if ngx.ctx.after_render then
+    ngx.ctx.after_render()
+  end
   return res
 end
 return {

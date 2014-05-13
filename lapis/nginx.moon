@@ -92,8 +92,6 @@ lazy_tbl = (tbl, index) ->
   }
 
 
--- this gives us a table that looks like the request that we get in xavante
--- all the properties are evaluated lazily unless unlazy is true
 build_request = (unlazy=false) ->
   with t = lazy_tbl {}, ngx_req
     if unlazy
@@ -122,6 +120,9 @@ dispatch = (app) ->
   app\dispatch res.req, res
   ngx.status = res.status if res.status
   ngx.print res.content if res.content
+  if ngx.ctx.after_render
+    ngx.ctx.after_render!
+
   res
 
 { :build_request, :build_response, :dispatch }
