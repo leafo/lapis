@@ -38,7 +38,7 @@ filters = {
         db = assert val.database, "missing database name"
         val.user or "postgres", val.password or "", val.host or "127.0.0.1", db
       when "string"
-        url\match "^postgres://(.*):(.*)@(.*)/(.*)$"
+        val\match "^postgres://(.*):(.*)@(.*)/(.*)$"
 
     error "failed to create postgres connect string" unless user
     "%s dbname=%s user=%s password=%s"\format host, db, user, password
