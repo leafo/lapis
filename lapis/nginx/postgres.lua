@@ -93,6 +93,7 @@ local backends = {
         end
         pgmoon = Postgres(pg_config.user, pg_config.database, pg_config.host, pg_config.port)
         assert(pgmoon:connect())
+        ngx.ctx.pgmoon = pgmoon
         after_dispatch(function()
           return pgmoon:keepalive()
         end)
