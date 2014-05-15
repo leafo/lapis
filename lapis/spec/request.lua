@@ -133,6 +133,7 @@ mock_request = function(app_cls, url, opts)
       return ngx.print("\n")
     end,
     header = out_headers,
+    ctx = { },
     var = setmetatable({
       host = host,
       http_host = http_host,

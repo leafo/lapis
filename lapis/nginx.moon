@@ -1,4 +1,5 @@
 import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
+import run_after_dispatch from require "lapis.nginx.context"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
@@ -120,9 +121,8 @@ dispatch = (app) ->
   app\dispatch res.req, res
   ngx.status = res.status if res.status
   ngx.print res.content if res.content
-  if ngx.ctx.after_render
-    ngx.ctx.after_render!
 
+  run_after_dispatch!
   res
 
 { :build_request, :build_response, :dispatch }

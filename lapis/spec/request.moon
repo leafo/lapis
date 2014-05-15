@@ -98,6 +98,8 @@ mock_request = (app_cls, url, opts={}) ->
 
     header: out_headers
 
+    ctx: { }
+
     var: setmetatable {
       :host
       :http_host

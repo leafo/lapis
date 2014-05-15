@@ -3,6 +3,11 @@ do
   local _obj_0 = require("lapis.util")
   escape_pattern, parse_content_disposition, build_url = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url
 end
+local run_after_dispatch
+do
+  local _obj_0 = require("lapis.nginx.context")
+  run_after_dispatch = _obj_0.run_after_dispatch
+end
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }
@@ -180,9 +185,7 @@ dispatch = function(app)
   if res.content then
     ngx.print(res.content)
   end
-  if ngx.ctx.after_render then
-    ngx.ctx.after_render()
-  end
+  run_after_dispatch()
   return res
 end
 return {
