@@ -145,29 +145,12 @@ process_config = (cfg, port) ->
   -- escape for nginx config
   run_code_action = run_code_action\gsub("\\", "\\\\")\gsub('"', '\\"')
 
-  cfg\gsub "%f[%a]http%s-{", [[
-    http {
+  test_server = {
+    [[
       server {
         allow 127.0.0.1;
         deny all;
         listen ]] .. port .. [[;
-
-        location = /http_query {
-          postgres_pass database;
-          set_decode_base64 $query $http_x_query;
-          log_by_lua '
-            local logger = require "lapis.logging"
-            logger.query(ngx.var.query)
-          ';
-          postgres_query $query;
-          rds_json on;
-        }
-
-        location = /query {
-          internal;
-          postgres_pass database;
-          postgres_query $echo_request_body;
-        }
 
         location = /run_lua {
           client_body_buffer_size 10m;
@@ -177,8 +160,33 @@ process_config = (cfg, port) ->
 
           ";
         }
+    ]]
+  }
+
+  -- add query locations if upstream can be found
+  if cfg\match "upstream%s+database"
+    table.insert test_server, [[
+      location = /http_query {
+        postgres_pass database;
+        set_decode_base64 $query $http_x_query;
+        log_by_lua '
+          local logger = require "lapis.logging"
+          logger.query(ngx.var.query)
+        ';
+        postgres_query $query;
+        rds_json on;
       }
-  ]]
+
+      location = /query {
+        internal;
+        postgres_pass database;
+        postgres_query $echo_request_body;
+      }
+    ]]
+
+  table.insert test_server, "}"
+
+  cfg\gsub "%f[%a]http%s-{", "http { " .. table.concat test_server, "\n"
 
 server_stack = nil
 
@@ -191,8 +199,7 @@ class AttachedServer
     pg_config = @environment.postgres
     if pg_config and pg_config.backend == "pgmoon"
       import Postgres from require "pgmoon"
-      pgmoon = Postgres pg_config.user, pg_config.database,
-        pg_config.host, pg_config.port
+      pgmoon = Postgres pg_config
       assert pgmoon\connect!
       @old_backend = db.set_backend "raw", pgmoon\query
     else

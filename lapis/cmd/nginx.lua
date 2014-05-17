@@ -181,28 +181,11 @@ process_config = function(cfg, port)
     print = old_print
   ]]
   run_code_action = run_code_action:gsub("\\", "\\\\"):gsub('"', '\\"')
-  return cfg:gsub("%f[%a]http%s-{", [[    http {
-      server {
+  local test_server = {
+    [[      server {
         allow 127.0.0.1;
         deny all;
         listen ]] .. port .. [[;
-
-        location = /http_query {
-          postgres_pass database;
-          set_decode_base64 $query $http_x_query;
-          log_by_lua '
-            local logger = require "lapis.logging"
-            logger.query(ngx.var.query)
-          ';
-          postgres_query $query;
-          rds_json on;
-        }
-
-        location = /query {
-          internal;
-          postgres_pass database;
-          postgres_query $echo_request_body;
-        }
 
         location = /run_lua {
           client_body_buffer_size 10m;
@@ -211,8 +194,29 @@ process_config = function(cfg, port)
             ]] .. run_code_action .. [[
           ";
         }
+    ]]
+  }
+  if cfg:match("upstream%s+database") then
+    table.insert(test_server, [[      location = /http_query {
+        postgres_pass database;
+        set_decode_base64 $query $http_x_query;
+        log_by_lua '
+          local logger = require "lapis.logging"
+          logger.query(ngx.var.query)
+        ';
+        postgres_query $query;
+        rds_json on;
       }
-  ]])
+
+      location = /query {
+        internal;
+        postgres_pass database;
+        postgres_query $echo_request_body;
+      }
+    ]])
+  end
+  table.insert(test_server, "}")
+  return cfg:gsub("%f[%a]http%s-{", "http { " .. table.concat(test_server, "\n"))
 end
 server_stack = nil
 do
@@ -292,7 +296,7 @@ do
           local _obj_0 = require("pgmoon")
           Postgres = _obj_0.Postgres
         end
-        local pgmoon = Postgres(pg_config.user, pg_config.database, pg_config.host, pg_config.port)
+        local pgmoon = Postgres(pg_config)
         assert(pgmoon:connect())
         self.old_backend = db.set_backend("raw", (function()
           local _base_1 = pgmoon
