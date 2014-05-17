@@ -71,8 +71,7 @@ backends = {
       pgmoon = ngx.ctx.pgmoon
       unless pgmoon
         import Postgres from require "pgmoon"
-        pgmoon = Postgres pg_config.user, pg_config.database,
-          pg_config.host, pg_config.port
+        pgmoon = Postgres pg_config
         assert pgmoon\connect!
 
         ngx.ctx.pgmoon = pgmoon

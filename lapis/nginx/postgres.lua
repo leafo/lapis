@@ -91,7 +91,7 @@ local backends = {
           local _obj_0 = require("pgmoon")
           Postgres = _obj_0.Postgres
         end
-        pgmoon = Postgres(pg_config.user, pg_config.database, pg_config.host, pg_config.port)
+        pgmoon = Postgres(pg_config)
         assert(pgmoon:connect())
         ngx.ctx.pgmoon = pgmoon
         after_dispatch(function()
