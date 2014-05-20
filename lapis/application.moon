@@ -81,11 +81,11 @@ class Request
 
       @res\add_header "Location", redirect_url
       @res.status or= 302
+      return ""
 
     has_layout = @app.layout and set_and_truthy(@options.layout, true)
     @layout_opts = if has_layout
       { inner: nil }
-
 
     widget = @options.render
     widget = @route_name if widget == true

@@ -103,6 +103,7 @@ do
           end
           self.res:add_header("Location", redirect_url)
           self.res.status = self.res.status or 302
+          return ""
         end
       end
       local has_layout = self.app.layout and set_and_truthy(self.options.layout, true)
