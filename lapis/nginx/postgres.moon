@@ -78,7 +78,10 @@ backends = {
         after_dispatch -> pgmoon\keepalive!
 
       logger.query "[PGMOON] #{str}" if logger
-      pgmoon\query str
+      res, err = pgmoon\query str
+      if not res and err
+        error "#{str}\n#{err}"
+      res
 }
 
 set_backend = (name="default", ...) ->

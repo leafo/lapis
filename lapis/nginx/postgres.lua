@@ -101,7 +101,11 @@ local backends = {
       if logger then
         logger.query("[PGMOON] " .. tostring(str))
       end
-      return pgmoon:query(str)
+      local res, err = pgmoon:query(str)
+      if not res and err then
+        error(tostring(str) .. "\n" .. tostring(err))
+      end
+      return res
     end
   end
 }
