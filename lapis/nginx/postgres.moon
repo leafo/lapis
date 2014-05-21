@@ -68,13 +68,13 @@ backends = {
 
     init_logger!
     raw_query = (str) ->
-      pgmoon = ngx.ctx.pgmoon
+      pgmoon = ngx and ngx.ctx.pgmoon
       unless pgmoon
         import Postgres from require "pgmoon"
         pgmoon = Postgres pg_config
         assert pgmoon\connect!
 
-        ngx.ctx.pgmoon = pgmoon
+        ngx.ctx.pgmoon = pgmoon if ngx
         after_dispatch -> pgmoon\keepalive!
 
       logger.query "[PGMOON] #{str}" if logger

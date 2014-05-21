@@ -84,7 +84,7 @@ local backends = {
     local pg_config = assert(config.postgres, "missing postgres configuration")
     init_logger()
     raw_query = function(str)
-      local pgmoon = ngx.ctx.pgmoon
+      local pgmoon = ngx and ngx.ctx.pgmoon
       if not (pgmoon) then
         local Postgres
         do
@@ -93,7 +93,9 @@ local backends = {
         end
         pgmoon = Postgres(pg_config)
         assert(pgmoon:connect())
-        ngx.ctx.pgmoon = pgmoon
+        if ngx then
+          ngx.ctx.pgmoon = pgmoon
+        end
         after_dispatch(function()
           return pgmoon:keepalive()
         end)
