@@ -95,10 +95,10 @@ local backends = {
         assert(pgmoon:connect())
         if ngx then
           ngx.ctx.pgmoon = pgmoon
+          after_dispatch(function()
+            return pgmoon:keepalive()
+          end)
         end
-        after_dispatch(function()
-          return pgmoon:keepalive()
-        end)
       end
       if logger then
         logger.query("[PGMOON] " .. tostring(str))

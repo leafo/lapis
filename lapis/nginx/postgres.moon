@@ -74,8 +74,9 @@ backends = {
         pgmoon = Postgres pg_config
         assert pgmoon\connect!
 
-        ngx.ctx.pgmoon = pgmoon if ngx
-        after_dispatch -> pgmoon\keepalive!
+        if ngx
+          ngx.ctx.pgmoon = pgmoon
+          after_dispatch -> pgmoon\keepalive!
 
       logger.query "[PGMOON] #{str}" if logger
       res, err = pgmoon\query str
