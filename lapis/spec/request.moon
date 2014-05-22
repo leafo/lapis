@@ -147,6 +147,8 @@ mock_request = (app_cls, url, opts={}) ->
 
   -- if app is already an instance just use it
   app = app_cls.__base and app_cls! or app_cls
+  unless app.router
+    app\build_router!
 
   response = nginx.dispatch app
   stack.pop!

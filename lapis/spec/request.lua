@@ -197,6 +197,9 @@ mock_request = function(app_cls, url, opts)
     }
   })
   local app = app_cls.__base and app_cls() or app_cls
+  if not (app.router) then
+    app:build_router()
+  end
   local response = nginx.dispatch(app)
   stack.pop()
   logger.request = old_logger
