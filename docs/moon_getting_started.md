@@ -1,7 +1,7 @@
 ### A Simple MoonScript Application
 
 Instead of making `web.lua`, we'll actually make `web.moon` and let the
-[MoonScript compiler][4] automatically generate the Lua file.
+[MoonScript compiler][1] automatically generate the Lua file.
 
 Create `web.moon`:
 
@@ -345,3 +345,4 @@ class extends lapis.Application
 Returns the function of the action that has the name specified by
 `action_name`.
 
+[1]: http://moonscript.org/reference/#moonc

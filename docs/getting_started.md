@@ -132,5 +132,3 @@ that now.
 ## Creating An Application
 
 [0]: http://openresty.org/
-[1]: https://github.com/leafo/heroku-openresty
-[2]: https://github.com/leafo/heroku-buildpack-lua

@@ -1,0 +1,83 @@
+## Input validation
+
+Lapis comes with a set of validators for working with external inputs. Here's a
+quick example:
+
+```moon
+import capture_errors from require "lapis.application"
+import assert_valid from require "lapis.validate"
+
+class App extends lapis.Application
+  "/create_user": capture_errors =>
+
+    assert_valid @params, {
+      { "username", exists: true, min_length: 2, max_length: 25 }
+      { "password", exists: true, min_length: 2 }
+      { "password_repeat", equals: @params.password }
+      { "email", exists: true, min_length: 3 }
+      { "accept_terms", equals: "yes", "You must accept the Terms of Service" }
+    }
+
+    create_the_user @params
+    render: true
+```
+
+`assert_valid` takes two arguments, a table to be validated, and a second array
+table with a list of validations to perform. Each validation is the following format:
+
+    { Validation_Key, [Error_Message], Validation_Function: Validation_Argument, ... }
+
+`Validation_Key` is the key to fetch from the table being validated.
+
+Any number of validation functions can be provided. If a validation function
+takes multiple arguments, an array table can be passed
+
+`Error_Message` is an optional second positional value. If provided it will be
+used as the validation failure error message instead of the default generated
+one. Because of how Lua tables work, it can also be provided after the
+validation functions as demonstrated in the example above.
+
+### Validation Functions
+
+* `exists: true` -- check if the value exists and is not an empty string
+* `file_exists: true` -- check if the value is a file upload
+* `min_length: Min_Length` -- value must be at least `Min_Length` chars
+* `max_length: Max_Length` -- value must be at most `Max_Length` chars
+* `is_integer: true` -- value matches integer pattern
+* `is_color: true` -- value matches CSS hex color (eg. `#1234AA`)
+* `is_file: true` -- value is an uploaded file, see [File Uploads](#utilities-file-uploads)
+* `equals: String` -- value is equal to String
+* `type: String` -- type of value is equal to String
+* `one_of: {A, B, C, ...}` -- value is equal to one of the elements in the array table
+
+
+Custom validators can be added like so:
+
+```moon
+import validate_functions, assert_valid from require "lapis.validate"
+
+validate_functions.integer_greater_than = (input, min) ->
+  num = tonumber input
+  num and num > min, "%s must be greater than #{min}"
+
+import capture_errors from require "lapis.application"
+
+class App extends lapis.Application
+  "/": capture_errors =>
+    assert_valid @params, {
+      { "number", integer_greater_than: 100 }
+    }
+```
+
+### Manual Validation
+
+In addition to `assert_valid` there is one more useful validation function:
+
+```moon
+import validate from require "lapis.validate"
+```
+
+* `validate(object, validation)` -- takes the same exact arguments as
+  `assert_valid`, but returns the either errors or `nil` on failure instead of
+  yielding the error.
+
