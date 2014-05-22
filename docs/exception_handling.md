@@ -13,6 +13,21 @@ Lapis creates an exception handling system using coroutines. We must define the
 scope in which we will capture errors. We do that using the `capture_errors`
 helper. Then we can throw a raw error using `yield_error`.
 
+
+```lua
+local lapis = require("lapis")
+local app_helpers = require("lapis.application")
+
+local capture_errors, yield_error = app_helpers.capture_errors, app_helpers.yield_error
+
+local app = lapis.Application()
+
+app:match("/do_something", capture_errors(function(self)
+  yield_error("something bad happened")
+  return "Hello!"
+end))
+```
+
 ```moon
 import capture_errors, yield_error from require "lapis.application"
 
@@ -23,18 +38,38 @@ class App extends lapis.Application
 ```
 
 What happens when there is an error? The action will stop executing at the
-first error, and then the error handler is run. The default one will set an
-array like table of errors to `@errors` and return `render: true`. In your view
-you can then display the errors.
+first error, and then the error handler is run. The default error handler will
+sets an array like table of errors in <span
+class="for_moon">`@errors`</span><span class="for_lua">`self.errors`</span> and
+return <span class="for_moon">`render: true`</span><span class="for_lua">`{
+render = true }`</span>. In your view you can then display the errors. This
+means that if you have a named route the view of that route will render. You
+should then code your view to sometimes have a `errors` table.
 
 If you want to have a custom error handler you can invoke `capture_errors` with
-a table: (note that `@errors` is set before the custom handler)
+a table: (note that <span class="for_moon">`@errors`</span><span
+class="for_lua">`self.errors`</span> is set before the custom handler)
+
+```lua
+app:match("/do_something", capture_errors({
+  on_error = function(self)
+    log_erorrs(self.errors) -- you would supply the log_errors function
+    return { render = "my_error_page", status = 500 }
+  end,
+  function(self)
+    if self.params.bad_thing then
+      yield_error("something bad happened")
+    end
+    return { render = true }
+  end
+}))
+```
 
 ```moon
 class App extends lapis.Application
   "/do_something": capture_errors {
     on_error: =>
-      log_errors @errors -- you would supply the log_errors method
+      log_errors @errors -- you would supply the log_errors function
       render: "my_error_page", status: 500
 
     =>
@@ -50,6 +85,18 @@ as the action.
 If you're building a JSON API then another method is provided,
 `capture_errors_json`, which renders the errors in a JSON object like so:
 
+```lua
+local lapis = require("lapis")
+local app_helpers = require("lapis.application")
+
+local capture_errors_json, yield_error = app_helpers.capture_errors_json, app_helpers.yield_error
+
+local app = lapis.Application()
+
+app:match("/", capture_errors_json(function(self)
+  yield_error("something bad happened")
+end))
+```
 
 ```moon
 import capture_errors_json, yield_error from require "lapis.application"
@@ -70,10 +117,25 @@ Would render (with the correct content type):
 It is idiomatic in Lua to return `nil` and an error message from a function
 when it fails. For this reason the helper `assert_error` exists. If the first
 argument is falsey (`nil` or `false`) then the second argument is thrown as an
-error, otherwise the first argument is returned.
+error, otherwise all the arguments are returned from the function unchanged.
 
 `assert_error` is very handy with database methods, which make use of this
 idiom.
+
+```lua
+local lapis = require("lapis")
+local app_helpers = require("lapis.application")
+
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+local app = lapis.Application()
+
+app:match("/", capture_errors(function(self)
+  local user = assert_error(Users:find({id = "leafo"}))
+  reutrn "result: " .. user.id
+end))
+
+```
 
 ```moon
 import capture_errors, assert_error from require "lapis.application"

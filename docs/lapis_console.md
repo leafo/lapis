@@ -22,6 +22,19 @@ $ luarocks install --server=http://rocks.moonscript.org lapis-console
 Lapis console provides an action that you can insert into your application to a
 route of your choosing:
 
+
+```lua
+local lapis = require("lapis")
+local console = require("lapis.console")
+
+local app = lapis.Application()
+
+app:match("/console", console.make())
+
+return app
+```
+
+
 ```moon
 lapis = require "lapis"
 console = require "lapis.console"

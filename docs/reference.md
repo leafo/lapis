@@ -7,17 +7,19 @@ x  actions.md - moon + lua
 x  command_line.md - either
 .  configuration.md - moon
 x  database.md - moon + lua
-.  exception_handling.md
-.  getting_started.md
-.  html_generation.md
-.  input_validation.md
-.  lapis_console.md
+x  exception_handling.md - moon + lua
+x  getting_started.md - either (needs links)
+x  html_generation.md - moon
+x  input_validation.md - moon + lua
+x  lapis_console.md - moon + lua
 .  lua_getting_started.md
 .  moon_getting_started.md
-.  reference.md
-.  testing.md
+x  testing.md - moon + lua
 .  utilities.md
 
+
+-- convert all the headers to the proper depths
+-- configuration guide for lua
 
 <div class="footer">
   <a href="http://leafo.net/lapis">&laquo; Go To Homepage</a>

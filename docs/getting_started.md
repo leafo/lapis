@@ -131,4 +131,6 @@ that now.
 
 ## Creating An Application
 
+TODO: links to next pages
+
 [0]: http://openresty.org/
