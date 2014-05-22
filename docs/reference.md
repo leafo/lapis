@@ -15,11 +15,15 @@ x  lapis_console.md - moon + lua
 .  lua_getting_started.md
 .  moon_getting_started.md
 x  testing.md - moon + lua
-.  utilities.md
+x  utilities.md - moon + lua
 
+need to write:
+* configuration for lua
+* views for lua (etlua detailed guide)
 
 -- convert all the headers to the proper depths
 -- configuration guide for lua
+-- add missing links between pages, look for # links or [0]
 
 <div class="footer">
   <a href="http://leafo.net/lapis">&laquo; Go To Homepage</a>

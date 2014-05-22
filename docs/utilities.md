@@ -4,6 +4,10 @@
 
 Utility functions are found in:
 
+```lua
+local util = require("lapis.util")
+```
+
 ```moon
 util = require "lapis.util"
 ```
@@ -39,7 +43,8 @@ symbols and replaces them with `-`.
 
 #### `uniquify(tbl)`
 
-Returns a new table from `tbl` where there are no duplicate values.
+Iterates over array table `tbl` appending all unique values into a new array
+table, then returns the new one.
 
 ####  `trim(str)
 
@@ -47,8 +52,8 @@ Trims the whitespace off of both sides of a string.
 
 #### `trim_all(tbl)`
 
-Trims the whitespace off of all values in a table (suitable for hash and array
-tables).
+Trims the whitespace off of all values in a table. Uses `pairs` to traverse
+every key in the table.
 
 The table is modified in place.
 
@@ -64,6 +69,26 @@ If `empty_val` is provided then the whitespace only values are replaced with
 that value instead of `nil`
 
 The table is modified in place.
+
+```lua
+local db = require("lapis.db")
+local trim_filter = require("lapis.util").trim_filter
+
+unknown_input = {
+  username = "     hello    ",
+  level = "admin",
+  description = " "
+}
+
+trim_filter(unknown_input, {"username", "description"}, db.NULL)
+
+-- unknown input is now:
+-- {
+--   username = "hello",
+--   description = db.NULL
+-- }
+
+```
 
 ```moon
 db = require "lapis.db"
@@ -90,11 +115,15 @@ Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 
 ####  `from_json(str)`
 
-Convers JSON to table, using lua cjson.
+Convers JSON to table, a direct wrapper around Lua CJSON's `decode`.
 
 ### Encoding Methods
 
 Encoding functions are found in:
+
+```lua
+local encoding = require("lapis.util.encoding")
+```
 
 ```moon
 encoding = require "lapis.util.encoding"
@@ -131,6 +160,14 @@ for the value. Useful for autoloading components split across many files.
 Overwrites `__index` metamethod. The result of the require is stored in the
 table.
 
+
+```lua
+local models = autoload("models")
+
+models.HelloWorld --> will require "models.hello_world"
+models.foo_bar --> will require "models.foo_bar"
+```
+
 ```moon
 models = autoload("models")
 
@@ -153,8 +190,17 @@ application's secret. This is a string that only the application knows about.
 If you application is open source it's worthwhile to not commit this secret.
 The secret is set in [your configuration](#configuration-and-environments) like so:
 
+```lua
+local config = require("lapis.config")
+
+config("development", {
+  secret = "this is my secret string 123456"
+})
+
+```
+
 ```moon
-import config from require "lapis.config"
+config = require "lapis.config"
 
 config "development", ->
   secret "this is my secret string 123456"
@@ -163,6 +209,30 @@ config "development", ->
 Now that you have the secret configured, we might create a CSRF protected form
 like so:
 
+
+```lua
+local lapis = require("lapis")
+local csrf = require("lapis.csrf")
+
+local capture_errors = require("lapis.application").capture_errors
+
+local app = lapis.Application()
+
+app:get("form", "/form", function(self)
+  local csrf_token = csrf.generate_token(self)
+  self:html(function()
+    form({ method = "POST", action = self:url_for("form") }, function()
+      input({ type = "hidden", name = "csrf_token", value = csrf_token })
+      input({ type = "submit" })
+    end)
+  end)
+end)
+
+app:post("form", "/form", capture_errors(function(self)
+  csrf.assert_token(self)
+  "The form is valid!"
+end))
+```
 
 ```moon
 csrf = require "lapis.csrf"
@@ -186,6 +256,10 @@ class extends lapis.Application
 > to create a before filter that generates the token automatically.
 
 The following functions are part of the CSRF module:
+
+```lua
+local csrf = require("lapis.csrf")
+```
 
 ```moon
 csrf = require "lapis.csrf"
@@ -251,6 +325,36 @@ and `simple`. `request` implements the Lua Socket HTTP request API (complete
 with LTN12).
 
 `simple` is a simplified API with no LTN12:
+
+```lua
+local http = require("lapis.nginx.http")
+
+local app = lapis.Application()
+
+app:get("/", function(self)
+  -- a simple GET request
+  local body, status_code, headers = http.simple("http://leafo.net")
+
+  -- a post request, data table is form encoded and content-type is set to
+  -- application/x-www-form-urlencoded
+  http.simple("http://leafo.net/", {
+    name: "leafo"
+  })
+
+  -- manual invocation of the above request
+  http.simple({
+    url = "http://leafo.net",
+    method = "POST",
+    headers = {
+      "content-type" = "application/x-www-form-urlencoded"
+    },
+    body: {
+      name = "leafo"
+    }
+  })
+end)
+```
+
 
 ```moon
 http = require "lapis.nginx.http"
@@ -333,6 +437,17 @@ Now we are ready to start using the caching module, `lapis.cache`.
 
 Wraps an action to use the cache.
 
+```lua
+local lapis = require("lapis")
+local cached = require("lapis.cache").cached
+
+local app = lapis.Application()
+
+app:match("my_page", "/hello/world", cached(function(self)
+  return "hello world!"
+end))
+```
+
 ```moon
 import cached from require "lapis.cache"
 
@@ -370,6 +485,21 @@ The table supports the following options:
 For example, you could implement microcaching, where the page is cached for a
 short period of time, like so:
 
+```lua
+local lapis = require("lapis")
+local cached = require("lapis.cache").cached
+
+local app = lapis.Application()
+
+app:match("/microcached", cached({
+  exptime = 1,
+  function(self)
+    return "hello world!"
+  end
+}))
+
+```
+
 ```moon
 import cached from require "lapis.cache"
 
@@ -385,9 +515,15 @@ class extends lapis.Application
 Deletes an entry from the cache. Key can either be a plain string, or a tuple
 of `{path, params}` that will be encoded as the key.
 
+
+```lua
+local cache = require("lapis.cache")
+cache.delete({ "/hello", { thing = "world" } })
+```
+
 ```moon
 cache = require "lapis.cache"
-cache.delete { "/hello", { hello: "world" } }
+cache.delete { "/hello", { thing: "world" } }
 ```
 
 #### `delete_all([dict_name="page_cache"])`
@@ -398,6 +534,11 @@ Deletes all entires from the cache.
 
 Deletes all entries for a specific path.
 
+```lua
+local cache = require("lapis.cache")
+cache.delete_path("/hello")
+```
+
 ```moon
 cache = require "lapis.cache"
 cache.delete_path "/hello"
@@ -406,7 +547,8 @@ cache.delete_path "/hello"
 ### File Uploads
 
 File uploads can be handled with a multipart form and accessing the file from
-the `@params` of the request.
+the <span class="for_moon">`@params`</span><span
+class="for_lua">`self.params`</span> of the request.
 
 For example, let's create the following form:
 
@@ -425,7 +567,19 @@ class MyForm extends Widget
 ```
 
 When the form is submitted, the file is stored as a table with `filename` and
-`content` properties in `@params` under the name of the form input:
+`content` properties in <span class="for_moon">`@params`</span><span
+class="for_lua">`self.params`</span> under the name of the form input:
+
+```lua
+locl app = lapis.Application()
+
+app:post("/my_action", function(self)
+  local file = @params.uploaded_file
+  if file then
+    return "Uploaded: " .. file.filename .. ", " .. #file.content .. "bytes"
+  end
+end)
+```
 
 ```moon
 class extends lapis.Application
@@ -437,6 +591,18 @@ class extends lapis.Application
 
 A validation exists for ensuring that a param is an uploaded file, it's called
 `is_file`:
+
+```lua
+local app = lapis.Application()
+
+app:post("/my_action", function(self)
+  assert_valid(self.params, {
+    { "uploaded_file", is_file: true }
+  })
+
+  -- file is ready to be used
+end)
+```
 
 ```moon
 class extends lapis.Application
@@ -459,6 +625,10 @@ greater than that you should set a new value in your Nginx configuration.
 
 The following functions are part of the `lapis.application` module:
 
+```lua
+local app_helpers = require("lapis.application")
+```
+
 ```moon
 application = require "lapis.application"
 ```
@@ -470,8 +640,12 @@ function. Returns a new function that dispatches to the correct function in the
 table based on the verb of the request. See
 [Handling HTTP verbs](#lapis-applications-handling-http-verbs)
 
-If an action for `HEAD` does not exist Lapis provides the following function to
+If an action for `HEAD` does not exist Lapis inserts the following function to
 render nothing:
+
+```lua
+function() return { layout = false } end
+```
 
 ```moon
 -> { layout: false }
@@ -481,16 +655,21 @@ If the request is a verb that is not handled then the Lua `error` function
 is called and a 500 page is generated.
 
 A special `before` key can be set to a function that should run before any
-other action. If `@write` is called inside the before function then the regular
-handler will not be called.
+other action. If <span class="for_moon">`@write`</span><span
+class="for_lua">`self.write`</span> is called inside the before function then
+the regular handler will not be called.
 
 #### `safe_fn = capture_errors(fn_or_tbl)`
 
 Wraps a function to catch errors sent by `yield_error` or `assert_error`. See
-[Exception Handling](#exception-handling) for more information.
+[Exception Handling][0] for more information.
 
 If the first argument is a function then that function is called on request and
 the following default error handler is used:
+
+```lua
+function() return { render = true } end
+```
 
 ```moon
 -> { render: true }
@@ -499,12 +678,17 @@ the following default error handler is used:
 If a table is the first argument then the `1`st element of the table is used as
 the action and value of `on_error` is used as the error handler.
 
-When an error is yielded then the `@errors` variable is set on the current
-request and the error handler is called.
+When an error is yielded then the <span class="for_moon">`@errors`</span><span
+class="for_lua">`self.errors`</span> variable is set on the current request and
+the error handler is called.
 
 #### `safe_fn = capture_errors_json(fn)`
 
 A wrapper for `capture_errors` that passes in the following error handler:
+
+```lua
+function(self) return { json = { errors = self.errors } } end
+```
 
 ```moon
 => { json: { errors: @errors } }
@@ -513,7 +697,6 @@ A wrapper for `capture_errors` that passes in the following error handler:
 #### `yield_error(error_message)`
 
 Yields a single error message to be captured by `capture_errors`
-
 
 #### `obj, msg, ... = assert_error(obj, msg, ...)`
 
@@ -525,6 +708,14 @@ error to be captured by `capture_errors`
 
 Return a new function that will parse the body of the request as JSON and
 inject it into `@params` if the `content-type` is set to `application/json`.
+
+```lua
+local json_params = requrie("lapis.application").json_params
+
+app:match("/json", json_params(function(self)
+  return self.params.value
+end)
+```
 
 ```moon
 import json_params from require "lapis.application"
@@ -541,6 +732,9 @@ $ curl \
   'https://localhost:8080/json'
 ```
 
-The unmerged params can also be accessed from `@json`. If there was an error
-parsing the JSON then `@json` will be `nil` and the request will continue.
+The unmerged params can also be accessed from <span
+class="for_moon">`@json`</span><span class="for_lua">`self.json`</span>. If
+there was an error parsing the JSON then <span
+class="for_moon">`@json`</span><span class="for_lua">`self.json`</span> will be
+`nil` and the request will continue.
 
