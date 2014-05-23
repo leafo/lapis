@@ -17,6 +17,74 @@ By default the environment is `development`. The environment name only affects
 what configuration is loaded. This has absolutely no effect if you don't have any
 configurations, so let's create some.
 
+### Creating Configurations
+
+Whenever Lapis executes code that depends on a configuration it attempts to
+load the module `"config"`.  The `"config"` module is where we define our
+environment specific variables. It's a standard Lua/MoonScript file, so let's
+create it.
+
+> If the `config` module is not found no error is thrown, and only the default
+> configuration is available.
+
+```lua
+local config = require("lapis.config")
+
+config("development", {
+  port = 8080
+})
+
+config("production", {
+  port = 80,
+  num_workers = 4,
+  lua_code_cache = "off"
+})
+
+```
+
+```moon
+-- config.moon
+config = require "lapis.config"
+
+config "development", ->
+  port 8080
+
+
+config "production", ->
+  port 80
+  num_workers 4
+  lua_code_cache "off"
+
+```
+
+We use the configuration helpers provided in `"lapis.config"` to create our
+configurations. This defines a domain specific language for setting variables.
+In the example above we define two configurations, and set the ports for each
+of them.
+
+A configuration is just a plain table. Use the special builder syntax above to
+construct the configuration tables.
+
+We can configure multiple environments at once by passing in an array table for
+evironment names:
+
+```lua
+config({"development", "production"}, {
+  session_name = "my_app_session"
+})
+```
+
+```moon
+config {"development", "production"}, ->
+  session_name "my_app_session"
+```
+
+The configuration file has access to a nice syntax for combining nested
+tables. Both MoonScript and Lua have their own variations, for more details
+about the syntax have a look at the respective guide.
+
+* [MoonScript configuration syntax][0]
+* [Lua configuration syntax][0]
 
 ### Configurations and Nginx
 

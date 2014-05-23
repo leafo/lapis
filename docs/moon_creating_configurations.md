@@ -1,42 +1,9 @@
-### Creating Configurations
 
-Whenever Lapis starts the server it attempts to load the module `"config"`. If
-it can't be found it is silently ignored. The `"config"` module is where we
-define out configurations. It's a standard Lua/MoonScript file, so let's create
-it.
+## MoonScript Configuration Syntax
 
-```moon
--- config.moon
-config = require "lapis.config"
-
-config "development", ->
-  port 8080
-
-
-config "production", ->
-  port 80
-  num_workers 4
-  lua_code_cache "off"
-
-```
-
-We use the configuration helpers provided in `"lapis.config"` to create our
-configurations. This defines a domain specific language for setting variables.
-In the example above we define two configurations, and set the ports for each
-of them.
-
-A configuration is just a plain table. Use the special builder syntax above to
-construct the configuration tables.
-
-We can configure multiple environments at once by passing in an array table for
-evironment names:
-
-```moon
-config {"development", "production"}, ->
-  session_name "my_app_session"
-```
-
-### Configuration Builder Syntax
+The MoonScript config builder syntax uses function calls to define variables.
+The advantage to this approach over using a Lua table literal is that you can
+have logic surrounding your assignments.
 
 Here's an example of the configuration DSL (domain specific language) and the
 table it generates:

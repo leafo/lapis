@@ -5,7 +5,7 @@ Here are the files that need to be done checked
 
 x  actions.md - moon + lua
 x  command_line.md - either
-.  configuration.md - moon
+x  configuration.md - either (has sub pages)
 x  database.md - moon + lua
 x  exception_handling.md - moon + lua
 x  getting_started.md - either (needs links)
@@ -18,11 +18,9 @@ x  testing.md - moon + lua
 x  utilities.md - moon + lua
 
 need to write:
-* configuration for lua
 * views for lua (etlua detailed guide)
 
 -- convert all the headers to the proper depths
--- configuration guide for lua
 -- add missing links between pages, look for # links or [0]
 
 <div class="footer">
