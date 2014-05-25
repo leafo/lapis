@@ -276,7 +276,9 @@ do
     views_prefix = "views",
     enable = function(self, feature)
       local fn = require("lapis.features." .. tostring(feature))
-      return fn(self)
+      if type(fn) == "function" then
+        return fn(self)
+      end
     end,
     match = function(self, route_name, path, handler)
       if handler == nil then

@@ -224,7 +224,8 @@ class Application
 
   enable: (feature) =>
     fn = require "lapis.features.#{feature}"
-    fn @
+    if type(fn) == "function"
+      fn @
 
   match: (route_name, path, handler) =>
     if handler == nil
