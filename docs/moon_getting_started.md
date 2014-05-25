@@ -26,28 +26,6 @@ You can read more about what an action can return in [Request Objects](#request-
 > Don't forget to compile the `.moon` files. You can watch the current
 > directory and compile automatically with `moonc -w`.
 
-## Starting The Server
-
-To start your server you can run `lapis server`. The `lapis` binary will
-attempt to find your OpenResty instalation. It will search the following
-directories for an `nginx` binary. (The last one represents anything in your
-`PATH`)
-
-    "/usr/local/openresty/nginx/sbin/"
-    "/usr/sbin/"
-    ""
-
-> Remember that you need OpenResty and not a normal installation of Nginx.
-> Lapis will ignore regular Nginx binaries.
-
-So go ahead and start your server:
-
-```bash
-$ lapis server
-```
-
-Assuming there are no errors we can now navigate to <http://localhost:8080/> to
-see our application.
 
 ## Lapis Applications
 

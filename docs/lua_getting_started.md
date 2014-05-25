@@ -1,8 +1,10 @@
-# Lapis Lua guide
+# Creating a Lapis Application with Lua
 
-## Creating an application
+If you haven't already, read through the [generic getting started guide][2] for
+information on creating a new project skeleton along with details on OpenResty,
+Nginx configurations, and the `lapis` command.
 
-Start a new project in the current directory busing by typing into your
+You can start a new project in the current directory busing by typing into your
 console:
 
 ```bash
@@ -47,10 +49,11 @@ lapis server
 ```
 
 
-Visit <http://localhost:8080> to see the page. To change the port we can create
-a configuration. Create `config.lua`.
+Visit <http://localhost:8080> to see the page.
 
-In this example we change the port in the `development` environment to 9090. 
+To change the port we can create a configuration. Create `config.lua`.
+
+In this example we change the port in the `development` environment to 9090:
 
 ```lua
 -- config.lua
@@ -61,7 +64,10 @@ config("development", {
 })
 ```
 
-The `development` environment is what is loaded automatically when `lapis
+> You can read more about configurations on the [Configurations and
+> Environments guide][3].
+
+The `development` environment is used and loaded automatically when `lapis
 server` is run with no additional arguments. (And `lapis_environment.lua`
 doesn't exist)
 
@@ -94,8 +100,7 @@ end)
 return app
 ```
 
-
-## Creating a view
+## Creating a View
 
 Now that we can create basic pages we'll likely want to render something a bit
 more complex. Lapis comes with support for [etlua][1], an Lua templating
@@ -123,9 +128,9 @@ Now lets create the application which renders our view:
 ```lua
 -- my_app.lua
 local lapis = require "lapis"
-require "lapis.features.etlua"
 
 local app = lapis.Application()
+app:enable("etlua")
 
 app:get("/", function(self)
   return { render: "index" }
@@ -134,8 +139,8 @@ end)
 return app
 ```
 
-`etlua` is not enabled by default, you must enable it by requiring
-`"lapis.features.etlua"`.
+`etlua` is not enabled by default, you must enable it by calling the `enable`
+method on your application instance.
 
 We use the `render` parameter of our action's return value to instruct what
 template to use when rendering the page. In this case `"index"` refers to the
@@ -210,7 +215,10 @@ We'll write the layout in etlua just like our views. Create `views/layout.etlua`
 ```
 
 
-  [1]: https://github.com/leafo/etlua
+[1]: https://github.com/leafo/etlua
+[2]: getting_started.html
+[3]: configuration.html
+
 
 
 

@@ -1,4 +1,4 @@
-# Lapis Guide
+# Getting Started With Lapis
 
 [Lapis](http://leafo.net/lapis/) is a web framework written for Lua and
 MoonScript. Lapis is interesting because it's built on top of the Nginx
@@ -129,8 +129,46 @@ Our single location calls the directive `content_by_lua_file "web.lua"`. This
 causes all requests of that location to run through `web.lua`, so let's make
 that now.
 
+## Starting The Server
+
+Before we start writing any code lets look at how to start the server.
+
+To start your server you can run `lapis server`. The `lapis` binary will
+attempt to find your OpenResty instalation. It will search the following
+directories for an `nginx` binary. (The last one represents anything in your
+`PATH`)
+
+    "/usr/local/openresty/nginx/sbin/"
+    "/usr/sbin/"
+    ""
+
+> Remember that you need OpenResty and not a normal installation of Nginx.
+> Lapis will ignore regular Nginx binaries.
+
+You can go ahead and start the server now so you can see what it looks like:
+
+```bash
+$ lapis server
+```
+
+When running the server in the foreground, which is the default for the
+generated configuration, you can stop the server with `CTRL+C`
+
+If you're running the server in the background you can run `lapis term` from
+your command line in the directory of your application to stop the server. This
+command looks for the PID file for a running server and sends a `TERM` message
+to that process if it exists.
+
 ## Creating An Application
 
-TODO: links to next pages
+Now we're ready to start writing our application logic. You have a choice which
+path to take depending on the language you want to learn. I recommended reading
+through both paths if you're unsure what you want to use.
+
+ * [Create an application with Lua][1]
+ * [Create an application with MoonScript][2]
+
 
 [0]: http://openresty.org/
+[1]: lua_getting_started.html
+[2]: moon_getting_started.html
