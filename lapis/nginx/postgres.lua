@@ -34,10 +34,6 @@ local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
 local init_logger
 init_logger = function()
-  local config = require("lapis.config").get()
-  if config.log_queries == false then
-    return 
-  end
   return set_logger(require("lapis.logging"))
 end
 local backends = {

@@ -11,7 +11,11 @@ default_config = {
   secret = "please-change-me",
   session_name = "lapis_session",
   code_cache = "off",
-  num_workers = "1"
+  num_workers = "1",
+  logging = {
+    queries = true,
+    requests = true
+  }
 }
 merge_set = function(t, k, v)
   local existing = t[k]

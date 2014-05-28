@@ -12,6 +12,11 @@ default_config = {
   session_name: "lapis_session"
   code_cache: "off"
   num_workers: "1"
+
+  logging: {
+    queries: true
+    requests: true
+  }
 }
 
 merge_set = (t, k, v) ->

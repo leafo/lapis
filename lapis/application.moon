@@ -201,6 +201,7 @@ class Application
   Request: Request
   layout: require"lapis.views.layout"
   error_page: require"lapis.views.error"
+  views_prefix: "views"
 
   -- find action for named route in this application
   @find_action: (name) =>
@@ -216,8 +217,6 @@ class Application
           route = app_route if app_route_name == name
 
     route and @[route], route
-
-  views_prefix: "views"
 
   new: =>
     @build_router!
