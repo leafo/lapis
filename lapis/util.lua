@@ -43,8 +43,10 @@ do
     local _obj_0 = require("lpeg")
     C, P, S, Ct = _obj_0.C, _obj_0.P, _obj_0.S, _obj_0.Ct
   end
-  local chunk = C((P(1) - S("=&")) ^ 1)
-  local tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
+  local char = (P(1) - S("=&"))
+  local chunk = C(char ^ 1)
+  local chunk_0 = C(char ^ 0)
+  local tuple = Ct(chunk / unescape * "=" * (chunk_0 / unescape) + chunk)
   local query = S("?#") ^ -1 * Ct(tuple * (P("&") * tuple) ^ 0)
   parse_query_string = function(str)
     do

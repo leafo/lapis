@@ -33,6 +33,20 @@ tests = {
     }
   }
 
+
+  {
+    -> util.parse_query_string "hello=&thing=123&world="
+    {
+      {"hello", ""}
+      {"thing", "123"}
+      {"world", ""}
+
+      hello: ""
+      thing: "123"
+      world: ""
+    }
+  }
+
   {
     -> util.underscore "ManifestRocks"
     "manifest_rocks"

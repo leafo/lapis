@@ -27,8 +27,12 @@ inject_tuples = (tbl) ->
 parse_query_string = do
   import C, P, S, Ct from require "lpeg"
 
-  chunk = C (P(1) - S("=&"))^1
-  tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
+  char = (P(1) - S("=&"))
+
+  chunk = C char^1
+  chunk_0 = C char^0
+
+  tuple = Ct(chunk / unescape * "=" * (chunk_0 / unescape) + chunk)
   query = S"?#"^-1 * Ct tuple * (P"&" * tuple)^0
 
   (str) ->
