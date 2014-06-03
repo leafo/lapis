@@ -125,7 +125,7 @@ describe "application error capturing", ->
 
     assert.same "no", result
     assert.same [[{"errors":["something bad happened!"]}]], body
-    assert.same "application/json", headers["Content-type"]
+    assert.same "application/json", headers["Content-Type"]
 
 describe "instance app", ->
   it "should match a route", ->

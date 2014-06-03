@@ -81,7 +81,7 @@ do
       do
         local obj = self.options.json
         if obj then
-          self.res.headers["Content-type"] = "application/json"
+          self.res.headers["Content-Type"] = "application/json"
           self.res.content = to_json(obj)
           return 
         end
@@ -89,11 +89,11 @@ do
       do
         local ct = self.options.content_type
         if ct then
-          self.res.headers["Content-type"] = ct
+          self.res.headers["Content-Type"] = ct
         end
       end
-      if not self.res.headers["Content-type"] then
-        self.res.headers["Content-type"] = "text/html"
+      if not self.res.headers["Content-Type"] then
+        self.res.headers["Content-Type"] = "text/html"
       end
       do
         local redirect_url = self.options.redirect_to
@@ -238,7 +238,7 @@ do
         if extra then
           cookie = cookie .. extra
         end
-        self.res:add_header("Set-cookie", cookie)
+        self.res:add_header("Set-Cookie", cookie)
       end
     end
   }

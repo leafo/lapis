@@ -77,7 +77,7 @@ describe "cookies", ->
 
   it "should write a cookie", ->
     _, _, h = mock_request CookieApp, "/"
-    assert.same "world=34; Path=/; HttpOnly", h["Set-cookie"]
+    assert.same "world=34; Path=/; HttpOnly", h["Set-Cookie"]
 
   it "should write multiple cookies", ->
     _, _, h = mock_request CookieApp, "/many"
@@ -85,11 +85,11 @@ describe "cookies", ->
     assert.same {
       'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
       'world=454545; Path=/; HttpOnly'
-    }, h["Set-cookie"]
+    }, h["Set-Cookie"]
 
   it "should write a cookie with cookie attributes", ->
     _, _, h = mock_request CookieApp2, "/"
-    assert.same "world=34; Path=/; HttpOnly; Domain=.leafo.net;", h["Set-cookie"]
+    assert.same "world=34; Path=/; HttpOnly; Domain=.leafo.net;", h["Set-Cookie"]
 
 
 describe "500 error", ->

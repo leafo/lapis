@@ -65,15 +65,15 @@ class Request
       @res.status = @options.status
 
     if obj = @options.json
-      @res.headers["Content-type"] = "application/json"
+      @res.headers["Content-Type"] = "application/json"
       @res.content = to_json obj
       return
 
     if ct = @options.content_type
-      @res.headers["Content-type"] = ct
+      @res.headers["Content-Type"] = ct
 
-    if not @res.headers["Content-type"]
-      @res.headers["Content-type"] = "text/html"
+    if not @res.headers["Content-Type"]
+      @res.headers["Content-Type"] = "text/html"
 
     if redirect_url = @options.redirect_to
       if redirect_url\match "^/"
@@ -194,7 +194,7 @@ class Request
     for k,v in pairs @cookies
       cookie = "#{url.escape k}=#{url.escape v}; Path=/; HttpOnly"
       cookie ..= extra if extra
-      @res\add_header "Set-cookie", cookie
+      @res\add_header "Set-Cookie", cookie
 
 
 class Application
