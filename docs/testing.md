@@ -92,12 +92,12 @@ headers returned from a previous request.
 
 ```lua
 local r1_status, r1_res, r1_headers = mock_request(my_app, "/first_url")
-local r1_status, r1_res = mock_request(my_app, "/second_url", { prev = r1_headers })
+local r2_status, r2_res = mock_request(my_app, "/second_url", { prev = r1_headers })
 ```
 
 ```moon
 r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
-r1_status, r1_res = mock_request MyApp!, "/second_url", prev: r1_headers
+r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
 ```
 
 ### Using The Test Server
