@@ -1,18 +1,35 @@
 ### A Simple MoonScript Application
 
-Instead of making `web.lua`, we'll actually make `web.moon` and let the
+Instead of making `.lua` files we'll actually make `.moon` and let the
 [MoonScript compiler][1] automatically generate the Lua file.
 
-Create `web.moon`:
+We need to create two files, `web.moon` and a file for our application.
+
+First create `web.moon`:
 
 ```moon
 lapis = require "lapis"
-lapis.serve class extends lapis.Application
+lapis.serve("my_app")
+```
+
+The job of `web.lua` is to load to serve our application. `lapis.serve` does
+all the work of loading, instantiating, and rendering a request throught the
+specified application.
+
+The string of the application name, `"my_app"`, is pased directly to Lua's
+`require` function within `lapis.serve`. So now we'll create the corresponding
+`my_app.moon` in the same directory.
+
+
+```moon
+lapis = require "lapis"
+
+class extends lapis.Application
   "/": => "Hello World!"
 ```
 
-That's it! `lapis.serve` takes an application class to serve the request with.
-So we create an anonymous class that extends from `lapis.Application`.
+Here we create a simple module that return a MoonScript class that represents
+out application.
 
 The members of our class make up the patterns that can be matched against the
 route and the resulting action that happens. In this example, the route `"/"`
@@ -26,6 +43,11 @@ You can read more about what an action can return in [Request Objects](#request-
 > Don't forget to compile the `.moon` files. You can watch the current
 > directory and compile automatically with `moonc -w`.
 
+You might be asking what's the difference between the two files. The contents
+of `web.moon` are executed for every request. The contents of `my_app.moon` are
+only executed once per worker that starts. This is because of how Lua's
+`require` function works, when loading a module the result is cached. On
+subsequent loads only the cache needs to be returned.
 
 ## Lapis Applications
 
@@ -37,15 +59,13 @@ If a property name is a string and begins with a `"/"` or the property is a
 table then it defines a route. All other properties are methods of the
 application.
 
-Let's start with the basic application from above:
+Let's start with the basic application from above and make some modifications:
 
 ```moon
 lapis = require "lapis"
-lapis.serve class extends lapis.Application
+class extends lapis.Application
   "/": => "Hello World!"
 ```
-
-[Named routes](#lapis-applications-named-routes) are constructed using a table as a property name.
 
 ### URL Parameters
 
@@ -74,10 +94,10 @@ named. The value of the splat is placed into `@params.splat`
 
 ### The Action
 
-An action is the function that is called in reponse to a route matching the
-URL. In the above example it uses a fat arrow, `=>`, so you might think that
-`self` is an instance of application. It's actually an instance of the
-`Request`, a class that abstracts the request from Nginx.
+An action is the function that is called in reponse to a route matching the URL
+of a request. In the above example it uses a fat arrow, `=>`, so you might
+think that `self` is an instance of application. It's actually an instance of
+`Request`, a class that's used to represent the current requerst.
 
 As we've already seen, the request holds all the parameters in `@params`.
 
@@ -87,11 +107,14 @@ We can the get the distinct parameters types using `@GET`, `@POST`, and
 We can also access the instance of the application with `@app`, and the raw
 request and response with `@req` and `@res`.
 
+You should treat `@app` as read only because the instance is shared among many
+requests.
+
 ### Named Routes
 
-It's useful in websites to give names to your routes so when you need to
-generate URLs in other parts of you application you don't have to manually
-construct them.
+It's useful to give names to your routes so links to other pages can be
+generated just by knowing the name of the page instead of hard-coding the
+structure of the URL
 
 If the key of the action is a table with a single pair, then the key of that
 table is the name and the value is the pattern. MoonScript gives us convenient
@@ -116,6 +139,8 @@ of this is setting up the user session. We can declare a before filter, or a
 function that runs before every action, like so:
 
 ```moon
+lapis = require "lapis"
+
 class App extends lapis.Application
   @before_filter =>
     if @session.user
@@ -133,6 +158,8 @@ For example we can cancel the action and redirect to another page if some
 condition is not met:
 
 ```moon
+lapis = require "lapis"
+
 class App extends lapis.Application
   @before_filter =>
     unless user_meets_requirements!
@@ -142,6 +169,9 @@ class App extends lapis.Application
     "Welcome in"
 ```
 
+> `@write` is what handles the return value of an action, so the same things you
+> can return in an action can be passed to `@write`
+
 ### Handling HTTP verbs
 
 It's common to have a single action do different things depending on the HTTP
@@ -150,6 +180,7 @@ verb. Lapis comes with some helpers to make writing these actions simple.
 perform when the action receives that verb.
 
 ```moon
+lapis = require "lapis"
 import respond_to from require "lapis.application"
 
 class App extends lapis.Application
@@ -168,6 +199,8 @@ The same semantics of [before filters](#lapis-applications-before-filters)
 apply, so if you call `@write` then the rest of the action will not get run.
 
 ```moon
+lapis = require "lapis"
+
 class App extends lapis.Application
   "/edit_user/:id": respond_to {
     before: =>
@@ -210,7 +243,7 @@ We can include this application into our main one:
 lapis = require "lapis"
 
 class extends lapis.Application
-  @include require "applications.users"
+  @include "applications.users"
 
   [index: "/"]: =>
     @html ->
@@ -225,15 +258,6 @@ leaving the original untouched.
 Before filters of the sub-application are kept associated with the actions from
 that application.
 
-In addition to passing in an actual application object, you can also pass in a
-string and it will `require`d automatically. The above include statement could
-be rewritten as:
-
-```moon
-class extends lapis.Application
-  @include "applications.users"
-  -- ...
-```
 
 `include` takes an optional second argument, a table of options. The following
 options are available:
@@ -246,7 +270,7 @@ route and its URL are different:
 
 ```moon
 class extends lapis.Application
-  @include require("applications.users"), path: "/users", name: "user_"
+  @include "applications.users", path: "/users", name: "user_"
 
   "/": =>
     @url_for("user_login") -- returns "/users/login"

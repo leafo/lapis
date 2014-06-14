@@ -144,7 +144,9 @@ method on your application instance.
 
 We use the `render` parameter of our action's return value to instruct what
 template to use when rendering the page. In this case `"index"` refers to the
-file at `views.index`.
+module with the name `views.index`. `etalua` injects itself into Lua's
+`require` method and so when the module `views.index` is loaded, an attempt to
+read and parse the file `views/index.etlua` is made.
 
 Running the server and navigating to it in the browser should show our rendered
 template.
@@ -164,9 +166,9 @@ in our view:
 ```lua
 -- my_app.lua
 local lapis = require "lapis"
-require "lapis.features.etlua"
 
 local app = lapis.Application()
+app:enable("etlua")
 
 app:get("/", function(self)
   self.my_favorite_things = {
@@ -191,7 +193,7 @@ return app
 </ol>
 ```
 
-### Creating a layout
+### Creating a Layout
 
 A layout is a separate shared template that wraps the content of every page.
 Lapis comes with a basic layout to get you started but you'll most likely want
@@ -209,18 +211,39 @@ We'll write the layout in etlua just like our views. Create `views/layout.etlua`
 </head>
 <body>
   <h1>Greetings</h1>
-  <%- content_for("inner") %>
+  <% content_for("inner") %>
 </body>
 </html>
 ```
+
+The `content_for` function is a special function built into templates that
+allows you to send data from a view to a layout. Lapis puts the rendered result
+of the view into the content variable named `inner`. You'll note that we don't
+need to use any of the etlua tags that write into the page. This is because
+`content_for` efficiently puts its result directly into the output buffer.
+
+Any other variables and helper functions that would normally be available in a
+view are also available in the layout.
+
+Now that the layout is written it can be assigned to the application:
+
+```lua
+local app = lapis.Application()
+app:enable("etlua")
+app.layout = require "views.layout"
+
+-- the rest of the application...
+```
+
+The syntax is slightly different than rendering a view. Instead of assigning a
+template name to the `layout` field, we assign the actual template object. This
+can be obtained by just requiring it by the module name: `"views.layout"`. As
+described above, etlua takes care of coverting the `.etlua` file into something
+usable by Lua.
 
 
 [1]: https://github.com/leafo/etlua
 [2]: getting_started.html
 [3]: configuration.html
-
-
-
-
 
 
