@@ -1,5 +1,5 @@
 
-## Configuration and Environments
+# Configuration and Environments
 
 Lapis is designed to run your server in different configurations called
 environments. For example you might have a development configuration with a
@@ -17,7 +17,7 @@ By default the environment is `development`. The environment name only affects
 what configuration is loaded. This has absolutely no effect if you don't have any
 configurations, so let's create some.
 
-### Creating Configurations
+## Creating Configurations
 
 Whenever Lapis executes code that depends on a configuration it attempts to
 load the module `"config"`.  The `"config"` module is where we define our
@@ -86,7 +86,7 @@ about the syntax have a look at the respective guide.
 * [MoonScript configuration syntax][0]
 * [Lua configuration syntax][0]
 
-### Configurations and Nginx
+## Configurations and Nginx
 
 The values in the configuration are used when compiling `nginx.conf`.
 Interpolated Nginx configuration variables are case insensitive. They are
@@ -105,7 +105,7 @@ When this is compiled, first the environment variable
 `LAPIS_WORKER_CONNECTIONS` is checked. If it doesn't have a value then the
 configuration of the current environment is checked for `worker_connections`.
 
-### Accessing Configuration From Application
+## Accessing Configuration From Application
 
 The configuration is also made available in the application. We can get access
 to the configuration table like so:
@@ -131,7 +131,7 @@ print(config._name) -- development, production, etc...
 print config._name -- development, production, etc...
 ```
 
-### Default Configuration Values
+## Default Configuration Values
 
 All configurations come with some default values, these are them in table
 syntax:
