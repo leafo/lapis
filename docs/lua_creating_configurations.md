@@ -1,3 +1,5 @@
+<div class="override_lang"></div>
+
 # Lua Configuration Syntax
 
 ## Configuration Example

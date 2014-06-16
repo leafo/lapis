@@ -1,3 +1,5 @@
+<div class="override_lang"></div>
+
 # Creating a Lapis Application with Lua
 
 ## Generating a New Project
