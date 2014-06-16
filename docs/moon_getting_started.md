@@ -1,4 +1,6 @@
-### A Simple MoonScript Application
+# Creating a Lapis Application with MoonScript
+
+## Creating a Basic Application
 
 Instead of making `.lua` files we'll actually make `.moon` and let the
 [MoonScript compiler][1] automatically generate the Lua file.

@@ -1,3 +1,4 @@
+# Requests and Actions
 
 ## Request Object
 
@@ -165,9 +166,9 @@ config "development", ->
   secret "this is my secret string 123456"
 ```
 
-### Methods
+## Request Object Methods
 
-####  `write(things...)`
+###  `write(things...)`
 
 Writes all of the arguments. A different actions is done depending on the type
 of each argument.
@@ -177,7 +178,12 @@ of each argument.
 * `table` -- key/value pairs are assigned into <span class="for_moon">`@options`</span><span class="for_lua">`self.options`</span>, all other values are recursively passed to `write`
 
 
-#### `url_for(name_or_obj, params)`
+In most circumstances it is unnecessary to call write as the return value of an
+action is automatically passed to write. In before filters, write has the dual
+purpose of writing to the output and cancelling the any further actions from
+running.
+
+### `url_for(name_or_obj, params)`
 
 Generates a URL for `name_or_obj`.
 
@@ -199,6 +205,7 @@ end)
 
 ```moon
 [user_data: "/data/:user_id/:data_field"]: =>
+  "hi"
 
 "/": =>
   -- returns: /data/123/height
@@ -233,7 +240,7 @@ class Users extends Model
   url_key: (route_name) => @id
 ```
 
-#### `build_url(path, [options])`
+### `build_url(path, [options])`
 
 Builds an absolute URL for the path. The current request's URI is used to build
 the URL.

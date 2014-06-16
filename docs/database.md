@@ -64,7 +64,7 @@ used within the context of a sub-request.
 
 You're now ready to start making queries.
 
-## Making A Query
+## Making a Query
 
 There are two ways to make queries. The first way is to use the raw query
 interface, a collection of functions to help you write SQL.
@@ -109,11 +109,9 @@ local db = require("lapis.db")
 db = require "lapis.db"
 ```
 
-### Functions
-
 The `db` module provides the following functions:
 
-#### `query(query, params...)`
+### `query(query, params...)`
 
 Performs a raw query. Returns the result set if successful, returns `nil` if
 failed.
@@ -147,7 +145,7 @@ INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 > get the error message in your code. You can however see the error in the
 > logs.
 
-#### `select(query, params...)`
+### `select(query, params...)`
 
 The same as `query` except it appends `"SELECT"` to the front of the query.
 
@@ -163,7 +161,7 @@ res = db.select "* from hello where active = ?", db.FALSE
 SELECT * from hello where active = FALSE
 ```
 
-#### `insert(table, values, returning...)`
+### `insert(table, values, returning...)`
 
 Inserts a row into `table`. `values` is a Lua table of column names and values.
 
@@ -204,7 +202,7 @@ res = db.insert "some_other_table", {
 INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
 ```
 
-#### `update(table, values, conditions, params...)`
+### `update(table, values, conditions, params...)`
 
 Updates `table` with `values` on all rows that match `conditions`.
 
@@ -249,7 +247,7 @@ db.update "the_table", {
 UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
 ```
 
-#### `delete(table, conditions, params...)`
+### `delete(table, conditions, params...)`
 
 Deletes rows from `table` that match `conditions`.
 
@@ -279,7 +277,7 @@ db.delete "cats", "name = ?", "Gato"
 DELETE FROM "cats" WHERE name = 'Gato'
 ```
 
-#### `raw(str)`
+### `raw(str)`
 
 Returns a special value that will be inserted verbatim into query without being
 escaped:
@@ -305,7 +303,7 @@ UPDATE "the_table" SET "count" = count + 1
 SELECT * from another_table where x = now()
 ```
 
-#### `escape_literal(value)`
+### `escape_literal(value)`
 
 Escapes a value for use in a query. A value is any type that can be stored in a
 column. Numbers, strings, and booleans will be escaped accordingly.
@@ -323,7 +321,7 @@ res = db.query "select * from hello where id = #{escaped}"
 `escape_literal` is not appropriate for escaping column or table names. See
 `escape_identifier`.
 
-#### `escape_identifier(str)`
+### `escape_identifier(str)`
 
 Escapes a string for use in a query as an identifier. An identifier is a column
 or table name.
@@ -438,7 +436,7 @@ class Followings extends Model
   @primary_key: { "user_id", "followed_user_id" }
 ```
 
-### Finding A Row
+### Finding a Row
 
 For the following examples assume we have the following models:
 
@@ -626,7 +624,7 @@ user = Users\create {
 INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
 ```
 
-### Updating A Row
+### Updating a Row
 
 Instances of models have the `update` method for updating the row. The values
 of the primary keys are used to uniquely identify the row for updating.
@@ -681,7 +679,7 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 > The table argument can also take positional values, which are treated the
 > same as the variable argument form.
 
-### Deleting A Row
+### Deleting a Row
 
 Just call `delete` on the instance:
 
@@ -1072,7 +1070,7 @@ SELECT COUNT(*) as c from "users" where group_id = 123
 Lapis comes with a collection of tools for creating your database schema inside
 of the `lapis.db.schema` module.
 
-### Creating And Dropping Tables
+### Creating and Dropping Tables
 
 #### `create_table(table_name, { table_declarations... })`
 

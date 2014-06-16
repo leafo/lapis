@@ -1,5 +1,7 @@
 # Lua Configuration Syntax
 
+## Configuration Example
+
 Lapis' configuration module gives you support for merging tables recursively.
 
 For example we might define a base configuration, then override some values in
@@ -7,6 +9,7 @@ the more specific configuration declarations:
 
 
 ```lua
+-- config.moon
 local config = require("lapis.config")
 
 config({"development", "production"}, {

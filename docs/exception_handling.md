@@ -1,12 +1,34 @@
-## Exception Handling
+# Exception Handling
 
-Lapis comes with a set of exception handling routines for recovering from errors
-and displaying something appropriate. We use the `capture_errors` helper to
-capture any errors and run an error handler.
+## The Kinds of Errors
 
-When we refer to exceptions we are talking about messages thrown explicitly by
-the programmer. This doesn't include runtime errors. You should use `pcall` if
-you want to capture runtime errors as you would normally do in Lua.
+Lapis makes a distinction between two kinds of errors: Recoverable and
+non-recoverable errors. Errors thrown by Lua's runtime during executuion or
+calls to  `error` are considered non-recoverable. (This also includes the Lua
+build in function `assert`)
+
+Because non-recoverable errors aren't expected to be captured by the user,
+Lapis catches them and prints an exception message to the browser. Any action
+that may have been running is aborted and Lapis prints a special view showing
+the stack trace along with setting the status to `500`.
+
+These kinds of errors typically are an indicator of a bug or other serious
+issue and should be fixed.
+
+Recoverable errors are a user controlled way of aborting the execution of an
+action to run a special error handling function. They are implemented using
+coroutines instead of Lua's error system.
+
+Examples include non-valid inputs from users, or missing records from the
+database.
+
+## Capturing Recoverable Errors
+
+The `capture_errors` helper is used wrap an action such that it can capture
+errors and run an error handler.
+
+This does not capture runtime errors. You should use `pcall` if you
+want to capture runtime errors as you would normally do in Lua.
 
 Lua doesn't have the concept of exceptions like most other languages. Instead
 Lapis creates an exception handling system using coroutines. We must define the

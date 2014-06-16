@@ -1,9 +1,11 @@
+# MoonScript Configuration Syntax
 
-## MoonScript Configuration Syntax
+## Configuration Example
 
-The MoonScript config builder syntax uses function calls to define variables.
-The advantage to this approach over using a Lua table literal is that you can
-have logic surrounding your assignments.
+The MoonScript configuration builder syntax uses function calls to define
+variables. The advantage to this approach over using a Lua table literal is
+that you can have logic surrounding your assignments. You can also freely mix
+regular table objects.
 
 Here's an example of the configuration DSL (domain specific language) and the
 table it generates:

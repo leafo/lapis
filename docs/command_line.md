@@ -1,4 +1,6 @@
-## Command Line Interface
+# Command Line Interface
+
+## Command Reference
 
 The Lapis command line interface gives you a couple of handful tools for
 working with Lapis projects.

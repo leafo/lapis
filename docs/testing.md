@@ -1,4 +1,4 @@
-## Testing
+# Testing
 
 Lapis comes with utilities for mocking requests so you can test your
 application using unit tests that run outside of Nginx.
@@ -6,19 +6,22 @@ application using unit tests that run outside of Nginx.
 You are free to use any testing framework you like, but in these examples we'll
 be using [Busted](http://olivinelabs.com/busted/).
 
-### Mocking A Request
+## Mocking a Request
 
-Before you can test an application it must be available in a module that can be
-`require`d. This means you should separate the call to `lapis.serve` and the
-definition of your application class. It's recommended to put a single
-application in it's own file and then have your Nginx Lua/MoonScript entry code
-require that model.
+Mocking a request simulates a request to your application, bypassing any real
+HTTP requests and Nginx. If you want to test against a running server scroll
+down to the next section.
 
-In these examples we'll just define the application in the same file for
-simplicity.
+In order to test your application it should be a Lua module that can be
+`require`d without any side effects. Ideally you'll have a separate file for
+each application and you can get the application class just by loading the
+module.
 
-The method we are interested in for mocking a request is called `mock_request`
-defined in `lapis.spec.request`:
+In these examples we'll define the application in the same file as the tests
+for simplicity.
+
+A request can be mocked using the `mock_request` function defined in
+`lapis.spec.request`:
 
 ```lua
 local mock_request = require("lapis.spec.request").mock_request
@@ -32,7 +35,8 @@ import mock_request from require "lapis.spec.request"
 status, body, headers = mock_request(app, url, options)
 ```
 
-For example, to test a basic application with Busted we could do:
+For example, to test a basic application with
+[Busted](http://olivinelabs.com/busted/) we could do:
 
 ```lua
 local lapis = require("lapis.application")
@@ -100,7 +104,7 @@ r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
 r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
 ```
 
-### Using The Test Server
+## Using the Test Server
 
 While mocking a request is useful, it doesn't give you access to the entire
 stack that your application uses. For that reason you can spawn up a *test*
@@ -172,7 +176,7 @@ For example, we could write a basic unit test for a model:
     assert Users\create name: "leafo"
 ```
 
-#### `request(path, options={})`
+### `request(path, options={})`
 
 To make HTTP request to the test server you can use the helper function
 `request` found in `"lapis.spec.server"`. For example we might write a test to

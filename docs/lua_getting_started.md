@@ -1,5 +1,7 @@
 # Creating a Lapis Application with Lua
 
+## Generating a New Project
+
 If you haven't already, read through the [generic getting started guide][2] for
 information on creating a new project skeleton along with details on OpenResty,
 Nginx configurations, and the `lapis` command.

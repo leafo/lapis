@@ -1,6 +1,6 @@
-## Utilities
+# Utilities
 
-### Methods
+## Functions
 
 Utility functions are found in:
 
@@ -12,52 +12,52 @@ local util = require("lapis.util")
 util = require "lapis.util"
 ```
 
-#### `unescape(str)`
+### `unescape(str)`
 
 URL unescapes string
 
-#### `escape(str)`
+### `escape(str)`
 
 URL escapes string
 
-#### `escape_pattern(str)`
+### `escape_pattern(str)`
 
 Escapes string for use in Lua pattern
 
-#### `parse_query_string(str)`
+### `parse_query_string(str)`
 
 Parses query string into a table
 
-#### `encode_query_string(tbl)`
+### `encode_query_string(tbl)`
 
 Converts a key,value table into a query string
 
-#### `underscore(str)`
+### `underscore(str)`
 
 Converst CamelCase to camel_case.
 
-#### `slugify(str)`
+### `slugify(str)`
 
 Converts a string to a slug suitable for a URL. Removes all whitespace and
 symbols and replaces them with `-`.
 
-#### `uniquify(tbl)`
+### `uniquify(tbl)`
 
 Iterates over array table `tbl` appending all unique values into a new array
 table, then returns the new one.
 
-####  `trim(str)
+###  `trim(str)
 
 Trims the whitespace off of both sides of a string.
 
-#### `trim_all(tbl)`
+### `trim_all(tbl)`
 
 Trims the whitespace off of all values in a table. Uses `pairs` to traverse
 every key in the table.
 
 The table is modified in place.
 
-#### `trim_filter(tbl, [{keys ...}], [empty_val=nil])`
+### `trim_filter(tbl, [{keys ...}], [empty_val=nil])`
 
 Trims the whitespace off of all values in a table. The entry is removed from
 the table if the result is an empty string.
@@ -109,11 +109,11 @@ trim_filter unknown_input, {"username", "description"}, db.NULL
 -- }
 ```
 
-#### `to_json(obj)`
+### `to_json(obj)`
 
 Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 
-####  `from_json(str)`
+###  `from_json(str)`
 
 Convers JSON to table, a direct wrapper around Lua CJSON's `decode`.
 
@@ -129,31 +129,31 @@ local encoding = require("lapis.util.encoding")
 encoding = require "lapis.util.encoding"
 ```
 
-#### `encode_base64(str)`
+### `encode_base64(str)`
 
 Base64 encodes a string.
 
-#### `decode_base64(str)`
+### `decode_base64(str)`
 
 Base64 decodes a string.
 
-#### `hmac_sha1(secret, str)`
+### `hmac_sha1(secret, str)`
 
 Calculates the hmac-sha1 digest of `str` using `secret`. Returns a binary
 string.
 
-#### `encode_with_secret(object, secret=config.secret)`
+### `encode_with_secret(object, secret=config.secret)`
 
 Encodes a Lua object and generates a signature for it. Returns a single string
 that contains the encoded object and signature.
 
-#### `decode_with_secret(msg_and_sig, secret=config.secret)`
+### `decode_with_secret(msg_and_sig, secret=config.secret)`
 
 Decodes a string created by `encode_with_secret`. The decoded object is only
 returned if the signature is correct. Otherwise returns `nil` and an error
 message. The secret must match what was used with `encode_with_secret`.
 
-#### `autoload(prefix, tbl={})`
+### `autoload(prefix, tbl={})`
 
 Makes it so accessing an unset value in `tbl` will run a `require` to search
 for the value. Useful for autoloading components split across many files.
@@ -175,7 +175,7 @@ models.HelloWorld --> will require "models.hello_world"
 models.foo_bar --> will require "models.foo_bar"
 ```
 
-### CSRF Protection
+## CSRF Protection
 
 CSRF protection provides a way to prevent fraudulent requests that originate
 from other sites that are not your application. The common approach is to
@@ -265,25 +265,25 @@ local csrf = require("lapis.csrf")
 csrf = require "lapis.csrf"
 ```
 
-####  `generate_token(req, key=nil, expires=os.time! + 28800)`
+###  `generate_token(req, key=nil, expires=os.time! + 28800)`
 
 Generates a new CSRF token using the session secret. `key` is an optional piece
 of data you can associate with the request. The token will expire in 8 hours by
 default.
 
-####  `validate_token(req, key)`
+###  `validate_token(req, key)`
 
 Valides the CSRF token located in `req.params.csrf_token`. If the token has a
 key it will be validated against `key`. Returns `true` if it's valid, or `nil`
 and an error message if it's invalid.
 
-####  `assert_token(...)`
+###  `assert_token(...)`
 
 First calls `validate_token` with same arguments, then calls `assert_error` if
 validation fails.
 
 
-### Making HTTP Requests
+## Making HTTP Requests
 
 Lapis comes with a built in module for making asynchronous HTTP requests. The
 way it works is by using the Nginx `proxy_pass` directive on an internal
@@ -383,7 +383,7 @@ class extends lapis.Application
     }
 ```
 
-#### `simple(req, body)`
+### `simple(req, body)`
 
 Performs an HTTP request using the internal `/proxy` location.
 
@@ -406,14 +406,14 @@ parameters. I takes the following keys:
  * `headers` -- a table of request headers to set
 
 
-#### `request(url_or_table, body)`
+### `request(url_or_table, body)`
 
 Implements a subset of [Lua Socket's
 `http.request`](http://w3.impa.br/~diego/software/luasocket/http.html#request).
 
 Does not support `proxy`, `create`, `step`, or `redirect`.
 
-### Caching
+## Caching
 
 Lapis comes with a simple memory cache for caching the entire result of an
 action keyed on the parameters it receives. This is useful for speeding up the
@@ -433,7 +433,7 @@ lua_shared_dict page_cache 15m;
 
 Now we are ready to start using the caching module, `lapis.cache`.
 
-#### `cached(fn_or_tbl)`
+### `cached(fn_or_tbl)`
 
 Wraps an action to use the cache.
 
@@ -510,7 +510,7 @@ class extends lapis.Application
   }
 ```
 
-#### `delete(key, [dict_name="page_cache"])`
+### `delete(key, [dict_name="page_cache"])`
 
 Deletes an entry from the cache. Key can either be a plain string, or a tuple
 of `{path, params}` that will be encoded as the key.
@@ -526,11 +526,11 @@ cache = require "lapis.cache"
 cache.delete { "/hello", { thing: "world" } }
 ```
 
-#### `delete_all([dict_name="page_cache"])`
+### `delete_all([dict_name="page_cache"])`
 
 Deletes all entires from the cache.
 
-#### `delete_path(path, [dict_name="page_cache"])`
+### `delete_path(path, [dict_name="page_cache"])`
 
 Deletes all entries for a specific path.
 
@@ -544,7 +544,7 @@ cache = require "lapis.cache"
 cache.delete_path "/hello"
 ```
 
-### File Uploads
+## File Uploads
 
 File uploads can be handled with a multipart form and accessing the file from
 the <span class="for_moon">`@params`</span><span
@@ -621,7 +621,7 @@ through the
 directive. It's only 1 megabyte by default, so if you plan to allow uploads
 greater than that you should set a new value in your Nginx configuration.
 
-### Application Helpers
+## Application Helpers
 
 The following functions are part of the `lapis.application` module:
 
@@ -633,7 +633,7 @@ local app_helpers = require("lapis.application")
 application = require "lapis.application"
 ```
 
-#### `fn = respond_to(verbs_to_fn={})`
+### `fn = respond_to(verbs_to_fn={})`
 
 `verbs_to_fn` is a table of functions that maps a HTTP verb to a corresponding
 function. Returns a new function that dispatches to the correct function in the
@@ -659,7 +659,7 @@ other action. If <span class="for_moon">`@write`</span><span
 class="for_lua">`self.write`</span> is called inside the before function then
 the regular handler will not be called.
 
-#### `safe_fn = capture_errors(fn_or_tbl)`
+### `safe_fn = capture_errors(fn_or_tbl)`
 
 Wraps a function to catch errors sent by `yield_error` or `assert_error`. See
 [Exception Handling][0] for more information.
@@ -682,7 +682,7 @@ When an error is yielded then the <span class="for_moon">`@errors`</span><span
 class="for_lua">`self.errors`</span> variable is set on the current request and
 the error handler is called.
 
-#### `safe_fn = capture_errors_json(fn)`
+### `safe_fn = capture_errors_json(fn)`
 
 A wrapper for `capture_errors` that passes in the following error handler:
 
@@ -694,17 +694,17 @@ function(self) return { json = { errors = self.errors } } end
 => { json: { errors: @errors } }
 ```
 
-#### `yield_error(error_message)`
+### `yield_error(error_message)`
 
 Yields a single error message to be captured by `capture_errors`
 
-#### `obj, msg, ... = assert_error(obj, msg, ...)`
+### `obj, msg, ... = assert_error(obj, msg, ...)`
 
 Works like Lua's `assert` but instead of triggering a Lua error it triggers an
 error to be captured by `capture_errors`
 
 
-#### `wrapped_fn = json_params(fn)`
+### `wrapped_fn = json_params(fn)`
 
 Return a new function that will parse the body of the request as JSON and
 inject it into `@params` if the `content-type` is set to `application/json`.

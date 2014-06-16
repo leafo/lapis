@@ -1,4 +1,4 @@
-## Lapis Console
+# Lapis Console
 
 [Lapis Console][1] is a separate project that adds an interactive console to
 your web application. Because Lapis runs inside of the Nginx loop, it's not
@@ -15,9 +15,9 @@ Install through LuaRocks:
 $ luarocks install --server=http://rocks.moonscript.org lapis-console
 ```
 
-### Creating A Console
+## Creating A Console
 
-#### `console.make([opts])`
+### `console.make([opts])`
 
 Lapis console provides an action that you can insert into your application to a
 route of your choosing:
@@ -54,7 +54,7 @@ every environment, or you can name an environment.
 > destroy your application and compromise your system if given access.
 
 
-### Tips
+## Tips
 
 The console lets your write and execute a MoonScript program. Multiple lines
 are supported.

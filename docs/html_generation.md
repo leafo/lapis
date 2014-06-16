@@ -1,6 +1,6 @@
-## HTML Generation
+# HTML Generation
 
-### HTML In Actions
+## HTML In Actions
 
 If we want to generate HTML directly in our action we can use the `@html`
 method:
@@ -13,10 +13,10 @@ method:
       text "Welcome to my site!"
 ```
 
-HTML templates are written directly as MoonScript code. This is a very powerful
-feature (inspired by [Erector](http://erector.rubyforge.org/)) that gives us
-the ability to write templates with high composability and also all the
-features of MoonScript. No need to learn any goofy templating syntax with
+HTML templates can be  written directly as MoonScript code. This is a very
+powerful feature (inspired by [Erector](http://erector.rubyforge.org/)) that
+gives us the ability to write templates with high composability and also all
+the features of MoonScript. No need to learn any goofy templating syntax with
 arbitrary restrictions.
 
 The `@html` method overrides the environment of the function passed to it.
@@ -55,7 +55,7 @@ to call `element "div"`.
 > If you want to create a `<table>` or `<select>` tag you'll need to use `element` because Lua
 > uses those names in the built-in modules.
 
-### HTML Widgets
+## HTML Widgets
 
 The preferred way to write HTML is through widgets. Widgets are classes who are
 only concerned with outputting HTML. They use the same syntax as the `@html`
@@ -171,7 +171,7 @@ You should avoid rendering widgets manually when possible. When in an action
 use the `render` [request option](#request-object-request-options). When in
 another widget use the `widget` helper function.
 
-### Layouts
+## Layouts
 
 Whenever an action is rendered normally the result is inserted into the
 current layout. The layout is just another widget, but it is used across many
@@ -221,9 +221,9 @@ class extends lapis.Application
 As demonstrated in the example, passing false will prevent any layout from
 being rendered.
 
-### Widget Methods
+## Widget Methods
 
-#### `@@include(other_class)`
+### `@@include(other_class)`
 
 Class method that copies the methods from another class into this widget.
 Useful for mixin in shared functionality across multiple widgets.
@@ -244,7 +244,7 @@ class SomeWidget extends html.Widget
 ```
 
 
-#### `@content_for(name, [content])`
+### `@content_for(name, [content])`
 
 `content_for` is used for sending HTML or strings from the view to the layout.
 You've probably already seen `@content_for "inner"` if you've looked at
@@ -290,7 +290,7 @@ use a builder function in conjunction with the `raw` function:
   raw "<pre>this wont' be escaped</pre>"
 ```
 
-#### `@has_content_for(name)`
+### `@has_content_for(name)`
 
 Checks to see if content for `name` is set.
 
@@ -304,13 +304,13 @@ class MyView extends Widget
         text "default content"
 ```
 
-### HTML Module
+## HTML Module
 
 ```moon
 html = require "lapis.html"
 ```
 
-#### `render_html(fn)`
+### `render_html(fn)`
 
 Runs the function, `fn` in the HTML rendering context as described above.
 Returns the resulting HTML. The HTML context will automatically convert any
@@ -325,7 +325,7 @@ print render_html ->
     strong "Hello!"
 ```
 
-#### `escape(str)`
+### `escape(str)`
 
 Escapes any HTML special characters in the string. The following are escaped:
 

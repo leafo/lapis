@@ -1,4 +1,6 @@
-## Input validation
+# Input Validation
+
+## Example Validation
 
 Lapis comes with a set of validators for working with external inputs. Here's a
 quick example:
@@ -64,7 +66,7 @@ used as the validation failure error message instead of the default generated
 one. Because of how Lua tables work, it can also be provided after the
 validation functions as demonstrated in the example above.
 
-### Validation Functions
+## Validation Functions
 
 * `exists: true` -- check if the value exists and is not an empty string
 * `file_exists: true` -- check if the value is a file upload
@@ -78,7 +80,7 @@ validation functions as demonstrated in the example above.
 * `one_of: {A, B, C, ...}` -- value is equal to one of the elements in the array table
 
 
-### Creating A Custom Validator
+## Creating a Custom Validator
 
 Custom validators can be defined like so:
 
@@ -118,7 +120,7 @@ class App extends lapis.Application
     }
 ```
 
-### Manual Validation
+## Manual Validation
 
 In addition to `assert_valid` there is one more useful validation function:
 
