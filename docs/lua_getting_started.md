@@ -1,4 +1,6 @@
-<div class="override_lang"></div>
+title: Creating a Lapis Application with Lua
+--
+<div class="override_lang" data-lang="lua"></div>
 
 # Creating a Lapis Application with Lua
 

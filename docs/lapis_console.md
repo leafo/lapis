@@ -1,3 +1,5 @@
+title: Lapis Console
+--
 # Lapis Console
 
 [Lapis Console][1] is a separate project that adds an interactive console to

@@ -1,16 +1,23 @@
+title: Testing
+--
 # Testing
 
-Lapis comes with utilities for mocking requests so you can test your
-application using unit tests that run outside of Nginx.
+Lapis comes with utilities for handling two types of testing.
+
+The first type is request mocking. Mocking a request simulates a HTTP request
+to your application, bypassing any real HTTP requests and Nginx. The advantage
+of this method is that it's faster and errors happen within the test process.
+
+The second type uses the test server. The test server is a temporary Nginx
+server spawned for the duration of your tests that allows you to issue full
+HTTP requests. The advantage is you can test both Nginx configuration and your
+application at the same time. It very closely resembles how your application
+will run in production.
 
 You are free to use any testing framework you like, but in these examples we'll
 be using [Busted](http://olivinelabs.com/busted/).
 
 ## Mocking a Request
-
-Mocking a request simulates a request to your application, bypassing any real
-HTTP requests and Nginx. If you want to test against a running server scroll
-down to the next section.
 
 In order to test your application it should be a Lua module that can be
 `require`d without any side effects. Ideally you'll have a separate file for

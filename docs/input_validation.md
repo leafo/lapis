@@ -1,3 +1,5 @@
+title: Input Validation
+--
 # Input Validation
 
 ## Example Validation

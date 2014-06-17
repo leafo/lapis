@@ -1,3 +1,5 @@
+title: MoonScript Configuration Syntax
+--
 <div class="override_lang"></div>
 
 # MoonScript Configuration Syntax
