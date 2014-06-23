@@ -110,7 +110,15 @@ describe "lapis.etlua", ->
 
     it "should let etlua call render helper", ->
       tpl = EtluaWidget\load [[before<% render("spec.templates.moon_test") %>after]]
+      w = tpl!
       assert.same [[before<div class="greeting">hello world</div>after]],
         tpl\render_to_string!
 
+    it "should pass arguments to sub widget", ->
+      outer = assert EtluaWidget\load [[hello <% widget(Inner {color = "blue" }) %>]]
+      inner = assert EtluaWidget\load [[the color is <%= color %>.]]
+
+      w = outer { Inner: inner, color: "green" }
+      out = w\render_to_string!
+      assert.same [[hello the color is blue.]], out
 
