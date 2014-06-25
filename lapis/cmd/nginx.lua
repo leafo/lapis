@@ -16,19 +16,35 @@ do
     ""
   }
   local nginx_path
+  local is_openresty
+  is_openresty = function(path)
+    local cmd = tostring(path) .. " -v 2>&1"
+    local handle = io.popen(cmd)
+    local out = handle:read()
+    handle:close()
+    local matched = out:match("^nginx version: ngx_openresty/") or out:match("^nginx version: openresty/")
+    if matched then
+      return path
+    end
+  end
   find_nginx = function()
     if nginx_path then
       return nginx_path
     end
+    do
+      local to_check = os.getenv("LAPIS_OPENRESTY")
+      if to_check then
+        if is_openresty(to_check) then
+          nginx_path = to_check
+          return nginx_path
+        end
+      end
+    end
     for _index_0 = 1, #nginx_search_paths do
       local prefix = nginx_search_paths[_index_0]
-      local cmd = tostring(prefix) .. tostring(nginx_bin) .. " -v 2>&1"
-      local handle = io.popen(cmd)
-      local out = handle:read()
-      handle:close()
-      local matched = out:match("^nginx version: ngx_openresty/") or out:match("^nginx version: openresty/")
-      if matched then
-        nginx_path = tostring(prefix) .. tostring(nginx_bin)
+      local to_check = tostring(prefix) .. tostring(nginx_bin)
+      if is_openresty(to_check) then
+        nginx_path = to_check
         return nginx_path
       end
     end

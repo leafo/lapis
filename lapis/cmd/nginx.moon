@@ -17,18 +17,31 @@ find_nginx = do
   }
 
   local nginx_path
+
+  -- check if the path is openresty binary
+  is_openresty = (path) ->
+    cmd = "#{path} -v 2>&1"
+    handle = io.popen cmd
+    out = handle\read!
+    handle\close!
+
+    matched = out\match"^nginx version: ngx_openresty/" or out\match"^nginx version: openresty/"
+
+    if matched
+      return path
+
   ->
     return nginx_path if nginx_path
+    if to_check = os.getenv "LAPIS_OPENRESTY"
+      if is_openresty to_check
+        nginx_path = to_check
+        return nginx_path
+
     for prefix in *nginx_search_paths
-      cmd = "#{prefix}#{nginx_bin} -v 2>&1"
-      handle = io.popen cmd
-      out = handle\read!
-      handle\close!
+      to_check = "#{prefix}#{nginx_bin}"
 
-      matched = out\match"^nginx version: ngx_openresty/" or out\match"^nginx version: openresty/"
-
-      if matched
-        nginx_path = "#{prefix}#{nginx_bin}"
+      if is_openresty to_check
+        nginx_path = to_check
         return nginx_path
 
 filters = {

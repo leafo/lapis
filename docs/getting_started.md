@@ -141,6 +141,7 @@ directories for an `nginx` binary. (The last one represents anything in your
 `PATH`)
 
     "/usr/local/openresty/nginx/sbin/"
+    "/usr/local/opt/openresty/bin/"
     "/usr/sbin/"
     ""
 

@@ -62,8 +62,20 @@ Lapis ensures that it runs a version of Nginx that is OpenResty. It will search
 `$PATH` and any common OpenResty installation directories to find the correct
 binary.
 
+Lapis searches the following directories for an installation of OpenResty:
+
+    "/usr/local/openresty/nginx/sbin/"
+    "/usr/local/opt/openresty/bin/"
+    "/usr/sbin/"
+    ""
+
+If you need to manually specify the location of the OpenResty binary you can do
+so with the `LAPIS_OPENRESTY` environment variable:
+
+    LAPIS_OPENRESTY=/home/leafo/bin/openresty lapis server
+
 After finding the correct binary it will run a command similar to this to start
-the server:
+the server (where `nginx` is the path to the located OpenResty installation):
 
 ```bash
 $ nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
