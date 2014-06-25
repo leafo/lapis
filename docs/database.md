@@ -1005,6 +1005,10 @@ preloaded = Posts\paginated [[where category = ?]], "cats", {
 }
 ```
 
+Any additional options sent to `paginated` are passed directly to the
+underlying `select` method call when a page is loaded. For example you can
+provide a `fields` option in order to limit the fields returned by a page.
+
 The paginator has the following methods:
 
 #### `get_all()`
