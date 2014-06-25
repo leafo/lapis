@@ -226,9 +226,9 @@ do
         end
       })
     end,
-    render = function(self, mod_name)
+    render = function(self, mod_name, ...)
       local widget = require(mod_name)
-      return self:render_widget(widget())
+      return self:render_widget(widget(...))
     end,
     render_widget = function(self, w)
       if w.__init and w.__base then
