@@ -88,7 +88,7 @@ describe "lapis.etlua", ->
 
           div class: "etlua", ->
             widget fragment!
-      
+
       w = SomeWidget!
 
       w\include_helper {
@@ -114,6 +114,7 @@ describe "lapis.etlua", ->
       assert.same [[before<div class="greeting">hello world</div>after]],
         tpl\render_to_string!
 
+
     it "should pass arguments to sub widget", ->
       outer = assert EtluaWidget\load [[hello <% widget(Inner {color = "blue" }) %>]]
       inner = assert EtluaWidget\load [[the color is <%= color %>.]]
@@ -121,4 +122,32 @@ describe "lapis.etlua", ->
       w = outer { Inner: inner, color: "green" }
       out = w\render_to_string!
       assert.same [[hello the color is blue.]], out
+
+
+    describe "with loadkit", ->
+      before_each ->
+        require "lapis.features.etlua"
+
+      after_each ->
+        loadkit = require "loadkit"
+        loadkit.unregister "etlua"
+        package.loaded["lapis.features.etlua"] = nil
+
+      it "should render template from loadkit", ->
+        tpl = EtluaWidget\load [[before<% render("spec.templates.etlua_test2") %>after<%= color %>]]
+        w = tpl color: "green"
+
+        out = w\render_to_string!
+        -- TODO: the variable should be inherited into sub template
+        assert.same [[beforeThis is the color: nil.
+aftergreen]], out
+
+      it "should pass arguments to widget with render", ->
+        tpl = EtluaWidget\load [[before<% render("spec.templates.etlua_test2", { color = "blue"}) %>after]]
+        w = tpl color: "green" -- should be overwritten
+
+        out = w\render_to_string!
+        assert.same [[beforeThis is the color: blue.
+after]], out
+
 
