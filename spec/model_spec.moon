@@ -94,6 +94,7 @@ describe "lapis.db.model.", ->
 
   it "should paginate", ->
     query_mock['COUNT%(%*%)'] = {{ c: 127 }}
+    query_mock['BLAH'] = {{ hello: "world"}}
 
     class Things extends Model
 
@@ -114,6 +115,11 @@ describe "lapis.db.model.", ->
     p3 = Things\paginated "", fields: "hello, world", per_page: 12
     p3\get_page 2
 
+    p4 = Things\paginated [[order by BLAH]]
+    iter = p4\each_page!
+    iter!
+    iter!
+
     assert.same {
       'SELECT * from "things" where group_id = 123 order by name asc'
       'SELECT COUNT(*) as c from "things" where group_id = 123 '
@@ -121,6 +127,8 @@ describe "lapis.db.model.", ->
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 30 '
       'SELECT * from "things" order by name asc limit 25 offset 50 '
       'SELECT hello, world from "things" limit 12 offset 12 '
+      'SELECT * from "things" order by BLAH limit 10 offset 0 '
+      'SELECT * from "things" order by BLAH limit 10 offset 10 '
     }, queries
 
   it "should create model", ->

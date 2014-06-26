@@ -269,8 +269,6 @@ class Model
     values._timestamp = true if @@timestamp
     db.update @@table_name!, values, cond
 
-
-
 class Paginator
   per_page: 10
 
@@ -287,6 +285,16 @@ class Paginator
 
     @_clause = db.interpolate_query clause, ...
     @opts = opts
+
+  each_page: (starting_page=1)=>
+    coroutine.wrap ->
+      page = starting_page
+      while true
+        results = @get_page page
+        break unless next results
+        coroutine.yield results, page
+        page += 1
+
 
   get_all: =>
     @.prepare_results @model\select @_clause, @opts

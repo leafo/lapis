@@ -1070,6 +1070,23 @@ users = paginated\total_items!
 SELECT COUNT(*) as c from "users" where group_id = 123
 ```
 
+#### `each_page(starting_page=1)`
+
+Returns an iterator function that can be used to iterate through each page of
+the results. Useful for processing a large query without having the entire
+result set loaded in memory at once.
+
+```lua
+for page_results, page_num in paginated:each_page() do
+  print(page_results, page_num)
+end
+```
+
+```moon
+for page_results, page_num in paginated\each_page!
+  print(page_results, page_num)
+```
+
 ## Database Schemas
 
 Lapis comes with a collection of tools for creating your database schema inside
