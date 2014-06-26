@@ -15,9 +15,11 @@ description = {
 dependencies = {
 	"lua >= 5.1",
 	"ansicolors",
+	"etlua",
+	"loadkit",
 	"lpeg",
 	"luasocket",
-	"lua-cjson",
+	"lua-cjson"
 }
 
 build = {
