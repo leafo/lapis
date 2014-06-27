@@ -1,6 +1,6 @@
 
 test::
-	busted -p _spec.moon$
+	busted
 
 local: build
 	luarocks make --local lapis-dev-1.rockspec

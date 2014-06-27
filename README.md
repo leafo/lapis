@@ -14,7 +14,7 @@ A web framework for Lua/[MoonScript][1].
 Requires [Busted][2] and [MoonScript][1].
 
 ```bash
-make test
+busted
 ```
 
 ## License (MIT)
