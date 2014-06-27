@@ -1,18 +1,21 @@
 
 db = require "lapis.nginx.postgres"
 import Model from require "lapis.db.model"
+import with_query_fn from require "spec.helpers"
 
 time = 1376377000
 
-local old_query_fn, old_date
-describe "lapis.db.model.", ->
+describe "lapis.db.model", ->
   local queries
   local query_mock
+
+  local restore_query
+  local old_date
 
   setup ->
     export ngx = { null: nil }
 
-    old_query_fn = db.set_backend "raw", (q) ->
+    restore_query = with_query_fn (q) ->
       table.insert queries, (q\gsub("%s+", " ")\gsub("[\n\t]", " "))
 
       -- try to find a mock
@@ -28,7 +31,7 @@ describe "lapis.db.model.", ->
 
   teardown ->
     export ngx = nil
-    db.set_backend "raw", old_query_fn
+    restore_query!
     os.date = old_date
 
   before_each ->
