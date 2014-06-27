@@ -84,14 +84,23 @@ describe "lapis.db.model", ->
 
     assert_queries {
       [[SELECT * from "things" where "id" = 'hello' limit 1]]
-      [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
+      {
+        [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
+        [[SELECT * from "things" where "weight" = 120 AND "cat" = TRUE limit 1]]
+      }
       [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
       [[SELECT * from "things" where "id" in ('yeah')]]
       [[SELECT * from "things" where "dad" in (1, 2, 4)]]
       [[SELECT hello from "things" where "id" in (1, 2, 4)]]
       [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
-      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
-      [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
+      {
+        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
+        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
+      }
+      {
+        [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
+        [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
+      }
     }, queries
 
   it "should paginate", ->
@@ -157,8 +166,19 @@ describe "lapis.db.model", ->
 
     assert_queries {
       [[INSERT INTO "things" ("color") VALUES ('blue') RETURNING "id"]]
-      [[INSERT INTO "timed_things" ("hello", "created_at", "updated_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
-      [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
+      {
+        [[INSERT INTO "timed_things" ("hello", "created_at", "updated_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
+        [[INSERT INTO "timed_things" ("created_at", "hello", "updated_at") VALUES ('2013-08-13 06:56:40', 'world', '2013-08-13 06:56:40') RETURNING "id"]]
+        [[INSERT INTO "timed_things" ("created_at", "updated_at", "hello" ) VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'world') RETURNING "id"]]
+
+        [[INSERT INTO "timed_things" ("hello", "updated_at", "created_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
+        [[INSERT INTO "timed_things" ("updated_at", "hello", "created_at") VALUES ('2013-08-13 06:56:40', 'world', '2013-08-13 06:56:40') RETURNING "id"]]
+        [[INSERT INTO "timed_things" ("updated_at", "created_at", "hello" ) VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'world') RETURNING "id"]]
+      }
+      {
+        [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
+        [[INSERT INTO "other_things" ("id_a", "height") VALUES (120, '400px') RETURNING "id_a", "id_b"]]
+      }
     }, queries
 
 
@@ -184,9 +204,18 @@ describe "lapis.db.model", ->
     thing3\update great: true -- need a way to stub date before testing
 
     assert_queries {
-      [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
+      {
+        [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
+        [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12]]
+      }
       [[UPDATE "things" SET "age" = 2000 WHERE "id" IS NULL]]
-      [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "a" = 2 AND "b" = 3]]
+      {
+        [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "a" = 2 AND "b" = 3]]
+        [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3]]
+
+        [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "b" = 3 AND "a" = 2]]
+        [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "b" = 3 AND "a" = 2]]
+      }
     }, queries
 
   it "should delete model", ->
@@ -208,7 +237,10 @@ describe "lapis.db.model", ->
     assert_queries {
       [[DELETE FROM "things" WHERE "id" = 2]]
       [[DELETE FROM "things" WHERE "id" IS NULL]]
-      [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
+      {
+        [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
+        [[DELETE FROM "things" WHERE "key2" = 4821 AND "key1" = 'blah blag']]
+      }
     }, queries
 
 
@@ -225,7 +257,10 @@ describe "lapis.db.model", ->
 
     assert_queries {
       [[SELECT 1 from "things" where "name" = 'world' limit 1]]
-      [[SELECT 1 from "things" where "height" = 10 AND "color" = 'red' limit 1]]
+      {
+        [[SELECT 1 from "things" where "height" = 10 AND "color" = 'red' limit 1]]
+        [[SELECT 1 from "things" where "color" = 'red' AND "height" = 10 limit 1]]
+      }
     }, queries
 
 

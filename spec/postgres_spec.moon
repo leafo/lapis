@@ -74,6 +74,7 @@ tests = {
   {
     -> db.insert "cats", age: 123, name: "catter"
     [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123)]]
+    [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter')]]
   }
 
   {
@@ -273,11 +274,11 @@ describe "lapis.nginx.postgres", ->
 
   for group in *tests
     it "should match", ->
-      input = group[1]!
+      output = group[1]!
       if #group > 2
-        assert.one_of input, { unpack group, 2 }
+        assert.one_of output, { unpack group, 2 }
       else
-        assert.same group[2], input
+        assert.same group[2], output
 
   it "should create index", ->
     old_select = db.select
