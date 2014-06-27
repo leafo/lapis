@@ -1,7 +1,7 @@
 
 db = require "lapis.nginx.postgres"
 import Model from require "lapis.db.model"
-import with_query_fn from require "spec.helpers"
+import with_query_fn, assert_queries from require "spec.helpers"
 
 time = 1376377000
 
@@ -46,7 +46,7 @@ describe "lapis.db.model", ->
     Things\select fields: "hello" -- broke
     Things\select "where id = ?", 1234, fields: "hello, world"
 
-    assert.same {
+    assert_queries {
       'SELECT * from "things" '
       'SELECT * from "things" where id = 1234'
       'SELECT hello from "things" '
@@ -82,8 +82,7 @@ describe "lapis.db.model", ->
 
     Things2\find 1,2
 
-
-    assert.same {
+    assert_queries {
       [[SELECT * from "things" where "id" = 'hello' limit 1]]
       [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
       [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
@@ -123,7 +122,7 @@ describe "lapis.db.model", ->
     iter!
     iter!
 
-    assert.same {
+    assert_queries {
       'SELECT * from "things" where group_id = 123 order by name asc'
       'SELECT COUNT(*) as c from "things" where group_id = 123 '
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 0 '
@@ -156,7 +155,7 @@ describe "lapis.db.model", ->
 
     assert.same { id_a: "hello", id_b: "world", height: "400px"}, thing3
 
-    assert.same {
+    assert_queries {
       [[INSERT INTO "things" ("color") VALUES ('blue') RETURNING "id"]]
       [[INSERT INTO "timed_things" ("hello", "created_at", "updated_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
       [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
@@ -184,7 +183,7 @@ describe "lapis.db.model", ->
     -- thing3\update "what" -- should error set to null
     thing3\update great: true -- need a way to stub date before testing
 
-    assert.same {
+    assert_queries {
       [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
       [[UPDATE "things" SET "age" = 2000 WHERE "id" IS NULL]]
       [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "a" = 2 AND "b" = 3]]
@@ -206,7 +205,7 @@ describe "lapis.db.model", ->
     thing = Things2\load { key1: "blah blag", key2: 4821 }
     thing\delete!
 
-    assert.same {
+    assert_queries {
       [[DELETE FROM "things" WHERE "id" = 2]]
       [[DELETE FROM "things" WHERE "id" IS NULL]]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
@@ -224,7 +223,7 @@ describe "lapis.db.model", ->
 
     assert.same false, Things\check_unique_constraint color: "red", height: 10
 
-    assert.same {
+    assert_queries {
       [[SELECT 1 from "things" where "name" = 'world' limit 1]]
       [[SELECT 1 from "things" where "height" = 10 AND "color" = 'red' limit 1]]
     }, queries
@@ -243,7 +242,7 @@ describe "lapis.db.model", ->
     ThingItems\include_in things, "thing_id", where: { dad: true }
     ThingItems\include_in things, "thing_id", fields: "one, two, three"
 
-    assert.same {
+    assert_queries {
       [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
       [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]]
       [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110) and "dad" = TRUE]]
@@ -277,7 +276,7 @@ describe "lapis.db.model", ->
       thing = Things\load { id: 0, name: "hello" }
       assert.same { nil, "name can't be hello"}, { thing\update "name" }
 
-      assert.same { }, queries
+      assert_queries { }, queries
 
     it "should prevent create for missing field", ->
       class Things extends Model

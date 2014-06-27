@@ -27,4 +27,12 @@ with_query_fn = (q, run) ->
     with run!
       db.set_backend "raw", old_query
 
-{ :with_query_fn }
+assert_queries = (expected, result) ->
+  assert #expected == #result, "number of expected queries does not match numbe received"
+  for i, q in ipairs expected
+    if type(q) == "table"
+      assert.one_of result[i], q
+    else
+      assert.same q, result[i]
+
+{ :with_query_fn, :assert_queries }
