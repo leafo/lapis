@@ -21,29 +21,39 @@ block:
 
 ```nginx
 upstream database {
-  postgres_server ${{pg POSTGRESQL_URL}};
+  postgres_server ${{pg POSTGRES}};
 }
 ```
 
-In this example the `pg` filter is applied to our `POSTGRESQL_URL`
+In this example the `pg` filter is applied to our `POSTGRESQL`
 configuration variable. Let's go ahead and add a value to our `config.moon`
 
 ```lua
 config("development", {
-  postgresql_url = "postgres://pg_user:user_password@127.0.0.1/my_database"
+  postgres = {
+    host = "127.0.0.1",
+    user = "pg_user",
+    password = "the_password",
+    database = "my_database"
+  }
 })
 ```
 
 ```moon
 config "development", ->
-  postgresql_url "postgres://pg_user:user_password@127.0.0.1/my_database"
+  postgres ->
+    host "127.0.0.1"
+    user "pg_user"
+    password "the_password"
+    database "my_database"
 ```
 
-The `pg` filter will convert the PostgreSQL URL to the right format for the
-Nginx PostgreSQL module.
+`host` defaults to `127.0.0.1` and `user` defaults to `postgres`, so you can
+leave those fields out if they aren't different from the defaults. If you need
+to set a post append it to the `host` with colon syntax: `my_host:1234`.
 
-> Change `pg_user`, `user_password`, `127.0.0.1` and `my_database` to the
-> correct values depending on your requirements.
+The `pg` filter in `nginx.conf` will convert the PostgreSQL connection data to the right format
+for the Nginx PostgreSQL module.
 
 Lastly, we add the location. Place the following in your `server` block:
 
