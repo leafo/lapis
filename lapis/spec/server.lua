@@ -40,6 +40,10 @@ close_test_server = function()
   current_server:detach()
   current_server = nil
 end
+local get_current_server
+get_current_server = function()
+  return current_server
+end
 local request
 request = function(path, opts)
   if path == nil then
@@ -110,6 +114,7 @@ end
 return {
   load_test_server = load_test_server,
   close_test_server = close_test_server,
+  get_current_server = get_current_server,
   request = request,
   run_on_server = run_on_server
 }

@@ -20,12 +20,14 @@ load_test_server = ->
   current_server.app_port = port
   current_server
 
--- TODO: if _TEST (inside of busted) keep the server running?
 close_test_server = ->
   server_loaded -= 1
   return unless server_loaded == 0
   current_server\detach!
   current_server = nil
+
+get_current_server = ->
+  current_server
 
 -- hits the server in test environment
 request = (path="", opts={}) ->
@@ -79,6 +81,7 @@ request = (path="", opts={}) ->
 {
   :load_test_server
   :close_test_server
+  :get_current_server
   :request
   :run_on_server
 }
