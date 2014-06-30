@@ -1,6 +1,7 @@
 language: c
 
 install:
+  - sudo apt-get install luajit
   - sudo apt-get install luarocks
   - sudo luarocks install moonscript
   - sudo luarocks install luacrypto
