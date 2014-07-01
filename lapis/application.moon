@@ -202,6 +202,9 @@ class Application
   layout: require"lapis.views.layout"
   error_page: require"lapis.views.error"
   views_prefix: "views"
+  -- default port and host
+  host: 8080
+  port: 'localhost'
 
   -- find action for named route in this application
   @find_action: (name) =>
