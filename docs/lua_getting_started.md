@@ -139,7 +139,7 @@ local app = lapis.Application()
 app:enable("etlua")
 
 app:get("/", function(self)
-  return { render: "index" }
+  return { render = "index" }
 end)
 
 return app
@@ -183,7 +183,7 @@ app:get("/", function(self)
     "Skateboards"
   }
 
-  return { render: "list" }
+  return { render = "list" }
 end)
 
 return app
