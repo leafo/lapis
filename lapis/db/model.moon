@@ -18,16 +18,25 @@ class Model
     else
       @primary_key
 
-  @encode_key = (...) =>
+  @encode_key: (...) =>
     if type(@primary_key) == "table"
       { k, select i, ... for i, k in ipairs @primary_key }
     else
       { [@primary_key]: ... }
 
-  @table_name = =>
+  @table_name: =>
     name = underscore @__name
     @table_name = -> name
     name
+
+  @columns: =>
+    columns = db.query [[
+      select column_name, data_type
+      from information_schema.columns
+      where table_name = ?]], @table_name!
+
+    @columns = -> columns
+    columns
 
   @load: (tbl) =>
     for k,v in pairs tbl

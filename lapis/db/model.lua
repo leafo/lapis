@@ -142,6 +142,15 @@ do
     end
     return name
   end
+  self.columns = function(self)
+    local columns = db.query([[      select column_name, data_type
+      from information_schema.columns
+      where table_name = ?]], self:table_name())
+    self.columns = function()
+      return columns
+    end
+    return columns
+  end
   self.load = function(self, tbl)
     for k, v in pairs(tbl) do
       if ngx and v == ngx.null or v == cjson.null then
