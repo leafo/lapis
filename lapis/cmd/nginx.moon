@@ -214,7 +214,8 @@ class AttachedServer
       import Postgres from require "pgmoon"
       pgmoon = Postgres pg_config
       assert pgmoon\connect!
-      @old_backend = db.set_backend "raw", pgmoon\query
+      @old_backend = db.set_backend "raw", (...) ->
+        assert pgmoon\query ...
     else
       @old_backend = db.set_backend "raw", @\query
 

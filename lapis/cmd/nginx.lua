@@ -314,13 +314,9 @@ do
         end
         local pgmoon = Postgres(pg_config)
         assert(pgmoon:connect())
-        self.old_backend = db.set_backend("raw", (function()
-          local _base_1 = pgmoon
-          local _fn_0 = _base_1.query
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)())
+        self.old_backend = db.set_backend("raw", function(...)
+          return assert(pgmoon:query(...))
+        end)
       else
         self.old_backend = db.set_backend("raw", (function()
           local _base_1 = self
