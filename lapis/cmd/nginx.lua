@@ -315,7 +315,7 @@ do
         local pgmoon = Postgres(pg_config)
         assert(pgmoon:connect())
         local logger = require("lapis.db").get_logger()
-        if not (os.getenv("LAPIS_TEST_SHOW_QUERIES")) then
+        if not (os.getenv("LAPIS_SHOW_QUERIES")) then
           logger = nil
         end
         self.old_backend = db.set_backend("raw", function(...)

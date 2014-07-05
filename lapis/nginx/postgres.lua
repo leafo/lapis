@@ -3,20 +3,16 @@ do
   local _obj_0 = table
   concat = _obj_0.concat
 end
-local raw_query, logger, get_logger, set_logger, init_logger
+local raw_query
 local proxy_location = "/query"
+local logger = require("lapis.logging")
+local set_logger
 set_logger = function(l)
   logger = l
 end
+local get_logger
 get_logger = function()
-  init_logger()
-  get_logger = function()
-    return logger
-  end
   return logger
-end
-init_logger = function()
-  return set_logger(require("lapis.logging"))
 end
 local type, tostring, pairs, select
 do
@@ -43,7 +39,6 @@ local backends = {
       _proxy = proxy_location
     end
     local parser = require("rds.parser")
-    init_logger()
     raw_query = function(str)
       if logger then
         logger.query(str)
@@ -65,7 +60,6 @@ local backends = {
     end
   end,
   raw = function(fn)
-    init_logger()
     do
       raw_query = fn
       return raw_query
@@ -79,7 +73,6 @@ local backends = {
     end
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
-    init_logger()
     raw_query = function(str)
       local pgmoon = ngx and ngx.ctx.pgmoon
       if not (pgmoon) then

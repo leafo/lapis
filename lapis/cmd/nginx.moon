@@ -216,7 +216,7 @@ class AttachedServer
       assert pgmoon\connect!
 
       logger = require("lapis.db").get_logger!
-      logger = nil unless os.getenv "LAPIS_TEST_SHOW_QUERIES"
+      logger = nil unless os.getenv "LAPIS_SHOW_QUERIES"
 
       @old_backend = db.set_backend "raw", (...) ->
         logger.query ... if logger
