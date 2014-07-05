@@ -18,12 +18,18 @@
 
 import concat from table
 
-local raw_query, logger
+local raw_query, logger, get_logger, set_logger, init_logger
 
 proxy_location = "/query"
 
 set_logger = (l) -> logger = l
-get_logger = -> logger
+get_logger = ->
+  init_logger!
+  get_logger = -> logger
+  logger
+
+init_logger = ->
+  set_logger require "lapis.logging"
 
 import type, tostring, pairs, select from _G
 
@@ -35,8 +41,6 @@ is_raw = (val) ->
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
 
-init_logger = ->
-  set_logger require "lapis.logging"
 
 backends = {
   default: (_proxy=proxy_location) ->

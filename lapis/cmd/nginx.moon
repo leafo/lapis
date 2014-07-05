@@ -214,7 +214,12 @@ class AttachedServer
       import Postgres from require "pgmoon"
       pgmoon = Postgres pg_config
       assert pgmoon\connect!
+
+      logger = require("lapis.db").get_logger!
+      logger = nil unless os.getenv "LAPIS_TEST_SHOW_QUERIES"
+
       @old_backend = db.set_backend "raw", (...) ->
+        logger.query ... if logger
         assert pgmoon\query ...
     else
       @old_backend = db.set_backend "raw", @\query

@@ -3,15 +3,20 @@ do
   local _obj_0 = table
   concat = _obj_0.concat
 end
-local raw_query, logger
+local raw_query, logger, get_logger, set_logger, init_logger
 local proxy_location = "/query"
-local set_logger
 set_logger = function(l)
   logger = l
 end
-local get_logger
 get_logger = function()
+  init_logger()
+  get_logger = function()
+    return logger
+  end
   return logger
+end
+init_logger = function()
+  return set_logger(require("lapis.logging"))
 end
 local type, tostring, pairs, select
 do
@@ -32,10 +37,6 @@ is_raw = function(val)
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
-local init_logger
-init_logger = function()
-  return set_logger(require("lapis.logging"))
-end
 local backends = {
   default = function(_proxy)
     if _proxy == nil then
