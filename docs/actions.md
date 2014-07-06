@@ -109,7 +109,7 @@ table:
 
 ```lua
 app:match("/sets-cookie", function(self)
-  self.foo = "bar"
+  self.cookies.foo = "bar"
 end)
 ```
 
