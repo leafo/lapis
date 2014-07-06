@@ -969,7 +969,7 @@ class Users extends Model
 We can create a paginator like so:
 
 ```lua
-local = paginated = Users:paginated("where group_id = ? order by name asc", 123)
+local paginated = Users:paginated("where group_id = ? order by name asc", 123)
 ```
 
 ```moon
