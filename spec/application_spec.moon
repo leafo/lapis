@@ -78,6 +78,104 @@ describe "application inheritance", ->
     assert.same 200, status
     assert.same "child yeah", result
 
+
+describe "application composition", ->
+  local result
+
+  before_each ->
+    result = nil
+
+  it "should include another app", ->
+    class SubApp extends lapis.Application
+      "/hello": => result = "hello"
+
+    class App extends lapis.Application
+      @include SubApp
+
+      "/world": => result = "world"
+
+    status, buffer, headers = mock_request App, "/hello", {}
+    assert.same 200, status
+    assert.same "hello", result
+
+    status, buffer, headers = mock_request App, "/world", {}
+    assert.same 200, status
+    assert.same "world", result
+
+  it "should include another app", ->
+    class SubApp extends lapis.Application
+      "/hello": => result = "hello"
+
+    class App extends lapis.Application
+      @include SubApp
+
+      "/world": => result = "world"
+
+    status, buffer, headers = mock_request App, "/hello", {}
+    assert.same 200, status
+    assert.same "hello", result
+
+    status, buffer, headers = mock_request App, "/world", {}
+    assert.same 200, status
+    assert.same "world", result
+
+  it "should merge url table", ->
+    class SubApp extends lapis.Application
+      [hello: "/hello"]: => result = "hello"
+
+    class App extends lapis.Application
+      @include SubApp
+      [world: "/world"]: => result = "world"
+
+    app = App!
+    req = App.Request App!, {}, {}
+    assert.same "/hello", req\url_for "hello"
+    assert.same "/world", req\url_for "world"
+
+  it "should set sub app prefix path", ->
+    class SubApp extends lapis.Application
+      [hello: "/hello"]: => result = "hello"
+
+    class App extends lapis.Application
+      @include SubApp, path: "/sub"
+      [world: "/world"]: => result = "world"
+
+    app = App!
+    req = App.Request App!, {}, {}
+    assert.same "/sub/hello", req\url_for "hello"
+    assert.same "/world", req\url_for "world"
+
+  it "should set sub app url name prefix", ->
+    class SubApp extends lapis.Application
+      [hello: "/hello"]: => result = "hello"
+
+    class App extends lapis.Application
+      @include SubApp, name: "sub_"
+      [world: "/world"]: => result = "world"
+
+    app = App!
+    req = App.Request App!, {}, {}
+    assert.has_error -> req\url_for "hello"
+
+    assert.same "/hello", req\url_for "sub_hello"
+    assert.same "/world", req\url_for "world"
+
+  it "should set include options from target app", ->
+    class SubApp extends lapis.Application
+      @path: "/sub"
+      @name: "sub_"
+
+      [hello: "/hello"]: => result = "hello"
+
+    class App extends lapis.Application
+      @include SubApp
+      [world: "/world"]: => result = "world"
+
+    app = App!
+    req = App.Request App!, {}, {}
+    assert.same "/sub/hello", req\url_for "sub_hello"
+    assert.same "/world", req\url_for "world"
+
 describe "application inline html", ->
   class HtmlApp extends lapis.Application
     layout: false
@@ -157,5 +255,18 @@ describe "instance app", ->
 
     assert_request app, "/hello", post: {}
     assert.same "post", res
+
+
+  it "should include another app", ->
+    do return
+    local res
+
+    sub_app = lapis.Application!
+    sub_app\get "/hello", => res = "hello"
+
+    app = lapis.Application!
+    app\get "/cool", => res = "cool"
+    app\include sub_app
+
 
 
