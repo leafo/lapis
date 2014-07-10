@@ -176,6 +176,19 @@ describe "application composition", ->
     assert.same "/sub/hello", req\url_for "sub_hello"
     assert.same "/world", req\url_for "world"
 
+describe "application default route", ->
+  it "should hit default route", ->
+    local res
+
+    class App extends lapis.Application
+      "/": =>
+      default_route: =>
+        res = "bingo!"
+
+    status, body = mock_request App, "/hello", {}
+    assert.same 200, status
+    assert.same "bingo!", res
+
 describe "application inline html", ->
   class HtmlApp extends lapis.Application
     layout: false

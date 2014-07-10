@@ -37,7 +37,7 @@ class Request
     @session = session.lazy_session @
 
   add_params: (params, name) =>
-    self[name] = params
+    @[name] = params
     for k,v in pairs params
       -- expand nested[param][keys]
       if front = k\match "^([^%[]+)%["
@@ -301,11 +301,11 @@ class Application
   dispatch: (req, res) =>
     local err, trace, r
     success = xpcall (->
-        r = @.Request self, req, res
+        r = @.Request @, req, res
 
         unless @router\resolve req.parsed_url.path, r
           -- run default route if nothing matched
-          handler = @wrap_handler self.default_route
+          handler = @wrap_handler @default_route
           handler {}, nil, "default_route", r
 
         r\render!
@@ -315,7 +315,7 @@ class Application
         trace = debug.traceback "", 2
 
     unless success
-      self.handle_error r, err, trace
+      @.handle_error r, err, trace
 
     res
 
@@ -375,7 +375,7 @@ class Application
     error "Failed to find route: #{@req.cmd_url}"
 
   handle_error: (err, trace, error_page=@app.error_page) =>
-    r = @app.Request self, @req, @res
+    r = @app.Request @, @req, @res
     r\write {
       status: 500
       layout: false
