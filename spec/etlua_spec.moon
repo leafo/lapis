@@ -138,7 +138,6 @@ describe "lapis.etlua", ->
         w = tpl color: "green"
 
         out = w\render_to_string!
-        -- TODO: the variable should be inherited into sub template
         assert.same [[beforeThis is the color: nil.
 aftergreen]], out
 
