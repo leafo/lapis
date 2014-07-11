@@ -134,6 +134,8 @@ do
       else
         self._buffer = Buffer(buffer)
       end
+      local old_widget = self._buffer.widget
+      self._buffer.widget = self
       local seen_helpers = { }
       local scope = setmetatable({ }, {
         __index = function(scope, key)
@@ -150,6 +152,7 @@ do
       local clone = locked_fn(self._tpl_fn)
       parser:run(clone, scope, self._buffer)
       release_fn(clone)
+      self._buffer.widget = old_widget
       return nil
     end
   }

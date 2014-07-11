@@ -78,6 +78,9 @@ class EtluaWidget extends Widget
     else
       Buffer buffer
 
+    old_widget = @_buffer.widget
+    @_buffer.widget = @
+
     seen_helpers = {}
     scope = setmetatable { }, {
       __index: (scope, key) ->
@@ -92,6 +95,8 @@ class EtluaWidget extends Widget
     clone = locked_fn @_tpl_fn
     parser\run clone, scope, @_buffer
     release_fn clone
+
+    @_buffer.widget = old_widget
     nil
 
 { :EtluaWidget, :BufferCompiler }

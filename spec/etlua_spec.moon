@@ -63,7 +63,7 @@ describe "lapis.etlua", ->
       code, body = assert_request EtluaApp, "/"
       assert.same [[<html data-etlua>color: blue</html>]], body
 
-    it "show work with request helpers", ->
+    it "should work with request helpers", ->
       class EtluaApp extends lapis.Application
         layout: layout
         [page: "/the-page"]: =>
@@ -151,7 +151,7 @@ aftergreen]], out
 after]], out
 
 
-      it "should work with render #xxx", ->
+      it "should work with render", ->
         lapis = require "lapis"
         import assert_request from require "lapis.spec.request"
 
@@ -165,7 +165,7 @@ after]], out
           render: tpl, layout: false
 
         status, body = assert_request app, "/"
-        assert.same [[helloThis is the color: nil.
+        assert.same [[helloThis is the color: maroon.
 world]], body
 
 
