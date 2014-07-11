@@ -43,6 +43,12 @@ class EtluaWidget extends Widget
         ""
 
   _find_helper: (name) =>
+    switch name
+      when "render"
+        return @_buffer\render
+      when "widget"
+        return @_buffer\render_widget
+
     if chain = @_get_helper_chain!
       for h in *chain
         helper_val = h[name]
@@ -55,11 +61,6 @@ class EtluaWidget extends Widget
 
           return value
 
-    switch name
-      when "render"
-        return @_buffer\render
-      when "widget"
-        return @_buffer\render_widget
 
     -- look on self
     val = @[name]

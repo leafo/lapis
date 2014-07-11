@@ -81,6 +81,20 @@ do
       end
     end,
     _find_helper = function(self, name)
+      local _exp_0 = name
+      if "render" == _exp_0 then
+        local _base_1 = self._buffer
+        local _fn_0 = _base_1.render
+        return function(...)
+          return _fn_0(_base_1, ...)
+        end
+      elseif "widget" == _exp_0 then
+        local _base_1 = self._buffer
+        local _fn_0 = _base_1.render_widget
+        return function(...)
+          return _fn_0(_base_1, ...)
+        end
+      end
       do
         local chain = self:_get_helper_chain()
         if chain then
@@ -99,20 +113,6 @@ do
               return value
             end
           end
-        end
-      end
-      local _exp_0 = name
-      if "render" == _exp_0 then
-        local _base_1 = self._buffer
-        local _fn_0 = _base_1.render
-        return function(...)
-          return _fn_0(_base_1, ...)
-        end
-      elseif "widget" == _exp_0 then
-        local _base_1 = self._buffer
-        local _fn_0 = _base_1.render_widget
-        return function(...)
-          return _fn_0(_base_1, ...)
         end
       end
       local val = self[name]
