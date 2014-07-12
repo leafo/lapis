@@ -27,7 +27,12 @@ For example, here's a simple template that renders a random number:
 * `<%- lua_expression %>` same as above but with no HTML escaping
 
 
-## Rendering from action
+## Rendering From Actions
+
+An *action* is a function that handles a request that matches a particular
+route. An action should perform logic and prepare data before forwarding to a
+view or triggering a render. Actions can control how the result is rendered by
+returning a table of options.
 
 The `render` option of the return value of an action lets us specify which
 template to render after the action is executed. If we place an `.etlua` file
@@ -60,8 +65,156 @@ class App extends lapis.Application
 Rendering `"hello"` will cause the module `"views.hello"` to load, which will
 resolve our `etlua` template located at `views/hello.etlua`
 
+Because it's common to have a single view for every (or most actions) you can
+avoid repeating the name of the view when using a named route. A named route's
+action can just set `true` to the `render` option and the name of the route
+will be used as the name of the template:
 
-## Rendering sub-templates
 
+```lua
+local lapis = require("lapis")
+
+local app = lapis.Application()
+app:enable("etlua")
+
+app:match("index", "/", function()
+  return { render: true }
+end)
+
+reutrn app
+```
+
+```moon
+lapis = require "lapis"
+
+class App extends lapis.Application
+  @enable "etlua"
+  [index: "/"]: => render: true
+```
+
+```erb
+<!-- views/index.etlua -->
+<div class="index">
+  Welcome to the index of my site!
+</div>
+```
+
+
+### Passing Values to Views
+
+Values can be passed to views by setting them on `self` in the action. For
+example we might set some state for a template like so:
+
+
+```lua
+app:match("/", function(self)
+  self.pets = { "Cat", "Dog", "Bird" }
+  return { render = "my_template" }
+end)
+```
+
+```moon
+class App extends lapis.Application
+  @enable "etlua"
+  "/": =>
+    @pets = {"Cat", "Dog", "Bird"}
+    render: "my_template"
+```
+
+```erb
+<!-- views/my_template.etlua -->
+<ul class="list">
+<% for item in pets do %>
+  <li><%= item %></li>
+<% end %>
+</ul>
+```
+
+You'll notice that we don't need to refer scope the values with `self` when
+retreiving their values in the template. Any varialbes are automatically looked
+up in that table by default.
+
+
+## Calling Helper Functions from Views
+
+Helper functions can be called just as if they were in scope when inside of a
+template. A common helper is the `url_for` function which helps us generate a
+URL to a named route:
+
+```erb
+<!-- views/about.etlua -->
+<div class="about_page">
+  <p>This is a great page!</p>
+  <p>
+  <a href="<% url_for("index") %>">Return home</a>
+  </p>
+</div>
+```
+
+Any method available on the request object (`self` in an action) can be called
+in the template. It will be called with the correct reciever automatically.
+
+Additionally `etlua` templates have a couple helper functions only defined in
+the context of the template. They are covered below.
+
+
+## Rendering Sub-templates
+
+A sub-template is a template that is rendered inside of a template. For example
+you might have a common navigation across many pages so you would create a
+template for the navigation's HTML and include it in the templates that require
+a navigation.
+
+To render a sub-template you can use the `render` helper function:
+
+```erb
+<!-- views/navigation.etlua -->
+<div class="nav_bar">
+  <a href="<% url_for("index") %>">Home</a>
+  <a href="<% url_for("about") %>">About</a>
+</div>
+```
+
+```erb
+<!-- views/index.etlua -->
+<div class="page">
+  <% render("views.navigation") %>
+</div>
+```
+
+Note that you have to type the full module name of the template for the first
+argument to require, in this case `"views.navigation"`, which points to
+`views/navigation.etlua`. If you happen to also be using MoonScript templates
+you can also inclue them using the `render` function.
+
+Any values and helpers available in the parent template are also available in
+the sub-template.
+
+Somtimes you need to pass data to a sub-template that's generated during the
+execution of the parent template. `require` takes a second argument of values
+to pass into the sub-template.
+
+Here's a contrived example of using a sub-template to render a list of numbers:
+
+```erb
+<!-- templates/list_item.etlua -->
+<div class="list_item">
+  <%= number_value %>
+</div>
+```
+
+```erb
+<!-- templates/list.etlua -->
+<div class="list">
+<% for i, value in ipairs({}) do %>
+  <% render("templates.list_item", { number_value = value }) %>
+<% end %>
+</div>
+```
+
+## View Helper Functions
+
+* `render(template_name, [template_params])` -- loads and renders a template
+* `widget(widget_instance)` -- renders and instance of a `Widget`
 
 [1]: https://github.com/leafo/etlua
