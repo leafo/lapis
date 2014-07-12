@@ -357,3 +357,36 @@ class extends lapis.Application
     status: 404, layout: false, "Not Found!"
 ```
 
+## Error Handler
+
+Every action executed by Lapis is wrapped by [`xpcall`][1]. This ensures fatal
+errors can be captured and a meaningful error page can be generated instead of
+Nginx's default which is unaware of Lua code.
+
+The error handler should only be used to capture fatal and unexpected errors,
+expected errors are discussed in the [Exception Handling
+guide]($root/reference/exception_handling.html)
+
+Lapis comes with an error handler pre-defined that extracts information about
+the error and renders the template `"lapis.views.error"`. This error page
+contains a stack trace and the error message.
+
+If you want to have your own error handling logic you can override the method
+`handle_error`:
+
+```lua
+app.handle_error = function(self, err, trace)
+  ngx.log(ngx.NOTICE, "There was an error! " .. err .. ": " ..trace)
+  lapis.Application.handle_error(self, err, trace)
+end
+```
+
+```moon
+class extends lapis.Application
+  handle_error: (err, trace) =>
+    ngx.log ngx.NOTICE, "There was an error! #{err}: #{trace}"
+    super!
+```
+
+
+[1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
