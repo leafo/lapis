@@ -270,6 +270,18 @@ describe "instance app", ->
     assert.same "post", res
 
 
+
+  it "should hit default route", ->
+    local res
+
+    app = lapis.Application!
+    app\match "/", -> res = "/"
+    app.default_route = -> res = "default_route"
+    app\build_router!
+
+    assert_request app, "/hello"
+    assert.same "default_route", res
+
   it "should include another app", ->
     do return
     local res
