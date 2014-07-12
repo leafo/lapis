@@ -263,3 +263,97 @@ self:build_url("world", { host = "leafo.net", port = 2000 }) --> http://leafo.ne
 
 @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
 ```
+
+## Application Callbacks
+
+Application callbacks are special methods that can be overridden in a
+application that get called when certain kinds of requests needs to be handled.
+Although they are functions stored on the application, they are called as if
+they were regular actions, this means that the first argument to the function
+is an instance of a request object.
+
+### Default Action
+
+When a request does not match any of the routes you've defined it will fall
+back on running the default action. Lapis comes with a default action
+pre-defined that looks like this:
+
+```lua
+app.default_route = function(self)
+  -- strip trailing /
+  if self.req.parsed_url.path:match("./$") then
+    local stripped = self.req.parsed_url:match("^(.+)/+$")
+    return { redirect_to = self:build_url(stripped, {query: self.req.parsed_url.query, status: 301}) }
+  else
+    self.app.handle_404(self)
+  end
+end
+```
+
+```moon
+default_route: =>
+  -- strip trailing /
+  if @req.parsed_url.path\match "./$"
+    stripped = @req.parsed_url.path\match "^(.+)/+$"
+    redirect_to: @build_url(stripped, query: @req.parsed_url.query), status: 301
+  else
+    @app.handle_404 @
+```
+
+If it notices a trailing `/` on the end of the URL it will attempt to redirect
+to a version without the trailing slash. Otherwise it will call the
+`handle_404` method on the application.
+
+This method, `default_route`, is just a normal method of your application. You
+can override it to do whatever you like. For example, this adds logging:
+
+```lua
+app.default_route = function(self)
+  ngx.log(ngx.NOTICE, "User hit unknown path " .. self.req.parsed_url.path)
+
+  -- call the original implementaiton to preserve the functionality it provides
+  return lapis.Application.default_route(self)
+end
+```
+
+```moon
+class extends lapis.Application
+  default_route: =>
+    ngx.log ngx.NOTICE, "User hit unknown path #{@req.parsed_url.path}"
+    @super!
+```
+
+You'll notice in the pre-defined version of `default_route` another method,
+`handle_404`, is referenced. This is also pre-defined and looks like this:
+
+```lua
+app.handle_404 = function(self)
+  error("Failed to find route: " .. self.req.cmd_url)
+end
+```
+
+```moon
+handle_404: =>
+  error "Failed to find route: #{@req.cmd_url}"
+```
+
+This will trigger a 500 error and a stack trace on every invalid request. If
+you want to make a proper 404 page this is where you would do it.
+
+Overriding the `handle_404` method instead of `default_route` allows us to
+create a custom 404 page while still keeping the trailing slash removal code.
+
+Here's a simple 404 handler that just prints the text `"Not Found!"`
+
+```lua
+app.handle_404 = function(self)
+  return { status = 404, layout = false, "Not Found!" }
+end
+```
+
+```moon
+class extends lapis.Application
+  handle_404: =>
+    status: 404, layout: false, "Not Found!"
+```
+
