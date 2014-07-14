@@ -8,6 +8,8 @@ import html_writer from require "lapis.html"
 
 import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
 
+import insert from table
+
 json = require "cjson"
 
 local capture_errors, capture_errors_json, respond_to
@@ -169,7 +171,7 @@ class Request
 
       switch t
         when "string"
-          table.insert @buffer, thing
+          insert @buffer, thing
         when "table"
           -- see if there are options
           for k,v in pairs thing
@@ -232,12 +234,27 @@ class Application
       path = route_name
       route_name = nil
 
+    @ordered_routes or= {}
     key = if route_name
-      {[route_name]: path}
+      tuple = @ordered_routes[route_name]
+      if old_path = tuple and tuple[next(tuple)]
+        if old_path != path
+          error "named route mismatch (#{old_path} != #{path})"
+
+      if tuple
+        tuple
+      else
+        tuple = {[route_name]: path}
+        @ordered_routes[route_name] = tuple
+        tuple
     else
       path
 
+    unless @[key]
+      insert @ordered_routes, key
+
     @[key] = handler
+
 
     @router = nil
     handler
@@ -275,8 +292,12 @@ class Application
       for path, handler in pairs cls.__base
         add_route path, handler
 
-      for path, handler in pairs @
-        add_route path, handler
+      if ordered = @ordered_routes
+        for path in *ordered
+          add_route path, @[path]
+      else
+        for path, handler in pairs @
+          add_route path, handler
 
       if parent = cls.__parent
         add_routes parent
@@ -323,7 +344,7 @@ class Application
 
   @before_filter: (fn) =>
     @__base.before_filters or= {}
-    table.insert @before_filters, fn
+    insert @before_filters, fn
 
   -- copies all actions into this application, preserves before filters
   -- @include other_app, path: "/hello", name: "hello_"

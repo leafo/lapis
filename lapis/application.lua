@@ -16,6 +16,11 @@ do
   local _obj_0 = require("lapis.util")
   parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
+local insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local json = require("cjson")
 local capture_errors, capture_errors_json, respond_to
 local set_and_truthy
@@ -207,7 +212,7 @@ do
         end
         local _exp_0 = t
         if "string" == _exp_0 then
-          table.insert(self.buffer, thing)
+          insert(self.buffer, thing)
         elseif "table" == _exp_0 then
           for k, v in pairs(thing) do
             if type(k) == "string" then
@@ -286,13 +291,32 @@ do
         path = route_name
         route_name = nil
       end
+      self.ordered_routes = self.ordered_routes or { }
       local key
       if route_name then
-        key = {
-          [route_name] = path
-        }
+        local tuple = self.ordered_routes[route_name]
+        do
+          local old_path = tuple and tuple[next(tuple)]
+          if old_path then
+            if old_path ~= path then
+              error("named route mismatch (" .. tostring(old_path) .. " != " .. tostring(path) .. ")")
+            end
+          end
+        end
+        if tuple then
+          key = tuple
+        else
+          tuple = {
+            [route_name] = path
+          }
+          self.ordered_routes[route_name] = tuple
+          key = tuple
+        end
       else
         key = path
+      end
+      if not (self[key]) then
+        insert(self.ordered_routes, key)
       end
       self[key] = handler
       self.router = nil
@@ -315,8 +339,18 @@ do
         for path, handler in pairs(cls.__base) do
           add_route(path, handler)
         end
-        for path, handler in pairs(self) do
-          add_route(path, handler)
+        do
+          local ordered = self.ordered_routes
+          if ordered then
+            for _index_0 = 1, #ordered do
+              local path = ordered[_index_0]
+              add_route(path, self[path])
+            end
+          else
+            for path, handler in pairs(self) do
+              add_route(path, handler)
+            end
+          end
         end
         do
           local parent = cls.__parent
@@ -474,7 +508,7 @@ do
   end
   self.before_filter = function(self, fn)
     self.__base.before_filters = self.__base.before_filters or { }
-    return table.insert(self.before_filters, fn)
+    return insert(self.before_filters, fn)
   end
   self.include = function(self, other_app, opts, into)
     if into == nil then
