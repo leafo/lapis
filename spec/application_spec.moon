@@ -283,7 +283,7 @@ describe "instance app", ->
     assert.same "default_route", res
 
   it "should include another app", ->
-    do return
+    do return -- TODO
     local res
 
     sub_app = lapis.Application!
@@ -293,5 +293,15 @@ describe "instance app", ->
     app\get "/cool", => res = "cool"
     app\include sub_app
 
+  it "should preserve order of route #preserve", ->
+    app = lapis.Application!
+
+    routes = for i=1,20
+      with r = "/route#{i}"
+        app\get r, =>
+
+    app\build_router!
+
+    assert.same routes, [tuple[1] for tuple in *app.router.routes]
 
 
