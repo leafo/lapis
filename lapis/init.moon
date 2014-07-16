@@ -23,7 +23,6 @@ serve = (app_cls) ->
 
     app_cache[name] = app
     
-    
   if __leda 
       -- dispatch in leda environment
       leda.dispatch app

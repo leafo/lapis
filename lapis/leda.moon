@@ -1,56 +1,48 @@
 import escape_pattern, parse_content_disposition, build_url, parse_query_string from require "lapis.util"
-url = require "socket.url"
+import parseUrl, parseQuery from require 'leda.client'
+
+parse_url = parseUrl
+parse_query = parsQuery
+
 
 flatten_params = (t) -> 
     {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
-
-to_keyvalue = (t) -> 
-    r = {}
-    for key, value in pairs t
-        r[key] = value if type(key) == 'string'
-    r  
       
-ngx_req = {
-  headers: -> __leda.httpRequest.headers
-  cmd_mth: -> __leda.httpRequest.method
-  cmd_url: ->  __leda.httpRequest.url
-
+request = {
+  headers: -> __leda.httpRequestGetHeaders(__leda.httpRequest) 
+  cmd_mth: -> __leda.httpRequestGetMethod(__leda.httpRequest) 
+  cmd_url: ->  __leda.httpRequestGetUrl(__leda.httpRequest) 
   relpath: (t) -> t.parsed_url.path
-  scheme: -> ""
+  scheme: (t)-> t.parsed_url.scheme
   port: (t) -> t.parsed_url.port
   srv: -> t.parsed_url.host
-  remote_addr: -> __leda.httpRequest.remoteAddress
+  remote_addr: -> __leda.httpRequestGetAddress(__leda.httpRequest) 
   referer: ->  ""
-  body: -> __leda.httpRequest.body
+  body: -> __leda.httpRequestGetBody(__leda.httpRequest) 
 
   parsed_url: (t) ->
-    uri = __leda.httpRequest.url
-    uri = uri\match("(.-)%?") or uri
-    host = __leda.httpRequest.headers.host or ""
-    parsed = url.parse(__leda.httpRequest.url)
-    query = parsed.query or ""
-    
-    {
-      scheme: ""
-      path: uri
-      host: host
-      port: host\match ":(%d+)$"
-      query: query
-    }
+      
+    host = t.headers.host
+    parsed = parse_url(t.cmd_url)
+    if host  
+        parsed_host = parse_url(host)
+        parsed.host = parsed_host.host
+        parsed.port = parsed_host.port
 
+    parsed
+    
   built_url: (t) ->
     build_url t.parsed_url
 
   params_post: (t) ->
     -- parse multipart if required
     if  (t.headers["content-type"] or "")\match escape_pattern "x-www-form-urlencoded"
-        to_keyvalue parse_query_string(t.body or "") or {}
+        flatten_params parse_query(t.body or "") or {}
     else
         flatten_params {}
         
   params_get: (t) ->
-    -- need a way to do this better. parse_url_string returns a table like '{1={1=a,2=b},a=b}' for a string '?a=b'
-    to_keyvalue parse_query_string(t.parsed_url.query) or {}
+        flatten_params t.parsed_url.params
 }
 
 lazy_tbl = (tbl, index) ->
@@ -64,9 +56,9 @@ lazy_tbl = (tbl, index) ->
 
 
 build_request = (unlazy=false) ->
-  with t = lazy_tbl {}, ngx_req
+  with t = lazy_tbl {}, request
     if unlazy
-      for k in pairs ngx_req
+      for k in pairs request
         t[k]
 
 build_response = ->
@@ -87,16 +79,37 @@ build_response = ->
   }
 
 dispatch = (app) ->
+    if __leda.init
+        config = require("lapis.config")
+      
+        -- start the leda server
+        __api.serverCreate({
+            type: 'http',
+            port: config.get!.port,
+            host: config.get!.host or 'localhost',
+            threads: __leda.processorCount()
+            })
+        return
+    else
+        -- set request callback
+        if not __leda.onHttpRequest 
+            __leda.onHttpRequest = ->
+                  dispatch(app) 
+            return      
+        
     res = build_response!
 
     app\dispatch res.req, res
-
-    __leda.httpResponse = {
-      body: res.content,
-      headers: res.headers,
-      status:  200
-    }
     
+    if res.status 
+      __leda.httpResponseSetStatus(__leda.httpResponse, tonumber(res.status))
+    
+    if next(res.headers) 
+       __leda.httpResponseSetHeaders(__leda.httpResponse, res.headers)
+
+    if res.content 
+      __leda.httpResponseSetBody(__leda.httpResponse, res.content)
+        
     res
 
 { :build_request, :build_response, :dispatch }
