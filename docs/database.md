@@ -1,4 +1,4 @@
-title: Database Access 
+title: Database Access
 --
 # Database Access
 
@@ -1096,6 +1096,31 @@ end
 for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
 ```
+
+### Finding Columns
+
+You can get the column names and column types of a table using the `columns`
+method on the model class:
+
+```lua
+local Posts = Model:extend("posts")
+for _, col in ipairs(Posts:columns) do
+  print(col.column_name, col.data_type)
+end
+```
+
+```moon
+class Posts extends Model
+
+for {column_name, data_type} in Posts\columns!
+  print column_name, data_type
+```
+
+```sql
+SELECT column_name, data_type
+  FROM information_schema.columns WHERE table_name = 'posts'
+```
+
 
 ## Database Schemas
 
