@@ -4,6 +4,10 @@ title: HTML Generation
 
 # HTML Generation
 
+This guide is focussed on using builder syntax in Lua/MoonScript to generate
+HTML. If you're interested in a more traditional templating system see the
+[etlua Templates guide]($root/reference/etlua_templates.html).
+
 ## HTML In Actions
 
 If we want to generate HTML directly in our action we can use the `@html`
@@ -17,11 +21,11 @@ method:
       text "Welcome to my site!"
 ```
 
-HTML templates can be  written directly as MoonScript code. This is a very
-powerful feature (inspired by [Erector](http://erector.rubyforge.org/)) that
-gives us the ability to write templates with high composability and also all
-the features of MoonScript. No need to learn any goofy templating syntax with
-arbitrary restrictions.
+HTML templates can be  written directly as MoonScript (or Lua) code. This is a
+very powerful feature (inspired by [Erector](http://erector.rubyforge.org/))
+that gives us the ability to write templates with high composability and also
+all the features of MoonScript. No need to learn any goofy templating syntax
+with arbitrary restrictions.
 
 The `@html` method overrides the environment of the function passed to it.
 Functions that create HTML tags are generated on the fly as you call them. The
