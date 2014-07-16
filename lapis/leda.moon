@@ -1,10 +1,13 @@
 import escape_pattern, parse_content_disposition, build_url, parse_query_string from require "lapis.util"
-import parseUrl, parseQuery from require 'leda.client'
 
-parse_url = parseUrl
-parse_query = parsQuery
+local parse_url
+local parse_query
 
-
+pcall ->
+    import parseUrl, parseQuery from require 'leda.client'
+    parse_url = parseUrl
+    parse_query = parseQuery
+    
 flatten_params = (t) -> 
     {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
       

@@ -15,9 +15,11 @@ end
 
 local parse_url, parse_query
 do
-  local _obj_0 = require("leda.client")
-  parse_url = _obj_0.parseUrl
-  parse_query = _obj_0.parseQuery
+  pcall( function() 
+      local client = require("leda.client")
+      parse_url = client.parseUrl
+      parse_query = client.parseQuery
+ end)
 end
 
 local request = {
