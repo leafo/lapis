@@ -1,4 +1,4 @@
-local mimetypes = require 'lapis.leda.mimetypes'
+local mimetypes = require 'mimetypes'
 local dict = require 'leda.dict'
 local util = require 'leda.util'
 local lfs = require 'lfs'
@@ -48,19 +48,10 @@ function FileState:delete()
 end
     
 
-function serve(path, request, response)
-    -- assume that path is relative to the second slash
-    local slash = request.parsed_url.path:find("/", 2)
-
-    if not slash  then
-        response.status = 404
-        return {layout=false}
-    end
-    
-    local filePath = request.parsed_url.path:sub(slash)
-    
-    path = path ..  filePath
-    --
+function serve(path, app)
+    local request = app.req
+    local response = app.res
+    path = path .. "/".. app.params.splat
     local attributes = lfs.attributes(path)
     
     if not attributes then
@@ -106,6 +97,7 @@ function serve(path, request, response)
     response.status = 200    
     -- read file and set response content 
     response.content = file:read("*all")
+    
     file:close()
 
     -- guess mime type

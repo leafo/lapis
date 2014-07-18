@@ -20,7 +20,9 @@ dependencies = {
 	"loadkit",
 	"lpeg",
 	"lua-cjson",
+	"luacrypto",
 	"luasocket",
+	"mimetypes",
 	"pgmoon",
 }
 
@@ -72,7 +74,9 @@ build = {
 		["lapis.validate"] = "lapis/validate.lua",
 		["lapis.version"] = "lapis/version.lua",
 		["lapis.views.error"] = "lapis/views/error.lua",
-		["lapis.views.layout"] = "lapis/views/layout.lua",
+		["lapis.views.layout"] = "lapis/views/layout.lua",	
+		["lapis.leda"] = "lapis/leda.lua",
+		["lapis.leda.files"] = "lapis/leda/files.lua",
 	},
 	install = {
 		bin = { "bin/lapis" }
