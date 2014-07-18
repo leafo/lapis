@@ -22,18 +22,24 @@ do
  end)
 end
 
+local http
+pcall(function()
+    http = require 'leda.http'
+end)
+
+
 local request = {
   headers = function()
-    return __leda.httpRequestGetHeaders(__leda.httpRequest) 
+    return __leda.request:headers()
   end,
   cmd_mth = function()
-    return __leda.httpRequestGetMethod(__leda.httpRequest) 
+    return __leda.request:method()
   end,
   cmd_url = function()
-    return __leda.httpRequestGetUrl(__leda.httpRequest) 
+    return  __leda.request:url()
   end,
   body = function()
-    return __leda.httpRequestGetBody(__leda.httpRequest) 
+    return __leda.request:body()
   end,
   relpath = function(t)
     return t.parsed_url.path
@@ -48,7 +54,7 @@ local request = {
     return t.parsed_url.host 
   end,
   remote_addr = function()
-    return __leda.httpRequestGetAddress(__leda.httpRequest) 
+    return __leda.request:address()
   end,
   referer = function()
     return  ""
@@ -131,43 +137,30 @@ build_response = function()
     headers = {}
   }
 end
+
+local function request_callback(app, request, response)
+    __leda.request = request
+    __leda.response = response
+
+    local res = build_response()
+  
+    app:dispatch(res.req, res)
+    if res.status then
+        response.status = res.status
+    end
+  
+    if next(res.headers) then
+        response.headers = res.headers
+    end
+  
+    response.body = res.content or ""
+end
+
 local dispatch
 dispatch = function(app)
-  if __leda.init then
-      local config = require("lapis.config")
-      
-      -- start the leda server
-      __api.serverCreate({
-          type = 'http',
-          port = config.get().port,
-          host = config.get().host or 'localhost',
-          threads = __api.processorCount()
-          })
-      return
-  else
-      -- set request callback
-      if not __leda.onHttpRequest then
-          __leda.onHttpRequest = function()  dispatch(app) end
-          return      
-      end
-  end    
-    
-  local res = build_response()
-  
-  app:dispatch(res.req, res)
-  if res.status then
-    __leda.httpResponseSetStatus(__leda.httpResponse, tonumber(res.status))
-  end
-  
-  if next(res.headers) then
-     __leda.httpResponseSetHeaders(__leda.httpResponse, res.headers)
-  end
-  
-  if res.content then
-    __leda.httpResponseSetBody(__leda.httpResponse, res.content)
-  end
- 
-  return res
+    local config = require("lapis.config")
+    local server = http.Server(config.get().port, config.get().host or 'localhost')
+    server.request = function(server, request, response) request_callback(app, request, response) end
 end
 return {
   build_request = build_request,
