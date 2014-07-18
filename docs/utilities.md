@@ -320,7 +320,8 @@ location /proxy {
 ```
 
 > This code ensures that the correct headers are set for the new request. The
-> `$_url` variable is used to used to store the target URL.
+> `$_url` variable is used to used to store the target URL. It must be defined
+> as `$_url=""` in your default location.
 
 Now we can use the `lapis.nginx.http` module. There are two methods. `request`
 and `simple`. `request` implements the Lua Socket HTTP request API (complete
