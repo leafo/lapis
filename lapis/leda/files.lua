@@ -3,7 +3,51 @@ local dictionary = require 'leda.dictionary'
 local utility = require 'leda.utility'
 local lfs = require 'lfs'
 
+require 'middleclass'
+
 local export = {}
+
+local FileState = class('FileState')
+
+FileState.fields = {'modification', 'tag', 'timestamp'}
+function FileState:initialize(key)
+    self.key = key
+end
+
+
+function FileState:_fieldKey(field)
+    return self.key .. field
+end
+
+function FileState:get()
+    local value
+    for _, field in ipairs(self.fields) do
+        value = dictionary.get(self:_fieldKey(field))
+        self[field] = value
+    end
+    
+    if not value then return end    
+    self.timestamp = tonumber(self.timestamp)
+    self.modification = tonumber(self.modification)
+    
+    return self
+end
+
+function FileState:save()
+    for _, field in ipairs(self.fields) do
+        if self[field] then dictionary.set(self:_fieldKey(field), tostring(self[field])) end
+    end
+end
+
+function FileState:delete()
+    for _, field in ipairs(self.fields) do
+        dictionary.delete(self:_fieldKey(field))
+        self[field] = nil
+    end
+    
+end
+    
+
 function serve(path, request, response)
     -- assume that path is relative to the second slash
     local slash = request.parsed_url.path:find("/", 2)
@@ -33,20 +77,18 @@ function serve(path, request, response)
      
      -- check etag
     local etag = request.headers['if-none-match']
-    local state = dictionary.get(path)
-
-
-    if state then
+    local fileState = FileState(path, {'modification', 'tag', 'timestamp'})
+    
+    if fileState:get() then
         -- check etag age
         local allowedTime = os.time()
-        if (state.updated + maxAge < allowedTime) or (modificationTime ~= tonumber(state.modification))  then 
-            dictionary.delete(path)
-            state = nil
+        if (fileState.timestamp + maxAge < allowedTime) or (modificationTime ~= fileState.modification)  then 
+            fileState:delete()
         end
     end
     
-    if state and etag then
-        if etag == state.tag and modificationTime == tonumber(state.modification) then
+    if fileState.tag and etag then
+        if etag == fileState.tag and modificationTime == fileState.modification then
             -- return 304
             response.status = 304   
             response.headers['Etag'] = etag
@@ -56,6 +98,11 @@ function serve(path, request, response)
     end
     
     local file = io.open(path, "rb")
+    if not file then
+        response.status = 404
+        return {layout=false}    
+    end
+    
     response.status = 200    
     -- read file and set response content 
     response.content = file:read("*all")
@@ -68,12 +115,15 @@ function serve(path, request, response)
     --  generate etag
     local etag = tostring(os.time()) .. tostring(math.random(100000, 800000))
     -- save etag
-    if not state then
-         state = {modification = modificationTime, tag = etag, updated = os.time()}    
-         dictionary.set(path, state)
-      end
+    if not fileState.tag then
+        fileState.tag = etag
+        fileState.modification = modificationTime
+        fileState.timestamp = os.time()
+        fileState:save()
+    end
         
-    response.headers['Etag'] = state.tag
+    -- set response header
+    response.headers['Etag'] = fileState.tag
     
     return {layout=false}
 end
