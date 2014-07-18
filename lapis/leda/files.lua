@@ -1,6 +1,6 @@
 local mimetypes = require 'lapis.leda.mimetypes'
-local dictionary = require 'leda.dictionary'
-local utility = require 'leda.utility'
+local dict = require 'leda.dict'
+local util = require 'leda.util'
 local lfs = require 'lfs'
 
 require 'middleclass'
@@ -22,7 +22,7 @@ end
 function FileState:get()
     local value
     for _, field in ipairs(self.fields) do
-        value = dictionary.get(self:_fieldKey(field))
+        value = dict.get(self:_fieldKey(field))
         self[field] = value
     end
     
@@ -35,13 +35,13 @@ end
 
 function FileState:save()
     for _, field in ipairs(self.fields) do
-        if self[field] then dictionary.set(self:_fieldKey(field), tostring(self[field])) end
+        if self[field] then dict.set(self:_fieldKey(field), tostring(self[field])) end
     end
 end
 
 function FileState:delete()
     for _, field in ipairs(self.fields) do
-        dictionary.delete(self:_fieldKey(field))
+        dict.delete(self:_fieldKey(field))
         self[field] = nil
     end
     
@@ -111,7 +111,7 @@ function serve(path, request, response)
     -- guess mime type
     response.headers['Content-Type'] =  mimetypes.guess(path)
     -- set last modified header
-    response.headers['Last-Modified'] = utility.formatTime(modificationTime)
+    response.headers['Last-Modified'] = util.formatTime(modificationTime)
     --  generate etag
     local etag = tostring(os.time()) .. tostring(math.random(100000, 800000))
     -- save etag
