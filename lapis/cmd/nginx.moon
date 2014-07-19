@@ -5,7 +5,10 @@ COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 path = require "lapis.cmd.path"
 import get_free_port, default_environment from require "lapis.cmd.util"
 
+
 local *
+
+current_server = nil
 
 find_nginx = do
   nginx_bin = "nginx"
@@ -201,8 +204,6 @@ process_config = (cfg, port) ->
 
   cfg\gsub "%f[%a]http%s-{", "http { " .. table.concat test_server, "\n"
 
-server_stack = nil
-
 class AttachedServer
   new: (opts) =>
     for k,v in pairs opts
@@ -244,15 +245,11 @@ class AttachedServer
       send_term!
     else
       send_hup!
-
-    server_stack = @previous
-    if server_stack
-      server_stack\wait_until_ready!
+      -- TODO: wait until closed
 
     db = require "lapis.nginx.postgres"
     db.set_backend "raw", @old_backend
-
-    server_stack
+    true
 
   query: (q) =>
     ltn12 = require "ltn12"
@@ -289,11 +286,14 @@ class AttachedServer
 
     table.concat buffer
 
-
+-- attaches or starts a new server in a specified environment
 attach_server = (environment, env_overrides) ->
+  assert not current_server, "a server is already attached (did you forget to detach?)"
+
   pid = get_pid!
 
-  existing_config = path.exists(COMPILED_CONFIG_PATH) and path.read_file(COMPILED_CONFIG_PATH)
+  existing_config = if path.exists COMPILED_CONFIG_PATH
+    path.read_file COMPILED_CONFIG_PATH
 
   port = get_free_port!
 
@@ -313,19 +313,19 @@ attach_server = (environment, env_overrides) ->
 
   server = AttachedServer {
     :environment
-    previous: server_stack
     fresh: not pid
     :port, :existing_config
   }
 
   server\wait_until_ready!
-  server_stack = server
+  current_server = server
   server
 
 detach_server = ->
-  error "no server was pushed" unless server_stack
-  server_stack\detach!
-
+  error "no server is attached" unless current_server
+  current_server\detach!
+  current_server = nil
+  true
 
 -- combines attach_server and detach_server to run code with temporary server
 run_with_server = (fn) ->

@@ -6,14 +6,9 @@ do
 end
 local ltn12 = require("ltn12")
 local json = require("cjson")
-local server_loaded = 0
 local current_server = nil
 local load_test_server
 load_test_server = function()
-  server_loaded = server_loaded + 1
-  if not (server_loaded == 1) then
-    return 
-  end
   local attach_server
   do
     local _obj_0 = require("lapis.cmd.nginx")
@@ -24,20 +19,21 @@ load_test_server = function()
     local _obj_0 = require("lapis.cmd.util")
     get_free_port = _obj_0.get_free_port
   end
-  local port = get_free_port()
+  local app_port = get_free_port()
   current_server = attach_server(TEST_ENV, {
-    port = port
+    port = app_port
   })
-  current_server.app_port = port
+  current_server.app_port = app_port
   return current_server
 end
 local close_test_server
 close_test_server = function()
-  server_loaded = server_loaded - 1
-  if not (server_loaded == 0) then
-    return 
+  local detach_server
+  do
+    local _obj_0 = require("lapis.cmd.nginx")
+    detach_server = _obj_0.detach_server
   end
-  current_server:detach()
+  detach_server()
   current_server = nil
 end
 local get_current_server
@@ -52,8 +48,8 @@ request = function(path, opts)
   if opts == nil then
     opts = { }
   end
-  if not (server_loaded > 0) then
-    error("The test server is not loaded!")
+  if not (current_server) then
+    error("The test server is not loaded! (did you forget to load_test_server?)")
   end
   local http = require("socket.http")
   local headers = { }

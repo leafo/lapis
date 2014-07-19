@@ -6,7 +6,8 @@ do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
 end
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server, run_with_server
+local current_server, find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, AttachedServer, attach_server, detach_server, run_with_server
+current_server = nil
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -234,7 +235,6 @@ process_config = function(cfg, port)
   table.insert(test_server, "}")
   return cfg:gsub("%f[%a]http%s-{", "http { " .. table.concat(test_server, "\n"))
 end
-server_stack = nil
 do
   local _base_0 = {
     wait_until_ready = function(self)
@@ -261,13 +261,9 @@ do
       else
         send_hup()
       end
-      server_stack = self.previous
-      if server_stack then
-        server_stack:wait_until_ready()
-      end
       local db = require("lapis.nginx.postgres")
       db.set_backend("raw", self.old_backend)
-      return server_stack
+      return true
     end,
     query = function(self, q)
       local ltn12 = require("ltn12")
@@ -350,8 +346,12 @@ do
   AttachedServer = _class_0
 end
 attach_server = function(environment, env_overrides)
+  assert(not current_server, "a server is already attached (did you forget to detach?)")
   local pid = get_pid()
-  local existing_config = path.exists(COMPILED_CONFIG_PATH) and path.read_file(COMPILED_CONFIG_PATH)
+  local existing_config
+  if path.exists(COMPILED_CONFIG_PATH) then
+    existing_config = path.read_file(COMPILED_CONFIG_PATH)
+  end
   local port = get_free_port()
   if type(environment) == "string" then
     environment = require("lapis.config").get(environment)
@@ -370,24 +370,25 @@ attach_server = function(environment, env_overrides)
   end
   local server = AttachedServer({
     environment = environment,
-    previous = server_stack,
     fresh = not pid,
     port = port,
     existing_config = existing_config
   })
   server:wait_until_ready()
-  server_stack = server
+  current_server = server
   return server
 end
 detach_server = function()
-  if not (server_stack) then
-    error("no server was pushed")
+  if not (current_server) then
+    error("no server is attached")
   end
-  return server_stack:detach()
+  current_server:detach()
+  current_server = nil
+  return true
 end
 run_with_server = function(fn)
   local port = get_free_port()
-  local current_server = attach_server(default_environment(), {
+  current_server = attach_server(default_environment(), {
     port = port
   })
   current_server.app_port = port
