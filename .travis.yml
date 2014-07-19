@@ -10,4 +10,4 @@ install:
   - sudo luarocks install busted
   - sudo luarocks make
 
-script: busted
+script: luajit $(cat $(which busted) | grep -Po '[^'"'"']*?bin/busted')
