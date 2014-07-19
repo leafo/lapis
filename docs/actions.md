@@ -162,14 +162,13 @@ configure a cookie's settings by overidding the the `cookie_attributes`
 function on your application. Here's an example that adds an expiration date to
 cookies to make them persist:
 
-
 ```moon
 date = require "date"
 
 class extends lapis.Application
   cookie_attributes: (name, value) =>
     expires = date(true)\adddays(365)\fmt "${http}"
-    "Expires=#{expire}; Path=/; HttpOnly"
+    "Expires=#{expires}; Path=/; HttpOnly"
 ```
 
 ```lua
