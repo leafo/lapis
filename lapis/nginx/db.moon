@@ -109,12 +109,14 @@ backends = {
       mysql = ngx and ngx.ctx.mysql
       unless mysql
         mysql = assert (require "resty.mysql")\new!
-        mysql\set_timeout 1000 -- 1 s
+        mysql\set_timeout mysql_config.read_timeout_ms or 1000
         assert mysql\connect mysql_config
 
         if ngx
           ngx.ctx.mysql = mysql
-          after_dispatch -> mysql\set_keepalive 10000, 100 -- 10 s in a pool of 100
+          after_dispatch ->
+            mysql\set_keepalive mysql_config.idle_timeout_ms or 10000,
+                                mysql_config.max_connections or   100
 
       logger.query "[mysql] #{str}" if logger
       assert mysql\query str
