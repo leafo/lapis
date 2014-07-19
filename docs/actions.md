@@ -155,12 +155,12 @@ end)
   @cookies.foo = "bar"
 ```
 
-By default all cookies are given the additional parameters `Path=/; HttpOnly`
+By default all cookies are given the additional attributes `Path=/; HttpOnly`
 (which creates a [*session
 cookie*](http://en.wikipedia.org/wiki/HTTP_cookie#Terminology)). You can
-configure the cookie parameters for any cookie by overidding the the
-`cookie_attributes` function on your application. Here's an example that adds
-an expiration date to cookies to make them persist:
+configure a cookie's settings by overidding the the `cookie_attributes`
+function on your application. Here's an example that adds an expiration date to
+cookies to make them persist:
 
 
 ```moon
