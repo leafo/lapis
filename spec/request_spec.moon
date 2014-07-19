@@ -72,7 +72,7 @@ describe "cookies", ->
 
   class CookieApp2 extends lapis.Application
     layout: false
-    cookie_attributes: { "Domain=.leafo.net;" }
+    cookie_attributes: => "Path=/; Secure; Domain=.leafo.net;"
     "/": => @cookies.world = 34
 
   it "should write a cookie", ->
@@ -89,8 +89,18 @@ describe "cookies", ->
 
   it "should write a cookie with cookie attributes", ->
     _, _, h = mock_request CookieApp2, "/"
-    assert.same "world=34; Path=/; HttpOnly; Domain=.leafo.net;", h["Set-Cookie"]
+    assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
 
+  it "should set cookie attributes with lua app", ->
+    app = lapis.Application!
+    app.cookie_attributes = =>
+      "Path=/; Secure; Domain=.leafo.net;"
+
+    app\get "/", =>
+      @cookies.world = 34
+
+    _, _, h = mock_request app, "/"
+    assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
 
 describe "500 error", ->
   it "should render error page", ->

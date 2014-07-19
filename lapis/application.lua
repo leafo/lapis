@@ -234,14 +234,13 @@ do
       if not (next(self.cookies)) then
         return 
       end
-      local extra = self.app.cookie_attributes
-      if extra then
-        extra = "; " .. table.concat(self.app.cookie_attributes, "; ")
-      end
       for k, v in pairs(self.cookies) do
-        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v)) .. "; Path=/; HttpOnly"
-        if extra then
-          cookie = cookie .. extra
+        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
+        do
+          local extra = self.app.cookie_attributes(self, k, v)
+          if extra then
+            cookie = cookie .. ("; " .. extra)
+          end
         end
         self.res:add_header("Set-Cookie", cookie)
       end
@@ -437,6 +436,9 @@ do
       r:render()
       logger.request(r)
       return r
+    end,
+    cookie_attributes = function(self, name, value)
+      return "Path=/; HttpOnly"
     end
   }
   _base_0.__index = _base_0

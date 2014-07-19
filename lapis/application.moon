@@ -188,14 +188,12 @@ class Request
 
   write_cookies: =>
     return unless next @cookies
-    extra = @app.cookie_attributes
-
-    if extra
-      extra = "; " .. table.concat @app.cookie_attributes, "; "
 
     for k,v in pairs @cookies
-      cookie = "#{url.escape k}=#{url.escape v}; Path=/; HttpOnly"
-      cookie ..= extra if extra
+      cookie = "#{url.escape k}=#{url.escape v}"
+      if extra = @app.cookie_attributes @, k, v
+        cookie ..= "; " .. extra
+
       @res\add_header "Set-Cookie", cookie
 
 
@@ -406,6 +404,9 @@ class Application
     r\render!
     logger.request r
     r
+
+  cookie_attributes: (name, value) =>
+    "Path=/; HttpOnly"
 
 respond_to = do
   default_head = -> layout: false -- render nothing

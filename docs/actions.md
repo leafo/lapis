@@ -155,6 +155,36 @@ end)
   @cookies.foo = "bar"
 ```
 
+By default all cookies are given the additional parameters `Path=/; HttpOnly`
+(which creates a [*session
+cookie*](http://en.wikipedia.org/wiki/HTTP_cookie#Terminology)). You can
+configure the cookie parameters for any cookie by overidding the the
+`cookie_attributes` function on your application. Here's an example that adds
+an expiration date to cookies to make them persist:
+
+
+```moon
+date = require "date"
+
+class extends lapis.Application
+  cookie_attributes: (name, value) =>
+    expires = date(true)\adddays(365)\fmt "${http}"
+    "Expires=#{expire}; Path=/; HttpOnly"
+```
+
+```lua
+local date = require("date")
+local app = lapis.Application()
+
+app.cookie_attributes = function(self)
+  local expires = date(true):adddays(365):fmt("${http}")
+  return "Expires=" .. expires .. "; Path=/; HttpOnly"
+end
+```
+
+The `cookie_attributes` method takes the request object as the first argument
+(`self`) and then the name and value of the cookie being processed.
+
 ### Session
 
 The <span class="for_moon">`@session`</span><span
