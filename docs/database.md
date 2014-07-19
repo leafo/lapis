@@ -3,34 +3,32 @@ title: Database Access
 # Database Access
 
 Lapis comes with a set of classes and functions for working with
-[PostgreSQL](http://www.postgresql.org/). In the future other databases might
-be directly supported.
+[PostgreSQL](http://www.postgresql.org/). In the future other databases will be
+directly supported. In the meantime you're free to use other OpenResty database
+drivers, you just won't have access to Lapis' query API.
+
+Every query is performed asynchronously through the [OpenResty cosocket
+API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp). A request will yield
+and resume automatically so there's no need to code with callbacks, queries can
+be written sequentially if they were in a synchronous environment. Additionally
+connections to the server are automatically pooled for optimal performance.
+
+[*pgmoon*](https://github.com/leafo/pgmoon) is the driver used in Lapis for
+communicating with PostgreSQL. It has the advantage of being able to be used
+within OpenResty's cosocket API in addition to on the command line using
+LuaSocket's synchronous API.
 
 ## Establishing A Connection
 
-Every query is performed asynchronously by sending an internal sub-request to a
-special location defined in our Nginx configuration. This location communicates
-with an upstream, which automatically manages a pool of PostgreSQL database
-connections. This is handled by the
-[`ngx_postgres`](https://github.com/FRiCKLE/ngx_postgres) module that is
-bundled with OpenResty.
-
-First we'll add the upstream to our `nginx.conf`, it's how we specify the
-host and authentication of the database. Place the following in the `http`
-block:
-
-```nginx
-upstream database {
-  postgres_server ${{pg POSTGRES}};
-}
-```
-
-In this example the `pg` filter is applied to our `POSTGRESQL`
-configuration variable. Let's go ahead and add a value to our `config.moon`
+The first step is to define the configuration for our server in the `postgres`
+block in our <span class="for_moon">`config.moon`</span><span
+class="for_lua">`config.lua`</span> file.
 
 ```lua
+-- config.lua
 config("development", {
   postgres = {
+    backend = "pgmoon",
     host = "127.0.0.1",
     user = "pg_user",
     password = "the_password",
@@ -40,8 +38,10 @@ config("development", {
 ```
 
 ```moon
+-- config.moon
 config "development", ->
   postgres ->
+    backend "pgmoon"
     host "127.0.0.1"
     user "pg_user"
     password "the_password"
@@ -49,44 +49,27 @@ config "development", ->
 ```
 
 `host` defaults to `127.0.0.1` and `user` defaults to `postgres`, so you can
-leave those fields out if they aren't different from the defaults. If you need
-to set a post append it to the `host` with colon syntax: `my_host:1234`.
-
-The `pg` filter in `nginx.conf` will convert the PostgreSQL connection data to the right format
-for the Nginx PostgreSQL module.
-
-Lastly, we add the location. Place the following in your `server` block:
-
-```nginx
-location = /query {
-  internal;
-  postgres_pass database;
-  postgres_query $echo_request_body;
-}
-```
-
-> The location must be named `/query` by default. And `postgres_pass` must
-> match the name of the upstream. In this example we use `database`.
-
-
-
-The `internal` setting is very important. This allows the location to only be
-used within the context of a sub-request.
+leave those fields out if they aren't different from the defaults. If a
+non-default port is required it can be appended to the `host` with colon
+syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
 
 You're now ready to start making queries.
 
 ## Making a Query
 
-There are two ways to make queries. The first way is to use the raw query
-interface, a collection of functions to help you write SQL.
+There are two ways to make queries:
 
-The second way is to use the `Model` class, a wrapper around a Lua table that
-helps you synchronize it with a row in a database table.
+1. The raw query interface is a collection of functions to help you write SQL.
+1. The [`Model` class](#models) is a wrapper around a Lua table that helps you synchronize it with a row in a database table.
 
-Here's a base example using the raw query interface:
+The `Model` class is the preferred way to interact with the database. The raw
+query interface is for achieving things the `Model` class in unable to do
+easily.
+
+Here's an example of the raw query interface:
 
 ```lua
-local lapis = require "lapis"
+local lapis = require("lapis")
 local db = require("lapis.db")
 
 local app = lapis.Application()
@@ -107,8 +90,37 @@ class extends lapis.Application
     "ok!"
 ```
 
-By default all queries will log to the Nginx log. You'll be able to see each
-query as it happens.
+And the same query represented with the `Model` class:
+
+```lua
+local lapis = require("lapis")
+local Model = require("lapis.db.model").Model
+
+local app = lapis.Application()
+
+local MyTable = Model:extend("my_table")
+
+app:match("/", function()
+  local row = MyTable:find(10)
+  return "ok!"
+end)
+```
+
+```moon
+lapis = require "lapis"
+import Model from require "lapis.db.model"
+
+class MyTable extends Model
+
+class extends lapis.Application
+  "/": =>
+    row = MyTable\find 10
+    "ok!"
+```
+
+
+By default all queries will log to the Nginx notice log. You'll be able to see
+each query as it happens.
 
 ## Query Interface
 
@@ -152,9 +164,8 @@ UPDATE things SET color = 'blue'
 INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 ```
 
-> Due to a limitation in the PostgreSQL Nginx extension, it is not possible to
-> get the error message in your code. You can however see the error in the
-> logs.
+A query that fails to execute will raise a Lua error. The error will contain
+the message from PostgreSQL along with the query.
 
 ### `select(query, params...)`
 
@@ -494,7 +505,8 @@ SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
 `find` returns an instance of the model. In the case of the user, if there was a
 `name` column, then we could access the users name with `user.name`.
 
-We can also pass a table as an argument to `find`. The table will be converted to a `WHERE` clause in the query:
+We can also pass a table as an argument to `find`. The table will be converted
+to a `WHERE` clause in the query:
 
 
 ```lua

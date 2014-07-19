@@ -216,7 +216,7 @@ application secret, which is stored in the configuration value `secret`. It is
 highly recommended to change this from the default.
 
 ```lua
--- config.moon
+-- config.lua
 local config = require("lapis.config").config
 
 config("development", {
