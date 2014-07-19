@@ -225,17 +225,32 @@ class AttachedServer
     else
       @old_backend = db.set_backend "raw", @\query
 
-  wait_until_ready: =>
+  wait_until: (server_status="open")=>
     socket = require "socket"
     max_tries = 1000
     while true
-      status = socket.connect "127.0.0.1", @port
-      if status
-        break
+      sock = socket.connect "127.0.0.1", @port
+      switch server_status
+        when "open"
+          if sock
+            sock\close!
+            break
+        when "close"
+          if sock
+            sock\close!
+          else
+            break
+        else
+          error "don't know how to wait for #{server_status}"
 
       max_tries -= 1
-      error "Timed out waiting for server to start" if max_tries == 0
+      if max_tries == 0
+        error "Timed out waiting for server to #{server_status}"
+
       socket.sleep 0.001
+
+  wait_until_ready: => @wait_until "open"
+  wait_until_closed: => @wait_until "close"
 
   detach: =>
     if @existing_config
@@ -243,9 +258,9 @@ class AttachedServer
 
     if @fresh
       send_term!
+      @wait_until_closed!
     else
       send_hup!
-      -- TODO: wait until closed
 
     db = require "lapis.nginx.postgres"
     db.set_backend "raw", @old_backend
