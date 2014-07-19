@@ -48,6 +48,9 @@ config "development", ->
     database "my_database"
 ```
 
+Specifying `mysql` instead of `postgres` will use the `lua-resty-mysql` driver.
+To specify a socket, use `path` instead of `host`.
+
 `host` defaults to `127.0.0.1` and `user` defaults to `postgres`, so you can
 leave those fields out if they aren't different from the defaults. If you need
 to set a post append it to the `host` with colon syntax: `my_host:1234`.
