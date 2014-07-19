@@ -237,7 +237,8 @@ class AttachedServer
       socket.sleep 0.001
 
   detach: =>
-    path.write_file COMPILED_CONFIG_PATH, assert @existing_config
+    if @existing_config
+      path.write_file COMPILED_CONFIG_PATH, @existing_config
 
     if @fresh
       send_term!
@@ -292,7 +293,7 @@ class AttachedServer
 attach_server = (environment, env_overrides) ->
   pid = get_pid!
 
-  existing_config = path.read_file COMPILED_CONFIG_PATH
+  existing_config = path.exists(COMPILED_CONFIG_PATH) and path.read_file(COMPILED_CONFIG_PATH)
 
   port = get_free_port!
 

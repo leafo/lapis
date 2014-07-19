@@ -253,7 +253,9 @@ do
       end
     end,
     detach = function(self)
-      path.write_file(COMPILED_CONFIG_PATH, assert(self.existing_config))
+      if self.existing_config then
+        path.write_file(COMPILED_CONFIG_PATH, self.existing_config)
+      end
       if self.fresh then
         send_term()
       else
@@ -349,7 +351,7 @@ do
 end
 attach_server = function(environment, env_overrides)
   local pid = get_pid()
-  local existing_config = path.read_file(COMPILED_CONFIG_PATH)
+  local existing_config = path.exists(COMPILED_CONFIG_PATH) and path.read_file(COMPILED_CONFIG_PATH)
   local port = get_free_port()
   if type(environment) == "string" then
     environment = require("lapis.config").get(environment)
