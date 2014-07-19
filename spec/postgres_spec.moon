@@ -282,14 +282,14 @@ describe "lapis.nginx.postgres", ->
 
   it "should create index", ->
     old_select = db.select
-    db.select = -> { { c: 0 } }
+    db.select = -> {}
     input = schema.create_index "user_data", "one", "two"
     assert.same input, [[CREATE INDEX "user_data_one_two_idx" ON "user_data" ("one", "two");]]
     db.select = old_select
 
   it "should create index with expression", ->
     old_select = db.select
-    db.select = -> { { c: 0 } }
+    db.select = -> {}
     input = schema.create_index "user_data", db.raw("lower(name)"), "height"
     assert.same input, [[CREATE INDEX "user_data_lower_name_height_idx" ON "user_data" (lower(name), "height");]]
     db.select = old_select
@@ -297,7 +297,7 @@ describe "lapis.nginx.postgres", ->
 
   it "should create not create duplicate index", ->
     old_select = db.select
-    db.select = -> { { c: 1 } }
+    db.select = -> { {} }
     input = schema.create_index "user_data", "one", "two"
     assert.same input, nil
     db.select = old_select

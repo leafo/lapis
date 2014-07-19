@@ -53,6 +53,7 @@ build = {
 		["lapis.lua"] = "lapis/lua.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
 		["lapis.nginx.context"] = "lapis/nginx/context.lua",
+		["lapis.nginx.db"] = "lapis/nginx/db.lua",
 		["lapis.nginx.http"] = "lapis/nginx/http.lua",
 		["lapis.nginx.postgres"] = "lapis/nginx/postgres.lua",
 		["lapis.router"] = "lapis/router.lua",

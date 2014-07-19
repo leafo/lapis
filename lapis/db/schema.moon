@@ -19,9 +19,8 @@ extract_options = (cols) ->
   cols, options
 
 entity_exists = (name) ->
-  name = db.escape_literal name
-  res = unpack db.select "COUNT(*) as c from pg_class where relname = #{name}"
-  res.c > 0
+  res = db.select db.get_dialect!.row_if_entity_exists, name
+  #res > 0
 
 gen_index_name = (...) ->
   parts = for p in *{...}
@@ -81,18 +80,26 @@ create_index = (tname, ...) ->
 
   append_all buffer, ")"
 
-  if options.tablespace
+  if options.tablespace and db.get_dialect!.tablespace
     append_all buffer, " TABLESPACE ", options.tablespace
     
-  if options.where
+  if options.where and db.get_dialect!.index_where
     append_all buffer, " WHERE ", options.where
 
   append_all buffer, ";"
   db.query concat buffer
 
 drop_index = (...) ->
-  index_name = gen_index_name ...
-  db.query "DROP INDEX IF EXISTS #{db.escape_identifier index_name}"
+  index_name = db.escape_identifier gen_index_name ...
+  if db.get_dialect!.drop_index_if_exists
+    db.query "DROP INDEX IF EXISTS #{index_name}"
+  else
+    -- not the most robust solution
+    db.query "LOCK TABLES bar WRITE"
+    if entity_exists index_name
+      table_name = db.escape_identifier (...)
+      db.query "DROP INDEX #{index_name} ON #{table_name}"
+    db.query "UNLOCK TABLES"
 
 drop_table = (tname) ->
   db.query "DROP TABLE IF EXISTS #{db.escape_identifier tname};"
@@ -108,10 +115,18 @@ drop_column = (tname, col_name) ->
   db.query "ALTER TABLE #{tname} DROP COLUMN #{col_name}"
 
 rename_column = (tname, col_from, col_to) ->
-  tname = db.escape_identifier tname
   col_from = db.escape_identifier col_from
   col_to = db.escape_identifier col_to
-  db.query "ALTER TABLE #{tname} RENAME COLUMN #{col_from} TO #{col_to}"
+  if db.get_dialect!.rename_column
+    tname = db.escape_identifier tname
+    db.query "ALTER TABLE #{tname} RENAME COLUMN #{col_from} TO #{col_to}"
+  else
+    assert not tname\match "`", "invalid table name " .. tname
+    res = db.query "SHOW CREATE TABLE #{tname}"
+    assert #res == 1, "cannot have #{#res} rows from SHOW CREATE TABLE"
+    col_def = res[1]["Create Table"]\match "\n *`#{tname}` ([^\n]-),?\n"
+    assert col_def, "no column definition in #{res[1]}"
+    db.query "ALTER TABLE #{tname} MODIFY #{col_from} #{col_to} #{col_def}"
 
 rename_table = (tname_from, tname_to) ->
   tname_from = db.escape_identifier tname_from
@@ -151,7 +166,11 @@ class TimeType extends ColumnType
 
   __call: (opts) =>
     base = @base
-    @base = base .. " with time zone" if opts.timezone
+    if base == "timestamp"
+      if db.get_dialect!.explicit_time_zone
+        @base = base .. " with time zone" if opts.timezone
+      else
+        @base = opts.timezone and "timestamp" or "datetime"
 
     with ColumnType.__call @, opts
       @base = base

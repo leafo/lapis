@@ -1,1 +1,1 @@
-require "lapis.nginx.postgres"
+require "lapis.nginx.db"
