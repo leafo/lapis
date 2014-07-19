@@ -244,7 +244,7 @@ app.layout = require "views.layout"
 The syntax is slightly different than rendering a view. Instead of assigning a
 template name to the `layout` field, we assign the actual template object. This
 can be obtained by just requiring it by the module name: `"views.layout"`. As
-described above, etlua takes care of coverting the `.etlua` file into something
+described above, etlua takes care of converting the `.etlua` file into something
 usable by Lua.
 
 
