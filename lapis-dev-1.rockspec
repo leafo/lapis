@@ -13,13 +13,15 @@ description = {
 }
 
 dependencies = {
-	"lua >= 5.1",
+	"lua ~> 5.1",
+
 	"ansicolors",
 	"etlua",
 	"loadkit",
 	"lpeg",
+	"lua-cjson",
 	"luasocket",
-	"lua-cjson"
+	"pgmoon",
 }
 
 build = {
