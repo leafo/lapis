@@ -2,6 +2,53 @@ title: Requests and Actions
 --
 # Requests and Actions
 
+Every HTTP request that is handled by Lapis follows the same basic flow after
+being handed off from Nginx. The first step is routing. A *route* is a pattern
+that a URL must match. When you define a route you also include an *action*. An
+action is a regular Lua/MoonScript function that will be called if the
+associated route matches.
+
+All actions are called with one argument, the [*request
+object*](#request-object).
+
+The return value of the action is used to render the output. A return value
+that is a string will be rendered to the browser directly. A return value of a
+table is treated as [*request options*](#request-options).
+
+
+## Routes -- URL Patterns
+
+Route patterns use a special syntax to define dynamic parameters of the URL and
+assign a name to them. The simplest routes have no parameters though:
+
+* `/`
+* `/hello`
+* `/users/all`
+
+These routes match the URLS verbatim. The leading `/` is required. The route
+must match the entire URL path. That means a request to `/hello/world` will not
+match the route `/hello`.
+
+You can specify a named parameter with a `:` followed immediately by the name.
+The parameter will match all characters excluding `/`:
+
+* `/page/:page`
+* `/post/:post_id/:post_name`
+
+The captured values of the route parameters are saved in the `params` field of
+the request object by their name. A named parameter must contain at least 1
+character, and will fail to match otherwise.
+
+There's one other capture type, a splat. A splat, or `*` will match at least 1
+character all the way to the end of the path (including `/`). The splat is
+stored in a `splat` fields in the `params` table of the request object.
+
+* `/browse/*`
+* `/user/:name/file/*`
+
+It is currently not valid to put anything after the splat as the splat is
+greedy and will capture all characters.
+
 ## Request Object
 
 Every action is passed the *request object* as its first argument when called.
@@ -31,49 +78,6 @@ The raw request table <span class="for_lua">`@req`</span><span class="for_lua">`
 * <span class="for_moon">`@req.params_post`</span><span class="for_lua">`self.params_post`</span> -- Request POST parameters table
 * <span class="for_moon">`@req.params_get`</span><span class="for_lua">`self.params_get`</span> -- Request GET parameters table
 
-### Request Options
-
-Whenever a table is written, the key/value pairs (for keys that are strings)
-are copied into <span class="for_moon">`@options`</span><span
-class="for_lua">`self.options`</span>. For example, in the following action the
-`render` and `status` properties are copied. The options table is used at
-the end of the action lifecycle to create the appropriate response.
-
-```lua
-app:match("/", function(self)
-  return { render = "error", status = 404}
-end)
-```
-
-```moon
-"/": => render: "error", status: 404
-```
-
-Here is the list of options that can be written
-
-* `status` -- sets HTTP status code (eg. 200, 404, 500, ...)
-* `render` -- causes a view to be rendered with the request. If the value is
-  `true` then the name of the route is used as the view name. Otherwise the value must be a string or a view class.
-* `content_type` -- sets the `Content-type` header
-* `json` -- causes the request to return the JSON encoded value of the property. The content type is set to `application/json` as well.
-* `layout` -- changes the layout from the default defined by the application
-* `redirect_to` -- sets status to 302 and sets `Location` header to value. Supports both relative and absolute URLs. (Combine with `status` to perform 301 redirect)
-
-
-When rendering JSON make sure to use the `json` render option. It will
-automatically set the correct content type and disable the layout:
-
-```lua
-app:match("/hello", function(self)
-  return { json = { hello = "world" } }
-end)
-```
-
-```moon
-class extends lapis.Application
-  "/hello": =>
-    json: { hello: "world!" }
-```
 
 ### Cookies
 
@@ -167,6 +171,52 @@ config "development", ->
   session_name "my_app_session"
   secret "this is my secret string 123456"
 ```
+
+## Request Options
+
+Whenever a table is written, the key/value pairs (for keys that are strings)
+are copied into <span class="for_moon">`@options`</span><span
+class="for_lua">`self.options`</span>. For example, in the following action the
+`render` and `status` properties are copied. The options table is used at
+the end of the action lifecycle to create the appropriate response.
+
+```lua
+app:match("/", function(self)
+  return { render = "error", status = 404}
+end)
+```
+
+```moon
+"/": => render: "error", status: 404
+```
+
+Here is the list of options that can be written
+
+* `status` -- sets HTTP status code (eg. 200, 404, 500, ...)
+* `render` -- causes a view to be rendered with the request. If the value is
+  `true` then the name of the route is used as the view name. Otherwise the value must be a string or a view class.
+* `content_type` -- sets the `Content-type` header
+* `json` -- causes the request to return the JSON encoded value of the property. The content type is set to `application/json` as well.
+* `layout` -- changes the layout from the default defined by the application
+* `redirect_to` -- sets status to 302 and sets `Location` header to value. Supports both relative and absolute URLs. (Combine with `status` to perform 301 redirect)
+
+
+When rendering JSON make sure to use the `json` render option. It will
+automatically set the correct content type and disable the layout:
+
+```lua
+app:match("/hello", function(self)
+  return { json = { hello = "world" } }
+end)
+```
+
+```moon
+class extends lapis.Application
+  "/hello": =>
+    json: { hello: "world!" }
+```
+
+
 
 ## Request Object Methods
 
