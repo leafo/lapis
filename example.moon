@@ -1,10 +1,13 @@
 
 lapis = require "lapis"
-import Model from require "lapis.db.model"
-import respond_to, capture_errors from require "lapis.application"
 csrf = require "lapis.csrf"
 
+import Model from require "lapis.db.model"
+import respond_to, capture_errors from require "lapis.application"
+
 class Users extends Model
+  url_params: =>
+    "user", id: @id
 
 class App extends lapis.Application
   -- Execute code before every action
@@ -19,7 +22,7 @@ class App extends lapis.Application
       ul ->
         for user in *users
           li ->
-            a href: @url_for("user", user.id), user.name
+            a href: @url_for(user), user.name
 
   [user: "/profile/:id"]: =>
     user = Users\find id: @params.id
@@ -38,5 +41,3 @@ class App extends lapis.Application
           input type: "hidden", name: "csrf_token", value: @csrf_token
           input type: "text", name: "username"
   }
-
-lapis.serve(App)
