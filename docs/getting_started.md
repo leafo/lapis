@@ -23,9 +23,8 @@ This guide hopes to serve as a tutorial and a reference.
 
 ## Basic Setup
 
-Install OpenResty onto your system. If you're compiling manually it's
-recommended to enable PostgreSQL and Lua JIT. If you're using Heroku then you
-can use the Heroku OpenResty module along with the Lua build pack.
+Install OpenResty onto your system. If you're using Heroku then you can use the
+[Heroku OpenResty module][4] along with the [Lua build pack][3].
 
 Next install Lapis using LuaRocks:
 
@@ -38,7 +37,7 @@ $ luarocks install lapis
 ### `lapis` Command Line Tool
 
 Lapis comes with a command line tool to help you create new projects and start
-your server. To see what Lapis can do, run in your shell:
+the server. To see what Lapis can do, run in your shell:
 
 
 ```bash
@@ -51,13 +50,17 @@ directory and run:
 ```bash
 $  lapis new
 
-->	wrote	nginx.conf
-->	wrote	mime.types
+wrote	nginx.conf
+wrote	mime.types
+wrote	app.moon
 ```
 
-Lapis starts you off by writing some basic Nginx configuration. Your
-application runs directly in Nginx and this configuration is what routes
-requests from Nginx to your Lua code.
+> If you want a Lua starter application then you can pass the `--lua` flag,
+> more about this in the [Lua getting started
+> guide]($root/reference/lua_getting_started.html).
+
+Lapis starts you off by writing a basic Nginx configuration and a blank Lapis
+application.
 
 Feel free to look at the generated configuration file (`nginx.conf` is the only
 important file). Here's a brief overview of what it does:
@@ -65,11 +68,11 @@ important file). Here's a brief overview of what it does:
  * Any requests inside `/static/` will serve files out of the directory
    `static` (You can create this directory now if you want)
  * A request to `/favicon.ico` is read from `static/favicon.ico`
- * All other requests will be served by `web.lua`. (We'll create this next)
+ * All other requests will be served by Lua, more specifically a module named `"app"`
 
-When you start your server with Lapis, the `nginx.conf` file is actually
-processed and templated variables are filled in based on the server's
-environment. We'll talk about how to configure these things later on.
+When you start the server using the `lapis` command line tool the `nginx.conf`
+file is processed and templated variables are filled with values from the
+current Lapis' environment. This is discussed in more detail further on.
 
 ### Nginx Configuration
 
@@ -81,37 +84,38 @@ application to production.
 Here is the `nginx.conf` that has been generated:
 
 ```nginx
-worker_processes  ${{NUM_WORKERS}};
+worker_processes ${{NUM_WORKERS}};
 error_log stderr notice;
 daemon off;
 
 events {
-    worker_connections 1024;
+  worker_connections 1024;
 }
 
 http {
-    include mime.types;
+  include mime.types;
 
-    server {
-        listen ${{PORT}};
-        lua_code_cache off;
+  server {
+    listen ${{PORT}};
+    lua_code_cache ${{CODE_CACHE}};
 
-        location / {
-            default_type text/html;
-            content_by_lua_file "web.lua";
-        }
-
-        location /static/ {
-            alias static/;
-        }
-
-        location /favicon.ico {
-            alias static/favicon.ico;
-        }
+    location / {
+      default_type text/html;
+      content_by_lua '
+        require("lapis").serve("app")
+      ';
     }
+
+    location /static/ {
+      alias static/;
+    }
+
+    location /favicon.ico {
+      alias static/favicon.ico;
+    }
+  }
 }
 ```
-
 
 The first thing to notice is that this is not a normal Nginx configuration
 file. Special `${{VARIABLE}}` syntax is used by Lapis to inject environment
@@ -122,21 +126,23 @@ There are a couple interesting things provided by the default configuration.
 foreground, and print log text to the console. This is great for development,
 but worth turning off in a production environment.
 
-`lua_code_cache off` is also another setting nice for development. It causes
-all Lua modules to be reloaded on each request, so if we change files after
-starting the server they will be picked up. Something you also want to turn off
-in production for the best performance.
+`lua_code_cache` is also another setting useful for development. When set to
+`of` it causes all Lua modules to be reloaded on each request. Modifications to
+the web application's source code can then be reloaded automatically. In a
+production environment this should be disabled for optimal performance. Defaults to `off`.
 
-Our single location calls the directive `content_by_lua_file "web.lua"`. This
-causes all requests of that location to run through `web.lua`, so let's make
-that now.
+The `content_by_lua` directive specifies a chunk of Lua code that will handle
+any request that doesn't match the other locations. It loads Lapis and tells it
+to serve the module named `"app"`. The `lapis new` command ran earlier provides
+a skeleton `app` module to get started with
 
 ## Starting The Server
 
-Before we start writing any code lets look at how to start the server.
+Although it's possible to start Nginx manually, Lapis wraps building the
+configuration and starting the server into a single convenient command.
 
-To start your server you can run `lapis server`. The `lapis` binary will
-attempt to find your OpenResty instalation. It will search the following
+Running `lapis server` in the shell will start the server. Lapis will will
+attempt to find your OpenResty installation. It will search the following
 directories for an `nginx` binary. (The last one represents anything in your
 `PATH`)
 
@@ -148,30 +154,38 @@ directories for an `nginx` binary. (The last one represents anything in your
 > Remember that you need OpenResty and not a normal installation of Nginx.
 > Lapis will ignore regular Nginx binaries.
 
-You can go ahead and start the server now so you can see what it looks like:
+
+If you've been following along, go ahead and start the server to see what it
+looks like:
 
 ```bash
 $ lapis server
 ```
 
-When running the server in the foreground, which is the default for the
-generated configuration, you can stop the server with `CTRL+C`
+The default configuration puts the server in the foreground, use `CTRL+C` to
+stop the server.
 
-If you're running the server in the background you can run `lapis term` from
-your command line in the directory of your application to stop the server. This
+If the server is running in the background it can be stopped with the command
+`lapis term`. It must be run in the root directory of the application.  This
 command looks for the PID file for a running server and sends a `TERM` message
 to that process if it exists.
 
 ## Creating An Application
 
-Now we're ready to start writing our application logic. You have a choice which
-path to take depending on the language you want to learn. I recommended reading
-through both paths if you're unsure what you want to use.
+Now that you know how to generate a new project and start and stop the server
+you're ready to start writing application code. This guide splits into two for
+MoonScript and Lua.
+
+I recommended reading through both paths if you're unsure what you want to use.
 
  * [Create an application with Lua][1]
  * [Create an application with MoonScript][2]
 
+> Further guides have MoonScript and Lua examples on the same page and can be
+> toggled with the *MoonScript* and *Lua* buttons on the top right.
 
 [0]: http://openresty.org/
 [1]: lua_getting_started.html
 [2]: moon_getting_started.html
+[3]: https://github.com/leafo/heroku-buildpack-lua
+[4]: https://github.com/leafo/heroku-openresty

@@ -10,50 +10,37 @@ If you haven't already, read through the [generic getting started guide][2] for
 information on creating a new project skeleton along with details on OpenResty,
 Nginx configurations, and the `lapis` command.
 
-You can start a new project in the current directory busing by typing into your
-console:
+You can start a new Lua project in the current directory by running the
+following command:
 
 ```bash
 $ lapis new --lua
 ```
 
-The default `nginx.conf` reads a file called `web.lua` for your application.
-Lets start by creating that.
+The default `nginx.conf` reads a file called `app.lua` for your application. A
+basic one is provided with the `lapis new` command.
 
-The job of `web.lua` is to load to serve our application. Typically your
-application will be a separate Lua module defined in another file, so we just
-need to reference it by name here:
-
-
-```lua
--- web.lua
-local lapis = require "lapis"
-lapis.serve("my_app")
-```
-
-`lapis.serve` takes the name of the module that contains the application
-that will handle the request. In our case we're using `"my_app"` so we'll
-create `my_app.lua`:
+`app.lua` is a regular Lua module that contains the application. You can even
+require the module like any other in the regular Lua interpreter. It looks like
+this:
 
 ```lua
--- my_app.lua
-local lapis = require "lapis"
-
+-- app.lua
+local lapis = require("lapis")
 local app = lapis.Application()
 
-app:get("/", function(self)
-  return "Hello world"
+app:get("/", function()
+  return "Welcome to Lapis " .. require("lapis.version")
 end)
 
 return app
 ```
 
-Now we can start the server:
+Try it out by starting the server:
 
 ```bash
 lapis server
 ```
-
 
 Visit <http://localhost:8080> to see the page.
 
@@ -63,7 +50,7 @@ In this example we change the port in the `development` environment to 9090:
 
 ```lua
 -- config.lua
-local config = require "lapis.config"
+local config = require("lapis.config")
 
 config("development", {
   port = 9090
@@ -74,15 +61,15 @@ config("development", {
 > Environments guide][3].
 
 The `development` environment is used and loaded automatically when `lapis
-server` is run with no additional arguments. (And `lapis_environment.lua`
-doesn't exist)
+server` is run with no additional arguments. (And the file
+`lapis_environment.lua` doesn't exist)
 
-
-You can store anything you want in the configuration. For example:
+Lapis uses a handful of fields in the configuration (such as `port`), other
+fields can be used to store anything you want. For example:
 
 ```lua
 -- config.lua
-local config = require "lapis.config"
+local config = require("lapis.config")
 
 config("development", {
   greeting = "Hello world"
@@ -93,8 +80,8 @@ You can get the current configuration by calling `get`. It returns a plain Lua
 table:
 
 ```lua
--- my_app.lua
-local lapis = require "lapis"
+-- app.lua
+local lapis = require("lapis")
 local config = require("lapis.config").get()
 
 local app = lapis.Application()
@@ -119,7 +106,7 @@ By default Lapis searches for views in `views/` directory. Lets create a new
 view there, `index.etlua`. We won't use any of etlua's special markup just yet,
 so it will look like a normal HTML file.
 
-```erb
+```html
 <!-- views/index.etlua -->
 <h1>Hello world</h1>
 <p>Welcome to my page</p>
@@ -132,8 +119,8 @@ what goes around it. We'll look at layouts further down.
 Now lets create the application which renders our view:
 
 ```lua
--- my_app.lua
-local lapis = require "lapis"
+-- app.lua
+local lapis = require("lapis")
 
 local app = lapis.Application()
 app:enable("etlua")
@@ -165,13 +152,14 @@ template.
 * `<%= lua_expression %>` writes result of expression to output, HTML escaped
 * `<%- lua_expression %>` same as above but with no HTML escaping
 
+> Learn more about the etlua integration in the [etlua guide][4].
 
 In the following example we assign some data in the action, then print it out
 in our view:
 
 ```lua
--- my_app.lua
-local lapis = require "lapis"
+-- app.lua
+local lapis = require("lapis")
 
 local app = lapis.Application()
 app:enable("etlua")
@@ -189,7 +177,7 @@ end)
 return app
 ```
 
-```erb
+```html
 <!-- views/list.etlua -->
 <h1>Here are my favorite things</h1>
 <ol>
@@ -203,11 +191,11 @@ return app
 
 A layout is a separate shared template that wraps the content of every page.
 Lapis comes with a basic layout to get you started but you'll most likely want
-to create something custom.
+to replace it with something custom.
 
 We'll write the layout in etlua just like our views. Create `views/layout.etlua`:
 
-```erb
+```html
 <!-- views/layout.etlua -->
 <!DOCTYPE HTML>
 <html lang="en">
@@ -251,5 +239,6 @@ usable by Lua.
 [1]: https://github.com/leafo/etlua
 [2]: getting_started.html
 [3]: configuration.html
+[4]: etlua_templates.html
 
 

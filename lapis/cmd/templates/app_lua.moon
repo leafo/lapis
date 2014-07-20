@@ -1,4 +1,4 @@
-[[local lapis = require "lapis"
+[[local lapis = require("lapis")
 local app = lapis.Application()
 
 app:get("/", function()
