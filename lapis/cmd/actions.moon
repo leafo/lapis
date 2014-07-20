@@ -75,9 +75,9 @@ tasks = {
       write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
 
       if flags.lua
-        write_file_safe "web.lua", require "lapis.cmd.templates.web_lua"
+        write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
       else
-        write_file_safe "web.moon", require "lapis.cmd.templates.web"
+        write_file_safe "app.moon", require "lapis.cmd.templates.app"
 
       if flags.git
         write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") flags
