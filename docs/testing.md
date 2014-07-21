@@ -241,6 +241,7 @@ supports the following options in the table:
 * `expect` -- What type of response to expect, currently only supports
   `"json"`. It will parse the body automatically into a Lua table or throw an
   error if the body is not valid JSON.
+* `port` -- The port of the server, defaults to the randomly assigned port defined autmatically when running tests
 
 The function has three return values: the status code as a number, the body of
 the response and any response headers in a table.

@@ -35,6 +35,7 @@ request = (path="", opts={}) ->
 
   headers = {}
   method = opts.method
+  port = opts.port or current_server.app_port
 
   source = if data = opts.post or opts.data
     method or= "POST" if opts.post
@@ -52,6 +53,8 @@ request = (path="", opts={}) ->
   if url_host
     headers.Host = url_host
     path = url_path
+    if override_port = url_host\match ":(%d+)$"
+      port = override_port
 
   path = path\gsub "^/", ""
 
@@ -61,7 +64,7 @@ request = (path="", opts={}) ->
 
   buffer = {}
   res, status, headers = http.request {
-    url: "http://127.0.0.1:#{current_server.app_port}/#{path}"
+    url: "http://127.0.0.1:#{port}/#{path}"
     redirect: false
     sink: ltn12.sink.table buffer
     :headers, :method, :source

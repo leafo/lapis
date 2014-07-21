@@ -54,6 +54,7 @@ request = function(path, opts)
   local http = require("socket.http")
   local headers = { }
   local method = opts.method
+  local port = opts.port or current_server.app_port
   local source
   do
     local data = opts.post or opts.data
@@ -78,6 +79,12 @@ request = function(path, opts)
   if url_host then
     headers.Host = url_host
     path = url_path
+    do
+      local override_port = url_host:match(":(%d+)$")
+      if override_port then
+        port = override_port
+      end
+    end
   end
   path = path:gsub("^/", "")
   if opts.headers then
@@ -88,7 +95,7 @@ request = function(path, opts)
   local buffer = { }
   local res, status
   res, status, headers = http.request({
-    url = "http://127.0.0.1:" .. tostring(current_server.app_port) .. "/" .. tostring(path),
+    url = "http://127.0.0.1:" .. tostring(port) .. "/" .. tostring(path),
     redirect = false,
     sink = ltn12.sink.table(buffer),
     headers = headers,
