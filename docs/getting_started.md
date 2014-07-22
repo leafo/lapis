@@ -127,9 +127,10 @@ foreground, and print log text to the console. This is great for development,
 but worth turning off in a production environment.
 
 `lua_code_cache` is also another setting useful for development. When set to
-`of` it causes all Lua modules to be reloaded on each request. Modifications to
+`off` it causes all Lua modules to be reloaded on each request. Modifications to
 the web application's source code can then be reloaded automatically. In a
-production environment this should be disabled for optimal performance. Defaults to `off`.
+production environment the cache should be enabled (`on`) for optimal performance.
+Defaults to `off`.
 
 The `content_by_lua` directive specifies a chunk of Lua code that will handle
 any request that doesn't match the other locations. It loads Lapis and tells it
