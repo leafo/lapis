@@ -7,6 +7,9 @@ do
   dispatch = _obj_0.dispatch
 end
 local app_cache = { }
+setmetatable(app_cache, {
+  __mode = "k"
+})
 local serve
 serve = function(app_cls)
   local app = app_cache[app_cls]

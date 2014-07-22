@@ -5,6 +5,7 @@ import Application from application
 import dispatch from require "lapis.nginx"
 
 app_cache = {}
+setmetatable app_cache, __mode: "k"
 
 serve = (app_cls) ->
   app = app_cache[app_cls]
