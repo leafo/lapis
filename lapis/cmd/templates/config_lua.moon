@@ -1,4 +1,6 @@
-return [[worker_processes ${{NUM_WORKERS}};
+
+[[
+worker_processes ${{NUM_WORKERS}};
 error_log stderr notice;
 daemon off;
 
@@ -8,8 +10,6 @@ events {
 
 http {
   init_by_lua'
-    require = require"require".require
-    require"moonscript"
     lapis = require"lapis"
   ';
 

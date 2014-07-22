@@ -9,6 +9,12 @@ events {
 }
 
 http {
+  init_by_lua'
+    require = require"require".require
+    require"moonscript"
+    lapis = require"lapis"
+  ';
+
   include mime.types;
 
   server {
@@ -18,7 +24,7 @@ http {
     location / {
       default_type text/html;
       content_by_lua '
-        require("lapis").serve("app")
+        lapis.serve("app")
       ';
     }
 
