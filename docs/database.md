@@ -1459,8 +1459,7 @@ return {
 ```
 
 ```moon
-import schema from require "lapis.db.schema"
-import types from schema
+import add_column, create_index, types from require "lapis.db.schema"
 
 {
   [1368686109]: =>
@@ -1491,7 +1490,7 @@ migrations in the format described above.
 Let's create this file with a single migration as an example.
 
 ```lua
--- migrations.moon
+-- migrations.lua
 
 local schema = require("lapis.db.schema")
 local types = schema.types
