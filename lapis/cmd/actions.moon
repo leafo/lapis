@@ -71,13 +71,14 @@ tasks = {
       if path.exists "nginx.conf"
         fail_with_message "nginx.conf already exists"
 
-      write_file_safe "nginx.conf", require "lapis.cmd.templates.config"
       write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
 
       if flags.lua
         write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
+        write_file_safe "nginx.conf", require "lapis.cmd.templates.config_lua"
       else
         write_file_safe "app.moon", require "lapis.cmd.templates.app"
+        write_file_safe "nginx.conf", require "lapis.cmd.templates.config"
 
       if flags.git
         write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") flags

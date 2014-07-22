@@ -22,6 +22,7 @@ dependencies = {
 	"lua-cjson",
 	"luasocket",
 	"pgmoon",
+	"require",
 }
 
 build = {

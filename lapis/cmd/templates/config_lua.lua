@@ -8,8 +8,6 @@ events {
 
 http {
   init_by_lua'
-    require = require"require".require
-    require"moonscript"
     lapis = require"lapis"
   ';
 
