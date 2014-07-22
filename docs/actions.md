@@ -92,7 +92,6 @@ The request object has the following parameters:
 
 * <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all the get, post, and url parameters together
 * <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table (generated from `ngx` state)
-* <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table (generated from `ngx` state)
 * <span class="for_moon">`@res`</span><span class="for_lua">`self.res`</span> -- raw response table (used to update `ngx` state)
 * <span class="for_moon">`@app`</span><span class="for_lua">`self.app`</span> -- the instance of the application
 * <span class="for_moon">`@cookies`</span><span class="for_lua">`self.cookies`</span> -- the table of cookies, can be assigned to set new cookies. Only supports strings as values
