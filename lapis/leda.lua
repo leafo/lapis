@@ -16,15 +16,15 @@ end
 local parse_url, parse_query
 do
   pcall( function() 
-      local client = require("leda.client")
-      parse_url = client.parseUrl
-      parse_query = client.parseQuery
+      local util = require("leda.util")
+      parse_url = util.parseUrl
+      parse_query = util.parseQuery
  end)
 end
 
 local http
 pcall(function()
-    http = require 'leda.http'
+    http = require 'leda.server.http'
 end)
 
 
@@ -154,12 +154,13 @@ local function request_callback(app, request, response)
     end
   
     response.body = res.content or ""
+    response:send()
 end
 
 local dispatch
 dispatch = function(app)
     local config = require("lapis.config")
-    local server = http.Server(config.get().port, config.get().host or 'localhost')
+    local server = http(config.get().port, config.get().host or 'localhost')
     server.request = function(server, request, response) request_callback(app, request, response) end
 end
 return {

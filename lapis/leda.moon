@@ -5,11 +5,11 @@ local parse_query
 local http
 
 pcall ->
-    import parseUrl, parseQuery from require 'leda.client'
+    import parseUrl, parseQuery from require 'leda.util'
     parse_url = parseUrl
     parse_query = parseQuery
     
-    http = require 'leda.http'
+    http = require 'leda.server.http'
     
 flatten_params = (t) -> 
     {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
@@ -99,10 +99,11 @@ request_callback = (app, request, response)  ->
        response.headers = res.headers
 
     response.body = res.content or ""
+    response\send!
     
 dispatch = (app) ->
     config = require("lapis.config")
-    server = http.Server(config.get!.port, config.get!.host or 'localhost')
+    server = http(config.get!.port, config.get!.host or 'localhost')
     server.request = (server, response, request) ->
         request_callback(app, response, request)
         
