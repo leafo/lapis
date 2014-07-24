@@ -91,8 +91,8 @@ add_config_header = (compiled, env) ->
 
   header .. compiled
 
-compile_config = (config, env={}) ->
-  wrapped = wrap_environment env
+compile_config = (config, env={}, opts={}) ->
+  wrapped = opts.os_env == false and env or wrap_environment(env)
 
   out = config\gsub "(${%b{}})", (w) ->
     name = w\sub 4, -3
@@ -104,15 +104,22 @@ compile_config = (config, env={}) ->
       value = wrapped[name]
       if value == nil then w else value
 
-  add_config_header out, env
+  if opts.header == false
+    out
+  else
+    add_config_header out, env
 
-compile_etlua_config = (config, env={}) ->
+compile_etlua_config = (config, env={}, opts={}) ->
   etlua = require "etlua"
+  wrapped = opts.os_env == false and env or wrap_environment(env)
 
   template = assert etlua.compile config
-  out = template wrap_environment env
+  out = template wrapped
 
-  add_config_header out, env
+  if opts.header == false
+    out
+  else
+    add_config_header out, env
 
 write_config_for = (environment, process_fn, ...) ->
   if type(environment) == "string"

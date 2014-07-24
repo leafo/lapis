@@ -108,11 +108,14 @@ add_config_header = function(compiled, env)
   end
   return header .. compiled
 end
-compile_config = function(config, env)
+compile_config = function(config, env, opts)
   if env == nil then
     env = { }
   end
-  local wrapped = wrap_environment(env)
+  if opts == nil then
+    opts = { }
+  end
+  local wrapped = opts.os_env == false and env or wrap_environment(env)
   local out = config:gsub("(${%b{}})", function(w)
     local name = w:sub(4, -3)
     local filter_name, filter_arg = name:match("^(%S+)%s+(.+)$")
@@ -135,16 +138,28 @@ compile_config = function(config, env)
       end
     end
   end)
-  return add_config_header(out, env)
+  if opts.header == false then
+    return out
+  else
+    return add_config_header(out, env)
+  end
 end
-compile_etlua_config = function(config, env)
+compile_etlua_config = function(config, env, opts)
   if env == nil then
     env = { }
   end
+  if opts == nil then
+    opts = { }
+  end
   local etlua = require("etlua")
+  local wrapped = opts.os_env == false and env or wrap_environment(env)
   local template = assert(etlua.compile(config))
-  local out = template(wrap_environment(env))
-  return add_config_header(out, env)
+  local out = template(wrapped)
+  if opts.header == false then
+    return out
+  else
+    return add_config_header(out, env)
+  end
 end
 write_config_for = function(environment, process_fn, ...)
   if type(environment) == "string" then
