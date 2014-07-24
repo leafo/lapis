@@ -138,6 +138,9 @@ compile_config = function(config, env)
   return add_config_header(out, env)
 end
 compile_etlua_config = function(config, env)
+  if env == nil then
+    env = { }
+  end
   local etlua = require("etlua")
   local template = assert(etlua.compile(config))
   local out = template(wrap_environment(env))
@@ -440,6 +443,7 @@ run_with_server = function(fn)
 end
 return {
   compile_config = compile_config,
+  compile_etlua_config = compile_etlua_config,
   filters = filters,
   find_nginx = find_nginx,
   start_nginx = start_nginx,

@@ -40,7 +40,6 @@ pg-connect: ${{pg postgres}}]]
 env LAPIS_ENVIRONMENT;
 pg-connect: example.com:1234 dbname=hello user=leafo password=thepass]], compiled
 
-
   it "should read environment variable", ->
     unless pcall -> require "posix"
       pending "lposix is required for cmd.nginx specs"
@@ -53,4 +52,25 @@ pg-connect: example.com:1234 dbname=hello user=leafo password=thepass]], compile
     compiled = nginx.compile_config "thing: ${{cool}}"
     assert.same "env LAPIS_ENVIRONMENT;\nthing: #{val}", compiled
 
+  it "should compile etlua config", ->
+    tpl = [[
+hello: <%- some_var %>]]
+
+    compiled = nginx.compile_etlua_config tpl, { some_var: "what's up" }
+
+    assert.same [[
+env LAPIS_ENVIRONMENT;
+hello: what's up]], compiled
+
+  it "should read environment variable in etlua config", ->
+    unless pcall -> require "posix"
+      pending "lposix is required for cmd.nginx specs"
+      return
+
+    posix = require "posix"
+    val = "hi there #{os.time!}"
+    posix.setenv "LAPIS_COOL", val
+
+    compiled = nginx.compile_etlua_config "thing: <%- cool %>"
+    assert.same "env LAPIS_ENVIRONMENT;\nthing: #{val}", compiled
 

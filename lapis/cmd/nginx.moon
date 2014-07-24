@@ -106,7 +106,7 @@ compile_config = (config, env={}) ->
 
   add_config_header out, env
 
-compile_etlua_config = (config, env) ->
+compile_etlua_config = (config, env={}) ->
   etlua = require "etlua"
 
   template = assert etlua.compile config
@@ -370,6 +370,7 @@ run_with_server = (fn) ->
   current_server\detach!
 
 
-{ :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :write_config_for, :attach_server, :detach_server, :send_signal,
-  :run_with_server, :CONFIG_PATH, :CONFIG_PATH_ETLUA }
+{ :compile_config, :compile_etlua_config, :filters, :find_nginx, :start_nginx,
+  :send_hup, :send_term, :get_pid, :write_config_for, :attach_server,
+  :detach_server, :send_signal, :run_with_server, :CONFIG_PATH,
+  :CONFIG_PATH_ETLUA }
