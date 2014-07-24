@@ -1,6 +1,6 @@
 
 CONFIG_PATH = "nginx.conf"
-CONFIG_PATH_ETLUA = "nginx.conf"
+CONFIG_PATH_ETLUA = "nginx.conf.etlua"
 
 COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 
@@ -106,12 +106,23 @@ compile_config = (config, env={}) ->
 
   add_config_header out, env
 
+compile_etlua_config = (config, env) ->
+  etlua = require "etlua"
+
+  template = assert etlua.compile config
+  out = template wrap_environment env
+
+  add_config_header out, env
+
 write_config_for = (environment, process_fn, ...) ->
   if type(environment) == "string"
     config = require "lapis.config"
     environment = config.get environment
 
-  compiled = compile_config path.read_file(CONFIG_PATH), environment
+  compiled = if path.exists CONFIG_PATH_ETLUA
+    compile_etlua_config path.read_file(CONFIG_PATH_ETLUA), environment
+  else
+    compile_config path.read_file(CONFIG_PATH), environment
 
   if process_fn
     compiled = process_fn compiled, ...

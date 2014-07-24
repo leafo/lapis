@@ -1,5 +1,5 @@
 local CONFIG_PATH = "nginx.conf"
-local CONFIG_PATH_ETLUA = "nginx.conf"
+local CONFIG_PATH_ETLUA = "nginx.conf.etlua"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
 local get_free_port, default_environment
@@ -7,7 +7,7 @@ do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
 end
-local current_server, find_nginx, filters, start_nginx, wrap_environment, add_config_header, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, AttachedServer, attach_server, detach_server, run_with_server
+local current_server, find_nginx, filters, start_nginx, wrap_environment, add_config_header, compile_config, compile_etlua_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, AttachedServer, attach_server, detach_server, run_with_server
 current_server = nil
 do
   local nginx_bin = "nginx"
@@ -137,12 +137,23 @@ compile_config = function(config, env)
   end)
   return add_config_header(out, env)
 end
+compile_etlua_config = function(config, env)
+  local etlua = require("etlua")
+  local template = assert(etlua.compile(config))
+  local out = template(wrap_environment(env))
+  return add_config_header(out, env)
+end
 write_config_for = function(environment, process_fn, ...)
   if type(environment) == "string" then
     local config = require("lapis.config")
     environment = config.get(environment)
   end
-  local compiled = compile_config(path.read_file(CONFIG_PATH), environment)
+  local compiled
+  if path.exists(CONFIG_PATH_ETLUA) then
+    compiled = compile_etlua_config(path.read_file(CONFIG_PATH_ETLUA), environment)
+  else
+    compiled = compile_config(path.read_file(CONFIG_PATH), environment)
+  end
   if process_fn then
     compiled = process_fn(compiled, ...)
   end
