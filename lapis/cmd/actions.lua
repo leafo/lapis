@@ -115,7 +115,11 @@ tasks = {
       if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA) then
         fail_with_message("nginx.conf already exists")
       end
-      write_file_safe(CONFIG_PATH, require("lapis.cmd.templates.config"))
+      if flags["etlua-config"] then
+        write_file_safe(CONFIG_PATH_ETLUA, require("lapis.cmd.templates.config_etlua"))
+      else
+        write_file_safe(CONFIG_PATH, require("lapis.cmd.templates.config"))
+      end
       write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
       if flags.lua then
         write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
