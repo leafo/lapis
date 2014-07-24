@@ -66,12 +66,14 @@ tasks = {
     help: "create a new lapis project in the current directory"
 
     (...) ->
+      import CONFIG_PATH, CONFIG_PATH_ETLUA from require "lapis.cmd.nginx"
+
       flags = parse_flags ...
 
-      if path.exists "nginx.conf"
+      if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA)
         fail_with_message "nginx.conf already exists"
 
-      write_file_safe "nginx.conf", require "lapis.cmd.templates.config"
+      write_file_safe CONFIG_PATH, require "lapis.cmd.templates.config"
       write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
 
       if flags.lua

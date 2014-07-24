@@ -1,5 +1,7 @@
 
 CONFIG_PATH = "nginx.conf"
+CONFIG_PATH_ETLUA = "nginx.conf"
+
 COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 
 path = require "lapis.cmd.path"
@@ -75,28 +77,34 @@ start_nginx = (background=false) ->
 
   os.execute cmd
 
-compile_config = (config, opts={}) ->
-  env = setmetatable {}, __index: (key) =>
+wrap_environment = (env) ->
+  setmetatable {}, __index: (key) =>
     v = os.getenv "LAPIS_" .. key\upper!
     return v if v != nil
-    opts[key\lower!]
+    env[key\lower!]
+
+add_config_header = (compiled, env) ->
+  header = if name = env._name
+    "env LAPIS_ENVIRONMENT=#{name};\n"
+  else
+    "env LAPIS_ENVIRONMENT;\n"
+
+  header .. compiled
+
+compile_config = (config, env={}) ->
+  wrapped = wrap_environment env
 
   out = config\gsub "(${%b{}})", (w) ->
     name = w\sub 4, -3
     filter_name, filter_arg = name\match "^(%S+)%s+(.+)$"
     if filter = filters[filter_name]
-      value = env[filter_arg]
+      value = wrapped[filter_arg]
       if value == nil then w else filter value
     else
-      value = env[name]
+      value = wrapped[name]
       if value == nil then w else value
 
-  env_header = if opts._name
-    "env LAPIS_ENVIRONMENT=#{opts._name};\n"
-  else
-    "env LAPIS_ENVIRONMENT;\n"
-
-  env_header .. out
+  add_config_header out, env
 
 write_config_for = (environment, process_fn, ...) ->
   if type(environment) == "string"
@@ -353,4 +361,4 @@ run_with_server = (fn) ->
 
 { :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
   :get_pid, :write_config_for, :attach_server, :detach_server, :send_signal,
-  :run_with_server }
+  :run_with_server, :CONFIG_PATH, :CONFIG_PATH_ETLUA }

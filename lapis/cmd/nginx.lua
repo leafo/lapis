@@ -1,4 +1,5 @@
 local CONFIG_PATH = "nginx.conf"
+local CONFIG_PATH_ETLUA = "nginx.conf"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
 local get_free_port, default_environment
@@ -6,7 +7,7 @@ do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
 end
-local current_server, find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, AttachedServer, attach_server, detach_server, run_with_server
+local current_server, find_nginx, filters, start_nginx, wrap_environment, add_config_header, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, AttachedServer, attach_server, detach_server, run_with_server
 current_server = nil
 do
   local nginx_bin = "nginx"
@@ -84,33 +85,48 @@ start_nginx = function(background)
   end
   return os.execute(cmd)
 end
-compile_config = function(config, opts)
-  if opts == nil then
-    opts = { }
-  end
-  local env = setmetatable({ }, {
+wrap_environment = function(env)
+  return setmetatable({ }, {
     __index = function(self, key)
       local v = os.getenv("LAPIS_" .. key:upper())
       if v ~= nil then
         return v
       end
-      return opts[key:lower()]
+      return env[key:lower()]
     end
   })
+end
+add_config_header = function(compiled, env)
+  local header
+  do
+    local name = env._name
+    if name then
+      header = "env LAPIS_ENVIRONMENT=" .. tostring(name) .. ";\n"
+    else
+      header = "env LAPIS_ENVIRONMENT;\n"
+    end
+  end
+  return header .. compiled
+end
+compile_config = function(config, env)
+  if env == nil then
+    env = { }
+  end
+  local wrapped = wrap_environment(env)
   local out = config:gsub("(${%b{}})", function(w)
     local name = w:sub(4, -3)
     local filter_name, filter_arg = name:match("^(%S+)%s+(.+)$")
     do
       local filter = filters[filter_name]
       if filter then
-        local value = env[filter_arg]
+        local value = wrapped[filter_arg]
         if value == nil then
           return w
         else
           return filter(value)
         end
       else
-        local value = env[name]
+        local value = wrapped[name]
         if value == nil then
           return w
         else
@@ -119,13 +135,7 @@ compile_config = function(config, opts)
       end
     end
   end)
-  local env_header
-  if opts._name then
-    env_header = "env LAPIS_ENVIRONMENT=" .. tostring(opts._name) .. ";\n"
-  else
-    env_header = "env LAPIS_ENVIRONMENT;\n"
-  end
-  return env_header .. out
+  return add_config_header(out, env)
 end
 write_config_for = function(environment, process_fn, ...)
   if type(environment) == "string" then
@@ -429,5 +439,7 @@ return {
   attach_server = attach_server,
   detach_server = detach_server,
   send_signal = send_signal,
-  run_with_server = run_with_server
+  run_with_server = run_with_server,
+  CONFIG_PATH = CONFIG_PATH,
+  CONFIG_PATH_ETLUA = CONFIG_PATH_ETLUA
 }
