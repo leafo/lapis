@@ -22,9 +22,10 @@ dependencies = {
 	"lpeg",
 	"lua-cjson",
 	"luacrypto",
+	"luafilesystem",
 	"luasocket",
 	"mimetypes",
-	"pgmoon",
+	"pgmoon"
 }
 
 build = {
