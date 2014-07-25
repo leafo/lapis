@@ -423,16 +423,28 @@ do
         error_page = self.app.error_page
       end
       local r = self.app.Request(self, self.req, self.res)
-      r:write({
-        status = 500,
-        layout = false,
-        content_type = "text/html",
-        error_page({
+      local config = require("lapis.config").get()
+      if config._name == "test" then
+        r.res:add_header("X-Lapis-Error", "true")
+        r:write({
           status = 500,
-          err = err,
-          trace = trace
+          json = {
+            err = err,
+            trace = trace
+          }
         })
-      })
+      else
+        r:write({
+          status = 500,
+          layout = false,
+          content_type = "text/html",
+          error_page({
+            status = 500,
+            err = err,
+            trace = trace
+          })
+        })
+      end
       r:render()
       logger.request(r)
       return r

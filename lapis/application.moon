@@ -395,12 +395,21 @@ class Application
 
   handle_error: (err, trace, error_page=@app.error_page) =>
     r = @app.Request @, @req, @res
-    r\write {
-      status: 500
-      layout: false
-      content_type: "text/html"
-      error_page { status: 500, :err, :trace }
-    }
+
+    config = require("lapis.config").get!
+    if config._name == "test"
+      r.res\add_header "X-Lapis-Error", "true"
+      r\write {
+        status: 500
+        json: { :err, :trace }
+      }
+    else
+      r\write {
+        status: 500
+        layout: false
+        content_type: "text/html"
+        error_page { status: 500, :err, :trace }
+      }
     r\render!
     logger.request r
     r
