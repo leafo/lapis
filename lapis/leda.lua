@@ -1,9 +1,21 @@
-local escape_pattern, parse_content_disposition, build_url
+local escape_pattern, parse_content_disposition, build_url, parse_query_string
 do
   local _obj_0 = require("lapis.util")
-  escape_pattern, parse_content_disposition, build_url = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url
+  escape_pattern, parse_content_disposition, build_url, parse_query_string = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url, _obj_0.parse_query_string
 end
-
+local parse_url
+local parse_query
+local http
+pcall(function()
+  local parseUrl, parseQuery
+  do
+    local _obj_0 = require('leda.util')
+    parseUrl, parseQuery = _obj_0.parseUrl, _obj_0.parseQuery
+  end
+  parse_url = parseUrl
+  parse_query = parseQuery
+  http = require('leda.server.http')
+end)
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }
@@ -12,22 +24,6 @@ flatten_params = function(t)
   end
   return _tbl_0
 end
-
-local parse_url, parse_query
-do
-  pcall( function() 
-      local util = require("leda.util")
-      parse_url = util.parseUrl
-      parse_query = util.parseQuery
- end)
-end
-
-local http
-pcall(function()
-    http = require 'leda.server.http'
-end)
-
-
 local request = {
   headers = function()
     return __leda.request:headers()
@@ -36,10 +32,7 @@ local request = {
     return __leda.request:method()
   end,
   cmd_url = function()
-    return  __leda.request:url()
-  end,
-  body = function()
-    return __leda.request:body()
+    return __leda.request:url()
   end,
   relpath = function(t)
     return t.parsed_url.path
@@ -48,39 +41,40 @@ local request = {
     return t.parsed_url.scheme
   end,
   port = function(t)
-    return t.parsed_url.port 
+    return t.parsed_url.port
   end,
   srv = function()
-    return t.parsed_url.host 
+    return t.parsed_url.host
   end,
   remote_addr = function()
     return __leda.request:address()
   end,
   referer = function()
-    return  ""
+    return ""
+  end,
+  body = function()
+    return __leda.request:body()
   end,
   parsed_url = function(t)
     local host = t.headers.host
-    local parsed =  parse_url(t.cmd_url)
-    if host then 
-        local parsed_host = parse_url(host)
-        parsed.host = parsed_host.host
-        parsed.port = parsed_host.port
+    local parsed = parse_url(t.cmd_url)
+    if host then
+      local parsed_host = parse_url(host)
+      parsed.host = parsed_host.host
+      parsed.port = parsed_host.port
     end
     return parsed
   end,
   built_url = function(t)
     return build_url(t.parsed_url)
   end,
- 
-  params_post = function(t) 
-    if (t.headers["content-type"] or ""):match(escape_pattern("application/x-www-form-urlencoded")) then
-        return flatten_params(parse_query(t.body or ""))
+  params_post = function(t)
+    if (t.headers["content-type"] or ""):match(escape_pattern("x-www-form-urlencoded")) then
+      return flatten_params(parse_query(t.body or "") or { })
+    else
+      return flatten_params({ })
     end
-    
-    return {}
   end,
-  
   params_get = function(t)
     return flatten_params(t.parsed_url.params)
   end
@@ -134,34 +128,31 @@ build_response = function()
         }
       end
     end,
-    headers = {}
+    headers = { }
   }
 end
-
-local function request_callback(app, request, response)
-    __leda.request = request
-    __leda.response = response
-
-    local res = build_response()
-  
-    app:dispatch(res.req, res)
-    if res.status then
-        response.status = res.status
-    end
-  
-    if next(res.headers) then
-        response.headers = res.headers
-    end
-  
-    response.body = res.content or ""
-    response:send()
+local request_callback
+request_callback = function(app, request, response)
+  __leda.request = request
+  __leda.response = response
+  local res = build_response()
+  app:dispatch(res.req, res)
+  if res.status then
+    response.status = res.status
+  end
+  if next(res.headers) then
+    response.headers = res.headers
+  end
+  response.body = res.content or ""
+  return response:send()
 end
-
 local dispatch
 dispatch = function(app)
-    local config = require("lapis.config")
-    local server = http(config.get().port, config.get().host or 'localhost')
-    server.request = function(server, request, response) request_callback(app, request, response) end
+  local config = require("lapis.config")
+  local server = http(config.get().port, config.get().host or 'localhost')
+  server.request = function(server, response, request)
+    return request_callback(app, response, request)
+  end
 end
 return {
   build_request = build_request,
