@@ -17,6 +17,7 @@ dependencies = {
 
 	"ansicolors",
 	"etlua",
+	"lfs"
 	"loadkit",
 	"lpeg",
 	"lua-cjson",

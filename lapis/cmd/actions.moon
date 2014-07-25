@@ -1,6 +1,7 @@
 
 import default_environment, columnize from require "lapis.cmd.util"
 import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
+import find_leda, start_leda from require "lapis.cmd.leda"
 
 path = require "lapis.cmd.path"
 config = require "lapis.config"
@@ -40,6 +41,7 @@ fail_with_message = (msg) ->
 parse_flags = (...) ->
   input = {...}
   flags = {}
+  
   filtered = for arg in *input
     if flag = arg\match "^%-%-?(.+)$"
       k,v = flag\match "(.-)=(.*)"
@@ -67,6 +69,7 @@ tasks = {
 
     (...) ->
       import CONFIG_PATH, CONFIG_PATH_ETLUA from require "lapis.cmd.nginx"
+
       flags = parse_flags ...
 
       if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA)
@@ -91,7 +94,7 @@ tasks = {
         tup_files = require "lapis.cmd.templates.tup"
         for fname, content in pairs tup_files
           write_file_safe fname, content
-
+    
   }
 
   {
@@ -101,12 +104,17 @@ tasks = {
 
     (environment=default_environment!) ->
       nginx = find_nginx!
+      leda = find_leda!
 
-      unless nginx
-        fail_with_message "can not find an installation of OpenResty"
+      unless nginx or leda
+        fail_with_message "can not find suitable server installation"
 
-      write_config_for environment
-      start_nginx!
+      if nginx
+          write_config_for environment
+          start_nginx!
+      else
+          start_leda environment
+          
   }
 
   {
@@ -212,10 +220,15 @@ tasks = {
       print colors "Lapis #{require "lapis.version"}"
       print "usage: lapis <action> [arguments]"
 
-      if nginx = find_nginx!
+
+      nginx = find_nginx!
+      leda = find_leda!
+      if nginx
         print "using nginx: #{nginx}"
+      elseif leda
+        print "using leda: #{leda}"      
       else
-        print "can not find installation of OpenResty"
+        print "can not find suitable server installation"
 
       print "default environment: #{default_environment!}"
       print!
