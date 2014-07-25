@@ -425,10 +425,12 @@ do
       local r = self.app.Request(self, self.req, self.res)
       local config = require("lapis.config").get()
       if config._name == "test" then
+        local param_dump = logger.flatten_params(self.url_params)
         r.res:add_header("X-Lapis-Error", "true")
         r:write({
           status = 500,
           json = {
+            status = "[" .. tostring(r.req.cmd_mth) .. "] " .. tostring(r.req.cmd_url) .. " " .. tostring(param_dump),
             err = err,
             trace = trace
           }

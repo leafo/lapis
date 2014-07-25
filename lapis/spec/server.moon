@@ -78,7 +78,13 @@ request = (path="", opts={}) ->
     unless pcall -> body = json.decode body
       error "expected to get json from #{path}"
 
-  status, body, normalize_headers(headers)
+  headers = normalize_headers headers
+  if headers.x_lapis_error
+    json = require "cjson"
+    {:status, :err, :trace} = json.decode body
+    error "\n#{status}\n#{err}\n#{trace}"
+
+  status, body, headers
 
 {
   :load_test_server

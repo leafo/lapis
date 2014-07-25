@@ -253,7 +253,6 @@ class Application
 
     @[key] = handler
 
-
     @router = nil
     handler
 
@@ -398,10 +397,14 @@ class Application
 
     config = require("lapis.config").get!
     if config._name == "test"
+      param_dump = logger.flatten_params @url_params
       r.res\add_header "X-Lapis-Error", "true"
       r\write {
         status: 500
-        json: { :err, :trace }
+        json: {
+          status: "[#{r.req.cmd_mth}] #{r.req.cmd_url} #{param_dump}"
+          :err, :trace
+        }
       }
     else
       r\write {
