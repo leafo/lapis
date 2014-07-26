@@ -104,14 +104,6 @@ request = function(path, opts)
   })
   assert(res, status)
   local body = table.concat(buffer)
-  if opts.expect == "json" then
-    json = require("cjson")
-    if not (pcall(function()
-      body = json.decode(body)
-    end)) then
-      error("expected to get json from " .. tostring(path))
-    end
-  end
   headers = normalize_headers(headers)
   if headers.x_lapis_error then
     json = require("cjson")
@@ -121,6 +113,14 @@ request = function(path, opts)
       status, err, trace = _obj_0.status, _obj_0.err, _obj_0.trace
     end
     error("\n" .. tostring(status) .. "\n" .. tostring(err) .. "\n" .. tostring(trace))
+  end
+  if opts.expect == "json" then
+    json = require("cjson")
+    if not (pcall(function()
+      body = json.decode(body)
+    end)) then
+      error("expected to get json from " .. tostring(path))
+    end
   end
   return status, body, headers
 end
