@@ -69,7 +69,6 @@ tasks = {
 
     (...) ->
       import CONFIG_PATH, CONFIG_PATH_ETLUA from require "lapis.cmd.nginx"
-
       flags = parse_flags ...
 
       if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA)
