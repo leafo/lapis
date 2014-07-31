@@ -67,7 +67,6 @@ build = {
 		["lapis.router"] = "lapis/router.lua",
 		["lapis.server"] = "lapis/server.lua",
 		["lapis.session"] = "lapis/session.lua",
-		["lapis.spec"] = "lapis/spec.lua",
 		["lapis.spec.db"] = "lapis/spec/db.lua",
 		["lapis.spec.request"] = "lapis/spec/request.lua",
 		["lapis.spec.server"] = "lapis/spec/server.lua",
