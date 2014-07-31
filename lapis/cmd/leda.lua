@@ -3,16 +3,45 @@ do
   local _obj_0 = require('moonscript.util')
   dump = _obj_0.dump
 end
-local lfs = require('lfs')
 local config = require('lapis.config')
-local Leda, leda, find_leda, start_leda
+local path = require("lapis.cmd.path")
+local leda
+local Leda
 do
   local _base_0 = {
     paths = {
       "/usr/local/bin",
       "/usr/bin"
     },
+    find_bin = function(self)
+      if self.bin then
+        return self.bin
+      end
+      local bin = "leda"
+      local paths
+      do
+        local _tbl_0 = { }
+        local _list_0 = self.paths
+        for _index_0 = 1, #_list_0 do
+          local p = _list_0[_index_0]
+          local _key_0, _val_0 = p
+          _tbl_0[_key_0] = _val_0
+        end
+        paths = _tbl_0
+      end
+      table.insert(paths, os.getenv("LAPIS_LEDA"))
+      for _index_0 = 1, #paths do
+        local to_check = paths[_index_0]
+        to_check = to_check .. "/" .. tostring(bin)
+        if path.exists(to_check) then
+          self.bin = to_check
+          return self.bin
+        end
+      end
+      return nil, "failed to find leda installation"
+    end,
     start = function(self, environment)
+      assert(self:find_bin())
       local port = config.get().port
       local host = config.get().host or 'localhost'
       print("starting server on " .. tostring(host) .. ":" .. tostring(port) .. " in environment " .. tostring(environment) .. ". Press Ctrl-C to exit")
@@ -26,18 +55,7 @@ do
   }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
-    __init = function(self)
-      local bin = "leda"
-      table.insert(self.paths, os.getenv("LAPIS_LEDA"))
-      local _list_0 = self.paths
-      for _index_0 = 1, #_list_0 do
-        local path = _list_0[_index_0]
-        path = path .. "/" .. "leda"
-        if lfs.attributes(path) then
-          self.bin = path
-        end
-      end
-    end,
+    __init = function() end,
     __base = _base_0,
     __name = "Leda"
   }, {
@@ -52,9 +70,11 @@ do
   Leda = _class_0
 end
 leda = Leda()
+local find_leda
 find_leda = function()
-  return leda.bin
+  return leda:find_bin()
 end
+local start_leda
 start_leda = function(environment)
   return leda:start(environment)
 end

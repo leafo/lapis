@@ -41,7 +41,7 @@ fail_with_message = (msg) ->
 parse_flags = (...) ->
   input = {...}
   flags = {}
-  
+
   filtered = for arg in *input
     if flag = arg\match "^%-%-?(.+)$"
       k,v = flag\match "(.-)=(.*)"
@@ -93,7 +93,7 @@ tasks = {
         tup_files = require "lapis.cmd.templates.tup"
         for fname, content in pairs tup_files
           write_file_safe fname, content
-    
+
   }
 
   {
@@ -109,11 +109,11 @@ tasks = {
         fail_with_message "can not find suitable server installation"
 
       if nginx
-          write_config_for environment
-          start_nginx!
+        write_config_for environment
+        start_nginx!
       else
-          start_leda environment
-          
+        start_leda environment
+
   }
 
   {
@@ -225,7 +225,7 @@ tasks = {
       if nginx
         print "using nginx: #{nginx}"
       elseif leda
-        print "using leda: #{leda}"      
+        print "using leda: #{leda}"
       else
         print "can not find suitable server installation"
 
