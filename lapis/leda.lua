@@ -43,7 +43,7 @@ local request = {
   port = function(t)
     return t.parsed_url.port
   end,
-  srv = function()
+  srv = function(t)
     return t.parsed_url.host
   end,
   remote_addr = function()

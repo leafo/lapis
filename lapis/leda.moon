@@ -21,7 +21,7 @@ request = {
   relpath: (t) -> t.parsed_url.path
   scheme: (t)-> t.parsed_url.scheme
   port: (t) -> t.parsed_url.port
-  srv: -> t.parsed_url.host
+  srv: (t) -> t.parsed_url.host
   remote_addr: -> __leda.request\address!
   referer: ->  ""
   body: -> __leda.request\body!
