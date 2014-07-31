@@ -1,4 +1,3 @@
-import dump from require 'moonscript.util'
 config = require 'lapis.config'
 path = require "lapis.cmd.path"
 

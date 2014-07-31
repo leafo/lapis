@@ -1,8 +1,3 @@
-local dump
-do
-  local _obj_0 = require('moonscript.util')
-  dump = _obj_0.dump
-end
 local config = require('lapis.config')
 local path = require("lapis.cmd.path")
 local leda
