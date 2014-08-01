@@ -322,8 +322,12 @@ do
       else
         send_hup()
       end
-      local db = require("lapis.nginx.postgres")
-      db.set_backend("raw", self.old_backend)
+      if self.old_backend then
+        local db = require("lapis.db")
+        db.set_backend("raw", self.old_backend)
+      end
+      local env = require("lapis.environment")
+      env.pop()
       return true
     end,
     query = function(self, q)
@@ -363,27 +367,10 @@ do
       for k, v in pairs(opts) do
         self[k] = v
       end
-      local db = require("lapis.nginx.postgres")
+      local env = require("lapis.environment")
+      env.push(self.environment)
       local pg_config = self.environment.postgres
-      if pg_config and pg_config.backend == "pgmoon" then
-        local Postgres
-        do
-          local _obj_0 = require("pgmoon")
-          Postgres = _obj_0.Postgres
-        end
-        local pgmoon = Postgres(pg_config)
-        assert(pgmoon:connect())
-        local logger = require("lapis.db").get_logger()
-        if not (os.getenv("LAPIS_SHOW_QUERIES")) then
-          logger = nil
-        end
-        self.old_backend = db.set_backend("raw", function(...)
-          if logger then
-            logger.query(...)
-          end
-          return assert(pgmoon:query(...))
-        end)
-      else
+      if pg_config and not pg_config.backend == "pgmoon" then
         self.old_backend = db.set_backend("raw", (function()
           local _base_1 = self
           local _fn_0 = _base_1.query

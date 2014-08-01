@@ -5,16 +5,22 @@ do
 end
 local popper
 local push
-push = function(name)
-  if name == nil then
-    name = default_environment()
-  end
-  print("PUSHING", name)
+push = function(name_or_env)
+  assert(name_or_env, "missing name or env for push")
   local config_module = require("lapis.config")
   local old_getter = config_module.get
-  local config = old_getter(name)
-  config_module.get = function()
-    return config
+  local env
+  if type(name_or_env) == "table" then
+    env = name_or_env
+  else
+    env = old_getter(name_or_env)
+  end
+  config_module.get = function(...)
+    if ... then
+      return old_getter(...)
+    else
+      return env
+    end
   end
   local old_popper = popper
   popper = function()

@@ -235,20 +235,11 @@ class AttachedServer
     for k,v in pairs opts
       @[k] = v
 
-    db = require "lapis.nginx.postgres"
+    env = require "lapis.environment"
+    env.push @environment
+
     pg_config = @environment.postgres
-    if pg_config and pg_config.backend == "pgmoon"
-      import Postgres from require "pgmoon"
-      pgmoon = Postgres pg_config
-      assert pgmoon\connect!
-
-      logger = require("lapis.db").get_logger!
-      logger = nil unless os.getenv "LAPIS_SHOW_QUERIES"
-
-      @old_backend = db.set_backend "raw", (...) ->
-        logger.query ... if logger
-        assert pgmoon\query ...
-    else
+    if pg_config and not pg_config.backend == "pgmoon"
       @old_backend = db.set_backend "raw", @\query
 
   wait_until: (server_status="open")=>
@@ -288,8 +279,13 @@ class AttachedServer
     else
       send_hup!
 
-    db = require "lapis.nginx.postgres"
-    db.set_backend "raw", @old_backend
+    if @old_backend
+      db = require "lapis.db"
+      db.set_backend "raw", @old_backend
+
+    env = require "lapis.environment"
+    env.pop!
+
     true
 
   query: (q) =>
