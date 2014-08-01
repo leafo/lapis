@@ -60,9 +60,10 @@ backends = {
     import after_dispatch from require "lapis.nginx.context"
     config = require("lapis.config").get!
     pg_config = assert config.postgres, "missing postgres configuration"
+    local pgmoon_conn
 
     raw_query = (str) ->
-      pgmoon = ngx and ngx.ctx.pgmoon
+      pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       unless pgmoon
         import Postgres from require "pgmoon"
         pgmoon = Postgres pg_config
@@ -71,6 +72,8 @@ backends = {
         if ngx
           ngx.ctx.pgmoon = pgmoon
           after_dispatch -> pgmoon\keepalive!
+        else
+          pgmoon_conn = pgmoon
 
       logger.query "[PGMOON] #{str}" if logger
       res, err = pgmoon\query str

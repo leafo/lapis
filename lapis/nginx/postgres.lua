@@ -73,8 +73,9 @@ local backends = {
     end
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
+    local pgmoon_conn
     raw_query = function(str)
-      local pgmoon = ngx and ngx.ctx.pgmoon
+      local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       if not (pgmoon) then
         local Postgres
         do
@@ -88,6 +89,8 @@ local backends = {
           after_dispatch(function()
             return pgmoon:keepalive()
           end)
+        else
+          pgmoon_conn = pgmoon
         end
       end
       if logger then
