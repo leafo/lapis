@@ -26,7 +26,7 @@ describe "lapis.env", ->
     c "second", ->
       color "red"
 
-  it "should push and pop env", ->
+  it "should push and pop env by name", ->
     env = require "lapis.environment"
     -- default env
     assert.same "development", require("lapis.config").get!._name
@@ -42,6 +42,17 @@ describe "lapis.env", ->
 
     assert.has_error ->
       env.pop!
+
+  it "should push and pop table env", ->
+    env = require "lapis.environment"
+    env.push { color: "green" }
+    assert.same "green", require("lapis.config").get!.color
+    env.push { color: "blue" }
+    assert.same "blue", require("lapis.config").get!.color
+    env.pop!
+    assert.same "green", require("lapis.config").get!.color
+    env.pop!
+    assert.same nil, require("lapis.config").get!.color
 
 
 describe "lapis.config", ->

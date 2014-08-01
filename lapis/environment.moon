@@ -4,16 +4,20 @@ import default_environment from require "lapis.cmd.util"
 local popper
 
 -- ensure that everything runs in test env, sets up db to execute queries
-push = (name=default_environment!) ->
+push = (name_or_env=default_environment!) ->
   config_module = require("lapis.config")
   old_getter = config_module.get
 
-  config = old_getter name
+  env = if type(name_or_env) == "table"
+    name_or_env
+  else
+    old_getter name_or_env
+
   config_module.get = (...) ->
     if ...
       old_getter ...
     else
-      config
+      env
 
   old_popper = popper
   popper = ->
