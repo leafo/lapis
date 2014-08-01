@@ -15,14 +15,15 @@ do
       local bin = "leda"
       local paths
       do
-        local _tbl_0 = { }
+        local _accum_0 = { }
+        local _len_0 = 1
         local _list_0 = self.paths
         for _index_0 = 1, #_list_0 do
           local p = _list_0[_index_0]
-          local _key_0, _val_0 = p
-          _tbl_0[_key_0] = _val_0
+          _accum_0[_len_0] = p
+          _len_0 = _len_0 + 1
         end
-        paths = _tbl_0
+        paths = _accum_0
       end
       table.insert(paths, os.getenv("LAPIS_LEDA"))
       for _index_0 = 1, #paths do

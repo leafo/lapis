@@ -13,7 +13,7 @@ class Leda
     return @bin if @bin
 
     bin = "leda"
-    paths = {p for p in *@paths}
+    paths = [p for p in *@paths]
     table.insert paths, os.getenv "LAPIS_LEDA"
 
     for to_check in *paths
