@@ -13,6 +13,37 @@ extend = (first, ...) ->
 with_default = (c) ->
   extend {}, config.default_config, c
 
+describe "lapis.env", ->
+  before_each ->
+    package.loaded["lapis.config"] = nil
+    package.loaded["lapis.environment"] = nil
+
+    c = require "lapis.config"
+
+    c "first", ->
+      color "blue"
+
+    c "second", ->
+      color "red"
+
+  it "should push and pop env", ->
+    env = require "lapis.environment"
+    -- default env
+    assert.same "development", require("lapis.config").get!._name
+    env.push "first"
+    assert.same "first", require("lapis.config").get!._name
+    env.push "second"
+    assert.same "second", require("lapis.config").get!._name
+    assert.same "red", require("lapis.config").get!.color
+    env.pop!
+    assert.same "first", require("lapis.config").get!._name
+    env.pop!
+    assert.same "development", require("lapis.config").get!._name
+
+    assert.has_error ->
+      env.pop!
+
+
 describe "lapis.config", ->
   before_each ->
     config.reset true
