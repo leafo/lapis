@@ -5,15 +5,7 @@ do
 end
 local raw_query
 local proxy_location = "/query"
-local logger = require("lapis.logging")
-local set_logger
-set_logger = function(l)
-  logger = l
-end
-local get_logger
-get_logger = function()
-  return logger
-end
+local logger
 local type, tostring, pairs, select
 do
   local _obj_0 = _G
@@ -94,7 +86,7 @@ local backends = {
         end
       end
       if logger then
-        logger.query("[PGMOON] " .. tostring(str))
+        logger.query(str)
       end
       local res, err = pgmoon:query(str)
       if not res and err then
@@ -110,6 +102,18 @@ set_backend = function(name, ...)
     name = "default"
   end
   return assert(backends[name])(...)
+end
+local init_logger
+init_logger = function()
+  if ngx or os.getenv("LAPIS_SHOW_QUERIES") then
+    logger = require("lapis.logging")
+  end
+end
+local init_db
+init_db = function()
+  local config = require("lapis.config").get()
+  local default_backend = config.postgres and config.postgres.backend or "default"
+  return set_backend(default_backend)
 end
 local format_date
 format_date = function(time)
@@ -232,9 +236,8 @@ encode_clause = function(t, buffer)
   end
 end
 raw_query = function(...)
-  local config = require("lapis.config").get()
-  local default_backend = config.postgres and config.postgres.backend or "default"
-  set_backend(default_backend)
+  init_logger()
+  init_db()
   return raw_query(...)
 end
 local query
@@ -406,8 +409,6 @@ return {
   encode_clause = encode_clause,
   interpolate_query = interpolate_query,
   parse_clause = parse_clause,
-  set_logger = set_logger,
-  get_logger = get_logger,
   format_date = format_date,
   set_backend = set_backend,
   select = _select,

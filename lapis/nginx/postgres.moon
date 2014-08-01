@@ -22,10 +22,7 @@ local raw_query
 
 proxy_location = "/query"
 
-logger = require "lapis.logging"
-
-set_logger = (l) -> logger = l
-get_logger = -> logger
+local logger
 
 import type, tostring, pairs, select from _G
 
@@ -75,8 +72,9 @@ backends = {
         else
           pgmoon_conn = pgmoon
 
-      logger.query "[PGMOON] #{str}" if logger
+      logger.query str if logger
       res, err = pgmoon\query str
+
       if not res and err
         error "#{str}\n#{err}"
       res
@@ -84,6 +82,15 @@ backends = {
 
 set_backend = (name="default", ...) ->
   assert(backends[name]) ...
+
+init_logger = ->
+  if ngx or os.getenv "LAPIS_SHOW_QUERIES"
+    logger = require "lapis.logging"
+
+init_db = ->
+  config = require("lapis.config").get!
+  default_backend = config.postgres and config.postgres.backend or "default"
+  set_backend default_backend
 
 format_date = (time) ->
   os.date "!%Y-%m-%d %H:%M:%S", time
@@ -163,9 +170,8 @@ encode_clause = (t, buffer)->
   concat buffer unless have_buffer
 
 raw_query = (...) ->
-  config = require("lapis.config").get!
-  default_backend = config.postgres and config.postgres.backend or "default"
-  set_backend default_backend
+  init_logger!
+  init_db! -- sets raw query to default backend
   raw_query ...
 
 query = (str, ...) ->
@@ -282,7 +288,7 @@ parse_clause = do
 {
   :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :set_logger, :get_logger, :format_date,
+  :interpolate_query, :parse_clause, :format_date,
 
   :set_backend
 
