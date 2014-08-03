@@ -9,7 +9,8 @@ class App extends lapis.Application
 describe "application", ->
   it "should mock a request", ->
     assert.same 200, (mock_request App, "/hello")
-    assert.same 500, (mock_request App, "/world")
+    assert.has_error ->
+      mock_request App, "/world"
 
 class SessionApp extends lapis.Application
   layout: false
@@ -108,9 +109,8 @@ describe "500 error", ->
       "/": =>
         error "I am an error!"
 
-    status, body = mock_request ErrorApp, "/"
-    assert.same 500, status
-    assert.truthy body\match "I am an error"
+    assert.has_error ->
+      mock_request ErrorApp, "/"
 
   it "should run custom error action", ->
     class ErrorApp extends lapis.Application
