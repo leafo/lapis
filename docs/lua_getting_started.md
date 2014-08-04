@@ -181,7 +181,7 @@ return app
 <!-- views/list.etlua -->
 <h1>Here are my favorite things</h1>
 <ol>
-  <% for i, thing in pairs() do %>
+  <% for i, thing in pairs(my_favorite_things) do %>
     <li><%= thing %></li>
   <% end %>
 </ol>
