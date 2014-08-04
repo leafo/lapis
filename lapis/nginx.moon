@@ -47,7 +47,7 @@ parse_multipart = ->
 ngx_req = {
   headers: -> ngx.req.get_headers!
   cmd_mth: -> ngx.var.request_method
-  cmd_url: ->  ngx.var.request_uri
+  cmd_url: ->  ngx.var.uri
 
   relpath: (t) -> t.parsed_url.path
   scheme: -> ngx.var.scheme
@@ -57,7 +57,7 @@ ngx_req = {
   referer: -> ngx.var.http_referer or ""
 
   parsed_url: (t) ->
-    uri = ngx.var.request_uri
+    uri = ngx.var.uri
     uri = uri\match("(.-)%?") or uri
 
     {
