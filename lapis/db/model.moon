@@ -143,6 +143,8 @@ class Model
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
+        assert field_name, "failed to infer field name, provide one with `as`"
+
         for other in *other_records
           other[field_name] = records[other[src_key]]
 
