@@ -190,6 +190,7 @@ tasks = {
         print colors "%{green}Using temporary server..."
 
 
+      write_config_for environment
       server = attach_server environment
       print server\exec [[
         local migrations = require("lapis.db.migrations")

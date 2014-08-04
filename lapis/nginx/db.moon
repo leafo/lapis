@@ -26,7 +26,6 @@ logger = require "lapis.logging"
 
 set_logger = (l) -> logger = l
 get_logger = -> logger
-get_dialect = -> dialect
 
 import type, tostring, pairs, select from _G
 
@@ -43,6 +42,7 @@ dialects = {
   postgres: {
     drop_index_if_exists: true
     explicit_time_zone: true
+	identifier_quote: '"'
     index_where: true
     rename_column: true
     restart_identity: " RESTART IDENTITY"
@@ -50,6 +50,7 @@ dialects = {
     row_if_entity_exists: "0 from pg_class where relname = ? limit 1"
   }
   mysql: {
+	identifier_quote: "`" -- ANSI_QUOTES is disabled by default
     restart_identity: ""
     row_if_entity_exists: "0 from information_schema.tables where table_schema = database() limit 1"
   }
@@ -137,7 +138,8 @@ escape_identifier = (ident) ->
     return ident[2]
 
   ident = tostring ident
-  '"' ..  (ident\gsub '"', '""') .. '"'
+  identifier_quote = dialect.identifier_quote
+  identifier_quote ..  (ident\gsub identifier_quote, identifier_quote .. identifier_quote) .. identifier_quote
 
 escape_literal = (val) ->
   switch type val
@@ -202,12 +204,17 @@ encode_clause = (t, buffer)->
 
   concat buffer unless have_buffer
 
+get_dialect = ->
+  if not dialect
+    config = require("lapis.config").get!
+    default_backend = config.mysql and (config.mysql.backend or "resty_mysql")
+    default_backend = default_backend or (config.postgres and config.postgres.backend)
+    default_backend = default_backend or "default"
+    set_backend default_backend
+  dialect
+
 raw_query = (...) ->
-  config = require("lapis.config").get!
-  default_backend = config.mysql and (config.mysql.backend or "resty_mysql")
-  default_backend = default_backend or (config.postgres and config.postgres.backend)
-  default_backend = default_backend or "default"
-  set_backend default_backend
+  get_dialect!
   raw_query ...
 
 query = (str, ...) ->
