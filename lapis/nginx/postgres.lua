@@ -139,7 +139,7 @@ escape_literal = function(val)
   if "number" == _exp_0 then
     return tostring(val)
   elseif "string" == _exp_0 then
-    return "'" .. tostring((val:gsub("'", "''"))) .. "'"
+    return "'" .. tostring((val:gsub("[\\']", "\\%0"))) .. "'"
   elseif "boolean" == _exp_0 then
     return val and "TRUE" or "FALSE"
   elseif "table" == _exp_0 then
