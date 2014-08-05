@@ -111,7 +111,7 @@ escape_literal = (val) ->
     when "number"
       return tostring val
     when "string"
-      return "'#{(val\gsub "'", "''")}'"
+      return "'#{(val\gsub "[\\']", "\\%0")}'"
     when "boolean"
       return val and "TRUE" or "FALSE"
     when "table"
