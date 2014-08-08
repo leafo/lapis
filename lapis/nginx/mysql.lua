@@ -1,3 +1,13 @@
+local type, tostring, pairs, select
+do
+  local _obj_0 = _G
+  type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
+end
+local NULL, TRUE, FALSE, raw, is_raw
+do
+  local _obj_0 = require("lapis.db.base")
+  NULL, TRUE, FALSE, raw, is_raw = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw
+end
 local conn
 local backends, set_backend, escape_literal, raw_query
 backends = {

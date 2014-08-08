@@ -25,14 +25,7 @@ proxy_location = "/query"
 local logger
 
 import type, tostring, pairs, select from _G
-
-NULL = {}
-raw = (val) -> {"raw", tostring(val)}
-is_raw = (val) ->
-  type(val) == "table" and val[1] == "raw" and val[2]
-
-TRUE = raw"TRUE"
-FALSE = raw"FALSE"
+import NULL, TRUE, FALSE, raw, is_raw from require "lapis.db.base"
 
 backends = {
   default: (_proxy=proxy_location) ->

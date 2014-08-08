@@ -11,20 +11,11 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local NULL = { }
-local raw
-raw = function(val)
-  return {
-    "raw",
-    tostring(val)
-  }
+local NULL, TRUE, FALSE, raw, is_raw
+do
+  local _obj_0 = require("lapis.db.base")
+  NULL, TRUE, FALSE, raw, is_raw = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw
 end
-local is_raw
-is_raw = function(val)
-  return type(val) == "table" and val[1] == "raw" and val[2]
-end
-local TRUE = raw("TRUE")
-local FALSE = raw("FALSE")
 local backends = {
   default = function(_proxy)
     if _proxy == nil then

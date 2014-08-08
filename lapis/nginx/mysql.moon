@@ -1,4 +1,7 @@
 
+import type, tostring, pairs, select from _G
+import NULL, TRUE, FALSE, raw, is_raw from require "lapis.db.base"
+
 local conn
 local *
 
