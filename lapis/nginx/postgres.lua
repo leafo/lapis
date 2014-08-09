@@ -49,10 +49,10 @@ local backends = {
     end
   end,
   pgmoon = function()
-    local after_dispatch
+    local after_dispatch, increment_perf
     do
       local _obj_0 = require("lapis.nginx.context")
-      after_dispatch = _obj_0.after_dispatch
+      after_dispatch, increment_perf = _obj_0.after_dispatch, _obj_0.increment_perf
     end
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
@@ -76,10 +76,18 @@ local backends = {
           pgmoon_conn = pgmoon
         end
       end
+      local start_time
+      if config.measure_performance then
+        start_time = ngx.now()
+      end
       if logger then
         logger.query(str)
       end
       local res, err = pgmoon:query(str)
+      if start_time then
+        increment_perf("db_time", ngx.now() - start_time)
+        increment_perf("db_count", 1)
+      end
       if not res and err then
         error(tostring(str) .. "\n" .. tostring(err))
       end

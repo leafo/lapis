@@ -47,13 +47,15 @@ backends = {
       raw_query = fn
 
   pgmoon: ->
-    import after_dispatch from require "lapis.nginx.context"
+    import after_dispatch, increment_perf from require "lapis.nginx.context"
+
     config = require("lapis.config").get!
     pg_config = assert config.postgres, "missing postgres configuration"
     local pgmoon_conn
 
     raw_query = (str) ->
       pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
+
       unless pgmoon
         import Postgres from require "pgmoon"
         pgmoon = Postgres pg_config
@@ -65,8 +67,15 @@ backends = {
         else
           pgmoon_conn = pgmoon
 
+      start_time = if config.measure_performance
+        ngx.now!
+
       logger.query str if logger
       res, err = pgmoon\query str
+
+      if start_time
+        increment_perf "db_time", ngx.now! - start_time
+        increment_perf "db_count", 1
 
       if not res and err
         error "#{str}\n#{err}"
