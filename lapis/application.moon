@@ -2,10 +2,11 @@
 logger = require "lapis.logging"
 url = require "socket.url"
 session = require "lapis.session"
+lapis_config = require "lapis.config"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
-
+import increment_perf from require "lapis.nginx.context"
 import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
 
 import insert from table
@@ -13,6 +14,7 @@ import insert from table
 json = require "cjson"
 
 local capture_errors, capture_errors_json, respond_to
+
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -93,14 +95,23 @@ class Request
     widget = @route_name if widget == true
 
     if widget
+      config = lapis_config.get!
+
       if type(widget) == "string"
         widget = require "#{@app.views_prefix}.#{widget}"
+
+      start_time = if config.measure_performance
+        ngx.update_time!
+        ngx.now!
 
       view = widget @options.locals
       @layout_opts.view_widget = view if @layout_opts
       view\include_helper @
-
       @write view
+
+      if start_time
+        ngx.update_time!
+        increment_perf "view_time", ngx.now! - start_time
 
     if has_layout
       inner = @buffer
@@ -395,7 +406,7 @@ class Application
   handle_error: (err, trace, error_page=@app.error_page) =>
     r = @app.Request @, @req, @res
 
-    config = require("lapis.config").get!
+    config = lapis_config.get!
     if config._name == "test"
       param_dump = logger.flatten_params @url_params
       r.res\add_header "X-Lapis-Error", "true"

@@ -1,6 +1,7 @@
 local logger = require("lapis.logging")
 local url = require("socket.url")
 local session = require("lapis.session")
+local lapis_config = require("lapis.config")
 local Router
 do
   local _obj_0 = require("lapis.router")
@@ -10,6 +11,11 @@ local html_writer
 do
   local _obj_0 = require("lapis.html")
   html_writer = _obj_0.html_writer
+end
+local increment_perf
+do
+  local _obj_0 = require("lapis.nginx.context")
+  increment_perf = _obj_0.increment_perf
 end
 local parse_cookie_string, to_json, build_url, auto_table
 do
@@ -122,8 +128,14 @@ do
         widget = self.route_name
       end
       if widget then
+        local config = lapis_config.get()
         if type(widget) == "string" then
           widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
+        end
+        local start_time
+        if config.measure_performance then
+          ngx.update_time()
+          start_time = ngx.now()
         end
         local view = widget(self.options.locals)
         if self.layout_opts then
@@ -131,6 +143,10 @@ do
         end
         view:include_helper(self)
         self:write(view)
+        if start_time then
+          ngx.update_time()
+          increment_perf("view_time", ngx.now() - start_time)
+        end
       end
       if has_layout then
         local inner = self.buffer
@@ -423,7 +439,7 @@ do
         error_page = self.app.error_page
       end
       local r = self.app.Request(self, self.req, self.res)
-      local config = require("lapis.config").get()
+      local config = lapis_config.get()
       if config._name == "test" then
         local param_dump = logger.flatten_params(self.url_params)
         r.res:add_header("X-Lapis-Error", "true")
