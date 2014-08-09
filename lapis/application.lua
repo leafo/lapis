@@ -127,8 +127,8 @@ do
       if widget == true then
         widget = self.route_name
       end
+      local config = lapis_config.get()
       if widget then
-        local config = lapis_config.get()
         if type(widget) == "string" then
           widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
         end
@@ -158,12 +158,21 @@ do
         else
           layout_cls = self.app.layout
         end
+        local start_time
+        if config.measure_performance then
+          ngx.update_time()
+          start_time = ngx.now()
+        end
         self.layout_opts.inner = self.layout_opts.inner or function()
           return raw(inner)
         end
         local layout = layout_cls(self.layout_opts)
         layout:include_helper(self)
         layout:render(self.buffer)
+        if start_time then
+          ngx.update_time()
+          increment_perf("layout_time", ngx.now() - start_time)
+        end
       end
       if next(self.buffer) then
         local content = table.concat(self.buffer)

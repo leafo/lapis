@@ -94,9 +94,9 @@ class Request
     widget = @options.render
     widget = @route_name if widget == true
 
-    if widget
-      config = lapis_config.get!
+    config = lapis_config.get!
 
+    if widget
       if type(widget) == "string"
         widget = require "#{@app.views_prefix}.#{widget}"
 
@@ -123,11 +123,19 @@ class Request
       else
         @app.layout
 
+      start_time = if config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
       @layout_opts.inner or= -> raw inner
 
       layout = layout_cls @layout_opts
       layout\include_helper @
       layout\render @buffer
+
+      if start_time
+        ngx.update_time!
+        increment_perf "layout_time", ngx.now! - start_time
 
     if next @buffer
       content = table.concat @buffer
