@@ -77,7 +77,7 @@ local backends = {
         end
       end
       local start_time
-      if config.measure_performance then
+      if ngx and config.measure_performance then
         ngx.update_time()
         start_time = ngx.now()
       end

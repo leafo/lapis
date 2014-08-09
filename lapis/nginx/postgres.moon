@@ -67,7 +67,7 @@ backends = {
         else
           pgmoon_conn = pgmoon
 
-      start_time = if config.measure_performance
+      start_time = if ngx and config.measure_performance
         ngx.update_time!
         ngx.now!
 
