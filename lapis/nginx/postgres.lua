@@ -78,6 +78,7 @@ local backends = {
       end
       local start_time
       if config.measure_performance then
+        ngx.update_time()
         start_time = ngx.now()
       end
       if logger then
@@ -85,6 +86,7 @@ local backends = {
       end
       local res, err = pgmoon:query(str)
       if start_time then
+        ngx.update_time()
         increment_perf("db_time", ngx.now() - start_time)
         increment_perf("db_count", 1)
       end

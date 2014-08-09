@@ -68,12 +68,14 @@ backends = {
           pgmoon_conn = pgmoon
 
       start_time = if config.measure_performance
+        ngx.update_time!
         ngx.now!
 
       logger.query str if logger
       res, err = pgmoon\query str
 
       if start_time
+        ngx.update_time!
         increment_perf "db_time", ngx.now! - start_time
         increment_perf "db_count", 1
 
