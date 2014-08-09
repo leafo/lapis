@@ -130,7 +130,6 @@ request = (url, str_body) ->
       ltn12.pump.all ltn12.source.string(res.body), req.sink
     1
 
-
   if start_time
     ngx.update_time!
     increment_perf "http_count", 1

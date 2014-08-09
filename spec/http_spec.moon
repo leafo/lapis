@@ -101,3 +101,22 @@ describe "lapis.http", ->
         ctx: { }
         vars: { _url: "http://leafo.net/lapis" }
       }, options
+
+
+  describe "request", ->
+    local request
+    before_each ->
+      request = require("lapis.http").simple
+
+    it "should call with string", ->
+      request "http://leafo.net"
+
+      assert.same "/proxy", location
+      assert.same {
+        method: ngx.HTTP_GET
+        ctx: {}
+        vars: {
+          _url: "http://leafo.net"
+        }
+      }, options
+
