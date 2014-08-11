@@ -156,3 +156,16 @@ default_config = {
 }
 ```
 
+
+## Available Configuration Values
+
+Althought most coniguration keys are free for any use, some names are reserved
+for configuring Lapis and supporting libraries. Here is a list of them:
+
+* `port` (`number`) -- The port of Nginx, defined in default `nginx.conf`
+* `num_workers` (`number`) -- The number of workers to launch for Nginx, defined in default `nginx.conf`
+* `session_name` (`string`) -- The name of the cookie where the [session]($root/reference/actions.html#request-object-session) will be stored
+* `secret` (`string`) -- Secret key used by `encode_with_secret`, also used for signing session cookie
+* `measure_performance` (`bool`) -- Used to enable performance time and query tracking
+* `logging` (`table`) -- Configure which events to log to console or log files
+
