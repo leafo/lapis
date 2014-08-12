@@ -47,6 +47,13 @@ end
 escape_literal = function(val)
   return assert(conn):escape(val)
 end
+escape_identifier = function(ident)
+  if is_raw(ident) then
+    return ident
+  end
+  ident = tostring(ident)
+  return '`' .. (ident:gsub('`', '``')) .. '`'
+end
 raw_query = function(...)
   local config = require("lapis.config").get()
   set_backend("luasql")

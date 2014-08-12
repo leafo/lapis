@@ -37,6 +37,11 @@ set_backend = (name="default", ...) ->
 escape_literal = (val) ->
   assert(conn)\escape val
 
+escape_identifier = (ident) ->
+  return ident if is_raw ident
+  ident = tostring ident
+  '`' ..  (ident\gsub '`', '``') .. '`'
+
 raw_query = (...) ->
   config = require("lapis.config").get!
   set_backend "luasql"
