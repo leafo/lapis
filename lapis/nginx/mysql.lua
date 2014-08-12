@@ -53,6 +53,12 @@ raw_query = function(...)
   return raw_query(...)
 end
 return {
+  raw = raw,
+  is_raw = is_raw,
+  NULL = NULL,
+  TRUE = TRUE,
+  FALSE = FALSE,
   escape_literal = escape_literal,
+  set_backend = set_backend,
   raw_query = raw_query
 }

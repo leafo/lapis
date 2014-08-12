@@ -42,7 +42,30 @@ raw_query = (...) ->
   set_backend "luasql"
   raw_query ...
 
+
+-- To be implemented
+-- {
+--   :query,
+--   :escape_identifier
+--   :encode_values
+--   :encode_assigns
+--   :encode_clause
+--   :interpolate_query
+--   :parse_clause
+--   :format_date
+-- 
+--   select: _select
+--   insert: _insert
+--   update: _update
+--   delete: _delete
+--   truncate: _truncate
+-- }
+
+
 {
+  :raw, :is_raw, :NULL, :TRUE, :FALSE,
+
   :escape_literal
+  :set_backend
   :raw_query
 }
