@@ -1,6 +1,6 @@
 
 import type, tostring, pairs, select from _G
-import NULL, TRUE, FALSE, raw, is_raw from require "lapis.db.base"
+import NULL, TRUE, FALSE, raw, is_raw, format_date from require "lapis.db.base"
 
 local conn
 local *
@@ -68,4 +68,5 @@ raw_query = (...) ->
   :escape_literal
   :set_backend
   :raw_query
+  :format_date
 }

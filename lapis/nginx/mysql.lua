@@ -3,13 +3,13 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local NULL, TRUE, FALSE, raw, is_raw
+local NULL, TRUE, FALSE, raw, is_raw, format_date
 do
   local _obj_0 = require("lapis.db.base")
-  NULL, TRUE, FALSE, raw, is_raw = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw
+  NULL, TRUE, FALSE, raw, is_raw, format_date = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw, _obj_0.format_date
 end
 local conn
-local backends, set_backend, escape_literal, raw_query
+local backends, set_backend, escape_literal, escape_identifier, raw_query
 backends = {
   luasql = function()
     local config = require("lapis.config").get()
@@ -60,5 +60,6 @@ return {
   FALSE = FALSE,
   escape_literal = escape_literal,
   set_backend = set_backend,
-  raw_query = raw_query
+  raw_query = raw_query,
+  format_date = format_date
 }

@@ -25,7 +25,7 @@ proxy_location = "/query"
 local logger
 
 import type, tostring, pairs, select from _G
-import NULL, TRUE, FALSE, raw, is_raw from require "lapis.db.base"
+import NULL, TRUE, FALSE, raw, is_raw, format_date from require "lapis.db.base"
 
 backends = {
   default: (_proxy=proxy_location) ->
@@ -95,9 +95,6 @@ init_db = ->
   config = require("lapis.config").get!
   default_backend = config.postgres and config.postgres.backend or "default"
   set_backend default_backend
-
-format_date = (time) ->
-  os.date "!%Y-%m-%d %H:%M:%S", time
 
 append_all = (t, ...) ->
   for i=1, select "#", ...

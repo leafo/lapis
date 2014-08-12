@@ -7,7 +7,9 @@ is_raw = (val) ->
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
 
+format_date = (time) ->
+  os.date "!%Y-%m-%d %H:%M:%S", time
 
 {
-  :NULL, :TRUE, :FALSE, :raw, :is_raw
+  :NULL, :TRUE, :FALSE, :raw, :is_raw, :format_date
 }

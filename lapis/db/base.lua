@@ -12,10 +12,15 @@ is_raw = function(val)
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
+local format_date
+format_date = function(time)
+  return os.date("!%Y-%m-%d %H:%M:%S", time)
+end
 return {
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,
   raw = raw,
-  is_raw = is_raw
+  is_raw = is_raw,
+  format_date = format_date
 }

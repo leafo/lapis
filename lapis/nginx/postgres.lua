@@ -11,10 +11,10 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local NULL, TRUE, FALSE, raw, is_raw
+local NULL, TRUE, FALSE, raw, is_raw, format_date
 do
   local _obj_0 = require("lapis.db.base")
-  NULL, TRUE, FALSE, raw, is_raw = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw
+  NULL, TRUE, FALSE, raw, is_raw, format_date = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw, _obj_0.format_date
 end
 local backends = {
   default = function(_proxy)
@@ -115,10 +115,6 @@ init_db = function()
   local config = require("lapis.config").get()
   local default_backend = config.postgres and config.postgres.backend or "default"
   return set_backend(default_backend)
-end
-local format_date
-format_date = function(time)
-  return os.date("!%Y-%m-%d %H:%M:%S", time)
 end
 local append_all
 append_all = function(t, ...)
