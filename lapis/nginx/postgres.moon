@@ -25,7 +25,7 @@ proxy_location = "/query"
 local logger
 
 import type, tostring, pairs, select from _G
-import NULL, TRUE, FALSE, raw, is_raw, format_date from require "lapis.db.base"
+import NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers from require "lapis.db.base"
 
 backends = {
   default: (_proxy=proxy_location) ->
@@ -96,10 +96,6 @@ init_db = ->
   default_backend = config.postgres and config.postgres.backend or "default"
   set_backend default_backend
 
-append_all = (t, ...) ->
-  for i=1, select "#", ...
-    t[#t + 1] = select i, ...
-
 escape_identifier = (ident) ->
   if type(ident) == "table" and ident[1] == "raw"
     return ident[2]
@@ -122,53 +118,11 @@ escape_literal = (val) ->
 
   error "don't know how to escape value: #{val}"
 
--- replace ? with values
-interpolate_query = (query, ...) ->
-  values = {...}
-  i = 0
-  (query\gsub "%?", ->
-    i += 1
-    escape_literal values[i])
+interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers escape_literal, escape_identifier
 
--- (col1, col2, col3) VALUES (val1, val2, val3)
-encode_values = (t, buffer) ->
-  have_buffer = buffer
-  buffer or= {}
-
-  tuples = [{k,v} for k,v in pairs t]
-  cols = concat [escape_identifier pair[1] for pair in *tuples], ", "
-  vals = concat [escape_literal pair[2] for pair in *tuples], ", "
-
-  append_all buffer, "(", cols, ") VALUES (", vals, ")"
-  concat buffer unless have_buffer
-
--- col1 = val1, col2 = val2, col3 = val3
-encode_assigns = (t, buffer) ->
-  join = ", "
-  have_buffer = buffer
-  buffer or= {}
-
-  for k,v in pairs t
-    append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
-
-  buffer[#buffer] = nil
-
-  concat buffer unless have_buffer
-
-encode_clause = (t, buffer)->
-  join = " AND "
-  have_buffer = buffer
-  buffer or= {}
-
-  for k,v in pairs t
-    if v == NULL
-      append_all buffer, escape_identifier(k), " IS NULL", join
-    else
-      append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
-
-  buffer[#buffer] = nil
-
-  concat buffer unless have_buffer
+append_all = (t, ...) ->
+  for i=1, select "#", ...
+    t[#t + 1] = select i, ...
 
 raw_query = (...) ->
   init_logger!

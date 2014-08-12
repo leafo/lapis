@@ -11,10 +11,10 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local NULL, TRUE, FALSE, raw, is_raw, format_date
+local NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers
 do
   local _obj_0 = require("lapis.db.base")
-  NULL, TRUE, FALSE, raw, is_raw, format_date = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw, _obj_0.format_date
+  NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw, _obj_0.format_date, _obj_0.build_helpers
 end
 local backends = {
   default = function(_proxy)
@@ -116,12 +116,6 @@ init_db = function()
   local default_backend = config.postgres and config.postgres.backend or "default"
   return set_backend(default_backend)
 end
-local append_all
-append_all = function(t, ...)
-  for i = 1, select("#", ...) do
-    t[#t + 1] = select(i, ...)
-  end
-end
 local escape_identifier
 escape_identifier = function(ident)
   if type(ident) == "table" and ident[1] == "raw" then
@@ -149,87 +143,11 @@ escape_literal = function(val)
   end
   return error("don't know how to escape value: " .. tostring(val))
 end
-local interpolate_query
-interpolate_query = function(query, ...)
-  local values = {
-    ...
-  }
-  local i = 0
-  return (query:gsub("%?", function()
-    i = i + 1
-    return escape_literal(values[i])
-  end))
-end
-local encode_values
-encode_values = function(t, buffer)
-  local have_buffer = buffer
-  buffer = buffer or { }
-  local tuples
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for k, v in pairs(t) do
-      _accum_0[_len_0] = {
-        k,
-        v
-      }
-      _len_0 = _len_0 + 1
-    end
-    tuples = _accum_0
-  end
-  local cols = concat((function()
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #tuples do
-      local pair = tuples[_index_0]
-      _accum_0[_len_0] = escape_identifier(pair[1])
-      _len_0 = _len_0 + 1
-    end
-    return _accum_0
-  end)(), ", ")
-  local vals = concat((function()
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #tuples do
-      local pair = tuples[_index_0]
-      _accum_0[_len_0] = escape_literal(pair[2])
-      _len_0 = _len_0 + 1
-    end
-    return _accum_0
-  end)(), ", ")
-  append_all(buffer, "(", cols, ") VALUES (", vals, ")")
-  if not (have_buffer) then
-    return concat(buffer)
-  end
-end
-local encode_assigns
-encode_assigns = function(t, buffer)
-  local join = ", "
-  local have_buffer = buffer
-  buffer = buffer or { }
-  for k, v in pairs(t) do
-    append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
-  end
-  buffer[#buffer] = nil
-  if not (have_buffer) then
-    return concat(buffer)
-  end
-end
-local encode_clause
-encode_clause = function(t, buffer)
-  local join = " AND "
-  local have_buffer = buffer
-  buffer = buffer or { }
-  for k, v in pairs(t) do
-    if v == NULL then
-      append_all(buffer, escape_identifier(k), " IS NULL", join)
-    else
-      append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
-    end
-  end
-  buffer[#buffer] = nil
-  if not (have_buffer) then
-    return concat(buffer)
+local interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers(escape_literal, escape_identifier)
+local append_all
+append_all = function(t, ...)
+  for i = 1, select("#", ...) do
+    t[#t + 1] = select(i, ...)
   end
 end
 raw_query = function(...)
