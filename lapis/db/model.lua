@@ -401,6 +401,9 @@ do
     return Paginator(self, ...)
   end
   self.extend = function(self, table_name, tbl)
+    if tbl == nil then
+      tbl = { }
+    end
     local lua = require("lapis.lua")
     do
       local cls = lua.class(table_name, tbl, self)

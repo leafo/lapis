@@ -228,7 +228,7 @@ class Model
     Paginator @, ...
 
   -- alternative to MoonScript inheritance
-  @extend: (table_name, tbl) =>
+  @extend: (table_name, tbl={}) =>
     lua = require "lapis.lua"
     with cls = lua.class table_name, tbl, @
       .table_name = -> table_name
