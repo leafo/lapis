@@ -2,6 +2,9 @@
 import insert from table
 
 validate_functions = {
+  is_email: (input) ->
+    input and input != "" and input\match("[A-Za-z0-9%.%%%+%-]+@[A-Za-z0-9%.%%%+%-]+%.%w%w%w?%w?"), "The e-mail address is not valid"
+
   exists: (input) ->
     input and input != "", "%s must be provided"
 
