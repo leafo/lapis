@@ -224,6 +224,14 @@ mock_request = function(app_cls, url, opts)
     end
     error("\n" .. tostring(status) .. "\n" .. tostring(err) .. "\n" .. tostring(trace))
   end
+  if opts.expect == "json" then
+    local json = require("cjson")
+    if not (pcall(function()
+      body = json.decode(body)
+    end)) then
+      error("expected to get json from " .. tostring(url))
+    end
+  end
   return response.status or 200, body, out_headers
 end
 local assert_request

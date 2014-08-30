@@ -173,6 +173,11 @@ mock_request = (app_cls, url, opts={}) ->
     {:status, :err, :trace} = json.decode body
     error "\n#{status}\n#{err}\n#{trace}"
 
+  if opts.expect == "json"
+    json = require "cjson"
+    unless pcall -> body = json.decode body
+      error "expected to get json from #{url}"
+
   response.status or 200, body, out_headers
 
 assert_request = (...) ->
