@@ -134,6 +134,12 @@ mock_request = function(app_cls, url, opts)
       return ngx.print("\n")
     end,
     header = out_headers,
+    now = function()
+      return os.time()
+    end,
+    update_time = function(self)
+      return os.time()
+    end,
     ctx = { },
     var = setmetatable({
       host = host,
@@ -144,6 +150,7 @@ mock_request = function(app_cls, url, opts)
       server_port = server_port,
       args = url_query,
       query_string = url_query,
+      remote_addr = "127.0.0.1",
       uri = url_base
     }, {
       __index = function(self, name)

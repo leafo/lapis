@@ -100,6 +100,9 @@ mock_request = (app_cls, url, opts={}) ->
 
     header: out_headers
 
+    now: -> os.time!
+    update_time: => os.time!
+
     ctx: { }
 
     var: setmetatable {
@@ -112,6 +115,7 @@ mock_request = (app_cls, url, opts={}) ->
 
       args: url_query
       query_string: url_query
+      remote_addr: "127.0.0.1"
 
       uri: url_base
     }, __index: (name) =>
