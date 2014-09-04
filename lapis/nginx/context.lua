@@ -1,8 +1,5 @@
 local insert
-do
-  local _obj_0 = table
-  insert = _obj_0.insert
-end
+insert = table.insert
 local make_callback
 make_callback = function(name)
   local add

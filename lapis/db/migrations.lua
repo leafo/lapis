@@ -1,10 +1,7 @@
 local db = require("lapis.db")
 local logger = require("lapis.logging")
 local Model
-do
-  local _obj_0 = require("lapis.db.model")
-  Model = _obj_0.Model
-end
+Model = require("lapis.db.model").Model
 local LapisMigrations
 do
   local _parent_0 = Model

@@ -2,10 +2,7 @@ local db = require("lapis.db")
 local escape_literal
 escape_literal = db.escape_literal
 local concat
-do
-  local _obj_0 = table
-  concat = _obj_0.concat
-end
+concat = table.concat
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do

@@ -94,10 +94,7 @@ delete_path = function(path, dict_name)
     dict_name = "page_cache"
   end
   local escape_pattern
-  do
-    local _obj_0 = require("lapis.util")
-    escape_pattern = _obj_0.escape_pattern
-  end
+  escape_pattern = require("lapis.util").escape_pattern
   local dict = ngx.shared[dict_name]
   local _list_0 = dict:get_keys()
   for _index_0 = 1, #_list_0 do

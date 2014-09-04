@@ -3,30 +3,18 @@ local url = require("socket.url")
 local session = require("lapis.session")
 local lapis_config = require("lapis.config")
 local Router
-do
-  local _obj_0 = require("lapis.router")
-  Router = _obj_0.Router
-end
+Router = require("lapis.router").Router
 local html_writer
-do
-  local _obj_0 = require("lapis.html")
-  html_writer = _obj_0.html_writer
-end
+html_writer = require("lapis.html").html_writer
 local increment_perf
-do
-  local _obj_0 = require("lapis.nginx.context")
-  increment_perf = _obj_0.increment_perf
-end
+increment_perf = require("lapis.nginx.context").increment_perf
 local parse_cookie_string, to_json, build_url, auto_table
 do
   local _obj_0 = require("lapis.util")
   parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
 local insert
-do
-  local _obj_0 = table
-  insert = _obj_0.insert
-end
+insert = table.insert
 local json = require("cjson")
 local capture_errors, capture_errors_json, respond_to
 local set_and_truthy
