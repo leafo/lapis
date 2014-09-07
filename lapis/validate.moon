@@ -72,7 +72,7 @@ validate = (object, validations) ->
       continue unless type(fn) == "string"
       success, msg = test_input input, fn, args
       unless success
-        insert errors, (error_msg or msg)\format key
+        errors[key] = (error_msg or msg)\format key
         break
 
   next(errors) and errors

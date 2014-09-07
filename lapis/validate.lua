@@ -96,7 +96,7 @@ validate = function(object, validations)
           end
           local success, msg = test_input(input, fn, args)
           if not (success) then
-            insert(errors, (error_msg or msg):format(key))
+            errors[key] = (error_msg or msg):format(key)
             break
           end
           _continue_1 = true
