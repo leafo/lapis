@@ -1,5 +1,6 @@
 
 import insert from table
+import p from require "moon"
 
 validate_functions = {
   is_email: (input) ->
@@ -57,10 +58,11 @@ test_input = (input, func, args) ->
 
 validate = (object, validations) ->
   errors = {}
+  invalid_fields = {}
+
   for v in *validations
     key = v[1]
     error_msg = v[2]
-
     input = object[key]
 
     if v.optional
@@ -72,10 +74,11 @@ validate = (object, validations) ->
       continue unless type(fn) == "string"
       success, msg = test_input input, fn, args
       unless success
-        errors[key] = (error_msg or msg)\format key
+        insert errors, (error_msg or msg)\format key
+        insert invalid_fields, key
         break
 
-  next(errors) and errors
+  next(errors) and errors, next(invalid_fields) and invalid_fields
 
 assert_valid = (object, validations) ->
   errors = validate object, validations
