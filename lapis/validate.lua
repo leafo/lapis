@@ -3,11 +3,6 @@ do
   local _obj_0 = table
   insert = _obj_0.insert
 end
-local p
-do
-  local _obj_0 = require("moon")
-  p = _obj_0.p
-end
 local validate_functions = {
   is_email = function(input)
     return input and input ~= "" and input:match("[A-Za-z0-9%.%%%+%-]+@[A-Za-z0-9%.%%%+%-]+%.%w%w%w?%w?"), "The e-mail address is not valid"

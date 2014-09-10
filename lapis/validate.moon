@@ -1,6 +1,5 @@
 
 import insert from table
-import p from require "moon"
 
 validate_functions = {
   is_email: (input) ->
