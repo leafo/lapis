@@ -1,8 +1,5 @@
 local insert
-do
-  local _obj_0 = table
-  insert = _obj_0.insert
-end
+insert = table.insert
 local validate_functions = {
   is_email = function(input)
     return input and input ~= "" and input:match("[A-Za-z0-9%.%%%+%-]+@[A-Za-z0-9%.%%%+%-]+%.%w%w%w?%w?"), "The e-mail address is not valid"

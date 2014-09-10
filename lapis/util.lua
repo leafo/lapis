@@ -6,10 +6,7 @@ do
   concat, insert = _obj_0.concat, _obj_0.insert
 end
 local floor
-do
-  local _obj_0 = math
-  floor = _obj_0.floor
-end
+floor = math.floor
 local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin
 do
   local u = url.unescape

@@ -4,10 +4,7 @@ do
   escape_pattern, parse_content_disposition, build_url = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url
 end
 local run_after_dispatch
-do
-  local _obj_0 = require("lapis.nginx.context")
-  run_after_dispatch = _obj_0.run_after_dispatch
-end
+run_after_dispatch = require("lapis.nginx.context").run_after_dispatch
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }

@@ -1,24 +1,15 @@
 local TEST_ENV = "test"
 local normalize_headers
-do
-  local _obj_0 = require("lapis.spec.request")
-  normalize_headers = _obj_0.normalize_headers
-end
+normalize_headers = require("lapis.spec.request").normalize_headers
 local ltn12 = require("ltn12")
 local json = require("cjson")
 local current_server = nil
 local load_test_server
 load_test_server = function()
   local attach_server
-  do
-    local _obj_0 = require("lapis.cmd.nginx")
-    attach_server = _obj_0.attach_server
-  end
+  attach_server = require("lapis.cmd.nginx").attach_server
   local get_free_port
-  do
-    local _obj_0 = require("lapis.cmd.util")
-    get_free_port = _obj_0.get_free_port
-  end
+  get_free_port = require("lapis.cmd.util").get_free_port
   local app_port = get_free_port()
   current_server = attach_server(TEST_ENV, {
     port = app_port
@@ -29,10 +20,7 @@ end
 local close_test_server
 close_test_server = function()
   local detach_server
-  do
-    local _obj_0 = require("lapis.cmd.nginx")
-    detach_server = _obj_0.detach_server
-  end
+  detach_server = require("lapis.cmd.nginx").detach_server
   detach_server()
   current_server = nil
 end
@@ -64,10 +52,7 @@ request = function(path, opts)
       end
       if type(data) == "table" then
         local encode_query_string
-        do
-          local _obj_0 = require("lapis.util")
-          encode_query_string = _obj_0.encode_query_string
-        end
+        encode_query_string = require("lapis.util").encode_query_string
         headers["Content-type"] = "application/x-www-form-urlencoded"
         data = encode_query_string(data)
       end

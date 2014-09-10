@@ -134,6 +134,12 @@ mock_request = function(app_cls, url, opts)
       return ngx.print("\n")
     end,
     header = out_headers,
+    now = function()
+      return os.time()
+    end,
+    update_time = function(self)
+      return os.time()
+    end,
     ctx = { },
     var = setmetatable({
       host = host,
@@ -144,6 +150,7 @@ mock_request = function(app_cls, url, opts)
       server_port = server_port,
       args = url_query,
       query_string = url_query,
+      remote_addr = "127.0.0.1",
       uri = url_base
     }, {
       __index = function(self, name)
@@ -216,6 +223,14 @@ mock_request = function(app_cls, url, opts)
       status, err, trace = _obj_0.status, _obj_0.err, _obj_0.trace
     end
     error("\n" .. tostring(status) .. "\n" .. tostring(err) .. "\n" .. tostring(trace))
+  end
+  if opts.expect == "json" then
+    local json = require("cjson")
+    if not (pcall(function()
+      body = json.decode(body)
+    end)) then
+      error("expected to get json from " .. tostring(url))
+    end
   end
   return response.status or 200, body, out_headers
 end

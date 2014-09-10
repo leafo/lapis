@@ -1,10 +1,7 @@
 local lapis_config = require("lapis.config")
 local ltn12 = require("ltn12")
 local increment_perf
-do
-  local _obj_0 = require("lapis.nginx.context")
-  increment_perf = _obj_0.increment_perf
-end
+increment_perf = require("lapis.nginx.context").increment_perf
 local proxy_location = "/proxy"
 local methods = setmetatable({ }, {
   __index = function(self, name)
@@ -18,10 +15,7 @@ set_proxy_location = function(loc)
   proxy_location = loc
 end
 local encode_query_string
-do
-  local _obj_0 = require("lapis.util")
-  encode_query_string = _obj_0.encode_query_string
-end
+encode_query_string = require("lapis.util").encode_query_string
 local simple
 simple = function(req, body)
   local config = lapis_config.get()
@@ -123,10 +117,7 @@ ngx_replace_headers = function(new_headers)
     new_headers = nil
   end
   local req
-  do
-    local _obj_0 = ngx
-    req = _obj_0.req
-  end
+  req = ngx.req
   new_headers = new_headers or ngx.ctx.headers
   for k, v in pairs(req.get_headers()) do
     if k ~= 'content-length' then

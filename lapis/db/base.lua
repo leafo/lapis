@@ -19,15 +19,9 @@ end
 local build_helpers
 build_helpers = function(escape_literal, escape_identifier)
   local concat
-  do
-    local _obj_0 = table
-    concat = _obj_0.concat
-  end
+  concat = table.concat
   local select
-  do
-    local _obj_0 = _G
-    select = _obj_0.select
-  end
+  select = _G.select
   local append_all
   append_all = function(t, ...)
     for i = 1, select("#", ...) do
