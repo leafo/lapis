@@ -12,4 +12,4 @@ install:
   - sudo luarocks make
   - ./install_luajit.sh
 
-script: luajit $(cat $(which busted) | grep -Po '[^'"'"']*?bin/busted')
+script: busted -l ./luajit
