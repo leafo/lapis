@@ -143,6 +143,8 @@ class Model
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
+        assert field_name, "failed to infer field name, provide one with `as`"
+
         for other in *other_records
           other[field_name] = records[other[src_key]]
 
@@ -226,7 +228,7 @@ class Model
     Paginator @, ...
 
   -- alternative to MoonScript inheritance
-  @extend: (table_name, tbl) =>
+  @extend: (table_name, tbl={}) =>
     lua = require "lapis.lua"
     with cls = lua.class table_name, tbl, @
       .table_name = -> table_name

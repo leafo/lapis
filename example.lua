@@ -1,27 +1,20 @@
+local lapis = require("lapis")
 
-local lua = require "lapis.lua"
-local lapis = require "lapis.init"
+local app = lapis.Application()
+app:enable("etlua")
 
-local app = lua.class({
-  ["/"] = function(self)
-    return self:html(function()
-      a({ href = self:url_for("user", { name = "leafo" }) }, "Go to profile")
-    end)
-  end,
+app:get("index", "/", function(self)
+  -- renders views/index.etlua
+  return { render = true }
+end)
 
-  [{user = "/user/:name"}] = function(self)
-    return self:html(function()
-      h1(self.params.name)
-      p("Welcome to " .. self.params.name .. "'s profile")
-    end)
-  end,
+app:get("/user/:name", function(self)
+  return "Welcome to " .. self.params.name .. "'s profile"
+end)
 
-  ["/test.json"] = function(self)
-    return {
-      json = { status = "ok" }
-    }
-  end,
+app:get("/test.json", function(self)
+  return { json = { status = "ok" } }
+end)
 
-}, lapis.Application)
+return app
 
-lapis.serve(app)

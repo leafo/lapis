@@ -1,4 +1,6 @@
 
+env = require "lapis.environment"
+
 normalize_headers = do
   normalize = (header) ->
     header\lower!\gsub "-", "_"
@@ -98,6 +100,9 @@ mock_request = (app_cls, url, opts={}) ->
 
     header: out_headers
 
+    now: -> os.time!
+    update_time: => os.time!
+
     ctx: { }
 
     var: setmetatable {
@@ -110,6 +115,7 @@ mock_request = (app_cls, url, opts={}) ->
 
       args: url_query
       query_string: url_query
+      remote_addr: "127.0.0.1"
 
       uri: url_base
     }, __index: (name) =>
@@ -150,11 +156,29 @@ mock_request = (app_cls, url, opts={}) ->
   unless app.router
     app\build_router!
 
+  env.push "test"
+
   response = nginx.dispatch app
+
+  env.pop!
   stack.pop!
 
   logger.request = old_logger
-  response.status or 200, concat(buffer), out_headers
+  out_headers = normalize_headers out_headers
+
+  body = concat(buffer)
+
+  if out_headers.x_lapis_error
+    json = require "cjson"
+    {:status, :err, :trace} = json.decode body
+    error "\n#{status}\n#{err}\n#{trace}"
+
+  if opts.expect == "json"
+    json = require "cjson"
+    unless pcall -> body = json.decode body
+      error "expected to get json from #{url}"
+
+  response.status or 200, body, out_headers
 
 assert_request = (...) ->
   res = {mock_request ...}

@@ -143,7 +143,11 @@ default_config = {
   port = "8080",
   secret = "please-change-me",
   session_name = "lapis_session",
-  num_workers = "1"
+  num_workers = "1",
+  logging = {
+    queries = true,
+    requests = true
+  }
 }
 ```
 
@@ -153,6 +157,117 @@ default_config = {
   secret: "please-change-me"
   session_name: "lapis_session"
   num_workers: "1"
+  logging: {
+    queries: true
+    requests: true
+  }
 }
 ```
+
+
+## Available Configuration Values
+
+Althought most coniguration keys are free for any use, some names are reserved
+for configuring Lapis and supporting libraries. Here is a list of them:
+
+* `port` (`number`) -- The port of Nginx, defined in default `nginx.conf`
+* `num_workers` (`number`) -- The number of workers to launch for Nginx, defined in default `nginx.conf`
+* `session_name` (`string`) -- The name of the cookie where the [session]($root/reference/actions.html#request-object-session) will be stored
+* `secret` (`string`) -- Secret key used by `encode_with_secret`, also used for signing session cookie
+* `measure_performance` (`bool`) -- Used to enable performance time and query tracking
+* `logging` (`table`) -- Configure which events to log to console or log files
+
+
+## Configuring Logging
+
+The `logging` configuration key can be used to disable the various logging that
+Lapis does by default. The default value of the loging configuration is:
+
+```lua
+{
+  queries = true
+  requests = true
+}
+```
+
+```moon
+{
+  queries: true
+  requests: true
+}
+```
+
+All logging is done to Nginx's notice log using the `print` function provided
+by OpenResty. If running the server in the foreground then the logs will be
+printed to the console. If running in the
+
+## Performance Measurement
+
+Lapis can collection timings and counts for various actions if the
+`measure_performance` configuratin value is set to true.
+
+The data is stored in `ngx.ctx.performance`. The following fiels are collected
+in a table:
+
+* `view_time` -- Time in seconds spent rendering view
+* `layout_time` -- Time in seconds spent rendering layout
+* `db_time` -- Time in seconds spent executing queries
+* `db_count` -- The number of queries executed
+* `http_time` -- Time in seconds spent executing HTTP requests
+* `http_count` -- The number of HTTP requests sent
+
+A field will be `nil` if no corresponding action was done in the request. The
+fields are filled out over the course the requesst so it's best to only access
+them at the very end of the request to ensure all the data is available. The
+`after_dispatch` helper can be used to register a function to run at the very
+end of processing a request.
+
+In this example the performance data is printed to the log at the end of every
+request:
+
+
+```lua
+local lapis = require("lapis")
+local after_dispatch = require("lapis.nginx.context").after_dispatch
+local to_json = require("lapis.util").to_json
+
+local config = require("lapis.config")
+
+config("development", {
+  measure_performance = true
+})
+
+
+local app = lapis.Application()
+
+app:before_filter(function(self)
+  after_dispatch(function()
+    print(to_json(ngx.ctx.performance))
+  end)
+end)
+
+-- ...
+
+return app
+
+```
+
+
+```moon
+lapis = require "lapis"
+import after_dispatch from require "lapis.nginx.context"
+import to_json from require "lapis.util"
+
+config = require "lapis.config"
+config "development", ->
+  measure_performance true
+
+class App extends lapis.Application
+  @before_filter: =>
+    after_dispatch ->
+      print to_json(ngx.ctx.performance)
+
+  -- ...
+```
+
 

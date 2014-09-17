@@ -92,7 +92,6 @@ The request object has the following parameters:
 
 * <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all the get, post, and url parameters together
 * <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table (generated from `ngx` state)
-* <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table (generated from `ngx` state)
 * <span class="for_moon">`@res`</span><span class="for_lua">`self.res`</span> -- raw response table (used to update `ngx` state)
 * <span class="for_moon">`@app`</span><span class="for_lua">`self.app`</span> -- the instance of the application
 * <span class="for_moon">`@cookies`</span><span class="for_lua">`self.cookies`</span> -- the table of cookies, can be assigned to set new cookies. Only supports strings as values
@@ -155,6 +154,35 @@ end)
   @cookies.foo = "bar"
 ```
 
+By default all cookies are given the additional attributes `Path=/; HttpOnly`
+(which creates a [*session
+cookie*](http://en.wikipedia.org/wiki/HTTP_cookie#Terminology)). You can
+configure a cookie's settings by overidding the the `cookie_attributes`
+function on your application. Here's an example that adds an expiration date to
+cookies to make them persist:
+
+```moon
+date = require "date"
+
+class extends lapis.Application
+  cookie_attributes: (name, value) =>
+    expires = date(true)\adddays(365)\fmt "${http}"
+    "Expires=#{expires}; Path=/; HttpOnly"
+```
+
+```lua
+local date = require("date")
+local app = lapis.Application()
+
+app.cookie_attributes = function(self)
+  local expires = date(true):adddays(365):fmt("${http}")
+  return "Expires=" .. expires .. "; Path=/; HttpOnly"
+end
+```
+
+The `cookie_attributes` method takes the request object as the first argument
+(`self`) and then the name and value of the cookie being processed.
+
 ### Session
 
 The <span class="for_moon">`@session`</span><span
@@ -187,7 +215,7 @@ application secret, which is stored in the configuration value `secret`. It is
 highly recommended to change this from the default.
 
 ```lua
--- config.moon
+-- config.lua
 local config = require("lapis.config").config
 
 config("development", {

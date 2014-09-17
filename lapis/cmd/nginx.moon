@@ -1,11 +1,16 @@
 
 CONFIG_PATH = "nginx.conf"
+CONFIG_PATH_ETLUA = "nginx.conf.etlua"
+
 COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 
 path = require "lapis.cmd.path"
 import get_free_port, default_environment from require "lapis.cmd.util"
 
+
 local *
+
+current_server = nil
 
 find_nginx = do
   nginx_bin = "nginx"
@@ -72,35 +77,59 @@ start_nginx = (background=false) ->
 
   os.execute cmd
 
-compile_config = (config, opts={}) ->
-  env = setmetatable {}, __index: (key) =>
+wrap_environment = (env) ->
+  setmetatable {}, __index: (key) =>
     v = os.getenv "LAPIS_" .. key\upper!
     return v if v != nil
-    opts[key\lower!]
+    env[key\lower!]
+
+add_config_header = (compiled, env) ->
+  header = if name = env._name
+    "env LAPIS_ENVIRONMENT=#{name};\n"
+  else
+    "env LAPIS_ENVIRONMENT;\n"
+
+  header .. compiled
+
+compile_config = (config, env={}, opts={}) ->
+  wrapped = opts.os_env == false and env or wrap_environment(env)
 
   out = config\gsub "(${%b{}})", (w) ->
     name = w\sub 4, -3
     filter_name, filter_arg = name\match "^(%S+)%s+(.+)$"
     if filter = filters[filter_name]
-      value = env[filter_arg]
+      value = wrapped[filter_arg]
       if value == nil then w else filter value
     else
-      value = env[name]
+      value = wrapped[name]
       if value == nil then w else value
 
-  env_header = if opts._name
-    "env LAPIS_ENVIRONMENT=#{opts._name};\n"
+  if opts.header == false
+    out
   else
-    "env LAPIS_ENVIRONMENT;\n"
+    add_config_header out, env
 
-  env_header .. out
+compile_etlua_config = (config, env={}, opts={}) ->
+  etlua = require "etlua"
+  wrapped = opts.os_env == false and env or wrap_environment(env)
+
+  template = assert etlua.compile config
+  out = template wrapped
+
+  if opts.header == false
+    out
+  else
+    add_config_header out, env
 
 write_config_for = (environment, process_fn, ...) ->
   if type(environment) == "string"
     config = require "lapis.config"
     environment = config.get environment
 
-  compiled = compile_config path.read_file(CONFIG_PATH), environment
+  compiled = if path.exists CONFIG_PATH_ETLUA
+    compile_etlua_config path.read_file(CONFIG_PATH_ETLUA), environment
+  else
+    compile_config path.read_file(CONFIG_PATH), environment
 
   if process_fn
     compiled = process_fn compiled, ...
@@ -201,57 +230,63 @@ process_config = (cfg, port) ->
 
   cfg\gsub "%f[%a]http%s-{", "http { " .. table.concat test_server, "\n"
 
-server_stack = nil
-
 class AttachedServer
   new: (opts) =>
     for k,v in pairs opts
       @[k] = v
 
-    db = require "lapis.nginx.postgres"
+    env = require "lapis.environment"
+    env.push @environment
+
     pg_config = @environment.postgres
-    if pg_config and pg_config.backend == "pgmoon"
-      import Postgres from require "pgmoon"
-      pgmoon = Postgres pg_config
-      assert pgmoon\connect!
-
-      logger = require("lapis.db").get_logger!
-      logger = nil unless os.getenv "LAPIS_SHOW_QUERIES"
-
-      @old_backend = db.set_backend "raw", (...) ->
-        logger.query ... if logger
-        assert pgmoon\query ...
-    else
+    if pg_config and not pg_config.backend == "pgmoon"
       @old_backend = db.set_backend "raw", @\query
 
-  wait_until_ready: =>
+  wait_until: (server_status="open")=>
     socket = require "socket"
     max_tries = 1000
     while true
-      status = socket.connect "127.0.0.1", @port
-      if status
-        break
+      sock = socket.connect "127.0.0.1", @port
+      switch server_status
+        when "open"
+          if sock
+            sock\close!
+            break
+        when "close"
+          if sock
+            sock\close!
+          else
+            break
+        else
+          error "don't know how to wait for #{server_status}"
 
       max_tries -= 1
-      error "Timed out waiting for server to start" if max_tries == 0
+      if max_tries == 0
+        error "Timed out waiting for server to #{server_status}"
+
       socket.sleep 0.001
 
+  wait_until_ready: => @wait_until "open"
+  wait_until_closed: => @wait_until "close"
+
   detach: =>
-    path.write_file COMPILED_CONFIG_PATH, assert @existing_config
+    if @existing_config
+      path.write_file COMPILED_CONFIG_PATH, @existing_config
 
     if @fresh
       send_term!
+      @wait_until_closed!
     else
       send_hup!
 
-    server_stack = @previous
-    if server_stack
-      server_stack\wait_until_ready!
+    if @old_backend
+      db = require "lapis.db"
+      db.set_backend "raw", @old_backend
 
-    db = require "lapis.nginx.postgres"
-    db.set_backend "raw", @old_backend
+    env = require "lapis.environment"
+    env.pop!
 
-    server_stack
+    true
 
   query: (q) =>
     ltn12 = require "ltn12"
@@ -288,11 +323,14 @@ class AttachedServer
 
     table.concat buffer
 
-
+-- attaches or starts a new server in a specified environment
 attach_server = (environment, env_overrides) ->
+  assert not current_server, "a server is already attached (did you forget to detach?)"
+
   pid = get_pid!
 
-  existing_config = path.read_file COMPILED_CONFIG_PATH
+  existing_config = if path.exists COMPILED_CONFIG_PATH
+    path.read_file COMPILED_CONFIG_PATH
 
   port = get_free_port!
 
@@ -312,19 +350,19 @@ attach_server = (environment, env_overrides) ->
 
   server = AttachedServer {
     :environment
-    previous: server_stack
     fresh: not pid
     :port, :existing_config
   }
 
   server\wait_until_ready!
-  server_stack = server
+  current_server = server
   server
 
 detach_server = ->
-  error "no server was pushed" unless server_stack
-  server_stack\detach!
-
+  error "no server is attached" unless current_server
+  current_server\detach!
+  current_server = nil
+  true
 
 -- combines attach_server and detach_server to run code with temporary server
 run_with_server = (fn) ->
@@ -335,6 +373,7 @@ run_with_server = (fn) ->
   current_server\detach!
 
 
-{ :compile_config, :filters, :find_nginx, :start_nginx, :send_hup, :send_term,
-  :get_pid, :write_config_for, :attach_server, :detach_server, :send_signal,
-  :run_with_server }
+{ :compile_config, :compile_etlua_config, :filters, :find_nginx, :start_nginx,
+  :send_hup, :send_term, :get_pid, :write_config_for, :attach_server,
+  :detach_server, :send_signal, :run_with_server, :CONFIG_PATH,
+  :CONFIG_PATH_ETLUA }
