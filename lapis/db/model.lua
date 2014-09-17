@@ -276,6 +276,7 @@ do
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end
+          assert(field_name, "failed to infer field name, provide one with `as`")
           for _index_0 = 1, #other_records do
             local other = other_records[_index_0]
             other[field_name] = records[other[src_key]]
@@ -400,6 +401,9 @@ do
     return Paginator(self, ...)
   end
   self.extend = function(self, table_name, tbl)
+    if tbl == nil then
+      tbl = { }
+    end
     local lua = require("lapis.lua")
     do
       local cls = lua.class(table_name, tbl, self)

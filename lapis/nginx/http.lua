@@ -1,4 +1,10 @@
+local lapis_config = require("lapis.config")
 local ltn12 = require("ltn12")
+local increment_perf
+do
+  local _obj_0 = require("lapis.nginx.context")
+  increment_perf = _obj_0.increment_perf
+end
 local proxy_location = "/proxy"
 local methods = setmetatable({ }, {
   __index = function(self, name)
@@ -18,6 +24,12 @@ do
 end
 local simple
 simple = function(req, body)
+  local config = lapis_config.get()
+  local start_time
+  if config.measure_performance then
+    ngx.update_time()
+    start_time = ngx.now()
+  end
   if type(req) == "string" then
     req = {
       url = req
@@ -42,10 +54,21 @@ simple = function(req, body)
       _url = req.url
     }
   })
+  if start_time then
+    ngx.update_time()
+    increment_perf("http_count", 1)
+    increment_perf("http_time", ngx.now() - start_time)
+  end
   return res.body, res.status, res.header
 end
 local request
 request = function(url, str_body)
+  local config = lapis_config.get()
+  local start_time
+  if config.measure_performance then
+    ngx.update_time()
+    start_time = ngx.now()
+  end
   local return_res_body
   local req
   if type(url) == "table" then
@@ -86,6 +109,11 @@ request = function(url, str_body)
       ltn12.pump.all(ltn12.source.string(res.body), req.sink)
     end
     out = 1
+  end
+  if start_time then
+    ngx.update_time()
+    increment_perf("http_count", 1)
+    increment_perf("http_time", ngx.now() - start_time)
   end
   return out, res.status, res.header
 end

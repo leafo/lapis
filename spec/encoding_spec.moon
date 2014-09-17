@@ -6,12 +6,17 @@ unless pcall -> require "crypto"
   return
 
 encoding = require "lapis.util.encoding"
-config = require"lapis.config".get!
 
 describe "lapis.util.encoding", ->
+  config = require"lapis.config".get!
 
   before_each ->
     config.secret = "the-secret"
+
+  it "should encode message", ->
+    encoded = encoding.encode_with_secret { color: "red" }
+    input = encoding.decode_with_secret encoded
+    assert.same input, { color: "red" }
 
   it "should encode message", ->
     encoded = encoding.encode_with_secret { color: "red" }

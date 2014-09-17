@@ -1,6 +1,7 @@
 local logger = require("lapis.logging")
 local url = require("socket.url")
 local session = require("lapis.session")
+local lapis_config = require("lapis.config")
 local Router
 do
   local _obj_0 = require("lapis.router")
@@ -10,6 +11,11 @@ local html_writer
 do
   local _obj_0 = require("lapis.html")
   html_writer = _obj_0.html_writer
+end
+local increment_perf
+do
+  local _obj_0 = require("lapis.nginx.context")
+  increment_perf = _obj_0.increment_perf
 end
 local parse_cookie_string, to_json, build_url, auto_table
 do
@@ -121,9 +127,15 @@ do
       if widget == true then
         widget = self.route_name
       end
+      local config = lapis_config.get()
       if widget then
         if type(widget) == "string" then
           widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
+        end
+        local start_time
+        if config.measure_performance then
+          ngx.update_time()
+          start_time = ngx.now()
         end
         local view = widget(self.options.locals)
         if self.layout_opts then
@@ -131,6 +143,10 @@ do
         end
         view:include_helper(self)
         self:write(view)
+        if start_time then
+          ngx.update_time()
+          increment_perf("view_time", ngx.now() - start_time)
+        end
       end
       if has_layout then
         local inner = self.buffer
@@ -142,12 +158,21 @@ do
         else
           layout_cls = self.app.layout
         end
+        local start_time
+        if config.measure_performance then
+          ngx.update_time()
+          start_time = ngx.now()
+        end
         self.layout_opts.inner = self.layout_opts.inner or function()
           return raw(inner)
         end
         local layout = layout_cls(self.layout_opts)
         layout:include_helper(self)
         layout:render(self.buffer)
+        if start_time then
+          ngx.update_time()
+          increment_perf("layout_time", ngx.now() - start_time)
+        end
       end
       if next(self.buffer) then
         local content = table.concat(self.buffer)
@@ -234,14 +259,13 @@ do
       if not (next(self.cookies)) then
         return 
       end
-      local extra = self.app.cookie_attributes
-      if extra then
-        extra = "; " .. table.concat(self.app.cookie_attributes, "; ")
-      end
       for k, v in pairs(self.cookies) do
-        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v)) .. "; Path=/; HttpOnly"
-        if extra then
-          cookie = cookie .. extra
+        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
+        do
+          local extra = self.app.cookie_attributes(self, k, v)
+          if extra then
+            cookie = cookie .. ("; " .. extra)
+          end
         end
         self.res:add_header("Set-Cookie", cookie)
       end
@@ -424,19 +448,36 @@ do
         error_page = self.app.error_page
       end
       local r = self.app.Request(self, self.req, self.res)
-      r:write({
-        status = 500,
-        layout = false,
-        content_type = "text/html",
-        error_page({
+      local config = lapis_config.get()
+      if config._name == "test" then
+        local param_dump = logger.flatten_params(self.url_params)
+        r.res:add_header("X-Lapis-Error", "true")
+        r:write({
           status = 500,
-          err = err,
-          trace = trace
+          json = {
+            status = "[" .. tostring(r.req.cmd_mth) .. "] " .. tostring(r.req.cmd_url) .. " " .. tostring(param_dump),
+            err = err,
+            trace = trace
+          }
         })
-      })
+      else
+        r:write({
+          status = 500,
+          layout = false,
+          content_type = "text/html",
+          error_page({
+            status = 500,
+            err = err,
+            trace = trace
+          })
+        })
+      end
       r:render()
       logger.request(r)
       return r
+    end,
+    cookie_attributes = function(self, name, value)
+      return "Path=/; HttpOnly"
     end
   }
   _base_0.__index = _base_0

@@ -6,14 +6,9 @@ do
 end
 local ltn12 = require("ltn12")
 local json = require("cjson")
-local server_loaded = 0
 local current_server = nil
 local load_test_server
 load_test_server = function()
-  server_loaded = server_loaded + 1
-  if not (server_loaded == 1) then
-    return 
-  end
   local attach_server
   do
     local _obj_0 = require("lapis.cmd.nginx")
@@ -24,20 +19,21 @@ load_test_server = function()
     local _obj_0 = require("lapis.cmd.util")
     get_free_port = _obj_0.get_free_port
   end
-  local port = get_free_port()
+  local app_port = get_free_port()
   current_server = attach_server(TEST_ENV, {
-    port = port
+    port = app_port
   })
-  current_server.app_port = port
+  current_server.app_port = app_port
   return current_server
 end
 local close_test_server
 close_test_server = function()
-  server_loaded = server_loaded - 1
-  if not (server_loaded == 0) then
-    return 
+  local detach_server
+  do
+    local _obj_0 = require("lapis.cmd.nginx")
+    detach_server = _obj_0.detach_server
   end
-  current_server:detach()
+  detach_server()
   current_server = nil
 end
 local get_current_server
@@ -52,12 +48,13 @@ request = function(path, opts)
   if opts == nil then
     opts = { }
   end
-  if not (server_loaded > 0) then
-    error("The test server is not loaded!")
+  if not (current_server) then
+    error("The test server is not loaded! (did you forget to load_test_server?)")
   end
   local http = require("socket.http")
   local headers = { }
   local method = opts.method
+  local port = opts.port or current_server.app_port
   local source
   do
     local data = opts.post or opts.data
@@ -82,6 +79,12 @@ request = function(path, opts)
   if url_host then
     headers.Host = url_host
     path = url_path
+    do
+      local override_port = url_host:match(":(%d+)$")
+      if override_port then
+        port = override_port
+      end
+    end
   end
   path = path:gsub("^/", "")
   if opts.headers then
@@ -92,7 +95,7 @@ request = function(path, opts)
   local buffer = { }
   local res, status
   res, status, headers = http.request({
-    url = "http://127.0.0.1:" .. tostring(current_server.app_port) .. "/" .. tostring(path),
+    url = "http://127.0.0.1:" .. tostring(port) .. "/" .. tostring(path),
     redirect = false,
     sink = ltn12.sink.table(buffer),
     headers = headers,
@@ -101,6 +104,16 @@ request = function(path, opts)
   })
   assert(res, status)
   local body = table.concat(buffer)
+  headers = normalize_headers(headers)
+  if headers.x_lapis_error then
+    json = require("cjson")
+    local err, trace
+    do
+      local _obj_0 = json.decode(body)
+      status, err, trace = _obj_0.status, _obj_0.err, _obj_0.trace
+    end
+    error("\n" .. tostring(status) .. "\n" .. tostring(err) .. "\n" .. tostring(trace))
+  end
   if opts.expect == "json" then
     json = require("cjson")
     if not (pcall(function()
@@ -109,7 +122,7 @@ request = function(path, opts)
       error("expected to get json from " .. tostring(path))
     end
   end
-  return status, body, normalize_headers(headers)
+  return status, body, headers
 end
 return {
   load_test_server = load_test_server,

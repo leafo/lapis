@@ -37,7 +37,30 @@ make_callback = function(name)
   return add, run
 end
 local after_dispatch, run_after_dispatch = make_callback("after_dispatch")
+local increment_perf
+increment_perf = function(key, amount, parent)
+  if parent == nil then
+    parent = "performance"
+  end
+  if not (ngx and ngx.ctx) then
+    return 
+  end
+  local p = ngx.ctx[parent]
+  if not (p) then
+    p = { }
+    ngx.ctx[parent] = p
+  end
+  do
+    local old = p[key]
+    if old then
+      p[key] = old + amount
+    else
+      p[key] = amount
+    end
+  end
+end
 return {
   after_dispatch = after_dispatch,
-  run_after_dispatch = run_after_dispatch
+  run_after_dispatch = run_after_dispatch,
+  increment_perf = increment_perf
 }

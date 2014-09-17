@@ -87,5 +87,6 @@ return {
   request = request,
   query = query,
   migration = migration,
-  migration_summary = migration_summary
+  migration_summary = migration_summary,
+  flatten_params = flatten_params
 }

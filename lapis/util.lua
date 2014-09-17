@@ -104,7 +104,7 @@ parse_cookie_string = function(str)
   end
   local _tbl_0 = { }
   for key, value in str:gmatch("([^=%s]*)=([^;]*)") do
-    _tbl_0[key] = unescape(value)
+    _tbl_0[unescape(key)] = unescape(value)
   end
   return _tbl_0
 end

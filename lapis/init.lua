@@ -1,12 +1,11 @@
 local application = require("lapis.application")
 local Application
 Application = application.Application
-local dispatch
-do
-  local _obj_0 = require("lapis.nginx")
-  dispatch = _obj_0.dispatch
-end
 local app_cache = { }
+setmetatable(app_cache, {
+  __mode = "k"
+})
+local dispatcher
 local serve
 serve = function(app_cls)
   local app = app_cache[app_cls]
@@ -23,7 +22,14 @@ serve = function(app_cls)
     end
     app_cache[name] = app
   end
-  return dispatch(app)
+  if not (dispatcher) then
+    if __leda then
+      dispatcher = require("lapis.leda")
+    else
+      dispatcher = require("lapis.nginx")
+    end
+  end
+  return dispatcher.dispatch(app)
 end
 return {
   serve = serve,

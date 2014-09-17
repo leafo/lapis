@@ -8,6 +8,11 @@ do
   local _obj_0 = require("lapis.cmd.nginx")
   find_nginx, start_nginx, write_config_for, get_pid = _obj_0.find_nginx, _obj_0.start_nginx, _obj_0.write_config_for, _obj_0.get_pid
 end
+local find_leda, start_leda
+do
+  local _obj_0 = require("lapis.cmd.leda")
+  find_leda, start_leda = _obj_0.find_leda, _obj_0.start_leda
+end
 local path = require("lapis.cmd.path")
 local config = require("lapis.config")
 local colors = require("ansicolors")
@@ -106,16 +111,25 @@ tasks = {
     name = "new",
     help = "create a new lapis project in the current directory",
     function(...)
+      local CONFIG_PATH, CONFIG_PATH_ETLUA
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        CONFIG_PATH, CONFIG_PATH_ETLUA = _obj_0.CONFIG_PATH, _obj_0.CONFIG_PATH_ETLUA
+      end
       local flags = parse_flags(...)
-      if path.exists("nginx.conf") then
+      if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA) then
         fail_with_message("nginx.conf already exists")
       end
-      write_file_safe("nginx.conf", require("lapis.cmd.templates.config"))
+      if flags["etlua-config"] then
+        write_file_safe(CONFIG_PATH_ETLUA, require("lapis.cmd.templates.config_etlua"))
+      else
+        write_file_safe(CONFIG_PATH, require("lapis.cmd.templates.config"))
+      end
       write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
       if flags.lua then
-        write_file_safe("web.lua", require("lapis.cmd.templates.web_lua"))
+        write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
       else
-        write_file_safe("web.moon", require("lapis.cmd.templates.web"))
+        write_file_safe("app.moon", require("lapis.cmd.templates.app"))
       end
       if flags.git then
         write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(flags))
@@ -137,11 +151,16 @@ tasks = {
         environment = default_environment()
       end
       local nginx = find_nginx()
-      if not (nginx) then
-        fail_with_message("can not find an installation of OpenResty")
+      local leda = find_leda()
+      if not (nginx or leda) then
+        fail_with_message("can not find suitable server installation")
       end
-      write_config_for(environment)
-      return start_nginx()
+      if nginx then
+        write_config_for(environment)
+        return start_nginx()
+      else
+        return start_leda(environment)
+      end
     end
   },
   {
@@ -273,13 +292,14 @@ tasks = {
     function()
       print(colors("Lapis " .. tostring(require("lapis.version"))))
       print("usage: lapis <action> [arguments]")
-      do
-        local nginx = find_nginx()
-        if nginx then
-          print("using nginx: " .. tostring(nginx))
-        else
-          print("can not find installation of OpenResty")
-        end
+      local nginx = find_nginx()
+      local leda = find_leda()
+      if nginx then
+        print("using nginx: " .. tostring(nginx))
+      elseif leda then
+        print("using leda: " .. tostring(leda))
+      else
+        print("can not find suitable server installation")
       end
       print("default environment: " .. tostring(default_environment()))
       print()

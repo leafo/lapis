@@ -1,4 +1,5 @@
 local CONFIG_PATH = "nginx.conf"
+local CONFIG_PATH_ETLUA = "nginx.conf.etlua"
 local COMPILED_CONFIG_PATH = "nginx.conf.compiled"
 local path = require("lapis.cmd.path")
 local get_free_port, default_environment
@@ -6,7 +7,8 @@ do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
 end
-local find_nginx, filters, start_nginx, compile_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, server_stack, AttachedServer, attach_server, detach_server, run_with_server
+local current_server, find_nginx, filters, start_nginx, wrap_environment, add_config_header, compile_config, compile_etlua_config, write_config_for, get_pid, send_signal, send_hup, send_term, process_config, AttachedServer, attach_server, detach_server, run_with_server
+current_server = nil
 do
   local nginx_bin = "nginx"
   local nginx_search_paths = {
@@ -83,33 +85,51 @@ start_nginx = function(background)
   end
   return os.execute(cmd)
 end
-compile_config = function(config, opts)
-  if opts == nil then
-    opts = { }
-  end
-  local env = setmetatable({ }, {
+wrap_environment = function(env)
+  return setmetatable({ }, {
     __index = function(self, key)
       local v = os.getenv("LAPIS_" .. key:upper())
       if v ~= nil then
         return v
       end
-      return opts[key:lower()]
+      return env[key:lower()]
     end
   })
+end
+add_config_header = function(compiled, env)
+  local header
+  do
+    local name = env._name
+    if name then
+      header = "env LAPIS_ENVIRONMENT=" .. tostring(name) .. ";\n"
+    else
+      header = "env LAPIS_ENVIRONMENT;\n"
+    end
+  end
+  return header .. compiled
+end
+compile_config = function(config, env, opts)
+  if env == nil then
+    env = { }
+  end
+  if opts == nil then
+    opts = { }
+  end
+  local wrapped = opts.os_env == false and env or wrap_environment(env)
   local out = config:gsub("(${%b{}})", function(w)
     local name = w:sub(4, -3)
     local filter_name, filter_arg = name:match("^(%S+)%s+(.+)$")
     do
       local filter = filters[filter_name]
       if filter then
-        local value = env[filter_arg]
+        local value = wrapped[filter_arg]
         if value == nil then
           return w
         else
           return filter(value)
         end
       else
-        local value = env[name]
+        local value = wrapped[name]
         if value == nil then
           return w
         else
@@ -118,20 +138,40 @@ compile_config = function(config, opts)
       end
     end
   end)
-  local env_header
-  if opts._name then
-    env_header = "env LAPIS_ENVIRONMENT=" .. tostring(opts._name) .. ";\n"
+  if opts.header == false then
+    return out
   else
-    env_header = "env LAPIS_ENVIRONMENT;\n"
+    return add_config_header(out, env)
   end
-  return env_header .. out
+end
+compile_etlua_config = function(config, env, opts)
+  if env == nil then
+    env = { }
+  end
+  if opts == nil then
+    opts = { }
+  end
+  local etlua = require("etlua")
+  local wrapped = opts.os_env == false and env or wrap_environment(env)
+  local template = assert(etlua.compile(config))
+  local out = template(wrapped)
+  if opts.header == false then
+    return out
+  else
+    return add_config_header(out, env)
+  end
 end
 write_config_for = function(environment, process_fn, ...)
   if type(environment) == "string" then
     local config = require("lapis.config")
     environment = config.get(environment)
   end
-  local compiled = compile_config(path.read_file(CONFIG_PATH), environment)
+  local compiled
+  if path.exists(CONFIG_PATH_ETLUA) then
+    compiled = compile_etlua_config(path.read_file(CONFIG_PATH_ETLUA), environment)
+  else
+    compiled = compile_config(path.read_file(CONFIG_PATH), environment)
+  end
   if process_fn then
     compiled = process_fn(compiled, ...)
   end
@@ -234,38 +274,61 @@ process_config = function(cfg, port)
   table.insert(test_server, "}")
   return cfg:gsub("%f[%a]http%s-{", "http { " .. table.concat(test_server, "\n"))
 end
-server_stack = nil
 do
   local _base_0 = {
-    wait_until_ready = function(self)
+    wait_until = function(self, server_status)
+      if server_status == nil then
+        server_status = "open"
+      end
       local socket = require("socket")
       local max_tries = 1000
       while true do
-        local status = socket.connect("127.0.0.1", self.port)
-        if status then
-          break
+        local sock = socket.connect("127.0.0.1", self.port)
+        local _exp_0 = server_status
+        if "open" == _exp_0 then
+          if sock then
+            sock:close()
+            break
+          end
+        elseif "close" == _exp_0 then
+          if sock then
+            sock:close()
+          else
+            break
+          end
+        else
+          error("don't know how to wait for " .. tostring(server_status))
         end
         max_tries = max_tries - 1
         if max_tries == 0 then
-          error("Timed out waiting for server to start")
+          error("Timed out waiting for server to " .. tostring(server_status))
         end
         socket.sleep(0.001)
       end
     end,
+    wait_until_ready = function(self)
+      return self:wait_until("open")
+    end,
+    wait_until_closed = function(self)
+      return self:wait_until("close")
+    end,
     detach = function(self)
-      path.write_file(COMPILED_CONFIG_PATH, assert(self.existing_config))
+      if self.existing_config then
+        path.write_file(COMPILED_CONFIG_PATH, self.existing_config)
+      end
       if self.fresh then
         send_term()
+        self:wait_until_closed()
       else
         send_hup()
       end
-      server_stack = self.previous
-      if server_stack then
-        server_stack:wait_until_ready()
+      if self.old_backend then
+        local db = require("lapis.db")
+        db.set_backend("raw", self.old_backend)
       end
-      local db = require("lapis.nginx.postgres")
-      db.set_backend("raw", self.old_backend)
-      return server_stack
+      local env = require("lapis.environment")
+      env.pop()
+      return true
     end,
     query = function(self, q)
       local ltn12 = require("ltn12")
@@ -304,27 +367,10 @@ do
       for k, v in pairs(opts) do
         self[k] = v
       end
-      local db = require("lapis.nginx.postgres")
+      local env = require("lapis.environment")
+      env.push(self.environment)
       local pg_config = self.environment.postgres
-      if pg_config and pg_config.backend == "pgmoon" then
-        local Postgres
-        do
-          local _obj_0 = require("pgmoon")
-          Postgres = _obj_0.Postgres
-        end
-        local pgmoon = Postgres(pg_config)
-        assert(pgmoon:connect())
-        local logger = require("lapis.db").get_logger()
-        if not (os.getenv("LAPIS_SHOW_QUERIES")) then
-          logger = nil
-        end
-        self.old_backend = db.set_backend("raw", function(...)
-          if logger then
-            logger.query(...)
-          end
-          return assert(pgmoon:query(...))
-        end)
-      else
+      if pg_config and not pg_config.backend == "pgmoon" then
         self.old_backend = db.set_backend("raw", (function()
           local _base_1 = self
           local _fn_0 = _base_1.query
@@ -348,8 +394,12 @@ do
   AttachedServer = _class_0
 end
 attach_server = function(environment, env_overrides)
+  assert(not current_server, "a server is already attached (did you forget to detach?)")
   local pid = get_pid()
-  local existing_config = path.read_file(COMPILED_CONFIG_PATH)
+  local existing_config
+  if path.exists(COMPILED_CONFIG_PATH) then
+    existing_config = path.read_file(COMPILED_CONFIG_PATH)
+  end
   local port = get_free_port()
   if type(environment) == "string" then
     environment = require("lapis.config").get(environment)
@@ -368,24 +418,25 @@ attach_server = function(environment, env_overrides)
   end
   local server = AttachedServer({
     environment = environment,
-    previous = server_stack,
     fresh = not pid,
     port = port,
     existing_config = existing_config
   })
   server:wait_until_ready()
-  server_stack = server
+  current_server = server
   return server
 end
 detach_server = function()
-  if not (server_stack) then
-    error("no server was pushed")
+  if not (current_server) then
+    error("no server is attached")
   end
-  return server_stack:detach()
+  current_server:detach()
+  current_server = nil
+  return true
 end
 run_with_server = function(fn)
   local port = get_free_port()
-  local current_server = attach_server(default_environment(), {
+  current_server = attach_server(default_environment(), {
     port = port
   })
   current_server.app_port = port
@@ -394,6 +445,7 @@ run_with_server = function(fn)
 end
 return {
   compile_config = compile_config,
+  compile_etlua_config = compile_etlua_config,
   filters = filters,
   find_nginx = find_nginx,
   start_nginx = start_nginx,
@@ -404,5 +456,7 @@ return {
   attach_server = attach_server,
   detach_server = detach_server,
   send_signal = send_signal,
-  run_with_server = run_with_server
+  run_with_server = run_with_server,
+  CONFIG_PATH = CONFIG_PATH,
+  CONFIG_PATH_ETLUA = CONFIG_PATH_ETLUA
 }
