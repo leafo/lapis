@@ -33,7 +33,10 @@
 -- set $_url "";
 --
 
+lapis_config = require "lapis.config"
 ltn12 = require "ltn12"
+
+import increment_perf from require "lapis.nginx.context"
 
 proxy_location = "/proxy"
 
@@ -49,6 +52,11 @@ import encode_query_string from require "lapis.util"
 
 -- a simple http interface that doesn't use ltn12
 simple = (req, body) ->
+  config = lapis_config.get!
+  start_time = if config.measure_performance
+    ngx.update_time!
+    ngx.now!
+
   if type(req) == "string"
     req = { url: req }
 
@@ -70,9 +78,19 @@ simple = (req, body) ->
     vars: { _url: req.url }
   }
 
+  if start_time
+    ngx.update_time!
+    increment_perf "http_count", 1
+    increment_perf "http_time", ngx.now! - start_time
+
   res.body, res.status, res.header
 
 request = (url, str_body) ->
+  config = lapis_config.get!
+  start_time = if config.measure_performance
+    ngx.update_time!
+    ngx.now!
+
   local return_res_body
   req = if type(url) == "table"
     url
@@ -112,8 +130,12 @@ request = (url, str_body) ->
       ltn12.pump.all ltn12.source.string(res.body), req.sink
     1
 
-  out, res.status, res.header
+  if start_time
+    ngx.update_time!
+    increment_perf "http_count", 1
+    increment_perf "http_time", ngx.now! - start_time
 
+  out, res.status, res.header
 
 ngx_replace_headers = (new_headers=nil) ->
   import req from ngx

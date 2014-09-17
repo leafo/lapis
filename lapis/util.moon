@@ -74,7 +74,7 @@ parse_content_disposition = do
 
 parse_cookie_string = (str) ->
   return {} unless str
-  {key, unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
+  {unescape(key), unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
 slugify = (str) ->
   (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))\lower!

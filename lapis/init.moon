@@ -2,9 +2,11 @@
 application = require "lapis.application"
 
 import Application from application
-import dispatch from require "lapis.nginx"
 
 app_cache = {}
+setmetatable app_cache, __mode: "k"
+
+local dispatcher
 
 serve = (app_cls) ->
   app = app_cache[app_cls]
@@ -22,7 +24,14 @@ serve = (app_cls) ->
 
     app_cache[name] = app
 
-  dispatch app
+
+  unless dispatcher
+    dispatcher = if __leda
+      require "lapis.leda"
+    else
+      require "lapis.nginx"
+
+  dispatcher.dispatch app
 
 {
   :serve, :application, :Application, :app_cache

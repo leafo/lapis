@@ -69,5 +69,5 @@ migration_summary = (count) ->
 
   print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
 
-{ :request, :query, :migration, :migration_summary }
+{ :request, :query, :migration, :migration_summary, :flatten_params }
 

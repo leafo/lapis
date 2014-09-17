@@ -2,10 +2,11 @@
 logger = require "lapis.logging"
 url = require "socket.url"
 session = require "lapis.session"
+lapis_config = require "lapis.config"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
-
+import increment_perf from require "lapis.nginx.context"
 import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
 
 import insert from table
@@ -13,6 +14,7 @@ import insert from table
 json = require "cjson"
 
 local capture_errors, capture_errors_json, respond_to
+
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -92,15 +94,24 @@ class Request
     widget = @options.render
     widget = @route_name if widget == true
 
+    config = lapis_config.get!
+
     if widget
       if type(widget) == "string"
         widget = require "#{@app.views_prefix}.#{widget}"
 
+      start_time = if config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
       view = widget @options.locals
       @layout_opts.view_widget = view if @layout_opts
       view\include_helper @
-
       @write view
+
+      if start_time
+        ngx.update_time!
+        increment_perf "view_time", ngx.now! - start_time
 
     if has_layout
       inner = @buffer
@@ -112,11 +123,19 @@ class Request
       else
         @app.layout
 
+      start_time = if config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
       @layout_opts.inner or= -> raw inner
 
       layout = layout_cls @layout_opts
       layout\include_helper @
       layout\render @buffer
+
+      if start_time
+        ngx.update_time!
+        increment_perf "layout_time", ngx.now! - start_time
 
     if next @buffer
       content = table.concat @buffer
@@ -188,14 +207,12 @@ class Request
 
   write_cookies: =>
     return unless next @cookies
-    extra = @app.cookie_attributes
-
-    if extra
-      extra = "; " .. table.concat @app.cookie_attributes, "; "
 
     for k,v in pairs @cookies
-      cookie = "#{url.escape k}=#{url.escape v}; Path=/; HttpOnly"
-      cookie ..= extra if extra
+      cookie = "#{url.escape k}=#{url.escape v}"
+      if extra = @app.cookie_attributes @, k, v
+        cookie ..= "; " .. extra
+
       @res\add_header "Set-Cookie", cookie
 
 
@@ -254,7 +271,6 @@ class Application
       insert @ordered_routes, key
 
     @[key] = handler
-
 
     @router = nil
     handler
@@ -397,15 +413,31 @@ class Application
 
   handle_error: (err, trace, error_page=@app.error_page) =>
     r = @app.Request @, @req, @res
-    r\write {
-      status: 500
-      layout: false
-      content_type: "text/html"
-      error_page { status: 500, :err, :trace }
-    }
+
+    config = lapis_config.get!
+    if config._name == "test"
+      param_dump = logger.flatten_params @url_params
+      r.res\add_header "X-Lapis-Error", "true"
+      r\write {
+        status: 500
+        json: {
+          status: "[#{r.req.cmd_mth}] #{r.req.cmd_url} #{param_dump}"
+          :err, :trace
+        }
+      }
+    else
+      r\write {
+        status: 500
+        layout: false
+        content_type: "text/html"
+        error_page { status: 500, :err, :trace }
+      }
     r\render!
     logger.request r
     r
+
+  cookie_attributes: (name, value) =>
+    "Path=/; HttpOnly"
 
 respond_to = do
   default_head = -> layout: false -- render nothing

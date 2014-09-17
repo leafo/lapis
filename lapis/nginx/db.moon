@@ -22,27 +22,17 @@ local raw_query, dialect
 
 proxy_location = "/query"
 
-logger = require "lapis.logging"
-
-set_logger = (l) -> logger = l
-get_logger = -> logger
+local logger
 
 import type, tostring, pairs, select from _G
 
-NULL = {}
-NULL = ngx.null if ngx
-raw = (val) -> {"raw", tostring(val)}
-is_raw = (val) ->
-  type(val) == "table" and val[1] == "raw" and val[2]
-
-TRUE = raw"TRUE"
-FALSE = raw"FALSE"
+import NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers from require "lapis.db.base"
 
 dialects = {
   postgres: {
     drop_index_if_exists: true
     explicit_time_zone: true
-	identifier_quote: '"'
+    identifier_quote: '"'
     index_where: true
     rename_column: true
     restart_identity: " RESTART IDENTITY"
@@ -50,7 +40,7 @@ dialects = {
     row_if_entity_exists: "0 from pg_class where relname = ? limit 1"
   }
   mysql: {
-	identifier_quote: "`" -- ANSI_QUOTES is disabled by default
+    identifier_quote: "`" -- ANSI_QUOTES is disabled by default
     restart_identity: ""
     row_if_entity_exists: "0 from information_schema.tables where table_schema = database() limit 1"
   }
@@ -78,13 +68,15 @@ backends = {
       raw_query = fn
 
   pgmoon: ->
-    import after_dispatch from require "lapis.nginx.context"
+    import after_dispatch, increment_perf from require "lapis.nginx.context"
     config = require("lapis.config").get!
     pg_config = assert config.postgres, "missing postgres configuration"
+    local pgmoon_conn
 
     dialect = dialects.postgres
     raw_query = (str) ->
-      pgmoon = ngx and ngx.ctx.pgmoon
+      pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
+
       unless pgmoon
         import Postgres from require "pgmoon"
         pgmoon = Postgres pg_config
@@ -93,9 +85,21 @@ backends = {
         if ngx
           ngx.ctx.pgmoon = pgmoon
           after_dispatch -> pgmoon\keepalive!
+        else
+          pgmoon_conn = pgmoon
 
-      logger.query "[PGMOON] #{str}" if logger
+      start_time = if ngx and config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
+      logger.query str if logger
       res, err = pgmoon\query str
+
+      if start_time
+        ngx.update_time!
+        increment_perf "db_time", ngx.now! - start_time
+        increment_perf "db_count", 1
+
       if not res and err
         error "#{str}\n#{err}"
       res
@@ -126,12 +130,15 @@ backends = {
 set_backend = (name="default", ...) ->
   assert(backends[name]) ...
 
-format_date = (time) ->
-  os.date "!%Y-%m-%d %H:%M:%S", time
+init_logger = ->
+  if ngx or os.getenv "LAPIS_SHOW_QUERIES"
+    logger = require "lapis.logging"
 
-append_all = (t, ...) ->
-  for i=1, select "#", ...
-    t[#t + 1] = select i, ...
+init_db = ->
+  default_backend = config.mysql and (config.mysql.backend or "resty_mysql")
+  default_backend = default_backend or (config.postgres and config.postgres.backend)
+  default_backend = default_backend or "default"
+  set_backend default_backend
 
 escape_identifier = (ident) ->
   if type(ident) == "table" and ident[1] == "raw"
@@ -156,61 +163,16 @@ escape_literal = (val) ->
 
   error "don't know how to escape value: #{val}"
 
--- replace ? with values
-interpolate_query = (query, ...) ->
-  values = {...}
-  i = 0
-  (query\gsub "%?", ->
-    i += 1
-    escape_literal values[i])
+interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers escape_literal, escape_identifier
 
--- (col1, col2, col3) VALUES (val1, val2, val3)
-encode_values = (t, buffer) ->
-  have_buffer = buffer
-  buffer or= {}
-
-  tuples = [{k,v} for k,v in pairs t]
-  cols = concat [escape_identifier pair[1] for pair in *tuples], ", "
-  vals = concat [escape_literal pair[2] for pair in *tuples], ", "
-
-  append_all buffer, "(", cols, ") VALUES (", vals, ")"
-  concat buffer unless have_buffer
-
--- col1 = val1, col2 = val2, col3 = val3
-encode_assigns = (t, buffer) ->
-  join = ", "
-  have_buffer = buffer
-  buffer or= {}
-
-  for k,v in pairs t
-    append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
-
-  buffer[#buffer] = nil
-
-  concat buffer unless have_buffer
-
-encode_clause = (t, buffer)->
-  join = " AND "
-  have_buffer = buffer
-  buffer or= {}
-
-  for k,v in pairs t
-    if v == NULL
-      append_all buffer, escape_identifier(k), " IS NULL", join
-    else
-      append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
-
-  buffer[#buffer] = nil
-
-  concat buffer unless have_buffer
+append_all = (t, ...) ->
+  for i=1, select "#", ...
+    t[#t + 1] = select i, ...
 
 get_dialect = ->
   if not dialect
-    config = require("lapis.config").get!
-    default_backend = config.mysql and (config.mysql.backend or "resty_mysql")
-    default_backend = default_backend or (config.postgres and config.postgres.backend)
-    default_backend = default_backend or "default"
-    set_backend default_backend
+    init_logger!
+    init_db! -- sets raw query to default backend
   dialect
 
 raw_query = (...) ->
@@ -332,7 +294,7 @@ parse_clause = do
 {
   :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :set_logger, :get_logger, :format_date,
+  :interpolate_query, :parse_clause, :format_date,
 
   :set_backend, :get_dialect
 
