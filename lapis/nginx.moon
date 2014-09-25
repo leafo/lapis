@@ -1,6 +1,8 @@
 import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
 import run_after_dispatch from require "lapis.nginx.context"
 
+config = require"lapis.config".get!
+
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
 
@@ -72,12 +74,15 @@ ngx_req = {
     build_url t.parsed_url
 
   params_post: (t) ->
-    -- parse multipart if required
-    if (t.headers["content-type"] or "")\match escape_pattern "multipart/form-data"
-      parse_multipart! or {}
+    if config.allow_read_body
+      -- parse multipart if required
+      if (t.headers["content-type"] or "")\match escape_pattern "multipart/form-data"
+        parse_multipart! or {}
+      else
+        ngx.req.read_body!
+        flatten_params ngx.req.get_post_args!
     else
-      ngx.req.read_body!
-      flatten_params ngx.req.get_post_args!
+      {}
 
   params_get: ->
     flatten_params ngx.req.get_uri_args!
