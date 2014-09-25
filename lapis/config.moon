@@ -12,6 +12,7 @@ default_config = {
   session_name: "lapis_session"
   code_cache: "off"
   num_workers: "1"
+  allow_read_body: true -- set to false if you don't want lapis to ready request body (ideal for proxying)
 
   logging: {
     queries: true
