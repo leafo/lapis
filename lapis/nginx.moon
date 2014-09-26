@@ -72,12 +72,14 @@ ngx_req = {
     build_url t.parsed_url
 
   params_post: (t) ->
-    -- parse multipart if required
-    if (t.headers["content-type"] or "")\match escape_pattern "multipart/form-data"
-      parse_multipart! or {}
-    else
+    content_type = (t.headers["content-type"] or "")\lower!
+    params = if content_type\match escape_pattern "multipart/form-data"
+      parse_multipart!
+    elseif content_type\match escape_pattern "application/x-www-form-urlencoded"
       ngx.req.read_body!
       flatten_params ngx.req.get_post_args!
+
+    params or {}
 
   params_get: ->
     flatten_params ngx.req.get_uri_args!
