@@ -4,7 +4,10 @@ do
   escape_pattern, parse_content_disposition, build_url = _obj_0.escape_pattern, _obj_0.parse_content_disposition, _obj_0.build_url
 end
 local run_after_dispatch
-run_after_dispatch = require("lapis.nginx.context").run_after_dispatch
+do
+  local _obj_0 = require("lapis.nginx.context")
+  run_after_dispatch = _obj_0.run_after_dispatch
+end
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }
@@ -74,7 +77,7 @@ local ngx_req = {
     return ngx.var.request_method
   end,
   cmd_url = function()
-    return ngx.var.request_uri
+    return ngx.var.uri
   end,
   relpath = function(t)
     return t.parsed_url.path
@@ -95,7 +98,7 @@ local ngx_req = {
     return ngx.var.http_referer or ""
   end,
   parsed_url = function(t)
-    local uri = ngx.var.request_uri
+    local uri = ngx.var.uri
     uri = uri:match("(.-)%?") or uri
     return {
       scheme = ngx.var.scheme,

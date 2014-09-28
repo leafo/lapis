@@ -1,5 +1,8 @@
 local insert
-insert = table.insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local config_cache, configs, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get
 config_cache = { }
 configs = { }

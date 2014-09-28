@@ -1,1 +1,1 @@
-return require("lapis.nginx.postgres")
+return require("lapis.nginx.db")

@@ -1,5 +1,8 @@
 local insert
-insert = table.insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local lpeg = require("lpeg")
 local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P

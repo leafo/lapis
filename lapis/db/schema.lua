@@ -2,7 +2,10 @@ local db = require("lapis.db")
 local escape_literal
 escape_literal = db.escape_literal
 local concat
-concat = table.concat
+do
+  local _obj_0 = table
+  concat = _obj_0.concat
+end
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do
@@ -41,9 +44,8 @@ extract_options = function(cols)
 end
 local entity_exists
 entity_exists = function(name)
-  name = db.escape_literal(name)
-  local res = unpack(db.select("COUNT(*) as c from pg_class where relname = " .. tostring(name)))
-  return res.c > 0
+  local res = db.select(db.get_dialect().row_if_entity_exists, name)
+  return #res > 0
 end
 local gen_index_name
 gen_index_name = function(...)
@@ -138,10 +140,10 @@ create_index = function(tname, ...)
     end
   end
   append_all(buffer, ")")
-  if options.tablespace then
+  if options.tablespace and db.get_dialect().tablespace then
     append_all(buffer, " TABLESPACE ", options.tablespace)
   end
-  if options.where then
+  if options.where and db.get_dialect().index_where then
     append_all(buffer, " WHERE ", options.where)
   end
   append_all(buffer, ";")
@@ -149,8 +151,17 @@ create_index = function(tname, ...)
 end
 local drop_index
 drop_index = function(...)
-  local index_name = gen_index_name(...)
-  return db.query("DROP INDEX IF EXISTS " .. tostring(db.escape_identifier(index_name)))
+  local index_name = db.escape_identifier(gen_index_name(...))
+  if db.get_dialect().drop_index_if_exists then
+    return db.query("DROP INDEX IF EXISTS " .. tostring(index_name))
+  else
+    db.query("LOCK TABLES bar WRITE")
+    if entity_exists(index_name) then
+      local table_name = db.escape_identifier((...))
+      db.query("DROP INDEX " .. tostring(index_name) .. " ON " .. tostring(table_name))
+    end
+    return db.query("UNLOCK TABLES")
+  end
 end
 local drop_table
 drop_table = function(tname)
@@ -170,10 +181,19 @@ drop_column = function(tname, col_name)
 end
 local rename_column
 rename_column = function(tname, col_from, col_to)
-  tname = db.escape_identifier(tname)
   col_from = db.escape_identifier(col_from)
   col_to = db.escape_identifier(col_to)
-  return db.query("ALTER TABLE " .. tostring(tname) .. " RENAME COLUMN " .. tostring(col_from) .. " TO " .. tostring(col_to))
+  if db.get_dialect().rename_column then
+    tname = db.escape_identifier(tname)
+    return db.query("ALTER TABLE " .. tostring(tname) .. " RENAME COLUMN " .. tostring(col_from) .. " TO " .. tostring(col_to))
+  else
+    assert(not tname:match("`", "invalid table name " .. tname))
+    local res = db.query("SHOW CREATE TABLE " .. tostring(tname))
+    assert(#res == 1, "cannot have " .. tostring(#res) .. " rows from SHOW CREATE TABLE")
+    local col_def = res[1]["Create Table"]:match("\n *`" .. tostring(tname) .. "` ([^\n]-),?\n")
+    assert(col_def, "no column definition in " .. tostring(res[1]))
+    return db.query("ALTER TABLE " .. tostring(tname) .. " MODIFY " .. tostring(col_from) .. " " .. tostring(col_to) .. " " .. tostring(col_def))
+  end
 end
 local rename_table
 rename_table = function(tname_from, tname_to)
@@ -237,8 +257,14 @@ do
     __tostring = ColumnType.__tostring,
     __call = function(self, opts)
       local base = self.base
-      if opts.timezone then
-        self.base = base .. " with time zone"
+      if base == "timestamp" then
+        if db.get_dialect().explicit_time_zone then
+          if opts.timezone then
+            self.base = base .. " with time zone"
+          end
+        else
+          self.base = opts.timezone and "timestamp" or "datetime"
+        end
       end
       do
         local _with_0 = ColumnType.__call(self, opts)

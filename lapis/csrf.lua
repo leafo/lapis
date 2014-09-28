@@ -43,7 +43,10 @@ end
 local assert_token
 assert_token = function(...)
   local assert_error
-  assert_error = require("lapis.application").assert_error
+  do
+    local _obj_0 = require("lapis.application")
+    assert_error = _obj_0.assert_error
+  end
   return assert_error(validate_token(...))
 end
 return {

@@ -1,6 +1,9 @@
 local colors = require("ansicolors")
 local insert
-insert = table.insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local config = require("lapis.config").get()
 local flatten_params_helper, flatten_params, query, request, migration, migration_summary
 flatten_params_helper = function(params, out, sep)

@@ -500,7 +500,10 @@ do
   end
   self.include = function(self, other_cls)
     local mixin_class
-    mixin_class = require("lapis.util").mixin_class
+    do
+      local _obj_0 = require("lapis.util")
+      mixin_class = _obj_0.mixin_class
+    end
     if type(other_cls) == "string" then
       other_cls = require(other_cls)
     end

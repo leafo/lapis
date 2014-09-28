@@ -4,7 +4,10 @@ do
   insert, concat = _obj_0.insert, _obj_0.concat
 end
 local escape_pattern
-escape_pattern = require("lapis.util").escape_pattern
+do
+  local _obj_0 = require("lapis.util")
+  escape_pattern = _obj_0.escape_pattern
+end
 local split
 split = function(str, delim)
   str = str .. delim
@@ -91,7 +94,10 @@ local random_string
 do
   math.randomseed(os.time())
   local random
-  random = math.random
+  do
+    local _obj_0 = math
+    random = _obj_0.random
+  end
   local random_char
   random_char = function()
     local _exp_0 = random(1, 3)

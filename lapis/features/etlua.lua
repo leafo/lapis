@@ -1,6 +1,9 @@
 local loadkit = require("loadkit")
 local EtluaWidget
-EtluaWidget = require("lapis.etlua").EtluaWidget
+do
+  local _obj_0 = require("lapis.etlua")
+  EtluaWidget = _obj_0.EtluaWidget
+end
 return loadkit.register("etlua", function(file, mod, fname)
   local widget, err = EtluaWidget:load(file:read("*a"))
   if err then

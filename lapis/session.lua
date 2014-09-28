@@ -6,7 +6,10 @@ do
 end
 local config = require("lapis.config").get()
 local insert
-insert = table.insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local setmetatable, getmetatable, rawset, rawget
 do
   local _obj_0 = _G

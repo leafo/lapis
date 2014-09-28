@@ -1,5 +1,8 @@
 local insert
-insert = table.insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local validate_functions = {
   exists = function(input)
     return input and input ~= "", "%s must be provided"

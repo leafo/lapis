@@ -173,7 +173,10 @@ tasks = {
       end
       write_config_for(environment)
       local send_hup
-      send_hup = require("lapis.cmd.nginx").send_hup
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        send_hup = _obj_0.send_hup
+      end
       local pid = send_hup()
       if pid then
         return print(colors("%{green}HUP " .. tostring(pid)))
@@ -186,7 +189,10 @@ tasks = {
     help = "send HUP signal to running server",
     function()
       local send_hup
-      send_hup = require("lapis.cmd.nginx").send_hup
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        send_hup = _obj_0.send_hup
+      end
       local pid = send_hup()
       if pid then
         return print(colors("%{green}HUP " .. tostring(pid)))
@@ -200,7 +206,10 @@ tasks = {
     help = "sends TERM signal to shut down a running server",
     function()
       local send_term
-      send_term = require("lapis.cmd.nginx").send_term
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        send_term = _obj_0.send_term
+      end
       local pid = send_term()
       if pid then
         return print(colors("%{green}TERM " .. tostring(pid)))
@@ -216,7 +225,10 @@ tasks = {
     function(signal)
       assert(signal, "Missing signal")
       local send_signal
-      send_signal = require("lapis.cmd.nginx").send_signal
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        send_signal = _obj_0.send_signal
+      end
       local pid = send_signal(signal)
       if pid then
         return print(colors("%{green}Sent " .. tostring(signal) .. " to " .. tostring(pid)))
@@ -237,7 +249,10 @@ tasks = {
         fail_with_message("missing lua-string: exec <lua-string>")
       end
       local attach_server
-      attach_server = require("lapis.cmd.nginx").attach_server
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        attach_server = _obj_0.attach_server
+      end
       if not (get_pid()) then
         print(colors("%{green}Using temporary server..."))
       end
@@ -255,10 +270,14 @@ tasks = {
         environment = default_environment()
       end
       local attach_server
-      attach_server = require("lapis.cmd.nginx").attach_server
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        attach_server = _obj_0.attach_server
+      end
       if not (get_pid()) then
         print(colors("%{green}Using temporary server..."))
       end
+      write_config_for(environment)
       local server = attach_server(environment)
       print(server:exec([[        local migrations = require("lapis.db.migrations")
         migrations.create_migrations_table()

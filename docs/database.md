@@ -48,6 +48,10 @@ config "development", ->
     database "my_database"
 ```
 
+Specifying `mysql` instead of `postgres` will use the `lua-resty-mysql` driver.
+To specify a socket, use `path` instead of `host`. By default,
+`read_timeout_ms = 1000`, `idle_timeout_ms = 10000`, and `max_connections = 100`
+
 `host` defaults to `127.0.0.1` and `user` defaults to `postgres`, so you can
 leave those fields out if they aren't different from the defaults. If a
 non-default port is required it can be appended to the `host` with colon
