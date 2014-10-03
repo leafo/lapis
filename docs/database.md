@@ -1147,7 +1147,7 @@ The first argument to `create_table` is the name of the table and the second
 argument is an array table that describes the table.
 
 ```lua
-local schema = require("lapis.schema")
+local schema = require("lapis.db.schema")
 
 local types = schema.types
 
