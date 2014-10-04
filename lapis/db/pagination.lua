@@ -6,15 +6,15 @@ do
   local _class_0 = setmetatable({
     __init = function(self, model, clause, ...)
       self.model = model
-      if type(clause) == "table" then
-        local opts = clause
-        clause = ""
-      end
       local param_count = select("#", ...)
       local opts
       if param_count > 0 then
         local last = select(param_count, ...)
         opts = type(last) == "table" and last
+      elseif type(clause) == "table" then
+        opts = clause
+        clause = ""
+        opts = opts
       end
       self.per_page = self.model.per_page
       if opts then

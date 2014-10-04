@@ -3,15 +3,15 @@ db = require "lapis.db"
 
 class Paginator
   new: (@model, clause, ...) =>
-    if type(clause) == "table"
-      opts = clause
-      clause = ""
-
     param_count = select "#", ...
 
     opts = if param_count > 0
       last = select param_count, ...
       type(last) == "table" and last
+    elseif type(clause) == "table"
+      opts = clause
+      clause = ""
+      opts
 
     @per_page = @model.per_page
     @per_page = opts.per_page if opts
