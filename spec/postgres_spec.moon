@@ -261,6 +261,34 @@ tests = {
     -> schema.gen_index_name "yes", "please", db.raw "upper(dad)"
     "yes_please_upper_dad_idx"
   }
+
+  {
+    -> db.encode_case("x", { a: "b" })
+    [[CASE x
+WHEN 'a' THEN 'b'
+END]]
+  }
+
+  {
+    -> db.encode_case("x", { a: "b", foo: true })
+    [[CASE x
+WHEN 'a' THEN 'b'
+WHEN 'foo' THEN TRUE
+END]]
+    [[CASE x
+WHEN 'foo' THEN TRUE
+WHEN 'a' THEN 'b'
+END]]
+  }
+
+
+  {
+    -> db.encode_case("x", { a: "b" }, false)
+    [[CASE x
+WHEN 'a' THEN 'b'
+ELSE FALSE
+END]]
+  }
 }
 
 

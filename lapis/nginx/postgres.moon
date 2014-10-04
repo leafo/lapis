@@ -240,10 +240,25 @@ parse_clause = do
     if out = grammar\match clause
       { unpack t for t in *out }
 
+
+encode_case = (exp, t, on_else) ->
+  buff = {
+    "CASE ", exp
+  }
+
+  for k,v in pairs t
+    append_all buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v)
+
+  if on_else != nil
+    append_all buff, "\nELSE ", escape_literal on_else
+
+  append_all buff, "\nEND"
+  concat buff
+
 {
   :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :format_date,
+  :interpolate_query, :parse_clause, :format_date, :encode_case
 
   :set_backend
 
