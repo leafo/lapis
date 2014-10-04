@@ -304,6 +304,21 @@ do
     end
   end
 end
+local encode_case
+encode_case = function(exp, t, on_else)
+  local buff = {
+    "CASE ",
+    exp
+  }
+  for k, v in pairs(t) do
+    append_all(buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v))
+  end
+  if on_else ~= nil then
+    append_all(buff, "\nELSE ", escape_literal(on_else))
+  end
+  append_all(buff, "\nEND")
+  return concat(buff)
+end
 return {
   query = query,
   raw = raw,
@@ -319,6 +334,7 @@ return {
   interpolate_query = interpolate_query,
   parse_clause = parse_clause,
   format_date = format_date,
+  encode_case = encode_case,
   set_backend = set_backend,
   select = _select,
   insert = _insert,
