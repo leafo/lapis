@@ -240,6 +240,7 @@ class AttachedServer
 
     pg_config = @environment.postgres
     if pg_config and not pg_config.backend == "pgmoon"
+      db = require "lapis.db"
       @old_backend = db.set_backend "raw", @\query
 
   wait_until: (server_status="open")=>

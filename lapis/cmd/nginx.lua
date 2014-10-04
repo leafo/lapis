@@ -371,6 +371,7 @@ do
       env.push(self.environment)
       local pg_config = self.environment.postgres
       if pg_config and not pg_config.backend == "pgmoon" then
+        local db = require("lapis.db")
         self.old_backend = db.set_backend("raw", (function()
           local _base_1 = self
           local _fn_0 = _base_1.query
