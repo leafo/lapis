@@ -58,6 +58,9 @@ do
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
     __init = function(self, model, clause, ...)
+      if clause == nil then
+        clause = ""
+      end
       self.model = model
       local param_count = select("#", ...)
       local opts

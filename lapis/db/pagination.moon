@@ -25,7 +25,7 @@ rebuild_query_clause = (parsed) ->
   concat buffer, " "
 
 class Paginator
-  new: (@model, clause, ...) =>
+  new: (@model, clause="", ...) =>
     param_count = select "#", ...
 
     opts = if param_count > 0
@@ -115,6 +115,7 @@ class OrderedPaginator extends Paginator
 
   get_page: (prev_pos) =>
     parsed = db.parse_clause @_clause
+
     field = db.escape_identifier @field
 
     if parsed.order
