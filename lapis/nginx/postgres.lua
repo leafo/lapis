@@ -246,21 +246,6 @@ end
 local parse_clause
 do
   local grammar
-  local ci
-  ci = function(str)
-    local S
-    S = require("lpeg").S
-    local p
-    for c in str:gmatch(".") do
-      local char = S(tostring(c:lower()) .. tostring(c:upper()))
-      if p then
-        p = p * char
-      else
-        p = char
-      end
-    end
-    return p
-  end
   local make_grammar
   make_grammar = function()
     local basic_keywords = {
@@ -283,24 +268,49 @@ do
     local single_string = P("'") * (P("''") + (P(1) - P("'"))) ^ 0 * P("'")
     local double_string = P('"') * (P('""') + (P(1) - P('"'))) ^ 0 * P('"')
     local strings = single_string + double_string
+    local ci
+    ci = function(str)
+      S = require("lpeg").S
+      local p
+      for c in str:gmatch(".") do
+        local char = S(tostring(c:lower()) .. tostring(c:upper()))
+        if p then
+          p = p * char
+        else
+          p = char
+        end
+      end
+      return p * -alpha_num
+    end
     local balanced_parens = lpeg.P({
       P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
     })
     local keyword
     for _index_0 = 1, #basic_keywords do
       local k = basic_keywords[_index_0]
-      local part = ci(k) * -alpha_num / k
+      local part = ci(k) / k
       if keyword then
         keyword = keyword + part
       else
         keyword = part
       end
     end
-    local order_by = ci("order") * some_white * ci("by") * -alpha_num / "order"
+    local order_by = ci("order") * some_white * ci("by") / "order"
     keyword = (order_by + keyword) * white
     local clause_content = (balanced_parens + strings + (word + P(1) - keyword)) ^ 1
+    local outer_join_type = (ci("left") + ci("right") + ci("full")) * (white * ci("outer")) ^ -1
+    local join_type = (ci("natural") * white) ^ -1 * ((ci("inner") + outer_join_type) * white) ^ -1
+    local start_join = join_type * ci("join")
+    local join_body = (balanced_parens + strings + (P(1) - start_join - keyword)) ^ 1
+    local join_tuple = Ct(C(start_join) * C(join_body))
+    local joins = (#start_join * Ct(join_tuple ^ 1)) / function(joins)
+      return {
+        "join",
+        joins
+      }
+    end
     local clause = Ct((keyword * C(clause_content)))
-    grammar = white * Ct(clause ^ 0)
+    grammar = white * Ct(joins ^ -1 * clause ^ 0)
   end
   parse_clause = function(clause)
     if not (grammar) then

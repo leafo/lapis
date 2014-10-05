@@ -280,6 +280,28 @@ tests = {
     }
   }
 
+  {
+    -> db.parse_clause "join dads on color = blue where hello limit 10"
+    {
+      limit: "10"
+      where: "hello "
+      join: {
+        {"join", " dads on color = blue "}
+      }
+    }
+  }
+
+  {
+    -> db.parse_clause "inner join dads on color = blue left outer join hello world where foo"
+    {
+      where: "foo"
+      join: {
+        {"inner join", " dads on color = blue "}
+        {"left outer join", " hello world "}
+      }
+    }
+  }
+
 
   {
     -> schema.gen_index_name "hello", "world"

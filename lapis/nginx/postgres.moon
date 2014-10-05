@@ -206,19 +206,6 @@ _truncate = (...) ->
 parse_clause = do
   local grammar
 
-  -- case insensitive matching
-  ci = (str) ->
-    import S from require "lpeg"
-    local p
-
-    for c in str\gmatch "."
-      char = S"#{c\lower!}#{c\upper!}"
-      p = if p
-        p * char
-      else
-        char
-    p
-
   make_grammar = ->
     basic_keywords = {"where", "group", "having", "limit", "offset"}
 
@@ -234,26 +221,48 @@ parse_clause = do
     double_string = P'"' * (P'""' + (P(1) - P'"'))^0 * P'"'
     strings = single_string + double_string
 
+    -- case insensitive word
+    ci = (str) ->
+      import S from require "lpeg"
+      local p
+
+      for c in str\gmatch "."
+        char = S"#{c\lower!}#{c\upper!}"
+        p = if p
+          p * char
+        else
+          char
+      p * -alpha_num
+
     balanced_parens = lpeg.P {
       P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
     }
 
     local keyword
     for k in *basic_keywords
-      part = ci(k) * -alpha_num / k
+      part = ci(k) / k
       keyword = if keyword
         keyword + part
       else
         part
 
-    order_by = ci"order" * some_white * ci"by" * -alpha_num / "order"
+
+    order_by = ci"order" * some_white * ci"by" / "order"
 
     keyword = (order_by + keyword) * white
-
     clause_content = (balanced_parens + strings + (word + P(1) - keyword))^1
 
+    outer_join_type = (ci"left" + ci"right" + ci"full") * (white * ci"outer")^-1
+    join_type = (ci"natural" * white)^-1 * ((ci"inner" + outer_join_type) * white)^-1
+    start_join = join_type * ci"join"
+
+    join_body = (balanced_parens + strings + (P(1) - start_join - keyword))^1
+    join_tuple = Ct C(start_join) * C(join_body)
+
+    joins = (#start_join * Ct join_tuple^1) / (joins) -> {"join", joins}
+
     clause = Ct (keyword * C clause_content)
-    grammar = white * Ct clause^0
+    grammar = white * Ct joins^-1 * clause^0
 
   (clause) ->
     make_grammar! unless grammar
