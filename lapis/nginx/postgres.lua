@@ -250,7 +250,6 @@ do
   make_grammar = function()
     local basic_keywords = {
       "where",
-      "group",
       "having",
       "limit",
       "offset"
@@ -285,18 +284,15 @@ do
     local balanced_parens = lpeg.P({
       P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
     })
-    local keyword
+    local order_by = ci("order") * some_white * ci("by") / "order"
+    local group_by = ci("group") * some_white * ci("by") / "group"
+    local keyword = order_by + group_by
     for _index_0 = 1, #basic_keywords do
       local k = basic_keywords[_index_0]
       local part = ci(k) / k
-      if keyword then
-        keyword = keyword + part
-      else
-        keyword = part
-      end
+      keyword = keyword + part
     end
-    local order_by = ci("order") * some_white * ci("by") / "order"
-    keyword = (order_by + keyword) * white
+    keyword = keyword * white
     local clause_content = (balanced_parens + strings + (word + P(1) - keyword)) ^ 1
     local outer_join_type = (ci("left") + ci("right") + ci("full")) * (white * ci("outer")) ^ -1
     local join_type = (ci("natural") * white) ^ -1 * ((ci("inner") + outer_join_type) * white) ^ -1

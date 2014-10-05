@@ -274,6 +274,13 @@ tests = {
   }
 
   {
+    -> db.parse_clause "group BY height"
+    {
+      group: "height"
+    }
+  }
+
+  {
     -> db.parse_clause "where x = limitx 100"
     {
       where: "x = limitx 100"

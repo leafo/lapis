@@ -207,7 +207,7 @@ parse_clause = do
   local grammar
 
   make_grammar = ->
-    basic_keywords = {"where", "group", "having", "limit", "offset"}
+    basic_keywords = {"where", "having", "limit", "offset"}
 
     import P, R, C, S, Cmt, Ct, Cg, V from require "lpeg"
 
@@ -238,18 +238,16 @@ parse_clause = do
       P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
     }
 
-    local keyword
+    order_by = ci"order" * some_white * ci"by" / "order"
+    group_by = ci"group" * some_white * ci"by" / "group"
+
+    keyword = order_by + group_by
+
     for k in *basic_keywords
       part = ci(k) / k
-      keyword = if keyword
-        keyword + part
-      else
-        part
+      keyword += part
 
-
-    order_by = ci"order" * some_white * ci"by" / "order"
-
-    keyword = (order_by + keyword) * white
+    keyword = keyword * white
     clause_content = (balanced_parens + strings + (word + P(1) - keyword))^1
 
     outer_join_type = (ci"left" + ci"right" + ci"full") * (white * ci"outer")^-1
