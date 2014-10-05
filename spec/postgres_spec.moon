@@ -274,6 +274,14 @@ tests = {
   }
 
   {
+    -> db.parse_clause "where x = limitx 100"
+    {
+      where: "x = limitx 100"
+    }
+  }
+
+
+  {
     -> schema.gen_index_name "hello", "world"
     "hello_world_idx"
   }
