@@ -94,7 +94,13 @@ do
           end
         end
       end
-      if self.__class.timestamp then
+      local nargs = select("#", ...)
+      local last = nargs > 0 and select(nargs, ...)
+      local opts
+      if type(last) == "table" then
+        opts = last
+      end
+      if self.__class.timestamp and not (opts and opts.timestamp == false) then
         values._timestamp = true
       end
       return db.update(self.__class:table_name(), values, cond)

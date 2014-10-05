@@ -227,6 +227,10 @@ describe "lapis.db.model", ->
     -- thing3\update "what" -- should error set to null
     thing3\update great: true -- need a way to stub date before testing
 
+    thing3.hello = "world"
+    thing3\update "hello", timestamp: false
+    thing3\update { cat: "dog" }, timestamp: false
+
     assert_queries {
       {
         [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
@@ -240,6 +244,8 @@ describe "lapis.db.model", ->
         [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "b" = 3 AND "a" = 2]]
         [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "b" = 3 AND "a" = 2]]
       }
+      [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
+      [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
     }, queries
 
   it "should delete model", ->

@@ -278,7 +278,15 @@ class Model
         if err = @@_check_constraint key, value, @
           return nil, err
 
-    values._timestamp = true if @@timestamp
+    -- update options
+    nargs = select "#", ...
+    last = nargs > 0 and select nargs, ...
+
+    opts = if type(last) == "table" then last
+
+    if @@timestamp and not (opts and opts.timestamp == false)
+      values._timestamp = true
+
     db.update @@table_name!, values, cond
 
 { :Model }
