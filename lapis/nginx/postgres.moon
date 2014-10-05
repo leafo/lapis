@@ -205,6 +205,20 @@ _truncate = (...) ->
 
 parse_clause = do
   local grammar
+
+  -- case insensitive matching
+  ci = (str) ->
+    import S from require "lpeg"
+    local p
+
+    for c in str\gmatch "."
+      char = S"#{c\lower!}#{c\upper!}"
+      p = if p
+        p * char
+      else
+        char
+    p
+
   make_grammar = ->
     keywords = {"where", "group", "having", "order", "limit", "offset"}
     for v in *keywords
@@ -215,6 +229,7 @@ parse_clause = do
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
     white = S" \t\r\n"^0
+    some_white = S" \t\r\n"^1
     word = alpha_num^1
 
     single_string = P"'" * (P"''" + (P(1) - P"'"))^0 * P"'"
@@ -229,15 +244,13 @@ parse_clause = do
       if keywords[cap\lower!]
         true, cap
 
-    keyword = keyword * white
+    order_by = ci"order" * some_white * ci"by" * -alpha_num / "order"
+
+    keyword = (order_by + keyword) * white
 
     clause_content = (balanced_parens + strings + (word + P(1) - keyword))^1
-    clause = Ct (keyword * C clause_content) / (name, val) ->
-      if name == "group" or name == "order"
-        val = val\match "^%s*by%s*(.*)$"
 
-      name, val
-
+    clause = Ct (keyword * C clause_content)
     grammar = white * Ct clause^0
 
   (clause) ->

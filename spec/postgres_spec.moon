@@ -260,6 +260,20 @@ tests = {
   }
 
   {
+    -> db.parse_clause "order by color asc"
+    {
+      order: "color asc"
+    }
+  }
+
+  {
+    -> db.parse_clause "ORDER BY color asc"
+    {
+      order: "color asc"
+    }
+  }
+
+  {
     -> schema.gen_index_name "hello", "world"
     "hello_world_idx"
   }
