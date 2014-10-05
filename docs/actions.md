@@ -105,10 +105,10 @@ The request object has the following parameters:
 
 The raw request table <span class="for_lua">`@req`</span><span class="for_lua">`self.req`</span> wraps some of the data provided from `ngx`. Here is a list of the available properties.
 
-* <span class="for_moon">`@req.headers`</span><span class="for_lua">`self.headers`</span> -- Request headers table
-* <span class="for_moon">`@req.parsed_url`</span><span class="for_lua">`self.parsed_url`</span> -- Request parsed url. A table containing `scheme`, `path`, `host`, `port`, and `query` properties.
-* <span class="for_moon">`@req.params_post`</span><span class="for_lua">`self.params_post`</span> -- Request POST parameters table
-* <span class="for_moon">`@req.params_get`</span><span class="for_lua">`self.params_get`</span> -- Request GET parameters table
+* <span class="for_moon">`@req.headers`</span><span class="for_lua">`self.req.headers`</span> -- Request headers table
+* <span class="for_moon">`@req.parsed_url`</span><span class="for_lua">`self.req.parsed_url`</span> -- Request parsed url. A table containing `scheme`, `path`, `host`, `port`, and `query` properties.
+* <span class="for_moon">`@req.params_post`</span><span class="for_lua">`self.req.params_post`</span> -- Request POST parameters table
+* <span class="for_moon">`@req.params_get`</span><span class="for_lua">`self.req.params_get`</span> -- Request GET parameters table
 
 
 ### Cookies
