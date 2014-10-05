@@ -151,6 +151,21 @@ describe "lapis.db.model", ->
       'SELECT * from "things" join whales on color = blue order by BLAH limit 10 offset 10 '
     }, queries
 
+
+  it "should ordered paginate", ->
+    import OrderedPaginator from require "lapis.db.pagination"
+    class Things extends Model
+
+    pager = OrderedPaginator Things, "id", "where color = blue"
+    res, np = pager\get_page!
+
+    res, np = pager\get_page 123
+
+    assert_queries {
+      'SELECT * from "things" where color = blue order by "id" ASC limit 10'
+      'SELECT * from "things" where "id" > 123 and (color = blue) order by "id" ASC limit 10'
+    }, queries
+
   it "should create model", ->
     class Things extends Model
     query_mock['INSERT'] = { { id: 101 } }

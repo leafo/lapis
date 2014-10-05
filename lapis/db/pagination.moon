@@ -89,4 +89,62 @@ class OffsetPaginator extends Paginator
 
   prepare_results: (...) -> ...
 
-{ :OffsetPaginator, :Paginator}
+
+class OrderedPaginator extends Paginator
+  order: "ASC"
+  per_page: 10
+
+  prepare_results: (...) -> ...
+
+  new: (model, @field, ...) =>
+    super model, ...
+
+    if @opts and @opts.order
+      @order = @opts.order
+      @opts.order = nil
+
+  each_page: =>
+    coroutine.wrap ->
+      local page
+      while true
+        items, page = @get_page page
+        if next items
+          coroutine.yield items
+        else
+          break
+
+  get_page: (prev_pos) =>
+    parsed = db.parse_clause @_clause
+    field = db.escape_identifier @field
+
+    if parsed.order
+      error "order should not be provided for #{@@__name}"
+
+    if parsed.offset or parsed.limit
+      error "offset and limit should not be provided for #{@@__name}"
+
+    parsed.order = "#{field} #{@order}"
+
+    if prev_pos
+      field_clause = switch @order\lower!
+        when "asc"
+          "#{field} > #{db.escape_literal prev_pos}"
+        when "desc"
+          "#{field} < #{db.escape_literal prev_pos}"
+        else
+          error "don't know how to handle order #{@order}"
+
+      if parsed.where
+        parsed.where = "#{field_clause} and (#{parsed.where})"
+      else
+        parsed.where = field_clause
+
+    parsed.limit = tostring @per_page
+    query = rebuild_query_clause parsed
+
+    res = @model\select query, opts
+    final = res[#res]
+    @.prepare_results(res), final and final[@model.primary_key]
+
+
+{ :OffsetPaginator, :OrderedPaginator, :Paginator}

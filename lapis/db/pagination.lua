@@ -174,7 +174,99 @@ do
   end
   OffsetPaginator = _class_0
 end
+local OrderedPaginator
+do
+  local _parent_0 = Paginator
+  local _base_0 = {
+    order = "ASC",
+    per_page = 10,
+    prepare_results = function(...)
+      return ...
+    end,
+    each_page = function(self)
+      return coroutine.wrap(function()
+        local page
+        while true do
+          local items
+          items, page = self:get_page(page)
+          if next(items) then
+            coroutine.yield(items)
+          else
+            break
+          end
+        end
+      end)
+    end,
+    get_page = function(self, prev_pos)
+      local parsed = db.parse_clause(self._clause)
+      local field = db.escape_identifier(self.field)
+      if parsed.order then
+        error("order should not be provided for " .. tostring(self.__class.__name))
+      end
+      if parsed.offset or parsed.limit then
+        error("offset and limit should not be provided for " .. tostring(self.__class.__name))
+      end
+      parsed.order = tostring(field) .. " " .. tostring(self.order)
+      if prev_pos then
+        local field_clause
+        local _exp_0 = self.order:lower()
+        if "asc" == _exp_0 then
+          field_clause = tostring(field) .. " > " .. tostring(db.escape_literal(prev_pos))
+        elseif "desc" == _exp_0 then
+          field_clause = tostring(field) .. " < " .. tostring(db.escape_literal(prev_pos))
+        else
+          field_clause = error("don't know how to handle order " .. tostring(self.order))
+        end
+        if parsed.where then
+          parsed.where = tostring(field_clause) .. " and (" .. tostring(parsed.where) .. ")"
+        else
+          parsed.where = field_clause
+        end
+      end
+      parsed.limit = tostring(self.per_page)
+      local query = rebuild_query_clause(parsed)
+      local res = self.model:select(query, opts)
+      local final = res[#res]
+      return self.prepare_results(res), final and final[self.model.primary_key]
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  local _class_0 = setmetatable({
+    __init = function(self, model, field, ...)
+      self.field = field
+      _parent_0.__init(self, model, ...)
+      if self.opts and self.opts.order then
+        self.order = self.opts.order
+        self.opts.order = nil
+      end
+    end,
+    __base = _base_0,
+    __name = "OrderedPaginator",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        return _parent_0[name]
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  OrderedPaginator = _class_0
+end
 return {
   OffsetPaginator = OffsetPaginator,
+  OrderedPaginator = OrderedPaginator,
   Paginator = Paginator
 }
