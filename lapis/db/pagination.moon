@@ -1,6 +1,29 @@
 
 db = require "lapis.db"
 
+import insert, concat from table
+
+query_parts = {"where", "group", "having", "order", "limit", "offset"}
+rebuild_query_clause = (parsed) ->
+  buffer = {}
+
+  if joins = parsed.join
+    for {join_type, join_clause} in *joins
+      insert buffer, join_type
+      insert buffer, join_clause
+
+  for p in *query_parts
+    clause = parsed[p]
+    continue unless clause and clause != ""
+
+    p = "order by" if p == "order"
+    p = "group by" if p == "group"
+
+    insert buffer, p
+    insert buffer, clause
+
+  concat buffer, " "
+
 class Paginator
   new: (@model, clause, ...) =>
     param_count = select "#", ...
@@ -23,7 +46,7 @@ class Paginator
 class OffsetPaginator extends Paginator
   per_page: 10
 
-  each_page: (starting_page=1)=>
+  each_page: (starting_page=1) =>
     coroutine.wrap ->
       page = starting_page
       while true
@@ -48,9 +71,22 @@ class OffsetPaginator extends Paginator
     math.ceil @total_items! / @per_page
 
   total_items: =>
-    @_count or= @model\count db.parse_clause(@_clause).where
+    unless @_count
+      parsed = db.parse_clause(@_clause)
+
+      parsed.limit = nil
+      parsed.offset = nil
+      parsed.order = nil
+
+      if parsed.group
+        error "Paginator can't calculate total items in a query with group by"
+
+      tbl_name = db.escape_identifier @model\table_name!
+      query = "COUNT(*) as c from #{tbl_name} #{rebuild_query_clause parsed}"
+      @_count = unpack(db.select query).c
+
     @_count
 
   prepare_results: (...) -> ...
 
-{ :OffsetPaginator, :Paginator }
+{ :OffsetPaginator, :Paginator}

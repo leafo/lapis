@@ -1,4 +1,57 @@
 local db = require("lapis.db")
+local insert, concat
+do
+  local _obj_0 = table
+  insert, concat = _obj_0.insert, _obj_0.concat
+end
+local query_parts = {
+  "where",
+  "group",
+  "having",
+  "order",
+  "limit",
+  "offset"
+}
+local rebuild_query_clause
+rebuild_query_clause = function(parsed)
+  local buffer = { }
+  do
+    local joins = parsed.join
+    if joins then
+      for _index_0 = 1, #joins do
+        local _des_0 = joins[_index_0]
+        local join_type, join_clause
+        join_type, join_clause = _des_0[1], _des_0[2]
+        insert(buffer, join_type)
+        insert(buffer, join_clause)
+      end
+    end
+  end
+  for _index_0 = 1, #query_parts do
+    local _continue_0 = false
+    repeat
+      local p = query_parts[_index_0]
+      local clause = parsed[p]
+      if not (clause and clause ~= "") then
+        _continue_0 = true
+        break
+      end
+      if p == "order" then
+        p = "order by"
+      end
+      if p == "group" then
+        p = "group by"
+      end
+      insert(buffer, p)
+      insert(buffer, clause)
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+  return concat(buffer, " ")
+end
 local Paginator
 do
   local _base_0 = { }
@@ -73,7 +126,18 @@ do
       return math.ceil(self:total_items() / self.per_page)
     end,
     total_items = function(self)
-      self._count = self._count or self.model:count(db.parse_clause(self._clause).where)
+      if not (self._count) then
+        local parsed = db.parse_clause(self._clause)
+        parsed.limit = nil
+        parsed.offset = nil
+        parsed.order = nil
+        if parsed.group then
+          error("Paginator can't calculate total items in a query with group by")
+        end
+        local tbl_name = db.escape_identifier(self.model:table_name())
+        local query = "COUNT(*) as c from " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
+        self._count = unpack(db.select(query)).c
+      end
       return self._count
     end,
     prepare_results = function(...)
