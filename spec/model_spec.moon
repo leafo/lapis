@@ -133,6 +133,10 @@ describe "lapis.db.model", ->
     iter!
     iter!
 
+    p6 = Things\paginated [[join whales on color = blue order by BLAH]]
+    p6\total_items!
+    p6\get_page 2
+
     assert_queries {
       'SELECT * from "things" where group_id = 123 order by name asc'
       'SELECT COUNT(*) as c from "things" where group_id = 123 '
@@ -143,6 +147,8 @@ describe "lapis.db.model", ->
       'SELECT hello, world from "things" limit 12 offset 12 '
       'SELECT * from "things" order by BLAH limit 10 offset 0 '
       'SELECT * from "things" order by BLAH limit 10 offset 10 '
+      'SELECT COUNT(*) as c from "things" join whales on color = blue '
+      'SELECT * from "things" join whales on color = blue order by BLAH limit 10 offset 10 '
     }, queries
 
   it "should create model", ->
