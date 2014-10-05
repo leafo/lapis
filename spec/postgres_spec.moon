@@ -253,6 +253,13 @@ tests = {
   }
 
   {
+    -> db.parse_clause "where not exists(select 1 from things limit 100)"
+    {
+      where: "not exists(select 1 from things limit 100)"
+    }
+  }
+
+  {
     -> schema.gen_index_name "hello", "world"
     "hello_world_idx"
   }

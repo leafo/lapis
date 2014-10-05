@@ -260,10 +260,10 @@ do
       local v = keywords[_index_0]
       keywords[v] = true
     end
-    local P, R, C, S, Cmt, Ct, Cg
+    local P, R, C, S, Cmt, Ct, Cg, V
     do
       local _obj_0 = require("lpeg")
-      P, R, C, S, Cmt, Ct, Cg = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg
+      P, R, C, S, Cmt, Ct, Cg, V = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg, _obj_0.V
     end
     local alpha = R("az", "AZ", "__")
     local alpha_num = alpha + R("09")
@@ -272,13 +272,17 @@ do
     local single_string = P("'") * (P("''") + (P(1) - P("'"))) ^ 0 * P("'")
     local double_string = P('"') * (P('""') + (P(1) - P('"'))) ^ 0 * P('"')
     local strings = single_string + double_string
+    local balanced_parens = lpeg.P({
+      P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
+    })
     local keyword = Cmt(word, function(src, pos, cap)
       if keywords[cap:lower()] then
         return true, cap
       end
     end)
     keyword = keyword * white
-    local clause = Ct((keyword * C((strings + (word + P(1) - keyword)) ^ 1)) / function(name, val)
+    local clause_content = (balanced_parens + strings + (word + P(1) - keyword)) ^ 1
+    local clause = Ct((keyword * C(clause_content)) / function(name, val)
       if name == "group" or name == "order" then
         val = val:match("^%s*by%s*(.*)$")
       end
