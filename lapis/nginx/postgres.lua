@@ -246,20 +246,30 @@ end
 local parse_clause
 do
   local grammar
+  local ci
+  ci = function(str)
+    local S
+    S = require("lpeg").S
+    local p
+    for c in str:gmatch(".") do
+      local char = S(tostring(c:lower()) .. tostring(c:upper()))
+      if p then
+        p = p * char
+      else
+        p = char
+      end
+    end
+    return p
+  end
   local make_grammar
   make_grammar = function()
-    local keywords = {
+    local basic_keywords = {
       "where",
       "group",
       "having",
-      "order",
       "limit",
       "offset"
     }
-    for _index_0 = 1, #keywords do
-      local v = keywords[_index_0]
-      keywords[v] = true
-    end
     local P, R, C, S, Cmt, Ct, Cg, V
     do
       local _obj_0 = require("lpeg")
@@ -268,6 +278,7 @@ do
     local alpha = R("az", "AZ", "__")
     local alpha_num = alpha + R("09")
     local white = S(" \t\r\n") ^ 0
+    local some_white = S(" \t\r\n") ^ 1
     local word = alpha_num ^ 1
     local single_string = P("'") * (P("''") + (P(1) - P("'"))) ^ 0 * P("'")
     local double_string = P('"') * (P('""') + (P(1) - P('"'))) ^ 0 * P('"')
@@ -275,19 +286,20 @@ do
     local balanced_parens = lpeg.P({
       P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
     })
-    local keyword = Cmt(word, function(src, pos, cap)
-      if keywords[cap:lower()] then
-        return true, cap
+    local keyword
+    for _index_0 = 1, #basic_keywords do
+      local k = basic_keywords[_index_0]
+      local part = ci(k) * -alpha_num / k
+      if keyword then
+        keyword = keyword + part
+      else
+        keyword = part
       end
-    end)
-    keyword = keyword * white
+    end
+    local order_by = ci("order") * some_white * ci("by") * -alpha_num / "order"
+    keyword = (order_by + keyword) * white
     local clause_content = (balanced_parens + strings + (word + P(1) - keyword)) ^ 1
-    local clause = Ct((keyword * C(clause_content)) / function(name, val)
-      if name == "group" or name == "order" then
-        val = val:match("^%s*by%s*(.*)$")
-      end
-      return name, val
-    end)
+    local clause = Ct((keyword * C(clause_content)))
     grammar = white * Ct(clause ^ 0)
   end
   parse_clause = function(clause)

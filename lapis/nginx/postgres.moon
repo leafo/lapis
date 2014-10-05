@@ -220,9 +220,7 @@ parse_clause = do
     p
 
   make_grammar = ->
-    keywords = {"where", "group", "having", "order", "limit", "offset"}
-    for v in *keywords
-      keywords[v] = true
+    basic_keywords = {"where", "group", "having", "limit", "offset"}
 
     import P, R, C, S, Cmt, Ct, Cg, V from require "lpeg"
 
@@ -240,9 +238,13 @@ parse_clause = do
       P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
     }
 
-    keyword = Cmt word, (src, pos, cap) ->
-      if keywords[cap\lower!]
-        true, cap
+    local keyword
+    for k in *basic_keywords
+      part = ci(k) * -alpha_num / k
+      keyword = if keyword
+        keyword + part
+      else
+        part
 
     order_by = ci"order" * some_white * ci"by" * -alpha_num / "order"
 
