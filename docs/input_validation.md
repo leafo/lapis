@@ -135,6 +135,6 @@ import validate from require "lapis.validate"
 ```
 
 * `validate(object, validation)` -- takes the same exact arguments as
-  `assert_valid`, but returns the either errors or `nil` on failure instead of
+  `assert_valid`, but returns either errors or `nil` on failure instead of
   yielding the error.
 

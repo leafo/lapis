@@ -160,7 +160,7 @@ describe "my_site", ->
 
 The test server will either spawn a new Nginx if one isn't running, or it will
 take over your development server until `close_test_server` is called. Taking
-over the development server useful for seeing the raw Nginx output in the
+over the development server is useful for seeing the raw Nginx output in the
 console.
 
 While the test server is running we are free to make queries and use

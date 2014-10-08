@@ -7,15 +7,15 @@ MoonScript. Lapis is interesting because it's built on top of the Nginx
 distribution [OpenResty][0]. Your web application is run directly inside of
 Nginx. Nginx's event loop lets you make asynchronous HTTP requests, database
 queries and other requests using the modules provided with OpenResty. Lua's
-coroutines allows you to write synchronous looking code that is event driven
+coroutines allow you to write synchronous looking code that is event driven
 behind the scenes.
 
-In addition to provided a web framework, Lapis also provides tools for
-controlling OpenResty in different configuration environemnts. Even if you
+In addition to providing a web framework, Lapis also provides tools for
+controlling OpenResty in different configuration environments. Even if you
 don't want to use the web framework you might find it useful if you're working
 with OpenResty.
 
-The web framework comes with URL router, HTML templating, CSRF and session
+The web framework comes with a URL router, HTML templating, CSRF and session
 support, a PostgreSQL backed active record system for working with models
 and a handful of other useful functions needed for developing websites.
 
@@ -142,7 +142,7 @@ a skeleton `app` module to get started with
 Although it's possible to start Nginx manually, Lapis wraps building the
 configuration and starting the server into a single convenient command.
 
-Running `lapis server` in the shell will start the server. Lapis will will
+Running `lapis server` in the shell will start the server. Lapis will
 attempt to find your OpenResty installation. It will search the following
 directories for an `nginx` binary. (The last one represents anything in your
 `PATH`)

@@ -26,7 +26,7 @@ class extends lapis.Application
 ]]
 ```
 
-This defines a regular Lua module that returns out application class. (Implicit
+This defines a regular Lua module that returns our application class. (Implicit
 return in MoonScript states that the last statement in a block of code is the
 return value.)
 
@@ -117,7 +117,7 @@ requests.
 
 It's useful to give names to your routes so links to other pages can be
 generated just by knowing the name of the page instead of hard-coding the
-structure of the URL
+structure of the URL.
 
 If the route of the action is a table with a single pair, then the key of that
 table is the name and the value is the pattern. MoonScript gives us convenient
