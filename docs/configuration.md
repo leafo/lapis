@@ -198,8 +198,10 @@ Lapis does by default. The default value of the logging configuration is:
 ```
 
 All logging is done to Nginx's notice log using the `print` function provided
-by OpenResty. If running the server in the foreground then the logs will be
-printed to the console. If running in the
+by OpenResty. The default notice logging location is set to `stderr`, specified
+in the default Lapis Nginx configuration. It can configured using the
+[`error_log`
+directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
 
 ## Performance Measurement
 
