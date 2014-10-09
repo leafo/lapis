@@ -426,7 +426,6 @@ class Users extends Model
   @table_name: => "active_users"
 ```
 
-
 ### Primary Keys
 
 By default all models have the primary key "id". This can be changed by setting
@@ -1133,6 +1132,46 @@ SELECT column_name, data_type
   FROM information_schema.columns WHERE table_name = 'posts'
 ```
 
+### Refreshing a Model Instance
+
+If your model instance becomes out of date from an external change, it can tell
+it to re-fetch and re-populate it's data using the `refresh` method.
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh!
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh()
+```
+
+```sql
+SELECT * from "posts" where id = 1
+```
+
+By default all fields are refreshed. If you only want to refresh specific fields
+then pass them in as arguments:
+
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh "color", "height"
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh("color", "height")
+```
+
+```sql
+SELECT "color", "height" from "posts" where id = 1
+```
 
 ## Database Schemas
 
