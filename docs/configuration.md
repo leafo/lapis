@@ -181,7 +181,7 @@ for configuring Lapis and supporting libraries. Here is a list of them:
 ## Configuring Logging
 
 The `logging` configuration key can be used to disable the various logging that
-Lapis does by default. The default value of the loging configuration is:
+Lapis does by default. The default value of the logging configuration is:
 
 ```lua
 {
@@ -203,10 +203,10 @@ printed to the console. If running in the
 
 ## Performance Measurement
 
-Lapis can collection timings and counts for various actions if the
-`measure_performance` configuratin value is set to true.
+Lapis can collect timings and counts for various actions if the
+`measure_performance` configuration value is set to true.
 
-The data is stored in `ngx.ctx.performance`. The following fiels are collected
+The data is stored in `ngx.ctx.performance`. The following fields are collected
 in a table:
 
 * `view_time` -- Time in seconds spent rendering view
@@ -217,7 +217,7 @@ in a table:
 * `http_count` -- The number of HTTP requests sent
 
 A field will be `nil` if no corresponding action was done in the request. The
-fields are filled out over the course the requesst so it's best to only access
+fields are filled out over the course of the request so it's best to only access
 them at the very end of the request to ensure all the data is available. The
 `after_dispatch` helper can be used to register a function to run at the very
 end of processing a request.
