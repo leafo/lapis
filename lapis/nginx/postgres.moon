@@ -25,7 +25,15 @@ proxy_location = "/query"
 local logger
 
 import type, tostring, pairs, select from _G
-import NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers from require "lapis.db.base"
+import
+  FALSE
+  NULL
+  TRUE
+  build_helpers
+  format_date
+  is_raw
+  raw
+  from require "lapis.db.base"
 
 backends = {
   default: (_proxy=proxy_location) ->

@@ -206,6 +206,46 @@ describe "lapis.db.model", ->
     }, queries
 
 
+  it "should refresh model", ->
+    class Things extends Model
+    query_mock['SELECT'] = { { id: 123 } }
+
+    instance = Things\load { id: 123 }
+    instance\refresh!
+    assert.same { id: 123 }, instance
+
+    instance\refresh "hello"
+    assert.same { id: 123 }, instance
+
+    instance\refresh "foo", "bar"
+    assert.same { id: 123 }, instance
+
+    assert_queries {
+      'SELECT * from "things" where "id" = 123'
+      'SELECT "hello" from "things" where "id" = 123'
+      'SELECT "foo", "bar" from "things" where "id" = 123'
+    }, queries
+
+
+  it "should refresh model with composite primary key", ->
+    class Things extends Model
+      @primary_key: {"a", "b"}
+
+    query_mock['SELECT'] = { { a: "hello", b: false } }
+    instance = Things\load { a: "hello", b: false }
+    instance\refresh!
+
+    assert.same { a: "hello", b: false }, instance
+
+    instance\refresh "hello"
+    assert.same { a: "hello", b: false }, instance
+
+    assert_queries {
+      [[SELECT * from "things" where "a" = 'hello' AND "b" = FALSE]]
+      [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
+    }, queries
+
+
   it "should update model", ->
     class Things extends Model
 

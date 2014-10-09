@@ -289,5 +289,31 @@ class Model
 
     db.update @@table_name!, values, cond
 
+  -- reload fields on the instance
+  refresh: (fields="*", ...) =>
+    local field_names
+
+    if fields != "*"
+      field_names = {fields, ...}
+      fields = table.concat [db.escape_identifier f for f in *field_names], ", "
+
+    cond = db.encode_clause @_primary_cond!
+    tbl_name = db.escape_identifier @@table_name!
+    res = unpack db.select "#{fields} from #{tbl_name} where #{cond}"
+
+    if field_names
+      for field in *field_names
+        @[field] = res[field]
+    else
+      for k,v in pairs @
+        @[k] = nil
+
+      for k,v in pairs res
+        @[k] = v
+
+      @@load @
+
+    @
+
 { :Model }
 

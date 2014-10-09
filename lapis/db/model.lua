@@ -104,6 +104,46 @@ do
         values._timestamp = true
       end
       return db.update(self.__class:table_name(), values, cond)
+    end,
+    refresh = function(self, fields, ...)
+      if fields == nil then
+        fields = "*"
+      end
+      local field_names
+      if fields ~= "*" then
+        field_names = {
+          fields,
+          ...
+        }
+        fields = table.concat((function()
+          local _accum_0 = { }
+          local _len_0 = 1
+          for _index_0 = 1, #field_names do
+            local f = field_names[_index_0]
+            _accum_0[_len_0] = db.escape_identifier(f)
+            _len_0 = _len_0 + 1
+          end
+          return _accum_0
+        end)(), ", ")
+      end
+      local cond = db.encode_clause(self:_primary_cond())
+      local tbl_name = db.escape_identifier(self.__class:table_name())
+      local res = unpack(db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
+      if field_names then
+        for _index_0 = 1, #field_names do
+          local field = field_names[_index_0]
+          self[field] = res[field]
+        end
+      else
+        for k, v in pairs(self) do
+          self[k] = nil
+        end
+        for k, v in pairs(res) do
+          self[k] = v
+        end
+        self.__class:load(self)
+      end
+      return self
     end
   }
   _base_0.__index = _base_0
