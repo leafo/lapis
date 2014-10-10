@@ -736,7 +736,7 @@ CREATE TABLE ... (
 ```
 
 Then define your model with the <span class="for_moon">`@timestamp` class
-variable</span><span class="for_moon">`timestamp` property</span> set to
+variable</span><span class="for_lua">`timestamp` property</span> set to
 true:
 
 ```lua
@@ -753,6 +753,42 @@ class Users extends Model
 Whenever `create` and `update` are called the appropriate timestamp column will
 also be set.
 
+You can disable the timestamp from being updated on an `update` by passing a
+final table argument setting <span class="for_moon">`timestamp:
+false`</span><span class="for_lua">`timestamp = false`</span>:
+
+
+```lua
+local Users = Model:extend("users", {
+  timestamp = true
+})
+
+local user = Users:find(1)
+
+-- first form
+user:update({ name = "hello world" }, { timestamp = false })
+
+
+-- second form
+user.name = "hello world"
+user.age = 123
+user:update("name", "age", { timestamp = false})
+```
+
+```moon
+class Users extends Model
+  @timestamp: true
+
+user = Users\find 1
+
+-- first form
+user\update { name: "hello world" }, { timestamp: false }
+
+-- second form
+user.name = "hello world"
+user.age = 123
+user\update "name", "age", timestamp: false
+```
 
 ### Preloading Associations
 
