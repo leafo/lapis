@@ -193,9 +193,25 @@ tests = {
   }
 
   {
+    -> util.slugify "whhaa  $%#$  hooo"
+    "whhaa-hooo"
+  }
+
+  {
     -> util.slugify "what-about-now"
     "what-about-now"
   }
+
+  {
+    -> util.slugify "hello - me"
+    "hello-me"
+  }
+
+  {
+    -> util.slugify "cow _ dogs"
+    "cow-dogs"
+  }
+
 
   {
     -> util.uniquify { "hello", "hello", "world", "another", "world" }

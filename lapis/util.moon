@@ -77,7 +77,7 @@ parse_cookie_string = (str) ->
   {unescape(key), unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
 slugify = (str) ->
-  (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))\lower!
+  (str\gsub("[%s_]+", "-")\gsub("[^%w%-]+", "")\gsub("-+", "-"))\lower!
 
 -- TODO: make this not suck
 underscore = (str) ->
