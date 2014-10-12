@@ -106,7 +106,7 @@ parse_cookie_string = function(str)
   return _tbl_0
 end
 slugify = function(str)
-  return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", "")):lower()
+  return (str:gsub("[%s_]+", "-"):gsub("[^%w%-]+", ""):gsub("-+", "-")):lower()
 end
 underscore = function(str)
   local words
@@ -378,16 +378,31 @@ do
     end
     return mod
   end
-  autoload = function(prefix, t)
-    if t == nil then
+  autoload = function(...)
+    local prefixes = {
+      ...
+    }
+    local last = prefixes[#prefixes]
+    local t
+    if type(last) == "table" then
+      prefixes[#prefixes] = nil
+      t = last
+    else
       t = { }
     end
+    assert(next(prefixes), "missing prefixes for autoload")
     return setmetatable(t, {
       __index = function(self, mod_name)
         local mod
-        mod = try_require(prefix .. "." .. mod_name)
-        if not (mod) then
-          mod = try_require(prefix .. "." .. underscore(mod_name))
+        for _index_0 = 1, #prefixes do
+          local prefix = prefixes[_index_0]
+          mod = try_require(prefix .. "." .. mod_name)
+          if not (mod) then
+            mod = try_require(prefix .. "." .. underscore(mod_name))
+          end
+          if mod then
+            break
+          end
         end
         self[mod_name] = mod
         return mod
