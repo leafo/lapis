@@ -1,9 +1,7 @@
 local colors = require("ansicolors")
 local insert
-do
-  local _obj_0 = table
-  insert = _obj_0.insert
-end
+insert = table.insert
+local config = require("lapis.config").get()
 local flatten_params_helper, flatten_params, query, request, migration, migration_summary
 flatten_params_helper = function(params, out, sep)
   if out == nil then
@@ -38,9 +36,17 @@ flatten_params = function(params)
   return table.concat(flatten_params_helper(params))
 end
 query = function(q)
+  local l = config.logging
+  if not (l and l.queries) then
+    return 
+  end
   return print(colors("%{bright}%{cyan}SQL: %{reset}%{magenta}" .. tostring(q) .. "%{reset}"))
 end
 request = function(r)
+  local l = config.logging
+  if not (l and l.requests) then
+    return 
+  end
   local req, res
   req, res = r.req, r.res
   local status
@@ -78,5 +84,6 @@ return {
   request = request,
   query = query,
   migration = migration,
-  migration_summary = migration_summary
+  migration_summary = migration_summary,
+  flatten_params = flatten_params
 }

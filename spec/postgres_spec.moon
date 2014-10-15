@@ -21,6 +21,10 @@ tests = {
     '"love""fish"'
   }
   {
+    -> db.escape_identifier db.raw "hello(world)"
+    "hello(world)"
+  }
+  {
     -> db.escape_literal 3434
     "3434"
   }
@@ -70,6 +74,7 @@ tests = {
   {
     -> db.insert "cats", age: 123, name: "catter"
     [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123)]]
+    [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter')]]
   }
 
   {
@@ -247,6 +252,101 @@ tests = {
     }
   }
 
+  {
+    -> db.parse_clause "where not exists(select 1 from things limit 100)"
+    {
+      where: "not exists(select 1 from things limit 100)"
+    }
+  }
+
+  {
+    -> db.parse_clause "order by color asc"
+    {
+      order: "color asc"
+    }
+  }
+
+  {
+    -> db.parse_clause "ORDER BY color asc"
+    {
+      order: "color asc"
+    }
+  }
+
+  {
+    -> db.parse_clause "group BY height"
+    {
+      group: "height"
+    }
+  }
+
+  {
+    -> db.parse_clause "where x = limitx 100"
+    {
+      where: "x = limitx 100"
+    }
+  }
+
+  {
+    -> db.parse_clause "join dads on color = blue where hello limit 10"
+    {
+      limit: "10"
+      where: "hello "
+      join: {
+        {"join", " dads on color = blue "}
+      }
+    }
+  }
+
+  {
+    -> db.parse_clause "inner join dads on color = blue left outer join hello world where foo"
+    {
+      where: "foo"
+      join: {
+        {"inner join", " dads on color = blue "}
+        {"left outer join", " hello world "}
+      }
+    }
+  }
+
+
+  {
+    -> schema.gen_index_name "hello", "world"
+    "hello_world_idx"
+  }
+
+  {
+    -> schema.gen_index_name "yes", "please", db.raw "upper(dad)"
+    "yes_please_upper_dad_idx"
+  }
+
+  {
+    -> db.encode_case("x", { a: "b" })
+    [[CASE x
+WHEN 'a' THEN 'b'
+END]]
+  }
+
+  {
+    -> db.encode_case("x", { a: "b", foo: true })
+    [[CASE x
+WHEN 'a' THEN 'b'
+WHEN 'foo' THEN TRUE
+END]]
+    [[CASE x
+WHEN 'foo' THEN TRUE
+WHEN 'a' THEN 'b'
+END]]
+  }
+
+
+  {
+    -> db.encode_case("x", { a: "b" }, false)
+    [[CASE x
+WHEN 'a' THEN 'b'
+ELSE FALSE
+END]]
+  }
 }
 
 
@@ -260,18 +360,26 @@ describe "lapis.nginx.postgres", ->
 
   for group in *tests
     it "should match", ->
-      input = group[1]!
+      output = group[1]!
       if #group > 2
-        assert.one_of input, { unpack group, 2 }
+        assert.one_of output, { unpack group, 2 }
       else
-        assert.same group[2], input
+        assert.same group[2], output
 
   it "should create index", ->
     old_select = db.select
     db.select = -> { { c: 0 } }
     input = schema.create_index "user_data", "one", "two"
-    assert.same input, 'CREATE INDEX ON "user_data" ("one", "two");'
+    assert.same input, [[CREATE INDEX "user_data_one_two_idx" ON "user_data" ("one", "two");]]
     db.select = old_select
+
+  it "should create index with expression", ->
+    old_select = db.select
+    db.select = -> { { c: 0 } }
+    input = schema.create_index "user_data", db.raw("lower(name)"), "height"
+    assert.same input, [[CREATE INDEX "user_data_lower_name_height_idx" ON "user_data" (lower(name), "height");]]
+    db.select = old_select
+
 
   it "should create not create duplicate index", ->
     old_select = db.select

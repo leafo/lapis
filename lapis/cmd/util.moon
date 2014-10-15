@@ -70,6 +70,14 @@ get_free_port = ->
 
   port
 
+default_environment = do
+  _env = nil
+  ->
+    if _env == nil
+      _env = "development"
+      pcall -> _env = require "lapis_environment"
+
+    _env
 
 if ... == "test"
   print columnize {
@@ -79,4 +87,4 @@ if ... == "test"
     {"else", "yeah yeah yeah not so much okay goodbye"}
   }
 
-{ :columnize, :split, :random_string, :get_free_port }
+{ :columnize, :split, :random_string, :get_free_port, :default_environment }

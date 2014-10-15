@@ -226,11 +226,14 @@ do
         end
       })
     end,
-    render = function(self, mod_name)
+    render = function(self, mod_name, ...)
       local widget = require(mod_name)
-      return self:render_widget(widget())
+      return self:render_widget(widget(...))
     end,
     render_widget = function(self, w)
+      if w.__init and w.__base then
+        w = w()
+      end
       do
         local current = self.widget
         if current then
@@ -497,10 +500,7 @@ do
   end
   self.include = function(self, other_cls)
     local mixin_class
-    do
-      local _obj_0 = require("lapis.util")
-      mixin_class = _obj_0.mixin_class
-    end
+    mixin_class = require("lapis.util").mixin_class
     if type(other_cls) == "string" then
       other_cls = require(other_cls)
     end

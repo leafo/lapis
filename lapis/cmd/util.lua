@@ -4,10 +4,7 @@ do
   insert, concat = _obj_0.insert, _obj_0.concat
 end
 local escape_pattern
-do
-  local _obj_0 = require("lapis.util")
-  escape_pattern = _obj_0.escape_pattern
-end
+escape_pattern = require("lapis.util").escape_pattern
 local split
 split = function(str, delim)
   str = str .. delim
@@ -94,10 +91,7 @@ local random_string
 do
   math.randomseed(os.time())
   local random
-  do
-    local _obj_0 = math
-    random = _obj_0.random
-  end
+  random = math.random
   local random_char
   random_char = function()
     local _exp_0 = random(1, 3)
@@ -129,6 +123,19 @@ get_free_port = function()
   sock:close()
   return port
 end
+local default_environment
+do
+  local _env = nil
+  default_environment = function()
+    if _env == nil then
+      _env = "development"
+      pcall(function()
+        _env = require("lapis_environment")
+      end)
+    end
+    return _env
+  end
+end
 if ... == "test" then
   print(columnize({
     {
@@ -153,5 +160,6 @@ return {
   columnize = columnize,
   split = split,
   random_string = random_string,
-  get_free_port = get_free_port
+  get_free_port = get_free_port,
+  default_environment = default_environment
 }

@@ -2,15 +2,19 @@
 logger = require "lapis.logging"
 url = require "socket.url"
 session = require "lapis.session"
+lapis_config = require "lapis.config"
 
 import Router from require "lapis.router"
 import html_writer from require "lapis.html"
-
+import increment_perf from require "lapis.nginx.context"
 import parse_cookie_string, to_json, build_url, auto_table from require "lapis.util"
+
+import insert from table
 
 json = require "cjson"
 
 local capture_errors, capture_errors_json, respond_to
+
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -37,7 +41,7 @@ class Request
     @session = session.lazy_session @
 
   add_params: (params, name) =>
-    self[name] = params
+    @[name] = params
     for k,v in pairs params
       -- expand nested[param][keys]
       if front = k\match "^([^%[]+)%["
@@ -65,15 +69,15 @@ class Request
       @res.status = @options.status
 
     if obj = @options.json
-      @res.headers["Content-type"] = "application/json"
+      @res.headers["Content-Type"] = "application/json"
       @res.content = to_json obj
       return
 
     if ct = @options.content_type
-      @res.headers["Content-type"] = ct
+      @res.headers["Content-Type"] = ct
 
-    if not @res.headers["Content-type"]
-      @res.headers["Content-type"] = "text/html"
+    if not @res.headers["Content-Type"]
+      @res.headers["Content-Type"] = "text/html"
 
     if redirect_url = @options.redirect_to
       if redirect_url\match "^/"
@@ -81,24 +85,33 @@ class Request
 
       @res\add_header "Location", redirect_url
       @res.status or= 302
+      return ""
 
     has_layout = @app.layout and set_and_truthy(@options.layout, true)
     @layout_opts = if has_layout
       { inner: nil }
 
-
     widget = @options.render
     widget = @route_name if widget == true
+
+    config = lapis_config.get!
 
     if widget
       if type(widget) == "string"
         widget = require "#{@app.views_prefix}.#{widget}"
 
+      start_time = if config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
       view = widget @options.locals
       @layout_opts.view_widget = view if @layout_opts
       view\include_helper @
-
       @write view
+
+      if start_time
+        ngx.update_time!
+        increment_perf "view_time", ngx.now! - start_time
 
     if has_layout
       inner = @buffer
@@ -110,11 +123,19 @@ class Request
       else
         @app.layout
 
+      start_time = if config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
       @layout_opts.inner or= -> raw inner
 
       layout = layout_cls @layout_opts
       layout\include_helper @
       layout\render @buffer
+
+      if start_time
+        ngx.update_time!
+        increment_perf "layout_time", ngx.now! - start_time
 
     if next @buffer
       content = table.concat @buffer
@@ -169,7 +190,7 @@ class Request
 
       switch t
         when "string"
-          table.insert @buffer, thing
+          insert @buffer, thing
         when "table"
           -- see if there are options
           for k,v in pairs thing
@@ -186,21 +207,20 @@ class Request
 
   write_cookies: =>
     return unless next @cookies
-    extra = @app.cookie_attributes
-
-    if extra
-      extra = "; " .. table.concat @app.cookie_attributes, "; "
 
     for k,v in pairs @cookies
-      cookie = "#{url.escape k}=#{url.escape v}; Path=/; HttpOnly"
-      cookie ..= extra if extra
-      @res\add_header "Set-cookie", cookie
+      cookie = "#{url.escape k}=#{url.escape v}"
+      if extra = @app.cookie_attributes @, k, v
+        cookie ..= "; " .. extra
+
+      @res\add_header "Set-Cookie", cookie
 
 
 class Application
   Request: Request
   layout: require"lapis.views.layout"
   error_page: require"lapis.views.error"
+  views_prefix: "views"
 
   -- find action for named route in this application
   @find_action: (name) =>
@@ -217,14 +237,13 @@ class Application
 
     route and @[route], route
 
-  views_prefix: "views"
-
   new: =>
     @build_router!
 
   enable: (feature) =>
     fn = require "lapis.features.#{feature}"
-    fn @
+    if type(fn) == "function"
+      fn @
 
   match: (route_name, path, handler) =>
     if handler == nil
@@ -232,10 +251,24 @@ class Application
       path = route_name
       route_name = nil
 
+    @ordered_routes or= {}
     key = if route_name
-      {[route_name]: path}
+      tuple = @ordered_routes[route_name]
+      if old_path = tuple and tuple[next(tuple)]
+        if old_path != path
+          error "named route mismatch (#{old_path} != #{path})"
+
+      if tuple
+        tuple
+      else
+        tuple = {[route_name]: path}
+        @ordered_routes[route_name] = tuple
+        tuple
     else
       path
+
+    unless @[key]
+      insert @ordered_routes, key
 
     @[key] = handler
 
@@ -275,8 +308,12 @@ class Application
       for path, handler in pairs cls.__base
         add_route path, handler
 
-      for path, handler in pairs @
-        add_route path, handler
+      if ordered = @ordered_routes
+        for path in *ordered
+          add_route path, @[path]
+      else
+        for path, handler in pairs @
+          add_route path, handler
 
       if parent = cls.__parent
         add_routes parent
@@ -301,11 +338,11 @@ class Application
   dispatch: (req, res) =>
     local err, trace, r
     success = xpcall (->
-        r = @.Request self, req, res
+        r = @.Request @, req, res
 
         unless @router\resolve req.parsed_url.path, r
           -- run default route if nothing matched
-          handler = @wrap_handler self.default_route
+          handler = @wrap_handler @default_route
           handler {}, nil, "default_route", r
 
         r\render!
@@ -315,7 +352,7 @@ class Application
         trace = debug.traceback "", 2
 
     unless success
-      self.handle_error r, err, trace
+      @.handle_error r, err, trace
 
     res
 
@@ -323,10 +360,10 @@ class Application
 
   @before_filter: (fn) =>
     @__base.before_filters or= {}
-    table.insert @before_filters, fn
+    insert @before_filters, fn
 
   -- copies all actions into this application, preserves before filters
-  -- @inclue other_app, path: "/hello", name: "hello_"
+  -- @include other_app, path: "/hello", name: "hello_"
   @include: (other_app, opts, into=@__base) =>
     if type(other_app) == "string"
       other_app = require other_app
@@ -375,16 +412,32 @@ class Application
     error "Failed to find route: #{@req.cmd_url}"
 
   handle_error: (err, trace, error_page=@app.error_page) =>
-    r = @app.Request self, @req, @res
-    r\write {
-      status: 500
-      layout: false
-      content_type: "text/html"
-      error_page { status: 500, :err, :trace }
-    }
+    r = @app.Request @, @req, @res
+
+    config = lapis_config.get!
+    if config._name == "test"
+      param_dump = logger.flatten_params @url_params
+      r.res\add_header "X-Lapis-Error", "true"
+      r\write {
+        status: 500
+        json: {
+          status: "[#{r.req.cmd_mth}] #{r.req.cmd_url} #{param_dump}"
+          :err, :trace
+        }
+      }
+    else
+      r\write {
+        status: 500
+        layout: false
+        content_type: "text/html"
+        error_page { status: 500, :err, :trace }
+      }
     r\render!
     logger.request r
     r
+
+  cookie_attributes: (name, value) =>
+    "Path=/; HttpOnly"
 
 respond_to = do
   default_head = -> layout: false -- render nothing
@@ -437,9 +490,9 @@ capture_errors_json = (fn) ->
 yield_error = (msg) ->
   coroutine.yield "error", {msg}
 
-assert_error = (thing, msg) ->
+assert_error = (thing, msg, ...) ->
   yield_error msg unless thing
-  thing
+  thing, msg, ...
 
 json_params = (fn) ->
   (...) =>

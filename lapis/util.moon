@@ -27,8 +27,12 @@ inject_tuples = (tbl) ->
 parse_query_string = do
   import C, P, S, Ct from require "lpeg"
 
-  chunk = C (P(1) - S("=&"))^1
-  tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
+  char = (P(1) - S("=&"))
+
+  chunk = C char^1
+  chunk_0 = C char^0
+
+  tuple = Ct(chunk / unescape * "=" * (chunk_0 / unescape) + chunk)
   query = S"?#"^-1 * Ct tuple * (P"&" * tuple)^0
 
   (str) ->
@@ -70,10 +74,10 @@ parse_content_disposition = do
 
 parse_cookie_string = (str) ->
   return {} unless str
-  {key, unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
+  {unescape(key), unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
 slugify = (str) ->
-  (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))\lower!
+  (str\gsub("[%s_]+", "-")\gsub("[^%w%-]+", "")\gsub("-+", "-"))\lower!
 
 -- TODO: make this not suck
 underscore = (str) ->
@@ -101,7 +105,7 @@ trim_all = (tbl) ->
   tbl
 
 -- remove empty string (all whitespace) values from table
--- optionaly apply a key filter with second arg
+-- optionally apply a key filter with second arg
 -- set the value to replace empty strings with empty_val
 trim_filter = (tbl, keys, empty_val) ->
   key_filter tbl, unpack keys if keys
@@ -168,7 +172,14 @@ time_ago = do
   pcall -> date = require "date"
 
   (time) ->
-    diff = date.diff date(true), date(time)
+    sooner = date time
+    later = date true
+    flip = false
+
+    if later < sooner
+      sooner, later = later, sooner
+
+    diff = date.diff later, sooner
 
     times = {}
 
@@ -209,7 +220,7 @@ time_ago = do
 
       diff\addseconds -seconds
 
-    times
+    times, true
 
 time_ago_in_words = do
   singular = {
@@ -220,7 +231,7 @@ time_ago_in_words = do
     second: "second"
   }
 
-  (time, parts=1) ->
+  (time, parts=1, suffix="ago") ->
     ago = type(time) == "table" and time or time_ago time
 
     out = ""
@@ -236,7 +247,7 @@ time_ago_in_words = do
       out ..= ", " if #out > 0
       out ..= val .. " " .. word
 
-    out .. " ago"
+    out .. " " .. suffix
 
 title_case = do
   upper = string.upper
@@ -256,14 +267,27 @@ autoload = do
 
     mod
 
-  (prefix, t={}) ->
+  (...) ->
+    prefixes = {...}
+    last = prefixes[#prefixes]
+    t = if type(last) == "table"
+      prefixes[#prefixes] = nil
+      last
+    else
+      {}
+
+    assert next(prefixes), "missing prefixes for autoload"
+
     setmetatable t, __index: (mod_name) =>
       local mod
 
-      mod = try_require prefix .. "." .. mod_name
+      for prefix in *prefixes
+        mod = try_require prefix .. "." .. mod_name
 
-      unless mod
-        mod = try_require prefix .. "." .. underscore mod_name
+        unless mod
+          mod = try_require prefix .. "." .. underscore mod_name
+
+        break if mod
 
       @[mod_name] = mod
       mod

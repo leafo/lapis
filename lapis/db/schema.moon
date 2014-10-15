@@ -1,4 +1,3 @@
-
 db = require "lapis.db"
 
 import escape_literal from db
@@ -11,7 +10,7 @@ append_all = (t, ...) ->
 extract_options = (cols) ->
   options = {}
   cols = for col in *cols
-    if type(col) == "table"
+    if type(col) == "table" and col[1] != "raw"
       for k,v in pairs col
         options[k] = v
       continue
@@ -25,7 +24,18 @@ entity_exists = (name) ->
   res.c > 0
 
 gen_index_name = (...) ->
-  parts = [p for p in *{...} when type(p) == "string"]
+  parts = for p in *{...}
+    switch type(p)
+      when "string"
+        p
+      when "table"
+        if p[1] == "raw"
+          p[2]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
+        else
+          continue
+      else
+        continue
+
   concat(parts, "_") .. "_idx"
 
 create_table = (name, columns) ->
@@ -55,7 +65,15 @@ create_index = (tname, ...) ->
 
   buffer = {"CREATE"}
   append_all buffer, " UNIQUE" if options.unique
-  append_all buffer, " INDEX ON #{db.escape_identifier tname} ("
+
+  append_all buffer, " INDEX ",
+    db.escape_identifier(index_name),
+    " ON ", db.escape_identifier tname
+
+  if options.method
+    append_all buffer, " USING ", options.method
+    
+  append_all buffer, " ("
 
   for i, col in ipairs columns
     append_all buffer, db.escape_identifier(col)
@@ -63,6 +81,9 @@ create_index = (tname, ...) ->
 
   append_all buffer, ")"
 
+  if options.tablespace
+    append_all buffer, " TABLESPACE ", options.tablespace
+    
   if options.where
     append_all buffer, " WHERE ", options.where
 
@@ -155,6 +176,6 @@ types = setmetatable {
 
 {
   :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
-  :drop_column, :rename_column, :rename_table, :entity_exists
+  :drop_column, :rename_column, :rename_table, :entity_exists, :gen_index_name
 }
 

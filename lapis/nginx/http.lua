@@ -1,4 +1,7 @@
+local lapis_config = require("lapis.config")
 local ltn12 = require("ltn12")
+local increment_perf
+increment_perf = require("lapis.nginx.context").increment_perf
 local proxy_location = "/proxy"
 local methods = setmetatable({ }, {
   __index = function(self, name)
@@ -12,12 +15,15 @@ set_proxy_location = function(loc)
   proxy_location = loc
 end
 local encode_query_string
-do
-  local _obj_0 = require("lapis.util")
-  encode_query_string = _obj_0.encode_query_string
-end
+encode_query_string = require("lapis.util").encode_query_string
 local simple
 simple = function(req, body)
+  local config = lapis_config.get()
+  local start_time
+  if config.measure_performance then
+    ngx.update_time()
+    start_time = ngx.now()
+  end
   if type(req) == "string" then
     req = {
       url = req
@@ -42,10 +48,21 @@ simple = function(req, body)
       _url = req.url
     }
   })
+  if start_time then
+    ngx.update_time()
+    increment_perf("http_count", 1)
+    increment_perf("http_time", ngx.now() - start_time)
+  end
   return res.body, res.status, res.header
 end
 local request
 request = function(url, str_body)
+  local config = lapis_config.get()
+  local start_time
+  if config.measure_performance then
+    ngx.update_time()
+    start_time = ngx.now()
+  end
   local return_res_body
   local req
   if type(url) == "table" then
@@ -87,6 +104,11 @@ request = function(url, str_body)
     end
     out = 1
   end
+  if start_time then
+    ngx.update_time()
+    increment_perf("http_count", 1)
+    increment_perf("http_time", ngx.now() - start_time)
+  end
   return out, res.status, res.header
 end
 local ngx_replace_headers
@@ -95,10 +117,7 @@ ngx_replace_headers = function(new_headers)
     new_headers = nil
   end
   local req
-  do
-    local _obj_0 = ngx
-    req = _obj_0.req
-  end
+  req = ngx.req
   new_headers = new_headers or ngx.ctx.headers
   for k, v in pairs(req.get_headers()) do
     if k ~= 'content-length' then

@@ -15,7 +15,9 @@ http {
 
     location / {
       default_type text/html;
-      content_by_lua_file "web.lua";
+      content_by_lua '
+        require("lapis").serve("app")
+      ';
     }
 
     location /static/ {

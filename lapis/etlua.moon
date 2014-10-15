@@ -43,6 +43,12 @@ class EtluaWidget extends Widget
         ""
 
   _find_helper: (name) =>
+    switch name
+      when "render"
+        return @_buffer\render
+      when "widget"
+        return @_buffer\render_widget
+
     if chain = @_get_helper_chain!
       for h in *chain
         helper_val = h[name]
@@ -55,11 +61,6 @@ class EtluaWidget extends Widget
 
           return value
 
-    switch name
-      when "render"
-        return @_buffer\render
-      when "widget"
-        return @_buffer\render_widget
 
     -- look on self
     val = @[name]
@@ -77,6 +78,9 @@ class EtluaWidget extends Widget
     else
       Buffer buffer
 
+    old_widget = @_buffer.widget
+    @_buffer.widget = @
+
     seen_helpers = {}
     scope = setmetatable { }, {
       __index: (scope, key) ->
@@ -91,6 +95,8 @@ class EtluaWidget extends Widget
     clone = locked_fn @_tpl_fn
     parser\run clone, scope, @_buffer
     release_fn clone
+
+    @_buffer.widget = old_widget
     nil
 
 { :EtluaWidget, :BufferCompiler }

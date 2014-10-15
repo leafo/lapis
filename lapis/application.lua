@@ -1,21 +1,20 @@
 local logger = require("lapis.logging")
 local url = require("socket.url")
 local session = require("lapis.session")
+local lapis_config = require("lapis.config")
 local Router
-do
-  local _obj_0 = require("lapis.router")
-  Router = _obj_0.Router
-end
+Router = require("lapis.router").Router
 local html_writer
-do
-  local _obj_0 = require("lapis.html")
-  html_writer = _obj_0.html_writer
-end
+html_writer = require("lapis.html").html_writer
+local increment_perf
+increment_perf = require("lapis.nginx.context").increment_perf
 local parse_cookie_string, to_json, build_url, auto_table
 do
   local _obj_0 = require("lapis.util")
   parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
+local insert
+insert = table.insert
 local json = require("cjson")
 local capture_errors, capture_errors_json, respond_to
 local set_and_truthy
@@ -81,7 +80,7 @@ do
       do
         local obj = self.options.json
         if obj then
-          self.res.headers["Content-type"] = "application/json"
+          self.res.headers["Content-Type"] = "application/json"
           self.res.content = to_json(obj)
           return 
         end
@@ -89,11 +88,11 @@ do
       do
         local ct = self.options.content_type
         if ct then
-          self.res.headers["Content-type"] = ct
+          self.res.headers["Content-Type"] = ct
         end
       end
-      if not self.res.headers["Content-type"] then
-        self.res.headers["Content-type"] = "text/html"
+      if not self.res.headers["Content-Type"] then
+        self.res.headers["Content-Type"] = "text/html"
       end
       do
         local redirect_url = self.options.redirect_to
@@ -103,6 +102,7 @@ do
           end
           self.res:add_header("Location", redirect_url)
           self.res.status = self.res.status or 302
+          return ""
         end
       end
       local has_layout = self.app.layout and set_and_truthy(self.options.layout, true)
@@ -115,9 +115,15 @@ do
       if widget == true then
         widget = self.route_name
       end
+      local config = lapis_config.get()
       if widget then
         if type(widget) == "string" then
           widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
+        end
+        local start_time
+        if config.measure_performance then
+          ngx.update_time()
+          start_time = ngx.now()
         end
         local view = widget(self.options.locals)
         if self.layout_opts then
@@ -125,6 +131,10 @@ do
         end
         view:include_helper(self)
         self:write(view)
+        if start_time then
+          ngx.update_time()
+          increment_perf("view_time", ngx.now() - start_time)
+        end
       end
       if has_layout then
         local inner = self.buffer
@@ -136,12 +146,21 @@ do
         else
           layout_cls = self.app.layout
         end
+        local start_time
+        if config.measure_performance then
+          ngx.update_time()
+          start_time = ngx.now()
+        end
         self.layout_opts.inner = self.layout_opts.inner or function()
           return raw(inner)
         end
         local layout = layout_cls(self.layout_opts)
         layout:include_helper(self)
         layout:render(self.buffer)
+        if start_time then
+          ngx.update_time()
+          increment_perf("layout_time", ngx.now() - start_time)
+        end
       end
       if next(self.buffer) then
         local content = table.concat(self.buffer)
@@ -206,7 +225,7 @@ do
         end
         local _exp_0 = t
         if "string" == _exp_0 then
-          table.insert(self.buffer, thing)
+          insert(self.buffer, thing)
         elseif "table" == _exp_0 then
           for k, v in pairs(thing) do
             if type(k) == "string" then
@@ -228,16 +247,15 @@ do
       if not (next(self.cookies)) then
         return 
       end
-      local extra = self.app.cookie_attributes
-      if extra then
-        extra = "; " .. table.concat(self.app.cookie_attributes, "; ")
-      end
       for k, v in pairs(self.cookies) do
-        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v)) .. "; Path=/; HttpOnly"
-        if extra then
-          cookie = cookie .. extra
+        local cookie = tostring(url.escape(k)) .. "=" .. tostring(url.escape(v))
+        do
+          local extra = self.app.cookie_attributes(self, k, v)
+          if extra then
+            cookie = cookie .. ("; " .. extra)
+          end
         end
-        self.res:add_header("Set-cookie", cookie)
+        self.res:add_header("Set-Cookie", cookie)
       end
     end
   }
@@ -275,7 +293,9 @@ do
     views_prefix = "views",
     enable = function(self, feature)
       local fn = require("lapis.features." .. tostring(feature))
-      return fn(self)
+      if type(fn) == "function" then
+        return fn(self)
+      end
     end,
     match = function(self, route_name, path, handler)
       if handler == nil then
@@ -283,13 +303,32 @@ do
         path = route_name
         route_name = nil
       end
+      self.ordered_routes = self.ordered_routes or { }
       local key
       if route_name then
-        key = {
-          [route_name] = path
-        }
+        local tuple = self.ordered_routes[route_name]
+        do
+          local old_path = tuple and tuple[next(tuple)]
+          if old_path then
+            if old_path ~= path then
+              error("named route mismatch (" .. tostring(old_path) .. " != " .. tostring(path) .. ")")
+            end
+          end
+        end
+        if tuple then
+          key = tuple
+        else
+          tuple = {
+            [route_name] = path
+          }
+          self.ordered_routes[route_name] = tuple
+          key = tuple
+        end
       else
         key = path
+      end
+      if not (self[key]) then
+        insert(self.ordered_routes, key)
       end
       self[key] = handler
       self.router = nil
@@ -312,8 +351,18 @@ do
         for path, handler in pairs(cls.__base) do
           add_route(path, handler)
         end
-        for path, handler in pairs(self) do
-          add_route(path, handler)
+        do
+          local ordered = self.ordered_routes
+          if ordered then
+            for _index_0 = 1, #ordered do
+              local path = ordered[_index_0]
+              add_route(path, self[path])
+            end
+          else
+            for path, handler in pairs(self) do
+              add_route(path, handler)
+            end
+          end
         end
         do
           local parent = cls.__parent
@@ -387,19 +436,36 @@ do
         error_page = self.app.error_page
       end
       local r = self.app.Request(self, self.req, self.res)
-      r:write({
-        status = 500,
-        layout = false,
-        content_type = "text/html",
-        error_page({
+      local config = lapis_config.get()
+      if config._name == "test" then
+        local param_dump = logger.flatten_params(self.url_params)
+        r.res:add_header("X-Lapis-Error", "true")
+        r:write({
           status = 500,
-          err = err,
-          trace = trace
+          json = {
+            status = "[" .. tostring(r.req.cmd_mth) .. "] " .. tostring(r.req.cmd_url) .. " " .. tostring(param_dump),
+            err = err,
+            trace = trace
+          }
         })
-      })
+      else
+        r:write({
+          status = 500,
+          layout = false,
+          content_type = "text/html",
+          error_page({
+            status = 500,
+            err = err,
+            trace = trace
+          })
+        })
+      end
       r:render()
       logger.request(r)
       return r
+    end,
+    cookie_attributes = function(self, name, value)
+      return "Path=/; HttpOnly"
     end
   }
   _base_0.__index = _base_0
@@ -471,7 +537,7 @@ do
   end
   self.before_filter = function(self, fn)
     self.__base.before_filters = self.__base.before_filters or { }
-    return table.insert(self.before_filters, fn)
+    return insert(self.before_filters, fn)
   end
   self.include = function(self, other_app, opts, into)
     if into == nil then
@@ -616,11 +682,11 @@ yield_error = function(msg)
   })
 end
 local assert_error
-assert_error = function(thing, msg)
+assert_error = function(thing, msg, ...)
   if not (thing) then
     yield_error(msg)
   end
-  return thing
+  return thing, msg, ...
 end
 local json_params
 json_params = function(fn)

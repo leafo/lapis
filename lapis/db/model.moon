@@ -5,6 +5,7 @@ import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
 
 cjson = require "cjson"
+import OffsetPaginator from require "lapis.db.pagination"
 
 local *
 
@@ -18,16 +19,25 @@ class Model
     else
       @primary_key
 
-  @encode_key = (...) =>
+  @encode_key: (...) =>
     if type(@primary_key) == "table"
       { k, select i, ... for i, k in ipairs @primary_key }
     else
       { [@primary_key]: ... }
 
-  @table_name = =>
+  @table_name: =>
     name = underscore @__name
     @table_name = -> name
     name
+
+  @columns: =>
+    columns = db.query [[
+      select column_name, data_type
+      from information_schema.columns
+      where table_name = ?]], @table_name!
+
+    @columns = -> columns
+    columns
 
   @load: (tbl) =>
     for k,v in pairs tbl
@@ -80,7 +90,7 @@ class Model
   -- Users { id, name }
   -- Games { id, user_id, title }
   --
-  -- -- Have games, inlcude users
+  -- -- Have games, include users
   -- games = Games\select!
   -- Users\include_in games, "user_id"
   --
@@ -92,12 +102,11 @@ class Model
   -- specify as: "name" to set the key of the included objects in each item
   -- from the source list
   @include_in: (other_records, foreign_key, opts) =>
-    if type(@primary_key) == "table"
-      error "model must have singular primary key to include"
-
     fields = opts and opts.fields or "*"
-
     flip = opts and opts.flip
+
+    if not flip and type(@primary_key) == "table"
+      error "model must have singular primary key to include"
 
     src_key = flip and "id" or foreign_key
     include_ids = for record in *other_records
@@ -116,7 +125,12 @@ class Model
       tbl_name = db.escape_identifier @table_name!
       find_by_escaped = db.escape_identifier find_by
 
-      if res = db.select "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+      query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+
+      if opts and opts.where
+        query ..= " and " .. db.encode_clause opts.where
+
+      if res = db.select query
         records = {}
         for t in *res
           records[t[find_by]] = @load t
@@ -130,20 +144,24 @@ class Model
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
+        assert field_name, "failed to infer field name, provide one with `as`"
+
         for other in *other_records
           other[field_name] = records[other[src_key]]
 
     other_records
 
   @find_all: (ids, by_key=@primary_key) =>
+    where = nil
     fields = "*"
 
     -- parse opts
     if type(by_key) == "table"
       fields = by_key.fields or fields
+      where = by_key.where
       by_key = by_key.key or @primary_key
 
-    if type(by_key) == "table"
+    if type(by_key) == "table" and by_key[1] != "raw"
       error "find_all must have a singular key to search"
 
     return {} if #ids == 0
@@ -151,7 +169,12 @@ class Model
     primary = db.escape_identifier by_key
     tbl_name = db.escape_identifier @table_name!
 
-    if res = db.select fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
+    query = fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
+
+    if where
+      query ..= " and " .. db.encode_clause where
+
+    if res = db.select query
       @load r for r in *res
       res
 
@@ -173,8 +196,8 @@ class Model
   -- create from table of values, return loaded object
   @create: (values) =>
     if @constraints
-      for key, value in pairs values
-        if err = @_check_constraint key, value, values
+      for key in pairs @constraints
+        if err = @_check_constraint key, values and values[key], values
           return nil, err
 
     values._timestamp = true if @timestamp
@@ -203,14 +226,16 @@ class Model
       fn @, value, key, obj
 
   @paginated: (...) =>
-    Paginator @, ...
+    OffsetPaginator @, ...
 
   -- alternative to MoonScript inheritance
-  @extend: (name, tbl) =>
+  @extend: (table_name, tbl={}) =>
     lua = require "lapis.lua"
-    with cls = lua.class name, tbl, @
+    with cls = lua.class table_name, tbl, @
+      .table_name = -> table_name
       .primary_key = tbl.primary_key
       .timestamp = tbl.timestamp
+      .constraints = tbl.constraints
 
   _primary_cond: =>
     cond = {}
@@ -253,47 +278,42 @@ class Model
         if err = @@_check_constraint key, value, @
           return nil, err
 
-    values._timestamp = true if @@timestamp
+    -- update options
+    nargs = select "#", ...
+    last = nargs > 0 and select nargs, ...
+
+    opts = if type(last) == "table" then last
+
+    if @@timestamp and not (opts and opts.timestamp == false)
+      values._timestamp = true
+
     db.update @@table_name!, values, cond
 
+  -- reload fields on the instance
+  refresh: (fields="*", ...) =>
+    local field_names
 
+    if fields != "*"
+      field_names = {fields, ...}
+      fields = table.concat [db.escape_identifier f for f in *field_names], ", "
 
-class Paginator
-  per_page: 10
+    cond = db.encode_clause @_primary_cond!
+    tbl_name = db.escape_identifier @@table_name!
+    res = unpack db.select "#{fields} from #{tbl_name} where #{cond}"
 
-  new: (@model, clause, ...) =>
-    param_count = select "#", ...
+    if field_names
+      for field in *field_names
+        @[field] = res[field]
+    else
+      for k,v in pairs @
+        @[k] = nil
 
-    opts = if param_count > 0
-      last = select param_count, ...
-      type(last) == "table" and last
+      for k,v in pairs res
+        @[k] = v
 
-    @per_page = @model.per_page
-    @per_page = opts.per_page if opts
-    @prepare_results = opts.prepare_results if opts and opts.prepare_results
+      @@load @
 
-    @_clause = db.interpolate_query clause, ...
-    @opts = opts
+    @
 
-  get_all: =>
-    @.prepare_results @model\select @_clause, @opts
-
-  -- 1 indexed page
-  get_page: (page) =>
-    page = (math.max 1, tonumber(page) or 0) - 1
-    @.prepare_results @model\select @_clause .. [[
-      limit ?
-      offset ?
-    ]], @per_page, @per_page * page, @opts
-
-  num_pages: =>
-    math.ceil @total_items! / @per_page
-
-  total_items: =>
-    @_count or= @model\count db.parse_clause(@_clause).where
-    @_count
-
-  prepare_results: (...) -> ...
-
-{ :Model, :Paginator }
+{ :Model }
 

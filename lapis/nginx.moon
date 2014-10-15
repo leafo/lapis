@@ -1,4 +1,5 @@
 import escape_pattern, parse_content_disposition, build_url from require "lapis.util"
+import run_after_dispatch from require "lapis.nginx.context"
 
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
@@ -71,12 +72,14 @@ ngx_req = {
     build_url t.parsed_url
 
   params_post: (t) ->
-    -- parse multipart if required
-    if (t.headers["content-type"] or "")\match escape_pattern "multipart/form-data"
-      parse_multipart! or {}
-    else
+    content_type = (t.headers["content-type"] or "")\lower!
+    params = if content_type\match escape_pattern "multipart/form-data"
+      parse_multipart!
+    elseif content_type\match escape_pattern "application/x-www-form-urlencoded"
       ngx.req.read_body!
       flatten_params ngx.req.get_post_args!
+
+    params or {}
 
   params_get: ->
     flatten_params ngx.req.get_uri_args!
@@ -92,8 +95,6 @@ lazy_tbl = (tbl, index) ->
   }
 
 
--- this gives us a table that looks like the request that we get in xavante
--- all the properties are evaluated lazily unless unlazy is true
 build_request = (unlazy=false) ->
   with t = lazy_tbl {}, ngx_req
     if unlazy
@@ -122,6 +123,8 @@ dispatch = (app) ->
   app\dispatch res.req, res
   ngx.status = res.status if res.status
   ngx.print res.content if res.content
+
+  run_after_dispatch!
   res
 
 { :build_request, :build_response, :dispatch }

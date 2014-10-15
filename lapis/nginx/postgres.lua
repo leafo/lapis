@@ -1,33 +1,18 @@
 local concat
-do
-  local _obj_0 = table
-  concat = _obj_0.concat
-end
-local raw_query, logger
+concat = table.concat
+local raw_query
 local proxy_location = "/query"
-local set_logger
-set_logger = function(l)
-  logger = l
+local logger
+local type, tostring, pairs, select
+do
+  local _obj_0 = _G
+  type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local get_logger
-get_logger = function()
-  return logger
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw
+do
+  local _obj_0 = require("lapis.db.base")
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
 end
-set_logger(require("lapis.logging"))
-local NULL = { }
-local raw
-raw = function(val)
-  return {
-    "raw",
-    tostring(val)
-  }
-end
-local is_raw
-is_raw = function(val)
-  return type(val) == "table" and val[1] == "raw" and val[2]
-end
-local TRUE = raw("TRUE")
-local FALSE = raw("FALSE")
 local backends = {
   default = function(_proxy)
     if _proxy == nil then
@@ -60,18 +45,49 @@ local backends = {
       return raw_query
     end
   end,
-  ["resty.postgres"] = function(opts)
-    opts.host = opts.host or "127.0.0.1"
-    opts.port = opts.port or 5432
-    local pg = require("lapis.resty.postgres")
+  pgmoon = function()
+    local after_dispatch, increment_perf
+    do
+      local _obj_0 = require("lapis.nginx.context")
+      after_dispatch, increment_perf = _obj_0.after_dispatch, _obj_0.increment_perf
+    end
+    local config = require("lapis.config").get()
+    local pg_config = assert(config.postgres, "missing postgres configuration")
+    local pgmoon_conn
     raw_query = function(str)
+      local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
+      if not (pgmoon) then
+        local Postgres
+        Postgres = require("pgmoon").Postgres
+        pgmoon = Postgres(pg_config)
+        assert(pgmoon:connect())
+        if ngx then
+          ngx.ctx.pgmoon = pgmoon
+          after_dispatch(function()
+            return pgmoon:keepalive()
+          end)
+        else
+          pgmoon_conn = pgmoon
+        end
+      end
+      local start_time
+      if ngx and config.measure_performance then
+        ngx.update_time()
+        start_time = ngx.now()
+      end
       if logger then
         logger.query(str)
       end
-      local conn = pg:new()
-      conn:set_keepalive(0, 100)
-      assert(conn:connect(opts))
-      return assert(conn:query(str))
+      local res, err = pgmoon:query(str)
+      if start_time then
+        ngx.update_time()
+        increment_perf("db_time", ngx.now() - start_time)
+        increment_perf("db_count", 1)
+      end
+      if not res and err then
+        error(tostring(str) .. "\n" .. tostring(err))
+      end
+      return res
     end
   end
 }
@@ -82,18 +98,23 @@ set_backend = function(name, ...)
   end
   return assert(backends[name])(...)
 end
-local format_date
-format_date = function(time)
-  return os.date("!%Y-%m-%d %H:%M:%S", time)
-end
-local append_all
-append_all = function(t, ...)
-  for i = 1, select("#", ...) do
-    t[#t + 1] = select(i, ...)
+local init_logger
+init_logger = function()
+  if ngx or os.getenv("LAPIS_SHOW_QUERIES") then
+    logger = require("lapis.logging")
   end
+end
+local init_db
+init_db = function()
+  local config = require("lapis.config").get()
+  local default_backend = config.postgres and config.postgres.backend or "default"
+  return set_backend(default_backend)
 end
 local escape_identifier
 escape_identifier = function(ident)
+  if type(ident) == "table" and ident[1] == "raw" then
+    return ident[2]
+  end
   ident = tostring(ident)
   return '"' .. (ident:gsub('"', '""')) .. '"'
 end
@@ -116,91 +137,16 @@ escape_literal = function(val)
   end
   return error("don't know how to escape value: " .. tostring(val))
 end
-local interpolate_query
-interpolate_query = function(query, ...)
-  local values = {
-    ...
-  }
-  local i = 0
-  return (query:gsub("%?", function()
-    i = i + 1
-    return escape_literal(values[i])
-  end))
-end
-local encode_values
-encode_values = function(t, buffer)
-  local have_buffer = buffer
-  buffer = buffer or { }
-  local tuples
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for k, v in pairs(t) do
-      _accum_0[_len_0] = {
-        k,
-        v
-      }
-      _len_0 = _len_0 + 1
-    end
-    tuples = _accum_0
-  end
-  local cols = concat((function()
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #tuples do
-      local pair = tuples[_index_0]
-      _accum_0[_len_0] = escape_identifier(pair[1])
-      _len_0 = _len_0 + 1
-    end
-    return _accum_0
-  end)(), ", ")
-  local vals = concat((function()
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #tuples do
-      local pair = tuples[_index_0]
-      _accum_0[_len_0] = escape_literal(pair[2])
-      _len_0 = _len_0 + 1
-    end
-    return _accum_0
-  end)(), ", ")
-  append_all(buffer, "(", cols, ") VALUES (", vals, ")")
-  if not (have_buffer) then
-    return concat(buffer)
-  end
-end
-local encode_assigns
-encode_assigns = function(t, buffer)
-  local join = ", "
-  local have_buffer = buffer
-  buffer = buffer or { }
-  for k, v in pairs(t) do
-    append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
-  end
-  buffer[#buffer] = nil
-  if not (have_buffer) then
-    return concat(buffer)
-  end
-end
-local encode_clause
-encode_clause = function(t, buffer)
-  local join = " AND "
-  local have_buffer = buffer
-  buffer = buffer or { }
-  for k, v in pairs(t) do
-    if v == NULL then
-      append_all(buffer, escape_identifier(k), " IS NULL", join)
-    else
-      append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
-    end
-  end
-  buffer[#buffer] = nil
-  if not (have_buffer) then
-    return concat(buffer)
+local interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers(escape_literal, escape_identifier)
+local append_all
+append_all = function(t, ...)
+  for i = 1, select("#", ...) do
+    t[#t + 1] = select(i, ...)
   end
 end
 raw_query = function(...)
-  set_backend("default")
+  init_logger()
+  init_db()
   return raw_query(...)
 end
 local query
@@ -302,43 +248,65 @@ do
   local grammar
   local make_grammar
   make_grammar = function()
-    local keywords = {
+    local basic_keywords = {
       "where",
-      "group",
       "having",
-      "order",
       "limit",
       "offset"
     }
-    for _index_0 = 1, #keywords do
-      local v = keywords[_index_0]
-      keywords[v] = true
-    end
-    local P, R, C, S, Cmt, Ct, Cg
+    local P, R, C, S, Cmt, Ct, Cg, V
     do
       local _obj_0 = require("lpeg")
-      P, R, C, S, Cmt, Ct, Cg = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg
+      P, R, C, S, Cmt, Ct, Cg, V = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg, _obj_0.V
     end
     local alpha = R("az", "AZ", "__")
     local alpha_num = alpha + R("09")
     local white = S(" \t\r\n") ^ 0
+    local some_white = S(" \t\r\n") ^ 1
     local word = alpha_num ^ 1
     local single_string = P("'") * (P("''") + (P(1) - P("'"))) ^ 0 * P("'")
     local double_string = P('"') * (P('""') + (P(1) - P('"'))) ^ 0 * P('"')
     local strings = single_string + double_string
-    local keyword = Cmt(word, function(src, pos, cap)
-      if keywords[cap:lower()] then
-        return true, cap
+    local ci
+    ci = function(str)
+      S = require("lpeg").S
+      local p
+      for c in str:gmatch(".") do
+        local char = S(tostring(c:lower()) .. tostring(c:upper()))
+        if p then
+          p = p * char
+        else
+          p = char
+        end
       end
-    end)
+      return p * -alpha_num
+    end
+    local balanced_parens = lpeg.P({
+      P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
+    })
+    local order_by = ci("order") * some_white * ci("by") / "order"
+    local group_by = ci("group") * some_white * ci("by") / "group"
+    local keyword = order_by + group_by
+    for _index_0 = 1, #basic_keywords do
+      local k = basic_keywords[_index_0]
+      local part = ci(k) / k
+      keyword = keyword + part
+    end
     keyword = keyword * white
-    local clause = Ct((keyword * C((strings + (word + P(1) - keyword)) ^ 1)) / function(name, val)
-      if name == "group" or name == "order" then
-        val = val:match("^%s*by%s*(.*)$")
-      end
-      return name, val
-    end)
-    grammar = white * Ct(clause ^ 0)
+    local clause_content = (balanced_parens + strings + (word + P(1) - keyword)) ^ 1
+    local outer_join_type = (ci("left") + ci("right") + ci("full")) * (white * ci("outer")) ^ -1
+    local join_type = (ci("natural") * white) ^ -1 * ((ci("inner") + outer_join_type) * white) ^ -1
+    local start_join = join_type * ci("join")
+    local join_body = (balanced_parens + strings + (P(1) - start_join - keyword)) ^ 1
+    local join_tuple = Ct(C(start_join) * C(join_body))
+    local joins = (#start_join * Ct(join_tuple ^ 1)) / function(joins)
+      return {
+        "join",
+        joins
+      }
+    end
+    local clause = Ct((keyword * C(clause_content)))
+    grammar = white * Ct(joins ^ -1 * clause ^ 0)
   end
   parse_clause = function(clause)
     if not (grammar) then
@@ -358,6 +326,21 @@ do
     end
   end
 end
+local encode_case
+encode_case = function(exp, t, on_else)
+  local buff = {
+    "CASE ",
+    exp
+  }
+  for k, v in pairs(t) do
+    append_all(buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v))
+  end
+  if on_else ~= nil then
+    append_all(buff, "\nELSE ", escape_literal(on_else))
+  end
+  append_all(buff, "\nEND")
+  return concat(buff)
+end
 return {
   query = query,
   raw = raw,
@@ -372,9 +355,8 @@ return {
   encode_clause = encode_clause,
   interpolate_query = interpolate_query,
   parse_clause = parse_clause,
-  set_logger = set_logger,
-  get_logger = get_logger,
   format_date = format_date,
+  encode_case = encode_case,
   set_backend = set_backend,
   select = _select,
   insert = _insert,

@@ -2,10 +2,7 @@ local db = require("lapis.db")
 local escape_literal
 escape_literal = db.escape_literal
 local concat
-do
-  local _obj_0 = table
-  concat = _obj_0.concat
-end
+concat = table.concat
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do
@@ -22,7 +19,7 @@ extract_options = function(cols)
       local _continue_0 = false
       repeat
         local col = cols[_index_0]
-        if type(col) == "table" then
+        if type(col) == "table" and col[1] ~= "raw" then
           for k, v in pairs(col) do
             options[k] = v
           end
@@ -58,10 +55,28 @@ gen_index_name = function(...)
       ...
     }
     for _index_0 = 1, #_list_0 do
-      local p = _list_0[_index_0]
-      if type(p) == "string" then
-        _accum_0[_len_0] = p
+      local _continue_0 = false
+      repeat
+        local p = _list_0[_index_0]
+        local _exp_0 = type(p)
+        if "string" == _exp_0 then
+          _accum_0[_len_0] = p
+        elseif "table" == _exp_0 then
+          if p[1] == "raw" then
+            _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
+          else
+            _continue_0 = true
+            break
+          end
+        else
+          _continue_0 = true
+          break
+        end
         _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
     parts = _accum_0
@@ -111,7 +126,11 @@ create_index = function(tname, ...)
   if options.unique then
     append_all(buffer, " UNIQUE")
   end
-  append_all(buffer, " INDEX ON " .. tostring(db.escape_identifier(tname)) .. " (")
+  append_all(buffer, " INDEX ", db.escape_identifier(index_name), " ON ", db.escape_identifier(tname))
+  if options.method then
+    append_all(buffer, " USING ", options.method)
+  end
+  append_all(buffer, " (")
   for i, col in ipairs(columns) do
     append_all(buffer, db.escape_identifier(col))
     if not (i == #columns) then
@@ -119,6 +138,9 @@ create_index = function(tname, ...)
     end
   end
   append_all(buffer, ")")
+  if options.tablespace then
+    append_all(buffer, " TABLESPACE ", options.tablespace)
+  end
   if options.where then
     append_all(buffer, " WHERE ", options.where)
   end
@@ -299,5 +321,6 @@ return {
   drop_column = drop_column,
   rename_column = rename_column,
   rename_table = rename_table,
-  entity_exists = entity_exists
+  entity_exists = entity_exists,
+  gen_index_name = gen_index_name
 }

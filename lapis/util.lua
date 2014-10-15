@@ -6,10 +6,7 @@ do
   concat, insert = _obj_0.concat, _obj_0.insert
 end
 local floor
-do
-  local _obj_0 = math
-  floor = _obj_0.floor
-end
+floor = math.floor
 local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin
 do
   local u = url.unescape
@@ -43,8 +40,10 @@ do
     local _obj_0 = require("lpeg")
     C, P, S, Ct = _obj_0.C, _obj_0.P, _obj_0.S, _obj_0.Ct
   end
-  local chunk = C((P(1) - S("=&")) ^ 1)
-  local tuple = Ct(chunk / unescape * "=" * (chunk / unescape) + chunk)
+  local char = (P(1) - S("=&"))
+  local chunk = C(char ^ 1)
+  local chunk_0 = C(char ^ 0)
+  local tuple = Ct(chunk / unescape * "=" * (chunk_0 / unescape) + chunk)
   local query = S("?#") ^ -1 * Ct(tuple * (P("&") * tuple) ^ 0)
   parse_query_string = function(str)
     do
@@ -102,12 +101,12 @@ parse_cookie_string = function(str)
   end
   local _tbl_0 = { }
   for key, value in str:gmatch("([^=%s]*)=([^;]*)") do
-    _tbl_0[key] = unescape(value)
+    _tbl_0[unescape(key)] = unescape(value)
   end
   return _tbl_0
 end
 slugify = function(str)
-  return (str:gsub("%s+", "-"):gsub("[^%w%-_]+", "")):lower()
+  return (str:gsub("[%s_]+", "-"):gsub("[^%w%-]+", ""):gsub("-+", "-")):lower()
 end
 underscore = function(str)
   local words
@@ -267,7 +266,13 @@ do
     date = require("date")
   end)
   time_ago = function(time)
-    local diff = date.diff(date(true), date(time))
+    local sooner = date(time)
+    local later = date(true)
+    local flip = false
+    if later < sooner then
+      sooner, later = later, sooner
+    end
+    local diff = date.diff(later, sooner)
     local times = { }
     local days = floor(diff:spandays())
     if days >= 365 then
@@ -315,7 +320,7 @@ do
       })
       diff:addseconds(-seconds)
     end
-    return times
+    return times, true
   end
 end
 do
@@ -326,9 +331,12 @@ do
     minutes = "minute",
     second = "second"
   }
-  time_ago_in_words = function(time, parts)
+  time_ago_in_words = function(time, parts, suffix)
     if parts == nil then
       parts = 1
+    end
+    if suffix == nil then
+      suffix = "ago"
     end
     local ago = type(time) == "table" and time or time_ago(time)
     local out = ""
@@ -347,7 +355,7 @@ do
       end
       out = out .. (val .. " " .. word)
     end
-    return out .. " ago"
+    return out .. " " .. suffix
   end
 end
 do
@@ -370,16 +378,31 @@ do
     end
     return mod
   end
-  autoload = function(prefix, t)
-    if t == nil then
+  autoload = function(...)
+    local prefixes = {
+      ...
+    }
+    local last = prefixes[#prefixes]
+    local t
+    if type(last) == "table" then
+      prefixes[#prefixes] = nil
+      t = last
+    else
       t = { }
     end
+    assert(next(prefixes), "missing prefixes for autoload")
     return setmetatable(t, {
       __index = function(self, mod_name)
         local mod
-        mod = try_require(prefix .. "." .. mod_name)
-        if not (mod) then
-          mod = try_require(prefix .. "." .. underscore(mod_name))
+        for _index_0 = 1, #prefixes do
+          local prefix = prefixes[_index_0]
+          mod = try_require(prefix .. "." .. mod_name)
+          if not (mod) then
+            mod = try_require(prefix .. "." .. underscore(mod_name))
+          end
+          if mod then
+            break
+          end
         end
         self[mod_name] = mod
         return mod

@@ -15,6 +15,15 @@ cache_key = (path, params, r) ->
   params = concat params, "-"
   path .. "#" .. params
 
+get_dict = (dict_name, ...) ->
+  switch type(dict_name)
+    when "string"
+      ngx.shared[dict_name]
+    when "function"
+      dict_name ...
+    else
+      dict_name
+
 cached = (fn_or_tbl) ->
   fn = fn_or_tbl
   exptime = 0
@@ -35,8 +44,7 @@ cached = (fn_or_tbl) ->
       return fn @
 
     key = _cache_key @req.parsed_url.path, @GET, @
-
-    dict = ngx.shared[dict_name]
+    dict = get_dict dict_name, @
 
     if cache_value = dict\get key
       ngx.header["x-memory-cache-hit"] = "1"

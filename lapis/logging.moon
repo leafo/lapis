@@ -2,6 +2,8 @@
 colors = require "ansicolors"
 import insert from table
 
+config = require("lapis.config").get!
+
 local *
 
 flatten_params_helper = (params, out = {}, sep= ", ")->
@@ -28,9 +30,14 @@ flatten_params = (params) ->
   table.concat flatten_params_helper params
 
 query = (q) ->
+  l = config.logging
+  return unless l and l.queries
   print colors("%{bright}%{cyan}SQL: %{reset}%{magenta}#{q}%{reset}")
 
 request = (r) ->
+  l = config.logging
+  return unless l and l.requests
+
   import req, res from r
 
   status = if res.statusline
@@ -62,5 +69,5 @@ migration_summary = (count) ->
 
   print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
 
-{ :request, :query, :migration, :migration_summary }
+{ :request, :query, :migration, :migration_summary, :flatten_params }
 

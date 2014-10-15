@@ -9,7 +9,8 @@ class App extends lapis.Application
 describe "application", ->
   it "should mock a request", ->
     assert.same 200, (mock_request App, "/hello")
-    assert.same 500, (mock_request App, "/world")
+    assert.has_error ->
+      mock_request App, "/world"
 
 class SessionApp extends lapis.Application
   layout: false
@@ -72,12 +73,12 @@ describe "cookies", ->
 
   class CookieApp2 extends lapis.Application
     layout: false
-    cookie_attributes: { "Domain=.leafo.net;" }
+    cookie_attributes: => "Path=/; Secure; Domain=.leafo.net;"
     "/": => @cookies.world = 34
 
   it "should write a cookie", ->
     _, _, h = mock_request CookieApp, "/"
-    assert.same "world=34; Path=/; HttpOnly", h["Set-cookie"]
+    assert.same "world=34; Path=/; HttpOnly", h["Set-Cookie"]
 
   it "should write multiple cookies", ->
     _, _, h = mock_request CookieApp, "/many"
@@ -85,12 +86,22 @@ describe "cookies", ->
     assert.same {
       'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
       'world=454545; Path=/; HttpOnly'
-    }, h["Set-cookie"]
+    }, h["Set-Cookie"]
 
   it "should write a cookie with cookie attributes", ->
     _, _, h = mock_request CookieApp2, "/"
-    assert.same "world=34; Path=/; HttpOnly; Domain=.leafo.net;", h["Set-cookie"]
+    assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
 
+  it "should set cookie attributes with lua app", ->
+    app = lapis.Application!
+    app.cookie_attributes = =>
+      "Path=/; Secure; Domain=.leafo.net;"
+
+    app\get "/", =>
+      @cookies.world = 34
+
+    _, _, h = mock_request app, "/"
+    assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
 
 describe "500 error", ->
   it "should render error page", ->
@@ -98,9 +109,8 @@ describe "500 error", ->
       "/": =>
         error "I am an error!"
 
-    status, body = mock_request ErrorApp, "/"
-    assert.same 500, status
-    assert.truthy body\match "I am an error"
+    assert.has_error ->
+      mock_request ErrorApp, "/"
 
   it "should run custom error action", ->
     class ErrorApp extends lapis.Application

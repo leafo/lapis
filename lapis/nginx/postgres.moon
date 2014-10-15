@@ -16,25 +16,24 @@
 -- }
 --
 
-
 import concat from table
 
-local raw_query, logger
+local raw_query
 
 proxy_location = "/query"
 
-set_logger = (l) -> logger = l
-get_logger = -> logger
+local logger
 
-set_logger require "lapis.logging"
-
-NULL = {}
-raw = (val) -> {"raw", tostring(val)}
-is_raw = (val) ->
-  type(val) == "table" and val[1] == "raw" and val[2]
-
-TRUE = raw"TRUE"
-FALSE = raw"FALSE"
+import type, tostring, pairs, select from _G
+import
+  FALSE
+  NULL
+  TRUE
+  build_helpers
+  format_date
+  is_raw
+  raw
+  from require "lapis.db.base"
 
 backends = {
   default: (_proxy=proxy_location) ->
@@ -55,32 +54,60 @@ backends = {
     with raw_query
       raw_query = fn
 
-  "resty.postgres": (opts) ->
-    opts.host or= "127.0.0.1"
-    opts.port or= 5432
+  pgmoon: ->
+    import after_dispatch, increment_perf from require "lapis.nginx.context"
 
-    pg = require "lapis.resty.postgres"
+    config = require("lapis.config").get!
+    pg_config = assert config.postgres, "missing postgres configuration"
+    local pgmoon_conn
 
     raw_query = (str) ->
-      logger.query str if logger
-      conn = pg\new!
-      conn\set_keepalive 0, 100
+      pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
 
-      assert conn\connect opts
-      assert conn\query str
+      unless pgmoon
+        import Postgres from require "pgmoon"
+        pgmoon = Postgres pg_config
+        assert pgmoon\connect!
+
+        if ngx
+          ngx.ctx.pgmoon = pgmoon
+          after_dispatch -> pgmoon\keepalive!
+        else
+          pgmoon_conn = pgmoon
+
+      start_time = if ngx and config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
+      logger.query str if logger
+      res, err = pgmoon\query str
+
+      if start_time
+        ngx.update_time!
+        increment_perf "db_time", ngx.now! - start_time
+        increment_perf "db_count", 1
+
+      if not res and err
+        error "#{str}\n#{err}"
+      res
 }
 
 set_backend = (name="default", ...) ->
   assert(backends[name]) ...
 
-format_date = (time) ->
-  os.date "!%Y-%m-%d %H:%M:%S", time
+init_logger = ->
+  if ngx or os.getenv "LAPIS_SHOW_QUERIES"
+    logger = require "lapis.logging"
 
-append_all = (t, ...) ->
-  for i=1, select "#", ...
-    t[#t + 1] = select i, ...
+init_db = ->
+  config = require("lapis.config").get!
+  default_backend = config.postgres and config.postgres.backend or "default"
+  set_backend default_backend
 
 escape_identifier = (ident) ->
+  if type(ident) == "table" and ident[1] == "raw"
+    return ident[2]
+
   ident = tostring ident
   '"' ..  (ident\gsub '"', '""') .. '"'
 
@@ -99,56 +126,15 @@ escape_literal = (val) ->
 
   error "don't know how to escape value: #{val}"
 
--- replace ? with values
-interpolate_query = (query, ...) ->
-  values = {...}
-  i = 0
-  (query\gsub "%?", ->
-    i += 1
-    escape_literal values[i])
+interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers escape_literal, escape_identifier
 
--- (col1, col2, col3) VALUES (val1, val2, val3)
-encode_values = (t, buffer) ->
-  have_buffer = buffer
-  buffer or= {}
-
-  tuples = [{k,v} for k,v in pairs t]
-  cols = concat [escape_identifier pair[1] for pair in *tuples], ", "
-  vals = concat [escape_literal pair[2] for pair in *tuples], ", "
-
-  append_all buffer, "(", cols, ") VALUES (", vals, ")"
-  concat buffer unless have_buffer
-
--- col1 = val1, col2 = val2, col3 = val3
-encode_assigns = (t, buffer) ->
-  join = ", "
-  have_buffer = buffer
-  buffer or= {}
-
-  for k,v in pairs t
-    append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
-
-  buffer[#buffer] = nil
-
-  concat buffer unless have_buffer
-
-encode_clause = (t, buffer)->
-  join = " AND "
-  have_buffer = buffer
-  buffer or= {}
-
-  for k,v in pairs t
-    if v == NULL
-      append_all buffer, escape_identifier(k), " IS NULL", join
-    else
-      append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
-
-  buffer[#buffer] = nil
-
-  concat buffer unless have_buffer
+append_all = (t, ...) ->
+  for i=1, select "#", ...
+    t[#t + 1] = select i, ...
 
 raw_query = (...) ->
-  set_backend "default"
+  init_logger!
+  init_db! -- sets raw query to default backend
   raw_query ...
 
 query = (str, ...) ->
@@ -227,45 +213,87 @@ _truncate = (...) ->
 
 parse_clause = do
   local grammar
-  make_grammar = ->
-    keywords = {"where", "group", "having", "order", "limit", "offset"}
-    for v in *keywords
-      keywords[v] = true
 
-    import P, R, C, S, Cmt, Ct, Cg from require "lpeg"
+  make_grammar = ->
+    basic_keywords = {"where", "having", "limit", "offset"}
+
+    import P, R, C, S, Cmt, Ct, Cg, V from require "lpeg"
 
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
     white = S" \t\r\n"^0
+    some_white = S" \t\r\n"^1
     word = alpha_num^1
 
     single_string = P"'" * (P"''" + (P(1) - P"'"))^0 * P"'"
     double_string = P'"' * (P'""' + (P(1) - P'"'))^0 * P'"'
     strings = single_string + double_string
 
-    keyword = Cmt word, (src, pos, cap) ->
-      if keywords[cap\lower!]
-        true, cap
+    -- case insensitive word
+    ci = (str) ->
+      import S from require "lpeg"
+      local p
+
+      for c in str\gmatch "."
+        char = S"#{c\lower!}#{c\upper!}"
+        p = if p
+          p * char
+        else
+          char
+      p * -alpha_num
+
+    balanced_parens = lpeg.P {
+      P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
+    }
+
+    order_by = ci"order" * some_white * ci"by" / "order"
+    group_by = ci"group" * some_white * ci"by" / "group"
+
+    keyword = order_by + group_by
+
+    for k in *basic_keywords
+      part = ci(k) / k
+      keyword += part
 
     keyword = keyword * white
+    clause_content = (balanced_parens + strings + (word + P(1) - keyword))^1
 
-    clause = Ct (keyword * C (strings + (word + P(1) - keyword))^1) / (name, val) ->
-      if name == "group" or name == "order"
-        val = val\match "^%s*by%s*(.*)$"
+    outer_join_type = (ci"left" + ci"right" + ci"full") * (white * ci"outer")^-1
+    join_type = (ci"natural" * white)^-1 * ((ci"inner" + outer_join_type) * white)^-1
+    start_join = join_type * ci"join"
 
-      name, val
+    join_body = (balanced_parens + strings + (P(1) - start_join - keyword))^1
+    join_tuple = Ct C(start_join) * C(join_body)
 
-    grammar = white * Ct clause^0
+    joins = (#start_join * Ct join_tuple^1) / (joins) -> {"join", joins}
+
+    clause = Ct (keyword * C clause_content)
+    grammar = white * Ct joins^-1 * clause^0
 
   (clause) ->
     make_grammar! unless grammar
     if out = grammar\match clause
       { unpack t for t in *out }
 
+
+encode_case = (exp, t, on_else) ->
+  buff = {
+    "CASE ", exp
+  }
+
+  for k,v in pairs t
+    append_all buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v)
+
+  if on_else != nil
+    append_all buff, "\nELSE ", escape_literal on_else
+
+  append_all buff, "\nEND"
+  concat buff
+
 {
   :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :set_logger, :get_logger, :format_date,
+  :interpolate_query, :parse_clause, :format_date, :encode_case
 
   :set_backend
 

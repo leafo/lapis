@@ -149,13 +149,18 @@ class Buffer
         handler
     }
 
-  render: (mod_name) =>
+  render: (mod_name, ...) =>
     widget = require mod_name
-    @render_widget widget!
+    @render_widget widget ...
 
   render_widget: (w) =>
+    -- instantiate widget if it's a class
+    if w.__init and w.__base
+      w = w!
+
     if current = @widget
       w\_inherit_helpers current
+
     w\render @
 
   call: (fn, ...) =>

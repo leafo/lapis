@@ -10,7 +10,9 @@ do
   insert, concat = _obj_0.insert, _obj_0.concat
 end
 local cjson = require("cjson")
-local Model, Paginator
+local OffsetPaginator
+OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
+local Model
 do
   local _base_0 = {
     _primary_cond = function(self)
@@ -92,10 +94,56 @@ do
           end
         end
       end
-      if self.__class.timestamp then
+      local nargs = select("#", ...)
+      local last = nargs > 0 and select(nargs, ...)
+      local opts
+      if type(last) == "table" then
+        opts = last
+      end
+      if self.__class.timestamp and not (opts and opts.timestamp == false) then
         values._timestamp = true
       end
       return db.update(self.__class:table_name(), values, cond)
+    end,
+    refresh = function(self, fields, ...)
+      if fields == nil then
+        fields = "*"
+      end
+      local field_names
+      if fields ~= "*" then
+        field_names = {
+          fields,
+          ...
+        }
+        fields = table.concat((function()
+          local _accum_0 = { }
+          local _len_0 = 1
+          for _index_0 = 1, #field_names do
+            local f = field_names[_index_0]
+            _accum_0[_len_0] = db.escape_identifier(f)
+            _len_0 = _len_0 + 1
+          end
+          return _accum_0
+        end)(), ", ")
+      end
+      local cond = db.encode_clause(self:_primary_cond())
+      local tbl_name = db.escape_identifier(self.__class:table_name())
+      local res = unpack(db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
+      if field_names then
+        for _index_0 = 1, #field_names do
+          local field = field_names[_index_0]
+          self[field] = res[field]
+        end
+      else
+        for k, v in pairs(self) do
+          self[k] = nil
+        end
+        for k, v in pairs(res) do
+          self[k] = v
+        end
+        self.__class:load(self)
+      end
+      return self
     end
   }
   _base_0.__index = _base_0
@@ -141,6 +189,15 @@ do
       return name
     end
     return name
+  end
+  self.columns = function(self)
+    local columns = db.query([[      select column_name, data_type
+      from information_schema.columns
+      where table_name = ?]], self:table_name())
+    self.columns = function()
+      return columns
+    end
+    return columns
   end
   self.load = function(self, tbl)
     for k, v in pairs(tbl) do
@@ -195,11 +252,11 @@ do
     return unpack(db.select(query)).c
   end
   self.include_in = function(self, other_records, foreign_key, opts)
-    if type(self.primary_key) == "table" then
-      error("model must have singular primary key to include")
-    end
     local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip
+    if not flip and type(self.primary_key) == "table" then
+      error("model must have singular primary key to include")
+    end
     local src_key = flip and "id" or foreign_key
     local include_ids
     do
@@ -246,8 +303,12 @@ do
       end
       local tbl_name = db.escape_identifier(self:table_name())
       local find_by_escaped = db.escape_identifier(find_by)
+      local query = tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")"
+      if opts and opts.where then
+        query = query .. (" and " .. db.encode_clause(opts.where))
+      end
       do
-        local res = db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")")
+        local res = db.select(query)
         if res then
           local records = { }
           for _index_0 = 1, #res do
@@ -263,6 +324,7 @@ do
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end
+          assert(field_name, "failed to infer field name, provide one with `as`")
           for _index_0 = 1, #other_records do
             local other = other_records[_index_0]
             other[field_name] = records[other[src_key]]
@@ -276,12 +338,14 @@ do
     if by_key == nil then
       by_key = self.primary_key
     end
+    local where = nil
     local fields = "*"
     if type(by_key) == "table" then
       fields = by_key.fields or fields
+      where = by_key.where
       by_key = by_key.key or self.primary_key
     end
-    if type(by_key) == "table" then
+    if type(by_key) == "table" and by_key[1] ~= "raw" then
       error("find_all must have a singular key to search")
     end
     if #ids == 0 then
@@ -299,8 +363,12 @@ do
     end)(), ", ")
     local primary = db.escape_identifier(by_key)
     local tbl_name = db.escape_identifier(self:table_name())
+    local query = fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")"
+    if where then
+      query = query .. (" and " .. db.encode_clause(where))
+    end
     do
-      local res = db.select(fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")")
+      local res = db.select(query)
       if res then
         for _index_0 = 1, #res do
           local r = res[_index_0]
@@ -331,9 +399,9 @@ do
   end
   self.create = function(self, values)
     if self.constraints then
-      for key, value in pairs(values) do
+      for key in pairs(self.constraints) do
         do
-          local err = self:_check_constraint(key, value, values)
+          local err = self:_check_constraint(key, values and values[key], values)
           if err then
             return nil, err
           end
@@ -378,67 +446,26 @@ do
     end
   end
   self.paginated = function(self, ...)
-    return Paginator(self, ...)
+    return OffsetPaginator(self, ...)
+  end
+  self.extend = function(self, table_name, tbl)
+    if tbl == nil then
+      tbl = { }
+    end
+    local lua = require("lapis.lua")
+    do
+      local cls = lua.class(table_name, tbl, self)
+      cls.table_name = function()
+        return table_name
+      end
+      cls.primary_key = tbl.primary_key
+      cls.timestamp = tbl.timestamp
+      cls.constraints = tbl.constraints
+      return cls
+    end
   end
   Model = _class_0
 end
-do
-  local _base_0 = {
-    per_page = 10,
-    get_all = function(self)
-      return self.prepare_results(self.model:select(self._clause, self.opts))
-    end,
-    get_page = function(self, page)
-      page = (math.max(1, tonumber(page) or 0)) - 1
-      return self.prepare_results(self.model:select(self._clause .. [[      limit ?
-      offset ?
-    ]], self.per_page, self.per_page * page, self.opts))
-    end,
-    num_pages = function(self)
-      return math.ceil(self:total_items() / self.per_page)
-    end,
-    total_items = function(self)
-      self._count = self._count or self.model:count(db.parse_clause(self._clause).where)
-      return self._count
-    end,
-    prepare_results = function(...)
-      return ...
-    end
-  }
-  _base_0.__index = _base_0
-  local _class_0 = setmetatable({
-    __init = function(self, model, clause, ...)
-      self.model = model
-      local param_count = select("#", ...)
-      local opts
-      if param_count > 0 then
-        local last = select(param_count, ...)
-        opts = type(last) == "table" and last
-      end
-      self.per_page = self.model.per_page
-      if opts then
-        self.per_page = opts.per_page
-      end
-      if opts and opts.prepare_results then
-        self.prepare_results = opts.prepare_results
-      end
-      self._clause = db.interpolate_query(clause, ...)
-      self.opts = opts
-    end,
-    __base = _base_0,
-    __name = "Paginator"
-  }, {
-    __index = _base_0,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  Paginator = _class_0
-end
 return {
-  Model = Model,
-  Paginator = Paginator
+  Model = Model
 }

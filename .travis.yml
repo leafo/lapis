@@ -1,0 +1,15 @@
+language: c
+
+install:
+  - sudo apt-get install luarocks
+  - mkdir -p ~/.luarocks
+  - echo 'rocks_servers = { "http://rocks.moonscript.org" }' > ~/.luarocks/config.lua
+  - sudo luarocks install https://rocks.moonscript.org/manifests/olivine-labs/busted-1.11.1-1.rockspec
+  - sudo luarocks install moonscript
+  - sudo luarocks install luacrypto
+  - sudo luarocks install luaposix
+  - sudo luarocks install https://raw.githubusercontent.com/leafo/lua-date/master/date-dev-1.rockspec
+  - sudo luarocks make
+  - ./install_luajit.sh
+
+script: busted -l ./luajit

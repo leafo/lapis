@@ -63,7 +63,7 @@ describe "lapis.etlua", ->
       code, body = assert_request EtluaApp, "/"
       assert.same [[<html data-etlua>color: blue</html>]], body
 
-    it "request helpers should work", ->
+    it "should work with request helpers", ->
       class EtluaApp extends lapis.Application
         layout: layout
         [page: "/the-page"]: =>
@@ -88,7 +88,7 @@ describe "lapis.etlua", ->
 
           div class: "etlua", ->
             widget fragment!
-      
+
       w = SomeWidget!
 
       w\include_helper {
@@ -110,7 +110,71 @@ describe "lapis.etlua", ->
 
     it "should let etlua call render helper", ->
       tpl = EtluaWidget\load [[before<% render("spec.templates.moon_test") %>after]]
+      w = tpl!
       assert.same [[before<div class="greeting">hello world</div>after]],
         tpl\render_to_string!
+
+
+    it "should pass arguments to sub widget", ->
+      outer = assert EtluaWidget\load [[hello <% widget(Inner {color = "blue" }) %>]]
+      inner = assert EtluaWidget\load [[the color is <%= color %>.]]
+
+      w = outer { Inner: inner, color: "green" }
+      out = w\render_to_string!
+      assert.same [[hello the color is blue.]], out
+
+
+    describe "with loadkit", ->
+      before_each ->
+        require "lapis.features.etlua"
+
+      after_each ->
+        loadkit = require "loadkit"
+        loadkit.unregister "etlua"
+        package.loaded["lapis.features.etlua"] = nil
+
+      it "should render template from loadkit", ->
+        tpl = EtluaWidget\load [[before<% render("spec.templates.etlua_test2") %>after<%= color %>]]
+        w = tpl color: "green"
+
+        out = w\render_to_string!
+        assert.same [[beforeThis is the color: nil.
+aftergreen]], out
+
+      it "should pass arguments to widget with render", ->
+        tpl = EtluaWidget\load [[before<% render("spec.templates.etlua_test2", { color = "blue"}) %>after]]
+        w = tpl color: "green" -- should be overwritten
+
+        out = w\render_to_string!
+        assert.same [[beforeThis is the color: blue.
+after]], out
+
+      describe "with app", ->
+        local app, tpl
+
+        lapis = require "lapis"
+        import assert_request from require "lapis.spec.request"
+
+        before_each ->
+          app = lapis.Application!
+          app\enable "etlua"
+
+          app\get "index", "/", =>
+            @color = "maroon"
+            render: tpl, layout: false
+
+        it "should work with render", ->
+          tpl = EtluaWidget\load [[hello<% render("spec.templates.etlua_test2") %>world]]
+
+          status, body = assert_request app, "/"
+          assert.same [[helloThis is the color: maroon.
+world]], body
+
+        it "should work with app helper in sub-template", ->
+          tpl = EtluaWidget\load [[hello<% render("spec.templates.etlua_app_helper") %>world]]
+
+          status, body = assert_request app, "/"
+          assert.same [[helloIndex url: /
+world]], body
 
 

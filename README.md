@@ -2,6 +2,8 @@
 
 A web framework for Lua/[MoonScript][1].
 
+[![Build Status](https://travis-ci.org/leafo/lapis.svg?branch=master)](https://travis-ci.org/leafo/lapis)
+
 ### <http://leafo.net/lapis/>
 
 ## Lapis Powered
@@ -14,7 +16,7 @@ A web framework for Lua/[MoonScript][1].
 Requires [Busted][2] and [MoonScript][1].
 
 ```bash
-make test
+busted
 ```
 
 ## License (MIT)

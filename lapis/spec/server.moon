@@ -5,35 +5,37 @@ import normalize_headers from require "lapis.spec.request"
 ltn12 = require "ltn12"
 json = require "cjson"
 
-server_loaded = 0
 current_server = nil
 
 load_test_server = ->
-  server_loaded += 1
-  return unless server_loaded == 1
-
   import attach_server from require "lapis.cmd.nginx"
   import get_free_port from require "lapis.cmd.util"
 
-  port = get_free_port!
-  current_server = attach_server TEST_ENV, { :port }
-  current_server.app_port = port
+  app_port = get_free_port!
+
+  current_server = attach_server TEST_ENV, { port: app_port }
+  current_server.app_port = app_port
   current_server
 
--- TODO: if _TEST (inside of busted) keep the server running?
 close_test_server = ->
-  server_loaded -= 1
-  return unless server_loaded == 0
-  current_server\detach!
+  import detach_server from require "lapis.cmd.nginx"
+  detach_server!
+
   current_server = nil
+
+get_current_server = ->
+  current_server
 
 -- hits the server in test environment
 request = (path="", opts={}) ->
-  error "The test server is not loaded!" unless server_loaded > 0
+  unless current_server
+    error "The test server is not loaded! (did you forget to load_test_server?)"
+
   http = require "socket.http"
 
   headers = {}
   method = opts.method
+  port = opts.port or current_server.app_port
 
   source = if data = opts.post or opts.data
     method or= "POST" if opts.post
@@ -51,6 +53,8 @@ request = (path="", opts={}) ->
   if url_host
     headers.Host = url_host
     path = url_path
+    if override_port = url_host\match ":(%d+)$"
+      port = override_port
 
   path = path\gsub "^/", ""
 
@@ -60,7 +64,7 @@ request = (path="", opts={}) ->
 
   buffer = {}
   res, status, headers = http.request {
-    url: "http://127.0.0.1:#{current_server.app_port}/#{path}"
+    url: "http://127.0.0.1:#{port}/#{path}"
     redirect: false
     sink: ltn12.sink.table buffer
     :headers, :method, :source
@@ -69,16 +73,23 @@ request = (path="", opts={}) ->
   assert res, status
   body = table.concat buffer
 
+  headers = normalize_headers headers
+  if headers.x_lapis_error
+    json = require "cjson"
+    {:status, :err, :trace} = json.decode body
+    error "\n#{status}\n#{err}\n#{trace}"
+
   if opts.expect == "json"
     json = require "cjson"
     unless pcall -> body = json.decode body
       error "expected to get json from #{path}"
 
-  status, body, normalize_headers(headers)
+  status, body, headers
 
 {
   :load_test_server
   :close_test_server
+  :get_current_server
   :request
   :run_on_server
 }
