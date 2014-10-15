@@ -150,7 +150,68 @@ class Model
           other[field_name] = records[other[src_key]]
 
     other_records
+    
+  @select_all: (conditions) =>
+    fields = ""
+    query = ""
+    where = conditions.where
+    group_by = conditions.group_by
+    order_by = conditions.order_by
 
+    flat_group_by = concat [db.escape_literal cond for cond in *group_by], ", "
+    if where
+      where_query = ""
+      where_count = 0
+      if where.in
+        for key, tbl_value in pairs where.in
+          values = concat [db.escape_literal value for value in *tbl_value], ", "
+          if values ~= "" then 
+            if where_count > 0 then where_query ..= " AND"
+            where_query ..= " #{key} in (#{values})"
+            where_count += 1
+      if where.range
+        condition = ""
+        is_second = false
+        for key, tbl_value in pairs where.range
+            if where_count > 0 then condition ..= " AND "
+            condition ..= "("
+            for i in *tbl_value do
+              if i.begin and i.end
+                if is_second
+                  condition ..= " OR "
+                is_second = true
+                condition ..= "#{db.escape_identifier key} BETWEEN " .. db.escape_literal(i.begin) .. " AND " .. db.escape_literal(i.end)
+            condition ..= ")"
+            is_second = false
+        where_query ..= condition
+      if where_query ~= "" then where_query = " WHERE" .. where_query
+      query ..= where_query
+    if group_by
+      values = concat [db.escape_identifier value for value in *group_by], ", "
+      query ..= " GROUP BY #{values}"
+    if conditions.order_by
+      values = concat [db.escape_identifier(column) .. " " .. order for column, order in pairs(conditions.order_by)], ", "
+      query ..= " ORDER BY #{values}"
+    if conditions.limit
+      query ..= " LIMIT " .. tonumber conditions.limit
+    if conditions.offset
+      query ..= " OFFSET " .. tonumber conditions.offset
+    if conditions.fields
+      for func, field in pairs conditions.fields
+        if fields ~= "" then fields ..= ", "
+        fields ..= switch func
+          when "single"
+            concat [db.escape_identifier value for value in *field], ", "
+          when "text"
+            field
+          else
+            concat ["#{func}(" .. db.escape_identifier(value) .. ") as " .. db.escape_identifier(value) for value in *field], ", "
+    tbl_name = db.escape_identifier @table_name!
+    query = fields .. " FROM #{tbl_name}" .. query
+    if res = db.select query
+      @load r for r in *res
+      res
+  
   @find_all: (ids, by_key=@primary_key) =>
     where = nil
     fields = "*"
