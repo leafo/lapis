@@ -122,14 +122,20 @@ describe "lapis.db.model", ->
 
     p2\get_page 3
 
-    -- TODO: make clause optional
     p3 = Things\paginated "", fields: "hello, world", per_page: 12
     p3\get_page 2
 
-    p4 = Things\paginated [[order by BLAH]]
-    iter = p4\each_page!
+    p4 = Things\paginated fields: "hello, world", per_page: 12
+    p4\get_page 2
+
+    p5 = Things\paginated [[order by BLAH]]
+    iter = p5\each_page!
     iter!
     iter!
+
+    p6 = Things\paginated [[join whales on color = blue order by BLAH]]
+    p6\total_items!
+    p6\get_page 2
 
     assert_queries {
       'SELECT * from "things" where group_id = 123 order by name asc'
@@ -138,8 +144,26 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 30 '
       'SELECT * from "things" order by name asc limit 25 offset 50 '
       'SELECT hello, world from "things" limit 12 offset 12 '
+      'SELECT hello, world from "things" limit 12 offset 12 '
       'SELECT * from "things" order by BLAH limit 10 offset 0 '
       'SELECT * from "things" order by BLAH limit 10 offset 10 '
+      'SELECT COUNT(*) as c from "things" join whales on color = blue '
+      'SELECT * from "things" join whales on color = blue order by BLAH limit 10 offset 10 '
+    }, queries
+
+
+  it "should ordered paginate", ->
+    import OrderedPaginator from require "lapis.db.pagination"
+    class Things extends Model
+
+    pager = OrderedPaginator Things, "id", "where color = blue"
+    res, np = pager\get_page!
+
+    res, np = pager\get_page 123
+
+    assert_queries {
+      'SELECT * from "things" where color = blue order by "id" ASC limit 10'
+      'SELECT * from "things" where "id" > 123 and (color = blue) order by "id" ASC limit 10'
     }, queries
 
   it "should create model", ->
@@ -182,6 +206,46 @@ describe "lapis.db.model", ->
     }, queries
 
 
+  it "should refresh model", ->
+    class Things extends Model
+    query_mock['SELECT'] = { { id: 123 } }
+
+    instance = Things\load { id: 123 }
+    instance\refresh!
+    assert.same { id: 123 }, instance
+
+    instance\refresh "hello"
+    assert.same { id: 123 }, instance
+
+    instance\refresh "foo", "bar"
+    assert.same { id: 123 }, instance
+
+    assert_queries {
+      'SELECT * from "things" where "id" = 123'
+      'SELECT "hello" from "things" where "id" = 123'
+      'SELECT "foo", "bar" from "things" where "id" = 123'
+    }, queries
+
+
+  it "should refresh model with composite primary key", ->
+    class Things extends Model
+      @primary_key: {"a", "b"}
+
+    query_mock['SELECT'] = { { a: "hello", b: false } }
+    instance = Things\load { a: "hello", b: false }
+    instance\refresh!
+
+    assert.same { a: "hello", b: false }, instance
+
+    instance\refresh "hello"
+    assert.same { a: "hello", b: false }, instance
+
+    assert_queries {
+      [[SELECT * from "things" where "a" = 'hello' AND "b" = FALSE]]
+      [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
+    }, queries
+
+
   it "should update model", ->
     class Things extends Model
 
@@ -203,6 +267,10 @@ describe "lapis.db.model", ->
     -- thing3\update "what" -- should error set to null
     thing3\update great: true -- need a way to stub date before testing
 
+    thing3.hello = "world"
+    thing3\update "hello", timestamp: false
+    thing3\update { cat: "dog" }, timestamp: false
+
     assert_queries {
       {
         [[UPDATE "things" SET "height" = 100, "color" = 'green' WHERE "id" = 12]]
@@ -216,6 +284,8 @@ describe "lapis.db.model", ->
         [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "b" = 3 AND "a" = 2]]
         [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "b" = 3 AND "a" = 2]]
       }
+      [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
+      [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
     }, queries
 
   it "should delete model", ->

@@ -5,6 +5,7 @@ import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
 
 cjson = require "cjson"
+import OffsetPaginator from require "lapis.db.pagination"
 
 local *
 
@@ -225,7 +226,7 @@ class Model
       fn @, value, key, obj
 
   @paginated: (...) =>
-    Paginator @, ...
+    OffsetPaginator @, ...
 
   -- alternative to MoonScript inheritance
   @extend: (table_name, tbl={}) =>
@@ -277,55 +278,42 @@ class Model
         if err = @@_check_constraint key, value, @
           return nil, err
 
-    values._timestamp = true if @@timestamp
+    -- update options
+    nargs = select "#", ...
+    last = nargs > 0 and select nargs, ...
+
+    opts = if type(last) == "table" then last
+
+    if @@timestamp and not (opts and opts.timestamp == false)
+      values._timestamp = true
+
     db.update @@table_name!, values, cond
 
-class Paginator
-  per_page: 10
+  -- reload fields on the instance
+  refresh: (fields="*", ...) =>
+    local field_names
 
-  new: (@model, clause, ...) =>
-    param_count = select "#", ...
+    if fields != "*"
+      field_names = {fields, ...}
+      fields = table.concat [db.escape_identifier f for f in *field_names], ", "
 
-    opts = if param_count > 0
-      last = select param_count, ...
-      type(last) == "table" and last
+    cond = db.encode_clause @_primary_cond!
+    tbl_name = db.escape_identifier @@table_name!
+    res = unpack db.select "#{fields} from #{tbl_name} where #{cond}"
 
-    @per_page = @model.per_page
-    @per_page = opts.per_page if opts
-    @prepare_results = opts.prepare_results if opts and opts.prepare_results
+    if field_names
+      for field in *field_names
+        @[field] = res[field]
+    else
+      for k,v in pairs @
+        @[k] = nil
 
-    @_clause = db.interpolate_query clause, ...
-    @opts = opts
+      for k,v in pairs res
+        @[k] = v
 
-  each_page: (starting_page=1)=>
-    coroutine.wrap ->
-      page = starting_page
-      while true
-        results = @get_page page
-        break unless next results
-        coroutine.yield results, page
-        page += 1
+      @@load @
 
+    @
 
-  get_all: =>
-    @.prepare_results @model\select @_clause, @opts
-
-  -- 1 indexed page
-  get_page: (page) =>
-    page = (math.max 1, tonumber(page) or 0) - 1
-    @.prepare_results @model\select @_clause .. [[
-      limit ?
-      offset ?
-    ]], @per_page, @per_page * page, @opts
-
-  num_pages: =>
-    math.ceil @total_items! / @per_page
-
-  total_items: =>
-    @_count or= @model\count db.parse_clause(@_clause).where
-    @_count
-
-  prepare_results: (...) -> ...
-
-{ :Model, :Paginator }
+{ :Model }
 

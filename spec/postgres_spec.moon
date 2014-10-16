@@ -253,6 +253,64 @@ tests = {
   }
 
   {
+    -> db.parse_clause "where not exists(select 1 from things limit 100)"
+    {
+      where: "not exists(select 1 from things limit 100)"
+    }
+  }
+
+  {
+    -> db.parse_clause "order by color asc"
+    {
+      order: "color asc"
+    }
+  }
+
+  {
+    -> db.parse_clause "ORDER BY color asc"
+    {
+      order: "color asc"
+    }
+  }
+
+  {
+    -> db.parse_clause "group BY height"
+    {
+      group: "height"
+    }
+  }
+
+  {
+    -> db.parse_clause "where x = limitx 100"
+    {
+      where: "x = limitx 100"
+    }
+  }
+
+  {
+    -> db.parse_clause "join dads on color = blue where hello limit 10"
+    {
+      limit: "10"
+      where: "hello "
+      join: {
+        {"join", " dads on color = blue "}
+      }
+    }
+  }
+
+  {
+    -> db.parse_clause "inner join dads on color = blue left outer join hello world where foo"
+    {
+      where: "foo"
+      join: {
+        {"inner join", " dads on color = blue "}
+        {"left outer join", " hello world "}
+      }
+    }
+  }
+
+
+  {
     -> schema.gen_index_name "hello", "world"
     "hello_world_idx"
   }
@@ -260,6 +318,34 @@ tests = {
   {
     -> schema.gen_index_name "yes", "please", db.raw "upper(dad)"
     "yes_please_upper_dad_idx"
+  }
+
+  {
+    -> db.encode_case("x", { a: "b" })
+    [[CASE x
+WHEN 'a' THEN 'b'
+END]]
+  }
+
+  {
+    -> db.encode_case("x", { a: "b", foo: true })
+    [[CASE x
+WHEN 'a' THEN 'b'
+WHEN 'foo' THEN TRUE
+END]]
+    [[CASE x
+WHEN 'foo' THEN TRUE
+WHEN 'a' THEN 'b'
+END]]
+  }
+
+
+  {
+    -> db.encode_case("x", { a: "b" }, false)
+    [[CASE x
+WHEN 'a' THEN 'b'
+ELSE FALSE
+END]]
   }
 }
 

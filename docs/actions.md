@@ -12,7 +12,7 @@ All actions are called with one argument, a [*request
 object*](#request-object).
 
 The return value of the action is used to render the output. A string return
-value string will be rendered to the browser directly. A table return value
+value will be rendered to the browser directly. A table return value
 will be used as the [*request options*](#request-options).
 
 If there is no route that matches the request then the default route handler is
@@ -105,10 +105,10 @@ The request object has the following parameters:
 
 The raw request table <span class="for_lua">`@req`</span><span class="for_lua">`self.req`</span> wraps some of the data provided from `ngx`. Here is a list of the available properties.
 
-* <span class="for_moon">`@req.headers`</span><span class="for_lua">`self.headers`</span> -- Request headers table
-* <span class="for_moon">`@req.parsed_url`</span><span class="for_lua">`self.parsed_url`</span> -- Request parsed url. A table containing `scheme`, `path`, `host`, `port`, and `query` properties.
-* <span class="for_moon">`@req.params_post`</span><span class="for_lua">`self.params_post`</span> -- Request POST parameters table
-* <span class="for_moon">`@req.params_get`</span><span class="for_lua">`self.params_get`</span> -- Request GET parameters table
+* <span class="for_moon">`@req.headers`</span><span class="for_lua">`self.req.headers`</span> -- Request headers table
+* <span class="for_moon">`@req.parsed_url`</span><span class="for_lua">`self.req.parsed_url`</span> -- Request parsed url. A table containing `scheme`, `path`, `host`, `port`, and `query` properties.
+* <span class="for_moon">`@req.params_post`</span><span class="for_lua">`self.req.params_post`</span> -- Request POST parameters table
+* <span class="for_moon">`@req.params_get`</span><span class="for_lua">`self.req.params_get`</span> -- Request GET parameters table
 
 
 ### Cookies
@@ -134,7 +134,7 @@ end)
 ```
 
 The existing cookies are stored in the `__index` of the metatable. This is done
-so we can when tell what cookies have been assigned to during the action
+so we can tell what cookies have been assigned to during the action
 because they will be directly in the <span
 class="for_moon">`@cookies`</span><span class="for_lua">`self.cookies`</span>
 table.
@@ -188,8 +188,8 @@ The `cookie_attributes` method takes the request object as the first argument
 The <span class="for_moon">`@session`</span><span
 class="for_lua">`self.session`</span> is a more advanced way to persist data
 over requests. The content of the session is serialized to JSON and stored in
-store in a specially named cookie. The serialized cookie is also signed with
-you application secret so it can't be tampered with. Because it's serialized
+a specially named cookie. The serialized cookie is also signed with
+your application secret so it can't be tampered with. Because it's serialized
 with JSON you can store nested tables and other primitive values.
 
 The session can be set and read the same way as cookies:
@@ -237,7 +237,7 @@ config "development", ->
 
 ###  `write(things...)`
 
-Writes all of the arguments. A different actions is done depending on the type
+Writes all of the arguments. A different action is done depending on the type
 of each argument.
 
 * `string` -- String is appended to output buffer
@@ -379,7 +379,7 @@ class extends lapis.Application
 
 ## Application Callbacks
 
-Application callbacks are special methods that can be overridden in a
+Application callbacks are special methods that can be overridden in an
 application that get called when certain kinds of requests needs to be handled.
 Although they are functions stored on the application, they are called as if
 they were regular actions, this means that the first argument to the function

@@ -193,9 +193,25 @@ tests = {
   }
 
   {
+    -> util.slugify "whhaa  $%#$  hooo"
+    "whhaa-hooo"
+  }
+
+  {
     -> util.slugify "what-about-now"
     "what-about-now"
   }
+
+  {
+    -> util.slugify "hello - me"
+    "hello-me"
+  }
+
+  {
+    -> util.slugify "cow _ dogs"
+    "cow-dogs"
+  }
+
 
   {
     -> util.uniquify { "hello", "hello", "world", "another", "world" }
@@ -273,7 +289,7 @@ tests = {
 
 }
 
-describe "lapis.nginx.postgres", ->
+describe "lapis.util", ->
   for group in *tests
     it "should match", ->
       input = group[1]!
@@ -286,7 +302,7 @@ describe "lapis.nginx.postgres", ->
     package.loaded["things.hello_world"] = "yeah"
     package.loaded["things.cool_thing"] = "cool"
 
-    mod = util.autoload "things", {}
+    mod = util.autoload "things"
     assert.equal "yeah", mod.HelloWorld
     assert.equal "cool", mod.cool_thing
 
@@ -294,6 +310,28 @@ describe "lapis.nginx.postgres", ->
     assert.equal nil, mod.not_here
 
     assert.equal "cool", mod.cool_thing
+
+  it "should autoload with starting table", ->
+    package.loaded["things.hello_world"] = "yeah"
+    package.loaded["things.cool_thing"] = "cool"
+
+    mod = util.autoload "things", { dad: "world" }
+
+    assert.equal "yeah", mod.HelloWorld
+    assert.equal "cool", mod.cool_thing
+    assert.equal "world", mod.dad
+
+  it "should autoload with multiple prefixes", ->
+    package.loaded["things.hello_world"] = "yeah"
+    package.loaded["things.cool_thing"] = "cool"
+    package.loaded["wings.cool_thing"] = "very cool"
+    package.loaded["wings.hats"] = "off to you"
+
+    mod = util.autoload "wings", "things"
+    assert.equal "off to you", mod.hats
+    assert.equal "very cool", mod.CoolThing
+    assert.equal "yeah", mod.hello_world
+    assert.equal "yeah", mod.HelloWorld
 
 describe "lapis.util.mixin", ->
   it "should mixin mixins", ->

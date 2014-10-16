@@ -10,7 +10,7 @@ drivers, you just won't have access to Lapis' query API.
 Every query is performed asynchronously through the [OpenResty cosocket
 API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp). A request will yield
 and resume automatically so there's no need to code with callbacks, queries can
-be written sequentially if they were in a synchronous environment. Additionally
+be written sequentially as if they were in a synchronous environment. Additionally
 connections to the server are automatically pooled for optimal performance.
 
 [*pgmoon*](https://github.com/leafo/pgmoon) is the driver used in Lapis for
@@ -301,7 +301,7 @@ DELETE FROM "cats" WHERE name = 'Gato'
 
 ### `raw(str)`
 
-Returns a special value that will be inserted verbatim into query without being
+Returns a special value that will be inserted verbatim into the query without being
 escaped:
 
 ```lua
@@ -384,7 +384,7 @@ db.update "the_table", {
 
 ## Models
 
-Lapis provides a `Model` baseclass for making Lua tables that can be
+Lapis provides a `Model` base class for making Lua tables that can be
 synchronized with a database row. The class is used to represent a single
 database table, an instance of the class is used to represent a single row of
 that table.
@@ -426,7 +426,6 @@ class Users extends Model
   @table_name: => "active_users"
 ```
 
-
 ### Primary Keys
 
 By default all models have the primary key "id". This can be changed by setting
@@ -445,7 +444,7 @@ class Users extends Model
   @primary_key: "login"
 ```
 
-If there are multiple primary keys then a array table can be used:
+If there are multiple primary keys then an array table can be used:
 
 ```lua
 local Followings = Model:extend("followings", {
@@ -541,7 +540,7 @@ SELECT * from "tags" where tag = 'merchant'
 
 Instead of a single instance, an array table of instances is returned.
 
-If you want to restrict what columns are selected you can pass in a table as
+If you want to restrict which columns are selected you can pass in a table as
 the last argument with the `fields` key set:
 
 ```lua
@@ -591,7 +590,7 @@ SELECT * from "UserProfile" where "user_id" in (1, 2, 3, 4, 5)
 The second argument can also be a table of options. The following properties
 are supported:
 
-* `key` -- Specify the column name to find by, same effect as passing in string as second argument
+* `key` -- Specify the column name to find by, same effect as passing in a string as the second argument
 * `fields` -- Comma separated list of column names to fetch instead of the default `*`
 * `where` -- A table of additional `where` clauses for the query
 
@@ -677,7 +676,7 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 
 Alternatively we can pass a table as the first argument of `update`. The keys
 of the table are the column names, and the values are the values to update the
-columns too. The instance is also updated. We can rewrite the above example as:
+columns with. The instance is also updated. We can rewrite the above example as:
 
 ```lua
 local user = Users:find(1)
@@ -722,7 +721,7 @@ DELETE FROM "users" WHERE "id" = 1
 
 ### Timestamps
 
-Because it's common to store creation and update time models have
+Because it's common to store creation and update times, models have
 support for managing these columns automatically.
 
 When creating your table make sure your table has the following columns:
@@ -737,7 +736,7 @@ CREATE TABLE ... (
 ```
 
 Then define your model with the <span class="for_moon">`@timestamp` class
-variable</span><span class="for_moon">`timestamp` property</span> set to
+variable</span><span class="for_lua">`timestamp` property</span> set to
 true:
 
 ```lua
@@ -754,6 +753,42 @@ class Users extends Model
 Whenever `create` and `update` are called the appropriate timestamp column will
 also be set.
 
+You can disable the timestamp from being updated on an `update` by passing a
+final table argument setting <span class="for_moon">`timestamp:
+false`</span><span class="for_lua">`timestamp = false`</span>:
+
+
+```lua
+local Users = Model:extend("users", {
+  timestamp = true
+})
+
+local user = Users:find(1)
+
+-- first form
+user:update({ name = "hello world" }, { timestamp = false })
+
+
+-- second form
+user.name = "hello world"
+user.age = 123
+user:update("name", "age", { timestamp = false})
+```
+
+```moon
+class Users extends Model
+  @timestamp: true
+
+user = Users\find 1
+
+-- first form
+user\update { name: "hello world" }, { timestamp: false }
+
+-- second form
+user.name = "hello world"
+user.age = 123
+user\update "name", "age", timestamp: false
+```
 
 ### Preloading Associations
 
@@ -785,7 +820,7 @@ class Posts extends Model
 
 Given all the posts, we want to find the user for each post. We use the
 `include_in` class method to include instances of that model in the array of
-models instances passed to it.
+model instances passed to it.
 
 ```lua
 local posts = Posts:select() -- this gets all the posts
@@ -813,7 +848,7 @@ table of model instances. The second argument is the column name of the foreign
 key found in the array of model instances that maps to the primary key of the
 class calling the `include_in`.
 
-The name of the inserted property is derived form the name of the foreign key.
+The name of the inserted property is derived from the name of the foreign key.
 In this case, `user` was derived from the foreign key `user_id`. If we want to
 manually specify the name we can do something like this:
 
@@ -1133,6 +1168,46 @@ SELECT column_name, data_type
   FROM information_schema.columns WHERE table_name = 'posts'
 ```
 
+### Refreshing a Model Instance
+
+If your model instance becomes out of date from an external change, it can tell
+it to re-fetch and re-populate it's data using the `refresh` method.
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh!
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh()
+```
+
+```sql
+SELECT * from "posts" where id = 1
+```
+
+By default all fields are refreshed. If you only want to refresh specific fields
+then pass them in as arguments:
+
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh "color", "height"
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh("color", "height")
+```
+
+```sql
+SELECT "color", "height" from "posts" where id = 1
+```
 
 ## Database Schemas
 
@@ -1147,7 +1222,7 @@ The first argument to `create_table` is the name of the table and the second
 argument is an array table that describes the table.
 
 ```lua
-local schema = require("lapis.schema")
+local schema = require("lapis.db.schema")
 
 local types = schema.types
 
@@ -1190,7 +1265,7 @@ string. When the value is a table it is treated as a column/type tuple:
 They are both plain strings. The column name will be escaped automatically.
 The column type will be inserted verbatim after it is passed through
 `tostring`. `schema.types` has a collection of common types that can be used.
-For example, `schema.types.varchar` is evaluates to `character varying(255) NOT
+For example, `schema.types.varchar` evaluates to `character varying(255) NOT
 NULL`. See more about types below.
 
 If the value to the second argument is a string then it is inserted directly

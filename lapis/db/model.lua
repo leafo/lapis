@@ -10,7 +10,9 @@ do
   insert, concat = _obj_0.insert, _obj_0.concat
 end
 local cjson = require("cjson")
-local Model, Paginator
+local OffsetPaginator
+OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
+local Model
 do
   local _base_0 = {
     _primary_cond = function(self)
@@ -92,10 +94,56 @@ do
           end
         end
       end
-      if self.__class.timestamp then
+      local nargs = select("#", ...)
+      local last = nargs > 0 and select(nargs, ...)
+      local opts
+      if type(last) == "table" then
+        opts = last
+      end
+      if self.__class.timestamp and not (opts and opts.timestamp == false) then
         values._timestamp = true
       end
       return db.update(self.__class:table_name(), values, cond)
+    end,
+    refresh = function(self, fields, ...)
+      if fields == nil then
+        fields = "*"
+      end
+      local field_names
+      if fields ~= "*" then
+        field_names = {
+          fields,
+          ...
+        }
+        fields = table.concat((function()
+          local _accum_0 = { }
+          local _len_0 = 1
+          for _index_0 = 1, #field_names do
+            local f = field_names[_index_0]
+            _accum_0[_len_0] = db.escape_identifier(f)
+            _len_0 = _len_0 + 1
+          end
+          return _accum_0
+        end)(), ", ")
+      end
+      local cond = db.encode_clause(self:_primary_cond())
+      local tbl_name = db.escape_identifier(self.__class:table_name())
+      local res = unpack(db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
+      if field_names then
+        for _index_0 = 1, #field_names do
+          local field = field_names[_index_0]
+          self[field] = res[field]
+        end
+      else
+        for k, v in pairs(self) do
+          self[k] = nil
+        end
+        for k, v in pairs(res) do
+          self[k] = v
+        end
+        self.__class:load(self)
+      end
+      return self
     end
   }
   _base_0.__index = _base_0
@@ -398,7 +446,7 @@ do
     end
   end
   self.paginated = function(self, ...)
-    return Paginator(self, ...)
+    return OffsetPaginator(self, ...)
   end
   self.extend = function(self, table_name, tbl)
     if tbl == nil then
@@ -418,79 +466,6 @@ do
   end
   Model = _class_0
 end
-do
-  local _base_0 = {
-    per_page = 10,
-    each_page = function(self, starting_page)
-      if starting_page == nil then
-        starting_page = 1
-      end
-      return coroutine.wrap(function()
-        local page = starting_page
-        while true do
-          local results = self:get_page(page)
-          if not (next(results)) then
-            break
-          end
-          coroutine.yield(results, page)
-          page = page + 1
-        end
-      end)
-    end,
-    get_all = function(self)
-      return self.prepare_results(self.model:select(self._clause, self.opts))
-    end,
-    get_page = function(self, page)
-      page = (math.max(1, tonumber(page) or 0)) - 1
-      return self.prepare_results(self.model:select(self._clause .. [[      limit ?
-      offset ?
-    ]], self.per_page, self.per_page * page, self.opts))
-    end,
-    num_pages = function(self)
-      return math.ceil(self:total_items() / self.per_page)
-    end,
-    total_items = function(self)
-      self._count = self._count or self.model:count(db.parse_clause(self._clause).where)
-      return self._count
-    end,
-    prepare_results = function(...)
-      return ...
-    end
-  }
-  _base_0.__index = _base_0
-  local _class_0 = setmetatable({
-    __init = function(self, model, clause, ...)
-      self.model = model
-      local param_count = select("#", ...)
-      local opts
-      if param_count > 0 then
-        local last = select(param_count, ...)
-        opts = type(last) == "table" and last
-      end
-      self.per_page = self.model.per_page
-      if opts then
-        self.per_page = opts.per_page
-      end
-      if opts and opts.prepare_results then
-        self.prepare_results = opts.prepare_results
-      end
-      self._clause = db.interpolate_query(clause, ...)
-      self.opts = opts
-    end,
-    __base = _base_0,
-    __name = "Paginator"
-  }, {
-    __index = _base_0,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  Paginator = _class_0
-end
 return {
-  Model = Model,
-  Paginator = Paginator
+  Model = Model
 }

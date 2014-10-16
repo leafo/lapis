@@ -181,7 +181,7 @@ for configuring Lapis and supporting libraries. Here is a list of them:
 ## Configuring Logging
 
 The `logging` configuration key can be used to disable the various logging that
-Lapis does by default. The default value of the loging configuration is:
+Lapis does by default. The default value of the logging configuration is:
 
 ```lua
 {
@@ -198,15 +198,17 @@ Lapis does by default. The default value of the loging configuration is:
 ```
 
 All logging is done to Nginx's notice log using the `print` function provided
-by OpenResty. If running the server in the foreground then the logs will be
-printed to the console. If running in the
+by OpenResty. The default notice logging location is set to `stderr`, specified
+in the default Lapis Nginx configuration. It can configured using the
+[`error_log`
+directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
 
 ## Performance Measurement
 
-Lapis can collection timings and counts for various actions if the
-`measure_performance` configuratin value is set to true.
+Lapis can collect timings and counts for various actions if the
+`measure_performance` configuration value is set to true.
 
-The data is stored in `ngx.ctx.performance`. The following fiels are collected
+The data is stored in `ngx.ctx.performance`. The following fields are collected
 in a table:
 
 * `view_time` -- Time in seconds spent rendering view
@@ -217,7 +219,7 @@ in a table:
 * `http_count` -- The number of HTTP requests sent
 
 A field will be `nil` if no corresponding action was done in the request. The
-fields are filled out over the course the requesst so it's best to only access
+fields are filled out over the course of the request so it's best to only access
 them at the very end of the request to ensure all the data is available. The
 `after_dispatch` helper can be used to register a function to run at the very
 end of processing a request.

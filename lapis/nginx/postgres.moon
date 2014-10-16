@@ -25,7 +25,15 @@ proxy_location = "/query"
 local logger
 
 import type, tostring, pairs, select from _G
-import NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers from require "lapis.db.base"
+import
+  FALSE
+  NULL
+  TRUE
+  build_helpers
+  format_date
+  is_raw
+  raw
+  from require "lapis.db.base"
 
 backends = {
   default: (_proxy=proxy_location) ->
@@ -205,45 +213,87 @@ _truncate = (...) ->
 
 parse_clause = do
   local grammar
-  make_grammar = ->
-    keywords = {"where", "group", "having", "order", "limit", "offset"}
-    for v in *keywords
-      keywords[v] = true
 
-    import P, R, C, S, Cmt, Ct, Cg from require "lpeg"
+  make_grammar = ->
+    basic_keywords = {"where", "having", "limit", "offset"}
+
+    import P, R, C, S, Cmt, Ct, Cg, V from require "lpeg"
 
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
     white = S" \t\r\n"^0
+    some_white = S" \t\r\n"^1
     word = alpha_num^1
 
     single_string = P"'" * (P"''" + (P(1) - P"'"))^0 * P"'"
     double_string = P'"' * (P'""' + (P(1) - P'"'))^0 * P'"'
     strings = single_string + double_string
 
-    keyword = Cmt word, (src, pos, cap) ->
-      if keywords[cap\lower!]
-        true, cap
+    -- case insensitive word
+    ci = (str) ->
+      import S from require "lpeg"
+      local p
+
+      for c in str\gmatch "."
+        char = S"#{c\lower!}#{c\upper!}"
+        p = if p
+          p * char
+        else
+          char
+      p * -alpha_num
+
+    balanced_parens = lpeg.P {
+      P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
+    }
+
+    order_by = ci"order" * some_white * ci"by" / "order"
+    group_by = ci"group" * some_white * ci"by" / "group"
+
+    keyword = order_by + group_by
+
+    for k in *basic_keywords
+      part = ci(k) / k
+      keyword += part
 
     keyword = keyword * white
+    clause_content = (balanced_parens + strings + (word + P(1) - keyword))^1
 
-    clause = Ct (keyword * C (strings + (word + P(1) - keyword))^1) / (name, val) ->
-      if name == "group" or name == "order"
-        val = val\match "^%s*by%s*(.*)$"
+    outer_join_type = (ci"left" + ci"right" + ci"full") * (white * ci"outer")^-1
+    join_type = (ci"natural" * white)^-1 * ((ci"inner" + outer_join_type) * white)^-1
+    start_join = join_type * ci"join"
 
-      name, val
+    join_body = (balanced_parens + strings + (P(1) - start_join - keyword))^1
+    join_tuple = Ct C(start_join) * C(join_body)
 
-    grammar = white * Ct clause^0
+    joins = (#start_join * Ct join_tuple^1) / (joins) -> {"join", joins}
+
+    clause = Ct (keyword * C clause_content)
+    grammar = white * Ct joins^-1 * clause^0
 
   (clause) ->
     make_grammar! unless grammar
     if out = grammar\match clause
       { unpack t for t in *out }
 
+
+encode_case = (exp, t, on_else) ->
+  buff = {
+    "CASE ", exp
+  }
+
+  for k,v in pairs t
+    append_all buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v)
+
+  if on_else != nil
+    append_all buff, "\nELSE ", escape_literal on_else
+
+  append_all buff, "\nEND"
+  concat buff
+
 {
   :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :format_date,
+  :interpolate_query, :parse_clause, :format_date, :encode_case
 
   :set_backend
 

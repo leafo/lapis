@@ -117,7 +117,7 @@ Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 
 ###  `from_json(str)`
 
-Convers JSON to table, a direct wrapper around Lua CJSON's `decode`.
+Converts JSON to table, a direct wrapper around Lua CJSON's `decode`.
 
 ### Encoding Methods
 
@@ -189,7 +189,7 @@ verify the authenticity of.
 
 Before using any of the cryptographic functions it's important to set your
 application's secret. This is a string that only the application knows about.
-If you application is open source it's worthwhile to not commit this secret.
+If your application is open source it's worthwhile to not commit this secret.
 The secret is set in [your configuration](#configuration-and-environments) like so:
 
 ```lua
@@ -287,7 +287,7 @@ validation fails.
 
 ## Making HTTP Requests
 
-Lapis comes with a built in module for making asynchronous HTTP requests. The
+Lapis comes with a built-in module for making asynchronous HTTP requests. The
 way it works is by using the Nginx `proxy_pass` directive on an internal
 action. Because of this, before you can make any requests you need to modify
 your Nginx configuration.
@@ -400,8 +400,8 @@ If there is a second argument it is set as the body of a POST request. If
 the body is a table it is encoded with `encode_query_string` and the
 `Content-type` header is set to `application/x-www-form-urlencoded`
 
-If the first argument is a table then it is used manually set request
-parameters. I takes the following keys:
+If the first argument is a table then it is used to manually set request
+parameters. It takes the following keys:
 
  * `url` -- the URL to request
  * `method` -- `"GET"`, `"POST"`, `"PUT"`, etc...

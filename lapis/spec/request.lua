@@ -82,6 +82,9 @@ mock_request = function(app_cls, url, opts)
     Host = host,
     Cookie = prev_request.set_cookie
   }
+  if opts.post then
+    headers["Content-type"] = "application/x-www-form-urlencoded"
+  end
   if opts.headers then
     for k, v in pairs(opts.headers) do
       headers[k] = v

@@ -77,7 +77,7 @@ parse_cookie_string = (str) ->
   {unescape(key), unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
 slugify = (str) ->
-  (str\gsub("%s+", "-")\gsub("[^%w%-_]+", ""))\lower!
+  (str\gsub("[%s_]+", "-")\gsub("[^%w%-]+", "")\gsub("-+", "-"))\lower!
 
 -- TODO: make this not suck
 underscore = (str) ->
@@ -267,14 +267,27 @@ autoload = do
 
     mod
 
-  (prefix, t={}) ->
+  (...) ->
+    prefixes = {...}
+    last = prefixes[#prefixes]
+    t = if type(last) == "table"
+      prefixes[#prefixes] = nil
+      last
+    else
+      {}
+
+    assert next(prefixes), "missing prefixes for autoload"
+
     setmetatable t, __index: (mod_name) =>
       local mod
 
-      mod = try_require prefix .. "." .. mod_name
+      for prefix in *prefixes
+        mod = try_require prefix .. "." .. mod_name
 
-      unless mod
-        mod = try_require prefix .. "." .. underscore mod_name
+        unless mod
+          mod = try_require prefix .. "." .. underscore mod_name
+
+        break if mod
 
       @[mod_name] = mod
       mod

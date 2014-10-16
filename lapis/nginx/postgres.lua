@@ -8,10 +8,10 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw
 do
   local _obj_0 = require("lapis.db.base")
-  NULL, TRUE, FALSE, raw, is_raw, format_date, build_helpers = _obj_0.NULL, _obj_0.TRUE, _obj_0.FALSE, _obj_0.raw, _obj_0.is_raw, _obj_0.format_date, _obj_0.build_helpers
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
 end
 local backends = {
   default = function(_proxy)
@@ -248,43 +248,65 @@ do
   local grammar
   local make_grammar
   make_grammar = function()
-    local keywords = {
+    local basic_keywords = {
       "where",
-      "group",
       "having",
-      "order",
       "limit",
       "offset"
     }
-    for _index_0 = 1, #keywords do
-      local v = keywords[_index_0]
-      keywords[v] = true
-    end
-    local P, R, C, S, Cmt, Ct, Cg
+    local P, R, C, S, Cmt, Ct, Cg, V
     do
       local _obj_0 = require("lpeg")
-      P, R, C, S, Cmt, Ct, Cg = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg
+      P, R, C, S, Cmt, Ct, Cg, V = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg, _obj_0.V
     end
     local alpha = R("az", "AZ", "__")
     local alpha_num = alpha + R("09")
     local white = S(" \t\r\n") ^ 0
+    local some_white = S(" \t\r\n") ^ 1
     local word = alpha_num ^ 1
     local single_string = P("'") * (P("''") + (P(1) - P("'"))) ^ 0 * P("'")
     local double_string = P('"') * (P('""') + (P(1) - P('"'))) ^ 0 * P('"')
     local strings = single_string + double_string
-    local keyword = Cmt(word, function(src, pos, cap)
-      if keywords[cap:lower()] then
-        return true, cap
+    local ci
+    ci = function(str)
+      S = require("lpeg").S
+      local p
+      for c in str:gmatch(".") do
+        local char = S(tostring(c:lower()) .. tostring(c:upper()))
+        if p then
+          p = p * char
+        else
+          p = char
+        end
       end
-    end)
+      return p * -alpha_num
+    end
+    local balanced_parens = lpeg.P({
+      P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
+    })
+    local order_by = ci("order") * some_white * ci("by") / "order"
+    local group_by = ci("group") * some_white * ci("by") / "group"
+    local keyword = order_by + group_by
+    for _index_0 = 1, #basic_keywords do
+      local k = basic_keywords[_index_0]
+      local part = ci(k) / k
+      keyword = keyword + part
+    end
     keyword = keyword * white
-    local clause = Ct((keyword * C((strings + (word + P(1) - keyword)) ^ 1)) / function(name, val)
-      if name == "group" or name == "order" then
-        val = val:match("^%s*by%s*(.*)$")
-      end
-      return name, val
-    end)
-    grammar = white * Ct(clause ^ 0)
+    local clause_content = (balanced_parens + strings + (word + P(1) - keyword)) ^ 1
+    local outer_join_type = (ci("left") + ci("right") + ci("full")) * (white * ci("outer")) ^ -1
+    local join_type = (ci("natural") * white) ^ -1 * ((ci("inner") + outer_join_type) * white) ^ -1
+    local start_join = join_type * ci("join")
+    local join_body = (balanced_parens + strings + (P(1) - start_join - keyword)) ^ 1
+    local join_tuple = Ct(C(start_join) * C(join_body))
+    local joins = (#start_join * Ct(join_tuple ^ 1)) / function(joins)
+      return {
+        "join",
+        joins
+      }
+    end
+    local clause = Ct((keyword * C(clause_content)))
+    grammar = white * Ct(joins ^ -1 * clause ^ 0)
   end
   parse_clause = function(clause)
     if not (grammar) then
@@ -304,6 +326,21 @@ do
     end
   end
 end
+local encode_case
+encode_case = function(exp, t, on_else)
+  local buff = {
+    "CASE ",
+    exp
+  }
+  for k, v in pairs(t) do
+    append_all(buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v))
+  end
+  if on_else ~= nil then
+    append_all(buff, "\nELSE ", escape_literal(on_else))
+  end
+  append_all(buff, "\nEND")
+  return concat(buff)
+end
 return {
   query = query,
   raw = raw,
@@ -319,6 +356,7 @@ return {
   interpolate_query = interpolate_query,
   parse_clause = parse_clause,
   format_date = format_date,
+  encode_case = encode_case,
   set_backend = set_backend,
   select = _select,
   insert = _insert,

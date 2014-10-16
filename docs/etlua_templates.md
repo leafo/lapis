@@ -4,12 +4,12 @@ title: etlua Templates
 # `etlua` Templates
 
 [`etlua`][1] is a templating language that lets you render the result of Lua
-code inline a file to produce a dynamic output. In Lapis we use `etlua` to
-render dynamic content inside of HTML templates.
+code inline in a template file to produce a dynamic output. In Lapis we use
+`etlua` to render dynamic content inside of HTML templates.
 
 `etlua` files use the `.etlua` extension. Lapis knows how to load those types
 of files automatically using Lua's `require` function after you've enable
-`etlua` 
+`etlua`
 
 For example, here's a simple template that renders a random number:
 
@@ -133,7 +133,7 @@ class App extends lapis.Application
 ```
 
 You'll notice that we don't need to refer scope the values with `self` when
-retreiving their values in the template. Any varialbes are automatically looked
+retrieving their values in the template. Any variables are automatically looked
 up in that table by default.
 
 
@@ -154,15 +154,15 @@ URL to a named route:
 ```
 
 Any method available on the request object (`self` in an action) can be called
-in the template. It will be called with the correct reciever automatically.
+in the template. It will be called with the correct receiver automatically.
 
-Additionally `etlua` templates have a couple helper functions only defined in
+Additionally `etlua` templates have a couple of helper functions only defined in
 the context of the template. They are covered below.
 
 
 ## Rendering Sub-templates
 
-A sub-template is a template that is rendered inside of a template. For example
+A sub-template is a template that is rendered inside of another template. For example
 you might have a common navigation across many pages so you would create a
 template for the navigation's HTML and include it in the templates that require
 a navigation.
@@ -187,7 +187,7 @@ To render a sub-template you can use the `render` helper function:
 Note that you have to type the full module name of the template for the first
 argument to require, in this case `"views.navigation"`, which points to
 `views/navigation.etlua`. If you happen to also be using MoonScript templates
-you can also inclue them using the `render` function.
+you can also include them using the `render` function.
 
 Any values and helpers available in the parent template are also available in
 the sub-template.

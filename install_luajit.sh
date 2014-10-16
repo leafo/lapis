@@ -5,7 +5,7 @@ base_dir=$(pwd)
 luajit_tar="LuaJIT-2.0.3.tar.gz"
 
 echo "$(tput setaf 2)Downloading luajit...$(tput sgr0)"
-curl -O -L "http://luajit.org/download/$luajit_tar"
+curl -O -L "http://commondatastorage.googleapis.com/leafo/$luajit_tar"
 
 tar -xzf $luajit_tar
 
