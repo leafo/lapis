@@ -2,6 +2,9 @@
 import insert from table
 
 validate_functions = {
+  is_email: (input) ->
+    input and input != "" and input\match("[A-Za-z0-9%.%%%+%-]+@[A-Za-z0-9%.%%%+%-]+%.%w%w%w?%w?"), "The e-mail address is not valid"
+
   exists: (input) ->
     input and input != "", "%s must be provided"
 
@@ -54,10 +57,11 @@ test_input = (input, func, args) ->
 
 validate = (object, validations) ->
   errors = {}
+  invalid_fields = {}
+
   for v in *validations
     key = v[1]
     error_msg = v[2]
-
     input = object[key]
 
     if v.optional
@@ -70,9 +74,10 @@ validate = (object, validations) ->
       success, msg = test_input input, fn, args
       unless success
         insert errors, (error_msg or msg)\format key
+        insert invalid_fields, key
         break
 
-  next(errors) and errors
+  next(errors) and errors, next(invalid_fields) and invalid_fields
 
 assert_valid = (object, validations) ->
   errors = validate object, validations

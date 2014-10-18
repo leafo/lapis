@@ -95,7 +95,6 @@ class Request
     widget = @route_name if widget == true
 
     config = lapis_config.get!
-
     if widget
       if type(widget) == "string"
         widget = require "#{@app.views_prefix}.#{widget}"

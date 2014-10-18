@@ -1,6 +1,9 @@
 local insert
 insert = table.insert
 local validate_functions = {
+  is_email = function(input)
+    return input and input ~= "" and input:match("[A-Za-z0-9%.%%%+%-]+@[A-Za-z0-9%.%%%+%-]+%.%w%w%w?%w?"), "The e-mail address is not valid"
+  end,
   exists = function(input)
     return input and input ~= "", "%s must be provided"
   end,
@@ -67,6 +70,7 @@ end
 local validate
 validate = function(object, validations)
   local errors = { }
+  local invalid_fields = { }
   for _index_0 = 1, #validations do
     local _continue_0 = false
     repeat
@@ -91,6 +95,7 @@ validate = function(object, validations)
           local success, msg = test_input(input, fn, args)
           if not (success) then
             insert(errors, (error_msg or msg):format(key))
+            insert(invalid_fields, key)
             break
           end
           _continue_1 = true
@@ -105,7 +110,7 @@ validate = function(object, validations)
       break
     end
   end
-  return next(errors) and errors
+  return next(errors) and errors, next(invalid_fields) and invalid_fields
 end
 local assert_valid
 assert_valid = function(object, validations)
