@@ -695,6 +695,7 @@ json_params = function(fn)
       local content_type = self.req.headers["content-type"]
       if content_type then
         if string.find(content_type:lower(), "application/json", nil, true) then
+          ngx.req.read_body()
           local obj
           pcall(function()
             local err
