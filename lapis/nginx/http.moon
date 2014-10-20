@@ -69,6 +69,10 @@ simple = (req, body) ->
     req.headers or= {}
     req.headers["Content-type"] = "application/x-www-form-urlencoded"
 
+  -- ensure the url has trailing / so nginx overwites path
+  unless req.url\match "//.-/"
+    req.url ..= "/"
+
   res = ngx.location.capture proxy_location, {
     method: methods[req.method or "GET"]
     body: req.body
@@ -111,6 +115,10 @@ request = (url, str_body) ->
     sink = ltn12.sink.table buff
     ltn12.pump.all req.source, sink
     table.concat buff
+
+  -- ensure the url has trailing / so nginx overwites path
+  unless req.url\match "//.-/"
+    req.url ..= "/"
 
   res = ngx.location.capture proxy_location, {
     method: methods[req.method]

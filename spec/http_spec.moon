@@ -34,7 +34,7 @@ describe "lapis.http", ->
         method: ngx.HTTP_GET
         ctx: {}
         vars: {
-          _url: "http://leafo.net"
+          _url: "http://leafo.net/"
         }
       }, options
 
@@ -62,7 +62,7 @@ describe "lapis.http", ->
         body: "gold coins"
         ctx: {}
         vars: {
-          _url: "http://leafo.net"
+          _url: "http://leafo.net/"
         }
       }, options
 
@@ -106,7 +106,7 @@ describe "lapis.http", ->
   describe "request", ->
     local request
     before_each ->
-      request = require("lapis.http").simple
+      request = require("lapis.http").request
 
     it "should call with string", ->
       request "http://leafo.net"
@@ -116,7 +116,7 @@ describe "lapis.http", ->
         method: ngx.HTTP_GET
         ctx: {}
         vars: {
-          _url: "http://leafo.net"
+          _url: "http://leafo.net/"
         }
       }, options
 

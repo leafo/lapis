@@ -38,6 +38,9 @@ simple = function(req, body)
     req.headers = req.headers or { }
     req.headers["Content-type"] = "application/x-www-form-urlencoded"
   end
+  if not (req.url:match("//.-/")) then
+    req.url = req.url .. "/"
+  end
   local res = ngx.location.capture(proxy_location, {
     method = methods[req.method or "GET"],
     body = req.body,
@@ -84,6 +87,9 @@ request = function(url, str_body)
     local sink = ltn12.sink.table(buff)
     ltn12.pump.all(req.source, sink)
     body = table.concat(buff)
+  end
+  if not (req.url:match("//.-/")) then
+    req.url = req.url .. "/"
   end
   local res = ngx.location.capture(proxy_location, {
     method = methods[req.method],
