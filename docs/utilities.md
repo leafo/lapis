@@ -741,3 +741,5 @@ there was an error parsing the JSON then <span
 class="for_moon">`@json`</span><span class="for_lua">`self.json`</span> will be
 `nil` and the request will continue.
 
+
+[0]: exception_handling.html
