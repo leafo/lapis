@@ -717,7 +717,7 @@ local json_params = require("lapis.application").json_params
 
 app:match("/json", json_params(function(self)
   return self.params.value
-end)
+end))
 ```
 
 ```moon
