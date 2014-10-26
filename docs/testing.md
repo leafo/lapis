@@ -137,7 +137,7 @@ describe("my site", function()
   end)
 
   teardown(function()
-    spec_server.close_spec_server()
+    spec_server.close_test_server()
   end)
 
   -- write some tests that use the server here
@@ -199,7 +199,7 @@ describe("my site", function()
   end)
 
   teardown(function()
-    spec_server.close_spec_server()
+    spec_server.close_test_server()
   end)
 
   it("should load /", function()
