@@ -934,7 +934,7 @@ local Model = require("lapis.db.model").Model
 
 local Users = Model:extend("users", {
   constraints = {
-    name = function(value)
+    name = function(self, value)
       if value:lower() == "admin"
         return "User can not be named admin"
       end
@@ -953,7 +953,7 @@ import Model from require "lapis.db.models"
 
 class Users extends Model
   @constraints: {
-    name: (value) =>
+    name: (self, value) =>
       if value\lower! == "admin"
         "User can not be named admin"
   }
