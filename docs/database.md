@@ -953,7 +953,7 @@ import Model from require "lapis.db.models"
 
 class Users extends Model
   @constraints: {
-    name: (self, value) =>
+    name: (value) =>
       if value\lower! == "admin"
         "User can not be named admin"
   }
