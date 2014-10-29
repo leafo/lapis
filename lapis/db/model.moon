@@ -201,7 +201,18 @@ class Model
           return nil, err
 
     values._timestamp = true if @timestamp
-    res = db.insert @table_name!, values, @primary_keys!
+
+    local returning
+    for k, v in pairs values
+      if db.is_raw v
+        returning or= {@primary_keys!}
+        table.insert returning, k
+
+    res = if returning
+      db.insert @table_name!, values, unpack returning
+    else
+      db.insert @table_name!, values, @primary_keys!
+
     if res
       for k,v in pairs res[1]
         values[k] = v

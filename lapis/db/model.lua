@@ -411,7 +411,21 @@ do
     if self.timestamp then
       values._timestamp = true
     end
-    local res = db.insert(self:table_name(), values, self:primary_keys())
+    local returning
+    for k, v in pairs(values) do
+      if db.is_raw(v) then
+        returning = returning or {
+          self:primary_keys()
+        }
+        table.insert(returning, k)
+      end
+    end
+    local res
+    if returning then
+      res = db.insert(self:table_name(), values, unpack(returning))
+    else
+      res = db.insert(self:table_name(), values, self:primary_keys())
+    end
     if res then
       for k, v in pairs(res[1]) do
         values[k] = v
