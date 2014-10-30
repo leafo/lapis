@@ -129,6 +129,9 @@ do
       local cond = db.encode_clause(self:_primary_cond())
       local tbl_name = db.escape_identifier(self.__class:table_name())
       local res = unpack(db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
+      if not (res) then
+        error("failed to find row to refresh from, did the primary key change?")
+      end
       if field_names then
         for _index_0 = 1, #field_names do
           local field = field_names[_index_0]

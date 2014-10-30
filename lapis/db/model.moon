@@ -312,6 +312,9 @@ class Model
     tbl_name = db.escape_identifier @@table_name!
     res = unpack db.select "#{fields} from #{tbl_name} where #{cond}"
 
+    unless res
+      error "failed to find row to refresh from, did the primary key change?"
+
     if field_names
       for field in *field_names
         @[field] = res[field]
