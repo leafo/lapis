@@ -52,6 +52,16 @@ rebuild_query_clause = function(parsed)
   end
   return concat(buffer, " ")
 end
+local get_fields
+get_fields = function(obj, key, ...)
+  if not (obj) then
+    return 
+  end
+  if not (key) then
+    return 
+  end
+  return obj[key], get_fields(obj, ...)
+end
 local Paginator
 do
   local _base_0 = { }
@@ -200,37 +210,93 @@ do
         end
       end)
     end,
-    get_page = function(self, prev_pos)
+    get_page = function(self, ...)
+      return self:after(...)
+    end,
+    after = function(self, ...)
+      return self:get_ordered("ASC", ...)
+    end,
+    before = function(self, ...)
+      return self:get_ordered("DESC", ...)
+    end,
+    get_ordered = function(self, order, ...)
       local parsed = db.parse_clause(self._clause)
-      local field = db.escape_identifier(self.field)
+      local has_multi_fields = type(self.field) == "table" and not db.is_raw(self.field)
+      local escaped_fields
+      if has_multi_fields then
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          local _list_0 = self.field
+          for _index_0 = 1, #_list_0 do
+            local f = _list_0[_index_0]
+            _accum_0[_len_0] = db.escape_identifier(f)
+            _len_0 = _len_0 + 1
+          end
+          escaped_fields = _accum_0
+        end
+      else
+        escaped_fields = {
+          db.escape_identifier(self.field)
+        }
+      end
       if parsed.order then
         error("order should not be provided for " .. tostring(self.__class.__name))
       end
       if parsed.offset or parsed.limit then
         error("offset and limit should not be provided for " .. tostring(self.__class.__name))
       end
-      parsed.order = tostring(field) .. " " .. tostring(self.order)
-      if prev_pos then
-        local field_clause
-        local _exp_0 = self.order:lower()
-        if "asc" == _exp_0 then
-          field_clause = tostring(field) .. " > " .. tostring(db.escape_literal(prev_pos))
-        elseif "desc" == _exp_0 then
-          field_clause = tostring(field) .. " < " .. tostring(db.escape_literal(prev_pos))
-        else
-          field_clause = error("don't know how to handle order " .. tostring(self.order))
+      parsed.order = table.concat((function()
+        local _accum_0 = { }
+        local _len_0 = 1
+        for _index_0 = 1, #escaped_fields do
+          local f = escaped_fields[_index_0]
+          _accum_0[_len_0] = tostring(f) .. " " .. tostring(order)
+          _len_0 = _len_0 + 1
         end
+        return _accum_0
+      end)(), ", ")
+      if ... then
+        local positions = {
+          ...
+        }
+        local orders
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for i, pos in ipairs(positions) do
+            local field = escaped_fields[i]
+            local _value_0
+            local _exp_0 = order:lower()
+            if "asc" == _exp_0 then
+              _value_0 = tostring(field) .. " > " .. tostring(db.escape_literal(pos))
+            elseif "desc" == _exp_0 then
+              _value_0 = tostring(field) .. " < " .. tostring(db.escape_literal(pos))
+            else
+              _value_0 = error("don't know how to handle order " .. tostring(order))
+            end
+            _accum_0[_len_0] = _value_0
+            _len_0 = _len_0 + 1
+          end
+          orders = _accum_0
+        end
+        local order_clause = table.concat(orders, " and ")
         if parsed.where then
-          parsed.where = tostring(field_clause) .. " and (" .. tostring(parsed.where) .. ")"
+          parsed.where = tostring(order_clause) .. " and (" .. tostring(parsed.where) .. ")"
         else
-          parsed.where = field_clause
+          parsed.where = order_clause
         end
       end
       parsed.limit = tostring(self.per_page)
       local query = rebuild_query_clause(parsed)
       local res = self.model:select(query, opts)
       local final = res[#res]
-      return self.prepare_results(res), final and final[self.model.primary_key]
+      res = self.prepare_results(res)
+      if has_multi_fields then
+        return res, get_fields(final, unpack(self.field))
+      else
+        return res, get_fields(final, self.field)
+      end
     end
   }
   _base_0.__index = _base_0

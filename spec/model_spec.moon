@@ -166,6 +166,42 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where "id" > 123 and (color = blue) order by "id" ASC limit 10'
     }, queries
 
+  it "should ordered paginate with multiple keys", ->
+    import OrderedPaginator from require "lapis.db.pagination"
+    class Things extends Model
+
+    query_mock['SELECT'] = { { id: 101, updated_at: 300 }, { id: 102, updated_at: 301 } }
+
+    pager = OrderedPaginator Things, {"id", "updated_at"}, "where color = blue"
+
+    res, next_id, next_updated_at = pager\get_page!
+
+    assert.same 102, next_id
+    assert.same 301, next_updated_at
+
+    pager\after!
+    pager\before!
+
+    pager\after 100
+    pager\before 32
+
+    pager\after 100, 200
+    pager\before 32, 42
+
+    assert_queries {
+      'SELECT * from "things" where color = blue order by "id" ASC, "updated_at" ASC limit 10'
+
+      'SELECT * from "things" where color = blue order by "id" ASC, "updated_at" ASC limit 10'
+      'SELECT * from "things" where color = blue order by "id" DESC, "updated_at" DESC limit 10'
+
+      'SELECT * from "things" where "id" > 100 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
+      'SELECT * from "things" where "id" < 32 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
+
+      'SELECT * from "things" where "id" > 100 and "updated_at" > 200 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
+      'SELECT * from "things" where "id" < 32 and "updated_at" < 42 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
+    }, queries
+
+
   it "should create model", ->
     class Things extends Model
     query_mock['INSERT'] = { { id: 101 } }
