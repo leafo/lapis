@@ -429,6 +429,8 @@ describe "lapis.db.model", ->
       assert.same { nil, "missing `name`"}, { Things\create! }
 
     it "should allow to update values on create and on update", ->
+      query_mock['INSERT'] = { { id: 101 } }
+
       class Things extends Model
         @constraints: {
           name: (val, column, values) => values.name = 'changed from ' .. val
