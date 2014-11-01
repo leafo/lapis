@@ -11,7 +11,10 @@ do
 end
 local cjson = require("cjson")
 local OffsetPaginator
-OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
+do
+  local _obj_0 = require("lapis.db.pagination")
+  OffsetPaginator = _obj_0.OffsetPaginator
+end
 local Model
 do
   local _base_0 = {
@@ -75,6 +78,16 @@ do
       if next(columns) == nil then
         return 
       end
+      if self.__class.constraints then
+        for _, column in pairs(columns) do
+          do
+            local err = self.__class:_check_constraint(column, self[column], self)
+            if err then
+              return nil, err
+            end
+          end
+        end
+      end
       local values
       do
         local _tbl_0 = { }
@@ -83,16 +96,6 @@ do
           _tbl_0[col] = self[col]
         end
         values = _tbl_0
-      end
-      if self.__class.constraints then
-        for key, value in pairs(values) do
-          do
-            local err = self.__class:_check_constraint(key, value, self)
-            if err then
-              return nil, err
-            end
-          end
-        end
       end
       local nargs = select("#", ...)
       local last = nargs > 0 and select(nargs, ...)
