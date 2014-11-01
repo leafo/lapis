@@ -282,12 +282,13 @@ class Model
       {first, ...}
 
     return if next(columns) == nil
-    values = { col, @[col] for col in *columns }
 
     if @@constraints
-      for key, value in pairs values
-        if err = @@_check_constraint key, value, @
+      for _, column in pairs columns
+        if err = @@_check_constraint column, @[column], @
           return nil, err
+
+    values = { col, @[col] for col in *columns }
 
     -- update options
     nargs = select "#", ...
