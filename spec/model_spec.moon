@@ -428,6 +428,21 @@ describe "lapis.db.model", ->
 
       assert.same { nil, "missing `name`"}, { Things\create! }
 
+    it "should allow to update values on create and on update", ->
+      class Things extends Model
+        @constraints: {
+          name: (val, column, values) => values.name = 'changed from ' .. val
+        }
+
+      thing = Things\create name: 'create'
+      thing\update name: 'update'
+
+      assert_queries {
+        [[INSERT INTO "things" ("name") VALUES ('changed from create') RETURNING "id"]]
+        [[UPDATE "things" SET "name" = 'changed from update' WHERE "id" = 101]]
+      }, queries
+
+
   describe "relationships", ->
     local models
 
@@ -458,7 +473,6 @@ describe "lapis.db.model", ->
 
 
     it "should make a getter based on function", ->
-
       called = 0
 
       class Posts extends Model
@@ -477,5 +491,4 @@ describe "lapis.db.model", ->
       assert.same 1, called
 
       assert_queries { }, queries
-
 
