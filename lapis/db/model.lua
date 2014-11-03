@@ -27,7 +27,7 @@ add_relations = function(self, relations)
         local models = require("models")
         local model = assert(models[source], "failed to find model for relationship")
         do
-          local obj = model:find(assert(self[column_name] ~= nil, "missing primary key for relationhip"))
+          local obj = model:find(self[column_name])
           self[name] = obj
           return obj
         end

@@ -24,7 +24,7 @@ add_relations = (relations) =>
           return existing if existing != nil
           models = require "models"
           model = assert models[source], "failed to find model for relationship"
-          with obj = model\find assert @[column_name] != nil, "missing primary key for relationhip"
+          with obj = model\find @[column_name]
             @[name] = obj
 
       when "function"
