@@ -9,9 +9,39 @@ import OffsetPaginator from require "lapis.db.pagination"
 
 local *
 
+-- class Things extends Model
+--   @relations: {
+--     user: "Users"
+--   }
+add_relations = (relations) =>
+  for name, source in pairs relations
+    fn_name = "get_#{name}"
+    switch type source
+      when "string"
+        column_name = "#{name}_id"
+        @__base[fn_name] = =>
+          existing = @[name]
+          return existing if existing != nil
+          models = require "models"
+          model = assert models[source], "failed to find model for relationship"
+          with obj = model\find assert @[column_name] != nil, "missing primary key for relationhip"
+            @[name] = obj
+
+      when "function"
+        @__base[fn_name] = =>
+          existing = @[name]
+          return existing if existing != nil
+          with obj = source @
+            @[name] = obj
+
+
 class Model
   @timestamp: false
   @primary_key: "id"
+
+  @__inherited: (child) =>
+    if r = child.relations
+      add_relations child, r
 
   @primary_keys: =>
     if type(@primary_key) == "table"
@@ -81,31 +111,6 @@ class Model
       query ..= " where " .. db.interpolate_query clause, ...
 
     unpack(db.select query).c
-
-  -- class Things extends Model
-  --   @relations {
-  --     user: "Users"
-  --   }
-  @relations: (relations) =>
-    for name, source in pairs relations
-      fn_name = "get_#{name}"
-      switch type source
-        when "string"
-          column_name = "#{name}_id"
-          @__base[fn_name] = =>
-            existing = @[name]
-            return existing if existing != nil
-            models = require "models"
-            model = assert models[source], "failed to find model for relationship"
-            with obj = model\find assert @[column_name] != nil, "missing primary key for relationhip"
-              @[name] = obj
-
-        when "function"
-          @__base[fn_name] = =>
-            existing = @[name]
-            return existing if existing != nil
-            with obj = source @
-              @[name] = obj
 
 
   -- include references to this model in a list of records based on a foreign
