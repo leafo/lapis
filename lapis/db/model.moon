@@ -82,6 +82,32 @@ class Model
 
     unpack(db.select query).c
 
+  -- class Things extends Model
+  --   @has {
+  --     user: "Users"
+  --   }
+  @has: (relations) =>
+    for name, source in pairs relations
+      fn_name = "get_#{name}"
+      switch type source
+        when "string"
+          column_name = "#{name}_id"
+          @__base[fn_name] = =>
+            existing = @[name]
+            return existing if existing != nil
+            models = require "models"
+            model = assert models[source], "failed to find model for relationship"
+            with obj = model\find assert @[column_name] != nil, "missing primary key for relationhip"
+              @[name] = obj
+
+        when "function"
+          @__base[fn_name] = =>
+            existing = @[name]
+            return existing if existing != nil
+            with obj = source @
+              @[name] = obj
+
+
   -- include references to this model in a list of records based on a foreign
   -- key
   -- Examples:

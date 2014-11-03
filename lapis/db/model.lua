@@ -254,6 +254,40 @@ do
     end
     return unpack(db.select(query)).c
   end
+  self.has = function(self, relations)
+    for name, source in pairs(relations) do
+      local fn_name = "get_" .. tostring(name)
+      local _exp_0 = type(source)
+      if "string" == _exp_0 then
+        local column_name = tostring(name) .. "_id"
+        self.__base[fn_name] = function(self)
+          local existing = self[name]
+          if existing ~= nil then
+            return existing
+          end
+          local models = require("models")
+          local model = assert(models[source], "failed to find model for relationship")
+          do
+            local obj = model:find(assert(self[column_name] ~= nil, "missing primary key for relationhip"))
+            self[name] = obj
+            return obj
+          end
+        end
+      elseif "function" == _exp_0 then
+        self.__base[fn_name] = function(self)
+          local existing = self[name]
+          if existing ~= nil then
+            return existing
+          end
+          do
+            local obj = source(self)
+            self[name] = obj
+            return obj
+          end
+        end
+      end
+    end
+  end
   self.include_in = function(self, other_records, foreign_key, opts)
     local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip

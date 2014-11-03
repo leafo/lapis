@@ -428,4 +428,54 @@ describe "lapis.db.model", ->
 
       assert.same { nil, "missing `name`"}, { Things\create! }
 
+  describe "relationships", ->
+    local models
+
+    before_each ->
+      models = {}
+      package.loaded.models = models
+
+    it "should make a getter based on class name", ->
+      query_mock['SELECT'] = { { id: 101 } }
+
+      models.Users = class extends Model
+        @primary_key: "id"
+
+      class Posts extends Model
+        @has {
+          user: "Users"
+        }
+
+      post = Posts!
+      post.user_id = 123
+
+      assert post\get_user!
+      assert post\get_user!
+
+      assert_queries {
+        'SELECT * from "users" where "id" = TRUE limit 1'
+      }, queries
+
+
+    it "should make a getter based on function", ->
+
+      called = 0
+
+      class Posts extends Model
+        @has {
+          thing: =>
+            called += 1
+            "yes"
+
+        }
+
+      post = Posts!
+      post.user_id = 123
+
+      assert.same "yes", post\get_thing!
+      assert.same "yes", post\get_thing!
+      assert.same 1, called
+
+      assert_queries { }, queries
+
 
