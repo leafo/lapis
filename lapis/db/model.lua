@@ -11,10 +11,7 @@ do
 end
 local cjson = require("cjson")
 local OffsetPaginator
-do
-  local _obj_0 = require("lapis.db.pagination")
-  OffsetPaginator = _obj_0.OffsetPaginator
-end
+OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
 local Model
 do
   local _base_0 = {
