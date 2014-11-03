@@ -67,6 +67,12 @@ _class = function(name, tbl, extend)
   end
   base.super = base.super or _super
   cls.__name = name
+  do
+    local inherited = extend and extend.__inherited
+    if inherited then
+      inherited(extend, cls)
+    end
+  end
   return cls
 end
 _super = function(instance, method, ...)

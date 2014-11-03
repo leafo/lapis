@@ -24,6 +24,10 @@ _class = (name, tbl, extend) ->
   base.super or= _super
 
   cls.__name = name
+
+  if inherited = extend and extend.__inherited
+    inherited extend, cls
+
   cls
 
 _super = (instance, method, ...) ->

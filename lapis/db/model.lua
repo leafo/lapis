@@ -12,7 +12,41 @@ end
 local cjson = require("cjson")
 local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
-local Model
+local add_relations, Model
+add_relations = function(self, relations)
+  for name, source in pairs(relations) do
+    local fn_name = "get_" .. tostring(name)
+    local _exp_0 = type(source)
+    if "string" == _exp_0 then
+      local column_name = tostring(name) .. "_id"
+      self.__base[fn_name] = function(self)
+        local existing = self[name]
+        if existing ~= nil then
+          return existing
+        end
+        local models = require("models")
+        local model = assert(models[source], "failed to find model for relationship")
+        do
+          local obj = model:find(assert(self[column_name] ~= nil, "missing primary key for relationhip"))
+          self[name] = obj
+          return obj
+        end
+      end
+    elseif "function" == _exp_0 then
+      self.__base[fn_name] = function(self)
+        local existing = self[name]
+        if existing ~= nil then
+          return existing
+        end
+        do
+          local obj = source(self)
+          self[name] = obj
+          return obj
+        end
+      end
+    end
+  end
+end
 do
   local _base_0 = {
     _primary_cond = function(self)
@@ -166,6 +200,14 @@ do
   local self = _class_0
   self.timestamp = false
   self.primary_key = "id"
+  self.__inherited = function(self, child)
+    do
+      local r = child.relations
+      if r then
+        return add_relations(child, r)
+      end
+    end
+  end
   self.primary_keys = function(self)
     if type(self.primary_key) == "table" then
       return unpack(self.primary_key)
@@ -253,40 +295,6 @@ do
       query = query .. (" where " .. db.interpolate_query(clause, ...))
     end
     return unpack(db.select(query)).c
-  end
-  self.relations = function(self, relations)
-    for name, source in pairs(relations) do
-      local fn_name = "get_" .. tostring(name)
-      local _exp_0 = type(source)
-      if "string" == _exp_0 then
-        local column_name = tostring(name) .. "_id"
-        self.__base[fn_name] = function(self)
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          local models = require("models")
-          local model = assert(models[source], "failed to find model for relationship")
-          do
-            local obj = model:find(assert(self[column_name] ~= nil, "missing primary key for relationhip"))
-            self[name] = obj
-            return obj
-          end
-        end
-      elseif "function" == _exp_0 then
-        self.__base[fn_name] = function(self)
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          do
-            local obj = source(self)
-            self[name] = obj
-            return obj
-          end
-        end
-      end
-    end
   end
   self.include_in = function(self, other_records, foreign_key, opts)
     local fields = opts and opts.fields or "*"

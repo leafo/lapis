@@ -494,3 +494,26 @@ describe "lapis.db.model", ->
 
       assert_queries { }, queries
 
+    it "should make getters for extend syntax", ->
+      query_mock['SELECT'] = { { id: 101 } }
+
+      models.Users = class extends Model
+        @primary_key: "id"
+
+      m = Model\extend "the_things", {
+        relations: {
+          user: "Users"
+        }
+      }
+
+      obj = m!
+      obj.user_id = 101
+
+
+      assert obj\get_user! == obj\get_user!
+
+      assert_queries {
+        'SELECT * from "users" where "id" = TRUE limit 1'
+      }, queries
+
+
