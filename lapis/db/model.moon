@@ -83,10 +83,10 @@ class Model
     unpack(db.select query).c
 
   -- class Things extends Model
-  --   @has {
+  --   @relations {
   --     user: "Users"
   --   }
-  @has: (relations) =>
+  @relations: (relations) =>
     for name, source in pairs relations
       fn_name = "get_#{name}"
       switch type source

@@ -254,7 +254,7 @@ do
     end
     return unpack(db.select(query)).c
   end
-  self.has = function(self, relations)
+  self.relations = function(self, relations)
     for name, source in pairs(relations) do
       local fn_name = "get_" .. tostring(name)
       local _exp_0 = type(source)

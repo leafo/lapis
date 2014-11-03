@@ -445,7 +445,7 @@ describe "lapis.db.model", ->
       }, queries
 
 
-  describe "relationships", ->
+  describe "relations", ->
     local models
 
     before_each ->
@@ -459,7 +459,7 @@ describe "lapis.db.model", ->
         @primary_key: "id"
 
       class Posts extends Model
-        @has {
+        @relations {
           user: "Users"
         }
 
@@ -478,7 +478,7 @@ describe "lapis.db.model", ->
       called = 0
 
       class Posts extends Model
-        @has {
+        @relations {
           thing: =>
             called += 1
             "yes"
