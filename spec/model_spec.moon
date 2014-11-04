@@ -470,7 +470,7 @@ describe "lapis.db.model", ->
       assert post\get_user!
 
       assert_queries {
-        'SELECT * from "users" where "id" = TRUE limit 1'
+        'SELECT * from "users" where "id" = 123 limit 1'
       }, queries
 
 
@@ -513,7 +513,7 @@ describe "lapis.db.model", ->
       assert obj\get_user! == obj\get_user!
 
       assert_queries {
-        'SELECT * from "users" where "id" = TRUE limit 1'
+        'SELECT * from "users" where "id" = 101 limit 1'
       }, queries
 
 
