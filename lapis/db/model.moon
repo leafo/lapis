@@ -9,6 +9,36 @@ import OffsetPaginator from require "lapis.db.pagination"
 
 local *
 
+class Enum
+  -- convert string to number, or let number pass through
+  for_db: (key) =>
+    if type(key) == "string"
+      val = @[key]
+      assert val, "enum does not contain key #{key}"
+    elseif type(key) == "number"
+      assert @[key], "enum does not contain val #{key}"
+      key
+    else
+      error "don't know how to handle type #{type key} for enum"
+
+  -- convert number to string, or let string pass through
+  to_name: (val) =>
+    if type(val) == "string"
+      assert @[val], "enum does not contain key #{val}"
+      val
+    elseif type(val) == "number"
+      key = @[val]
+      assert key, "enum does not contain val #{val}"
+    else
+      error "don't know how to handle type #{type val} for enum"
+
+enum = (t) ->
+  keys = [k for k in pairs tbl]
+  for key in *keys
+    tbl[tbl[key]] = key
+
+  setmetatable tbl, Enum.__base
+
 -- class Things extends Model
 --   @relations: {
 --     user: "Users"
@@ -361,5 +391,5 @@ class Model
 
     @
 
-{ :Model }
+{ :Model, :Enum, :enum }
 

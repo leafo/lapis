@@ -12,7 +12,65 @@ end
 local cjson = require("cjson")
 local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
-local add_relations, Model
+local Enum, enum, add_relations, Model
+do
+  local _base_0 = {
+    for_db = function(self, key)
+      if type(key) == "string" then
+        local val = self[key]
+        return assert(val, "enum does not contain key " .. tostring(key))
+      elseif type(key) == "number" then
+        assert(self[key], "enum does not contain val " .. tostring(key))
+        return key
+      else
+        return error("don't know how to handle type " .. tostring(type(key)) .. " for enum")
+      end
+    end,
+    to_name = function(self, val)
+      if type(val) == "string" then
+        assert(self[val], "enum does not contain key " .. tostring(val))
+        return val
+      elseif type(val) == "number" then
+        local key = self[val]
+        return assert(key, "enum does not contain val " .. tostring(val))
+      else
+        return error("don't know how to handle type " .. tostring(type(val)) .. " for enum")
+      end
+    end
+  }
+  _base_0.__index = _base_0
+  local _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "Enum"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  Enum = _class_0
+end
+enum = function(t)
+  local keys
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for k in pairs(tbl) do
+      _accum_0[_len_0] = k
+      _len_0 = _len_0 + 1
+    end
+    keys = _accum_0
+  end
+  for _index_0 = 1, #keys do
+    local key = keys[_index_0]
+    tbl[tbl[key]] = key
+  end
+  return setmetatable(tbl, Enum.__base)
+end
 add_relations = function(self, relations)
   for name, source in pairs(relations) do
     local fn_name = "get_" .. tostring(name)
@@ -526,5 +584,7 @@ do
   Model = _class_0
 end
 return {
-  Model = Model
+  Model = Model,
+  Enum = Enum,
+  enum = enum
 }
