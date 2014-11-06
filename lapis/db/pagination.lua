@@ -211,7 +211,7 @@ do
       end)
     end,
     get_page = function(self, ...)
-      return self:after(...)
+      return self:get_ordered(self.order, ...)
     end,
     after = function(self, ...)
       return self:get_ordered("ASC", ...)
