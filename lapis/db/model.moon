@@ -13,8 +13,7 @@ class Enum
   -- convert string to number, or let number pass through
   for_db: (key) =>
     if type(key) == "string"
-      val = @[key]
-      assert val, "enum does not contain key #{key}"
+      (assert @[key], "enum does not contain key #{key}")
     elseif type(key) == "number"
       assert @[key], "enum does not contain val #{key}"
       key
@@ -28,7 +27,7 @@ class Enum
       val
     elseif type(val) == "number"
       key = @[val]
-      assert key, "enum does not contain val #{val}"
+      (assert key, "enum does not contain val #{val}")
     else
       error "don't know how to handle type #{type val} for enum"
 

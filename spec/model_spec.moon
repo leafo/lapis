@@ -517,3 +517,67 @@ describe "lapis.db.model", ->
       }, queries
 
 
+  describe "enum", ->
+    import enum from require "lapis.db.model"
+
+    it "should create an enum", ->
+      e = enum {
+        hello: 1
+        world: 2
+        foo: 3
+        bar: 3
+      }
+
+    describe "with enum", ->
+      local e
+      before_each ->
+        e = enum {
+          hello: 1
+          world: 2
+          foo: 3
+          bar: 4
+        }
+
+      it "should get enum values", ->
+        assert.same "hello", e[1]
+        assert.same "world", e[2]
+        assert.same "foo", e[3]
+        assert.same "bar", e[4]
+
+        assert.same 1, e.hello
+        assert.same 2, e.world
+        assert.same 3, e.foo
+        assert.same 4, e.bar
+
+      it "should get enum for_db", ->
+        assert.same 1, e\for_db "hello"
+        assert.same 1, e\for_db 1
+
+        assert.same 2, e\for_db "world"
+        assert.same 2, e\for_db 2
+
+        assert.same 3, e\for_db "foo"
+        assert.same 3, e\for_db 3
+
+        assert.same 4, e\for_db "bar"
+        assert.same 4, e\for_db 4
+
+        assert.has_error ->
+          e\for_db "far"
+
+        assert.has_error ->
+          e\for_db 5
+
+      it "should get enum to_name", ->
+        assert.same "hello", e\to_name "hello"
+        assert.same "hello", e\to_name 1
+
+        assert.same "world", e\to_name "world"
+        assert.same "world", e\to_name 2
+
+        assert.same "foo", e\to_name "foo"
+        assert.same "foo", e\to_name 3
+
+        assert.same "bar", e\to_name "bar"
+        assert.same "bar", e\to_name 4
+
