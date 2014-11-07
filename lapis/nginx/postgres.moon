@@ -242,7 +242,7 @@ parse_clause = do
           char
       p * -alpha_num
 
-    balanced_parens = lpeg.P {
+    balanced_parens = P {
       P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
     }
 

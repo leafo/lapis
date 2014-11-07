@@ -32,7 +32,7 @@ class Enum
     else
       error "don't know how to handle type #{type val} for enum"
 
-enum = (t) ->
+enum = (tbl) ->
   keys = [k for k in pairs tbl]
   for key in *keys
     tbl[tbl[key]] = key
