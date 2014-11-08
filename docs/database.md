@@ -1144,6 +1144,30 @@ for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
 ```
 
+### Describing Relationships
+
+You can describe relationships between models using the `relations` class
+property.
+
+```lua
+local Model = require("lapis.db.model").Model
+local Posts = Model:extend("posts", {
+  relations = {
+    user = "Users"
+  }
+})
+
+```
+
+```moon
+import Model from require "lapis.db.models"
+class Posts extends Model
+  @relations: {
+    user: "Users"
+  }
+```
+
+
 ### Finding Columns
 
 You can get the column names and column types of a table using the `columns`
