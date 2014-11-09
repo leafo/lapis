@@ -77,9 +77,15 @@ add_relations = (relations) =>
       if relation.pager
         @__base[fn_name] = (opts) =>
           model = assert_model source
-          clause = db.encode_clause {
+          clause = {
             ["#{singularize @@table_name!}_id"]: @[@@primary_keys!]
           }
+
+          if where = relation.where
+            for k,v in pairs where
+              clause[k] = v
+
+          clause = db.encode_clause clause
 
           model\paginated "where #{clause}", opts
       else

@@ -122,9 +122,18 @@ add_relations = function(self, relations)
         if relation.pager then
           self.__base[fn_name] = function(self, opts)
             local model = assert_model(source)
-            local clause = db.encode_clause({
+            local clause = {
               [tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
-            })
+            }
+            do
+              local where = relation.where
+              if where then
+                for k, v in pairs(where) do
+                  clause[k] = v
+                end
+              end
+            end
+            clause = db.encode_clause(clause)
             return model:paginated("where " .. tostring(clause), opts)
           end
         else

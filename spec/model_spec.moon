@@ -525,6 +525,7 @@ describe "lapis.db.model", ->
       models.Users = class extends Model
         @relations: {
           {"posts", has_many: "Posts", pager: true}
+          {"more_posts", has_many: "Posts", pager: true, where: {color: "blue"}}
         }
 
       user = models.Users!
@@ -533,9 +534,18 @@ describe "lapis.db.model", ->
       user\get_posts!\get_page 1
       user\get_posts!\get_page 2
 
+      user\get_more_posts!\get_page 2
+
+      user\get_posts(per_page: 44)\get_page 3
+
       assert_queries {
         'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 0 '
         'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 10 '
+        {
+          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue' limit 10 offset 10 ]]
+          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 limit 10 offset 10 ]]
+        }
+        'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
       }, queries
 
   describe "enum", ->
