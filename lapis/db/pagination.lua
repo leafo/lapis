@@ -289,7 +289,7 @@ do
       end
       parsed.limit = tostring(self.per_page)
       local query = rebuild_query_clause(parsed)
-      local res = self.model:select(query, opts)
+      local res = self.model:select(query, self.opts)
       local final = res[#res]
       res = self.prepare_results(res)
       if has_multi_fields then

@@ -17,8 +17,7 @@ do
   local _base_0 = {
     for_db = function(self, key)
       if type(key) == "string" then
-        local val = self[key]
-        return assert(val, "enum does not contain key " .. tostring(key))
+        return (assert(self[key], "enum does not contain key " .. tostring(key)))
       elseif type(key) == "number" then
         assert(self[key], "enum does not contain val " .. tostring(key))
         return key
@@ -32,7 +31,7 @@ do
         return val
       elseif type(val) == "number" then
         local key = self[val]
-        return assert(key, "enum does not contain val " .. tostring(val))
+        return (assert(key, "enum does not contain val " .. tostring(val)))
       else
         return error("don't know how to handle type " .. tostring(type(val)) .. " for enum")
       end
@@ -54,7 +53,7 @@ do
   _base_0.__class = _class_0
   Enum = _class_0
 end
-enum = function(t)
+enum = function(tbl)
   local keys
   do
     local _accum_0 = { }

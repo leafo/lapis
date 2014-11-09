@@ -281,7 +281,7 @@ do
       end
       return p * -alpha_num
     end
-    local balanced_parens = lpeg.P({
+    local balanced_parens = P({
       P("(") * (V(1) + strings + (P(1) - ")")) ^ 0 * P(")")
     })
     local order_by = ci("order") * some_white * ci("by") / "order"
