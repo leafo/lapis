@@ -71,34 +71,41 @@ enum = function(tbl)
   return setmetatable(tbl, Enum.__base)
 end
 add_relations = function(self, relations)
-  for name, source in pairs(relations) do
-    local fn_name = "get_" .. tostring(name)
-    local _exp_0 = type(source)
-    if "string" == _exp_0 then
-      local column_name = tostring(name) .. "_id"
-      self.__base[fn_name] = function(self)
-        local existing = self[name]
-        if existing ~= nil then
-          return existing
-        end
-        local models = require("models")
-        local model = assert(models[source], "failed to find model for relationship")
-        do
-          local obj = model:find(self[column_name])
-          self[name] = obj
-          return obj
-        end
-      end
-    elseif "function" == _exp_0 then
-      self.__base[fn_name] = function(self)
-        local existing = self[name]
-        if existing ~= nil then
-          return existing
-        end
-        do
-          local obj = source(self)
-          self[name] = obj
-          return obj
+  for _index_0 = 1, #relations do
+    local relation = relations[_index_0]
+    local name = assert(relation[1], "missing relation name")
+    do
+      local source = relation.has_one
+      if source then
+        local fn_name = "get_" .. tostring(name)
+        local _exp_0 = type(source)
+        if "string" == _exp_0 then
+          local column_name = tostring(name) .. "_id"
+          self.__base[fn_name] = function(self)
+            local existing = self[name]
+            if existing ~= nil then
+              return existing
+            end
+            local models = require("models")
+            local model = assert(models[source], "failed to find model for relationship")
+            do
+              local obj = model:find(self[column_name])
+              self[name] = obj
+              return obj
+            end
+          end
+        elseif "function" == _exp_0 then
+          self.__base[fn_name] = function(self)
+            local existing = self[name]
+            if existing ~= nil then
+              return existing
+            end
+            do
+              local obj = source(self)
+              self[name] = obj
+              return obj
+            end
+          end
         end
       end
     end
