@@ -268,6 +268,20 @@ tasks = {
     end
   },
   {
+    name = "generate",
+    usage = "generate template [args...]",
+    help = "generates a new file from template",
+    function(template_name, ...)
+      local tpl = require("lapis.cmd.templates." .. tostring(template_name))
+      if not (type(tpl) == "table") then
+        error("invalid template: " .. tostring(template_name))
+      end
+      local out = tpl.content(...)
+      local fname = tpl.filename(...)
+      return write_file_safe(fname, out)
+    end
+  },
+  {
     name = "help",
     help = "show this text",
     function()

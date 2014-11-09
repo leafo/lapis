@@ -43,6 +43,7 @@ build = {
 		["lapis.cmd.templates.config_etlua"] = "lapis/cmd/templates/config_etlua.lua",
 		["lapis.cmd.templates.gitignore"] = "lapis/cmd/templates/gitignore.lua",
 		["lapis.cmd.templates.mime_types"] = "lapis/cmd/templates/mime_types.lua",
+		["lapis.cmd.templates.spec"] = "lapis/cmd/templates/spec.lua",
 		["lapis.cmd.templates.tup"] = "lapis/cmd/templates/tup.lua",
 		["lapis.cmd.util"] = "lapis/cmd/util.lua",
 		["lapis.config"] = "lapis/config.lua",

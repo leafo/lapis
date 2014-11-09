@@ -212,6 +212,21 @@ tasks = {
   }
 
   {
+    name: "generate"
+    usage: "generate template [args...]"
+    help: "generates a new file from template"
+
+    (template_name, ...) ->
+      tpl = require "lapis.cmd.templates.#{template_name}"
+      unless type(tpl) == "table"
+        error "invalid template: #{template_name}"
+
+      out = tpl.content ...
+      fname = tpl.filename ...
+      write_file_safe fname, out
+  }
+
+  {
     name: "help"
     help: "show this text"
 
