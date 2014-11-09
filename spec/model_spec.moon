@@ -460,7 +460,7 @@ describe "lapis.db.model", ->
 
       class Posts extends Model
         @relations: {
-          user: "Users"
+          {"user", has_one: "Users"}
         }
 
       post = Posts!
@@ -479,10 +479,12 @@ describe "lapis.db.model", ->
 
       class Posts extends Model
         @relations: {
-          thing: =>
-            called += 1
-            "yes"
-
+          {
+            "thing"
+            has_one: =>
+              called += 1
+              "yes"
+          }
         }
 
       post = Posts!
@@ -502,7 +504,7 @@ describe "lapis.db.model", ->
 
       m = Model\extend "the_things", {
         relations: {
-          user: "Users"
+          {"user", has_one: "Users"}
         }
       }
 

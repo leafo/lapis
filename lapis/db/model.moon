@@ -40,28 +40,30 @@ enum = (tbl) ->
 
 -- class Things extends Model
 --   @relations: {
---     user: "Users"
+--     {"user", has_one: "Users"}
 --   }
 add_relations = (relations) =>
-  for name, source in pairs relations
-    fn_name = "get_#{name}"
-    switch type source
-      when "string"
-        column_name = "#{name}_id"
-        @__base[fn_name] = =>
-          existing = @[name]
-          return existing if existing != nil
-          models = require "models"
-          model = assert models[source], "failed to find model for relationship"
-          with obj = model\find @[column_name]
-            @[name] = obj
+  for relation in *relations
+    name = assert relation[1], "missing relation name"
+    if source = relation.has_one
+      fn_name = "get_#{name}"
+      switch type source
+        when "string"
+          column_name = "#{name}_id"
+          @__base[fn_name] = =>
+            existing = @[name]
+            return existing if existing != nil
+            models = require "models"
+            model = assert models[source], "failed to find model for relationship"
+            with obj = model\find @[column_name]
+              @[name] = obj
 
-      when "function"
-        @__base[fn_name] = =>
-          existing = @[name]
-          return existing if existing != nil
-          with obj = source @
-            @[name] = obj
+        when "function"
+          @__base[fn_name] = =>
+            existing = @[name]
+            return existing if existing != nil
+            with obj = source @
+              @[name] = obj
 
 
 class Model
