@@ -524,8 +524,8 @@ describe "lapis.db.model", ->
       models.Posts = class extends Model
       models.Users = class extends Model
         @relations: {
-          {"posts", has_many: "Posts", pager: true}
-          {"more_posts", has_many: "Posts", pager: true, where: {color: "blue"}}
+          {"posts", has_many: "Posts"}
+          {"more_posts", has_many: "Posts", where: {color: "blue"}}
         }
 
       user = models.Users!

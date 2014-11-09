@@ -119,7 +119,7 @@ add_relations = function(self, relations)
     do
       local source = relation.has_many
       if source then
-        if relation.pager then
+        if relation.pager ~= false then
           self.__base[fn_name] = function(self, opts)
             local model = assert_model(source)
             local clause = {

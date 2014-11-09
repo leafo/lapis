@@ -74,7 +74,7 @@ add_relations = (relations) =>
               @[name] = obj
 
     if source = relation.has_many
-      if relation.pager
+      if relation.pager != false
         @__base[fn_name] = (opts) =>
           model = assert_model source
           clause = {
