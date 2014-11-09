@@ -452,7 +452,7 @@ describe "lapis.db.model", ->
       models = {}
       package.loaded.models = models
 
-    it "should make a getter based on class name", ->
+    it "should make has_one getter based on class name", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.Users = class extends Model
@@ -474,7 +474,7 @@ describe "lapis.db.model", ->
       }, queries
 
 
-    it "should make a getter based on function", ->
+    it "should make has_one getter based on function", ->
       called = 0
 
       class Posts extends Model
@@ -496,7 +496,7 @@ describe "lapis.db.model", ->
 
       assert_queries { }, queries
 
-    it "should make getters for extend syntax", ->
+    it "should make has_one getters for extend syntax", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.Users = class extends Model
@@ -518,6 +518,25 @@ describe "lapis.db.model", ->
         'SELECT * from "users" where "id" = 101 limit 1'
       }, queries
 
+    it "should make has_many getter", ->
+      query_mock['SELECT'] = { { id: 101 } }
+
+      models.Posts = class extends Model
+      models.Users = class extends Model
+        @relations: {
+          {"posts", has_many: "Posts", pager: true}
+        }
+
+      user = models.Users!
+      user.id = 1234
+
+      user\get_posts!\get_page 1
+      user\get_posts!\get_page 2
+
+      assert_queries {
+        'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 0 '
+        'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 10 '
+      }, queries
 
   describe "enum", ->
     import enum from require "lapis.db.model"

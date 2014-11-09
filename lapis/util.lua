@@ -7,7 +7,7 @@ do
 end
 local floor
 floor = math.floor
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields
 do
   local u = url.unescape
   unescape = function(str)
@@ -505,6 +505,15 @@ do
     end
   end
 end
+get_fields = function(obj, key, ...)
+  if not (obj) then
+    return 
+  end
+  if not (key) then
+    return 
+  end
+  return obj[key], get_fields(obj, ...)
+end
 return {
   unescape = unescape,
   escape = escape,
@@ -531,5 +540,6 @@ return {
   autoload = autoload,
   auto_table = auto_table,
   mixin_class = mixin_class,
-  mixin = mixin
+  mixin = mixin,
+  get_fields = get_fields
 }

@@ -4,6 +4,8 @@ do
   local _obj_0 = table
   insert, concat = _obj_0.insert, _obj_0.concat
 end
+local get_fields
+get_fields = require("lapis.util").get_fields
 local query_parts = {
   "where",
   "group",
@@ -51,16 +53,6 @@ rebuild_query_clause = function(parsed)
     end
   end
   return concat(buffer, " ")
-end
-local get_fields
-get_fields = function(obj, key, ...)
-  if not (obj) then
-    return 
-  end
-  if not (key) then
-    return 
-  end
-  return obj[key], get_fields(obj, ...)
 end
 local Paginator
 do

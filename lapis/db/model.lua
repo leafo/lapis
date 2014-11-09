@@ -1,8 +1,8 @@
 local db = require("lapis.db")
-local underscore, escape_pattern, uniquify
+local underscore, escape_pattern, uniquify, get_fields
 do
   local _obj_0 = require("lapis.util")
-  underscore, escape_pattern, uniquify = _obj_0.underscore, _obj_0.escape_pattern, _obj_0.uniquify
+  underscore, escape_pattern, uniquify, get_fields = _obj_0.underscore, _obj_0.escape_pattern, _obj_0.uniquify, _obj_0.get_fields
 end
 local insert, concat
 do
@@ -12,7 +12,10 @@ end
 local cjson = require("cjson")
 local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
-local Enum, enum, add_relations, Model
+local singularize, Enum, enum, add_relations, Model
+singularize = function(name)
+  return name:match("^(.*)s$") or name
+end
 do
   local _base_0 = {
     for_db = function(self, key)
@@ -74,10 +77,15 @@ add_relations = function(self, relations)
   for _index_0 = 1, #relations do
     local relation = relations[_index_0]
     local name = assert(relation[1], "missing relation name")
+    local fn_name = relation.as or "get_" .. tostring(name)
+    local assert_model
+    assert_model = function(source)
+      local models = require("models")
+      return assert(models[source], "failed to find model for relationship")
+    end
     do
       local source = relation.has_one
       if source then
-        local fn_name = "get_" .. tostring(name)
         local _exp_0 = type(source)
         if "string" == _exp_0 then
           local column_name = tostring(name) .. "_id"
@@ -86,8 +94,7 @@ add_relations = function(self, relations)
             if existing ~= nil then
               return existing
             end
-            local models = require("models")
-            local model = assert(models[source], "failed to find model for relationship")
+            local model = assert_model(source)
             do
               local obj = model:find(self[column_name])
               self[name] = obj
@@ -106,6 +113,22 @@ add_relations = function(self, relations)
               return obj
             end
           end
+        end
+      end
+    end
+    do
+      local source = relation.has_many
+      if source then
+        if relation.pager then
+          self.__base[fn_name] = function(self, opts)
+            local model = assert_model(source)
+            local clause = db.encode_clause({
+              [tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
+            })
+            return model:paginated("where " .. tostring(clause), opts)
+          end
+        else
+          error("not yet")
         end
       end
     end
@@ -428,8 +451,7 @@ do
           if opts and opts.as then
             field_name = opts.as
           elseif flip then
-            local tbl = self:table_name()
-            field_name = tbl:match("^(.*)s$") or tbl
+            field_name = singularize(self:table_name())
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end

@@ -2,6 +2,7 @@
 db = require "lapis.db"
 
 import insert, concat from table
+import get_fields from require "lapis.util"
 
 query_parts = {"where", "group", "having", "order", "limit", "offset"}
 rebuild_query_clause = (parsed) ->
@@ -23,11 +24,6 @@ rebuild_query_clause = (parsed) ->
     insert buffer, clause
 
   concat buffer, " "
-
-get_fields = (obj, key, ...) ->
-  return unless obj
-  return unless key
-  obj[key], get_fields obj, ...
 
 class Paginator
   new: (@model, clause="", ...) =>

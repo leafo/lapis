@@ -1,13 +1,17 @@
 
 db = require "lapis.db"
 
-import underscore, escape_pattern, uniquify from require "lapis.util"
+import underscore, escape_pattern, uniquify, get_fields from require "lapis.util"
 import insert, concat from table
 
 cjson = require "cjson"
 import OffsetPaginator from require "lapis.db.pagination"
 
 local *
+
+-- TODO: need a proper singularize
+singularize = (name)->
+  name\match"^(.*)s$" or name
 
 class Enum
   -- convert string to number, or let number pass through
@@ -41,20 +45,24 @@ enum = (tbl) ->
 -- class Things extends Model
 --   @relations: {
 --     {"user", has_one: "Users"}
+--     {"posts", has_many: "Posts", pager: true, order: "id ASC"}
 --   }
 add_relations = (relations) =>
   for relation in *relations
     name = assert relation[1], "missing relation name"
+    fn_name = relation.as or "get_#{name}"
+    assert_model = (source) ->
+      models = require "models"
+      assert models[source], "failed to find model for relationship"
+
     if source = relation.has_one
-      fn_name = "get_#{name}"
       switch type source
         when "string"
           column_name = "#{name}_id"
           @__base[fn_name] = =>
             existing = @[name]
             return existing if existing != nil
-            models = require "models"
-            model = assert models[source], "failed to find model for relationship"
+            model = assert_model source
             with obj = model\find @[column_name]
               @[name] = obj
 
@@ -65,6 +73,17 @@ add_relations = (relations) =>
             with obj = source @
               @[name] = obj
 
+    if source = relation.has_many
+      if relation.pager
+        @__base[fn_name] = (opts) =>
+          model = assert_model source
+          clause = db.encode_clause {
+            ["#{singularize @@table_name!}_id"]: @[@@primary_keys!]
+          }
+
+          model\paginated "where #{clause}", opts
+      else
+        error "not yet"
 
 class Model
   @timestamp: false
@@ -200,9 +219,7 @@ class Model
         field_name = if opts and opts.as
           opts.as
         elseif flip
-          -- TODO: need a proper singularize
-          tbl = @table_name!
-          tbl\match"^(.*)s$" or tbl
+          singularize @table_name!
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
