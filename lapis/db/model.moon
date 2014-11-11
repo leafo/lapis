@@ -366,7 +366,7 @@ class Model
     else
       {first, ...}
 
-    return if next(columns) == nil
+    return nil, "nothing to update" if next(columns) == nil
 
     if @@constraints
       for _, column in pairs columns

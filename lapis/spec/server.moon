@@ -5,6 +5,8 @@ import normalize_headers from require "lapis.spec.request"
 ltn12 = require "ltn12"
 json = require "cjson"
 
+import parse_query_string, encode_query_string from require "lapis.util"
+
 current_server = nil
 
 load_test_server = ->
@@ -41,7 +43,6 @@ request = (path="", opts={}) ->
     method or= "POST" if opts.post
 
     if type(data) == "table"
-      import encode_query_string from require "lapis.util"
       headers["Content-type"] = "application/x-www-form-urlencoded"
       data = encode_query_string data
 
@@ -57,6 +58,19 @@ request = (path="", opts={}) ->
       port = override_port
 
   path = path\gsub "^/", ""
+
+  -- merge get parameters
+  if opts.get
+    url_base, url_query = path\match "^(.-)%?(.*)$"
+    get_params = if url_query
+      parse_query_string url_query
+    else
+      {}
+
+    for k,v in pairs opts.get
+      get_params[k] = v
+
+    path = path\gsub("^.-(%?.*)$", "") .. "?" .. encode_query_string get_params
 
   if opts.headers
     for k,v in pairs opts.headers

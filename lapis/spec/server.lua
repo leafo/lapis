@@ -3,6 +3,11 @@ local normalize_headers
 normalize_headers = require("lapis.spec.request").normalize_headers
 local ltn12 = require("ltn12")
 local json = require("cjson")
+local parse_query_string, encode_query_string
+do
+  local _obj_0 = require("lapis.util")
+  parse_query_string, encode_query_string = _obj_0.parse_query_string, _obj_0.encode_query_string
+end
 local current_server = nil
 local load_test_server
 load_test_server = function()
@@ -51,8 +56,6 @@ request = function(path, opts)
         method = method or "POST"
       end
       if type(data) == "table" then
-        local encode_query_string
-        encode_query_string = require("lapis.util").encode_query_string
         headers["Content-type"] = "application/x-www-form-urlencoded"
         data = encode_query_string(data)
       end
@@ -72,6 +75,19 @@ request = function(path, opts)
     end
   end
   path = path:gsub("^/", "")
+  if opts.get then
+    local url_base, url_query = path:match("^(.-)%?(.*)$")
+    local get_params
+    if url_query then
+      get_params = parse_query_string(url_query)
+    else
+      get_params = { }
+    end
+    for k, v in pairs(opts.get) do
+      get_params[k] = v
+    end
+    path = path:gsub("^.-(%?.*)$", "") .. "?" .. encode_query_string(get_params)
+  end
   if opts.headers then
     for k, v in pairs(opts.headers) do
       headers[k] = v

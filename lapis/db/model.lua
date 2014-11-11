@@ -203,7 +203,7 @@ do
         }
       end
       if next(columns) == nil then
-        return 
+        return nil, "nothing to update"
       end
       if self.__class.constraints then
         for _, column in pairs(columns) do
