@@ -75,10 +75,11 @@ add_relations = (relations) =>
 
     if source = relation.has_many
       if relation.pager != false
+        foreign_key = relation.key
         @__base[fn_name] = (opts) =>
           model = assert_model source
           clause = {
-            ["#{singularize @@table_name!}_id"]: @[@@primary_keys!]
+            [foreign_key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
           }
 
           if where = relation.where

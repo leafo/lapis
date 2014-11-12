@@ -120,10 +120,11 @@ add_relations = function(self, relations)
       local source = relation.has_many
       if source then
         if relation.pager ~= false then
+          local foreign_key = relation.key
           self.__base[fn_name] = function(self, opts)
             local model = assert_model(source)
             local clause = {
-              [tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
+              [foreign_key or tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
             }
             do
               local where = relation.where
