@@ -11,7 +11,10 @@ do
 end
 local cjson = require("cjson")
 local OffsetPaginator
-OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
+do
+  local _obj_0 = require("lapis.db.pagination")
+  OffsetPaginator = _obj_0.OffsetPaginator
+end
 local singularize, Enum, enum, add_relations, Model
 singularize = function(name)
   return name:match("^(.*)s$") or name
@@ -396,6 +399,7 @@ do
   self.include_in = function(self, other_records, foreign_key, opts)
     local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip
+    local has_many = opts and opts.has_many
     if not flip and type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
     end
@@ -455,7 +459,16 @@ do
           local records = { }
           for _index_0 = 1, #res do
             local t = res[_index_0]
-            records[t[find_by]] = self:load(t)
+            local t_key = t[find_by]
+            local data = self:load(t)
+            if has_many then
+              if records[t_key] == nil then
+                records[t_key] = { }
+              end
+              table.insert(records[t_key], data)
+            else
+              records[t_key] = data
+            end
           end
           local field_name
           if opts and opts.as then
