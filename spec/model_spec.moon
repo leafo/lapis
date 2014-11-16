@@ -518,6 +518,25 @@ describe "lapis.db.model", ->
         'SELECT * from "users" where "id" = 101 limit 1'
       }, queries
 
+    it "should make has_one getter flipped", ->
+      query_mock['SELECT'] = { { id: 101 } }
+
+      models.UserData = class extends Model
+        @primary_key: "user_id"
+
+      class Users extends Model
+        @relations: {
+          {"data", has_one: "UserData", flip: true}
+        }
+
+      user = Users!
+      user.id = 123
+      assert user\get_data!
+
+      assert_queries {
+        'SELECT * from "user_data" where "user_id" = 123 limit 1'
+      }, queries
+
     it "should make has_many getter", ->
       query_mock['SELECT'] = { { id: 101 } }
 

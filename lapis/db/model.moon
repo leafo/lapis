@@ -59,12 +59,25 @@ add_relations = (relations) =>
       switch type source
         when "string"
           column_name = "#{name}_id"
-          @__base[fn_name] = =>
-            existing = @[name]
-            return existing if existing != nil
-            model = assert_model source
-            with obj = model\find @[column_name]
-              @[name] = obj
+          if relation.flip
+            @__base[fn_name] = =>
+              existing = @[name]
+              return existing if existing != nil
+              model = assert_model source
+
+              clause = {
+                [foreign_key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
+              }
+
+              with obj = model\find clause
+                @[name] = obj
+          else
+            @__base[fn_name] = =>
+              existing = @[name]
+              return existing if existing != nil
+              model = assert_model source
+              with obj = model\find @[column_name]
+                @[name] = obj
 
         when "function"
           @__base[fn_name] = =>
