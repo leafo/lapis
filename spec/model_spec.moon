@@ -445,14 +445,14 @@ describe "lapis.db.model", ->
       }, queries
 
 
-  describe "relations", ->
+  describe "relations #xxx", ->
     local models
 
     before_each ->
       models = {}
       package.loaded.models = models
 
-    it "should make has_one getter based on class name", ->
+    it "should make belongs_to getter", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.Users = class extends Model
@@ -460,7 +460,7 @@ describe "lapis.db.model", ->
 
       class Posts extends Model
         @relations: {
-          {"user", has_one: "Users"}
+          {"user", belongs_to: "Users"}
         }
 
       post = Posts!
@@ -474,16 +474,14 @@ describe "lapis.db.model", ->
       }, queries
 
 
-    it "should make has_one getter based on function", ->
+    it "should make fetch getter", ->
       called = 0
 
       class Posts extends Model
         @relations: {
-          {
-            "thing"
-            has_one: =>
-              called += 1
-              "yes"
+          { "thing", fetch: =>
+            called += 1
+            "yes"
           }
         }
 
@@ -496,7 +494,7 @@ describe "lapis.db.model", ->
 
       assert_queries { }, queries
 
-    it "should make has_one getters for extend syntax", ->
+    it "should make belongs_to getters for extend syntax", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.Users = class extends Model
@@ -504,7 +502,7 @@ describe "lapis.db.model", ->
 
       m = Model\extend "the_things", {
         relations: {
-          {"user", has_one: "Users"}
+          {"user", belongs_to: "Users"}
         }
       }
 
@@ -518,15 +516,32 @@ describe "lapis.db.model", ->
         'SELECT * from "users" where "id" = 101 limit 1'
       }, queries
 
-    it "should make has_one getter flipped", ->
+    it "should make has_one getter", ->
+      query_mock['SELECT'] = { { id: 101 } }
+
+      models.Users = class Users extends Model
+        @relations: {
+          {"user_profile", has_one: "UserProfiles"}
+        }
+
+      models.UserProfiles = class UserProfiles extends Model
+
+      user = Users!
+      user.id = 123
+      user\get_user_profile!
+
+      assert_queries {
+        'SELECT * from "user_profiles" where "user_id" = 123 limit 1'
+      }, queries
+
+    it "should make has_one getter with custom key", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.UserData = class extends Model
-        @primary_key: "user_id"
 
-      class Users extends Model
+      models.Users = class Users extends Model
         @relations: {
-          {"data", has_one: "UserData", flip: true}
+          {"data", has_one: "UserData", key: "owner_id"}
         }
 
       user = Users!
@@ -534,7 +549,7 @@ describe "lapis.db.model", ->
       assert user\get_data!
 
       assert_queries {
-        'SELECT * from "user_data" where "user_id" = 123 limit 1'
+        'SELECT * from "user_data" where "owner_id" = 123 limit 1'
       }, queries
 
     it "should make has_many getter", ->
