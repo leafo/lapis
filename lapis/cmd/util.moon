@@ -2,7 +2,7 @@
 import insert, concat from table
 import escape_pattern from require "lapis.util"
 
-split = (str, delim using nil) ->
+split = (str, delim using escape_pattern) ->
   str ..= delim
   [part for part in str\gmatch "(.-)" .. escape_pattern delim]
 
