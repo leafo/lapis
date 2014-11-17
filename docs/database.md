@@ -1153,7 +1153,7 @@ property.
 local Model = require("lapis.db.model").Model
 local Posts = Model:extend("posts", {
   relations = {
-    {"users", has_one = "Users"}
+    {"users", belongs_to = "Users"}
   }
 })
 
@@ -1163,10 +1163,121 @@ local Posts = Model:extend("posts", {
 import Model from require "lapis.db.models"
 class Posts extends Model
   @relations: {
-    {"user", has_one: "Users"}
+    {"user", belongs_to: "Users"}
   }
 ```
 
+Relations will automatically add methods to models to make fetching the
+associated model instances easy. For example the `belongs_to` relation from the
+example above would make a `get_user` getter:
+
+
+```lua
+local post = Posts:find(1)
+local user = post:get_user()
+
+-- calling again returns the cached value
+local user = post:get_user()
+```
+
+```moon
+post = Posts\find 1
+user = post\get_user!
+
+-- calling again returns the cached value
+user = post\get_user!
+```
+
+```sql
+SELECT * from "posts" where "id" = 1;
+SELECT * from "users" where "id" = 123;
+```
+
+The following relations are available
+
+#### `belongs_to`
+
+A one-to-one relation where the foreign key is located on the current model.
+
+```moon
+import Model from require "lapis.db.models"
+class Users extends Model
+class Posts extends Model
+  @relations: {
+    {"user", belongs_to: "Users"}
+  }
+```
+
+Creates `get_` method for each relation.
+
+```moon
+user = post\get_user!
+```
+
+```sql
+SELECT * from "users" where "user_id" = 123;
+```
+
+#### `has_one`
+
+A one-to-one relation where the foreign key is located on the associated model.
+
+```moon
+import Model from require "lapis.db.models"
+class Users extends Model
+  @relations: {
+    {"user_profile", has_one: "UserProfiles"}
+  }
+
+class UserProfiles extends Model
+```
+
+Creates `get_` method for each relation.
+
+```moon
+profile = user\get_user_profile!
+```
+
+```sql
+SELECT * from "user_profiles" where "user_id" = 123;
+```
+
+By default, the relation converts the name of the table to a foreign key column
+name by making it singular and appending `_id`. The table `users` would convert
+to `user_id`. Sometimes the calculated foreign key isn't correct, you can
+provide a custom key with the `key` parameter to the relation:
+
+```moon
+import Model from require "lapis.db.models"
+class Users extends Model
+  @relations: {
+    {"user_profile", has_one: "UserProfiles", key: "owner_id"}
+  }
+
+class UserProfiles extends Model
+```
+
+```sql
+SELECT * from "user_profiles" where "owner_id" = 123;
+```
+
+#### `has_many`
+
+A one to many relation, returns a `Pager` object.
+
+#### `fetch`
+
+A custom relation, provide a function to fetch the associated data. Result is cached.
+
+```moon
+import Model from require "lapis.db.models"
+class Users extends Model
+  @relations: {
+    {"recent_posts", fetch: =>
+			-- fetch some data
+		}
+  }
+```
 
 ### Finding Columns
 
