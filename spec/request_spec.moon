@@ -1,28 +1,33 @@
 
 lapis = require "lapis"
 
-import mock_request, mock_action, assert_request from require "lapis.spec.request"
-
-class App extends lapis.Application
-  "/hello": =>
+import
+  mock_request
+  mock_action
+  assert_request
+  stub_request
+  from require "lapis.spec.request"
 
 describe "application", ->
+  class App extends lapis.Application
+    "/hello": =>
+
   it "should mock a request", ->
     assert.same 200, (mock_request App, "/hello")
     assert.has_error ->
       mock_request App, "/world"
 
-class SessionApp extends lapis.Application
-  layout: false
-
-  "/set_session/:value": =>
-    @session.hello = @params.value
-
-  "/get_session": =>
-    @session.hello
-
 -- tests a series of requests
 describe "session app", ->
+  class SessionApp extends lapis.Application
+    layout: false
+
+    "/set_session/:value": =>
+      @session.hello = @params.value
+
+    "/get_session": =>
+      @session.hello
+
   it "should set and read session", ->
     _, _, h = assert_request SessionApp, "/set_session/greetings"
     status, res = assert_request SessionApp, "/get_session", prev: h
@@ -190,4 +195,11 @@ describe "before filter", ->
     assert.same action_run, 1
     assert.same "stopped!", res
 
+describe "stub_request", ->
+  class SomeApp extends lapis.Application
+    [cool_page: "/cool/:name"]: =>
+
+  it "should stub a request object", ->
+    req = stub_request SomeApp, "/"
+    assert.same "/cool/world", req\url_for "cool_page", name: "world"
 
