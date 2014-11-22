@@ -26,8 +26,8 @@ assign a name to them. The simplest routes have no parameters though:
 
 ```lua
 app:match("/", function(self) end)
-app:match("/hello" function(self) end)
-app:match("/users/all" function(self) end)
+app:match("/hello", function(self) end)
+app:match("/users/all", function(self) end)
 ```
 
 ```moon
@@ -46,10 +46,10 @@ The parameter will match all characters excluding `/`:
 
 
 ```lua
-app:match("/page/:page" function(self)
+app:match("/page/:page", function(self)
   print(self.params.page)
 end)
-app:match("/post/:post_id/:post_name" function(self) end)
+app:match("/post/:post_id/:post_name", function(self) end)
 ```
 
 ```moon
@@ -67,10 +67,10 @@ character all the way to the end of the path (including `/`). The splat is
 stored in a `splat` fields in the `params` table of the request object.
 
 ```lua
-app:match("/browse/*" function(self)
+app:match("/browse/*", function(self)
   print(self.params.splat)
 end)
-app:match("/user/:name/file/*" function(self) end)
+app:match("/user/:name/file/*", function(self) end)
 ```
 
 ```moon
