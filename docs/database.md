@@ -805,6 +805,8 @@ local Model = require("lapis.db.model").Model
 
 -- table with columns: id, name
 local Users = Model:extend("users")
+
+-- table with columns: id, user_id, text_content
 local Posts = Model:extend("posts")
 ```
 
