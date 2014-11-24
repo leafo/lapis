@@ -260,6 +260,7 @@ class Model
     fields = "*"
 
     -- parse opts
+
     if type(by_key) == "table"
       fields = by_key.fields or fields
       where = by_key.where

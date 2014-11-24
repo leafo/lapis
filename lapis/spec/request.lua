@@ -310,6 +310,9 @@ mock_action = function(app_cls, url, opts, fn)
 end
 local stub_request
 stub_request = function(app_cls, url, opts)
+  if url == nil then
+    url = "/"
+  end
   if opts == nil then
     opts = { }
   end

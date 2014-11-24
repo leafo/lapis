@@ -217,7 +217,7 @@ mock_action = (app_cls, url, opts, fn) ->
   assert_request A, url, opts
   unpack ret
 
-stub_request = (app_cls, url, opts={}) ->
+stub_request = (app_cls, url="/", opts={}) ->
   local stub
 
   class App extends app_cls
