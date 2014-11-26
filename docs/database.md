@@ -1346,6 +1346,39 @@ post:refresh("color", "height")
 SELECT "color", "height" from "posts" where id = 1
 ```
 
+### `enum`
+
+The `enum` function lets you create a special table that lets you convert
+between integer constants and names. This is useful for created enumerations in
+your database rows by using integers to represent a state.
+
+```moon
+import Model, enum from require "lapis.db.model"
+
+class Posts extends Model
+	@statuses: enum {
+		pending: 1
+		public: 2
+		private: 3
+		deleted: 4
+	}
+
+
+assert Posts.statuses[1] == "pending"
+assert Posts.statuses[3] == "private"
+
+assert Posts.statuses.public == 2
+assert Posts.statuses.deleted == 4
+
+assert Posts.statuses\for_db("private") == 3
+assert Posts.statuses\for_db(3) == 3
+
+assert Posts.statuses\to_name(1) == "pending"
+assert Posts.statuses\to_name("pending") == "pending"
+
+
+```
+
 ## Database Schemas
 
 Lapis comes with a collection of tools for creating your database schema inside
