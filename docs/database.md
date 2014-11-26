@@ -1376,6 +1376,10 @@ assert Posts.statuses\for_db(3) == 3
 assert Posts.statuses\to_name(1) == "pending"
 assert Posts.statuses\to_name("pending") == "pending"
 
+-- using to_name or for_db with undefined enum value throws error
+
+Posts.statuses\to_name 232 -- erorr
+Posts.statuses\for_db "hello" -- erorr
 
 ```
 
