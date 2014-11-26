@@ -1276,8 +1276,8 @@ import Model from require "lapis.db.models"
 class Users extends Model
   @relations: {
     {"recent_posts", fetch: =>
-			-- fetch some data
-		}
+      -- fetch some data
+    }
   }
 ```
 
@@ -1356,12 +1356,12 @@ your database rows by using integers to represent a state.
 import Model, enum from require "lapis.db.model"
 
 class Posts extends Model
-	@statuses: enum {
-		pending: 1
-		public: 2
-		private: 3
-		deleted: 4
-	}
+  @statuses: enum {
+    pending: 1
+    public: 2
+    private: 3
+    deleted: 4
+  }
 
 
 assert Posts.statuses[1] == "pending"
