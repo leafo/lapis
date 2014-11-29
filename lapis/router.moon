@@ -56,7 +56,11 @@ class Router
       name = next route
       route = route[name]
 
+    if route\find '.+/$' -- don't blow away the root path..
+      route = route\gsub '/$', '' -- remove trailing slash
+
       -- keep existing route
+    if name
       unless @named_routes[name]
         @named_routes[name] = route
 
