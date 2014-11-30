@@ -1,22 +1,8 @@
-
-config = require "lapis.config"
-
-_G.do_nothing = ->
-
-extend = (first, ...) ->
-  for i = 1, select "#", ...
-    for k,v in pairs select i, ...
-      first[k] = v
-
-  first
-
-with_default = (c) ->
-  extend {}, config.default_config, c
-
 describe "lapis.env", ->
   before_each ->
     package.loaded["lapis.config"] = nil
     package.loaded["lapis.environment"] = nil
+    config = require "lapis.config"
 
     c = require "lapis.config"
 
@@ -25,6 +11,10 @@ describe "lapis.env", ->
 
     c "second", ->
       color "red"
+
+  teardown ->
+    package.loaded["lapis.config"] = nil
+    package.loaded["lapis.environment"] = nil
 
   it "should push and pop env by name", ->
     env = require "lapis.environment"
@@ -56,8 +46,26 @@ describe "lapis.env", ->
 
 
 describe "lapis.config", ->
+  _G.do_nothing = ->
+
+  local config
+
+  extend = (first, ...) ->
+    for i = 1, select "#", ...
+      for k,v in pairs select i, ...
+        first[k] = v
+
+    first
+
+  with_default = (c) ->
+    extend {}, config.default_config, c
+
   before_each ->
+    config = require "lapis.config"
     config.reset true
+
+  teardown ->
+    package.loaded["lapis.config"] = nil
 
   it "should create empty config", ->
     assert.same config.get"hello", with_default { _name: "hello" }
