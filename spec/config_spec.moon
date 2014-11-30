@@ -1,4 +1,17 @@
+
+restore_config = ->
+  local old_config, old_env
+  setup ->
+    old_config = package.loaded["lapis.config"]
+    old_env = package.loaded["lapis.environment"]
+
+  teardown ->
+    package.loaded["lapis.config"] = old_config
+    package.loaded["lapis.environment"] = old_env
+
 describe "lapis.env", ->
+  restore_config!
+
   before_each ->
     package.loaded["lapis.config"] = nil
     package.loaded["lapis.environment"] = nil
@@ -11,10 +24,6 @@ describe "lapis.env", ->
 
     c "second", ->
       color "red"
-
-  teardown ->
-    package.loaded["lapis.config"] = nil
-    package.loaded["lapis.environment"] = nil
 
   it "should push and pop env by name", ->
     env = require "lapis.environment"
@@ -46,6 +55,8 @@ describe "lapis.env", ->
 
 
 describe "lapis.config", ->
+  restore_config!
+
   _G.do_nothing = ->
 
   local config
@@ -61,11 +72,11 @@ describe "lapis.config", ->
     extend {}, config.default_config, c
 
   before_each ->
+    package.loaded["lapis.config"] = nil
+    package.loaded["lapis.environment"] = nil
+
     config = require "lapis.config"
     config.reset true
-
-  teardown ->
-    package.loaded["lapis.config"] = nil
 
   it "should create empty config", ->
     assert.same config.get"hello", with_default { _name: "hello" }
