@@ -1,22 +1,21 @@
 
-config = require "lapis.config"
+restore_config = ->
+  local old_config, old_env
+  setup ->
+    old_config = package.loaded["lapis.config"]
+    old_env = package.loaded["lapis.environment"]
 
-_G.do_nothing = ->
-
-extend = (first, ...) ->
-  for i = 1, select "#", ...
-    for k,v in pairs select i, ...
-      first[k] = v
-
-  first
-
-with_default = (c) ->
-  extend {}, config.default_config, c
+  teardown ->
+    package.loaded["lapis.config"] = old_config
+    package.loaded["lapis.environment"] = old_env
 
 describe "lapis.env", ->
+  restore_config!
+
   before_each ->
     package.loaded["lapis.config"] = nil
     package.loaded["lapis.environment"] = nil
+    config = require "lapis.config"
 
     c = require "lapis.config"
 
@@ -56,7 +55,27 @@ describe "lapis.env", ->
 
 
 describe "lapis.config", ->
+  restore_config!
+
+  _G.do_nothing = ->
+
+  local config
+
+  extend = (first, ...) ->
+    for i = 1, select "#", ...
+      for k,v in pairs select i, ...
+        first[k] = v
+
+    first
+
+  with_default = (c) ->
+    extend {}, config.default_config, c
+
   before_each ->
+    package.loaded["lapis.config"] = nil
+    package.loaded["lapis.environment"] = nil
+
+    config = require "lapis.config"
     config.reset true
 
   it "should create empty config", ->
