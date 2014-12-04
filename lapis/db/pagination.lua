@@ -190,12 +190,13 @@ do
     end,
     each_page = function(self)
       return coroutine.wrap(function()
-        local page
+        local tuple = { }
         while true do
-          local items
-          items, page = self:get_page(page)
-          if next(items) then
-            coroutine.yield(items)
+          tuple = {
+            self:get_page(unpack(tuple, 2))
+          }
+          if next(tuple[1]) then
+            coroutine.yield(tuple[1])
           else
             break
           end
