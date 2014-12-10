@@ -44,6 +44,14 @@ describe "lapis.html", ->
       link rel: "icon", type: "image/png", href: "dad"
       pre id: "hello", class: "things", style: [[border: image("http://leafo.net")]]
 
+
+  it "should boolean attributes", ->
+    output = render_html ->
+      span required: true
+      div required: false
+
+    assert.same [[<span required="true"></span><div required="false"></div>]], output
+
   it "should capture", ->
     local capture_out
     output = render_html ->
