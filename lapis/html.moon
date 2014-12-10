@@ -64,7 +64,11 @@ element_attributes = (buffer, t) ->
 
   for k,v in pairs t
     if type(k) == "string" and not k\match "^__"
-      buffer\write " ", k, "=", '"', escape(tostring(v)), '"'
+      if type(v) == "boolean"
+        if v
+          buffer\write " ", k
+      else
+        buffer\write " ", k, "=", '"', escape(tostring(v)), '"'
   nil
 
 element = (buffer, name, attrs, ...) ->

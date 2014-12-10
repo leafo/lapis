@@ -50,7 +50,7 @@ describe "lapis.html", ->
       span required: true
       div required: false
 
-    assert.same [[<span required="true"></span><div required="false"></div>]], output
+    assert.same [[<span required></span><div></div>]], output
 
   it "should capture", ->
     local capture_out

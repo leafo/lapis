@@ -86,7 +86,13 @@ element_attributes = function(buffer, t)
   end
   for k, v in pairs(t) do
     if type(k) == "string" and not k:match("^__") then
-      buffer:write(" ", k, "=", '"', escape(tostring(v)), '"')
+      if type(v) == "boolean" then
+        if v then
+          buffer:write(" ", k)
+        end
+      else
+        buffer:write(" ", k, "=", '"', escape(tostring(v)), '"')
+      end
     end
   end
   return nil
