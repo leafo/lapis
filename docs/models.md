@@ -1,5 +1,5 @@
 
-## Models
+# Models
 
 Lapis provides a `Model` base class for making Lua tables that can be
 synchronized with a database row. The class is used to represent a single
@@ -43,9 +43,12 @@ class Users extends Model
   @table_name: => "active_users"
 ```
 
-### Primary Keys
+Model instances have a field for each column that has been fetched from the
+database.
 
-By default all models have the primary key "id". This can be changed by setting
+## Primary Keys
+
+By default all models have the primary key `"id"`. This can be changed by setting
 the <span class="for_moon">`@primary_key`</span><span
 class="for_lua">`self.primary_key`</span> class variable.
 
@@ -74,7 +77,9 @@ class Followings extends Model
   @primary_key: { "user_id", "followed_user_id" }
 ```
 
-### Finding a Row
+## Class Mehods
+
+Model class methods are used for fetching existing rows or creating new ones.
 
 For the following examples assume we have the following models:
 
@@ -99,9 +104,15 @@ class Tags extends Model
   @primary_key: {"user_id", "tag"}
 ```
 
-When you want to find a single row the `find` class method is used. In the
-first form it takes a variable number of values, one for each primary key in
-the order the primary keys are specified:
+### `find(...)`
+
+The `find` class method fetches a single row from the table by some condition.
+Pass the values of the primary keys you want to look up by in the order
+specified by the `primary_keys` assigned in the Model's class.
+
+> A model without user defined primary keys has the primary key of `id` by
+> default. For those models, `find` would take one argument, the value of `id`.
+
 
 ```lua
 local user = Users:find(23232)
@@ -118,12 +129,10 @@ SELECT * from "users" where "id" = 23232 limit 1
 SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
 ```
 
-`find` returns an instance of the model. In the case of the user, if there was a
-`name` column, then we could access the users name with `user.name`.
+`find` returns an instance of the model.
 
-We can also pass a table as an argument to `find`. The table will be converted
-to a `WHERE` clause in the query:
-
+An alternate way of calling find is to pass a table as the first argument. The
+table will be converted to a `WHERE` clause in the query:
 
 ```lua
 local user = Users:find({ email = "person@example.com" })
@@ -137,7 +146,9 @@ user = Users\find email: "person@example.com"
 SELECT * from "users" where "email" = 'person@example.com' limit 1
 ```
 
-### Finding Many Rows
+If a row could not be found that matches the condition, `nil` is returned.
+
+### `select(query, ...)`
 
 When searching for multiple rows the `select` class method is used. It works
 similarly to the `select` function from the raw query interface except you
@@ -155,7 +166,8 @@ tags = Tags\select "where tag = ?", "merchant"
 SELECT * from "tags" where tag = 'merchant'
 ```
 
-Instead of a single instance, an array table of instances is returned.
+Instead of a single instance, an array table of instances is returned. If there
+are no matching rows an empty table is returned.
 
 If you want to restrict which columns are selected you can pass in a table as
 the last argument with the `fields` key set:
@@ -172,7 +184,9 @@ tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
 SELECT created_at as c from "tags" where tag = 'merchant'
 ```
 
-Alternatively if you want to find many rows by their primary key you can use
+### `find_all(primary_keys)`
+
+If you want to find many rows by their primary key you can use
 the `find_all` method. It takes an array table of primary keys. This method
 only works on tables that have singular primary keys.
 
@@ -237,7 +251,7 @@ users = UserProfile\find_all {1,2,3,4}, {
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
-### Inserting Rows
+### `create(opts)`
 
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
@@ -263,7 +277,9 @@ user = Users\create {
 INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
 ```
 
-### Updating a Row
+## Instance Methods
+
+### `update(...)`
 
 Instances of models have the `update` method for updating the row. The values
 of the primary keys are used to uniquely identify the row for updating.
@@ -318,7 +334,7 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 > The table argument can also take positional values, which are treated the
 > same as the variable argument form.
 
-### Deleting a Row
+### `delete()`
 
 Just call `delete` on the instance:
 
@@ -336,7 +352,7 @@ user\delete!
 DELETE FROM "users" WHERE "id" = 1
 ```
 
-### Timestamps
+## Timestamps
 
 Because it's common to store creation and update times, models have
 support for managing these columns automatically.
@@ -407,7 +423,7 @@ user.age = 123
 user\update "name", "age", timestamp: false
 ```
 
-### Preloading Associations
+## Preloading Associations
 
 A common pitfall when using active record type systems is triggering many
 queries inside of a loop. In order to avoid situations like this you should
@@ -540,7 +556,7 @@ instances is created from the name of the included table. In the example above
 the `user_data` property contains the included model instances. (Had it been
 plural the table name would have been made singular)
 
-### Constraints
+## Constraints
 
 Often before we insert or update a row we want to check that some conditions
 are met. In Lapis these are called constraints. For example let's say we have a
@@ -596,7 +612,7 @@ of the column being checked, the name of the column being checked, and lastly
 the object being checked. On insertion the object is the table passed to the
 create method. On update the object is the instance of the model.
 
-### Pagination
+## Pagination
 
 Using the `paginated` method on models we can easily paginate through a query
 that might otherwise return many results. The arguments are the same as the
@@ -687,7 +703,7 @@ provide a `fields` option in order to limit the fields returned by a page.
 
 The paginator has the following methods:
 
-#### `get_all()`
+### `get_all()`
 
 Gets all the items that the query can return, is the same as calling the
 `select` method directly. Returns an array table of model instances.
@@ -704,7 +720,7 @@ users = paginated\get_all!
 SELECT * from "users" where group_id = 123 order by name asc
 ```
 
-#### `get_page(page_num)`
+### `get_page(page_num)`
 
 Gets `page_num`th page, where pages are 1 indexed. The number of items per page
 is controlled by the `per_page` option, and defaults to 10. Returns an array
@@ -725,11 +741,11 @@ SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 0
 SELECT * from "users" where group_id = 123 order by name asc limit 10 offset 50
 ```
 
-#### `num_pages()`
+### `num_pages()`
 
 Returns the total number of pages.
 
-#### `total_items()`
+### `total_items()`
 
 Gets the total number of items that can be returned. The paginator will parse
 the query and remove all clauses except for the `WHERE` when issuing a `COUNT`.
@@ -746,7 +762,7 @@ users = paginated\total_items!
 SELECT COUNT(*) as c from "users" where group_id = 123
 ```
 
-#### `each_page(starting_page=1)`
+### `each_page(starting_page=1)`
 
 Returns an iterator function that can be used to iterate through each page of
 the results. Useful for processing a large query without having the entire
@@ -763,7 +779,7 @@ for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
 ```
 
-### Describing Relationships
+## Describing Relationships
 
 You can describe relationships between models using the `relations` class
 property.
@@ -814,7 +830,7 @@ SELECT * from "users" where "id" = 123;
 
 The following relations are available
 
-#### `belongs_to`
+### `belongs_to`
 
 A one-to-one relation where the foreign key is located on the current model.
 
@@ -837,7 +853,7 @@ user = post\get_user!
 SELECT * from "users" where "user_id" = 123;
 ```
 
-#### `has_one`
+### `has_one`
 
 A one-to-one relation where the foreign key is located on the associated model.
 
@@ -880,11 +896,11 @@ class UserProfiles extends Model
 SELECT * from "user_profiles" where "owner_id" = 123;
 ```
 
-#### `has_many`
+### `has_many`
 
 A one to many relation, returns a `Pager` object.
 
-#### `fetch`
+### `fetch`
 
 A custom relation, provide a function to fetch the associated data. Result is cached.
 
@@ -898,7 +914,7 @@ class Users extends Model
   }
 ```
 
-### Finding Columns
+## Finding Columns
 
 You can get the column names and column types of a table using the `columns`
 method on the model class:
@@ -922,7 +938,7 @@ SELECT column_name, data_type
   FROM information_schema.columns WHERE table_name = 'posts'
 ```
 
-### Refreshing a Model Instance
+## Refreshing a Model Instance
 
 If your model instance becomes out of date from an external change, it can tell
 it to re-fetch and re-populate it's data using the `refresh` method.
@@ -963,7 +979,7 @@ post:refresh("color", "height")
 SELECT "color", "height" from "posts" where id = 1
 ```
 
-### `enum`
+# Enum
 
 The `enum` function lets you create a special table that lets you convert
 between integer constants and names. This is useful for created enumerations in
