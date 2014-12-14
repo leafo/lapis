@@ -15,7 +15,6 @@ json = require "cjson"
 
 local capture_errors, capture_errors_json, respond_to
 
-
 set_and_truthy = (val, default=true) ->
   return default if val == nil
   val

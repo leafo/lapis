@@ -61,6 +61,9 @@ request = (r) ->
 migration = (name) ->
   print colors("%{bright}%{yellow}Migrating: %{reset}%{green}#{name}%{reset}")
 
+notice = (msg) ->
+  print colors("%{bright}%{yellow}Notice: %{reset}#{msg}")
+
 migration_summary = (count) ->
   noun = if count == 1
     "migration"
@@ -69,5 +72,5 @@ migration_summary = (count) ->
 
   print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
 
-{ :request, :query, :migration, :migration_summary, :flatten_params }
+{ :request, :query, :migration, :migration_summary, :notice, :flatten_params }
 
