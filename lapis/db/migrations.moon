@@ -23,7 +23,7 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
 run_migrations = (migrations) ->
   import entity_exists from require "lapis.db.schema"
   unless entity_exists LapisMigrations\table_name!
-    logger.notice "Table `#{LapisMigrations\table_name}` does not exist, creating"
+    logger.notice "Table `#{LapisMigrations\table_name!}` does not exist, creating"
     create_migrations_table!
 
   tuples = [{k,v} for k,v in pairs migrations]
