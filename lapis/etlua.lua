@@ -3,10 +3,10 @@ do
   local _obj_0 = require("etlua")
   Parser, Compiler = _obj_0.Parser, _obj_0.Compiler
 end
-local Widget, Buffer
+local Widget, Buffer, CONTENT_FOR_PREFIX
 do
   local _obj_0 = require("lapis.html")
-  Widget, Buffer = _obj_0.Widget, _obj_0.Buffer
+  Widget, Buffer, CONTENT_FOR_PREFIX = _obj_0.Widget, _obj_0.Buffer, _obj_0.CONTENT_FOR_PREFIX
 end
 local locked_fn, release_fn
 do
@@ -72,7 +72,7 @@ do
         return _parent_0.content_for(self, name, val)
       else
         do
-          val = self[name]
+          val = self[CONTENT_FOR_PREFIX .. name]
           if val then
             self._buffer:write(val)
             return ""

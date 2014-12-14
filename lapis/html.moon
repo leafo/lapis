@@ -6,9 +6,12 @@ import type, pairs, ipairs, tostring, getfenv, setfenv from _G
 
 import locked_fn, release_fn from require "lapis.util.functions"
 
-punct = "[%^$()%.%[%]*+%-?]"
-escape_patt = (str) ->
-  (str\gsub punct, (p) -> "%"..p)
+CONTENT_FOR_PREFIX = "_content_for_"
+
+escape_patt = do
+  punct = "[%^$()%.%[%]*+%-?]"
+  (str) ->
+    (str\gsub punct, (p) -> "%"..p)
 
 html_escape_entities = {
   ['&']: '&amp;'
@@ -274,17 +277,19 @@ class Widget
     nil
 
   content_for: (name, val) =>
+    full_name = CONTENT_FOR_PREFIX .. name
     if val
       if helper = @_get_helper_chain![1]
-        helper.layout_opts[name] = if type(val) == "string"
+        helper.layout_opts[full_name] = if type(val) == "string"
           escape val
         else
           getfenv(val).capture val
     else
-      @_buffer\write @[name]
+      @_buffer\write @[full_name]
 
   has_content_for: (name) =>
-    not not @[name]
+    full_name = CONTENT_FOR_PREFIX .. name
+    not not @[full_name]
 
   content: => -- implement me
 
@@ -343,5 +348,5 @@ class Widget
     @_buffer.widget = old_widget
     nil
 
-{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape }
+{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :CONTENT_FOR_PREFIX }
 

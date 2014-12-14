@@ -67,7 +67,7 @@ describe "lapis.html", ->
     class TestWidget extends Widget
       content: =>
         div class: "hello", @message
-        @content_for "inner"
+        raw @inner
 
     input = render_widget TestWidget message: "Hello World!", inner: -> b "Stay Safe"
     assert.same input, [[<div class="hello">Hello World!</div><b>Stay Safe</b>]]
@@ -186,15 +186,15 @@ describe "lapis.html", ->
     widget\include_helper helper
     out = render_widget widget
 
-    assert.same { another: "yeah", title: "<div>hello world</div>" }, helper.layout_opts
+    assert.same { _content_for_another: "yeah", _content_for_title: "<div>hello world</div>" }, helper.layout_opts
 
   it "should render content for", ->
     class TheLayout extends Widget
       content: =>
-        assert.truthy @has_content_for "title"
-        assert.truthy @has_content_for "inner"
-        assert.truthy @has_content_for "footer"
-        assert.falsy @has_content_for "hello"
+        assert @has_content_for("title"), "should have title content_for"
+        assert @has_content_for("inner"), "should have inner content_for"
+        assert @has_content_for("footer"), "should have footer content_for"
+        assert not @has_content_for("hello"), "should not have hello content for"
 
         div class: "title", ->
           @content_for "title"
@@ -216,7 +216,7 @@ describe "lapis.html", ->
     view\include_helper { :layout_opts }
     view inner
 
-    layout_opts.inner = -> raw inner
+    layout_opts._content_for_inner = -> raw inner
 
     assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
 

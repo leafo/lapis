@@ -88,7 +88,7 @@ class Request
 
     has_layout = @app.layout and set_and_truthy(@options.layout, true)
     @layout_opts = if has_layout
-      { inner: nil }
+      { _content_for_inner: nil }
 
     widget = @options.render
     widget = @route_name if widget == true
@@ -126,7 +126,7 @@ class Request
         ngx.update_time!
         ngx.now!
 
-      @layout_opts.inner or= -> raw inner
+      @layout_opts._content_for_inner or= -> raw inner
 
       layout = layout_cls @layout_opts
       layout\include_helper @

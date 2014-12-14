@@ -11,12 +11,15 @@ do
   local _obj_0 = require("lapis.util.functions")
   locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
 end
-local punct = "[%^$()%.%[%]*+%-?]"
+local CONTENT_FOR_PREFIX = "_content_for_"
 local escape_patt
-escape_patt = function(str)
-  return (str:gsub(punct, function(p)
-    return "%" .. p
-  end))
+do
+  local punct = "[%^$()%.%[%]*+%-?]"
+  escape_patt = function(str)
+    return (str:gsub(punct, function(p)
+      return "%" .. p
+    end))
+  end
 end
 local html_escape_entities = {
   ['&'] = '&amp;',
@@ -399,23 +402,25 @@ do
       return nil
     end,
     content_for = function(self, name, val)
+      local full_name = CONTENT_FOR_PREFIX .. name
       if val then
         do
           local helper = self:_get_helper_chain()[1]
           if helper then
             if type(val) == "string" then
-              helper.layout_opts[name] = escape(val)
+              helper.layout_opts[full_name] = escape(val)
             else
-              helper.layout_opts[name] = getfenv(val).capture(val)
+              helper.layout_opts[full_name] = getfenv(val).capture(val)
             end
           end
         end
       else
-        return self._buffer:write(self[name])
+        return self._buffer:write(self[full_name])
       end
     end,
     has_content_for = function(self, name)
-      return not not self[name]
+      local full_name = CONTENT_FOR_PREFIX .. name
+      return not not self[full_name]
     end,
     content = function(self) end,
     render_to_string = function(self, ...)
@@ -520,5 +525,6 @@ return {
   html_writer = html_writer,
   render_html = render_html,
   escape = escape,
-  unescape = unescape
+  unescape = unescape,
+  CONTENT_FOR_PREFIX = CONTENT_FOR_PREFIX
 }
