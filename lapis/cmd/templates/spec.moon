@@ -1,4 +1,7 @@
 
+check_args = (name) ->
+  error "spec template takes arguments: name" unless name
+
 content = (name) ->
   [[import
   load_test_server
@@ -24,5 +27,5 @@ filename = (name) ->
   "spec/#{name}_spec.moon"
 
 
-{:content, :filename}
+{:content, :filename, :check_args}
 
