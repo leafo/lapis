@@ -96,7 +96,8 @@ set_backend = (name="default", ...) ->
   assert(backends[name]) ...
 
 init_logger = ->
-  if ngx or os.getenv "LAPIS_SHOW_QUERIES"
+  config = require("lapis.config").get!
+  if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries
     logger = require "lapis.logging"
 
 init_db = ->

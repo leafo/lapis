@@ -3,8 +3,8 @@ import default_environment from require "lapis.cmd.util"
 
 local popper
 
--- ensure that everything runs in test env, sets up db to execute queries
-push = (name_or_env) ->
+-- force code to run in environment, sets up db to execute queries
+push = (name_or_env, overrides) ->
   assert name_or_env, "missing name or env for push"
 
   config_module = require("lapis.config")
@@ -14,6 +14,9 @@ push = (name_or_env) ->
     name_or_env
   else
     old_getter name_or_env
+
+  if overrides
+    env = setmetatable overrides, __index: env
 
   config_module.get = (...) ->
     if ...

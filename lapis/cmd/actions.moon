@@ -197,7 +197,7 @@ tasks = {
 
     (environment=default_environment!) ->
       env = require "lapis.environment"
-      env.push environment
+      env.push environment, show_queries: true
 
       migrations = require "lapis.db.migrations"
       migrations.run_migrations require "migrations"

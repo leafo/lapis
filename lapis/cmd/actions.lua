@@ -255,7 +255,9 @@ tasks = {
         environment = default_environment()
       end
       local env = require("lapis.environment")
-      env.push(environment)
+      env.push(environment, {
+        show_queries = true
+      })
       local migrations = require("lapis.db.migrations")
       migrations.run_migrations(require("migrations"))
       return env.pop()
