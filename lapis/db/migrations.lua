@@ -54,15 +54,13 @@ create_migrations_table = function(table_name)
   local schema = require("lapis.db.schema")
   local create_table, types, entity_exists
   create_table, types, entity_exists = schema.create_table, schema.types, schema.entity_exists
-  if not (entity_exists(table_name)) then
-    return create_table(table_name, {
-      {
-        "name",
-        types.varchar
-      },
-      "PRIMARY KEY(name)"
-    })
-  end
+  return create_table(table_name, {
+    {
+      "name",
+      types.varchar
+    },
+    "PRIMARY KEY(name)"
+  })
 end
 local run_migrations
 run_migrations = function(migrations)

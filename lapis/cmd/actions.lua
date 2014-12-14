@@ -254,17 +254,11 @@ tasks = {
       if environment == nil then
         environment = default_environment()
       end
-      local attach_server
-      attach_server = require("lapis.cmd.nginx").attach_server
-      if not (get_pid()) then
-        print(colors("%{green}Using temporary server..."))
-      end
-      local server = attach_server(environment)
-      print(server:exec([[        local migrations = require("lapis.db.migrations")
-        migrations.create_migrations_table()
-        migrations.run_migrations(require("migrations"))
-      ]]))
-      return server:detach()
+      local env = require("lapis.environment")
+      env.push(environment)
+      local migrations = require("lapis.db.migrations")
+      migrations.run_migrations(require("migrations"))
+      return env.pop()
     end
   },
   {
