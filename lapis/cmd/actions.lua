@@ -49,6 +49,14 @@ write_file_safe = function(file, content)
   if path.exists(file) then
     return 
   end
+  do
+    local prefix = file:match("^(.+)/[^/]+$")
+    if prefix then
+      if not (path.exists(prefix)) then
+        path.mkdir(prefix)
+      end
+    end
+  end
   return path.write_file(file, content)
 end
 local fail_with_message
@@ -272,6 +280,7 @@ tasks = {
       if not (type(tpl) == "table") then
         error("invalid template: " .. tostring(template_name))
       end
+      tpl.check_args(...)
       local out = tpl.content(...)
       local fname = tpl.filename(...)
       return write_file_safe(fname, out)

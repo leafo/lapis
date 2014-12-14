@@ -32,6 +32,10 @@ path = annotate path, {
 
 write_file_safe = (file, content) ->
   return if path.exists file
+
+  if prefix = file\match "^(.+)/[^/]+$"
+    path.mkdir prefix unless path.exists prefix
+
   path.write_file file, content
 
 fail_with_message = (msg) ->
