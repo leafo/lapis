@@ -616,6 +616,9 @@ do
         [name] = value
       }
     end
+    if not (next(t)) then
+      error("missing constraint to check")
+    end
     local cond = db.encode_clause(t)
     local table_name = db.escape_identifier(self:table_name())
     return nil ~= unpack(db.select("1 from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))

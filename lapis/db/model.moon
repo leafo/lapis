@@ -332,6 +332,8 @@ class Model
     else
       { [name]: value }
 
+    error "missing constraint to check" unless next t
+
     cond = db.encode_clause t
     table_name = db.escape_identifier @table_name!
     nil != unpack db.select "1 from #{table_name} where #{cond} limit 1"
