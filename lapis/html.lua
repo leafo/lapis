@@ -403,19 +403,31 @@ do
     end,
     content_for = function(self, name, val)
       local full_name = CONTENT_FOR_PREFIX .. name
-      if val then
-        do
-          local helper = self:_get_helper_chain()[1]
-          if helper then
-            if type(val) == "string" then
-              helper.layout_opts[full_name] = escape(val)
-            else
-              helper.layout_opts[full_name] = getfenv(val).capture(val)
-            end
+      if not (val) then
+        return self._buffer:write(self[full_name])
+      end
+      do
+        local helper = self:_get_helper_chain()[1]
+        if helper then
+          local layout_opts = helper.layout_opts
+          if type(val) == "string" then
+            val = escape(val)
+          else
+            val = getfenv(val).capture(val)
+          end
+          local existing = layout_opts[full_name]
+          local _exp_0 = type(existing)
+          if "nil" == _exp_0 then
+            layout_opts[full_name] = val
+          elseif "table" == _exp_0 then
+            return table.insert(layout_opts[full_name], val)
+          else
+            layout_opts[full_name] = {
+              existing,
+              val
+            }
           end
         end
-      else
-        return self._buffer:write(self[full_name])
       end
     end,
     has_content_for = function(self, name)

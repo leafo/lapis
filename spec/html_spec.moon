@@ -220,6 +220,26 @@ describe "lapis.html", ->
 
     assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
 
+  it "should append multiple content for", ->
+    class TheLayout extends Widget
+      content: =>
+        element "content-for", ->
+          @content_for "things"
+
+    class TheWidget extends Widget
+      content: =>
+        @content_for "things", -> div "hello world"
+        @content_for "things", "dual world"
+
+    layout_opts = {}
+
+    inner = {}
+    view = TheWidget!
+    view\include_helper { :layout_opts }
+    view inner
+
+    assert.same [[<content-for><div>hello world</div>dual world</content-for>]], render_widget TheLayout layout_opts
+
   it "should instantiate widget class when passed to widget helper", ->
     class SomeWidget extends Widget
       content: =>

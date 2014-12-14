@@ -278,14 +278,24 @@ class Widget
 
   content_for: (name, val) =>
     full_name = CONTENT_FOR_PREFIX .. name
-    if val
-      if helper = @_get_helper_chain![1]
-        helper.layout_opts[full_name] = if type(val) == "string"
-          escape val
+    return @_buffer\write @[full_name] unless val
+
+    if helper = @_get_helper_chain![1]
+      layout_opts = helper.layout_opts
+
+      val = if type(val) == "string"
+        escape val
+      else
+        getfenv(val).capture val
+
+      existing = layout_opts[full_name]
+      switch type existing
+        when "nil"
+          layout_opts[full_name] = val
+        when "table"
+          table.insert layout_opts[full_name], val
         else
-          getfenv(val).capture val
-    else
-      @_buffer\write @[full_name]
+          layout_opts[full_name] = {existing, val}
 
   has_content_for: (name) =>
     full_name = CONTENT_FOR_PREFIX .. name
