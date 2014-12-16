@@ -106,11 +106,11 @@ class OrderedPaginator extends Paginator
 
   each_page: =>
     coroutine.wrap ->
-      local page
+      tuple = {}
       while true
-        items, page = @get_page page
-        if next items
-          coroutine.yield items
+        tuple = { @get_page unpack tuple, 2 }
+        if next tuple[1]
+          coroutine.yield tuple[1]
         else
           break
 

@@ -217,4 +217,14 @@ mock_action = (app_cls, url, opts, fn) ->
   assert_request A, url, opts
   unpack ret
 
-{ :mock_request, :assert_request, :normalize_headers, :mock_action }
+stub_request = (app_cls, url="/", opts={}) ->
+  local stub
+
+  class App extends app_cls
+    dispatch: (req, res) =>
+      stub = @.Request @, req, res
+
+  mock_request App, url, opts
+  stub
+
+{ :mock_request, :assert_request, :normalize_headers, :mock_action, :stub_request }

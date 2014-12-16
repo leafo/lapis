@@ -1,7 +1,7 @@
 
 import Parser, Compiler from require "etlua"
 
-import Widget, Buffer from require "lapis.html"
+import Widget, Buffer, CONTENT_FOR_PREFIX from require "lapis.html"
 import locked_fn, release_fn from require "lapis.util.functions"
 
 parser = Parser!
@@ -38,7 +38,7 @@ class EtluaWidget extends Widget
     if val
       super name, val
     else
-      if val = @[name]
+      if val = @[CONTENT_FOR_PREFIX .. name]
         @_buffer\write val
         ""
 

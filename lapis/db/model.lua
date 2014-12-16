@@ -84,37 +84,68 @@ add_relations = function(self, relations)
     local assert_model
     assert_model = function(source)
       local models = require("models")
-      return assert(models[source], "failed to find model for relationship")
+      do
+        local m = models[source]
+        if not (m) then
+          error("failed to find model `" .. tostring(source) .. "` for relationship")
+        end
+        return m
+      end
+    end
+    do
+      local source = relation.fetch
+      if source then
+        assert(type(source) == "function", "Expecting function for `fetch` relation")
+        self.__base[fn_name] = function(self)
+          local existing = self[name]
+          if existing ~= nil then
+            return existing
+          end
+          do
+            local obj = source(self)
+            self[name] = obj
+            return obj
+          end
+        end
+      end
     end
     do
       local source = relation.has_one
       if source then
-        local _exp_0 = type(source)
-        if "string" == _exp_0 then
-          local column_name = tostring(name) .. "_id"
-          self.__base[fn_name] = function(self)
-            local existing = self[name]
-            if existing ~= nil then
-              return existing
-            end
-            local model = assert_model(source)
-            do
-              local obj = model:find(self[column_name])
-              self[name] = obj
-              return obj
-            end
+        assert(type(source) == "string", "Expecting model name for `has_one` relation")
+        local column_name = tostring(name) .. "_id"
+        self.__base[fn_name] = function(self)
+          local existing = self[name]
+          if existing ~= nil then
+            return existing
           end
-        elseif "function" == _exp_0 then
-          self.__base[fn_name] = function(self)
-            local existing = self[name]
-            if existing ~= nil then
-              return existing
-            end
-            do
-              local obj = source(self)
-              self[name] = obj
-              return obj
-            end
+          local model = assert_model(source)
+          local clause = {
+            [relation.key or tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
+          }
+          do
+            local obj = model:find(clause)
+            self[name] = obj
+            return obj
+          end
+        end
+      end
+    end
+    do
+      local source = relation.belongs_to
+      if source then
+        assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
+        local column_name = tostring(name) .. "_id"
+        self.__base[fn_name] = function(self)
+          local existing = self[name]
+          if existing ~= nil then
+            return existing
+          end
+          local model = assert_model(source)
+          do
+            local obj = model:find(self[column_name])
+            self[name] = obj
+            return obj
           end
         end
       end
@@ -597,6 +628,9 @@ do
       t = {
         [name] = value
       }
+    end
+    if not (next(t)) then
+      error("missing constraint to check")
     end
     local cond = db.encode_clause(t)
     local table_name = db.escape_identifier(self:table_name())

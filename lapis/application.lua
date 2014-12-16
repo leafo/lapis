@@ -108,7 +108,7 @@ do
       local has_layout = self.app.layout and set_and_truthy(self.options.layout, true)
       if has_layout then
         self.layout_opts = {
-          inner = nil
+          _content_for_inner = nil
         }
       end
       local widget = self.options.render
@@ -151,7 +151,7 @@ do
           ngx.update_time()
           start_time = ngx.now()
         end
-        self.layout_opts.inner = self.layout_opts.inner or function()
+        self.layout_opts._content_for_inner = self.layout_opts._content_for_inner or function()
           return raw(inner)
         end
         local layout = layout_cls(self.layout_opts)

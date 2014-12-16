@@ -11,12 +11,15 @@ do
   local _obj_0 = require("lapis.util.functions")
   locked_fn, release_fn = _obj_0.locked_fn, _obj_0.release_fn
 end
-local punct = "[%^$()%.%[%]*+%-?]"
+local CONTENT_FOR_PREFIX = "_content_for_"
 local escape_patt
-escape_patt = function(str)
-  return (str:gsub(punct, function(p)
-    return "%" .. p
-  end))
+do
+  local punct = "[%^$()%.%[%]*+%-?]"
+  escape_patt = function(str)
+    return (str:gsub(punct, function(p)
+      return "%" .. p
+    end))
+  end
 end
 local html_escape_entities = {
   ['&'] = '&amp;',
@@ -86,7 +89,13 @@ element_attributes = function(buffer, t)
   end
   for k, v in pairs(t) do
     if type(k) == "string" and not k:match("^__") then
-      buffer:write(" ", k, "=", '"', escape(tostring(v)), '"')
+      if type(v) == "boolean" then
+        if v then
+          buffer:write(" ", k)
+        end
+      else
+        buffer:write(" ", k, "=", '"', escape(tostring(v)), '"')
+      end
     end
   end
   return nil
@@ -393,23 +402,37 @@ do
       return nil
     end,
     content_for = function(self, name, val)
-      if val then
-        do
-          local helper = self:_get_helper_chain()[1]
-          if helper then
-            if type(val) == "string" then
-              helper.layout_opts[name] = escape(val)
-            else
-              helper.layout_opts[name] = getfenv(val).capture(val)
-            end
+      local full_name = CONTENT_FOR_PREFIX .. name
+      if not (val) then
+        return self._buffer:write(self[full_name])
+      end
+      do
+        local helper = self:_get_helper_chain()[1]
+        if helper then
+          local layout_opts = helper.layout_opts
+          if type(val) == "string" then
+            val = escape(val)
+          else
+            val = getfenv(val).capture(val)
+          end
+          local existing = layout_opts[full_name]
+          local _exp_0 = type(existing)
+          if "nil" == _exp_0 then
+            layout_opts[full_name] = val
+          elseif "table" == _exp_0 then
+            return table.insert(layout_opts[full_name], val)
+          else
+            layout_opts[full_name] = {
+              existing,
+              val
+            }
           end
         end
-      else
-        return self._buffer:write(self[name])
       end
     end,
     has_content_for = function(self, name)
-      return not not self[name]
+      local full_name = CONTENT_FOR_PREFIX .. name
+      return not not self[full_name]
     end,
     content = function(self) end,
     render_to_string = function(self, ...)
@@ -514,5 +537,6 @@ return {
   html_writer = html_writer,
   render_html = render_html,
   escape = escape,
-  unescape = unescape
+  unescape = unescape,
+  CONTENT_FOR_PREFIX = CONTENT_FOR_PREFIX
 }

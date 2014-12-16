@@ -6,9 +6,12 @@ import type, pairs, ipairs, tostring, getfenv, setfenv from _G
 
 import locked_fn, release_fn from require "lapis.util.functions"
 
-punct = "[%^$()%.%[%]*+%-?]"
-escape_patt = (str) ->
-  (str\gsub punct, (p) -> "%"..p)
+CONTENT_FOR_PREFIX = "_content_for_"
+
+escape_patt = do
+  punct = "[%^$()%.%[%]*+%-?]"
+  (str) ->
+    (str\gsub punct, (p) -> "%"..p)
 
 html_escape_entities = {
   ['&']: '&amp;'
@@ -64,7 +67,11 @@ element_attributes = (buffer, t) ->
 
   for k,v in pairs t
     if type(k) == "string" and not k\match "^__"
-      buffer\write " ", k, "=", '"', escape(tostring(v)), '"'
+      if type(v) == "boolean"
+        if v
+          buffer\write " ", k
+      else
+        buffer\write " ", k, "=", '"', escape(tostring(v)), '"'
   nil
 
 element = (buffer, name, attrs, ...) ->
@@ -270,17 +277,29 @@ class Widget
     nil
 
   content_for: (name, val) =>
-    if val
-      if helper = @_get_helper_chain![1]
-        helper.layout_opts[name] = if type(val) == "string"
-          escape val
+    full_name = CONTENT_FOR_PREFIX .. name
+    return @_buffer\write @[full_name] unless val
+
+    if helper = @_get_helper_chain![1]
+      layout_opts = helper.layout_opts
+
+      val = if type(val) == "string"
+        escape val
+      else
+        getfenv(val).capture val
+
+      existing = layout_opts[full_name]
+      switch type existing
+        when "nil"
+          layout_opts[full_name] = val
+        when "table"
+          table.insert layout_opts[full_name], val
         else
-          getfenv(val).capture val
-    else
-      @_buffer\write @[name]
+          layout_opts[full_name] = {existing, val}
 
   has_content_for: (name) =>
-    not not @[name]
+    full_name = CONTENT_FOR_PREFIX .. name
+    not not @[full_name]
 
   content: => -- implement me
 
@@ -339,5 +358,5 @@ class Widget
     @_buffer.widget = old_widget
     nil
 
-{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape }
+{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :CONTENT_FOR_PREFIX }
 

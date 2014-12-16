@@ -53,25 +53,43 @@ add_relations = (relations) =>
     fn_name = relation.as or "get_#{name}"
     assert_model = (source) ->
       models = require "models"
-      assert models[source], "failed to find model for relationship"
+      with m = models[source]
+        error "failed to find model `#{source}` for relationship" unless m
+
+    if source = relation.fetch
+      assert type(source) == "function", "Expecting function for `fetch` relation"
+      @__base[fn_name] = =>
+        existing = @[name]
+        return existing if existing != nil
+        with obj = source @
+          @[name] = obj
 
     if source = relation.has_one
-      switch type source
-        when "string"
-          column_name = "#{name}_id"
-          @__base[fn_name] = =>
-            existing = @[name]
-            return existing if existing != nil
-            model = assert_model source
-            with obj = model\find @[column_name]
-              @[name] = obj
+      assert type(source) == "string", "Expecting model name for `has_one` relation"
+      column_name = "#{name}_id"
+      @__base[fn_name] = =>
+        existing = @[name]
+        return existing if existing != nil
+        model = assert_model source
 
-        when "function"
-          @__base[fn_name] = =>
-            existing = @[name]
-            return existing if existing != nil
-            with obj = source @
-              @[name] = obj
+        clause = {
+          [relation.key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
+        }
+
+        with obj = model\find clause
+          @[name] = obj
+
+
+    if source = relation.belongs_to
+      assert type(source) == "string", "Expecting model name for `belongs_to` relation"
+      column_name = "#{name}_id"
+
+      @__base[fn_name] = =>
+        existing = @[name]
+        return existing if existing != nil
+        model = assert_model source
+        with obj = model\find @[column_name]
+          @[name] = obj
 
     if source = relation.has_many
       if relation.pager != false
@@ -252,6 +270,7 @@ class Model
     fields = "*"
 
     -- parse opts
+
     if type(by_key) == "table"
       fields = by_key.fields or fields
       where = by_key.where
@@ -322,6 +341,8 @@ class Model
       name
     else
       { [name]: value }
+
+    error "missing constraint to check" unless next t
 
     cond = db.encode_clause t
     table_name = db.escape_identifier @table_name!

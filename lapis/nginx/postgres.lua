@@ -100,7 +100,8 @@ set_backend = function(name, ...)
 end
 local init_logger
 init_logger = function()
-  if ngx or os.getenv("LAPIS_SHOW_QUERIES") then
+  local config = require("lapis.config").get()
+  if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries then
     logger = require("lapis.logging")
   end
 end

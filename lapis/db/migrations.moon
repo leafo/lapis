@@ -4,7 +4,7 @@ logger = require "lapis.logging"
 import Model from require "lapis.db.model"
 
 class LapisMigrations extends Model
-  primary_key: "name"
+  @primary_key: "name"
 
   @exists: (name) =>
     @find tostring name
@@ -12,17 +12,20 @@ class LapisMigrations extends Model
   @create: (name) =>
     Model.create @, { name: tostring name }
 
-create_migrations_table = (table_name="lapis_migrations") ->
+create_migrations_table = (table_name=LapisMigrations\table_name!) ->
   schema = require "lapis.db.schema"
   import create_table, types, entity_exists from schema
-
-  unless entity_exists table_name
-    create_table table_name, {
-      { "name", types.varchar }
-      "PRIMARY KEY(name)"
-    }
+  create_table table_name, {
+    { "name", types.varchar }
+    "PRIMARY KEY(name)"
+  }
 
 run_migrations = (migrations) ->
+  import entity_exists from require "lapis.db.schema"
+  unless entity_exists LapisMigrations\table_name!
+    logger.notice "Table `#{LapisMigrations\table_name!}` does not exist, creating"
+    create_migrations_table!
+
   tuples = [{k,v} for k,v in pairs migrations]
   table.sort tuples, (a, b) -> a[1] < b[1]
 

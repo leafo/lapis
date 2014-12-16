@@ -1,3 +1,9 @@
+local check_args
+check_args = function(name)
+  if not (name) then
+    return error("spec template takes arguments: name")
+  end
+end
 local content
 content = function(name)
   return [[import
@@ -26,5 +32,6 @@ filename = function(name)
 end
 return {
   content = content,
-  filename = filename
+  filename = filename,
+  check_args = check_args
 }

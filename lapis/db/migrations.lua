@@ -5,9 +5,7 @@ Model = require("lapis.db.model").Model
 local LapisMigrations
 do
   local _parent_0 = Model
-  local _base_0 = {
-    primary_key = "name"
-  }
+  local _base_0 = { }
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
   local _class_0 = setmetatable({
@@ -34,6 +32,7 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
+  self.primary_key = "name"
   self.exists = function(self, name)
     return self:find(tostring(name))
   end
@@ -50,23 +49,27 @@ end
 local create_migrations_table
 create_migrations_table = function(table_name)
   if table_name == nil then
-    table_name = "lapis_migrations"
+    table_name = LapisMigrations:table_name()
   end
   local schema = require("lapis.db.schema")
   local create_table, types, entity_exists
   create_table, types, entity_exists = schema.create_table, schema.types, schema.entity_exists
-  if not (entity_exists(table_name)) then
-    return create_table(table_name, {
-      {
-        "name",
-        types.varchar
-      },
-      "PRIMARY KEY(name)"
-    })
-  end
+  return create_table(table_name, {
+    {
+      "name",
+      types.varchar
+    },
+    "PRIMARY KEY(name)"
+  })
 end
 local run_migrations
 run_migrations = function(migrations)
+  local entity_exists
+  entity_exists = require("lapis.db.schema").entity_exists
+  if not (entity_exists(LapisMigrations:table_name())) then
+    logger.notice("Table `" .. tostring(LapisMigrations:table_name()) .. "` does not exist, creating")
+    create_migrations_table()
+  end
   local tuples
   do
     local _accum_0 = { }

@@ -33,8 +33,8 @@ describe "lapis.etlua", ->
     w_cls = EtluaWidget\load([[before <% content_for("thing") %>, <% content_for("other_thing")%> after]])
 
     w = w_cls {
-      thing: -> div class: "big", "Hello"
-      other_thing: "<div class='small'>yeah</div>"
+      _content_for_thing: -> div class: "big", "Hello"
+      _content_for_other_thing: "<div class='small'>yeah</div>"
     }
 
     assert.same [[before <div class="big">Hello</div>, <div class='small'>yeah</div> after]], w\render_to_string!
