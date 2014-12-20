@@ -1,11 +1,13 @@
-local type, getmetatable, setmetatable
+local type, getmetatable, setmetatable, rawset
 do
   local _obj_0 = _G
-  type, getmetatable, setmetatable = _obj_0.type, _obj_0.getmetatable, _obj_0.setmetatable
+  type, getmetatable, setmetatable, rawset = _obj_0.type, _obj_0.getmetatable, _obj_0.setmetatable, _obj_0.rawset
 end
 local Flow
 do
-  local _base_0 = { }
+  local _base_0 = {
+    expose_assigns = false
+  }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
     __init = function(self, _req, obj)
@@ -15,7 +17,7 @@ do
       self._req = _req
       assert(self._req, "flow missing request")
       local proxy = setmetatable(obj, getmetatable(self))
-      return setmetatable(self, {
+      local mt = {
         __index = function(self, key)
           local val = proxy[key]
           if val ~= nil then
@@ -26,11 +28,39 @@ do
             val = function(_, ...)
               return self._req[key](self._req, ...)
             end
-            self[key] = val
+            rawset(self, key, val)
           end
           return val
         end
-      })
+      }
+      do
+        local expose = self.expose_assigns
+        if expose then
+          local allowed_assigns
+          if type(expose) == "table" then
+            do
+              local _tbl_0 = { }
+              for _index_0 = 1, #expose do
+                local name = expose[_index_0]
+                _tbl_0[name] = true
+              end
+              allowed_assigns = _tbl_0
+            end
+          end
+          mt.__newindex = function(self, key, val)
+            if allowed_assigns then
+              if allowed_assigns[key] then
+                self._req[key] = val
+              else
+                return rawset(self, key, val)
+              end
+            else
+              self._req[key] = val
+            end
+          end
+        end
+      end
+      return setmetatable(self, mt)
     end,
     __base = _base_0,
     __name = "Flow"
