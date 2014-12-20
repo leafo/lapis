@@ -1,5 +1,5 @@
 
-import type, getmetatable, setmetatable from _G
+import type, getmetatable, setmetatable, rawset from _G
 
 -- a mediator for encapsulating logic between multiple models and a request
 class Flow
@@ -19,7 +19,7 @@ class Flow
         -- wrap the function to run in req context
         if type(val) == "function"
           val = (_, ...) -> @_req[key] @_req, ...
-          @[key] = val
+          rawset @, key, val
 
         val
     }
