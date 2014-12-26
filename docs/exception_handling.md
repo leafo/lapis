@@ -156,7 +156,7 @@ local app = lapis.Application()
 
 app:match("/", capture_errors(function(self)
   local user = assert_error(Users:find({id = "leafo"}))
-  reutrn "result: " .. user.id
+  return "result: " .. user.id
 end))
 
 ```
