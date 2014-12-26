@@ -291,9 +291,9 @@ describe "my_site", ->
 
 ```
 
-`path` is either a path of a full URL to request against the test server. If it
+`path` is either a path or a full URL to request against the test server. If it
 is a full URL then the hostname of the URL is extracted and inserted as the
-host header.
+`Host` header.
 
 The `options` argument can be used to further configure the request. It
 supports the following options in the table:
