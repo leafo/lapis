@@ -577,7 +577,7 @@ class="for_lua">`self.params`</span> under the name of the form input:
 locl app = lapis.Application()
 
 app:post("/my_action", function(self)
-  local file = @params.uploaded_file
+  local file = self.params.uploaded_file
   if file then
     return "Uploaded: " .. file.filename .. ", " .. #file.content .. "bytes"
   end
