@@ -149,7 +149,7 @@ class Index extends Widget
 ### Rendering Widgets Manually
 
 Widgets can also be rendered manually by instantiating them and calling the
-`render` method.
+`render_to_string` method.
 
 ```moon
 Index = require "views.index"
@@ -177,7 +177,9 @@ class extends lapis.Application
 
 You should avoid rendering widgets manually when possible. When in an action
 use the `render` [request option](#request-object-request-options). When in
-another widget use the `widget` helper function.
+another widget use the `widget` helper function. Both of these methods will
+ensure the same output buffer is shared to avoid unnecessary string
+concatenations.
 
 ## Layouts
 
