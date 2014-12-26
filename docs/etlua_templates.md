@@ -193,7 +193,7 @@ Any values and helpers available in the parent template are also available in
 the sub-template.
 
 Somtimes you need to pass data to a sub-template that's generated during the
-execution of the parent template. `require` takes a second argument of values
+execution of the parent template. `render` takes a second argument of values
 to pass into the sub-template.
 
 Here's a contrived example of using a sub-template to render a list of numbers:
