@@ -111,6 +111,86 @@ r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
 r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
 ```
 
+### Using a `test` Environment
+
+If you execute any queries during your tests without setting an environment
+then they will run on the current environment. The default environment is
+`development`, so this might not be ideal as it could mess up the state of your
+database for development. It's suggested to make a `test` environment for
+executing tests in with its own database connection.
+
+You can add a configuration environment with separate database rules by editing
+your <span class="for_moon">`config.moon`</span><span
+class="for_lua">`config.lua`</span>:
+
+> Read more about configurations on the [Configuration and
+> Environments guide]($root/reference/configuration.html), and more about
+> setting up a database on the [Database guide]($root/reference/configuration.html).
+
+```lua
+local config = require("lapis.config")
+
+-- other configuration ...
+
+config("test", {
+  postgres = {
+    backend = "pgmoon",
+    database = "myapp_test"
+  }
+})
+
+```
+
+```moon
+-- config.moon
+config = require "lapis.config"
+
+-- other configuration ...
+
+config "test", ->
+  postgres {
+    backend: "pgmoon"
+    database: "myapp_test"
+  }
+```
+
+> Don't forget to initialize your test database by creating it and its schema
+> before running the tests.
+
+When executing your tests you should use a *setup* and *teardown* to ensure
+your code runs in the `test` environment. The `lapis.environment` module lets
+us do this. Here is how you might do it in Busted:
+
+```lua
+local env = require("lapis.environment")
+
+describe("my site", function()
+  setup(function()
+    env.push("test")
+  end)
+
+  teardown(function()
+    env.pop()
+  end)
+
+  -- write some tests that use the test environment
+end)
+```
+
+
+```moon
+env = require "lapis.environment"
+
+describe "my_site", ->
+  setup ->
+    env.push "test"
+
+  teardown ->
+    env.pop!
+
+  -- write some tests that use the test environment
+```
+
 ## Using the Test Server
 
 While mocking a request is useful, it doesn't give you access to the entire
