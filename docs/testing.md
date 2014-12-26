@@ -122,6 +122,10 @@ The test server runs inside of the `test` environment (compared to
 connection for tests so you are free to delete and create rows in the database
 without messing up your development state.
 
+Additionally, when starting the test server, the local running Lapis
+environment is also overridden to be `test`. Likewise, if you've set up a test
+database for your test environment, you're free to run any queries without
+interfering with development state.
 
 The two functions that control the test server are `load_test_server` and
 `close_test_server`, and they can be found in `"lapis.spec.server"`.
@@ -160,28 +164,9 @@ describe "my_site", ->
 
 The test server will either spawn a new Nginx if one isn't running, or it will
 take over your development server until `close_test_server` is called. Taking
-over the development server is useful for seeing the raw Nginx output in the
-console.
-
-While the test server is running we are free to make queries and use
-models. Database queries are transparently sent over HTTP to the test server
-and executed inside of Nginx.
-
-For example, we could write a basic unit test for a model:
-
-```lua
-  it("should create a User", function()
-    local Users = require("models").Users
-    assert(Users:create({ name = "leafo" })
-  end)
-```
-
-
-```moon
-  it "should create a User", ->
-    import Users from require "models"
-    assert Users\create name: "leafo"
-```
+over the development server can be useful because the same stdout is used, so
+any output from the server is written to a terminal you might already have
+open.
 
 ### `request(path, options={})`
 
