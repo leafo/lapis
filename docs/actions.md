@@ -266,7 +266,7 @@ end)
 
 app:match("/", function(self)
   -- returns: /data/123/height
-  self.url_for("user_data", { user_id = 123, data_field = "height"})
+  self:url_for("user_data", { user_id = 123, data_field = "height"})
 end)
 ```
 
