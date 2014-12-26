@@ -921,7 +921,7 @@ method on the model class:
 
 ```lua
 local Posts = Model:extend("posts")
-for _, col in ipairs(Posts:columns) do
+for _, col in ipairs(Posts:columns()) do
   print(col.column_name, col.data_type)
 end
 ```
