@@ -406,7 +406,19 @@ class Model
     if @@timestamp and not (opts and opts.timestamp == false)
       values._timestamp = true
 
-    db.update @@table_name!, values, cond
+    local returning
+    for k, v in pairs values
+      if db.is_raw v
+        returning or= {}
+        table.insert returning, k
+
+    if returning
+      with res = db.update @@table_name!, values, cond, unpack returning
+        if update = unpack res
+          for k, v in pairs update
+            @[k] = v
+    else
+      db.update @@table_name!, values, cond
 
   -- reload fields on the instance
   refresh: (fields="*", ...) =>

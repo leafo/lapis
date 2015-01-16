@@ -265,7 +265,29 @@ do
       if self.__class.timestamp and not (opts and opts.timestamp == false) then
         values._timestamp = true
       end
-      return db.update(self.__class:table_name(), values, cond)
+      local returning
+      for k, v in pairs(values) do
+        if db.is_raw(v) then
+          returning = returning or { }
+          table.insert(returning, k)
+        end
+      end
+      if returning then
+        do
+          local res = db.update(self.__class:table_name(), values, cond, unpack(returning))
+          do
+            local update = unpack(res)
+            if update then
+              for k, v in pairs(update) do
+                self[k] = v
+              end
+            end
+          end
+          return res
+        end
+      else
+        return db.update(self.__class:table_name(), values, cond)
+      end
     end,
     refresh = function(self, fields, ...)
       if fields == nil then
