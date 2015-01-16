@@ -334,6 +334,11 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 > The table argument can also take positional values, which are treated the
 > same as the variable argument form.
 
+If any of the updated values are generated from raw SQL via `db.raw`, then
+those values will be replaces with values returning by the database using the
+`RETURNING` clause.
+
+
 ### `delete()`
 
 Just call `delete` on the instance:

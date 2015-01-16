@@ -269,6 +269,31 @@ db.update "the_table", {
 UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
 ```
 
+When using the table form for conditions, all the extra arguments are used for
+the `RETURNING` clause:
+
+```lua
+db.update("cats", {
+  count = db.raw("count + 1")
+}, {
+  id = 1200
+}, "count")
+```
+
+```moon
+db.update "cats", {
+  count: db.raw "count + 1"
+}, {
+  id: 1200
+}, "count"
+```
+
+```sql
+UPDATE "cats" SET "count" = count + 1, WHERE "id" = 1200 RETURNING count
+```
+
+
+
 ### `delete(table, conditions, params...)`
 
 Deletes rows from `table` that match `conditions`.
