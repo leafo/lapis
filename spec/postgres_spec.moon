@@ -99,6 +99,12 @@ tests = {
   }
 
   {
+    -> db.update "cats", { color: "red" }, { weight: 1200, length: 392 }, "weight", "color"
+    [[UPDATE "cats" SET "color" = 'red' WHERE "weight" = 1200 AND "length" = 392 RETURNING "weight", "color"]]
+    [[UPDATE "cats" SET "color" = 'red' WHERE "length" = 392 AND "weight" = 1200 RETURNING "weight", "color"]]
+  }
+
+  {
     -> db.delete "cats"
     [[DELETE FROM "cats"]]
   }

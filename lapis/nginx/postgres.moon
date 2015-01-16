@@ -202,6 +202,9 @@ _update = (table, values, cond, ...) ->
   if cond
     add_cond buff, cond, ...
 
+  if type(cond) == "table"
+    add_returning buff, true, ...
+
   raw_query concat buff
 
 _delete = (table, cond, ...) ->
