@@ -161,6 +161,20 @@ local _select
 _select = function(str, ...)
   return query("SELECT " .. str, ...)
 end
+local add_returning
+add_returning = function(buff, first, cur, following, ...)
+  if not (cur) then
+    return 
+  end
+  if first then
+    append_all(buff, " RETURNING ")
+  end
+  append_all(buff, escape_identifier(cur))
+  if following then
+    append_all(buff, ", ")
+    return add_returning(buff, false, following, ...)
+  end
+end
 local _insert
 _insert = function(tbl, values, ...)
   if values._timestamp then
@@ -175,17 +189,8 @@ _insert = function(tbl, values, ...)
     " "
   }
   encode_values(values, buff)
-  local returning = {
-    ...
-  }
-  if next(returning) then
-    append_all(buff, " RETURNING ")
-    for i, r in ipairs(returning) do
-      append_all(buff, escape_identifier(r))
-      if i ~= #returning then
-        append_all(buff, ", ")
-      end
-    end
+  if ... then
+    add_returning(buff, true, ...)
   end
   return raw_query(concat(buff))
 end

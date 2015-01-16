@@ -146,6 +146,18 @@ query = (str, ...) ->
 _select = (str, ...) ->
   query "SELECT " .. str, ...
 
+add_returning = (buff, first, cur, following, ...) ->
+  return unless cur
+
+  if first
+    append_all buff, " RETURNING "
+
+  append_all buff, escape_identifier cur
+
+  if following
+    append_all buff, ", "
+    add_returning buff, false, following, ...
+
 _insert = (tbl, values, ...) ->
   if values._timestamp
     values._timestamp = nil
@@ -161,12 +173,8 @@ _insert = (tbl, values, ...) ->
   }
   encode_values values, buff
 
-  returning = {...}
-  if next returning
-    append_all buff, " RETURNING "
-    for i, r in ipairs returning
-      append_all buff, escape_identifier r
-      append_all buff, ", " if i != #returning
+  if ...
+    add_returning buff, true, ...
 
   raw_query concat buff
 
