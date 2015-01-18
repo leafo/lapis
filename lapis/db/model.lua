@@ -591,7 +591,7 @@ do
       end
     end
   end
-  self.create = function(self, values)
+  self.create = function(self, values, opts)
     if self.constraints then
       for key in pairs(self.constraints) do
         do
@@ -606,6 +606,16 @@ do
       values._timestamp = true
     end
     local returning
+    if opts and opts.returning then
+      returning = {
+        self:primary_keys()
+      }
+      local _list_0 = opts.returning
+      for _index_0 = 1, #_list_0 do
+        local field = _list_0[_index_0]
+        table.insert(returning, field)
+      end
+    end
     for k, v in pairs(values) do
       if db.is_raw(v) then
         returning = returning or {

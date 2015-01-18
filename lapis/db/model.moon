@@ -299,7 +299,7 @@ class Model
       @load result
 
   -- create from table of values, return loaded object
-  @create: (values) =>
+  @create: (values, opts) =>
     if @constraints
       for key in pairs @constraints
         if err = @_check_constraint key, values and values[key], values
@@ -308,6 +308,12 @@ class Model
     values._timestamp = true if @timestamp
 
     local returning
+
+    if opts and opts.returning
+      returning = { @primary_keys! }
+      for field in *opts.returning
+        table.insert returning, field
+
     for k, v in pairs values
       if db.is_raw v
         returning or= {@primary_keys!}
