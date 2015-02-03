@@ -277,6 +277,14 @@ user = Users\create {
 INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
 ```
 
+If any of the values for creating the model are `db.raw` then their computed
+values will also be fetched using the `RETURN` clause of the `CREATE`
+statement. The raw values are replaced by the values returned by the database.
+
+If your model has any constraints they will be executed before trying to create
+a new row. If a constraint fails then `nil` and the error message are returned
+from the `create` function.
+
 ## Instance Methods
 
 ### `update(...)`
