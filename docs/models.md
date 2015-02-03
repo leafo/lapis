@@ -1175,7 +1175,7 @@ post:refresh("color", "height")
 SELECT "color", "height" from "posts" where id = 1
 ```
 
-# Enum
+## Enum
 
 The `enum` function lets you create a special table that lets you convert
 between integer constants and names. This is useful for created enumerations in
