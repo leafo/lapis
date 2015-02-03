@@ -275,7 +275,7 @@ users = UserProfile\find_all {1,2,3,4}, {
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
-### `create(opts)`
+### `create(values, create_opts=nil)`
 
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
@@ -330,6 +330,11 @@ RETURNING "id", "position"
 If your model has any [constraints](#constraints) they will be checked before trying to create
 a new row. If a constraint fails then `nil` and the error message are returned
 from the `create` function.
+
+`create` can take an options table as a second argument. It supports the
+following options:
+
+* `returning` -- A string containing a list of columns to fetch along with the create statement using the `RETURNING` statement
 
 ## Instance Methods
 
