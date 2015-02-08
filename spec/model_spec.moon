@@ -241,7 +241,7 @@ describe "lapis.db.model", ->
       }
     }, queries
 
-  it "should create model with options #ddd", ->
+  it "should create model with options", ->
     query_mock['INSERT'] = { { id: 101 } }
 
     class TimedThings extends Model
@@ -465,7 +465,7 @@ describe "lapis.db.model", ->
       }, queries
 
 
-  describe "relations #xxx", ->
+  describe "relations", ->
     local models
 
     before_each ->
@@ -601,6 +601,20 @@ describe "lapis.db.model", ->
         }
         'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
       }, queries
+
+    it "should create relations for inheritance #ddd", ->
+      class Base extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
+
+      class Child extends Base
+        @relations: {
+          {"category", belongs_to: "Categories"}
+        }
+
+      assert Child.get_user, "expecting get_user"
+      assert Child.get_category, "expecting get_category"
 
   describe "enum", ->
     import enum from require "lapis.db.model"
