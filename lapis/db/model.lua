@@ -208,7 +208,8 @@ do
       end)(), "-")
     end,
     delete = function(self)
-      return db.delete(self.__class:table_name(), self:_primary_cond())
+      local res = db.delete(self.__class:table_name(), self:_primary_cond())
+      return res.affected_rows and res.affected_rows > 0, res
     end,
     update = function(self, first, ...)
       local cond = self:_primary_cond()

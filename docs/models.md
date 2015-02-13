@@ -418,6 +418,31 @@ user\delete!
 DELETE FROM "users" WHERE "id" = 1
 ```
 
+`delete` will return `true` if the row was actually deleted. It's important to
+check this value to avoid any race condtions when running code in response to a
+delete.
+
+Consider the following code:
+
+```lua
+local user = Users:find()
+if user then
+  user:delete()
+  decrement_total_user_count()
+end
+```
+
+```moon
+user = Users\find 1
+if user
+  user\delete!
+  decrement_total_user_count!
+```
+
+Due to the asynchronous nature of OpenResty, it's possible that if two requests
+enter this block of code around the same time `delete` may end up getting called
+twice. This isn't a problem by itself, but the `decrement_total_user_count`
+function would get called twice and may invalidate whatever data it has.
 
 ## Timestamps
 
