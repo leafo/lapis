@@ -341,7 +341,7 @@ app:get("/", function(self)
   -- a post request, data table is form encoded and content-type is set to
   -- application/x-www-form-urlencoded
   http.simple("http://leafo.net/", {
-    name: "leafo"
+    name = "leafo"
   })
 
   -- manual invocation of the above request
@@ -351,7 +351,7 @@ app:get("/", function(self)
     headers = {
       "content-type" = "application/x-www-form-urlencoded"
     },
-    body: {
+    body = {
       name = "leafo"
     }
   })
