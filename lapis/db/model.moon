@@ -66,7 +66,6 @@ add_relations = (relations) =>
 
     if source = relation.has_one
       assert type(source) == "string", "Expecting model name for `has_one` relation"
-      column_name = "#{name}_id"
       @__base[fn_name] = =>
         existing = @[name]
         return existing if existing != nil
@@ -85,6 +84,7 @@ add_relations = (relations) =>
       column_name = "#{name}_id"
 
       @__base[fn_name] = =>
+        return nil unless @[column_name]
         existing = @[name]
         return existing if existing != nil
         model = assert_model source
