@@ -50,7 +50,7 @@ app:match("/", function()
   return { render = "hello" }
 end)
 
-reutrn app
+return app
 ```
 
 ```moon
@@ -82,7 +82,7 @@ app:match("index", "/", function()
   return { render: true }
 end)
 
-reutrn app
+return app
 ```
 
 ```moon
