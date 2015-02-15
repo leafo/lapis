@@ -293,6 +293,8 @@ self:url_for("user_data", { user_id = 123, data_field = "height"}, { sort = "asc
 @url_for "user_data", { user_id: 123, data_field: "height"}, sort: "asc"
 ```
 
+#### Passing an object to `url_for`
+
 If `name_or_obj` is a table, then the `url_params` method is called on the
 object. The arguments passed to `url_params` are the request, followed by all
 the remaining arguments passed to `url_for`. The result of `url_params` is used
@@ -382,7 +384,7 @@ user = Users\find 1
 The `url_key` method we've defined lets us pass the `User` object directly as
 the `id` parameter and it will be converted to the id:
 
-```moon
+```lua
 local user = Users:find(1)
 self:url_for("user_profile", {id = user})
 ```
