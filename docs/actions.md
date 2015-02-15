@@ -250,7 +250,7 @@ action is automatically passed to write. In before filters, write has the dual
 purpose of writing to the output and cancelling the any further actions from
 running.
 
-### `url_for(name_or_obj, params)`
+### `url_for(name_or_obj, params, query_params=nil, ...)`
 
 Generates a URL for `name_or_obj`.
 
@@ -279,21 +279,81 @@ end)
   @url_for "user_data", user_id: 123, data_field: "height"
 ```
 
+If `query_params` argument is supplied, then the value will be converted into
+query parameters and appended to the end of the generated path.
+
+
+```lua
+-- returns: /data/123/height?sort=asc
+self:url_for("user_data", { user_id = 123, data_field = "height"}, { sort = "asc" })
+```
+
+```moon
+-- returns: /data/123/height?sort=asc
+@url_for "user_data", { user_id: 123, data_field: "height"}, sort: "asc"
+```
+
 If `name_or_obj` is a table, then the `url_params` method is called on the
 object. The arguments passed to `url_params` are the request, followed by all
 the remaining arguments passed to `url_for`. The result of `url_params` is used
 to call `url_for` again.
 
-The values of params are inserted literally into the URL if they are strings.
-If the value is a table then the `url_key` method is called and the result is
-used as the URL value.
-
-For example, consider a `Users` model and generating a URL for it:
-
+For example, consider a `Users` model that defines a `url_params` method:
 
 ```lua
-local Model = require("lapis.db.model").Model
+local Users = Model:extend("users", {
+  url_params = function(self, req, ...)
+    return "user_profile", { id = self.id }, ...
+  end
+})
+```
 
+```moon
+class Users extends Model
+  url_params: (req, ...) =>
+    "user_profile", { id: @id }, ...
+```
+
+We can now just pass an instance of `Users` directly to `url_for` and the path
+for the `user_profile` route is returned:
+
+```lua
+local user = Users:find(100)
+self:url_for(user)
+-- could return: /user-profile/100
+```
+
+```moon
+user = Users\find 100
+@url_for user
+-- could return: /user-profile/100
+```
+
+You might notice we passed `...` through the `url_params` method to the return
+value. This allows the third `query_params` argument to still function:
+
+```lua
+local user = Users:find(1)
+self:url_for(user, { page = "likes" })
+-- could return: /user-profile/100?page=likes
+```
+
+```moon
+user = Users\find 1
+@url_for user, page: "likes"
+-- could return: /user-profile/100?page=likes
+```
+
+#### Using the `url_key` method
+
+The value of any parameter in `params` is a string then it is inserted into the
+generated path as is. If the value is a table, then the `url_key` method is
+called on it, and the return value is inserted into the path.
+
+For example, consider a `Users` model which we've generated a `url_key` method
+for:
+
+```lua
 local Users = Model:extend("users", {
   url_key = function(self, route_name)
     return self.id
@@ -301,11 +361,39 @@ local Users = Model:extend("users", {
 })
 ```
 
-
 ```moon
 class Users extends Model
   url_key: (route_name) => @id
 ```
+
+If we wanted to generate a path to the user profile we might normally write
+something like this:
+
+```lua
+local user = Users:find(1)
+self:url_for("user_profile", {id = user.id})
+```
+
+```moon
+user = Users\find 1
+@url_for "user_profile", id: user.id
+```
+
+The `url_key` method we've defined lets us pass the `User` object directly as
+the `id` parameter and it will be converted to the id:
+
+```moon
+local user = Users:find(1)
+self:url_for("user_profile", {id = user})
+```
+
+```moon
+user = Users\find 1
+@url_for "user_profile", id: user
+```
+
+> The `url_key` method takes the name of the path as the first argument, so we
+> could change what we return based on which route is being handled.
 
 ### `build_url(path, [options])`
 
