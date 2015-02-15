@@ -5,6 +5,8 @@ local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
 local C, Cs, Ct, Cmt, Cg, Cb, Cc
 C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
+local encode_query_string
+encode_query_string = require("lapis.util").encode_query_string
 local reduce
 reduce = function(items, fn)
   local count = #items
@@ -93,12 +95,19 @@ do
       local patt = Cs((symbol / replace + 1) ^ 0)
       return patt:match(path)
     end,
-    url_for = function(self, name, params)
+    url_for = function(self, name, params, query)
       if not (name) then
         return params
       end
       local path = assert(self.named_routes[name], "Missing route named " .. tostring(name))
-      return self:fill_path(path, params, name)
+      path = self:fill_path(path, params, name)
+      if query then
+        if type(query) == "table" then
+          query = encode_query_string(query)
+        end
+        path = path .. ("?" .. query)
+      end
+      return path
     end,
     resolve = function(self, route, ...)
       if not (self.p) then
