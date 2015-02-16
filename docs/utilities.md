@@ -36,7 +36,7 @@ Converts a key,value table into a query string
 
 ### `underscore(str)`
 
-Converst CamelCase to camel_case.
+Convert CamelCase to camel_case.
 
 ### `slugify(str)`
 
@@ -531,7 +531,7 @@ cache.delete { "/hello", { thing: "world" } }
 
 ### `delete_all([dict_name="page_cache"])`
 
-Deletes all entires from the cache.
+Deletes all entries from the cache.
 
 ### `delete_path(path, [dict_name="page_cache"])`
 

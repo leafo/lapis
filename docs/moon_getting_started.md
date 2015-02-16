@@ -157,7 +157,7 @@ class App extends lapis.Application
 You are free to add as many as you like by calling `@before_filter` multiple
 times. They will be run in the order they are registered.
 
-If a before filter calls the `@write` method then the action will be canceled.
+If a before filter calls the `@write` method then the action will be cancelled.
 For example we can cancel the action and redirect to another page if some
 condition is not met:
 

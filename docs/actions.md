@@ -157,7 +157,7 @@ end)
 By default all cookies are given the additional attributes `Path=/; HttpOnly`
 (which creates a [*session
 cookie*](http://en.wikipedia.org/wiki/HTTP_cookie#Terminology)). You can
-configure a cookie's settings by overidding the the `cookie_attributes`
+configure a cookie's settings by overriding the the `cookie_attributes`
 function on your application. Here's an example that adds an expiration date to
 cookies to make them persist:
 

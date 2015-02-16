@@ -276,7 +276,7 @@ class MyView extends Widget
 
 You can use either strings or builder functions as the content.
 
-To access the content from the layout call `@content_for` without the content
+To access the content from the layout, call `@content_for` without the content
 argument:
 
 ```moon

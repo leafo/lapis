@@ -80,7 +80,7 @@ class Followings extends Model
   @primary_key: { "user_id", "followed_user_id" }
 ```
 
-## Class Mehods
+## Class Methods
 
 Model class methods are used for fetching existing rows or creating new ones.
 
