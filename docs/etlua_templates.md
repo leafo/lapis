@@ -8,7 +8,7 @@ code inline in a template file to produce a dynamic output. In Lapis we use
 `etlua` to render dynamic content inside of HTML templates.
 
 `etlua` files use the `.etlua` extension. Lapis knows how to load those types
-of files automatically using Lua's `require` function after you've enable
+of files automatically using Lua's `require` function after you've enabled
 `etlua`
 
 For example, here's a simple template that renders a random number:
@@ -192,7 +192,7 @@ you can also include them using the `render` function.
 Any values and helpers available in the parent template are also available in
 the sub-template.
 
-Somtimes you need to pass data to a sub-template that's generated during the
+Sometimes you need to pass data to a sub-template that's generated during the
 execution of the parent template. `render` takes a second argument of values
 to pass into the sub-template.
 

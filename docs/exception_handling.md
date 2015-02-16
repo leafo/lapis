@@ -5,7 +5,7 @@ title: Exception Handling
 ## The Kinds of Errors
 
 Lapis makes a distinction between two kinds of errors: Recoverable and
-non-recoverable errors. Errors thrown by Lua's runtime during executuion or
+non-recoverable errors. Errors thrown by Lua's runtime during execution or
 calls to  `error` are considered non-recoverable. (This also includes the Lua
 built-in function `assert`)
 
@@ -63,7 +63,7 @@ class App extends lapis.Application
 
 What happens when there is an error? The action will stop executing at the
 first error, and then the error handler is run. The default error handler will
-set an array like table of errors in <span
+set an array-like table of errors in <span
 class="for_moon">`@errors`</span><span class="for_lua">`self.errors`</span> and
 return <span class="for_moon">`render: true`</span><span class="for_lua">`{
 render = true }`</span>. In your view you can then display the errors. This
