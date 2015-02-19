@@ -1,12 +1,5 @@
-require "spec.helpers" -- for one_of
-
 db = require "lapis.db.mysql"
-schema = require "lapis.db.mysql.schema"
-
--- TODO: we can't test escape_literal with strings here because we need a
--- connection for escape function
-
-value_table = { hello: db.FALSE, age: 34 }
+import setup_db, teardown_db from require "spec_mysql.helpers"
 
 tests = {
   -- lapis.db.mysql
@@ -155,13 +148,13 @@ tests = {
   }
 }
 
-local old_query_fn
 describe "lapis.db.mysql", ->
+
   setup ->
-    old_query_fn = db.set_backend "raw", (q) -> q
+    setup_db!
 
   teardown ->
-    db.set_backend "raw", old_query_fn
+    teardown_db!
 
   for group in *tests
     it "should match", ->
@@ -170,4 +163,3 @@ describe "lapis.db.mysql", ->
         assert.one_of output, { unpack group, 2 }
       else
         assert.same group[2], output
-
