@@ -20,12 +20,22 @@ backends = {
     end
   end,
   luasql = function()
+    local increment_perf
+    do
+      local _obj_0 = require("lapis.nginx.context")
+      increment_perf = _obj_0.increment_perf
+    end
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
     conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
     if mysql_config.encoding then
       assert(conn:execute("SET NAMES " .. mysql_config.encoding))
+    end
+    local start_time
+    if ngx and config.measure_performance then
+      ngx.update_time()
+      start_time = ngx.now()
     end
     raw_query = function(q)
       if logger then
@@ -48,6 +58,11 @@ backends = {
             end
           end
         end
+      end
+      if start_time then
+        ngx.update_time()
+        increment_perf("db_time", ngx.now() - start_time)
+        increment_perf("db_count", 1)
       end
       return result
     end
