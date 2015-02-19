@@ -27,6 +27,8 @@ backends = {
     luasql = require("luasql.mysql").mysql!
     conn = assert luasql\connect mysql_config.database, mysql_config.user, mysql_config.password
 
+    if mysql_config.encoding
+      assert conn\execute "SET NAMES " .. mysql_config.encoding
 
     raw_query = (q) ->
       logger.query q if logger

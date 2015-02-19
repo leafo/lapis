@@ -24,6 +24,9 @@ backends = {
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
     conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
+    if mysql_config.encoding then
+      assert(conn:execute("SET NAMES " .. mysql_config.encoding))
+    end
     raw_query = function(q)
       if logger then
         logger.query(q)
