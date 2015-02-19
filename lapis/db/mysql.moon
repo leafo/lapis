@@ -53,6 +53,8 @@ set_backend = (name="default", ...) ->
 
 escape_err = "a connection is required to escape a string literal"
 escape_literal = (val) ->
+  config = require("lapis.config").get!
+  set_backend "luasql"
   switch type val
     when "number"
       return tostring val

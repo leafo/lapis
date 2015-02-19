@@ -58,6 +58,8 @@ set_backend = function(name, ...)
 end
 escape_err = "a connection is required to escape a string literal"
 escape_literal = function(val)
+  local config = require("lapis.config").get()
+  set_backend("luasql")
   local _exp_0 = type(val)
   if "number" == _exp_0 then
     return tostring(val)
