@@ -23,7 +23,7 @@ backends = {
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
-    conn = assert(luasql:connect(mysql_config.database, mysql_config.user))
+    conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
     raw_query = function(q)
       if logger then
         logger.query(q)
