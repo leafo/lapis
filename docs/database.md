@@ -24,6 +24,9 @@ The first step is to define the configuration for our server in the `postgres`
 block in our <span class="for_moon">`config.moon`</span><span
 class="for_lua">`config.lua`</span> file.
 
+
+### For postgres
+
 ```lua
 -- config.lua
 config("development", {
@@ -52,6 +55,32 @@ config "development", ->
 leave those fields out if they aren't different from the defaults. If a
 non-default port is required it can be appended to the `host` with colon
 syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
+
+### For mysql
+
+```lua
+-- config.lua
+config("development", {
+  mysql = {
+    backend = "luasql",
+    user = "mysql_user",
+    password = "the_password",
+    database = "my_database",
+    encoding = "utf8"
+  }
+})
+```
+
+```moon
+-- config.moon
+config "development", ->
+  mysql ->
+    backend "luasql"
+    user "mysql_user"
+    password "the_password"
+    database "my_database"
+    encoding "utf8"
+```
 
 You're now ready to start making queries.
 
