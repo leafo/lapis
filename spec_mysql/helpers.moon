@@ -1,5 +1,5 @@
 import push, pop from require "lapis.environment"
-import set_backend from require "lapis.db.mysql"
+import set_backend, init_logger from require "lapis.db.mysql"
 
 setup_db = (opts) ->
   push "test", {
@@ -10,7 +10,7 @@ setup_db = (opts) ->
   }
 
   set_backend "luasql"
-  -- init_logger!
+  init_logger!
 
 teardown_db = ->
   pop!

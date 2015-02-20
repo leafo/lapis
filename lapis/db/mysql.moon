@@ -2,7 +2,7 @@
 import type, tostring, pairs, select from _G
 import NULL, TRUE, FALSE, raw, is_raw, format_date from require "lapis.db.base"
 
-local conn
+local conn, logger
 local *
 
 backends = {
@@ -17,7 +17,12 @@ backends = {
       conn\escape q
 
     raw_query = (q) ->
+      logger.query q if logger
       cur = assert conn\execute q
+
+      if type(cur) == "number"
+        return { affected_rows: cur }
+
       result = {
         affected_rows: cur\numrows!
       }
@@ -47,6 +52,11 @@ raw_query = (...) ->
   set_backend "luasql"
   raw_query ...
 
+init_logger = ->
+  config = require("lapis.config").get!
+  logger = if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries
+    require "lapis.logging"
+
 
 -- To be implemented
 -- {
@@ -74,4 +84,5 @@ raw_query = (...) ->
   :set_backend
   :raw_query
   :format_date
+  :init_logger
 }
