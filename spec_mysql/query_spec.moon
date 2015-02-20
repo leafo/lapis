@@ -2,7 +2,8 @@
 db = require "lapis.db.mysql"
 import setup_db, teardown_db from require "spec_mysql.helpers"
 import drop_tables from require "lapis.spec.db"
-import create_table, drop_table from require "lapis.db.mysql.schema"
+import create_table, drop_table, types from require "lapis.db.mysql.schema"
+
 
 describe "model", ->
   setup ->
@@ -26,7 +27,8 @@ describe "model", ->
   it "should create a table", ->
     drop_table "hello_worlds"
     create_table "hello_worlds", {
-      {"name", "varchar(255) NOT NULL"}
+      {"id", types.id}
+      {"name", types.varchar}
     }
 
     assert.same 1, #db.raw_query [[
