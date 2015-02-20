@@ -126,7 +126,7 @@ class App extends lapis.Application
 
 In addition to `assert_valid` there is one more useful validation function:
 
-```moon
+```lua
 local validate = require("lapis.validate").validate
 ```
 
