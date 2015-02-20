@@ -84,12 +84,7 @@ query = (str, ...) ->
 
 -- To be implemented
 -- {
---   :encode_values
---   :encode_assigns
---   :encode_clause
---   :interpolate_query
 --   :parse_clause
---   :format_date
 -- 
 --   select: _select
 --   insert: _insert
@@ -98,9 +93,13 @@ query = (str, ...) ->
 --   truncate: _truncate
 -- }
 
-
 {
   :raw, :is_raw, :NULL, :TRUE, :FALSE,
+
+  :encode_values
+  :encode_assigns
+  :encode_clause
+  :interpolate_query
 
   :query
   :escape_literal
