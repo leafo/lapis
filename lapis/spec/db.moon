@@ -25,6 +25,7 @@ drop_tables = (...) ->
     else
       t
 
+  return unless next names
   db.query "drop table if exists " ..  table.concat names, ", "
 
 { :truncate_tables, :drop_tables }

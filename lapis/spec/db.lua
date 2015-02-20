@@ -54,6 +54,9 @@ drop_tables = function(...)
     end
     names = _accum_0
   end
+  if not (next(names)) then
+    return 
+  end
   return db.query("drop table if exists " .. table.concat(names, ", "))
 end
 return {
