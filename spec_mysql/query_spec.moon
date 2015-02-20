@@ -1,7 +1,7 @@
 
 import setup_db, teardown_db from require "spec_mysql.helpers"
 import drop_tables from require "lapis.spec.db"
-import raw_query from require "lapis.nginx.mysql"
+import raw_query from require "lapis.db.mysql"
 
 describe "model", ->
   setup ->

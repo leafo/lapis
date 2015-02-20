@@ -2,6 +2,7 @@
 test::
 	busted spec
 	busted spec_postgres
+	busted spec_mysql
 
 local: build
 	luarocks make --local lapis-dev-1.rockspec

@@ -1,5 +1,5 @@
 import push, pop from require "lapis.environment"
-import set_backend from require "lapis.nginx.mysql"
+import set_backend from require "lapis.db.mysql"
 
 setup_db = (opts) ->
   push "test", {

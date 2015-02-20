@@ -1,6 +1,6 @@
 
 import push, pop from require "lapis.environment"
-import set_backend, init_logger from require "lapis.nginx.postgres"
+import set_backend, init_logger from require "lapis.db.postgres"
 
 setup_db = (opts) ->
   push "test", {

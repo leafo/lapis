@@ -66,6 +66,7 @@ return {
   TRUE = TRUE,
   FALSE = FALSE,
   escape_literal = escape_literal,
+  escape_identifier = escape_identifier,
   set_backend = set_backend,
   raw_query = raw_query,
   format_date = format_date

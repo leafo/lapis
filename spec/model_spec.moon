@@ -1,5 +1,5 @@
 
-db = require "lapis.nginx.postgres"
+db = require "lapis.db.postgres"
 import Model from require "lapis.db.model"
 import with_query_fn, assert_queries from require "spec.helpers"
 

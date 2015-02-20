@@ -1,13 +1,13 @@
 
 import with_query_fn from require "spec.helpers"
 
-db = require "lapis.nginx.postgres"
+db = require "lapis.db.postgres"
 schema = require "lapis.db.schema"
 
 value_table = { hello: "world", age: 34 }
 
 tests = {
-  -- lapis.nginx.postgres
+  -- lapis.db.postgres
   {
     -> db.escape_identifier "dad"
     '"dad"'
@@ -357,7 +357,7 @@ END]]
 
 
 local old_query_fn
-describe "lapis.nginx.postgres", ->
+describe "lapis.db.postgres", ->
   setup ->
     old_query_fn = db.set_backend "raw", (q) -> q
 
