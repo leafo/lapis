@@ -51,7 +51,6 @@ raw_query = (...) ->
 -- To be implemented
 -- {
 --   :query,
---   :escape_identifier
 --   :encode_values
 --   :encode_assigns
 --   :encode_clause
@@ -71,6 +70,7 @@ raw_query = (...) ->
   :raw, :is_raw, :NULL, :TRUE, :FALSE,
 
   :escape_literal
+  :escape_identifier
   :set_backend
   :raw_query
   :format_date

@@ -24,5 +24,10 @@ test_db:
 	-dropdb -U postgres lapis_test
 	createdb -U postgres lapis_test
 
+
+mysql_test_db:
+	echo 'drop database if exists lapis_test' | mysql -u root
+	echo 'create database lapis_test' | mysql -u root
+
 clean::
 	rm $$(find lapis/ | grep \.lua$$)
