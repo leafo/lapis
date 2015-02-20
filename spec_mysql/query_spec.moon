@@ -36,3 +36,16 @@ describe "model", ->
       where table_schema = "lapis_test"
     ]]
 
+    db.insert "hello_worlds", {
+      name: "well well well"
+    }
+
+    res = db.insert "hello_worlds", {
+      name: "another one"
+    }
+
+    assert.same {
+      affected_rows: 1
+      last_auto_id: 2
+    }, res
+

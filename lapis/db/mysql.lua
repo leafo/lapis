@@ -29,21 +29,20 @@ backends = {
         logger.query(q)
       end
       local cur = assert(conn:execute(q))
-      if type(cur) == "number" then
-        return {
-          affected_rows = cur
-        }
-      end
+      local has_rows = type(cur) ~= "number"
       local result = {
-        affected_rows = cur:numrows()
+        affected_rows = has_rows and cur:numrows() or cur,
+        last_auto_id = conn:getlastautoid()
       }
-      while true do
-        do
-          local row = cur:fetch({ }, "a")
-          if row then
-            table.insert(result, row)
-          else
-            break
+      if has_rows then
+        while true do
+          do
+            local row = cur:fetch({ }, "a")
+            if row then
+              table.insert(result, row)
+            else
+              break
+            end
           end
         end
       end

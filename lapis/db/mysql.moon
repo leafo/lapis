@@ -30,19 +30,19 @@ backends = {
     raw_query = (q) ->
       logger.query q if logger
       cur = assert conn\execute q
-
-      if type(cur) == "number"
-        return { affected_rows: cur }
+      has_rows = type(cur) != "number"
 
       result = {
-        affected_rows: cur\numrows!
+        affected_rows: has_rows and cur\numrows! or cur
+        last_auto_id: conn\getlastautoid!
       }
 
-      while true
-        if row = cur\fetch {}, "a"
-          table.insert result, row
-        else
-          break
+      if has_rows
+        while true
+          if row = cur\fetch {}, "a"
+            table.insert result, row
+          else
+            break
 
       result
 }
