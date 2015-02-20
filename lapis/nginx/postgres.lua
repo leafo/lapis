@@ -366,6 +366,7 @@ return {
   parse_clause = parse_clause,
   format_date = format_date,
   encode_case = encode_case,
+  init_logger = init_logger,
   set_backend = set_backend,
   select = _select,
   insert = _insert,

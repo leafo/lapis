@@ -79,8 +79,8 @@ set_backend = (name="default", ...) ->
 
 init_logger = ->
   config = require("lapis.config").get!
-  if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries
-    logger = require "lapis.logging"
+  logger = if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries
+    require "lapis.logging"
 
 init_db = ->
   config = require("lapis.config").get!
@@ -287,7 +287,7 @@ encode_case = (exp, t, on_else) ->
 {
   :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :format_date, :encode_case
+  :interpolate_query, :parse_clause, :format_date, :encode_case, :init_logger
 
   :set_backend
 
