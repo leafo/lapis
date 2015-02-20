@@ -6,6 +6,44 @@ import drop_tables from require "lapis.spec.db"
 import Model, enum from require "lapis.db.model"
 import types, create_table from require "lapis.db.schema"
 
+class Users extends Model
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"id", types.serial}
+      {"name", types.text}
+      "PRIMARY KEY (id)"
+    }
+
+class Posts extends Model
+  @timestamp: true
+
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"id", types.serial}
+      {"title", types.text null: false}
+      {"body", types.text null: false}
+      {"created_at", types.time}
+      {"updated_at", types.time}
+      "PRIMARY KEY (id)"
+    }
+
+class Likes extends Model
+  @primary_key: {"user_id", "post_id"}
+  @timestamp: true
+
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"user_id", types.foreign_key}
+      {"post_id", types.foreign_key}
+      {"count", types.integer}
+      {"created_at", types.time}
+      {"updated_at", types.time}
+      "PRIMARY KEY (user_id, post_id)"
+    }
+
 describe "model", ->
   setup ->
     setup_db!
@@ -14,15 +52,8 @@ describe "model", ->
     teardown_db!
 
   describe "basic model", ->
-    class Users extends Model
-
     before_each ->
-      drop_tables Users
-      create_table Users\table_name!, {
-        {"id", types.serial}
-        {"name", types.text}
-        "PRIMARY KEY (id)"
-      }
+      Users\create_table!
 
     it "should find on empty table", ->
       nothing = Users\find 1
@@ -75,19 +106,8 @@ describe "model", ->
         assert.same {second}, things
 
   describe "timestamp model", ->
-    class Posts extends Model
-      @timestamp: true
-
     before_each ->
-      drop_tables Posts
-      create_table Posts\table_name!, {
-        {"id", types.serial}
-        {"title", types.text null: false}
-        {"body", types.text null: false}
-        {"created_at", types.time}
-        {"updated_at", types.time}
-        "PRIMARY KEY (id)"
-      }
+      Posts\create_table!
 
     it "should fail to create without required types", ->
       assert.has_error ->
@@ -132,20 +152,8 @@ describe "model", ->
         assert.same {other_post}, Posts\select!
 
   describe "primary key model", ->
-    class Likes extends Model
-      @primary_key: {"user_id", "post_id"}
-      @timestamp: true
-
     before_each ->
-      drop_tables Likes
-      create_table Likes\table_name!, {
-        {"user_id", types.foreign_key}
-        {"post_id", types.foreign_key}
-        {"count", types.integer}
-        {"created_at", types.time}
-        {"updated_at", types.time}
-        "PRIMARY KEY (user_id, post_id)"
-      }
+      Likes\create_table!
 
     it "should find empty result by primary key", ->
       assert.falsy (Likes\find 1,2)
