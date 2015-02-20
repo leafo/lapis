@@ -58,8 +58,6 @@ tests = {
     [["thing" IS NULL]]
   }
 
-
-
   {
     -> db.interpolate_query "update x set x = ?", db.raw"y + 1"
     "update x set x = y + 1"
@@ -143,7 +141,7 @@ tests = {
   }
 
 
-  -- lapis.db.schema
+  -- lapis.db.postgres.schema
 
   {
     -> schema.add_column "hello", "dads", schema.types.integer
