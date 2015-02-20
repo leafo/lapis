@@ -1,5 +1,4 @@
-
-import with_query_fn from require "spec.helpers"
+require "spec.helpers" -- for one_of
 
 db = require "lapis.db.postgres"
 schema = require "lapis.db.postgres.schema"

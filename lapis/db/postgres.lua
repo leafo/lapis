@@ -113,7 +113,7 @@ init_db = function()
 end
 local escape_identifier
 escape_identifier = function(ident)
-  if type(ident) == "table" and ident[1] == "raw" then
+  if is_raw(ident) then
     return ident[2]
   end
   ident = tostring(ident)
@@ -132,9 +132,10 @@ escape_literal = function(val)
     if val == NULL then
       return "NULL"
     end
-    if val[1] == "raw" and val[2] then
+    if is_raw(val) then
       return val[2]
     end
+    error("unknown table passed to `escape_literal`")
   end
   return error("don't know how to escape value: " .. tostring(val))
 end

@@ -88,9 +88,7 @@ init_db = ->
   set_backend default_backend
 
 escape_identifier = (ident) ->
-  if type(ident) == "table" and ident[1] == "raw"
-    return ident[2]
-
+  return ident[2] if is_raw ident
   ident = tostring ident
   '"' ..  (ident\gsub '"', '""') .. '"'
 
@@ -104,8 +102,8 @@ escape_literal = (val) ->
       return val and "TRUE" or "FALSE"
     when "table"
       return "NULL" if val == NULL
-      if val[1] == "raw" and val[2]
-        return val[2]
+      return val[2] if is_raw val
+      error "unknown table passed to `escape_literal`"
 
   error "don't know how to escape value: #{val}"
 
