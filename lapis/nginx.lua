@@ -5,6 +5,7 @@ do
 end
 local run_after_dispatch
 run_after_dispatch = require("lapis.nginx.context").run_after_dispatch
+local lapis_config = require("lapis.config")
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }
@@ -115,12 +116,12 @@ local ngx_req = {
       params = parse_multipart()
     elseif content_type:match(escape_pattern("application/x-www-form-urlencoded")) then
       ngx.req.read_body()
-      params = flatten_params(ngx.req.get_post_args())
+      params = flatten_params(ngx.req.get_post_args(lapis_config.get().max_request_args))
     end
     return params or { }
   end,
   params_get = function()
-    return flatten_params(ngx.req.get_uri_args())
+    return flatten_params(ngx.req.get_uri_args(lapis_config.get().max_request_args))
   end
 }
 local lazy_tbl
