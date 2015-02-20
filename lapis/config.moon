@@ -13,6 +13,22 @@ default_config = {
   code_cache: "off"
   num_workers: "1"
 
+  -- optional:
+  -- max_request_args: nil
+  -- measure_performance: false
+  -- show_queries: false
+  -- mysql: {
+  --   database: ""
+  --   user: ""
+  -- }
+  -- postgres: {
+  --   backend: ""
+  --   host: ""
+  --   port: ""
+  --   database: ""
+  --   user: ""
+  -- }
+
   logging: {
     queries: true
     requests: true

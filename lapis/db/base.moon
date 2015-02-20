@@ -10,7 +10,6 @@ FALSE = raw"FALSE"
 format_date = (time) ->
   os.date "!%Y-%m-%d %H:%M:%S", time
 
-
 build_helpers = (escape_literal, escape_identifier) ->
   import concat from table
   import select from _G

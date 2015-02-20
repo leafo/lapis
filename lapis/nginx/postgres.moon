@@ -1,21 +1,3 @@
-
--- This is a simple interface form making queries to postgres on top of
--- ngx_postgres
---
--- Add the following upstream to your http:
---
--- upstream database {
---   postgres_server  127.0.0.1 dbname=... user=... password=...;
--- }
---
--- Add the following location to your server:
---
--- location /query {
---   postgres_pass database;
---   postgres_query $echo_request_body;
--- }
---
-
 import concat from table
 
 local raw_query
