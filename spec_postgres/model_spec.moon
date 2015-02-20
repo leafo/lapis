@@ -33,6 +33,11 @@ class Likes extends Model
   @primary_key: {"user_id", "post_id"}
   @timestamp: true
 
+  @relations: {
+    {"user", belongs_to: "Users"}
+    {"post", belongs_to: "Posts"}
+  }
+
   @create_table: =>
     drop_tables @
     create_table @table_name!, {
@@ -206,4 +211,36 @@ describe "model", ->
 
         assert.same like, Likes\find(like.user_id, like.post_id)
         assert.same other_like, Likes\find(other_like.user_id, other_like.post_id)
+
+  describe "relations", ->
+    before_each ->
+      Users\create_table!
+      Posts\create_table!
+      Likes\create_table!
+
+      package.loaded.models = {
+        :Users, :Posts, :Likes
+      }
+
+
+    after_each ->
+      package.loaded.models = nil
+
+
+    it "should fetch relation", ->
+      user = Users\create { name: "yeah" }
+      post = Posts\create {
+        title: "hi"
+        body: "quality writing"
+      }
+
+      Likes\create {
+        user_id: user.id
+        post_id: post.id
+      }
+
+      like = unpack Likes\select!
+
+      assert.same user, like\get_user!
+      assert.same post, like\get_post!
 
