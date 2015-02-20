@@ -78,12 +78,23 @@ ngx_req = {
       parse_multipart!
     elseif content_type\match escape_pattern "application/x-www-form-urlencoded"
       ngx.req.read_body!
-      flatten_params ngx.req.get_post_args lapis_config.get!.max_request_args
+
+      args = if max = lapis_config.get!.max_request_args
+        ngx.req.get_post_args max
+      else
+        ngx.req.get_post_args!
+
+      flatten_params args
 
     params or {}
 
   params_get: ->
-    flatten_params ngx.req.get_uri_args lapis_config.get!.max_request_args
+    args = if max = lapis_config.get!.max_request_args
+      ngx.req.get_uri_args max
+    else
+      ngx.req.get_uri_args!
+
+    flatten_params args
 }
 
 lazy_tbl = (tbl, index) ->
