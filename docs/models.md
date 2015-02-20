@@ -396,7 +396,7 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 If any of the updated values are generated from raw SQL via `db.raw`, then
 those values will be replaced with values returning by the database using the
 `RETURNING` clause similar to the [`create` class
-method](#class-mehods-createopts).
+method](#class-methods-createopts).
 
 
 ### `delete()`
