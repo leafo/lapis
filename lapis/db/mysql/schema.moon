@@ -30,10 +30,12 @@ create_table = (name, columns, opts={}) ->
 
   db.raw_query concat buffer
 
+drop_table = (tname) ->
+  db.query "DROP TABLE IF EXISTS #{db.escape_identifier tname};"
+
 {
   -- TODO:
   -- :types
-  -- :drop_table
   -- :create_index
   -- :drop_index
   -- :add_column,
@@ -44,5 +46,6 @@ create_table = (name, columns, opts={}) ->
   -- :gen_index_name
 
   :create_table
+  :drop_table
 }
 

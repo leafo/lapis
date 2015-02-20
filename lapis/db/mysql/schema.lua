@@ -45,6 +45,11 @@ create_table = function(name, columns, opts)
   add(";")
   return db.raw_query(concat(buffer))
 end
+local drop_table
+drop_table = function(tname)
+  return db.query("DROP TABLE IF EXISTS " .. tostring(db.escape_identifier(tname)) .. ";")
+end
 return {
-  create_table = create_table
+  create_table = create_table,
+  drop_table = drop_table
 }

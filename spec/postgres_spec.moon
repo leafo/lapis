@@ -2,7 +2,7 @@
 import with_query_fn from require "spec.helpers"
 
 db = require "lapis.db.postgres"
-schema = require "lapis.db.schema"
+schema = require "lapis.db.postgres.schema"
 
 value_table = { hello: "world", age: 34 }
 
