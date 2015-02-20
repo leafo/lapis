@@ -130,6 +130,10 @@ do
 end
 local C = ColumnType
 local types = setmetatable({
+  id = C("INT", {
+    auto_increment = true,
+    primary_key = true
+  }),
   varchar = C("VARCHAR", {
     length = 255
   }),
@@ -140,7 +144,7 @@ local types = setmetatable({
   tinyint = C("TINYINT"),
   smallint = C("SMALLINT"),
   mediumint = C("MEDIUMINT"),
-  integer = C("INTEGER"),
+  integer = C("INT"),
   bigint = C("BIGINT"),
   float = C("FLOAT"),
   double = C("DOUBLE"),

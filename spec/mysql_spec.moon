@@ -149,6 +149,10 @@ tests = {
     "TINYINT(1) NOT NULL"
   }
 
+  {
+    -> tostring schema.types.id
+    "INT NOT NULL AUTO_INCREMENT PRIMARY KEY"
+  }
 }
 
 local old_query_fn
