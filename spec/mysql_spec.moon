@@ -9,6 +9,7 @@ schema = require "lapis.db.mysql.schema"
 value_table = { hello: db.FALSE, age: 34 }
 
 tests = {
+  -- lapis.db.mysql
   {
     -> db.escape_identifier "dad"
     '`dad`'
@@ -107,6 +108,45 @@ tests = {
   {
     -> db.truncate "dogs"
     [[TRUNCATE `dogs`]]
+  }
+
+
+  -- lapis.db.mysql.schema
+  {
+    -> tostring schema.types.varchar
+    "VARCHAR(255) NOT NULL"
+  }
+
+  {
+    -> tostring schema.types.varchar 1024
+    "VARCHAR(1024) NOT NULL"
+  }
+
+  {
+    -> tostring schema.types.varchar primary_key: true, auto_increment: true
+    "VARCHAR(255) NOT NULL AUTO_INCREMENT PRIMARY KEY"
+  }
+
+  {
+    -> tostring schema.types.varchar null: true, default: 2000
+    "VARCHAR(255) DEFAULT 2000"
+  }
+
+
+  {
+    -> tostring schema.types.varchar 777, primary_key: true, auto_increment: true, default: 22
+    "VARCHAR(777) NOT NULL DEFAULT 22 AUTO_INCREMENT PRIMARY KEY"
+  }
+
+
+  {
+    -> tostring schema.types.varchar null: true, default: 2000, length: 88
+    "VARCHAR(88) DEFAULT 2000"
+  }
+
+  {
+    -> tostring schema.types.boolean
+    "TINYINT(1) NOT NULL"
   }
 
 }
