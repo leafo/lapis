@@ -1,8 +1,9 @@
 db = require "lapis.db.postgres"
 
-import escape_literal from db
-
+import gen_index_name from require "lapis.db.base"
+import escape_literal, escape_identifier from db
 import concat from table
+
 append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
@@ -19,34 +20,19 @@ extract_options = (cols) ->
   cols, options
 
 entity_exists = (name) ->
-  name = db.escape_literal name
+  name = escape_literal name
   res = unpack db.select "COUNT(*) as c from pg_class where relname = #{name}"
   res.c > 0
 
-gen_index_name = (...) ->
-  parts = for p in *{...}
-    switch type(p)
-      when "string"
-        p
-      when "table"
-        if p[1] == "raw"
-          p[2]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
-        else
-          continue
-      else
-        continue
-
-  concat(parts, "_") .. "_idx"
-
 create_table = (name, columns) ->
-  buffer = {"CREATE TABLE IF NOT EXISTS #{db.escape_identifier name} ("}
+  buffer = {"CREATE TABLE IF NOT EXISTS #{escape_identifier name} ("}
   add = (...) -> append_all buffer, ...
 
   for i, c in ipairs columns
     add "\n  "
     if type(c) == "table"
       name, kind = unpack c
-      add db.escape_identifier(name), " ", tostring kind
+      add escape_identifier(name), " ", tostring kind
     else
       add c
 
@@ -67,8 +53,8 @@ create_index = (tname, ...) ->
   append_all buffer, " UNIQUE" if options.unique
 
   append_all buffer, " INDEX ",
-    db.escape_identifier(index_name),
-    " ON ", db.escape_identifier tname
+    escape_identifier(index_name),
+    " ON ", escape_identifier tname
 
   if options.method
     append_all buffer, " USING ", options.method
@@ -76,7 +62,7 @@ create_index = (tname, ...) ->
   append_all buffer, " ("
 
   for i, col in ipairs columns
-    append_all buffer, db.escape_identifier(col)
+    append_all buffer, escape_identifier(col)
     append_all buffer, ", " unless i == #columns
 
   append_all buffer, ")"
@@ -92,30 +78,30 @@ create_index = (tname, ...) ->
 
 drop_index = (...) ->
   index_name = gen_index_name ...
-  db.query "DROP INDEX IF EXISTS #{db.escape_identifier index_name}"
+  db.query "DROP INDEX IF EXISTS #{escape_identifier index_name}"
 
 drop_table = (tname) ->
-  db.query "DROP TABLE IF EXISTS #{db.escape_identifier tname};"
+  db.query "DROP TABLE IF EXISTS #{escape_identifier tname};"
 
 add_column = (tname, col_name, col_type) ->
-  tname = db.escape_identifier tname
-  col_name = db.escape_identifier col_name
+  tname = escape_identifier tname
+  col_name = escape_identifier col_name
   db.query "ALTER TABLE #{tname} ADD COLUMN #{col_name} #{col_type}"
 
 drop_column = (tname, col_name) ->
-  tname = db.escape_identifier tname
-  col_name = db.escape_identifier col_name
+  tname = escape_identifier tname
+  col_name = escape_identifier col_name
   db.query "ALTER TABLE #{tname} DROP COLUMN #{col_name}"
 
 rename_column = (tname, col_from, col_to) ->
-  tname = db.escape_identifier tname
-  col_from = db.escape_identifier col_from
-  col_to = db.escape_identifier col_to
+  tname = escape_identifier tname
+  col_from = escape_identifier col_from
+  col_to = escape_identifier col_to
   db.query "ALTER TABLE #{tname} RENAME COLUMN #{col_from} TO #{col_to}"
 
 rename_table = (tname_from, tname_to) ->
-  tname_from = db.escape_identifier tname_from
-  tname_to = db.escape_identifier tname_to
+  tname_from = escape_identifier tname_from
+  tname_to = escape_identifier tname_to
   db.query "ALTER TABLE #{tname_from} RENAME TO #{tname_to}"
 
 class ColumnType

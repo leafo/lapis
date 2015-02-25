@@ -3,6 +3,8 @@ local escape_literal, escape_identifier
 escape_literal, escape_identifier = db.escape_literal, db.escape_identifier
 local concat
 concat = table.concat
+local gen_index_name
+gen_index_name = require("lapis.db.base").gen_index_name
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do
@@ -38,44 +40,6 @@ extract_options = function(cols)
     cols = _accum_0
   end
   return cols, options
-end
-local gen_index_name
-gen_index_name = function(...)
-  local parts
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    local _list_0 = {
-      ...
-    }
-    for _index_0 = 1, #_list_0 do
-      local _continue_0 = false
-      repeat
-        local p = _list_0[_index_0]
-        local _exp_0 = type(p)
-        if "string" == _exp_0 then
-          _accum_0[_len_0] = p
-        elseif "table" == _exp_0 then
-          if p[1] == "raw" then
-            _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
-          else
-            _continue_0 = true
-            break
-          end
-        else
-          _continue_0 = true
-          break
-        end
-        _len_0 = _len_0 + 1
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
-    parts = _accum_0
-  end
-  return concat(parts, "_") .. "_idx"
 end
 local create_table
 create_table = function(name, columns, opts)
@@ -129,14 +93,14 @@ create_index = function(tname, ...)
   if options.unique then
     append_all(buffer, " UNIQUE")
   end
-  append_all(buffer, " INDEX ", db.escape_identifier(index_name))
+  append_all(buffer, " INDEX ", escape_identifier(index_name))
   if options.using then
     append_all(buffer, " USING ", options.using)
   end
-  append_all(buffer, " ON ", db.escape_identifier(tname))
+  append_all(buffer, " ON ", escape_identifier(tname))
   append_all(buffer, " (")
   for i, col in ipairs(columns) do
-    append_all(buffer, db.escape_identifier(col))
+    append_all(buffer, escape_identifier(col))
     if not (i == #columns) then
       append_all(buffer, ", ")
     end
@@ -148,7 +112,19 @@ end
 local drop_index
 drop_index = function(...)
   local index_name = gen_index_name(...)
-  return db.query("DROP INDEX " .. tostring(db.escape_identifier(index_name)) .. ";")
+  return db.query("DROP INDEX " .. tostring(escape_identifier(index_name)) .. ";")
+end
+local add_column
+add_column = function(tname, col_name, col_type)
+  tname = escape_identifier(tname)
+  col_name = escape_identifier(col_name)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " ADD COLUMN " .. tostring(col_name) .. " " .. tostring(col_type))
+end
+local drop_column
+drop_column = function(tname, col_name)
+  tname = escape_identifier(tname)
+  col_name = escape_identifier(col_name)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " DROP COLUMN " .. tostring(col_name))
 end
 local ColumnType
 do
@@ -262,9 +238,12 @@ local types = setmetatable({
   end
 })
 return {
+  gen_index_name = gen_index_name,
   types = types,
   create_table = create_table,
   drop_table = drop_table,
   create_index = create_index,
-  drop_index = drop_index
+  drop_index = drop_index,
+  add_column = add_column,
+  drop_column = drop_column
 }

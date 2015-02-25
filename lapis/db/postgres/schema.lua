@@ -1,6 +1,8 @@
 local db = require("lapis.db.postgres")
-local escape_literal
-escape_literal = db.escape_literal
+local gen_index_name
+gen_index_name = require("lapis.db.base").gen_index_name
+local escape_literal, escape_identifier
+escape_literal, escape_identifier = db.escape_literal, db.escape_identifier
 local concat
 concat = table.concat
 local append_all
@@ -41,52 +43,14 @@ extract_options = function(cols)
 end
 local entity_exists
 entity_exists = function(name)
-  name = db.escape_literal(name)
+  name = escape_literal(name)
   local res = unpack(db.select("COUNT(*) as c from pg_class where relname = " .. tostring(name)))
   return res.c > 0
-end
-local gen_index_name
-gen_index_name = function(...)
-  local parts
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    local _list_0 = {
-      ...
-    }
-    for _index_0 = 1, #_list_0 do
-      local _continue_0 = false
-      repeat
-        local p = _list_0[_index_0]
-        local _exp_0 = type(p)
-        if "string" == _exp_0 then
-          _accum_0[_len_0] = p
-        elseif "table" == _exp_0 then
-          if p[1] == "raw" then
-            _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
-          else
-            _continue_0 = true
-            break
-          end
-        else
-          _continue_0 = true
-          break
-        end
-        _len_0 = _len_0 + 1
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
-    parts = _accum_0
-  end
-  return concat(parts, "_") .. "_idx"
 end
 local create_table
 create_table = function(name, columns)
   local buffer = {
-    "CREATE TABLE IF NOT EXISTS " .. tostring(db.escape_identifier(name)) .. " ("
+    "CREATE TABLE IF NOT EXISTS " .. tostring(escape_identifier(name)) .. " ("
   }
   local add
   add = function(...)
@@ -97,7 +61,7 @@ create_table = function(name, columns)
     if type(c) == "table" then
       local kind
       name, kind = unpack(c)
-      add(db.escape_identifier(name), " ", tostring(kind))
+      add(escape_identifier(name), " ", tostring(kind))
     else
       add(c)
     end
@@ -126,13 +90,13 @@ create_index = function(tname, ...)
   if options.unique then
     append_all(buffer, " UNIQUE")
   end
-  append_all(buffer, " INDEX ", db.escape_identifier(index_name), " ON ", db.escape_identifier(tname))
+  append_all(buffer, " INDEX ", escape_identifier(index_name), " ON ", escape_identifier(tname))
   if options.method then
     append_all(buffer, " USING ", options.method)
   end
   append_all(buffer, " (")
   for i, col in ipairs(columns) do
-    append_all(buffer, db.escape_identifier(col))
+    append_all(buffer, escape_identifier(col))
     if not (i == #columns) then
       append_all(buffer, ", ")
     end
@@ -150,35 +114,35 @@ end
 local drop_index
 drop_index = function(...)
   local index_name = gen_index_name(...)
-  return db.query("DROP INDEX IF EXISTS " .. tostring(db.escape_identifier(index_name)))
+  return db.query("DROP INDEX IF EXISTS " .. tostring(escape_identifier(index_name)))
 end
 local drop_table
 drop_table = function(tname)
-  return db.query("DROP TABLE IF EXISTS " .. tostring(db.escape_identifier(tname)) .. ";")
+  return db.query("DROP TABLE IF EXISTS " .. tostring(escape_identifier(tname)) .. ";")
 end
 local add_column
 add_column = function(tname, col_name, col_type)
-  tname = db.escape_identifier(tname)
-  col_name = db.escape_identifier(col_name)
+  tname = escape_identifier(tname)
+  col_name = escape_identifier(col_name)
   return db.query("ALTER TABLE " .. tostring(tname) .. " ADD COLUMN " .. tostring(col_name) .. " " .. tostring(col_type))
 end
 local drop_column
 drop_column = function(tname, col_name)
-  tname = db.escape_identifier(tname)
-  col_name = db.escape_identifier(col_name)
+  tname = escape_identifier(tname)
+  col_name = escape_identifier(col_name)
   return db.query("ALTER TABLE " .. tostring(tname) .. " DROP COLUMN " .. tostring(col_name))
 end
 local rename_column
 rename_column = function(tname, col_from, col_to)
-  tname = db.escape_identifier(tname)
-  col_from = db.escape_identifier(col_from)
-  col_to = db.escape_identifier(col_to)
+  tname = escape_identifier(tname)
+  col_from = escape_identifier(col_from)
+  col_to = escape_identifier(col_to)
   return db.query("ALTER TABLE " .. tostring(tname) .. " RENAME COLUMN " .. tostring(col_from) .. " TO " .. tostring(col_to))
 end
 local rename_table
 rename_table = function(tname_from, tname_to)
-  tname_from = db.escape_identifier(tname_from)
-  tname_to = db.escape_identifier(tname_to)
+  tname_from = escape_identifier(tname_from)
+  tname_to = escape_identifier(tname_to)
   return db.query("ALTER TABLE " .. tostring(tname_from) .. " RENAME TO " .. tostring(tname_to))
 end
 local ColumnType

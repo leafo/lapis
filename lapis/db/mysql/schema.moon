@@ -2,6 +2,7 @@ db = require "lapis.db.mysql"
 
 import escape_literal, escape_identifier from db
 import concat from table
+import gen_index_name from require "lapis.db.base"
 
 append_all = (t, ...) ->
   for i=1, select "#", ...
@@ -17,21 +18,6 @@ extract_options = (cols) ->
     col
 
   cols, options
-
-gen_index_name = (...) ->
-  parts = for p in *{...}
-    switch type(p)
-      when "string"
-        p
-      when "table"
-        if p[1] == "raw"
-          p[2]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
-        else
-          continue
-      else
-        continue
-
-  concat(parts, "_") .. "_idx"
 
 create_table = (name, columns, opts={}) ->
   buffer = {"CREATE TABLE IF NOT EXISTS #{escape_identifier name} ("}
@@ -66,17 +52,17 @@ create_index = (tname, ...) ->
   buffer = {"CREATE"}
   append_all buffer, " UNIQUE" if options.unique
 
-  append_all buffer, " INDEX ", db.escape_identifier index_name
+  append_all buffer, " INDEX ", escape_identifier index_name
 
   if options.using
     append_all buffer, " USING ", options.using
 
-  append_all buffer, " ON ", db.escape_identifier tname
+  append_all buffer, " ON ", escape_identifier tname
 
   append_all buffer, " ("
 
   for i, col in ipairs columns
-    append_all buffer, db.escape_identifier(col)
+    append_all buffer, escape_identifier(col)
     append_all buffer, ", " unless i == #columns
 
   append_all buffer, ")"
@@ -86,7 +72,7 @@ create_index = (tname, ...) ->
 
 drop_index = (...) ->
   index_name = gen_index_name ...
-  db.query "DROP INDEX #{db.escape_identifier index_name};"
+  db.query "DROP INDEX #{escape_identifier index_name};"
 
 class ColumnType
   default_options: { null: false }
@@ -171,7 +157,8 @@ types = setmetatable {
   -- :rename_column
   -- :rename_table
   -- :entity_exists
-  -- :gen_index_name
+
+  :gen_index_name
 
   :types
   :create_table
