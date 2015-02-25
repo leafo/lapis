@@ -8,29 +8,18 @@ This guide is focused on using builder syntax in Lua/MoonScript to generate
 HTML. If you're interested in a more traditional templating system see the
 [etlua Templates guide]($root/reference/etlua_templates.html).
 
-## HTML In Actions
-
-If we want to generate HTML directly in our action we can use the `@html`
-method:
-
-```moon
-"/": =>
-  @html ->
-    h1 class: "header", "Hello"
-    div class: "body", ->
-      text "Welcome to my site!"
-```
+## HTML Builder Syntax
 
 HTML templates can be written directly as MoonScript (or Lua) code. This is a
 very powerful feature (inspired by [Erector](http://erector.rubyforge.org/))
 that gives us the ability to write templates with high composability and also
-all the features of MoonScript. No need to learn any goofy templating syntax
-with arbitrary restrictions.
+all the features of MoonScript or Lua. No need to learn any goofy templating
+syntax with arbitrary restrictions.
 
-The `@html` method overrides the environment of the function passed to it.
-Functions that create HTML tags are generated on the fly as you call them. The
-output of these functions is written into a buffer that is compiled in the end
-and returned as the result of the action.
+In the context of a HTML renderer, the environment exposes functions that
+create HTML tags. The tag builder functins are generated on the fly as you call
+them. The output of these functions is written into a buffer that is compiled
+in the end and returned as the result
 
 Here are some examples of the HTML generation:
 
@@ -57,11 +46,42 @@ The `element` function is a special builder that takes the name of tag to
 generate as the first argument followed by any attributes and content.
 
 The HTML builder methods have lower precedence than any existing variables, so
-if you have a variable named `div` and you want to make a `<div>` tag you'll need
-to call `element "div"`.
+if you have a variable named `div` and you want to make a `<div>` tag you'll
+need to call `element "div"`.
 
-> If you want to create a `<table>` or `<select>` tag you'll need to use `element` because Lua
-> uses those names in the built-in modules.
+> If you want to create a `<table>` or `<select>` tag you'll need to use
+> `element` because Lua uses those names in the built-in modules.
+
+All strings passed to the HTML builder functions are escaped automatically. You
+never have to worry about introducing any cross site scripting vulnerabilities.
+
+### Helper functions
+
+In addition to the tag functions, a few other helper functions are also available:
+
+* `raw(str)` -- outputs the argument, a string, directly to the buffer without escaping.
+* `capture(func)` -- executes the function argument in the context of the HTML builder environment, returns the compiled result as a string instead of writing to buffer.
+* `text(args)` -- outputs the argument to the buffer, escaping it if it's a string. If it's a function, it executes the function in HTML builder environment. If it's a table, it writes each item in the table
+* `widget(SomeWidget)` -- renders another widget in the current output buffer. Automatically passes the enclosing context
+* `render(template_name)` -- renders another widget or view by the module name. Lets you render etlua templates from inside builder
+
+## HTML In Actions
+
+If we want to generate HTML directly in our action we can use the `@html`
+method:
+
+```moon
+"/": =>
+  @html ->
+    h1 class: "header", "Hello"
+    div class: "body", ->
+      text "Welcome to my site!"
+```
+
+The environment of the function passed to `@html` is set to one that support
+the HTML builder functions described above. The return value of the `@html`
+method is the generated HTML as a string. Returning this from the action allows
+us to render send it right to the browser
 
 ## HTML Widgets
 
