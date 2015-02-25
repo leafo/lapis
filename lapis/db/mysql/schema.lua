@@ -9,6 +9,74 @@ append_all = function(t, ...)
     t[#t + 1] = select(i, ...)
   end
 end
+local extract_options
+extract_options = function(cols)
+  local options = { }
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for _index_0 = 1, #cols do
+      local _continue_0 = false
+      repeat
+        local col = cols[_index_0]
+        if type(col) == "table" and col[1] ~= "raw" then
+          for k, v in pairs(col) do
+            options[k] = v
+          end
+          _continue_0 = true
+          break
+        end
+        local _value_0 = col
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    cols = _accum_0
+  end
+  return cols, options
+end
+local gen_index_name
+gen_index_name = function(...)
+  local parts
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local _continue_0 = false
+      repeat
+        local p = _list_0[_index_0]
+        local _exp_0 = type(p)
+        if "string" == _exp_0 then
+          _accum_0[_len_0] = p
+        elseif "table" == _exp_0 then
+          if p[1] == "raw" then
+            _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
+          else
+            _continue_0 = true
+            break
+          end
+        else
+          _continue_0 = true
+          break
+        end
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    parts = _accum_0
+  end
+  return concat(parts, "_") .. "_idx"
+end
 local create_table
 create_table = function(name, columns, opts)
   if opts == nil then
@@ -48,6 +116,34 @@ end
 local drop_table
 drop_table = function(tname)
   return db.query("DROP TABLE IF EXISTS " .. tostring(escape_identifier(tname)) .. ";")
+end
+local create_index
+create_index = function(tname, ...)
+  local index_name = gen_index_name(tname, ...)
+  local columns, options = extract_options({
+    ...
+  })
+  local buffer = {
+    "CREATE"
+  }
+  if options.unique then
+    append_all(buffer, " UNIQUE")
+  end
+  append_all(buffer, " INDEX ", db.escape_identifier(index_name))
+  if options.using then
+    append_all(buffer, " USING ", options.using)
+  end
+  append_all(buffer, " ON ", db.escape_identifier(tname))
+  append_all(buffer, " (")
+  for i, col in ipairs(columns) do
+    append_all(buffer, db.escape_identifier(col))
+    if not (i == #columns) then
+      append_all(buffer, ", ")
+    end
+  end
+  append_all(buffer, ")")
+  append_all(buffer, ";")
+  return db.query(concat(buffer))
 end
 local ColumnType
 do
@@ -163,5 +259,6 @@ local types = setmetatable({
 return {
   types = types,
   create_table = create_table,
-  drop_table = drop_table
+  drop_table = drop_table,
+  create_index = create_index
 }

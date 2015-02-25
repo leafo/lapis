@@ -153,6 +153,26 @@ tests = {
     -> tostring schema.types.id
     "INT NOT NULL AUTO_INCREMENT PRIMARY KEY"
   }
+
+  {
+    -> schema.create_index "things", "age"
+    "CREATE INDEX `things_age_idx` ON `things` (`age`);"
+  }
+
+  {
+    -> schema.create_index "things", "color", "height"
+    "CREATE INDEX `things_color_height_idx` ON `things` (`color`, `height`);"
+  }
+
+  {
+    -> schema.create_index "things", "color", "height", unique: true
+    "CREATE UNIQUE INDEX `things_color_height_idx` ON `things` (`color`, `height`);"
+  }
+
+  {
+    -> schema.create_index "things", "color", "height", unique: true, using: "BTREE"
+    "CREATE UNIQUE INDEX `things_color_height_idx` USING BTREE ON `things` (`color`, `height`);"
+  }
 }
 
 local old_query_fn
