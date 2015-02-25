@@ -84,6 +84,18 @@ drop_column = (tname, col_name) ->
   col_name = escape_identifier col_name
   db.query "ALTER TABLE #{tname} DROP COLUMN #{col_name}"
 
+rename_column = (tname, col_from, col_to, col_type)->
+  assert col_type, "A column type is required when renaming a column"
+  tname = escape_identifier tname
+  col_from = escape_identifier col_from
+  col_to = escape_identifier col_to
+  db.query "ALTER TABLE #{tname} CHANGE COLUMN #{col_from} #{col_to} #{col_type}"
+
+rename_table = (tname_from, tname_to) ->
+  tname_from = escape_identifier tname_from
+  tname_to = escape_identifier tname_to
+  db.query "RENAME TABLE #{tname_from} TO #{tname_to}"
+
 class ColumnType
   default_options: { null: false }
 
@@ -162,8 +174,6 @@ types = setmetatable {
 
 {
   -- TODO:
-  -- :rename_column
-  -- :rename_table
   -- :entity_exists
 
   :gen_index_name
@@ -175,5 +185,7 @@ types = setmetatable {
   :drop_index
   :add_column
   :drop_column
+  :rename_column
+  :rename_table
 }
 

@@ -126,6 +126,20 @@ drop_column = function(tname, col_name)
   col_name = escape_identifier(col_name)
   return db.query("ALTER TABLE " .. tostring(tname) .. " DROP COLUMN " .. tostring(col_name))
 end
+local rename_column
+rename_column = function(tname, col_from, col_to, col_type)
+  assert(col_type, "A column type is required when renaming a column")
+  tname = escape_identifier(tname)
+  col_from = escape_identifier(col_from)
+  col_to = escape_identifier(col_to)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " CHANGE COLUMN " .. tostring(col_from) .. " " .. tostring(col_to) .. " " .. tostring(col_type))
+end
+local rename_table
+rename_table = function(tname_from, tname_to)
+  tname_from = escape_identifier(tname_from)
+  tname_to = escape_identifier(tname_to)
+  return db.query("RENAME TABLE " .. tostring(tname_from) .. " TO " .. tostring(tname_to))
+end
 local ColumnType
 do
   local _base_0 = {
@@ -245,5 +259,7 @@ return {
   create_index = create_index,
   drop_index = drop_index,
   add_column = add_column,
-  drop_column = drop_column
+  drop_column = drop_column,
+  rename_column = rename_column,
+  rename_table = rename_table
 }

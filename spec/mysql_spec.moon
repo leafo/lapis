@@ -193,6 +193,16 @@ tests = {
     -> schema.drop_column "items", "cat"
     "ALTER TABLE `items` DROP COLUMN `cat`"
   }
+
+  {
+    -> schema.rename_column "items", "cat", "paw", schema.types.integer
+    "ALTER TABLE `items` CHANGE COLUMN `cat` `paw` INT NOT NULL"
+  }
+
+  {
+    -> schema.rename_table "goods", "sweets"
+    "RENAME TABLE `goods` TO `sweets`"
+  }
 }
 
 local old_query_fn
