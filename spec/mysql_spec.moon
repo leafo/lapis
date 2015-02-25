@@ -184,6 +184,15 @@ tests = {
     "DROP INDEX `items_cat_paw_idx`;"
   }
 
+  {
+    -> schema.add_column "things", "age", schema.types.varchar 22
+    "ALTER TABLE `things` ADD COLUMN `age` VARCHAR(22) NOT NULL"
+  }
+
+  {
+    -> schema.drop_column "items", "cat"
+    "ALTER TABLE `items` DROP COLUMN `cat`"
+  }
 }
 
 local old_query_fn

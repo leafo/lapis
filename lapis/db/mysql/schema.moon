@@ -74,6 +74,16 @@ drop_index = (...) ->
   index_name = gen_index_name ...
   db.query "DROP INDEX #{escape_identifier index_name};"
 
+add_column = (tname, col_name, col_type) ->
+  tname = escape_identifier tname
+  col_name = escape_identifier col_name
+  db.query "ALTER TABLE #{tname} ADD COLUMN #{col_name} #{col_type}"
+
+drop_column = (tname, col_name) ->
+  tname = escape_identifier tname
+  col_name = escape_identifier col_name
+  db.query "ALTER TABLE #{tname} DROP COLUMN #{col_name}"
+
 class ColumnType
   default_options: { null: false }
 
@@ -152,8 +162,6 @@ types = setmetatable {
 
 {
   -- TODO:
-  -- :add_column,
-  -- :drop_column
   -- :rename_column
   -- :rename_table
   -- :entity_exists
@@ -165,5 +173,7 @@ types = setmetatable {
   :drop_table
   :create_index
   :drop_index
+  :add_column
+  :drop_column
 }
 
