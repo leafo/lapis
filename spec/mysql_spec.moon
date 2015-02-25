@@ -173,6 +173,17 @@ tests = {
     -> schema.create_index "things", "color", "height", unique: true, using: "BTREE"
     "CREATE UNIQUE INDEX `things_color_height_idx` USING BTREE ON `things` (`color`, `height`);"
   }
+
+  {
+    -> schema.drop_index "things", "age"
+    "DROP INDEX `things_age_idx`;"
+  }
+
+  {
+    -> schema.drop_index "items", "cat", "paw"
+    "DROP INDEX `items_cat_paw_idx`;"
+  }
+
 }
 
 local old_query_fn

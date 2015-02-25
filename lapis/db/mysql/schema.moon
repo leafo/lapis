@@ -84,6 +84,10 @@ create_index = (tname, ...) ->
   append_all buffer, ";"
   db.query concat buffer
 
+drop_index = (...) ->
+  index_name = gen_index_name ...
+  db.query "DROP INDEX #{db.escape_identifier index_name};"
+
 class ColumnType
   default_options: { null: false }
 
@@ -162,7 +166,6 @@ types = setmetatable {
 
 {
   -- TODO:
-  -- :drop_index
   -- :add_column,
   -- :drop_column
   -- :rename_column
@@ -174,5 +177,6 @@ types = setmetatable {
   :create_table
   :drop_table
   :create_index
+  :drop_index
 }
 

@@ -145,6 +145,11 @@ create_index = function(tname, ...)
   append_all(buffer, ";")
   return db.query(concat(buffer))
 end
+local drop_index
+drop_index = function(...)
+  local index_name = gen_index_name(...)
+  return db.query("DROP INDEX " .. tostring(db.escape_identifier(index_name)) .. ";")
+end
 local ColumnType
 do
   local _base_0 = {
@@ -260,5 +265,6 @@ return {
   types = types,
   create_table = create_table,
   drop_table = drop_table,
-  create_index = create_index
+  create_index = create_index,
+  drop_index = drop_index
 }
