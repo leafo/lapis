@@ -70,9 +70,10 @@ create_index = (tname, ...) ->
   append_all buffer, ";"
   db.query concat buffer
 
-drop_index = (...) ->
-  index_name = gen_index_name ...
-  db.query "DROP INDEX #{escape_identifier index_name};"
+drop_index = (tname, ...) ->
+  index_name = gen_index_name tname, ...
+  tname = escape_identifier tname
+  db.query "DROP INDEX #{escape_identifier index_name} on #{tname};"
 
 add_column = (tname, col_name, col_type) ->
   tname = escape_identifier tname

@@ -1,8 +1,10 @@
 
 db = require "lapis.db.mysql"
+schema = require "lapis.db.mysql.schema"
+
 import setup_db, teardown_db from require "spec_mysql.helpers"
 import drop_tables from require "lapis.spec.db"
-import create_table, drop_table, types from require "lapis.db.mysql.schema"
+import create_table, drop_table, types from schema
 
 
 describe "model", ->
@@ -48,4 +50,21 @@ describe "model", ->
       affected_rows: 1
       last_auto_id: 2
     }, res
+
+  describe "with table", ->
+    before_each ->
+      drop_table "hello_worlds"
+      create_table "hello_worlds", {
+        {"id", types.id}
+        {"name", types.varchar}
+      }
+
+    it "should create index and remove index", ->
+      schema.create_index "hello_worlds", "id", "name", unique: true
+      schema.drop_index "hello_worlds", "id", "name", unique: true
+
+
+    it "should add column", ->
+      schema.add_column "hello_worlds", "counter", schema.types.integer 123
+
 

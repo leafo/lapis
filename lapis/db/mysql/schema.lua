@@ -110,9 +110,10 @@ create_index = function(tname, ...)
   return db.query(concat(buffer))
 end
 local drop_index
-drop_index = function(...)
-  local index_name = gen_index_name(...)
-  return db.query("DROP INDEX " .. tostring(escape_identifier(index_name)) .. ";")
+drop_index = function(tname, ...)
+  local index_name = gen_index_name(tname, ...)
+  tname = escape_identifier(tname)
+  return db.query("DROP INDEX " .. tostring(escape_identifier(index_name)) .. " on " .. tostring(tname) .. ";")
 end
 local add_column
 add_column = function(tname, col_name, col_type)
