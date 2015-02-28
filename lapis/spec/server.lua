@@ -76,7 +76,7 @@ request = function(path, opts)
   end
   path = path:gsub("^/", "")
   if opts.get then
-    local url_base, url_query = path:match("^(.-)%?(.*)$")
+    local _, url_query = path:match("^(.-)%?(.*)$")
     local get_params
     if url_query then
       get_params = parse_query_string(url_query)
@@ -129,6 +129,5 @@ return {
   load_test_server = load_test_server,
   close_test_server = close_test_server,
   get_current_server = get_current_server,
-  request = request,
-  run_on_server = run_on_server
+  request = request
 }

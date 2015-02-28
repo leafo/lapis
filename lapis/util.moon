@@ -174,7 +174,6 @@ time_ago = do
   (time) ->
     sooner = date time
     later = date true
-    flip = false
 
     if later < sooner
       sooner, later = later, sooner
@@ -250,11 +249,9 @@ time_ago_in_words = do
     out .. " " .. suffix
 
 title_case = do
-  upper = string.upper
   (str) ->
     (str\gsub "%S+", (chunk) ->
       chunk\gsub "^.", string.upper)
-
 
 autoload = do
   try_require = (mod_name) ->

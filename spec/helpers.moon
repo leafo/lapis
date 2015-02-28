@@ -8,6 +8,7 @@ one_of = (state, arguments) ->
   false
 
 s = require "say"
+assert = require "luassert"
 
 s\set "assertion.one_of.positive",
   "Expected %s to be one of:\n%s"

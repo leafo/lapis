@@ -77,7 +77,6 @@ mock_request = (app_cls, url, opts={}) ->
   headers = normalize_headers headers
   out_headers = {}
 
-  old_ngx = ngx
   nginx = require "lapis.nginx"
   buffer = {}
 

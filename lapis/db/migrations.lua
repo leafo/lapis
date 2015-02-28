@@ -1,4 +1,3 @@
-local db = require("lapis.db")
 local logger = require("lapis.logging")
 local Model
 Model = require("lapis.db.model").Model

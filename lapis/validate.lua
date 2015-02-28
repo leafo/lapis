@@ -29,7 +29,7 @@ local validate_functions = {
     end
   end)(),
   is_timestamp = function(input)
-    local month, day, hour, min, sec = input and input:match("^%d+%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)$")
+    local month = input and input:match("^%d+%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)$")
     return month ~= nil, "%s is not a valid timestamp"
   end,
   equals = function(input, value)

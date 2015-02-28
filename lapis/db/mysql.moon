@@ -72,7 +72,6 @@ escape_identifier = (ident) ->
   '`' ..  (ident\gsub '`', '``') .. '`'
 
 raw_query = (...) ->
-  config = require("lapis.config").get!
   set_backend "luasql"
   raw_query ...
 

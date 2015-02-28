@@ -4,8 +4,6 @@ import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cm
 import find_leda, start_leda from require "lapis.cmd.leda"
 
 path = require "lapis.cmd.path"
-config = require "lapis.config"
-
 colors = require "ansicolors"
 
 log = print

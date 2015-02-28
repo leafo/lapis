@@ -22,7 +22,7 @@ backends = {
     parser = require "rds.parser"
     raw_query = (str) ->
       logger.query str if logger
-      res, m = ngx.location.capture _proxy, {
+      res = ngx.location.capture _proxy, {
         body: str
       }
       out, err = parser.parse res.body

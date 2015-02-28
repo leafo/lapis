@@ -23,7 +23,7 @@ local backends = {
       if logger then
         logger.query(str)
       end
-      local res, m = ngx.location.capture(_proxy, {
+      local res = ngx.location.capture(_proxy, {
         body = str
       })
       local out, err = parser.parse(res.body)

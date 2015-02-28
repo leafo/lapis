@@ -84,7 +84,6 @@ escape_identifier = function(ident)
   return '`' .. (ident:gsub('`', '``')) .. '`'
 end
 raw_query = function(...)
-  local config = require("lapis.config").get()
   set_backend("luasql")
   return raw_query(...)
 end
