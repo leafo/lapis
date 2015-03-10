@@ -13,7 +13,7 @@ import insert from table
 
 json = require "cjson"
 
-local capture_errors, capture_errors_json, respond_to
+local capture_errors, capture_errors_json, render_errors_json, respond_to
 
 set_and_truthy = (val, default=true) ->
   return default if val == nil
@@ -481,10 +481,21 @@ capture_errors = (fn, error_response=default_error_response) ->
     else
       unpack out, 2
 
+render_errors_json = =>
+  status = 412
+  errors = @errors
+  -- take status if single error
+  if #errors == 1
+    e = errors[1]
+    if type(e) == "table"
+      status = e[1]
+  -- otherwise, stick with 412, flatten errors if needed
+  errors = [(if type(e) == "table" then e[2] else e) for e in *errors]
+  { json: { errors: errors }, status: status }
+
 capture_errors_json = (fn) ->
-  capture_errors fn, => {
-    json: { errors: @errors }
-  }
+  capture_errors fn, =>
+    render_errors_json @
 
 yield_error = (msg) ->
   coroutine.yield "error", {msg}
@@ -507,7 +518,7 @@ json_params = (fn) ->
 
 {
   :Request, :Application, :respond_to
-  :capture_errors, :capture_errors_json
+  :capture_errors, :capture_errors_json, :render_errors_json
   :json_params, :assert_error, :yield_error
 }
 
