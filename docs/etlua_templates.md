@@ -79,7 +79,7 @@ local app = lapis.Application()
 app:enable("etlua")
 
 app:match("index", "/", function()
-  return { render: true }
+  return { render = true }
 end)
 
 return app
