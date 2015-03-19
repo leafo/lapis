@@ -20,7 +20,6 @@ lint:
 	moonc lint_config.moon
 	moonc -l $$(find lapis | grep moon$$)
 
-
 test_db:
 	-dropdb -U postgres lapis_test
 	createdb -U postgres lapis_test

@@ -6,20 +6,12 @@ check_args = function(name)
 end
 local content
 content = function(name)
-  return [[import
-  load_test_server
-  close_test_server
-  request
-  from require "lapis.spec.server"
-
+  return [[import use_test_server from require "lapis.spec"
+import request from require "lapis.spec.server"
 import truncate_tables from require "lapis.spec.db"
 
 describe "]] .. name .. [[", ->
-  setup ->
-    load_test_server!
-
-  teardown ->
-    close_test_server!
+  use_test_server!
 
   before_each ->
 
