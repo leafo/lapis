@@ -48,6 +48,7 @@ For example, to test a basic application with
 ```lua
 local lapis = require("lapis.application")
 local mock_request = require("lapis.spec.request").mock_request
+local use_test_env = require("lapis.spec").use_test_env
 
 local app = lapis.Application()
 
@@ -70,11 +71,14 @@ end)
 lapis = require "lapis"
 
 import mock_request from require "lapis.spec.request"
+import use_test_env from require "lapis.spec"
 
 class App extends lapis.Application
   "/hello": => "welcome to my page"
 
 describe "my application", ->
+  use_test_env!
+
   it "should make a request", ->
     status, body = mock_request App, "/hello"
 
@@ -157,21 +161,16 @@ config "test", ->
 > Don't forget to initialize your test database by creating it and its schema
 > before running the tests.
 
-When executing your tests you should use a *setup* and *teardown* to ensure
-your code runs in the `test` environment. The `lapis.environment` module lets
-us do this. Here is how you might do it in Busted:
+When executing your tests we can use the `use_test_env` function to ensure the
+test block runs in the `test` environment. It is equivalent to adding a setup
+and teardown function that sets and restores the environment.
+
 
 ```lua
-local env = require("lapis.environment")
+local use_test_env = require("lapis.spec").use_test_env
 
 describe("my site", function()
-  setup(function()
-    env.push("test")
-  end)
-
-  teardown(function()
-    env.pop()
-  end)
+  use_test_env()
 
   -- write some tests that use the test environment
 end)
@@ -179,14 +178,10 @@ end)
 
 
 ```moon
-env = require "lapis.environment"
+import use_test_env from require "lapis.spec"
 
 describe "my_site", ->
-  setup ->
-    env.push "test"
-
-  teardown ->
-    env.pop!
+  use_test_env!
 
   -- write some tests that use the test environment
 ```
@@ -207,37 +202,25 @@ environment is also overridden to be `test`. Likewise, if you've set up a test
 database for your test environment, you're free to run any queries without
 interfering with development state.
 
-The two functions that control the test server are `load_test_server` and
-`close_test_server`, and they can be found in `"lapis.spec.server"`.
+Instead of using the `use_test_env` function from above, we'll call the
+`use_test_server` function.
 
-If you are using Busted then you might use these functions as follows:
 
 ```lua
-local spec_server = require("lapis.spec.server")
+local use_test_server = require("lapis.spec").use_test_server
 
 describe("my site", function()
-  setup(function()
-    spec_server.load_test_server()
-  end)
-
-  teardown(function()
-    spec_server.close_test_server()
-  end)
-
+  use_test_server()
   -- write some tests that use the server here
 end)
 ```
 
 
 ```moon
-import load_test_server, close_test_server from require "lapis.spec.server"
+import use_test_server from require "lapis.spec"
 
 describe "my_site", ->
-  setup ->
-    load_test_server!
-
-  teardown ->
-    close_test_server!
+  use_test_server!
 
   -- write some tests that use the server here
 ```
@@ -255,17 +238,11 @@ To make HTTP request to the test server you can use the helper function
 make sure `/` loads without errors:
 
 ```lua
-local spec_server = require("lapis.spec.server")
-local request = spec_server.request
+local request = require("lapis.spec.server").request
+local use_test_server = require("lapis.spec")
 
 describe("my site", function()
-  setup(function()
-    spec_server.load_test_server()
-  end)
-
-  teardown(function()
-    spec_server.close_test_server()
-  end)
+  use_test_server()
 
   it("should load /", function()
     local status, body, headers = request("/")
@@ -275,15 +252,11 @@ end)
 ```
 
 ```moon
-import load_test_server, close_test_server, request
-  from require "lapis.spec.server"
+import use_test_server from require "lapis.spec"
+import request from require "lapis.spec.server"
 
 describe "my_site", ->
-  setup ->
-    load_test_server!
-
-  teardown ->
-    close_test_server!
+  use_test_server!
 
   it "should load /", ->
     status, body, headers = request "/"
