@@ -176,12 +176,12 @@ tests = {
 
   {
     -> schema.drop_index "things", "age"
-    "DROP INDEX `things_age_idx`;"
+    "DROP INDEX `things_age_idx` on `things`;"
   }
 
   {
     -> schema.drop_index "items", "cat", "paw"
-    "DROP INDEX `items_cat_paw_idx`;"
+    "DROP INDEX `items_cat_paw_idx` on `items`;"
   }
 
   {
