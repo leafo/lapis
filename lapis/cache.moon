@@ -40,7 +40,7 @@ cached = (fn_or_tbl) ->
     fn = fn[1]
 
   =>
-    if cond and not cond @
+    if (@req.cmd_mth != "GET") or (cond and not cond @)
       return fn @
 
     key = _cache_key @req.parsed_url.path, @GET, @

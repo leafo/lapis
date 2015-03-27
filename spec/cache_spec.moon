@@ -45,6 +45,24 @@ describe "lapis.cache", ->
       _, body = assert_request App!, "/hoi"
       assert.same "hello #{i}", body
 
+  it "should skip cache non non-get", ->
+    count = 0
+
+    class App extends lapis.Application
+      layout: false
+
+      "/hoi": cached {
+        when: => false
+        =>
+          count += 1
+          "hello #{count}"
+      }
+
+    for i=1,3
+      _, body = assert_request App!, "/hoi", {
+        method: "POST"
+      }
+      assert.same "hello #{i}", body
 
   it "should cache a page based on params", ->
     counters = setmetatable {}, __index: => 0
