@@ -51,23 +51,27 @@ cached = (fn_or_tbl) ->
       cache_value = json.decode(cache_value)
       return cache_value
 
-    old_render = @render
-    @render = (...) =>
-      old_render @, ...
-      -- this is done like this because you can't mix hash/array in json
-      to_cache = json.encode {
-        {
-          content_type: @res.headers["Content-type"]
-          layout: false -- layout is already part of content
-          status: @res.status
-        }
-        @res.content
-      }
-      dict\set key, to_cache, exptime
-      ngx.header["x-memory-cache-save"] = "1"
-      nil
+    @write fn @
+    @render!
 
-    fn @
+    -- you can't mix hash/array in json so we make two tables
+    cache_response = {
+      {
+        content_type: @res.headers["Content-type"]
+        layout: false -- layout is already part of content
+        status: @res.status
+      }
+      @res.content
+    }
+
+    dict\set key, json.encode(cache_response), exptime
+    ngx.header["x-memory-cache-save"] = "1"
+
+    -- reset the request
+    @options = {}
+    @buffer = {}
+    @res.content = nil
+    cache_response
 
 delete = (key, dict_name="page_cache") ->
   if type(key) == "table"

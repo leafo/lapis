@@ -10,19 +10,23 @@ describe "lapis.cache", ->
   before_each -> mock_shared.setup!
   after_each -> mock_shared.teardown!
 
-  it "should cache a page", ->
+  it "should cache a page #ddd", ->
     counter = 0
 
     class App extends lapis.Application
       "/hello": cached =>
+        @title = "yeah"
         counter += 1
         "hello #{counter}"
 
     _, first_body = assert_request App!, "/hello"
     _, second_body = assert_request App!, "/hello"
+    _, third_body = assert_request App!, "/hello"
 
-    assert.same first_body, second_body
+    assert.same [[<!DOCTYPE HTML><html lang="en"><head><title>yeah</title></head><body>hello 1</body></html>]],
+      first_body, second_body, third_body
 
+    assert.same 1, counter
 
   it "should skip cache with when", ->
     count = 0
