@@ -1,4 +1,3 @@
-
 db = require "lapis.db"
 
 import underscore, escape_pattern, uniquify, get_fields from require "lapis.util"
@@ -132,6 +131,10 @@ class Model
 
   @table_name: =>
     name = underscore @__name
+    name = db.escape_identifier name
+    if @schema 
+      schema = db.escape_identifier @schema
+      name = schema .. '.' .. name
     @table_name = -> name
     name
 
@@ -172,14 +175,14 @@ class Model
       query = ""
 
     query = db.interpolate_query query, ...
-    tbl_name = db.escape_identifier @table_name!
+    tbl_name = @table_name!
 
     fields = opts.fields or "*"
     if res = db.select "#{fields} from #{tbl_name} #{query}"
       @load_all res
 
   @count: (clause, ...) =>
-    tbl_name = db.escape_identifier @table_name!
+    tbl_name = @table_name!
     query = "COUNT(*) as c from #{tbl_name}"
 
     if clause
@@ -228,7 +231,7 @@ class Model
       else
         @primary_key
 
-      tbl_name = db.escape_identifier @table_name!
+      tbl_name = @table_name!
       find_by_escaped = db.escape_identifier find_by
 
       query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
@@ -272,7 +275,7 @@ class Model
     return {} if #ids == 0
     flat_ids = concat [db.escape_literal id for id in *ids], ", "
     primary = db.escape_identifier by_key
-    tbl_name = db.escape_identifier @table_name!
+    tbl_name = @table_name!
 
     query = fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
 
@@ -293,7 +296,7 @@ class Model
     else
       db.encode_clause @encode_key(...)
 
-    table_name = db.escape_identifier @table_name!
+    table_name = @table_name!
 
     if result = unpack db.select "* from #{table_name} where #{cond} limit 1"
       @load result
@@ -341,7 +344,7 @@ class Model
     error "missing constraint to check" unless next t
 
     cond = db.encode_clause t
-    table_name = db.escape_identifier @table_name!
+    table_name = @table_name!
     nil != unpack db.select "1 from #{table_name} where #{cond} limit 1"
 
   @_check_constraint: (key, value, obj) =>
