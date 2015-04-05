@@ -325,8 +325,16 @@ class Model
       db.insert @table_name!, values, @primary_keys!
 
     if res
-      for k,v in pairs res[1]
-        values[k] = v
+      if res[1]
+        for k,v in pairs res[1]
+          values[k] = v
+      else
+        -- FIXME this code works only if mysql backend is
+        -- either luasql (field res.last_auto_id) or
+        -- lua-resty-mysql (field res.insert_id) and
+        new_id = res.last_auto_id or res.insert_id
+        if not values[@primary_key] and new_id
+          values[@primary_key] = new_id
       @load values
     else
       nil, "Failed to create #{@__name}"

@@ -634,8 +634,15 @@ do
       res = db.insert(self:table_name(), values, self:primary_keys())
     end
     if res then
-      for k, v in pairs(res[1]) do
-        values[k] = v
+      if res[1] then
+        for k, v in pairs(res[1]) do
+          values[k] = v
+        end
+      else
+        local new_id = res.last_auto_id or res.insert_id
+        if not values[self.primary_key] and new_id then
+          values[self.primary_key] = new_id
+        end
       end
       return self:load(values)
     else
