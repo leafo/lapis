@@ -45,18 +45,85 @@ backends = {
             break
 
       result
+
+  lua_resty_mysql: ->
+    import after_dispatch, increment_perf from require "lapis.nginx.context"
+
+    config = require("lapis.config").get!
+    mysql_config = assert config.mysql, "missing mysql configuration"
+    host = mysql_config.host or "127.0.0.1"
+    port = mysql_config.port or 3306
+    path = mysql_config.path
+    database = assert mysql_config.database
+    user = assert mysql_config.user
+    password = assert mysql_config.password
+    ssl = mysql_config.ssl
+    ssl_verify = mysql_config.ssl_verify
+    timeout = mysql_config.timeout or 10000 -- 10 seconds
+    max_idle_timeout = mysql_config.max_idle_timeout or 10000 -- 10 seconds
+    pool_size = mysql_config.pool_size or 100
+
+    mysql = require "resty.mysql"
+
+    raw_query = (q) ->
+      logger.query q if logger
+
+      db = ngx and ngx.ctx.lua_resty_mysql_db
+      unless db
+        db, err = assert mysql\new()
+        db\set_timeout(timeout)
+        options = {
+          :database, :user, :password, :ssl, :ssl_verify
+        }
+        if path
+          options.path = path
+        else
+          options.host = host
+          options.port = port
+        assert db\connect options
+        if ngx
+          ngx.ctx.lua_resty_mysql_db = db
+          after_dispatch ->
+            db\set_keepalive(max_idle_timeout, pool_size)
+
+      start_time = if ngx and config.measure_performance
+        ngx.update_time!
+        ngx.now!
+
+      res, err, errcode, sqlstate = assert db\query q
+
+      local result
+      if err == 'again'
+        result = {res}
+        while err == 'again'
+          res, err, errcode, sqlstate = assert db\read_result!
+          table.insert result, res
+      else
+        result = res
+
+      if start_time
+        ngx.update_time!
+        increment_perf "db_time", ngx.now! - start_time
+        increment_perf "db_count", 1
+
+      result
 }
 
 set_backend = (name="default", ...) ->
   assert(backends[name]) ...
 
-escape_err = "a connection is required to escape a string literal"
+escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = (val) ->
   switch type val
     when "number"
       return tostring val
     when "string"
-      return "'#{assert(conn, escape_err)\escape val}'"
+      if conn
+        return "'#{conn\escape val}'"
+      else if ngx
+        return ngx.quote_sql_str(val)
+      else
+        error escape_err
     when "boolean"
       return val and "TRUE" or "FALSE"
     when "table"
@@ -71,14 +138,20 @@ escape_identifier = (ident) ->
   ident = tostring ident
   '`' ..  (ident\gsub '`', '``') .. '`'
 
-raw_query = (...) ->
-  set_backend "luasql"
-  raw_query ...
-
 init_logger = ->
   config = require("lapis.config").get!
   logger = if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries
     require "lapis.logging"
+
+init_db = ->
+  config = require("lapis.config").get!
+  default_backend = config.mysql and config.mysql.backend or "default"
+  set_backend default_backend
+
+raw_query = (...) ->
+  init_logger!
+  init_db! -- sets raw query to default backend
+  raw_query ...
 
 interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers escape_literal, escape_identifier
 
