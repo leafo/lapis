@@ -39,8 +39,23 @@ backends = {
       }
 
       if has_rows
+        colnames = cur\getcolnames!
+        coltypes = cur\getcoltypes!
+        assert #colnames == #coltypes
+        name2type = {}
+        for i = 1, #colnames do
+          colname = colnames[i]
+          coltype = coltypes[i]
+          name2type[colname] = coltype
         while true
           if row = cur\fetch {}, "a"
+            for colname, value in pairs(row)
+              coltype = name2type[colname]
+              if coltype == 'number(1)'
+                value = if value == '1' then true else false
+              elseif coltype\match 'number'
+                value = tonumber(value)
+              row[colname] = value
             table.insert result, row
           else
             break

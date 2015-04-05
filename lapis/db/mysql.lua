@@ -35,10 +35,32 @@ backends = {
         last_auto_id = conn:getlastautoid()
       }
       if has_rows then
+        local colnames = cur:getcolnames()
+        local coltypes = cur:getcoltypes()
+        assert(#colnames == #coltypes)
+        local name2type = { }
+        for i = 1, #colnames do
+          local colname = colnames[i]
+          local coltype = coltypes[i]
+          name2type[colname] = coltype
+        end
         while true do
           do
             local row = cur:fetch({ }, "a")
             if row then
+              for colname, value in pairs(row) do
+                local coltype = name2type[colname]
+                if coltype == 'number(1)' then
+                  if value == '1' then
+                    value = true
+                  else
+                    value = false
+                  end
+                elseif coltype:match('number') then
+                  value = tonumber(value)
+                end
+                row[colname] = value
+              end
               table.insert(result, row)
             else
               break
