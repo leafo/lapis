@@ -25,7 +25,8 @@ backends = {
     mysql_config = assert config.mysql, "missing mysql configuration"
 
     luasql = require("luasql.mysql").mysql!
-    conn = assert luasql\connect mysql_config.database, mysql_config.user
+    conn = assert luasql\connect mysql_config.database,
+      mysql_config.user, mysql_config.password
 
     raw_query = (q) ->
       logger.query q if logger
