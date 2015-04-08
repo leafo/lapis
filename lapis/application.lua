@@ -629,7 +629,7 @@ do
         out = capture_errors(out, error_response)
       end
     end
-    return out, tbl
+    return out
   end
 end
 local default_error_response

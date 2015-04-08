@@ -456,7 +456,7 @@ respond_to = do
     if error_response = tbl.on_error
       out = capture_errors out, error_response
 
-    out, tbl
+    out
 
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->
