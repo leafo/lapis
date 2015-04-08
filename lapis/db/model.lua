@@ -113,7 +113,6 @@ add_relations = function(self, relations)
       local source = relation.has_one
       if source then
         assert(type(source) == "string", "Expecting model name for `has_one` relation")
-        local column_name = tostring(name) .. "_id"
         self.__base[fn_name] = function(self)
           local existing = self[name]
           if existing ~= nil then
@@ -137,6 +136,9 @@ add_relations = function(self, relations)
         assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
         local column_name = tostring(name) .. "_id"
         self.__base[fn_name] = function(self)
+          if not (self[column_name]) then
+            return nil
+          end
           local existing = self[name]
           if existing ~= nil then
             return existing
@@ -211,7 +213,8 @@ do
       end)(), "-")
     end,
     delete = function(self)
-      return db.delete(self.__class:table_name(), self:_primary_cond())
+      local res = db.delete(self.__class:table_name(), self:_primary_cond())
+      return res.affected_rows and res.affected_rows > 0, res
     end,
     update = function(self, first, ...)
       local cond = self:_primary_cond()
@@ -268,7 +271,29 @@ do
       if self.__class.timestamp and not (opts and opts.timestamp == false) then
         values._timestamp = true
       end
-      return db.update(self.__class:table_name(), values, cond)
+      local returning
+      for k, v in pairs(values) do
+        if db.is_raw(v) then
+          returning = returning or { }
+          table.insert(returning, k)
+        end
+      end
+      if returning then
+        do
+          local res = db.update(self.__class:table_name(), values, cond, unpack(returning))
+          do
+            local update = unpack(res)
+            if update then
+              for k, v in pairs(update) do
+                self[k] = v
+              end
+            end
+          end
+          return res
+        end
+      else
+        return db.update(self.__class:table_name(), values, cond)
+      end
     end,
     refresh = function(self, fields, ...)
       if fields == nil then
@@ -582,7 +607,7 @@ do
       end
     end
   end
-  self.create = function(self, values)
+  self.create = function(self, values, opts)
     if self.constraints then
       for key in pairs(self.constraints) do
         do
@@ -597,6 +622,16 @@ do
       values._timestamp = true
     end
     local returning
+    if opts and opts.returning then
+      returning = {
+        self:primary_keys()
+      }
+      local _list_0 = opts.returning
+      for _index_0 = 1, #_list_0 do
+        local field = _list_0[_index_0]
+        table.insert(returning, field)
+      end
+    end
     for k, v in pairs(values) do
       if db.is_raw(v) then
         returning = returning or {

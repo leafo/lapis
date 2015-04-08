@@ -54,7 +54,6 @@ describe "lapis.flow", ->
     flow\check_base_object!
     flow\check_self flow
 
-
   it "should let flows inherit each other", ->
     class BaseFlow extends Flow
       the_data: 100
@@ -70,3 +69,34 @@ describe "lapis.flow", ->
     flow = ChildFlow base_object
     assert.same 111, flow\the_method!
     assert.same "hello", flow\proxy_to_message!
+
+  it "should expose assigns", ->
+    class TesterFlow extends Flow
+      expose_assigns: true
+
+      hi: =>
+        @hello = "world"
+        @foo = "bar"
+        @foo = "car"
+
+    r = {}
+    flow = TesterFlow r
+    flow\hi!
+    assert.same { foo: "car", hello: "world" }, r
+
+  it "should expose some assigns", ->
+    class TesterFlow extends Flow
+      expose_assigns: {"foo", "poo"}
+
+      hi: =>
+        @hello = "world"
+        @foo = "bar"
+        @foo = "car"
+
+    r = {}
+    flow = TesterFlow r
+    flow\hi!
+    assert.same { foo: "car" }, r
+
+
+

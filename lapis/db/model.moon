@@ -66,7 +66,6 @@ add_relations = (relations) =>
 
     if source = relation.has_one
       assert type(source) == "string", "Expecting model name for `has_one` relation"
-      column_name = "#{name}_id"
       @__base[fn_name] = =>
         existing = @[name]
         return existing if existing != nil
@@ -85,6 +84,7 @@ add_relations = (relations) =>
       column_name = "#{name}_id"
 
       @__base[fn_name] = =>
+        return nil unless @[column_name]
         existing = @[name]
         return existing if existing != nil
         model = assert_model source
@@ -309,7 +309,7 @@ class Model
       @load result
 
   -- create from table of values, return loaded object
-  @create: (values) =>
+  @create: (values, opts) =>
     if @constraints
       for key in pairs @constraints
         if err = @_check_constraint key, values and values[key], values
@@ -318,6 +318,12 @@ class Model
     values._timestamp = true if @timestamp
 
     local returning
+
+    if opts and opts.returning
+      returning = { @primary_keys! }
+      for field in *opts.returning
+        table.insert returning, field
+
     for k, v in pairs values
       if db.is_raw v
         returning or= {@primary_keys!}
@@ -378,7 +384,8 @@ class Model
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 
   delete: =>
-    db.delete @@table_name!, @_primary_cond!
+    res =  db.delete @@table_name!, @_primary_cond!
+    res.affected_rows and res.affected_rows > 0, res
 
   -- thing\update "col1", "col2", "col3"
   -- thing\update {
@@ -416,7 +423,19 @@ class Model
     if @@timestamp and not (opts and opts.timestamp == false)
       values._timestamp = true
 
-    db.update @@table_name!, values, cond
+    local returning
+    for k, v in pairs values
+      if db.is_raw v
+        returning or= {}
+        table.insert returning, k
+
+    if returning
+      with res = db.update @@table_name!, values, cond, unpack returning
+        if update = unpack res
+          for k, v in pairs update
+            @[k] = v
+    else
+      db.update @@table_name!, values, cond
 
   -- reload fields on the instance
   refresh: (fields="*", ...) =>

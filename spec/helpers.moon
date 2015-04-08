@@ -8,6 +8,7 @@ one_of = (state, arguments) ->
   false
 
 s = require "say"
+assert = require "luassert"
 
 s\set "assertion.one_of.positive",
   "Expected %s to be one of:\n%s"
@@ -18,8 +19,7 @@ s\set "assertion.one_of.negative",
 assert\register "assertion",
   "one_of", one_of, "assertion.one_of.positive", "assertion.one_of.negative"
 
-with_query_fn = (q, run) ->
-  db = require "lapis.nginx.postgres"
+with_query_fn = (q, run, db=require "lapis.db.postgres") ->
   old_query = db.set_backend "raw", q
   if not run
     -> db.set_backend "raw", old_query

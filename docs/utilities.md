@@ -36,7 +36,7 @@ Converts a key,value table into a query string
 
 ### `underscore(str)`
 
-Converst CamelCase to camel_case.
+Convert CamelCase to camel_case.
 
 ### `slugify(str)`
 
@@ -341,7 +341,7 @@ app:get("/", function(self)
   -- a post request, data table is form encoded and content-type is set to
   -- application/x-www-form-urlencoded
   http.simple("http://leafo.net/", {
-    name: "leafo"
+    name = "leafo"
   })
 
   -- manual invocation of the above request
@@ -351,7 +351,7 @@ app:get("/", function(self)
     headers = {
       "content-type" = "application/x-www-form-urlencoded"
     },
-    body: {
+    body = {
       name = "leafo"
     }
   })
@@ -531,7 +531,7 @@ cache.delete { "/hello", { thing: "world" } }
 
 ### `delete_all([dict_name="page_cache"])`
 
-Deletes all entires from the cache.
+Deletes all entries from the cache.
 
 ### `delete_path(path, [dict_name="page_cache"])`
 
@@ -577,7 +577,7 @@ class="for_lua">`self.params`</span> under the name of the form input:
 locl app = lapis.Application()
 
 app:post("/my_action", function(self)
-  local file = @params.uploaded_file
+  local file = self.params.uploaded_file
   if file then
     return "Uploaded: " .. file.filename .. ", " .. #file.content .. "bytes"
   end

@@ -7,14 +7,13 @@ is_raw = (val) ->
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
 
+import concat from table
+import select from _G
+
 format_date = (time) ->
   os.date "!%Y-%m-%d %H:%M:%S", time
 
-
 build_helpers = (escape_literal, escape_identifier) ->
-  import concat from table
-  import select from _G
-
   append_all = (t, ...) ->
     for i=1, select "#", ...
       t[#t + 1] = select i, ...
@@ -70,6 +69,17 @@ build_helpers = (escape_literal, escape_identifier) ->
 
   interpolate_query, encode_values, encode_assigns, encode_clause
 
+gen_index_name = (...) ->
+  parts = for p in *{...}
+    if is_raw p
+      p[2]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
+    elseif type(p) == "string"
+      p
+    else
+      continue
+
+  concat(parts, "_") .. "_idx"
+
 {
-  :NULL, :TRUE, :FALSE, :raw, :is_raw, :format_date, :build_helpers
+  :NULL, :TRUE, :FALSE, :raw, :is_raw, :format_date, :build_helpers, :gen_index_name
 }

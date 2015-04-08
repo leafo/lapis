@@ -102,6 +102,14 @@ describe "named routes", ->
     url = r\url_for "splatted", slug: "cool", splat: "hello"
     assert.same "/page/cool/*", url
 
+  it "should generate url with query string as table", ->
+    url = r\url_for "profile", { name: "adam" }, hello: "world"
+    assert.same "/profile/adam?hello=world", url
+
+  it "should generate url with query string as value", ->
+    url = r\url_for "profile", { name: "adam" }, "required"
+    assert.same "/profile/adam?required", url
+
   it "should create param from object", ->
     user = {
       url_key: (route_name, param_name) =>

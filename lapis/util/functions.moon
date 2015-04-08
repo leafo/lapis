@@ -8,7 +8,7 @@ clone_function = if debug.upvaluejoin
 
     i = 1
     while true
-      name, val = debug.getupvalue(fn, i)
+      name = debug.getupvalue(fn, i)
       break unless name
       debug.upvaluejoin(cloned, i, fn, i)
       i += 1

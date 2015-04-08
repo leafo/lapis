@@ -14,7 +14,6 @@ do
   find_leda, start_leda = _obj_0.find_leda, _obj_0.start_leda
 end
 local path = require("lapis.cmd.path")
-local config = require("lapis.config")
 local colors = require("ansicolors")
 local log = print
 local annotate

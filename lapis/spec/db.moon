@@ -16,6 +16,16 @@ truncate_tables = (...) ->
   for table in *tables
     db.delete table
 
-{
-  :truncate_tables
-}
+drop_tables = (...) ->
+  assert_env "test", for: "drop_tables"
+
+  names = for t in *{...}
+    db.escape_identifier if type(t) == "table"
+      t\table_name!
+    else
+      t
+
+  return unless next names
+  db.query "drop table if exists " ..  table.concat names, ", "
+
+{ :truncate_tables, :drop_tables }

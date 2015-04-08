@@ -268,7 +268,6 @@ do
   time_ago = function(time)
     local sooner = date(time)
     local later = date(true)
-    local flip = false
     if later < sooner then
       sooner, later = later, sooner
     end
@@ -359,7 +358,6 @@ do
   end
 end
 do
-  local upper = string.upper
   title_case = function(str)
     return (str:gsub("%S+", function(chunk)
       return chunk:gsub("^.", string.upper)

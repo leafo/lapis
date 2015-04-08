@@ -30,7 +30,7 @@ By default it creates the following files:
 
 * `nginx.conf`
 * `mime.types`
-* `web.moon`
+* `app.moon`
 
 You're encouraged to look at all of these files and customize them to your
 needs.

@@ -61,7 +61,7 @@ request = (path="", opts={}) ->
 
   -- merge get parameters
   if opts.get
-    url_base, url_query = path\match "^(.-)%?(.*)$"
+    _, url_query = path\match "^(.-)%?(.*)$"
     get_params = if url_query
       parse_query_string url_query
     else
@@ -105,6 +105,5 @@ request = (path="", opts={}) ->
   :close_test_server
   :get_current_server
   :request
-  :run_on_server
 }
 

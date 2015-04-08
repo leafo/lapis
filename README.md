@@ -4,12 +4,17 @@ A web framework for Lua/[MoonScript][1].
 
 [![Build Status](https://travis-ci.org/leafo/lapis.svg?branch=master)](https://travis-ci.org/leafo/lapis)
 
+Lapis is production ready, use it on your next huge project.
+
 ### <http://leafo.net/lapis/>
 
 ## Lapis Powered
 
-  * <http://rocks.moonscript.org>
+  * <http://luarocks.org> - [source](https://github.com/leafo/moonrocks-site)
   * <http://itch.io>
+  * <http://streak.club> - [source](https://github.com/leafo/streak.club)
+  * <http://mundodescuento.com/>
+  * [Ludum Dare game browser](http://ludumdare.itch.io) - [source](https://github.com/leafo/ludum-dare-browser)
 
 ## Running Tests
 

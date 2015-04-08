@@ -60,7 +60,7 @@ You're now ready to start making queries.
 There are two ways to make queries:
 
 1. The raw query interface is a collection of functions to help you write SQL.
-1. The [`Model` class](#models) is a wrapper around a Lua table that helps you synchronize it with a row in a database table.
+1. The [`Model` class](models.html) is a wrapper around a Lua table that helps you synchronize it with a row in a database table.
 
 The `Model` class is the preferred way to interact with the database. The raw
 query interface is for achieving things the `Model` class in unable to do
@@ -268,6 +268,31 @@ db.update "the_table", {
 ```sql
 UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
 ```
+
+When using the table form for conditions, all the extra arguments are used for
+the `RETURNING` clause:
+
+```lua
+db.update("cats", {
+  count = db.raw("count + 1")
+}, {
+  id = 1200
+}, "count")
+```
+
+```moon
+db.update "cats", {
+  count: db.raw "count + 1"
+}, {
+  id: 1200
+}, "count"
+```
+
+```sql
+UPDATE "cats" SET "count" = count + 1, WHERE "id" = 1200 RETURNING count
+```
+
+
 
 ### `delete(table, conditions, params...)`
 

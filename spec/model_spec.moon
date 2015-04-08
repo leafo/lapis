@@ -1,5 +1,5 @@
 
-db = require "lapis.nginx.postgres"
+db = require "lapis.db.postgres"
 import Model from require "lapis.db.model"
 import with_query_fn, assert_queries from require "spec.helpers"
 
@@ -241,6 +241,26 @@ describe "lapis.db.model", ->
       }
     }, queries
 
+  it "should create model with options", ->
+    query_mock['INSERT'] = { { id: 101 } }
+
+    class TimedThings extends Model
+      @timestamp: true
+
+    TimedThings\create { color: "blue" }, returning: { "height" }
+
+    assert_queries {
+      {
+        [[INSERT INTO "timed_things" ("color", "created_at", "updated_at") VALUES ('blue', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id", "height"]]
+        [[INSERT INTO "timed_things" ("created_at", "color", "updated_at") VALUES ('2013-08-13 06:56:40', 'blue', '2013-08-13 06:56:40') RETURNING "id", "height"]]
+        [[INSERT INTO "timed_things" ("created_at", "updated_at", "color" ) VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'blue') RETURNING "id", "height"]]
+
+        [[INSERT INTO "timed_things" ("color", "updated_at", "created_at") VALUES ('blue', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id", "height"]]
+        [[INSERT INTO "timed_things" ("updated_at", "color", "created_at") VALUES ('2013-08-13 06:56:40', 'blue', '2013-08-13 06:56:40') RETURNING "id", "height"]]
+        [[INSERT INTO "timed_things" ("updated_at", "created_at", "color") VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'blue') RETURNING "id", "height"]]
+      }
+    }, queries
+
 
   it "should refresh model", ->
     class Things extends Model
@@ -445,7 +465,7 @@ describe "lapis.db.model", ->
       }, queries
 
 
-  describe "relations #xxx", ->
+  describe "relations", ->
     local models
 
     before_each ->
@@ -581,6 +601,20 @@ describe "lapis.db.model", ->
         }
         'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
       }, queries
+
+    it "should create relations for inheritance #ddd", ->
+      class Base extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
+
+      class Child extends Base
+        @relations: {
+          {"category", belongs_to: "Categories"}
+        }
+
+      assert Child.get_user, "expecting get_user"
+      assert Child.get_category, "expecting get_category"
 
   describe "enum", ->
     import enum from require "lapis.db.model"

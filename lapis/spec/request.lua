@@ -92,7 +92,6 @@ mock_request = function(app_cls, url, opts)
   end
   headers = normalize_headers(headers)
   local out_headers = { }
-  local old_ngx = ngx
   local nginx = require("lapis.nginx")
   local buffer = { }
   local flatten

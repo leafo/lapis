@@ -10,7 +10,7 @@ if debug.upvaluejoin then
     local cloned = loadstring(dumped)
     local i = 1
     while true do
-      local name, val = debug.getupvalue(fn, i)
+      local name = debug.getupvalue(fn, i)
       if not (name) then
         break
       end

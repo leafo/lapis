@@ -46,7 +46,7 @@ cached = function(fn_or_tbl)
     fn = fn[1]
   end
   return function(self)
-    if cond and not cond(self) then
+    if (self.req.cmd_mth ~= "GET") or (cond and not cond(self)) then
       return fn(self)
     end
     local key = _cache_key(self.req.parsed_url.path, self.GET, self)
@@ -59,22 +59,22 @@ cached = function(fn_or_tbl)
         return cache_value
       end
     end
-    local old_render = self.render
-    self.render = function(self, ...)
-      old_render(self, ...)
-      local to_cache = json.encode({
-        {
-          content_type = self.res.headers["Content-type"],
-          layout = false,
-          status = self.res.status
-        },
-        self.res.content
-      })
-      dict:set(key, to_cache, exptime)
-      ngx.header["x-memory-cache-save"] = "1"
-      return nil
-    end
-    return fn(self)
+    self:write(fn(self))
+    self:render()
+    local cache_response = {
+      {
+        content_type = self.res.headers["Content-type"],
+        layout = false,
+        status = self.res.status
+      },
+      self.res.content
+    }
+    dict:set(key, json.encode(cache_response), exptime)
+    ngx.header["x-memory-cache-save"] = "1"
+    self.options = { }
+    self.buffer = { }
+    self.res.content = nil
+    return cache_response
   end
 end
 local delete

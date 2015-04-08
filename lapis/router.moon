@@ -11,6 +11,8 @@ lpeg = require "lpeg"
 import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
 
+import encode_query_string from require "lapis.util"
+
 reduce = (items, fn) ->
   count = #items
   error "reducing 0 item list" if count == 0
@@ -87,12 +89,19 @@ class Router
         ""
 
     patt = Cs (symbol / replace + 1)^0
-    patt\match path
+    patt\match(path)
 
-  url_for: (name, params) =>
+  url_for: (name, params, query) =>
     return params unless name
     path = assert @named_routes[name], "Missing route named #{name}"
-    @fill_path path, params, name
+    path = @fill_path path, params, name
+
+    if query
+      if type(query) == "table"
+        query = encode_query_string query
+      path ..= "?" .. query
+
+    path
 
   resolve: (route, ...) =>
     @build! unless @p

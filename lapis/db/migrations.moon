@@ -1,5 +1,4 @@
 
-db = require "lapis.db"
 logger = require "lapis.logging"
 import Model from require "lapis.db.model"
 

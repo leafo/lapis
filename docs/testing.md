@@ -48,6 +48,7 @@ For example, to test a basic application with
 ```lua
 local lapis = require("lapis.application")
 local mock_request = require("lapis.spec.request").mock_request
+local use_test_env = require("lapis.spec").use_test_env
 
 local app = lapis.Application()
 
@@ -70,11 +71,14 @@ end)
 lapis = require "lapis"
 
 import mock_request from require "lapis.spec.request"
+import use_test_env from require "lapis.spec"
 
 class App extends lapis.Application
   "/hello": => "welcome to my page"
 
 describe "my application", ->
+  use_test_env!
+
   it "should make a request", ->
     status, body = mock_request App, "/hello"
 
@@ -111,6 +115,77 @@ r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
 r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
 ```
 
+### Using a `test` Environment
+
+If you execute any queries during your tests without setting an environment
+then they will run on the current environment. The default environment is
+`development`, so this might not be ideal as it could mess up the state of your
+database for development. It's suggested to make a `test` environment for
+executing tests in with its own database connection.
+
+You can add a configuration environment with separate database rules by editing
+your <span class="for_moon">`config.moon`</span><span
+class="for_lua">`config.lua`</span>:
+
+> Read more about configurations on the [Configuration and
+> Environments guide]($root/reference/configuration.html), and more about
+> setting up a database on the [Database guide]($root/reference/configuration.html).
+
+```lua
+local config = require("lapis.config")
+
+-- other configuration ...
+
+config("test", {
+  postgres = {
+    backend = "pgmoon",
+    database = "myapp_test"
+  }
+})
+
+```
+
+```moon
+-- config.moon
+config = require "lapis.config"
+
+-- other configuration ...
+
+config "test", ->
+  postgres {
+    backend: "pgmoon"
+    database: "myapp_test"
+  }
+```
+
+> Don't forget to initialize your test database by creating it and its schema
+> before running the tests.
+
+When executing your tests we can use the `use_test_env` function to ensure the
+test block runs in the `test` environment. It is equivalent to adding a setup
+and teardown function that sets and restores the environment.
+
+
+```lua
+local use_test_env = require("lapis.spec").use_test_env
+
+describe("my site", function()
+  use_test_env()
+
+  -- write some tests that use the test environment
+end)
+```
+
+
+```moon
+import use_test_env from require "lapis.spec"
+
+describe "my_site", ->
+  use_test_env!
+
+  -- write some tests that use the test environment
+```
+
 ## Using the Test Server
 
 While mocking a request is useful, it doesn't give you access to the entire
@@ -122,66 +197,39 @@ The test server runs inside of the `test` environment (compared to
 connection for tests so you are free to delete and create rows in the database
 without messing up your development state.
 
+Additionally, when starting the test server, the local running Lapis
+environment is also overridden to be `test`. Likewise, if you've set up a test
+database for your test environment, you're free to run any queries without
+interfering with development state.
 
-The two functions that control the test server are `load_test_server` and
-`close_test_server`, and they can be found in `"lapis.spec.server"`.
+Instead of using the `use_test_env` function from above, we'll call the
+`use_test_server` function.
 
-If you are using Busted then you might use these functions as follows:
 
 ```lua
-local spec_server = require("lapis.spec.server")
+local use_test_server = require("lapis.spec").use_test_server
 
 describe("my site", function()
-  setup(function()
-    spec_server.load_test_server()
-  end)
-
-  teardown(function()
-    spec_server.close_test_server()
-  end)
-
+  use_test_server()
   -- write some tests that use the server here
 end)
 ```
 
 
 ```moon
-import load_test_server, close_test_server from require "lapis.spec.server"
+import use_test_server from require "lapis.spec"
 
 describe "my_site", ->
-  setup ->
-    load_test_server!
-
-  teardown ->
-    close_test_server!
+  use_test_server!
 
   -- write some tests that use the server here
 ```
 
 The test server will either spawn a new Nginx if one isn't running, or it will
 take over your development server until `close_test_server` is called. Taking
-over the development server is useful for seeing the raw Nginx output in the
-console.
-
-While the test server is running we are free to make queries and use
-models. Database queries are transparently sent over HTTP to the test server
-and executed inside of Nginx.
-
-For example, we could write a basic unit test for a model:
-
-```lua
-  it("should create a User", function()
-    local Users = require("models").Users
-    assert(Users:create({ name = "leafo" })
-  end)
-```
-
-
-```moon
-  it "should create a User", ->
-    import Users from require "models"
-    assert Users\create name: "leafo"
-```
+over the development server can be useful because the same stdout is used, so
+any output from the server is written to a terminal you might already have
+open.
 
 ### `request(path, options={})`
 
@@ -190,17 +238,11 @@ To make HTTP request to the test server you can use the helper function
 make sure `/` loads without errors:
 
 ```lua
-local spec_server = require("lapis.spec.server")
-local request = spec_server.request
+local request = require("lapis.spec.server").request
+local use_test_server = require("lapis.spec")
 
 describe("my site", function()
-  setup(function()
-    spec_server.load_test_server()
-  end)
-
-  teardown(function()
-    spec_server.close_test_server()
-  end)
+  use_test_server()
 
   it("should load /", function()
     local status, body, headers = request("/")
@@ -210,15 +252,11 @@ end)
 ```
 
 ```moon
-import load_test_server, close_test_server, request
-  from require "lapis.spec.server"
+import use_test_server from require "lapis.spec"
+import request from require "lapis.spec.server"
 
 describe "my_site", ->
-  setup ->
-    load_test_server!
-
-  teardown ->
-    close_test_server!
+  use_test_server!
 
   it "should load /", ->
     status, body, headers = request "/"
@@ -226,9 +264,9 @@ describe "my_site", ->
 
 ```
 
-`path` is either a path of a full URL to request against the test server. If it
+`path` is either a path or a full URL to request against the test server. If it
 is a full URL then the hostname of the URL is extracted and inserted as the
-host header.
+`Host` header.
 
 The `options` argument can be used to further configure the request. It
 supports the following options in the table:

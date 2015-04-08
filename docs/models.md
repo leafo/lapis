@@ -33,6 +33,7 @@ class name of <code>HelloWorlds</code> would result in the table name
 <code>hello_worlds</code>. It is customary to make the class name plural.
 </p>
 
+
 <p class="for_moon">
 If you want to use a different table name you can overwrite the
 <code>@table_name</code> class method:
@@ -43,13 +44,15 @@ class Users extends Model
   @table_name: => "active_users"
 ```
 
-Model instances have a field for each column that has been fetched from the
-database.
+Model instances will have a field for each column that has been fetched from
+the database. You do not need to manually specify the names of the columns.  If
+you have any relationships, though, you can specify them using the
+[`relations` property](#describing-relationships).
 
 ## Primary Keys
 
-By default all models have the primary key `"id"`. This can be changed by setting
-the <span class="for_moon">`@primary_key`</span><span
+By default all models expect the table to have a primary key called`"id"`. This
+can be changed by setting the <span class="for_moon">`@primary_key`</span><span
 class="for_lua">`self.primary_key`</span> class variable.
 
 
@@ -77,7 +80,7 @@ class Followings extends Model
   @primary_key: { "user_id", "followed_user_id" }
 ```
 
-## Class Mehods
+## Class Methods
 
 Model class methods are used for fetching existing rows or creating new ones.
 
@@ -129,7 +132,7 @@ SELECT * from "users" where "id" = 23232 limit 1
 SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
 ```
 
-`find` returns an instance of the model.
+`find` returns an instance of the model if it could be found, `nil` otherwise.
 
 An alternate way of calling find is to pass a table as the first argument. The
 table will be converted to a `WHERE` clause in the query:
@@ -146,13 +149,28 @@ user = Users\find email: "person@example.com"
 SELECT * from "users" where "email" = 'person@example.com' limit 1
 ```
 
-If a row could not be found that matches the condition, `nil` is returned.
+Like all database finders, you are free to use `db.raw` to embed raw SQL. For
+example, you might perform a case insensitive email search like so:
+
+
+```lua
+local user = Users:find({ [db.raw("lower(email)")] = some_email\lower! })
+```
+
+```moon
+user = Users\find [db.raw "lower(email)"]: some_email\lower!
+```
+
+```sql
+SELECT * from "users" where lower(email) = 'person@example.com' limit 1
+```
 
 ### `select(query, ...)`
 
 When searching for multiple rows the `select` class method is used. It works
-similarly to the `select` function from the raw query interface except you
-specify the part of the query after the list of columns to select.
+similarly to the [`select` function from the raw query
+interface](database.html#query-interface-selectquery-params) except you specify
+the part of the query after the list of columns to select.
 
 ```lua
 local tags = Tags:select("where tag = ?", "merchant")
@@ -184,11 +202,17 @@ tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
 SELECT created_at as c from "tags" where tag = 'merchant'
 ```
 
+The `fields` option is inserted into the SQL statement as is, so do not use
+untrusted strings otherwise you may be vulnerable to SQL injection. Use
+[`db.escape_identifier`](database.html#query-interface-escape_identifierstr) to
+escape column names.
+
 ### `find_all(primary_keys)`
 
-If you want to find many rows by their primary key you can use
-the `find_all` method. It takes an array table of primary keys. This method
-only works on tables that have singular primary keys.
+If you want to find many rows by their primary key you can use the `find_all`
+method. It takes an array table of primary keys. This method only works on
+tables that have singular primary keys unless you explicitly pass a column to
+search by.
 
 ```lua
 local users = Users:find_all({ 1,2,3,4,5 })
@@ -251,7 +275,7 @@ users = UserProfile\find_all {1,2,3,4}, {
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
-### `create(opts)`
+### `create(values, create_opts=nil)`
 
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
@@ -276,6 +300,41 @@ user = Users\create {
 ```sql
 INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
 ```
+
+If any of the column values are
+[`db.raw`](database.html#query-interface-rawstr) then their computed values
+will also be fetched using the `RETURN` clause of the `CREATE` statement. The
+raw values are replaced by the values returned by the database.
+
+For example, we might create a new row in a table with a `position` column set
+to the next highest number:
+
+```moon
+user = Users\create {
+  position: db.raw "(select coalesce(max(position) + 1, 0) from users)"
+}
+```
+
+```lua
+local user = Users:create({
+  position = db.raw("(select coalesce(max(position) + 1, 0) from users)"0
+})
+```
+
+```sql
+INSERT INTO "users" (position)
+VALUES ((select coalesce(max(position) + 1, 0) from users))
+RETURNING "id", "position"
+```
+
+If your model has any [constraints](#constraints) they will be checked before trying to create
+a new row. If a constraint fails then `nil` and the error message are returned
+from the `create` function.
+
+`create` can take an options table as a second argument. It supports the
+following options:
+
+* `returning` -- A string containing a list of columns to fetch along with the create statement using the `RETURNING` statement
 
 ## Instance Methods
 
@@ -334,9 +393,16 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 > The table argument can also take positional values, which are treated the
 > same as the variable argument form.
 
+If any of the updated values are generated from raw SQL via `db.raw`, then
+those values will be replaced with values returning by the database using the
+`RETURNING` clause similar to the [`create` class
+method](#class-methods-createopts).
+
+
 ### `delete()`
 
-Just call `delete` on the instance:
+To delete the row call `delete`.
+
 
 ```lua
 local user = Users:find(1)
@@ -351,6 +417,32 @@ user\delete!
 ```sql
 DELETE FROM "users" WHERE "id" = 1
 ```
+
+`delete` will return `true` if the row was actually deleted. It's important to
+check this value to avoid any race condtions when running code in response to a
+delete.
+
+Consider the following code:
+
+```lua
+local user = Users:find()
+if user then
+  user:delete()
+  decrement_total_user_count()
+end
+```
+
+```moon
+user = Users\find 1
+if user
+  user\delete!
+  decrement_total_user_count!
+```
+
+Due to the asynchronous nature of OpenResty, it's possible that if two requests
+enter this block of code around the same time `delete` may end up getting called
+twice. This isn't a problem by itself, but the `decrement_total_user_count`
+function would get called twice and may invalidate whatever data it has.
 
 ## Timestamps
 
@@ -367,6 +459,36 @@ CREATE TABLE ... (
   "updated_at" timestamp without time zone NOT NULL
 )
 ```
+
+You might create a table with timestamps using the schema syntax from Lapis
+like this:
+
+```lua
+local schema = require "lapis.db.schema"
+
+scehma.create_table("some_table", {
+  -- ...
+  {"created_at", schema.types.time}
+  {"updated_at", schema.types.time}
+  -- ...
+})
+```
+
+```moon
+import types, create_table from require "lapis.db.schema"
+
+create_table "some_table", {
+  -- ...
+  {"created_at", types.time}
+  {"updated_at", types.time}
+  -- ...
+}
+```
+
+
+You'll notice both columns are stored without timezone. Lapis stored
+`created_at` and `updated_at` in UTC time.
+
 
 Then define your model with the <span class="for_moon">`@timestamp` class
 variable</span><span class="for_lua">`timestamp` property</span> set to
@@ -556,6 +678,13 @@ instances is created from the name of the included table. In the example above
 the `user_data` property contains the included model instances. (Had it been
 plural the table name would have been made singular)
 
+`include_in` supports the following options, including `as` and `flip` from above:
+
+* `as` -- set the name of the property to store the associated model as
+* `flip` -- set to `true` if the named column is located on the included model
+* `where` -- a table of additional conditionals to limit the query by
+* `fields` -- set the fields returned by each included model
+
 ## Constraints
 
 Often before we insert or update a row we want to check that some conditions
@@ -619,8 +748,7 @@ that might otherwise return many results. The arguments are the same as the
 `select` method but instead of the result it returns a special `Paginator`
 object.
 
-For example, say we have the following table and model: (For documentation on
-creating tables see the [next section](#database-schemas-creating-and-dropping-tables))
+For example, say we have the following table and model: (See [Database Schemas](database.html#database-schemas) for more information on creating tables.)
 
 ```lua
 create_table("users", {
@@ -663,12 +791,12 @@ The following options are supported:
 
 `per_page`: sets the number of items per page
 
-```moon
-local paginated_alt = Users:paginated("where group_id = ?", 4, { per_page = 100 })
+```lua
+local paginated2 = Users:paginated("where group_id = ?", 4, { per_page = 100 })
 ```
 
 ```moon
-paginated_alt = Users\paginated [[where group_id = ?]], 4, per_page: 100
+paginated2 = Users\paginated [[where group_id = ?]], 4, per_page: 100
 ```
 
 `prepare_results`: a function that is passed the results of `get_page` and
@@ -700,6 +828,9 @@ preloaded = Posts\paginated [[where category = ?]], "cats", {
 Any additional options sent to `paginated` are passed directly to the
 underlying `select` method call when a page is loaded. For example you can
 provide a `fields` option in order to limit the fields returned by a page.
+
+Whenever possible you should specify an `ORDER` clause in your paginated query,
+as the database might returned unexpected results for each page.
 
 The paginator has the following methods:
 
@@ -779,19 +910,24 @@ for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
 ```
 
+> Be careful modifying rows when iterating over each page, as your
+> modifications might change the pagination order and you may process rows
+> multiple times or none at all.
+
 ## Describing Relationships
 
-You can describe relationships between models using the `relations` class
+Often your models are connected to other models by use of a *foreign_key*. You
+can describe the relationships between models using the `relations` class
 property.
 
 ```lua
 local Model = require("lapis.db.model").Model
 local Posts = Model:extend("posts", {
   relations = {
-    {"users", belongs_to = "Users"}
+    {"users", belongs_to = "Users"},
+    {"posts", has_many = "Tags"}
   }
 })
-
 ```
 
 ```moon
@@ -799,12 +935,13 @@ import Model from require "lapis.db.models"
 class Posts extends Model
   @relations: {
     {"user", belongs_to: "Users"}
+    {"posts", has_many: "Tags"}
   }
 ```
 
 Relations will automatically add methods to models to make fetching the
 associated model instances easy. For example the `belongs_to` relation from the
-example above would make a `get_user` getter:
+example above would make a `get_user` method:
 
 
 ```lua
@@ -834,9 +971,20 @@ The following relations are available
 
 A one-to-one relation where the foreign key is located on the current model.
 
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Posts = Model:extend("posts", {
+  relations = {
+    {"user", belongs_to = "Users"}
+  }
+})
+```
+
 ```moon
 import Model from require "lapis.db.models"
-class Users extends Model
+
 class Posts extends Model
   @relations: {
     {"user", belongs_to: "Users"}
@@ -844,6 +992,10 @@ class Posts extends Model
 ```
 
 Creates `get_` method for each relation.
+
+```lua
+local user = post:get_user()
+```
 
 ```moon
 user = post\get_user!
@@ -857,17 +1009,29 @@ SELECT * from "users" where "user_id" = 123;
 
 A one-to-one relation where the foreign key is located on the associated model.
 
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  relations = {
+    {"user_profile", has_one = "UserProfiles"}
+  }
+})
+```
+
 ```moon
 import Model from require "lapis.db.models"
 class Users extends Model
   @relations: {
     {"user_profile", has_one: "UserProfiles"}
   }
-
-class UserProfiles extends Model
 ```
 
 Creates `get_` method for each relation.
+
+```lua
+local profile = user:get_user_profile()
+```
 
 ```moon
 profile = user\get_user_profile!
@@ -882,14 +1046,31 @@ name by making it singular and appending `_id`. The table `users` would convert
 to `user_id`. Sometimes the calculated foreign key isn't correct, you can
 provide a custom key with the `key` parameter to the relation:
 
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  relations = {
+    {"user_profile", has_one = "UserProfiles", key = "owner_id"}
+  }
+})
+```
+
 ```moon
 import Model from require "lapis.db.models"
+
 class Users extends Model
   @relations: {
     {"user_profile", has_one: "UserProfiles", key: "owner_id"}
   }
+```
 
-class UserProfiles extends Model
+```lua
+local profile = user:get_user_profile()
+```
+
+```moon
+profile = user\get_user_profile!
 ```
 
 ```sql
@@ -898,11 +1079,56 @@ SELECT * from "user_profiles" where "owner_id" = 123;
 
 ### `has_many`
 
-A one to many relation, returns a `Pager` object.
+A one to many relation, returns a [`Pager` object](#pagination).
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  relations = {
+    {"posts", has_many = "Posts"}
+  }
+})
+```
+
+```moon
+import Model from require "lapis.db.models"
+class Users extends Model
+  @relations: {
+    {"posts", has_many: "Posts"}
+  }
+```
+
+```lua
+local posts = user:get_posts({per_page = 20}):get_page(3)
+```
+
+```moon
+local posts = user\get_posts(per_page: 20)\get_page 3
+```
+
+```sql
+SELECT * from "posts" where "user_id" = 123 LIMIT 20 OFFSET 40
+```
+
+You can override the foreign key column name by passing a `key` relation
+property.
 
 ### `fetch`
 
 A custom relation, provide a function to fetch the associated data. Result is cached.
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  relations = {
+    {"recent_posts", fetch = function()
+      -- fetch some data
+    end}
+  }
+})
+```
 
 ```moon
 import Model from require "lapis.db.models"
@@ -914,14 +1140,14 @@ class Users extends Model
   }
 ```
 
-## Finding Columns
+## Inspecting Columns
 
 You can get the column names and column types of a table using the `columns`
 method on the model class:
 
 ```lua
 local Posts = Model:extend("posts")
-for _, col in ipairs(Posts:columns) do
+for _, col in ipairs(Posts:columns()) do
   print(col.column_name, col.data_type)
 end
 ```
@@ -941,7 +1167,7 @@ SELECT column_name, data_type
 ## Refreshing a Model Instance
 
 If your model instance becomes out of date from an external change, it can tell
-it to re-fetch and re-populate it's data using the `refresh` method.
+it to re-fetch and re-populate its data using the `refresh` method.
 
 ```moon
 class Posts extends Model
@@ -979,11 +1205,24 @@ post:refresh("color", "height")
 SELECT "color", "height" from "posts" where id = 1
 ```
 
-# Enum
+## Enum
 
 The `enum` function lets you create a special table that lets you convert
 between integer constants and names. This is useful for created enumerations in
 your database rows by using integers to represent a state.
+
+```lua
+local model = require("lapis.db.model")
+local Model, enum = model.Model, model.enum
+
+local Posts = Model:extend("posts")
+Posts.statuses = enum {
+  pending = 1,
+  public = 2,
+  private = 3,
+  deleted = 4
+}
+```
 
 ```moon
 import Model, enum from require "lapis.db.model"
@@ -995,8 +1234,28 @@ class Posts extends Model
     private: 3
     deleted: 4
   }
+```
 
+```lua
+assert(Posts.statuses[1] == "pending")
+assert(Posts.statuses[3] == "private")
 
+assert(Posts.statuses.public == 2)
+assert(Posts.statuses.deleted == 4)
+
+assert(Posts.statuses:for_db("private") == 3)
+assert(Posts.statuses:for_db(3) == 3)
+
+assert(Posts.statuses:to_name(1) == "pending")
+assert(Posts.statuses:to_name("pending") == "pending")
+
+-- using to_name or for_db with undefined enum value throws error
+
+Posts.statuses:to_name(232) -- erorr
+Posts.statuses:for_db("hello") -- erorr
+```
+
+```moon
 assert Posts.statuses[1] == "pending"
 assert Posts.statuses[3] == "private"
 

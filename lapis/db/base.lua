@@ -12,16 +12,16 @@ is_raw = function(val)
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
+local concat
+concat = table.concat
+local select
+select = _G.select
 local format_date
 format_date = function(time)
   return os.date("!%Y-%m-%d %H:%M:%S", time)
 end
 local build_helpers
 build_helpers = function(escape_literal, escape_identifier)
-  local concat
-  concat = table.concat
-  local select
-  select = _G.select
   local append_all
   append_all = function(t, ...)
     for i = 1, select("#", ...) do
@@ -113,6 +113,38 @@ build_helpers = function(escape_literal, escape_identifier)
   end
   return interpolate_query, encode_values, encode_assigns, encode_clause
 end
+local gen_index_name
+gen_index_name = function(...)
+  local parts
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local _continue_0 = false
+      repeat
+        local p = _list_0[_index_0]
+        if is_raw(p) then
+          _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
+        elseif type(p) == "string" then
+          _accum_0[_len_0] = p
+        else
+          _continue_0 = true
+          break
+        end
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    parts = _accum_0
+  end
+  return concat(parts, "_") .. "_idx"
+end
 return {
   NULL = NULL,
   TRUE = TRUE,
@@ -120,5 +152,6 @@ return {
   raw = raw,
   is_raw = is_raw,
   format_date = format_date,
-  build_helpers = build_helpers
+  build_helpers = build_helpers,
+  gen_index_name = gen_index_name
 }

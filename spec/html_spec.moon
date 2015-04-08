@@ -252,3 +252,30 @@ describe "lapis.html", ->
 
     assert.same nil, SomeWidget.color
 
+  it "should render widget inside of capture", ->
+    local captured
+
+    class InnerInner extends Widget
+      content: =>
+        out = capture ->
+          span "yeah"
+        raw out
+
+    class Inner extends Widget
+      content: =>
+        dt "hello"
+        widget InnerInner
+        dt "world"
+
+    class Outer extends Widget
+      content: =>
+        captured = capture ->
+          div "before"
+          widget Inner!
+          div "after"
+
+    assert.same [[]], render_widget Outer!
+    assert.same [[<div>before</div><dt>hello</dt><span>yeah</span><dt>world</dt><div>after</div>]], captured
+
+
+
