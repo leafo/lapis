@@ -85,7 +85,7 @@ tables. Both MoonScript and Lua have their own variations, for more details
 about the syntax have a look at the respective guide.
 
 * [MoonScript configuration syntax][0]
-* [Lua configuration syntax][0]
+* [Lua configuration syntax][1]
 
 ## Configurations and Nginx
 
@@ -272,4 +272,6 @@ class App extends lapis.Application
   -- ...
 ```
 
+[0]: $root/reference/moon_creating_configurations.html
+[1]: $root/reference/lua_creating_configurations.html
 
