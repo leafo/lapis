@@ -4,6 +4,16 @@ do
   type, getmetatable, setmetatable, rawset = _obj_0.type, _obj_0.getmetatable, _obj_0.setmetatable, _obj_0.rawset
 end
 local Flow
+local is_flow
+is_flow = function(cls)
+  if not (cls) then
+    return false
+  end
+  if cls == Flow then
+    return true
+  end
+  return is_flow(cls.__parent)
+end
 do
   local _base_0 = {
     expose_assigns = false
@@ -16,6 +26,9 @@ do
       end
       self._req = _req
       assert(self._req, "flow missing request")
+      if is_flow(self._req.__class) then
+        self._req = self._req._req
+      end
       local proxy = setmetatable(obj, getmetatable(self))
       local mt = {
         __index = function(self, key)
@@ -76,5 +89,6 @@ do
   Flow = _class_0
 end
 return {
-  Flow = Flow
+  Flow = Flow,
+  is_flow = is_flow
 }

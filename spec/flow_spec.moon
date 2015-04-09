@@ -99,4 +99,36 @@ describe "lapis.flow", ->
     assert.same { foo: "car" }, r
 
 
+  it "should create a flow with another flow", ->
+    class AlphaFlow extends Flow
+    class BetaFlow extends Flow
+
+    r = {}
+    a = AlphaFlow r
+    b = BetaFlow a
+
+    assert.same a._req, r
+    assert.same b._req, r
+
+  it "should create a flow with another flow with inheritance", ->
+    class AlphaFlow extends Flow
+    class GammaFlow extends AlphaFlow
+
+    class BetaFlow extends Flow
+      expose_assigns: true
+
+      set_something: =>
+        @hello = "world"
+
+
+    r = {}
+    g = GammaFlow r
+    b = BetaFlow g
+
+    assert.same b._req, r
+    b\set_something!
+
+    assert.same {hello: "world"}, r
+
+
 
