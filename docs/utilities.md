@@ -267,7 +267,7 @@ local csrf = require("lapis.csrf")
 csrf = require "lapis.csrf"
 ```
 
-###  `generate_token(req, key=nil, expires=os.time! + 28800)`
+###  `generate_token(req, key=nil, expires=os.time() + 28800)`
 
 Generates a new CSRF token using the session secret. `key` is an optional piece
 of data you can associate with the request. The token will expire in 8 hours by
