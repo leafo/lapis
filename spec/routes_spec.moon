@@ -12,6 +12,7 @@ describe "basic route matching", ->
     r\add_route "/hello/:name/world", handler
     r\add_route "/static/*", handler
     r\add_route "/x/:color/:height/*", handler
+    r\add_route "/please/", handler
 
     r.default_route = -> "failed to find route"
 
@@ -57,6 +58,14 @@ describe "basic route matching", ->
   it "should match nothing", ->
     assert.same "failed to find route", r\resolve("/hello//world")
 
+  it "should match trailing exactly", ->
+    assert.same {
+      {}
+      "/please/"
+    }, r\resolve("/please/")
+
+    assert.same "failed to find route", r\resolve("/please")
+
   it "should match the catchall", ->
     r = Router!
     r\add_route "*", handler
@@ -64,6 +73,7 @@ describe "basic route matching", ->
       { splat: "hello_world" }
       "*"
     }, r\resolve "hello_world"
+
 
 describe "named routes", ->
   local r
@@ -124,4 +134,3 @@ describe "named routes", ->
   it "should not build url", ->
     assert.has_error (-> r\url_for "fake_url", name: user),
       "Missing route named fake_url"
-
