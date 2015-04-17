@@ -386,6 +386,23 @@ res = db.query "select * from #{table_name}"
 `escape_identifier` is not appropriate for escaping values. See
 `escape_literal` for escaping values.
 
+#### `interpolate_query(query, ...)`
+
+Interpolates a query containing `?` markers with the rest of the
+arguments escaped via `escape_literal`.
+
+```lua
+local q = "select * from table"
+q = q .. db.interpolate_query("where value = ?", 42)
+local res = db.query(q)
+```
+
+```moon
+q = "select * from table"
+q ..= db.interpolate_query "where value = ?", 42
+res = db.query q
+```
+
 ### Constants
 
 The following constants are also available:
@@ -839,3 +856,25 @@ migrations.run_migrations(require("migrations"))
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
 ```
+
+## Database Helpers
+
+These are additional helper functions from the `db` module that
+aren't directly related to the query interface.
+
+#### `format_date(time)`
+
+Returns a date string formatted properly for insertion in the database.
+
+The `time` argument is optional, will default to the current UTC time.
+
+```lua
+local date = db.format_date()
+db.query("update things set published_at = ?", date)
+```
+
+```moon
+date = db.format_date!
+db.query "update things set published_at = ?", date
+```
+
