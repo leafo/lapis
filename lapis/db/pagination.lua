@@ -253,6 +253,7 @@ do
         local positions = {
           ...
         }
+        local pos_count = #positions
         local orders
         do
           local _accum_0 = { }
@@ -262,9 +263,9 @@ do
             local _value_0
             local _exp_0 = order:lower()
             if "asc" == _exp_0 then
-              _value_0 = tostring(field) .. " > " .. tostring(db.escape_literal(pos))
+              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and ">" or ">=") .. " " .. tostring(db.escape_literal(pos))
             elseif "desc" == _exp_0 then
-              _value_0 = tostring(field) .. " < " .. tostring(db.escape_literal(pos))
+              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and "<" or "<=") .. " " .. tostring(db.escape_literal(pos))
             else
               _value_0 = error("don't know how to handle order " .. tostring(order))
             end
