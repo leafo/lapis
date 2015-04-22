@@ -143,13 +143,14 @@ class OrderedPaginator extends Paginator
 
     if ...
       positions = {...}
+      pos_count = #positions
       orders = for i, pos in ipairs positions
         field = escaped_fields[i]
         switch order\lower!
           when "asc"
-            "#{field} > #{db.escape_literal pos}"
+            "#{field} #{i == pos_count and ">" or ">="} #{db.escape_literal pos}"
           when "desc"
-            "#{field} < #{db.escape_literal pos}"
+            "#{field} #{i == pos_count and "<" or "<="} #{db.escape_literal pos}"
           else
             error "don't know how to handle order #{order}"
 
