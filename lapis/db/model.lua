@@ -117,7 +117,7 @@ add_relations = function(self, relations)
           end
           local model = assert_model(source)
           local clause = {
-            [relation.key or tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
+            [relation.key or tostring(self.__class:singular_name()) .. "_id"] = self[self.__class:primary_keys()]
           }
           do
             local obj = model:find(clause)
@@ -157,7 +157,7 @@ add_relations = function(self, relations)
           self.__base[fn_name] = function(self, opts)
             local model = assert_model(source)
             local clause = {
-              [foreign_key or tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
+              [foreign_key or tostring(self.__class:singular_name()) .. "_id"] = self[self.__class:primary_keys()]
             }
             do
               local where = relation.where
@@ -388,6 +388,9 @@ do
     end
     return name
   end
+  self.singular_name = function(self)
+    return singularize(self:table_name())
+  end
   self.columns = function(self)
     local columns = db.query([[      select column_name, data_type
       from information_schema.columns
@@ -517,7 +520,7 @@ do
           if opts and opts.as then
             field_name = opts.as
           elseif flip then
-            field_name = singularize(self:table_name())
+            field_name = self:singular_name()
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end

@@ -72,7 +72,7 @@ add_relations = (relations) =>
         model = assert_model source
 
         clause = {
-          [relation.key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
+          [relation.key or "#{@@singular_name!}_id"]: @[@@primary_keys!]
         }
 
         with obj = model\find clause
@@ -97,7 +97,7 @@ add_relations = (relations) =>
         @__base[fn_name] = (opts) =>
           model = assert_model source
           clause = {
-            [foreign_key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
+            [foreign_key or "#{@@singular_name!}_id"]: @[@@primary_keys!]
           }
 
           if where = relation.where
@@ -134,6 +134,11 @@ class Model
     name = underscore @__name
     @table_name = -> name
     name
+
+  -- used as the forign key name when preloading objects over a relation
+  -- user_posts -> user_post
+  @singular_name: =>
+    singularize @table_name!
 
   @columns: =>
     columns = db.query [[
@@ -244,7 +249,7 @@ class Model
         field_name = if opts and opts.as
           opts.as
         elseif flip
-          singularize @table_name!
+          @singular_name!
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
