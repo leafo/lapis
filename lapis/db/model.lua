@@ -539,10 +539,12 @@ do
       by_key = self.primary_key
     end
     local where = nil
+    local clause = nil
     local fields = "*"
     if type(by_key) == "table" then
       fields = by_key.fields or fields
       where = by_key.where
+      clause = by_key.clause
       by_key = by_key.key or self.primary_key
     end
     if type(by_key) == "table" and by_key[1] ~= "raw" then
@@ -566,6 +568,13 @@ do
     local query = fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")"
     if where then
       query = query .. (" and " .. db.encode_clause(where))
+    end
+    if clause then
+      if type(clause) == "table" then
+        assert(clause[1], "invalid clause")
+        clause = db.interpolate_query(unpack(clause))
+      end
+      query = query .. (" " .. clause)
     end
     do
       local res = db.select(query)

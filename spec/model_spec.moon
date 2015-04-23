@@ -77,6 +77,26 @@ describe "lapis.db.model", ->
       }
     }
 
+    Things\find_all { 1,2,4 }, {
+      fields: "hello, world"
+      key: "dad"
+      where: {
+        color: "blue"
+      }
+      clause: {
+        "order by id limit ?", 1234
+      }
+    }
+
+    Things\find_all { 1,2,4 }, {
+      fields: "hello, world"
+      key: "dad"
+      where: {
+        color: "blue"
+      }
+      clause: "group by color"
+    }
+
     class Things2 extends Model
       @primary_key: {"hello", "world"}
 
@@ -97,6 +117,8 @@ describe "lapis.db.model", ->
         [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
         [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
       }
+      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' order by id limit 1234]]
+      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' group by color]]
       {
         [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
         [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
