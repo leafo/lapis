@@ -455,6 +455,7 @@ do
   self.include_in = function(self, other_records, foreign_key, opts)
     local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip
+    local many = opts and opts.many
     if not flip and type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
     end
@@ -512,15 +513,30 @@ do
         local res = db.select(query)
         if res then
           local records = { }
-          for _index_0 = 1, #res do
-            local t = res[_index_0]
-            records[t[find_by]] = self:load(t)
+          if many then
+            for _index_0 = 1, #res do
+              local t = res[_index_0]
+              local t_key = t[find_by]
+              if records[t_key] == nil then
+                records[t_key] = { }
+              end
+              insert(records[t_key], self:load(t))
+            end
+          else
+            for _index_0 = 1, #res do
+              local t = res[_index_0]
+              records[t[find_by]] = self:load(t)
+            end
           end
           local field_name
           if opts and opts.as then
             field_name = opts.as
           elseif flip then
-            field_name = self:singular_name()
+            if many then
+              field_name = self:table_name()
+            else
+              field_name = self:singular_name()
+            end
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end

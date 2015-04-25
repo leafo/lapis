@@ -215,7 +215,7 @@ class Model
   @include_in: (other_records, foreign_key, opts) =>
     fields = opts and opts.fields or "*"
     flip = opts and opts.flip
-    has_many = opts and opts.has_many
+    many = opts and opts.many
 
     if not flip and type(@primary_key) == "table"
       error "model must have singular primary key to include"
@@ -244,22 +244,25 @@ class Model
 
       if res = db.select query
         records = {}
-        for t in *res
-          t_key = t[find_by]
-          data = @load t
-          
-          if has_many
+        if many
+          for t in *res
+            t_key = t[find_by]
+
             if records[t_key] == nil
               records[t_key] = {}
 
-            table.insert(records[t_key], data)
-          else
-            records[t_key] = data
+            insert records[t_key], @load t
+        else
+          for t in *res
+            records[t[find_by]] = @load t
 
         field_name = if opts and opts.as
           opts.as
         elseif flip
-          @singular_name!
+          if many
+            @table_name!
+          else
+            @singular_name!
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
