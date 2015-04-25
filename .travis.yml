@@ -12,10 +12,12 @@ install:
   - sudo luarocks install luacrypto
   - sudo luarocks install luaposix
   - sudo luarocks install date
+  - sudo luarocks install luasql-mysql
   - sudo luarocks make
   - cat $(which busted) | sed 's/\/usr\/bin\/lua/.\/luajit/' > busted
   - chmod +x busted
   - ./install_luajit.sh
   - createdb -U postgres lapis_test
+  - echo 'create database lapis_test' | mysql -u root
 
-script: ./busted && ./busted spec_postgres/
+script: ./busted && ./busted spec_postgres/ && busted spec_mysql/
