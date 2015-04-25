@@ -248,6 +248,7 @@ are supported:
 * `key` -- Specify the column name to find by, same effect as passing in a string as the second argument
 * `fields` -- Comma separated list of column names to fetch instead of the default `*`
 * `where` -- A table of additional `where` clauses for the query
+* `clause` -- Additional SQL to append to query either as string, or array table of arguments to be passed to `db.interpolate_query`
 
 For example:
 
