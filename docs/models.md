@@ -82,7 +82,8 @@ class Followings extends Model
 
 ## Class Methods
 
-Model class methods are used for fetching existing rows or creating new ones.
+Model class methods are used for fetching existing rows, creating new ones, or
+fetching data about the underlying table.
 
 For the following examples assume we have the following models:
 
@@ -94,9 +95,7 @@ local Users = Model:extend("users")
 local Tags = Model:extend("tags", {
   primary_key = {"user_id", "tag"}
 })
-
 ```
-
 
 ```moon
 import Model from require "lapis.db.model"
@@ -310,16 +309,17 @@ raw values are replaced by the values returned by the database.
 For example, we might create a new row in a table with a `position` column set
 to the next highest number:
 
-```moon
-user = Users\create {
-  position: db.raw "(select coalesce(max(position) + 1, 0) from users)"
-}
-```
 
 ```lua
 local user = Users:create({
   position = db.raw("(select coalesce(max(position) + 1, 0) from users)"0
 })
+```
+
+```moon
+user = Users\create {
+  position: db.raw "(select coalesce(max(position) + 1, 0) from users)"
+}
 ```
 
 ```sql
@@ -337,8 +337,55 @@ following options:
 
 * `returning` -- A string containing a list of columns to fetch along with the create statement using the `RETURNING` statement
 
-## Instance Methods
 
+### `columns()`
+
+Returns all the columns on the table. Returns an array of tables that contain
+column names and their types.
+
+```lua
+local cols = Users:columns()
+```
+
+```moon
+cols = Users\columns!
+```
+
+```sql
+SELECT column_name, data_type
+  FROM information_schema.columns WHERE table_name = 'users'
+```
+
+The output might look like this:
+
+
+```lua
+{
+  {
+    data_type = "integer",
+    column_name = "id"
+  },
+  {
+    data_type = "text",
+    column_name = "name"
+  }
+}
+```
+
+```moon
+{
+  {
+    data_type: "integer",
+    column_name: "id"
+  }
+  {
+    data_type: "text",
+    column_name: "name"
+  }
+}
+```
+
+## Instance Methods
 ### `update(...)`
 
 Instances of models have the `update` method for updating the row. The values
@@ -399,11 +446,10 @@ those values will be replaced with values returning by the database using the
 `RETURNING` clause similar to the [`create` class
 method](#class-methods-createopts).
 
-
 ### `delete()`
 
-To delete the row call `delete`.
-
+Attempts to delete the row backed by the model instance based on the primary
+key.
 
 ```lua
 local user = Users:find(1)
@@ -444,6 +490,49 @@ Due to the asynchronous nature of OpenResty, it's possible that if two requests
 enter this block of code around the same time `delete` may end up getting called
 twice. This isn't a problem by itself, but the `decrement_total_user_count`
 function would get called twice and may invalidate whatever data it has.
+
+### `refresh(...)`
+
+Updates the values of the fields on the instance from the database.
+
+If your model instance becomes out of date from an external change, use the
+`refresh` method to re-fetch and re-populate its data.
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh!
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh()
+```
+
+```sql
+SELECT * from "posts" where id = 1
+```
+
+By default all fields are refreshed. If you only want to refresh specific fields
+then pass them in as arguments:
+
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh "color", "height"
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh("color", "height")
+```
+
+```sql
+SELECT "color", "height" from "posts" where id = 1
+```
 
 ## Timestamps
 
@@ -1152,70 +1241,6 @@ class Users extends Model
   }
 ```
 
-## Inspecting Columns
-
-You can get the column names and column types of a table using the `columns`
-method on the model class:
-
-```lua
-local Posts = Model:extend("posts")
-for _, col in ipairs(Posts:columns()) do
-  print(col.column_name, col.data_type)
-end
-```
-
-```moon
-class Posts extends Model
-
-for {column_name, data_type} in Posts\columns!
-  print column_name, data_type
-```
-
-```sql
-SELECT column_name, data_type
-  FROM information_schema.columns WHERE table_name = 'posts'
-```
-
-## Refreshing a Model Instance
-
-If your model instance becomes out of date from an external change, it can tell
-it to re-fetch and re-populate its data using the `refresh` method.
-
-```moon
-class Posts extends Model
-post = Posts\find 1
-post\refresh!
-```
-
-```lua
-local Posts = Model:extend("posts")
-local post = Posts:find(1)
-post:refresh()
-```
-
-```sql
-SELECT * from "posts" where id = 1
-```
-
-By default all fields are refreshed. If you only want to refresh specific fields
-then pass them in as arguments:
-
-
-```moon
-class Posts extends Model
-post = Posts\find 1
-post\refresh "color", "height"
-```
-
-```lua
-local Posts = Model:extend("posts")
-local post = Posts:find(1)
-post:refresh("color", "height")
-```
-
-```sql
-SELECT "color", "height" from "posts" where id = 1
-```
 
 ## Enum
 
