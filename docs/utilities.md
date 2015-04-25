@@ -349,7 +349,7 @@ app:get("/", function(self)
     url = "http://leafo.net",
     method = "POST",
     headers = {
-      "content-type" = "application/x-www-form-urlencoded"
+      ["content-type"] = "application/x-www-form-urlencoded"
     },
     body = {
       name = "leafo"
