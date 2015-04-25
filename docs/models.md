@@ -965,11 +965,20 @@ SELECT * from "posts" where "id" = 1;
 SELECT * from "users" where "id" = 123;
 ```
 
-The following relations are available
+The following relations are available:
 
 ### `belongs_to`
 
-A one-to-one relation where the foreign key is located on the current model.
+A relation that fetches a single related model. The foreign key column used to
+fetch the other model is located on the same table as the model.
+
+The name of the relation is used to derive the name of the column used as the
+foreign key in addition to the name of the method added to the model to fetch
+the associated row.
+
+A `belongs_to` relation named `user` would look for a column named `user_id` on
+the current model. When the relation is fetched, it will be cached in a field
+named `user` in the model.
 
 
 ```lua
@@ -991,7 +1000,7 @@ class Posts extends Model
   }
 ```
 
-Creates `get_` method for each relation.
+A `get_` method is added to the model to fetch the associated row:
 
 ```lua
 local user = post:get_user()
@@ -1007,7 +1016,9 @@ SELECT * from "users" where "user_id" = 123;
 
 ### `has_one`
 
-A one-to-one relation where the foreign key is located on the associated model.
+A relation that fetches a single related model. Similar to `belongs_to`, but
+the foreign key used to fetch the other model is located on the other table.
+
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -1027,7 +1038,7 @@ class Users extends Model
   }
 ```
 
-Creates `get_` method for each relation.
+A `get_` method is added to the model to fetch the associated row:
 
 ```lua
 local profile = user:get_user_profile()
