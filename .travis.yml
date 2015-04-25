@@ -5,7 +5,6 @@ addons:
 
 install:
   - sudo apt-get install luarocks
-  - sudo apt-get install libmysqlclient-dev
   - mkdir -p ~/.luarocks
   - echo 'rocks_servers = { "http://luarocks.org" }' > ~/.luarocks/config.lua
   - sudo luarocks install https://rocks.moonscript.org/manifests/olivine-labs/busted-2.0.rc7-0.rockspec
@@ -13,12 +12,10 @@ install:
   - sudo luarocks install luacrypto
   - sudo luarocks install luaposix
   - sudo luarocks install date
-  - sudo luarocks install luasql-mysql
   - sudo luarocks make
   - cat $(which busted) | sed 's/\/usr\/bin\/lua/.\/luajit/' > busted
   - chmod +x busted
   - ./install_luajit.sh
   - createdb -U postgres lapis_test
-  - echo 'create database lapis_test' | mysql -u root
 
-script: ./busted && ./busted spec_postgres/ && busted spec_mysql/
+script: ./busted && ./busted spec_postgres/
