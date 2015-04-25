@@ -34,16 +34,6 @@ class name of <code>HelloWorlds</code> would result in the table name
 </p>
 
 
-<p class="for_moon">
-If you want to use a different table name you can overwrite the
-<code>@table_name</code> class method:
-</p>
-
-```moon
-class Users extends Model
-  @table_name: => "active_users"
-```
-
 Model instances will have a field for each column that has been fetched from
 the database. You do not need to manually specify the names of the columns.  If
 you have any relationships, though, you can specify them using the
@@ -275,12 +265,31 @@ users = UserProfile\find_all {1,2,3,4}, {
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
+### `count(clause, ...)`
+
+Counts the number of records in the table that match the clause.
+
+```lua
+local total = Users:count()
+local count = Users:count("username like '%' || ? || '%'", "leafo")
+```
+
+```moon
+total = Users\count!
+count = Users\count "username like '%' || ? || '%'", "leafo"
+```
+
+```sql
+SELECT COUNT(*) "users"
+SELECT COUNT(*) "users" where username like '%' || 'leafo' || '%'
+```
+
 ### `create(values, create_opts=nil)`
 
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
 create query fetches the values of the primary keys and sets them on the
-instance using the PostgreSQL `RETURN` statement. This is useful for getting
+instance using the PostgreSQL `RETURNING` statement. This is useful for getting
 the value of an auto-incrementing key from the insert statement.
 
 ```lua
@@ -385,7 +394,60 @@ The output might look like this:
 }
 ```
 
+### `table_name()`
+
+Returns the name of the table backed by the model.
+
+```lua
+Model:extend("users"):table_name() --> "users"
+Model:extend("user_posts"):table_name() --> "user_posts"
+```
+
+```moon
+(class Users extends Model)\table_name! --> "users"
+(class UserPosts extends Model)\table_name! --> "user_posts"
+```
+
+<p class="for_moon">
+This class method can be overidden to change what table a model uses:
+</p>
+
+```moon
+class Users extends Model
+  @table_name: => "active_users"
+```
+
+### `singular_name()`
+
+Returns the singular name of the table.
+
+```lua
+Model:extend("users"):singular_name() --> "user"
+Model:extend("user_posts"):singular_name() --> "user_post"
+```
+
+```moon
+(class Users extends Model)\singular_name! --> "user"
+(class UserPosts extends Model)\singular_name! --> "user_post"
+```
+
+The singular name is used internally by lapis when calculating what the name of
+the field is when loading rows with `include_in`. It's also used when
+determining the foreign key column name with a `has_one` or `has_many`
+relation.
+
+### `include_in(model_instances, column_name, opts={})`
+
+Queries instances of the current model an loads them into an array of other
+models. This is used to preload relations in a single query. Read more in
+[Preloading Association](#preloading-associations)
+
+### `paginated(query, ...)`
+
+Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagination).
+
 ## Instance Methods
+
 ### `update(...)`
 
 Instances of models have the `update` method for updating the row. The values
