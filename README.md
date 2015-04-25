@@ -24,9 +24,24 @@ Requires [Busted][2] and [MoonScript][1].
 busted
 ```
 
+If you want to run the tests that query PostgreSQL, you'll need to have
+PostgreSQL installed and running. Create a database called `lapis_test`, ensure
+the `postgres` user can be logged in with no password.
+
+```bash
+busted spec_postgres
+```
+
+Likewise, for MySQL tests, create a database called `lapis_test`. Ensure the
+`root` user can be logged in with no password.
+
+```bash
+busted spec_mysql
+```
+
 ## License (MIT)
 
-Copyright (C) 2014 by Leaf Corcoran
+Copyright (C) 2015 by Leaf Corcoran
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
