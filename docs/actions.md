@@ -13,7 +13,7 @@ object*](#request-object).
 
 The return value of the action is used to render the output. A string return
 value will be rendered to the browser directly. A table return value
-will be used as the [*request options*](#request-options).
+will be used as the [*render options*](#render-options).
 
 If there is no route that matches the request then the default route handler is
 executed, read more in [*application callbacks*](#application-callbacks).
@@ -422,7 +422,7 @@ self:build_url("world", { host = "leafo.net", port = 2000 }) --> http://leafo.ne
 @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
 ```
 
-## Request Options
+## Render Options
 
 Whenever a table is written, the key/value pairs (for keys that are strings)
 are copied into <span class="for_moon">`@options`</span><span
