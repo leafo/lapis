@@ -74,6 +74,20 @@ describe "model", ->
       assert.same 2, second.id
       assert.same "second", second.name
 
+      assert.same 2, Users\count!
+
+    it "should get columns of model", ->
+      assert.same {
+        {
+          data_type: "integer"
+          column_name: "id"
+        }
+        {
+          data_type: "text"
+          column_name: "name"
+        }
+      }, Users\columns!
+
     describe "with some rows", ->
       local first, second
 
