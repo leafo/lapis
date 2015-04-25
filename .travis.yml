@@ -5,6 +5,7 @@ addons:
 
 install:
   - sudo apt-get install luarocks
+  - sudo apt-get install libmysqlclient-dev
   - mkdir -p ~/.luarocks
   - echo 'rocks_servers = { "http://luarocks.org" }' > ~/.luarocks/config.lua
   - sudo luarocks install https://rocks.moonscript.org/manifests/olivine-labs/busted-2.0.rc7-0.rockspec
