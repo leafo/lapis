@@ -185,7 +185,7 @@ Lapis does by default. The default value of the logging configuration is:
 
 ```lua
 {
-  queries = true
+  queries = true,
   requests = true
 }
 ```

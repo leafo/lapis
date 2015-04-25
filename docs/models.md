@@ -143,7 +143,7 @@ example, you might perform a case insensitive email search like so:
 
 
 ```lua
-local user = Users:find({ [db.raw("lower(email)")] = some_email\lower! })
+local user = Users:find({ [db.raw("lower(email)")] = some_email:lower() })
 ```
 
 ```moon
@@ -321,7 +321,7 @@ to the next highest number:
 
 ```lua
 local user = Users:create({
-  position = db.raw("(select coalesce(max(position) + 1, 0) from users)"0
+  position = db.raw("(select coalesce(max(position) + 1, 0) from users)")
 })
 ```
 
@@ -620,7 +620,7 @@ local schema = require "lapis.db.schema"
 
 scehma.create_table("some_table", {
   -- ...
-  {"created_at", schema.types.time}
+  {"created_at", schema.types.time},
   {"updated_at", schema.types.time}
   -- ...
 })
@@ -763,7 +763,7 @@ manually specify the name we can do something like this:
 
 
 ```lua
-Users:include_in(posts, "user_id", { as: "author" })
+Users:include_in(posts, "user_id", { as = "author" })
 ```
 
 ```moon
@@ -875,7 +875,7 @@ local Model = require("lapis.db.model").Model
 local Users = Model:extend("users", {
   constraints = {
     name = function(self, value)
-      if value:lower() == "admin"
+      if value:lower() == "admin" then
         return "User can not be named admin"
       end
     end
@@ -1291,7 +1291,7 @@ local posts = user:get_posts({per_page = 20}):get_page(3)
 ```
 
 ```moon
-local posts = user\get_posts(per_page: 20)\get_page 3
+posts = user\get_posts(per_page: 20)\get_page 3
 ```
 
 ```sql
