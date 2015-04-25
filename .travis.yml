@@ -16,6 +16,6 @@ install:
   - cat $(which busted) | sed 's/\/usr\/bin\/lua/.\/luajit/' > busted
   - chmod +x busted
   - ./install_luajit.sh
-  - createdb -U postgres community_test
+  - createdb -U postgres lapis_test
 
 script: ./busted && ./busted spec_postgres/
