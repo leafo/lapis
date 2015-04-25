@@ -805,7 +805,7 @@ user data:
 
 ```lua
 local users = Users:select()
-UserData:include_in(users, "user_id", { flip: true })
+UserData:include_in(users, "user_id", { flip = true })
 
 print(users[1].user_data.twitter_account)
 ```
@@ -830,12 +830,36 @@ instances is created from the name of the included table. In the example above
 the `user_data` property contains the included model instances. (Had it been
 plural the table name would have been made singular)
 
+One last common scenario is preloading a one-to-many relationship. You can use
+the `many` option to instruct `include_in` store many associated models for
+each input model. For example, we might load all the posts for each user:
+
+
+```lua
+local users = Users:select()
+Posts:include_in(users, "user_id", { flip = true, many = true })
+```
+
+```moon
+users = Users\select!
+Posts\include_in users, "user_id", flip: true, many: true
+```
+
+```sql
+SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
+```
+
+Each `users` object will now have a `posts` field that is an array containing
+all the associated posts that were found.
+
+
 `include_in` supports the following options, including `as` and `flip` from above:
 
 * `as` -- set the name of the property to store the associated model as
 * `flip` -- set to `true` if the named column is located on the included model
 * `where` -- a table of additional conditionals to limit the query by
 * `fields` -- set the fields returned by each included model
+* `many` -- set to true fetch many records for each input model instance instead of a single one
 
 ## Constraints
 
