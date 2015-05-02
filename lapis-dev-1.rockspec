@@ -53,6 +53,7 @@ build = {
 		["lapis.db.base"] = "lapis/db/base.lua",
 		["lapis.db.migrations"] = "lapis/db/migrations.lua",
 		["lapis.db.model"] = "lapis/db/model.lua",
+		["lapis.db.model.relations"] = "lapis/db/model/relations.lua",
 		["lapis.db.mysql"] = "lapis/db/mysql.lua",
 		["lapis.db.mysql.schema"] = "lapis/db/mysql/schema.lua",
 		["lapis.db.pagination"] = "lapis/db/pagination.lua",

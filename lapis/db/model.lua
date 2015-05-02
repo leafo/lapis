@@ -74,107 +74,30 @@ enum = function(tbl)
   return setmetatable(tbl, Enum.__base)
 end
 add_relations = function(self, relations)
+  local relation_builders = require("lapis.db.model.relations")
   for _index_0 = 1, #relations do
     local relation = relations[_index_0]
     local name = assert(relation[1], "missing relation name")
-    local fn_name = relation.as or "get_" .. tostring(name)
-    local assert_model
-    assert_model = function(source)
-      local models = require("models")
-      do
-        local m = models[source]
-        if not (m) then
-          error("failed to find model `" .. tostring(source) .. "` for relationship")
-        end
-        return m
-      end
-    end
-    do
-      local source = relation.fetch
-      if source then
-        assert(type(source) == "function", "Expecting function for `fetch` relation")
-        self.__base[fn_name] = function(self)
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          do
-            local obj = source(self)
-            self[name] = obj
-            return obj
+    for k in pairs(relation) do
+      local _continue_0 = false
+      repeat
+        do
+          local builder = relation_builders[k]
+          if builder then
+            builder(self, name, relation)
+            _continue_0 = true
+            break
           end
         end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
-    do
-      local source = relation.has_one
-      if source then
-        assert(type(source) == "string", "Expecting model name for `has_one` relation")
-        self.__base[fn_name] = function(self)
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          local model = assert_model(source)
-          local clause = {
-            [relation.key or tostring(self.__class:singular_name()) .. "_id"] = self[self.__class:primary_keys()]
-          }
-          do
-            local obj = model:find(clause)
-            self[name] = obj
-            return obj
-          end
-        end
-      end
-    end
-    do
-      local source = relation.belongs_to
-      if source then
-        assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
-        local column_name = tostring(name) .. "_id"
-        self.__base[fn_name] = function(self)
-          if not (self[column_name]) then
-            return nil
-          end
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          local model = assert_model(source)
-          do
-            local obj = model:find(self[column_name])
-            self[name] = obj
-            return obj
-          end
-        end
-      end
-    end
-    do
-      local source = relation.has_many
-      if source then
-        if relation.pager ~= false then
-          local foreign_key = relation.key
-          self.__base[fn_name] = function(self, opts)
-            local model = assert_model(source)
-            local clause = {
-              [foreign_key or tostring(self.__class:singular_name()) .. "_id"] = self[self.__class:primary_keys()]
-            }
-            do
-              local where = relation.where
-              if where then
-                for k, v in pairs(where) do
-                  clause[k] = v
-                end
-              end
-            end
-            clause = db.encode_clause(clause)
-            return model:paginated("where " .. tostring(clause), opts)
-          end
-        else
-          error("not yet")
-        end
-      end
-    end
+    local flatten_params
+    flatten_params = require("lapis.logging").flatten_params
+    error("don't know how to create relation `" .. tostring(flatten_params(relation)) .. "`")
   end
 end
 do
