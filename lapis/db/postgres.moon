@@ -263,10 +263,17 @@ parse_clause = do
     grammar = white * Ct joins^-1 * clause^0
 
   (clause) ->
-    make_grammar! unless grammar
-    if out = grammar\match clause
-      { unpack t for t in *out }
+    return {} if clause == ""
 
+    make_grammar! unless grammar
+
+    parsed = if tuples = grammar\match clause
+      { unpack t for t in *tuples }
+
+    if not parsed or (not next(parsed) and not clause\match "^%s*$")
+      return nil, "failed to parse clause: `#{clause}`"
+
+    parsed
 
 encode_case = (exp, t, on_else) ->
   buff = {

@@ -319,21 +319,31 @@ do
     grammar = white * Ct(joins ^ -1 * clause ^ 0)
   end
   parse_clause = function(clause)
+    if clause == "" then
+      return { }
+    end
     if not (grammar) then
       make_grammar()
     end
+    local parsed
     do
-      local out = grammar:match(clause)
-      if out then
-        local _tbl_0 = { }
-        for _index_0 = 1, #out do
-          local t = out[_index_0]
-          local _key_0, _val_0 = unpack(t)
-          _tbl_0[_key_0] = _val_0
+      local tuples = grammar:match(clause)
+      if tuples then
+        do
+          local _tbl_0 = { }
+          for _index_0 = 1, #tuples do
+            local t = tuples[_index_0]
+            local _key_0, _val_0 = unpack(t)
+            _tbl_0[_key_0] = _val_0
+          end
+          parsed = _tbl_0
         end
-        return _tbl_0
       end
     end
+    if not parsed or (not next(parsed) and not clause:match("^%s*$")) then
+      return nil, "failed to parse clause: `" .. tostring(clause) .. "`"
+    end
+    return parsed
   end
 end
 local encode_case

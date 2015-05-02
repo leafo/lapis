@@ -124,8 +124,7 @@ class OrderedPaginator extends Paginator
     @get_ordered "DESC", ...
 
   get_ordered: (order, ...) =>
-    parsed = db.parse_clause @_clause
-
+    parsed = assert db.parse_clause @_clause
     has_multi_fields = type(@field) == "table" and not db.is_raw @field
 
     escaped_fields = if has_multi_fields

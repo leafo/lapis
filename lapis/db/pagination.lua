@@ -213,7 +213,7 @@ do
       return self:get_ordered("DESC", ...)
     end,
     get_ordered = function(self, order, ...)
-      local parsed = db.parse_clause(self._clause)
+      local parsed = assert(db.parse_clause(self._clause))
       local has_multi_fields = type(self.field) == "table" and not db.is_raw(self.field)
       local escaped_fields
       if has_multi_fields then
