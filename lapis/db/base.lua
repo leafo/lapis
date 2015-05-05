@@ -10,6 +10,17 @@ local is_raw
 is_raw = function(val)
   return type(val) == "table" and val[1] == "raw" and val[2]
 end
+local set
+set = function(items)
+  return {
+    "set",
+    items
+  }
+end
+local is_set
+is_set = function(val)
+  return type(val) == "table" and val[1] == "set" and val[2]
+end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
 local concat
@@ -27,6 +38,21 @@ build_helpers = function(escape_literal, escape_identifier)
     for i = 1, select("#", ...) do
       t[#t + 1] = select(i, ...)
     end
+  end
+  local flatten_set
+  flatten_set = function(set)
+    local escaped_items
+    do
+      local _accum_0 = { }
+      local _len_0 = 1
+      for item in set[2] do
+        _accum_0[_len_0] = escape_literal(item)
+        _len_0 = _len_0 + 1
+      end
+      escaped_items = _accum_0
+    end
+    assert(escaped_items[1], "can't flatten empty set")
+    return "(" .. tostring(table.concat(escaped_items, ", ")) .. ")"
   end
   local interpolate_query
   interpolate_query = function(query, ...)
@@ -102,6 +128,8 @@ build_helpers = function(escape_literal, escape_identifier)
     for k, v in pairs(t) do
       if v == NULL then
         append_all(buffer, escape_identifier(k), " IS NULL", join)
+      elseif is_set(v) then
+        append_all(buffer, escape_identifier(k), " in ", flatten_set(v), join)
       else
         append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
       end
@@ -151,6 +179,8 @@ return {
   FALSE = FALSE,
   raw = raw,
   is_raw = is_raw,
+  set = set,
+  is_set = is_set,
   format_date = format_date,
   build_helpers = build_helpers,
   gen_index_name = gen_index_name

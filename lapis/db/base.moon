@@ -1,8 +1,13 @@
 
 NULL = {}
+
 raw = (val) -> {"raw", tostring(val)}
 is_raw = (val) ->
   type(val) == "table" and val[1] == "raw" and val[2]
+
+set = (items) -> {"set", items}
+is_set = (val) ->
+  type(val) == "table" and val[1] == "set" and val[2]
 
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
@@ -17,6 +22,11 @@ build_helpers = (escape_literal, escape_identifier) ->
   append_all = (t, ...) ->
     for i=1, select "#", ...
       t[#t + 1] = select i, ...
+
+  flatten_set = (set) ->
+    escaped_items = [escape_literal item for item in set[2]]
+    assert escaped_items[1], "can't flatten empty set"
+    "(#{table.concat escaped_items, ", "})"
 
   -- replace ? with values
   interpolate_query = (query, ...) ->
@@ -60,6 +70,8 @@ build_helpers = (escape_literal, escape_identifier) ->
     for k,v in pairs t
       if v == NULL
         append_all buffer, escape_identifier(k), " IS NULL", join
+      elseif is_set v
+        append_all buffer, escape_identifier(k), " in ", flatten_set(v), join
       else
         append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
 
@@ -81,5 +93,5 @@ gen_index_name = (...) ->
   concat(parts, "_") .. "_idx"
 
 {
-  :NULL, :TRUE, :FALSE, :raw, :is_raw, :format_date, :build_helpers, :gen_index_name
+  :NULL, :TRUE, :FALSE, :raw, :is_raw, :set, :is_set, :format_date, :build_helpers, :gen_index_name
 }

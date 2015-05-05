@@ -8,10 +8,10 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_set, set
 do
   local _obj_0 = require("lapis.db.base")
-  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_set, set = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_set, _obj_0.set
 end
 local backends = {
   default = function(_proxy)
@@ -365,6 +365,8 @@ return {
   query = query,
   raw = raw,
   is_raw = is_raw,
+  set = set,
+  is_set = is_set,
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,

@@ -15,6 +15,8 @@ import
   format_date
   is_raw
   raw
+  is_set
+  set
   from require "lapis.db.base"
 
 backends = {
@@ -290,7 +292,7 @@ encode_case = (exp, t, on_else) ->
   concat buff
 
 {
-  :query, :raw, :is_raw, :NULL, :TRUE, :FALSE, :escape_literal,
+  :query, :raw, :is_raw, :set, :is_set, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
   :interpolate_query, :parse_clause, :format_date, :encode_case, :init_logger
 
