@@ -34,16 +34,6 @@ class name of <code>HelloWorlds</code> would result in the table name
 </p>
 
 
-<p class="for_moon">
-If you want to use a different table name you can overwrite the
-<code>@table_name</code> class method:
-</p>
-
-```moon
-class Users extends Model
-  @table_name: => "active_users"
-```
-
 Model instances will have a field for each column that has been fetched from
 the database. You do not need to manually specify the names of the columns.  If
 you have any relationships, though, you can specify them using the
@@ -82,7 +72,8 @@ class Followings extends Model
 
 ## Class Methods
 
-Model class methods are used for fetching existing rows or creating new ones.
+Model class methods are used for fetching existing rows, creating new ones, or
+fetching data about the underlying table.
 
 For the following examples assume we have the following models:
 
@@ -94,9 +85,7 @@ local Users = Model:extend("users")
 local Tags = Model:extend("tags", {
   primary_key = {"user_id", "tag"}
 })
-
 ```
-
 
 ```moon
 import Model from require "lapis.db.model"
@@ -154,7 +143,7 @@ example, you might perform a case insensitive email search like so:
 
 
 ```lua
-local user = Users:find({ [db.raw("lower(email)")] = some_email\lower! })
+local user = Users:find({ [db.raw("lower(email)")] = some_email:lower() })
 ```
 
 ```moon
@@ -248,6 +237,7 @@ are supported:
 * `key` -- Specify the column name to find by, same effect as passing in a string as the second argument
 * `fields` -- Comma separated list of column names to fetch instead of the default `*`
 * `where` -- A table of additional `where` clauses for the query
+* `clause` -- Additional SQL to append to query either as string, or array table of arguments to be passed to `db.interpolate_query`
 
 For example:
 
@@ -275,12 +265,31 @@ users = UserProfile\find_all {1,2,3,4}, {
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
+### `count(clause, ...)`
+
+Counts the number of records in the table that match the clause.
+
+```lua
+local total = Users:count()
+local count = Users:count("username like '%' || ? || '%'", "leafo")
+```
+
+```moon
+total = Users\count!
+count = Users\count "username like '%' || ? || '%'", "leafo"
+```
+
+```sql
+SELECT COUNT(*) "users"
+SELECT COUNT(*) "users" where username like '%' || 'leafo' || '%'
+```
+
 ### `create(values, create_opts=nil)`
 
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
 create query fetches the values of the primary keys and sets them on the
-instance using the PostgreSQL `RETURN` statement. This is useful for getting
+instance using the PostgreSQL `RETURNING` statement. This is useful for getting
 the value of an auto-incrementing key from the insert statement.
 
 ```lua
@@ -309,16 +318,17 @@ raw values are replaced by the values returned by the database.
 For example, we might create a new row in a table with a `position` column set
 to the next highest number:
 
+
+```lua
+local user = Users:create({
+  position = db.raw("(select coalesce(max(position) + 1, 0) from users)")
+})
+```
+
 ```moon
 user = Users\create {
   position: db.raw "(select coalesce(max(position) + 1, 0) from users)"
 }
-```
-
-```lua
-local user = Users:create({
-  position = db.raw("(select coalesce(max(position) + 1, 0) from users)"0
-})
 ```
 
 ```sql
@@ -335,6 +345,106 @@ from the `create` function.
 following options:
 
 * `returning` -- A string containing a list of columns to fetch along with the create statement using the `RETURNING` statement
+
+
+### `columns()`
+
+Returns all the columns on the table. Returns an array of tables that contain
+column names and their types.
+
+```lua
+local cols = Users:columns()
+```
+
+```moon
+cols = Users\columns!
+```
+
+```sql
+SELECT column_name, data_type
+  FROM information_schema.columns WHERE table_name = 'users'
+```
+
+The output might look like this:
+
+
+```lua
+{
+  {
+    data_type = "integer",
+    column_name = "id"
+  },
+  {
+    data_type = "text",
+    column_name = "name"
+  }
+}
+```
+
+```moon
+{
+  {
+    data_type: "integer",
+    column_name: "id"
+  }
+  {
+    data_type: "text",
+    column_name: "name"
+  }
+}
+```
+
+### `table_name()`
+
+Returns the name of the table backed by the model.
+
+```lua
+Model:extend("users"):table_name() --> "users"
+Model:extend("user_posts"):table_name() --> "user_posts"
+```
+
+```moon
+(class Users extends Model)\table_name! --> "users"
+(class UserPosts extends Model)\table_name! --> "user_posts"
+```
+
+<p class="for_moon">
+This class method can be overidden to change what table a model uses:
+</p>
+
+```moon
+class Users extends Model
+  @table_name: => "active_users"
+```
+
+### `singular_name()`
+
+Returns the singular name of the table.
+
+```lua
+Model:extend("users"):singular_name() --> "user"
+Model:extend("user_posts"):singular_name() --> "user_post"
+```
+
+```moon
+(class Users extends Model)\singular_name! --> "user"
+(class UserPosts extends Model)\singular_name! --> "user_post"
+```
+
+The singular name is used internally by lapis when calculating what the name of
+the field is when loading rows with `include_in`. It's also used when
+determining the foreign key column name with a `has_one` or `has_many`
+relation.
+
+### `include_in(model_instances, column_name, opts={})`
+
+Queries instances of the current model an loads them into an array of other
+models. This is used to preload relations in a single query. Read more in
+[Preloading Association](#preloading-associations)
+
+### `paginated(query, ...)`
+
+Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagination).
 
 ## Instance Methods
 
@@ -398,11 +508,10 @@ those values will be replaced with values returning by the database using the
 `RETURNING` clause similar to the [`create` class
 method](#class-methods-createopts).
 
-
 ### `delete()`
 
-To delete the row call `delete`.
-
+Attempts to delete the row backed by the model instance based on the primary
+key.
 
 ```lua
 local user = Users:find(1)
@@ -444,6 +553,49 @@ enter this block of code around the same time `delete` may end up getting called
 twice. This isn't a problem by itself, but the `decrement_total_user_count`
 function would get called twice and may invalidate whatever data it has.
 
+### `refresh(...)`
+
+Updates the values of the fields on the instance from the database.
+
+If your model instance becomes out of date from an external change, use the
+`refresh` method to re-fetch and re-populate its data.
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh!
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh()
+```
+
+```sql
+SELECT * from "posts" where id = 1
+```
+
+By default all fields are refreshed. If you only want to refresh specific fields
+then pass them in as arguments:
+
+
+```moon
+class Posts extends Model
+post = Posts\find 1
+post\refresh "color", "height"
+```
+
+```lua
+local Posts = Model:extend("posts")
+local post = Posts:find(1)
+post:refresh("color", "height")
+```
+
+```sql
+SELECT "color", "height" from "posts" where id = 1
+```
+
 ## Timestamps
 
 Because it's common to store creation and update times, models have
@@ -468,7 +620,7 @@ local schema = require "lapis.db.schema"
 
 scehma.create_table("some_table", {
   -- ...
-  {"created_at", schema.types.time}
+  {"created_at", schema.types.time},
   {"updated_at", schema.types.time}
   -- ...
 })
@@ -611,7 +763,7 @@ manually specify the name we can do something like this:
 
 
 ```lua
-Users:include_in(posts, "user_id", { as: "author" })
+Users:include_in(posts, "user_id", { as = "author" })
 ```
 
 ```moon
@@ -653,7 +805,7 @@ user data:
 
 ```lua
 local users = Users:select()
-UserData:include_in(users, "user_id", { flip: true })
+UserData:include_in(users, "user_id", { flip = true })
 
 print(users[1].user_data.twitter_account)
 ```
@@ -678,12 +830,36 @@ instances is created from the name of the included table. In the example above
 the `user_data` property contains the included model instances. (Had it been
 plural the table name would have been made singular)
 
+One last common scenario is preloading a one-to-many relationship. You can use
+the `many` option to instruct `include_in` store many associated models for
+each input model. For example, we might load all the posts for each user:
+
+
+```lua
+local users = Users:select()
+Posts:include_in(users, "user_id", { flip = true, many = true })
+```
+
+```moon
+users = Users\select!
+Posts\include_in users, "user_id", flip: true, many: true
+```
+
+```sql
+SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
+```
+
+Each `users` object will now have a `posts` field that is an array containing
+all the associated posts that were found.
+
+
 `include_in` supports the following options, including `as` and `flip` from above:
 
 * `as` -- set the name of the property to store the associated model as
 * `flip` -- set to `true` if the named column is located on the included model
 * `where` -- a table of additional conditionals to limit the query by
 * `fields` -- set the fields returned by each included model
+* `many` -- set to true fetch many records for each input model instance instead of a single one
 
 ## Constraints
 
@@ -699,7 +875,7 @@ local Model = require("lapis.db.model").Model
 local Users = Model:extend("users", {
   constraints = {
     name = function(self, value)
-      if value:lower() == "admin"
+      if value:lower() == "admin" then
         return "User can not be named admin"
       end
     end
@@ -965,11 +1141,20 @@ SELECT * from "posts" where "id" = 1;
 SELECT * from "users" where "id" = 123;
 ```
 
-The following relations are available
+The following relations are available:
 
 ### `belongs_to`
 
-A one-to-one relation where the foreign key is located on the current model.
+A relation that fetches a single related model. The foreign key column used to
+fetch the other model is located on the same table as the model.
+
+The name of the relation is used to derive the name of the column used as the
+foreign key in addition to the name of the method added to the model to fetch
+the associated row.
+
+A `belongs_to` relation named `user` would look for a column named `user_id` on
+the current model. When the relation is fetched, it will be cached in a field
+named `user` in the model.
 
 
 ```lua
@@ -991,7 +1176,7 @@ class Posts extends Model
   }
 ```
 
-Creates `get_` method for each relation.
+A `get_` method is added to the model to fetch the associated row:
 
 ```lua
 local user = post:get_user()
@@ -1007,7 +1192,9 @@ SELECT * from "users" where "user_id" = 123;
 
 ### `has_one`
 
-A one-to-one relation where the foreign key is located on the associated model.
+A relation that fetches a single related model. Similar to `belongs_to`, but
+the foreign key used to fetch the other model is located on the other table.
+
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -1027,7 +1214,7 @@ class Users extends Model
   }
 ```
 
-Creates `get_` method for each relation.
+A `get_` method is added to the model to fetch the associated row:
 
 ```lua
 local profile = user:get_user_profile()
@@ -1104,7 +1291,7 @@ local posts = user:get_posts({per_page = 20}):get_page(3)
 ```
 
 ```moon
-local posts = user\get_posts(per_page: 20)\get_page 3
+posts = user\get_posts(per_page: 20)\get_page 3
 ```
 
 ```sql
@@ -1140,70 +1327,6 @@ class Users extends Model
   }
 ```
 
-## Inspecting Columns
-
-You can get the column names and column types of a table using the `columns`
-method on the model class:
-
-```lua
-local Posts = Model:extend("posts")
-for _, col in ipairs(Posts:columns()) do
-  print(col.column_name, col.data_type)
-end
-```
-
-```moon
-class Posts extends Model
-
-for {column_name, data_type} in Posts\columns!
-  print column_name, data_type
-```
-
-```sql
-SELECT column_name, data_type
-  FROM information_schema.columns WHERE table_name = 'posts'
-```
-
-## Refreshing a Model Instance
-
-If your model instance becomes out of date from an external change, it can tell
-it to re-fetch and re-populate its data using the `refresh` method.
-
-```moon
-class Posts extends Model
-post = Posts\find 1
-post\refresh!
-```
-
-```lua
-local Posts = Model:extend("posts")
-local post = Posts:find(1)
-post:refresh()
-```
-
-```sql
-SELECT * from "posts" where id = 1
-```
-
-By default all fields are refreshed. If you only want to refresh specific fields
-then pass them in as arguments:
-
-
-```moon
-class Posts extends Model
-post = Posts\find 1
-post\refresh "color", "height"
-```
-
-```lua
-local Posts = Model:extend("posts")
-local post = Posts:find(1)
-post:refresh("color", "height")
-```
-
-```sql
-SELECT "color", "height" from "posts" where id = 1
-```
 
 ## Enum
 

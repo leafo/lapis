@@ -1,9 +1,12 @@
 language: c
 
+addons:
+  postgresql: "9.3"
+
 install:
   - sudo apt-get install luarocks
   - mkdir -p ~/.luarocks
-  - echo 'rocks_servers = { "http://rocks.moonscript.org" }' > ~/.luarocks/config.lua
+  - echo 'rocks_servers = { "http://luarocks.org" }' > ~/.luarocks/config.lua
   - sudo luarocks install https://rocks.moonscript.org/manifests/olivine-labs/busted-2.0.rc7-0.rockspec
   - sudo luarocks install moonscript
   - sudo luarocks install luacrypto
@@ -13,5 +16,6 @@ install:
   - cat $(which busted) | sed 's/\/usr\/bin\/lua/.\/luajit/' > busted
   - chmod +x busted
   - ./install_luajit.sh
+  - createdb -U postgres lapis_test
 
-script: ./busted
+script: ./busted && ./busted spec_postgres/

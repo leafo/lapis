@@ -32,6 +32,24 @@ tests = {
     "'cat''s soft fur'"
   }
   {
+    -> db.escape_literal db.raw "upper(username)"
+    "upper(username)"
+  }
+  {
+    -> db.escape_literal db.list {1,2,3,4,5}
+    "(1, 2, 3, 4, 5)"
+  }
+  {
+    -> db.escape_literal db.list {"hello", "world", db.TRUE}
+    "('hello', 'world', TRUE)"
+  }
+
+  {
+    -> db.escape_literal db.list {"foo", db.raw "lower(name)"}
+    "('foo', lower(name))"
+  }
+
+  {
     -> db.interpolate_query "select * from cool where hello = ?", "world"
     "select * from cool where hello = 'world'"
   }
@@ -59,9 +77,21 @@ tests = {
   }
 
   {
-    -> db.interpolate_query "update x set x = ?", db.raw"y + 1"
-    "update x set x = y + 1"
+    -> db.encode_clause cool: true, id: db.list {1,2,3,5}
+    [["id" IN (1, 2, 3, 5) AND "cool" = TRUE]]
+    [["cool" = TRUE AND "id" IN (1, 2, 3, 5)]]
   }
+
+  {
+    -> db.interpolate_query "update items set x = ?", db.raw"y + 1"
+    "update items set x = y + 1"
+  }
+
+  {
+    -> db.interpolate_query "update items set x = false where y in ?", db.list {"a", "b"}
+    "update items set x = false where y in ('a', 'b')"
+  }
+
 
   {
     -> db.select "* from things where id = ?", "cool days"

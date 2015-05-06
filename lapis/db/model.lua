@@ -77,106 +77,34 @@ enum = function(tbl)
   return setmetatable(tbl, Enum.__base)
 end
 add_relations = function(self, relations)
+  local relation_builders = require("lapis.db.model.relations")
   for _index_0 = 1, #relations do
-    local relation = relations[_index_0]
-    local name = assert(relation[1], "missing relation name")
-    local fn_name = relation.as or "get_" .. tostring(name)
-    local assert_model
-    assert_model = function(source)
-      local models = require("models")
-      do
-        local m = models[source]
-        if not (m) then
-          error("failed to find model `" .. tostring(source) .. "` for relationship")
-        end
-        return m
-      end
-    end
-    do
-      local source = relation.fetch
-      if source then
-        assert(type(source) == "function", "Expecting function for `fetch` relation")
-        self.__base[fn_name] = function(self)
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          do
-            local obj = source(self)
-            self[name] = obj
-            return obj
+    local _continue_0 = false
+    repeat
+      local relation = relations[_index_0]
+      local name = assert(relation[1], "missing relation name")
+      local built = false
+      for k in pairs(relation) do
+        do
+          local builder = relation_builders[k]
+          if builder then
+            builder(self, name, relation)
+            built = true
+            break
           end
         end
       end
-    end
-    do
-      local source = relation.has_one
-      if source then
-        assert(type(source) == "string", "Expecting model name for `has_one` relation")
-        self.__base[fn_name] = function(self)
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          local model = assert_model(source)
-          local clause = {
-            [relation.key or tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
-          }
-          do
-            local obj = model:find(clause)
-            self[name] = obj
-            return obj
-          end
-        end
+      if built then
+        _continue_0 = true
+        break
       end
-    end
-    do
-      local source = relation.belongs_to
-      if source then
-        assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
-        local column_name = tostring(name) .. "_id"
-        self.__base[fn_name] = function(self)
-          if not (self[column_name]) then
-            return nil
-          end
-          local existing = self[name]
-          if existing ~= nil then
-            return existing
-          end
-          local model = assert_model(source)
-          do
-            local obj = model:find(self[column_name])
-            self[name] = obj
-            return obj
-          end
-        end
-      end
-    end
-    do
-      local source = relation.has_many
-      if source then
-        if relation.pager ~= false then
-          local foreign_key = relation.key
-          self.__base[fn_name] = function(self, opts)
-            local model = assert_model(source)
-            local clause = {
-              [foreign_key or tostring(singularize(self.__class:table_name())) .. "_id"] = self[self.__class:primary_keys()]
-            }
-            do
-              local where = relation.where
-              if where then
-                for k, v in pairs(where) do
-                  clause[k] = v
-                end
-              end
-            end
-            clause = db.encode_clause(clause)
-            return model:paginated("where " .. tostring(clause), opts)
-          end
-        else
-          error("not yet")
-        end
-      end
+      local flatten_params
+      flatten_params = require("lapis.logging").flatten_params
+      error("don't know how to create relation `" .. tostring(flatten_params(relation)) .. "`")
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
   end
 end
@@ -391,6 +319,9 @@ do
     end
     return name
   end
+  self.singular_name = function(self)
+    return singularize(self:table_name())
+  end
   self.columns = function(self)
     local columns = db.query([[      select column_name, data_type
       from information_schema.columns
@@ -455,7 +386,7 @@ do
   self.include_in = function(self, other_records, foreign_key, opts)
     local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip
-    local has_many = opts and opts.has_many
+    local many = opts and opts.many
     if not flip and type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
     end
@@ -513,6 +444,7 @@ do
         local res = db.select(query)
         if res then
           local records = { }
+<<<<<<< HEAD
           for _index_0 = 1, #res do
             local t = res[_index_0]
             local t_key = t[find_by]
@@ -524,13 +456,32 @@ do
               table.insert(records[t_key], data)
             else
               records[t_key] = data
+=======
+          if many then
+            for _index_0 = 1, #res do
+              local t = res[_index_0]
+              local t_key = t[find_by]
+              if records[t_key] == nil then
+                records[t_key] = { }
+              end
+              insert(records[t_key], self:load(t))
+            end
+          else
+            for _index_0 = 1, #res do
+              local t = res[_index_0]
+              records[t[find_by]] = self:load(t)
+>>>>>>> upstream/master
             end
           end
           local field_name
           if opts and opts.as then
             field_name = opts.as
           elseif flip then
-            field_name = singularize(self:table_name())
+            if many then
+              field_name = self:table_name()
+            else
+              field_name = self:singular_name()
+            end
           else
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end
@@ -549,10 +500,12 @@ do
       by_key = self.primary_key
     end
     local where = nil
+    local clause = nil
     local fields = "*"
     if type(by_key) == "table" then
       fields = by_key.fields or fields
       where = by_key.where
+      clause = by_key.clause
       by_key = by_key.key or self.primary_key
     end
     if type(by_key) == "table" and by_key[1] ~= "raw" then
@@ -576,6 +529,13 @@ do
     local query = fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")"
     if where then
       query = query .. (" and " .. db.encode_clause(where))
+    end
+    if clause then
+      if type(clause) == "table" then
+        assert(clause[1], "invalid clause")
+        clause = db.interpolate_query(unpack(clause))
+      end
+      query = query .. (" " .. clause)
     end
     do
       local res = db.select(query)

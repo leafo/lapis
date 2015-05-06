@@ -13,7 +13,7 @@ object*](#request-object).
 
 The return value of the action is used to render the output. A string return
 value will be rendered to the browser directly. A table return value
-will be used as the [*request options*](#request-options).
+will be used as the [*render options*](#render-options).
 
 If there is no route that matches the request then the default route handler is
 executed, read more in [*application callbacks*](#application-callbacks).
@@ -55,7 +55,7 @@ app:match("/post/:post_id/:post_name", function(self) end)
 ```moon
 class extends lapis.Application
   "/page/:page": => print @params.page
-  "/post/:post_id/:post_name" =>
+  "/post/:post_id/:post_name": =>
 ```
 
 The captured values of the route parameters are saved in the `params` field of
@@ -75,8 +75,11 @@ app:match("/user/:name/file/*", function(self) end)
 
 ```moon
 class extends lapis.Application
-  "/browse/*": => print @params.splat
-  "/user/:name/file/*" =>
+  "/browse/*": =>
+    print @params.splat
+
+  "/user/:name/file/*": =>
+    print @params.name, @params.splat
 ```
 
 It is currently not valid to put anything after the splat as the splat is
@@ -419,7 +422,7 @@ self:build_url("world", { host = "leafo.net", port = 2000 }) --> http://leafo.ne
 @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
 ```
 
-## Request Options
+## Render Options
 
 Whenever a table is written, the key/value pairs (for keys that are strings)
 are copied into <span class="for_moon">`@options`</span><span
@@ -486,7 +489,12 @@ app.default_route = function(self)
   -- strip trailing /
   if self.req.parsed_url.path:match("./$") then
     local stripped = self.req.parsed_url:match("^(.+)/+$")
-    return { redirect_to = self:build_url(stripped, {query: self.req.parsed_url.query, status: 301}) }
+    return {
+      redirect_to = self:build_url(stripped, {
+        status = 301,
+        query = self.req.parsed_url.query,
+      })
+    }
   else
     self.app.handle_404(self)
   end

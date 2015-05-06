@@ -22,6 +22,7 @@ class Posts extends Model
     drop_tables @
     create_table @table_name!, {
       {"id", types.serial}
+      {"user_id", types.foreign_key null: true}
       {"title", types.text null: false}
       {"body", types.text null: false}
       {"created_at", types.time}
@@ -73,6 +74,20 @@ describe "model", ->
 
       assert.same 2, second.id
       assert.same "second", second.name
+
+      assert.same 2, Users\count!
+
+    it "should get columns of model", ->
+      assert.same {
+        {
+          data_type: "integer"
+          column_name: "id"
+        }
+        {
+          data_type: "text"
+          column_name: "name"
+        }
+      }, Users\columns!
 
     describe "with some rows", ->
       local first, second
@@ -222,7 +237,6 @@ describe "model", ->
         :Users, :Posts, :Likes
       }
 
-
     after_each ->
       package.loaded.models = nil
 
@@ -243,4 +257,41 @@ describe "model", ->
 
       assert.same user, like\get_user!
       assert.same post, like\get_post!
+
+  describe "include_in", ->
+    before_each ->
+      Users\create_table!
+      Posts\create_table!
+      Likes\create_table!
+
+    before_each ->
+      for i=1,2
+        user = Users\create { name: "first" }
+        for i=1,2
+          Posts\create {
+            user_id: user.id
+            title: "My great post"
+            body: "This is about something"
+          }
+
+    it "should include users for posts", ->
+      posts = Posts\select!
+      Users\include_in posts, "user_id"
+      for post in *posts
+        assert post.user
+        assert.same post.user.id, post.user_id
+
+    it "should include flipped many posts for user", ->
+      users = Users\select!
+      Posts\include_in users, "user_id", {
+        flip: true
+        many: true
+      }
+
+      for user in *users
+        assert user.posts
+        assert.same 2, #user.posts
+
+        for post in *user.posts
+          assert.same user.id, post.user_id
 

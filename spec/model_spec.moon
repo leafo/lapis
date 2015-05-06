@@ -21,6 +21,9 @@ describe "lapis.db.model", ->
       -- try to find a mock
       for k,v in pairs query_mock
         if q\match k
+          if type(v) == "function"
+            v = v!
+
           return v
 
       {}
@@ -77,6 +80,26 @@ describe "lapis.db.model", ->
       }
     }
 
+    Things\find_all { 1,2,4 }, {
+      fields: "hello, world"
+      key: "dad"
+      where: {
+        color: "blue"
+      }
+      clause: {
+        "order by id limit ?", 1234
+      }
+    }
+
+    Things\find_all { 1,2,4 }, {
+      fields: "hello, world"
+      key: "dad"
+      where: {
+        color: "blue"
+      }
+      clause: "group by color"
+    }
+
     class Things2 extends Model
       @primary_key: {"hello", "world"}
 
@@ -97,6 +120,8 @@ describe "lapis.db.model", ->
         [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
         [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
       }
+      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' order by id limit 1234]]
+      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' group by color]]
       {
         [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
         [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
@@ -197,8 +222,8 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where "id" > 100 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
       'SELECT * from "things" where "id" < 32 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
 
-      'SELECT * from "things" where "id" > 100 and "updated_at" > 200 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
-      'SELECT * from "things" where "id" < 32 and "updated_at" < 42 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
+      'SELECT * from "things" where "id" >= 100 and "updated_at" > 200 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
+      'SELECT * from "things" where "id" <= 32 and "updated_at" < 42 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
     }, queries
 
 
@@ -602,7 +627,7 @@ describe "lapis.db.model", ->
         'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
       }, queries
 
-    it "should create relations for inheritance #ddd", ->
+    it "should create relations for inheritance", ->
       class Base extends Model
         @relations: {
           {"user", belongs_to: "Users"}
@@ -615,6 +640,121 @@ describe "lapis.db.model", ->
 
       assert Child.get_user, "expecting get_user"
       assert Child.get_category, "expecting get_category"
+
+    describe "polymorphic belongs to #ddd", ->
+      local Foos, Bars, Bazs, Items
+
+      before_each ->
+        models.Foos = class Foos extends Model
+        models.Bars = class Bars extends Model
+        models.Bazs = class Bazs extends Model
+
+        Items = class Items extends Model
+          @relations: {
+            {"object", polymorphic_belongs_to: {
+              [1]: {"foo", "Foos"}
+              [2]: {"bar", "Bars"}
+              [3]: {"baz", "Bazs"}
+            }}
+          }
+
+      it "should model_for_object_type", ->
+        assert Foos == Items\model_for_object_type 1
+        assert Foos == Items\model_for_object_type "foo"
+
+        assert Bars == Items\model_for_object_type 2
+        assert Bars == Items\model_for_object_type "bar"
+
+        assert Bazs == Items\model_for_object_type 3
+        assert Bazs == Items\model_for_object_type "baz"
+
+        assert.has_error ->
+          Items\model_for_object_type 4
+
+        assert.has_error ->
+          Items\model_for_object_type "bun"
+
+      it "should object_type_for_model", ->
+        assert.same 1, Items\object_type_for_model Foos
+        assert.same 2, Items\object_type_for_model Bars
+        assert.same 3, Items\object_type_for_model Bazs
+
+        assert.has_error ->
+          Items\object_type_for_model Items
+
+      it "should object_type_for_object", ->
+        assert.same 1, Items\object_type_for_object Foos!
+        assert.same 2, Items\object_type_for_object Bars!
+        assert.same 3, Items\object_type_for_object Bazs
+
+        assert.has_error ->
+          Items\object_type_for_model {}
+
+      it "should call getter", ->
+        query_mock['SELECT'] = -> { { id: 101 } }
+
+        for i, {type_id, cls} in ipairs {{1, Foos}, {2, Bars}, {3, Bazs}}
+          item = Items\load {
+            object_type: type_id
+            object_id: i * 33
+          }
+
+          obj = item\get_object!
+
+          obj.__class == cls
+
+          obj2 = item\get_object!
+
+          assert.same obj, obj2
+
+        assert_queries {
+          'SELECT * from "foos" where "id" = 33 limit 1'
+          'SELECT * from "bars" where "id" = 66 limit 1'
+          'SELECT * from "bazs" where "id" = 99 limit 1'
+        }, queries
+
+
+      it "should call preload with empty", ->
+        Items\preload_objects {}
+
+        assert_queries {
+        }, queries
+
+      it "should call preload", ->
+        k = 0
+        n = ->
+          k += 1
+          k
+
+        items = {
+          Items\load {
+            object_type: 1
+            object_id: n!
+          }
+
+          Items\load {
+            object_type: 2
+            object_id: n!
+          }
+
+          Items\load {
+            object_type: 1
+            object_id: n!
+          }
+
+          Items\load {
+            object_type: 1
+            object_id: n!
+          }
+        }
+
+        Items\preload_objects items
+
+        assert_queries {
+          'SELECT * from "foos" where "id" in (1, 3, 4)'
+          'SELECT * from "bars" where "id" in (2)'
+        }, queries
+
 
   describe "enum", ->
     import enum from require "lapis.db.model"

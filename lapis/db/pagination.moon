@@ -124,8 +124,7 @@ class OrderedPaginator extends Paginator
     @get_ordered "DESC", ...
 
   get_ordered: (order, ...) =>
-    parsed = db.parse_clause @_clause
-
+    parsed = assert db.parse_clause @_clause
     has_multi_fields = type(@field) == "table" and not db.is_raw @field
 
     escaped_fields = if has_multi_fields
@@ -143,13 +142,14 @@ class OrderedPaginator extends Paginator
 
     if ...
       positions = {...}
+      pos_count = #positions
       orders = for i, pos in ipairs positions
         field = escaped_fields[i]
         switch order\lower!
           when "asc"
-            "#{field} > #{db.escape_literal pos}"
+            "#{field} #{i == pos_count and ">" or ">="} #{db.escape_literal pos}"
           when "desc"
-            "#{field} < #{db.escape_literal pos}"
+            "#{field} #{i == pos_count and "<" or "<="} #{db.escape_literal pos}"
           else
             error "don't know how to handle order #{order}"
 

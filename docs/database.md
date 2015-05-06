@@ -299,7 +299,7 @@ UPDATE "cats" SET "count" = count + 1, WHERE "id" = 1200 RETURNING count
 Deletes rows from `table` that match `conditions`.
 
 ```lua
-db.delete("cats", { name: "Roo"})
+db.delete("cats", { name = "Roo" })
 ```
 
 ```moon
@@ -312,7 +312,7 @@ DELETE FROM "cats" WHERE "name" = 'Roo'
 
 `conditions` can also be a string
 
-```moon
+```lua
 db.delete("cats", "name = ?", "Gato")
 ```
 
@@ -357,7 +357,7 @@ column. Numbers, strings, and booleans will be escaped accordingly.
 
 ```lua
 local escaped = db.escape_literal(value)
-local res = db.query("select * from hello where id = " .. escaped")
+local res = db.query("select * from hello where id = " .. escaped)
 ```
 
 ```moon
@@ -385,6 +385,23 @@ res = db.query "select * from #{table_name}"
 
 `escape_identifier` is not appropriate for escaping values. See
 `escape_literal` for escaping values.
+
+#### `interpolate_query(query, ...)`
+
+Interpolates a query containing `?` markers with the rest of the
+arguments escaped via `escape_literal`.
+
+```lua
+local q = "select * from table"
+q = q .. db.interpolate_query("where value = ?", 42)
+local res = db.query(q)
+```
+
+```moon
+q = "select * from table"
+q ..= db.interpolate_query "where value = ?", 42
+res = db.query q
+```
 
 ### Constants
 
@@ -652,17 +669,17 @@ Here are all the default values:
 ```lua
 local types = require("lapis.db.schema").types
 
-types.boolean       --> boolean NOT NULL DEFAULT FALSE
-types.date          --> date NOT NULL
-types.double        --> double precision NOT NULL DEFAULT 0
-types.foreign_key   --> integer NOT NULL
-types.integer       --> integer NOT NULL DEFAULT 0
-types.numeric       --> numeric NOT NULL DEFAULT 0
-types.real          --> real NOT NULL DEFAULT 0
-types.serial        --> serial NOT NULL
-types.text          --> text NOT NULL
-types.time          --> timestamp without time zone NOT NULL
-types.varchar       --> character varying(255) NOT NULL
+print(types.boolean)       --> boolean NOT NULL DEFAULT FALSE
+print(types.date)          --> date NOT NULL
+print(types.double)        --> double precision NOT NULL DEFAULT 0
+print(types.foreign_key)   --> integer NOT NULL
+print(types.integer)       --> integer NOT NULL DEFAULT 0
+print(types.numeric)       --> numeric NOT NULL DEFAULT 0
+print(types.real)          --> real NOT NULL DEFAULT 0
+print(types.serial)        --> serial NOT NULL
+print(types.text)          --> text NOT NULL
+print(types.time)          --> timestamp without time zone NOT NULL
+print(types.varchar)       --> character varying(255) NOT NULL
 ```
 
 ```moon
@@ -839,3 +856,25 @@ migrations.run_migrations(require("migrations"))
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
 ```
+
+## Database Helpers
+
+These are additional helper functions from the `db` module that
+aren't directly related to the query interface.
+
+#### `format_date(time)`
+
+Returns a date string formatted properly for insertion in the database.
+
+The `time` argument is optional, will default to the current UTC time.
+
+```lua
+local date = db.format_date()
+db.query("update things set published_at = ?", date)
+```
+
+```moon
+date = db.format_date!
+db.query "update things set published_at = ?", date
+```
+

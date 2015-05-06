@@ -166,8 +166,8 @@ table.
 ```lua
 local models = autoload("models")
 
-models.HelloWorld --> will require "models.hello_world"
-models.foo_bar --> will require "models.foo_bar"
+local _ = models.HelloWorld --> will require "models.hello_world"
+local _ = models.foo_bar --> will require "models.foo_bar"
 ```
 
 ```moon
@@ -232,7 +232,7 @@ end)
 
 app:post("form", "/form", capture_errors(function(self)
   csrf.assert_token(self)
-  "The form is valid!"
+  return "The form is valid!"
 end))
 ```
 
@@ -267,7 +267,7 @@ local csrf = require("lapis.csrf")
 csrf = require "lapis.csrf"
 ```
 
-###  `generate_token(req, key=nil, expires=os.time! + 28800)`
+###  `generate_token(req, key=nil, expires=os.time() + 28800)`
 
 Generates a new CSRF token using the session secret. `key` is an optional piece
 of data you can associate with the request. The token will expire in 8 hours by
@@ -349,7 +349,7 @@ app:get("/", function(self)
     url = "http://leafo.net",
     method = "POST",
     headers = {
-      "content-type" = "application/x-www-form-urlencoded"
+      ["content-type"] = "application/x-www-form-urlencoded"
     },
     body = {
       name = "leafo"
@@ -600,7 +600,7 @@ local app = lapis.Application()
 
 app:post("/my_action", function(self)
   assert_valid(self.params, {
-    { "uploaded_file", is_file: true }
+    { "uploaded_file", is_file = true }
   })
 
   -- file is ready to be used

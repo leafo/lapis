@@ -269,8 +269,6 @@ describe "instance app", ->
     assert_request app, "/hello", post: {}
     assert.same "post", res
 
-
-
   it "should hit default route", ->
     local res
 
@@ -281,6 +279,22 @@ describe "instance app", ->
 
     assert_request app, "/hello"
     assert.same "default_route", res
+
+  it "should strip trailing / to find route", ->
+    local res
+
+    app = lapis.Application!
+    app\match "/hello", -> res = "/hello"
+    app\match "/world/", -> res = "/world/"
+    app\build_router!
+
+    -- exact match, no default action
+    assert_request app, "/world/"
+    assert.same "/world/", res
+
+    status, _, headers = assert_request app, "/hello/"
+    assert.same 301, status
+    assert.same "http://localhost/hello", headers.location
 
   it "should include another app", ->
     do return -- TODO

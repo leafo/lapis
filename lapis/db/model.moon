@@ -48,67 +48,22 @@ enum = (tbl) ->
 --     {"posts", has_many: "Posts", pager: true, order: "id ASC"}
 --   }
 add_relations = (relations) =>
+  relation_builders = require "lapis.db.model.relations"
+
   for relation in *relations
     name = assert relation[1], "missing relation name"
-    fn_name = relation.as or "get_#{name}"
-    assert_model = (source) ->
-      models = require "models"
-      with m = models[source]
-        error "failed to find model `#{source}` for relationship" unless m
+    built = false
 
-    if source = relation.fetch
-      assert type(source) == "function", "Expecting function for `fetch` relation"
-      @__base[fn_name] = =>
-        existing = @[name]
-        return existing if existing != nil
-        with obj = source @
-          @[name] = obj
+    for k in pairs relation
+      if builder = relation_builders[k]
+        builder @, name, relation
+        built = true
+        break
 
-    if source = relation.has_one
-      assert type(source) == "string", "Expecting model name for `has_one` relation"
-      @__base[fn_name] = =>
-        existing = @[name]
-        return existing if existing != nil
-        model = assert_model source
+    continue if built
 
-        clause = {
-          [relation.key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
-        }
-
-        with obj = model\find clause
-          @[name] = obj
-
-
-    if source = relation.belongs_to
-      assert type(source) == "string", "Expecting model name for `belongs_to` relation"
-      column_name = "#{name}_id"
-
-      @__base[fn_name] = =>
-        return nil unless @[column_name]
-        existing = @[name]
-        return existing if existing != nil
-        model = assert_model source
-        with obj = model\find @[column_name]
-          @[name] = obj
-
-    if source = relation.has_many
-      if relation.pager != false
-        foreign_key = relation.key
-        @__base[fn_name] = (opts) =>
-          model = assert_model source
-          clause = {
-            [foreign_key or "#{singularize @@table_name!}_id"]: @[@@primary_keys!]
-          }
-
-          if where = relation.where
-            for k,v in pairs where
-              clause[k] = v
-
-          clause = db.encode_clause clause
-
-          model\paginated "where #{clause}", opts
-      else
-        error "not yet"
+    import flatten_params from require "lapis.logging"
+    error "don't know how to create relation `#{flatten_params relation}`"
 
 class Model
   @timestamp: false
@@ -134,6 +89,11 @@ class Model
     name = underscore @__name
     @table_name = -> name
     name
+
+  -- used as the forign key name when preloading objects over a relation
+  -- user_posts -> user_post
+  @singular_name: =>
+    singularize @table_name!
 
   @columns: =>
     columns = db.query [[
@@ -210,7 +170,7 @@ class Model
   @include_in: (other_records, foreign_key, opts) =>
     fields = opts and opts.fields or "*"
     flip = opts and opts.flip
-    has_many = opts and opts.has_many
+    many = opts and opts.many
 
     if not flip and type(@primary_key) == "table"
       error "model must have singular primary key to include"
@@ -239,6 +199,7 @@ class Model
 
       if res = db.select query
         records = {}
+<<<<<<< HEAD
         for t in *res
           t_key = t[find_by]
           data = @load t
@@ -250,11 +211,27 @@ class Model
             table.insert(records[t_key], data)
           else
             records[t_key] = data
+=======
+        if many
+          for t in *res
+            t_key = t[find_by]
+
+            if records[t_key] == nil
+              records[t_key] = {}
+
+            insert records[t_key], @load t
+        else
+          for t in *res
+            records[t[find_by]] = @load t
+>>>>>>> upstream/master
 
         field_name = if opts and opts.as
           opts.as
         elseif flip
-          singularize @table_name!
+          if many
+            @table_name!
+          else
+            @singular_name!
         else
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
@@ -267,13 +244,14 @@ class Model
 
   @find_all: (ids, by_key=@primary_key) =>
     where = nil
+    clause = nil
     fields = "*"
 
     -- parse opts
-
     if type(by_key) == "table"
       fields = by_key.fields or fields
       where = by_key.where
+      clause = by_key.clause
       by_key = by_key.key or @primary_key
 
     if type(by_key) == "table" and by_key[1] != "raw"
@@ -288,6 +266,13 @@ class Model
 
     if where
       query ..= " and " .. db.encode_clause where
+
+    if clause
+      if type(clause) == "table"
+        assert clause[1], "invalid clause"
+        clause = db.interpolate_query unpack clause
+
+      query ..= " " .. clause
 
     if res = db.select query
       @load r for r in *res

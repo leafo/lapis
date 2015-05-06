@@ -1,12 +1,24 @@
 
 import type, getmetatable, setmetatable, rawset from _G
 
+local Flow
+
+is_flow = (cls) ->
+  return false unless cls
+  return true if cls == Flow
+  is_flow cls.__parent
+
 -- a mediator for encapsulating logic between multiple models and a request
 class Flow
   expose_assigns: false
 
   new: (@_req, obj={}) =>
     assert @_req, "flow missing request"
+
+    -- get the real request if the object passed is another flow
+    if is_flow @_req.__class
+      @_req = @_req._req
+
     proxy = setmetatable obj, getmetatable @
 
     mt = {
@@ -41,4 +53,4 @@ class Flow
     setmetatable @, mt
 
 
-{ :Flow }
+{ :Flow, :is_flow }
