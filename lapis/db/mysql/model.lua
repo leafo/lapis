@@ -1,0 +1,137 @@
+local db = require("lapis.db.mysql")
+local Enum, enum, BaseModel, singularize, add_relations
+do
+  local _obj_0 = require("lapis.db.base_model")
+  Enum, enum, BaseModel, singularize, add_relations = _obj_0.Enum, _obj_0.enum, _obj_0.BaseModel, _obj_0.singularize, _obj_0.add_relations
+end
+local Model
+do
+  local _parent_0 = BaseModel
+  local _base_0 = {
+    update = function(self, first, ...)
+      local cond = self:_primary_cond()
+      local columns
+      if type(first) == "table" then
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for k, v in pairs(first) do
+            if type(k) == "number" then
+              _accum_0[_len_0] = v
+            else
+              self[k] = v
+              _accum_0[_len_0] = k
+            end
+            _len_0 = _len_0 + 1
+          end
+          columns = _accum_0
+        end
+      else
+        columns = {
+          first,
+          ...
+        }
+      end
+      if next(columns) == nil then
+        return nil, "nothing to update"
+      end
+      if self.__class.constraints then
+        for _, column in pairs(columns) do
+          do
+            local err = self.__class:_check_constraint(column, self[column], self)
+            if err then
+              return nil, err
+            end
+          end
+        end
+      end
+      local values
+      do
+        local _tbl_0 = { }
+        for _index_0 = 1, #columns do
+          local col = columns[_index_0]
+          _tbl_0[col] = self[col]
+        end
+        values = _tbl_0
+      end
+      local nargs = select("#", ...)
+      local last = nargs > 0 and select(nargs, ...)
+      local opts
+      if type(last) == "table" then
+        opts = last
+      end
+      if self.__class.timestamp and not (opts and opts.timestamp == false) then
+        values._timestamp = true
+      end
+      return db.update(self.__class:table_name(), values, cond)
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  local _class_0 = setmetatable({
+    __init = function(self, ...)
+      return _parent_0.__init(self, ...)
+    end,
+    __base = _base_0,
+    __name = "Model",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        return _parent_0[name]
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  local self = _class_0
+  self.__inherited = function(self, child)
+    do
+      local r = child.relations
+      if r then
+        return add_relations(child, r, db)
+      end
+    end
+  end
+  self.create = function(self, values, opts)
+    if self.constraints then
+      for key in pairs(self.constraints) do
+        do
+          local err = self:_check_constraint(key, values and values[key], values)
+          if err then
+            return nil, err
+          end
+        end
+      end
+    end
+    if self.timestamp then
+      values._timestamp = true
+    end
+    local res = db.insert(self:table_name(), values, self:primary_keys())
+    if res then
+      local new_id = res.last_auto_id or res.insert_id
+      if not values[self.primary_key] and new_id then
+        values[self.primary_key] = new_id
+      end
+      return self:load(values)
+    else
+      return nil, "Failed to create " .. tostring(self.__name)
+    end
+  end
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  Model = _class_0
+end
+return {
+  Model = Model,
+  Enum = Enum,
+  enum = enum
+}

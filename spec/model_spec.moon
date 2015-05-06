@@ -1,6 +1,9 @@
+config = require "lapis.config"
+config.default_config.postgres = {backend: "pgmoon"}
+config.reset true
 
 db = require "lapis.db.postgres"
-import Model from require "lapis.db.model"
+import Model from require "lapis.db.postgres.model"
 import with_query_fn, assert_queries from require "spec.helpers"
 
 time = 1376377000

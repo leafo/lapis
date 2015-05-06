@@ -18,8 +18,17 @@ default_config = {
   -- measure_performance: false
   -- show_queries: false
   -- mysql: {
+  --   backend: "" -- luasql, lua_resty_mysql
+  --   host: ""
+  --   port: ""
+  --   path: "" -- unix domain socket
   --   database: ""
   --   user: ""
+  --   ssl: boolean -- for lua_resty_mysql
+  --   ssl_verify: boolean -- for lua_resty_mysql
+  --   timeout: ms -- for lua_resty_mysql
+  --   max_idle_timeout: ms -- for lua_resty_mysql
+  --   pool_size: integer -- for lua_resty_mysql
   -- }
   -- postgres: {
   --   backend: ""
