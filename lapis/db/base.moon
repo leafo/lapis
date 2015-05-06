@@ -7,9 +7,9 @@ class DBRaw
 raw = (val) -> setmetatable {tostring val}, DBRaw.__base
 is_raw = (val) -> getmetatable(val) == DBRaw.__base
 
-class DBSet
-set = (items) -> setmetatable {items}, DBSet.__base
-is_set = (val) -> getmetatable(val) == DBSet.__base
+class DBList
+list = (items) -> setmetatable {items}, DBList.__base
+is_list = (val) -> getmetatable(val) == DBList.__base
 
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
@@ -64,7 +64,7 @@ build_helpers = (escape_literal, escape_identifier) ->
     concat buffer unless have_buffer
 
   -- { hello: "world", cat: db.NULL" } -> "hello" = 'world' AND "cat" IS NULL
-  encode_clause = (t, buffer)->
+  encode_clause = (t, buffer) ->
     join = " AND "
     have_buffer = buffer
     buffer or= {}
@@ -72,10 +72,9 @@ build_helpers = (escape_literal, escape_identifier) ->
     for k,v in pairs t
       if v == NULL
         append_all buffer, escape_identifier(k), " IS NULL", join
-      elseif is_set v
-        append_all buffer, escape_identifier(k), " in ", flatten_set(v), join
       else
-        append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
+        op = is_list(v) and " IN " or " = "
+        append_all buffer, escape_identifier(k), op, escape_literal(v), join
 
     buffer[#buffer] = nil
 
@@ -95,5 +94,5 @@ gen_index_name = (...) ->
   concat(parts, "_") .. "_idx"
 
 {
-  :NULL, :TRUE, :FALSE, :raw, :is_raw, :set, :is_set, :format_date, :build_helpers, :gen_index_name
+  :NULL, :TRUE, :FALSE, :raw, :is_raw, :list, :is_list, :format_date, :build_helpers, :gen_index_name
 }

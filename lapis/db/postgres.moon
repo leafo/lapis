@@ -1,12 +1,11 @@
 import concat from table
-
-local raw_query
+import type, tostring, pairs, select from _G
 
 proxy_location = "/query"
 
+local raw_query
 local logger
 
-import type, tostring, pairs, select from _G
 import
   FALSE
   NULL
@@ -15,8 +14,8 @@ import
   format_date
   is_raw
   raw
-  is_set
-  set
+  is_list
+  list
   from require "lapis.db.base"
 
 backends = {
@@ -104,6 +103,11 @@ escape_literal = (val) ->
       return val and "TRUE" or "FALSE"
     when "table"
       return "NULL" if val == NULL
+      if is_list val
+        escaped_items = [escape_literal item for item in *val[1]]
+        assert escaped_items[1], "can't flatten empty list"
+        return "(#{concat escaped_items, ", "})"
+
       return val[1] if is_raw val
       error "unknown table passed to `escape_literal`"
 
@@ -292,7 +296,7 @@ encode_case = (exp, t, on_else) ->
   concat buff
 
 {
-  :query, :raw, :is_raw, :set, :is_set, :NULL, :TRUE, :FALSE, :escape_literal,
+  :query, :raw, :is_raw, :list, :is_list, :NULL, :TRUE, :FALSE, :escape_literal,
   :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
   :interpolate_query, :parse_clause, :format_date, :encode_case, :init_logger
 

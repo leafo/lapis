@@ -1,17 +1,17 @@
 local concat
 concat = table.concat
-local raw_query
-local proxy_location = "/query"
-local logger
 local type, tostring, pairs, select
 do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_set, set
+local proxy_location = "/query"
+local raw_query
+local logger
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list
 do
   local _obj_0 = require("lapis.db.base")
-  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_set, set = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_set, _obj_0.set
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list
 end
 local backends = {
   default = function(_proxy)
@@ -131,6 +131,22 @@ escape_literal = function(val)
   elseif "table" == _exp_0 then
     if val == NULL then
       return "NULL"
+    end
+    if is_list(val) then
+      local escaped_items
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        local _list_0 = val[1]
+        for _index_0 = 1, #_list_0 do
+          local item = _list_0[_index_0]
+          _accum_0[_len_0] = escape_literal(item)
+          _len_0 = _len_0 + 1
+        end
+        escaped_items = _accum_0
+      end
+      assert(escaped_items[1], "can't flatten empty list")
+      return "(" .. tostring(concat(escaped_items, ", ")) .. ")"
     end
     if is_raw(val) then
       return val[1]
@@ -365,8 +381,8 @@ return {
   query = query,
   raw = raw,
   is_raw = is_raw,
-  set = set,
-  is_set = is_set,
+  list = list,
+  is_list = is_list,
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,

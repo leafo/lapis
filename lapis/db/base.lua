@@ -33,14 +33,14 @@ local is_raw
 is_raw = function(val)
   return getmetatable(val) == DBRaw.__base
 end
-local DBSet
+local DBList
 do
   local _base_0 = { }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
     __init = function() end,
     __base = _base_0,
-    __name = "DBSet"
+    __name = "DBList"
   }, {
     __index = _base_0,
     __call = function(cls, ...)
@@ -50,17 +50,17 @@ do
     end
   })
   _base_0.__class = _class_0
-  DBSet = _class_0
+  DBList = _class_0
 end
-local set
-set = function(items)
+local list
+list = function(items)
   return setmetatable({
     items
-  }, DBSet.__base)
+  }, DBList.__base)
 end
-local is_set
-is_set = function(val)
-  return getmetatable(val) == DBSet.__base
+local is_list
+is_list = function(val)
+  return getmetatable(val) == DBList.__base
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
@@ -169,10 +169,9 @@ build_helpers = function(escape_literal, escape_identifier)
     for k, v in pairs(t) do
       if v == NULL then
         append_all(buffer, escape_identifier(k), " IS NULL", join)
-      elseif is_set(v) then
-        append_all(buffer, escape_identifier(k), " in ", flatten_set(v), join)
       else
-        append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
+        local op = is_list(v) and " IN " or " = "
+        append_all(buffer, escape_identifier(k), op, escape_literal(v), join)
       end
     end
     buffer[#buffer] = nil
@@ -220,8 +219,8 @@ return {
   FALSE = FALSE,
   raw = raw,
   is_raw = is_raw,
-  set = set,
-  is_set = is_set,
+  list = list,
+  is_list = is_list,
   format_date = format_date,
   build_helpers = build_helpers,
   gen_index_name = gen_index_name
