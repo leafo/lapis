@@ -444,19 +444,6 @@ do
         local res = db.select(query)
         if res then
           local records = { }
-<<<<<<< HEAD
-          for _index_0 = 1, #res do
-            local t = res[_index_0]
-            local t_key = t[find_by]
-            local data = self:load(t)
-            if has_many then
-              if records[t_key] == nil then
-                records[t_key] = { }
-              end
-              table.insert(records[t_key], data)
-            else
-              records[t_key] = data
-=======
           if many then
             for _index_0 = 1, #res do
               local t = res[_index_0]
@@ -470,7 +457,6 @@ do
             for _index_0 = 1, #res do
               local t = res[_index_0]
               records[t[find_by]] = self:load(t)
->>>>>>> upstream/master
             end
           end
           local field_name

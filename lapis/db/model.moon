@@ -199,19 +199,7 @@ class Model
 
       if res = db.select query
         records = {}
-<<<<<<< HEAD
-        for t in *res
-          t_key = t[find_by]
-          data = @load t
-          
-          if has_many
-            if records[t_key] == nil
-              records[t_key] = {}
-
-            table.insert(records[t_key], data)
-          else
-            records[t_key] = data
-=======
+        
         if many
           for t in *res
             t_key = t[find_by]
@@ -223,7 +211,6 @@ class Model
         else
           for t in *res
             records[t[find_by]] = @load t
->>>>>>> upstream/master
 
         field_name = if opts and opts.as
           opts.as
