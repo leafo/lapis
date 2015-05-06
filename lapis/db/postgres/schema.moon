@@ -1,7 +1,7 @@
 db = require "lapis.db.postgres"
 
 import gen_index_name from require "lapis.db.base"
-import escape_literal, escape_identifier from db
+import escape_literal, escape_identifier, is_raw from db
 import concat from table
 
 append_all = (t, ...) ->
@@ -11,7 +11,7 @@ append_all = (t, ...) ->
 extract_options = (cols) ->
   options = {}
   cols = for col in *cols
-    if type(col) == "table" and col[1] != "raw"
+    if type(col) == "table" and not is_raw(col)
       for k,v in pairs col
         options[k] = v
       continue

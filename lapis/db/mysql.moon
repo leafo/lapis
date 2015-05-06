@@ -61,13 +61,13 @@ escape_literal = (val) ->
       return val and "TRUE" or "FALSE"
     when "table"
       return "NULL" if val == NULL
-      return val[2] if is_raw val
+      return val[1] if is_raw val
       error "unknown table passed to `escape_literal`"
 
   error "don't know how to escape value: #{val}"
 
 escape_identifier = (ident) ->
-  return ident[2] if is_raw ident
+  return ident[1] if is_raw ident
   ident = tostring ident
   '`' ..  (ident\gsub '`', '``') .. '`'
 

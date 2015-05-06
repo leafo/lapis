@@ -114,7 +114,7 @@ end
 local escape_identifier
 escape_identifier = function(ident)
   if is_raw(ident) then
-    return ident[2]
+    return ident[1]
   end
   ident = tostring(ident)
   return '"' .. (ident:gsub('"', '""')) .. '"'
@@ -133,7 +133,7 @@ escape_literal = function(val)
       return "NULL"
     end
     if is_raw(val) then
-      return val[2]
+      return val[1]
     end
     error("unknown table passed to `escape_literal`")
   end

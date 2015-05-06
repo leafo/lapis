@@ -1,25 +1,66 @@
+local setmetatable, getmetatable, tostring
+do
+  local _obj_0 = _G
+  setmetatable, getmetatable, tostring = _obj_0.setmetatable, _obj_0.getmetatable, _obj_0.tostring
+end
 local NULL = { }
+local DBRaw
+do
+  local _base_0 = { }
+  _base_0.__index = _base_0
+  local _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "DBRaw"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  DBRaw = _class_0
+end
 local raw
 raw = function(val)
-  return {
-    "raw",
+  return setmetatable({
     tostring(val)
-  }
+  }, DBRaw.__base)
 end
 local is_raw
 is_raw = function(val)
-  return type(val) == "table" and val[1] == "raw" and val[2]
+  return getmetatable(val) == DBRaw.__base
+end
+local DBSet
+do
+  local _base_0 = { }
+  _base_0.__index = _base_0
+  local _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "DBSet"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  DBSet = _class_0
 end
 local set
 set = function(items)
-  return {
-    "set",
+  return setmetatable({
     items
-  }
+  }, DBSet.__base)
 end
 local is_set
 is_set = function(val)
-  return type(val) == "table" and val[1] == "set" and val[2]
+  return getmetatable(val) == DBSet.__base
 end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
@@ -155,7 +196,7 @@ gen_index_name = function(...)
       repeat
         local p = _list_0[_index_0]
         if is_raw(p) then
-          _accum_0[_len_0] = p[2]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
+          _accum_0[_len_0] = p[1]:gsub("[^%w]+$", ""):gsub("[^%w]+", "_")
         elseif type(p) == "string" then
           _accum_0[_len_0] = p
         else

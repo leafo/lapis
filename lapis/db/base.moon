@@ -1,13 +1,15 @@
 
+import setmetatable, getmetatable, tostring from _G
+
 NULL = {}
 
-raw = (val) -> {"raw", tostring(val)}
-is_raw = (val) ->
-  type(val) == "table" and val[1] == "raw" and val[2]
+class DBRaw
+raw = (val) -> setmetatable {tostring val}, DBRaw.__base
+is_raw = (val) -> getmetatable(val) == DBRaw.__base
 
-set = (items) -> {"set", items}
-is_set = (val) ->
-  type(val) == "table" and val[1] == "set" and val[2]
+class DBSet
+set = (items) -> setmetatable {items}, DBSet.__base
+is_set = (val) -> getmetatable(val) == DBSet.__base
 
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
@@ -84,7 +86,7 @@ build_helpers = (escape_literal, escape_identifier) ->
 gen_index_name = (...) ->
   parts = for p in *{...}
     if is_raw p
-      p[2]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
+      p[1]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")
     elseif type(p) == "string"
       p
     else

@@ -1,8 +1,8 @@
 local db = require("lapis.db.postgres")
 local gen_index_name
 gen_index_name = require("lapis.db.base").gen_index_name
-local escape_literal, escape_identifier
-escape_literal, escape_identifier = db.escape_literal, db.escape_identifier
+local escape_literal, escape_identifier, is_raw
+escape_literal, escape_identifier, is_raw = db.escape_literal, db.escape_identifier, db.is_raw
 local concat
 concat = table.concat
 local append_all
@@ -21,7 +21,7 @@ extract_options = function(cols)
       local _continue_0 = false
       repeat
         local col = cols[_index_0]
-        if type(col) == "table" and col[1] ~= "raw" then
+        if type(col) == "table" and not is_raw(col) then
           for k, v in pairs(col) do
             options[k] = v
           end
