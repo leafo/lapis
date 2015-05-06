@@ -3,13 +3,7 @@ db = require "lapis.db.mysql"
 import Enum, enum, BaseModel, singularize, add_relations
   from require "lapis.db.base_model"
 
-local *
-
 class Model extends BaseModel
-  @__inherited: (child) =>
-    if r = child.relations
-      add_relations child, r, db
-
   -- create from table of values, return loaded object
   @create: (values, opts) =>
     if @constraints
