@@ -1,4 +1,3 @@
-local db = require("lapis.db")
 local underscore, escape_pattern, uniquify
 do
   local _obj_0 = require("lapis.util")
@@ -116,7 +115,7 @@ do
         local key = _list_0[_index_0]
         local val = self[key]
         if val == nil then
-          val = db.NULL
+          val = self.__class.db.NULL
         end
         cond[key] = val
       end
@@ -138,7 +137,7 @@ do
       end)(), "-")
     end,
     delete = function(self)
-      local res = db.delete(self.__class:table_name(), self:_primary_cond())
+      local res = self.__class.db.delete(self.__class:table_name(), self:_primary_cond())
       return res.affected_rows and res.affected_rows > 0, res
     end,
     update = function(self, first, ...)
@@ -159,15 +158,15 @@ do
           local _len_0 = 1
           for _index_0 = 1, #field_names do
             local f = field_names[_index_0]
-            _accum_0[_len_0] = db.escape_identifier(f)
+            _accum_0[_len_0] = self.__class.db.escape_identifier(f)
             _len_0 = _len_0 + 1
           end
           return _accum_0
         end)(), ", ")
       end
-      local cond = db.encode_clause(self:_primary_cond())
-      local tbl_name = db.escape_identifier(self.__class:table_name())
-      local res = unpack(db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
+      local cond = self.__class.db.encode_clause(self:_primary_cond())
+      local tbl_name = self.__class.db.escape_identifier(self.__class:table_name())
+      local res = unpack(self.__class.db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
       if not (res) then
         error("failed to find row to refresh from, did the primary key change?")
       end
@@ -203,8 +202,17 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
+  self.db = nil
   self.timestamp = false
   self.primary_key = "id"
+  self.__inherited = function(self, child)
+    do
+      local r = child.relations
+      if r then
+        return add_relations(child, r, self.db)
+      end
+    end
+  end
   self.primary_keys = function(self)
     if type(self.primary_key) == "table" then
       return unpack(self.primary_key)
@@ -236,7 +244,7 @@ do
     return singularize(self:table_name())
   end
   self.columns = function(self)
-    local columns = db.query([[      select column_name, data_type
+    local columns = self.db.query([[      select column_name, data_type
       from information_schema.columns
       where table_name = ?]], self:table_name())
     self.columns = function()
@@ -278,23 +286,23 @@ do
       opts = query
       query = ""
     end
-    query = db.interpolate_query(query, ...)
-    local tbl_name = db.escape_identifier(self:table_name())
+    query = self.db.interpolate_query(query, ...)
+    local tbl_name = self.db.escape_identifier(self:table_name())
     local fields = opts.fields or "*"
     do
-      local res = db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " " .. tostring(query))
+      local res = self.db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " " .. tostring(query))
       if res then
         return self:load_all(res)
       end
     end
   end
   self.count = function(self, clause, ...)
-    local tbl_name = db.escape_identifier(self:table_name())
+    local tbl_name = self.db.escape_identifier(self:table_name())
     local query = "COUNT(*) as c from " .. tostring(tbl_name)
     if clause then
-      query = query .. (" where " .. db.interpolate_query(clause, ...))
+      query = query .. (" where " .. self.db.interpolate_query(clause, ...))
     end
-    return unpack(db.select(query)).c
+    return unpack(self.db.select(query)).c
   end
   self.include_in = function(self, other_records, foreign_key, opts)
     local fields = opts and opts.fields or "*"
@@ -336,7 +344,7 @@ do
         local _len_0 = 1
         for _index_0 = 1, #include_ids do
           local id = include_ids[_index_0]
-          _accum_0[_len_0] = db.escape_literal(id)
+          _accum_0[_len_0] = self.db.escape_literal(id)
           _len_0 = _len_0 + 1
         end
         return _accum_0
@@ -347,14 +355,14 @@ do
       else
         find_by = self.primary_key
       end
-      local tbl_name = db.escape_identifier(self:table_name())
-      local find_by_escaped = db.escape_identifier(find_by)
+      local tbl_name = self.db.escape_identifier(self:table_name())
+      local find_by_escaped = self.db.escape_identifier(find_by)
       local query = tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")"
       if opts and opts.where then
-        query = query .. (" and " .. db.encode_clause(opts.where))
+        query = query .. (" and " .. self.db.encode_clause(opts.where))
       end
       do
-        local res = db.select(query)
+        local res = self.db.select(query)
         if res then
           local records = { }
           if many then
@@ -418,26 +426,26 @@ do
       local _len_0 = 1
       for _index_0 = 1, #ids do
         local id = ids[_index_0]
-        _accum_0[_len_0] = db.escape_literal(id)
+        _accum_0[_len_0] = self.db.escape_literal(id)
         _len_0 = _len_0 + 1
       end
       return _accum_0
     end)(), ", ")
-    local primary = db.escape_identifier(by_key)
-    local tbl_name = db.escape_identifier(self:table_name())
+    local primary = self.db.escape_identifier(by_key)
+    local tbl_name = self.db.escape_identifier(self:table_name())
     local query = fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")"
     if where then
-      query = query .. (" and " .. db.encode_clause(where))
+      query = query .. (" and " .. self.db.encode_clause(where))
     end
     if clause then
       if type(clause) == "table" then
         assert(clause[1], "invalid clause")
-        clause = db.interpolate_query(unpack(clause))
+        clause = self.db.interpolate_query(unpack(clause))
       end
       query = query .. (" " .. clause)
     end
     do
-      local res = db.select(query)
+      local res = self.db.select(query)
       if res then
         for _index_0 = 1, #res do
           local r = res[_index_0]
@@ -454,13 +462,13 @@ do
     end
     local cond
     if "table" == type(first) then
-      cond = db.encode_clause((...))
+      cond = self.db.encode_clause((...))
     else
-      cond = db.encode_clause(self:encode_key(...))
+      cond = self.db.encode_clause(self:encode_key(...))
     end
-    local table_name = db.escape_identifier(self:table_name())
+    local table_name = self.db.escape_identifier(self:table_name())
     do
-      local result = unpack(db.select("* from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
+      local result = unpack(self.db.select("* from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
       if result then
         return self:load(result)
       end
@@ -481,9 +489,9 @@ do
     if not (next(t)) then
       error("missing constraint to check")
     end
-    local cond = db.encode_clause(t)
-    local table_name = db.escape_identifier(self:table_name())
-    return nil ~= unpack(db.select("1 from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
+    local cond = self.db.encode_clause(t)
+    local table_name = self.db.escape_identifier(self:table_name())
+    return nil ~= unpack(self.db.select("1 from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
   end
   self._check_constraint = function(self, key, value, obj)
     if not (self.constraints) then

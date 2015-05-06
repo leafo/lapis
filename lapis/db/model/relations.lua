@@ -1,4 +1,3 @@
-local db = require("lapis.db")
 local assert_model
 assert_model = function(primary_model, model_name)
   local models = require("models")
@@ -93,17 +92,14 @@ has_many = function(self, name, opts)
         end
       end
     end
-    clause = db.encode_clause(clause)
+    clause = self.__class.db.encode_clause(clause)
     return model:paginated("where " .. tostring(clause), fetch_opts)
   end
 end
 local polymorphic_belongs_to
 polymorphic_belongs_to = function(self, name, opts)
-  local Model, enum
-  do
-    local _obj_0 = require("lapis.db.model")
-    Model, enum = _obj_0.Model, _obj_0.enum
-  end
+  local enum
+  enum = require("lapis.db.model").enum
   local types = opts.polymorphic_belongs_to
   assert(type(types) == "table", "missing types")
   local type_col = tostring(name) .. "_type"

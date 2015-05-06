@@ -114,14 +114,7 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
-  self.__inherited = function(self, child)
-    do
-      local r = child.relations
-      if r then
-        return add_relations(child, r, db)
-      end
-    end
-  end
+  self.db = db
   self.create = function(self, values, opts)
     if self.constraints then
       for key in pairs(self.constraints) do

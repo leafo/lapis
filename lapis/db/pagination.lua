@@ -1,4 +1,3 @@
-local db = require("lapis.db")
 local insert, concat
 do
   local _obj_0 = table
@@ -64,6 +63,7 @@ do
         clause = ""
       end
       self.model = model
+      self.db = self.model.__class.db
       local param_count = select("#", ...)
       local opts
       if param_count > 0 then
@@ -81,7 +81,7 @@ do
       if opts and opts.prepare_results then
         self.prepare_results = opts.prepare_results
       end
-      self._clause = db.interpolate_query(clause, ...)
+      self._clause = self.db.interpolate_query(clause, ...)
       self.opts = opts
     end,
     __base = _base_0,
@@ -132,16 +132,16 @@ do
     end,
     total_items = function(self)
       if not (self._count) then
-        local parsed = db.parse_clause(self._clause)
+        local parsed = self.db.parse_clause(self._clause)
         parsed.limit = nil
         parsed.offset = nil
         parsed.order = nil
         if parsed.group then
           error("Paginator can't calculate total items in a query with group by")
         end
-        local tbl_name = db.escape_identifier(self.model:table_name())
+        local tbl_name = self.db.escape_identifier(self.model:table_name())
         local query = "COUNT(*) as c from " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
-        self._count = unpack(db.select(query)).c
+        self._count = unpack(self.db.select(query)).c
       end
       return self._count
     end,
@@ -213,8 +213,8 @@ do
       return self:get_ordered("DESC", ...)
     end,
     get_ordered = function(self, order, ...)
-      local parsed = assert(db.parse_clause(self._clause))
-      local has_multi_fields = type(self.field) == "table" and not db.is_raw(self.field)
+      local parsed = assert(self.db.parse_clause(self._clause))
+      local has_multi_fields = type(self.field) == "table" and not self.db.is_raw(self.field)
       local escaped_fields
       if has_multi_fields then
         do
@@ -223,14 +223,14 @@ do
           local _list_0 = self.field
           for _index_0 = 1, #_list_0 do
             local f = _list_0[_index_0]
-            _accum_0[_len_0] = db.escape_identifier(f)
+            _accum_0[_len_0] = self.db.escape_identifier(f)
             _len_0 = _len_0 + 1
           end
           escaped_fields = _accum_0
         end
       else
         escaped_fields = {
-          db.escape_identifier(self.field)
+          self.db.escape_identifier(self.field)
         }
       end
       if parsed.order then
@@ -263,9 +263,9 @@ do
             local _value_0
             local _exp_0 = order:lower()
             if "asc" == _exp_0 then
-              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and ">" or ">=") .. " " .. tostring(db.escape_literal(pos))
+              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and ">" or ">=") .. " " .. tostring(self.db.escape_literal(pos))
             elseif "desc" == _exp_0 then
-              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and "<" or "<=") .. " " .. tostring(db.escape_literal(pos))
+              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and "<" or "<=") .. " " .. tostring(self.db.escape_literal(pos))
             else
               _value_0 = error("don't know how to handle order " .. tostring(order))
             end

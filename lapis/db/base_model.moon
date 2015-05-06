@@ -1,5 +1,3 @@
-db = require "lapis.db"
-
 import underscore, escape_pattern, uniquify from require "lapis.util"
 import insert, concat from table
 
@@ -65,12 +63,14 @@ add_relations = (relations) =>
     error "don't know how to create relation `#{flatten_params relation}`"
 
 class BaseModel
+  @db: nil -- set in implementing class
+
   @timestamp: false
   @primary_key: "id"
 
   @__inherited: (child) =>
     if r = child.relations
-      add_relations child, r, db
+      add_relations child, r, @db
 
   @primary_keys: =>
     if type(@primary_key) == "table"
@@ -95,7 +95,7 @@ class BaseModel
     singularize @table_name!
 
   @columns: =>
-    columns = db.query [[
+    columns = @db.query [[
       select column_name, data_type
       from information_schema.columns
       where table_name = ?]], @table_name!
@@ -116,7 +116,7 @@ class BaseModel
 
   -- @delete: (query, ...) =>
   --   assert query, "tried to delete with no query"
-  --   db.delete @table_name!, query, ...
+  --   @db.delete @table_name!, query, ...
 
   @select: (query="", ...) =>
     opts = {}
@@ -130,21 +130,21 @@ class BaseModel
       opts = query
       query = ""
 
-    query = db.interpolate_query query, ...
-    tbl_name = db.escape_identifier @table_name!
+    query = @db.interpolate_query query, ...
+    tbl_name = @db.escape_identifier @table_name!
 
     fields = opts.fields or "*"
-    if res = db.select "#{fields} from #{tbl_name} #{query}"
+    if res = @db.select "#{fields} from #{tbl_name} #{query}"
       @load_all res
 
   @count: (clause, ...) =>
-    tbl_name = db.escape_identifier @table_name!
+    tbl_name = @db.escape_identifier @table_name!
     query = "COUNT(*) as c from #{tbl_name}"
 
     if clause
-      query ..= " where " .. db.interpolate_query clause, ...
+      query ..= " where " .. @db.interpolate_query clause, ...
 
-    unpack(db.select query).c
+    unpack(@db.select query).c
 
 
   -- include references to this model in a list of records based on a foreign
@@ -181,22 +181,22 @@ class BaseModel
 
     if next include_ids
       include_ids = uniquify include_ids
-      flat_ids = concat [db.escape_literal id for id in *include_ids], ", "
+      flat_ids = concat [@db.escape_literal id for id in *include_ids], ", "
 
       find_by = if flip
         foreign_key
       else
         @primary_key
 
-      tbl_name = db.escape_identifier @table_name!
-      find_by_escaped = db.escape_identifier find_by
+      tbl_name = @db.escape_identifier @table_name!
+      find_by_escaped = @db.escape_identifier find_by
 
       query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
 
       if opts and opts.where
-        query ..= " and " .. db.encode_clause opts.where
+        query ..= " and " .. @db.encode_clause opts.where
 
-      if res = db.select query
+      if res = @db.select query
         records = {}
         if many
           for t in *res
@@ -243,23 +243,23 @@ class BaseModel
       error "find_all must have a singular key to search"
 
     return {} if #ids == 0
-    flat_ids = concat [db.escape_literal id for id in *ids], ", "
-    primary = db.escape_identifier by_key
-    tbl_name = db.escape_identifier @table_name!
+    flat_ids = concat [@db.escape_literal id for id in *ids], ", "
+    primary = @db.escape_identifier by_key
+    tbl_name = @db.escape_identifier @table_name!
 
     query = fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
 
     if where
-      query ..= " and " .. db.encode_clause where
+      query ..= " and " .. @db.encode_clause where
 
     if clause
       if type(clause) == "table"
         assert clause[1], "invalid clause"
-        clause = db.interpolate_query unpack clause
+        clause = @db.interpolate_query unpack clause
 
       query ..= " " .. clause
 
-    if res = db.select query
+    if res = @db.select query
       @load r for r in *res
       res
 
@@ -269,13 +269,13 @@ class BaseModel
     error "(#{@table_name!}) trying to find with no conditions" if first == nil
 
     cond = if "table" == type first
-      db.encode_clause (...)
+      @db.encode_clause (...)
     else
-      db.encode_clause @encode_key(...)
+      @db.encode_clause @encode_key(...)
 
-    table_name = db.escape_identifier @table_name!
+    table_name = @db.escape_identifier @table_name!
 
-    if result = unpack db.select "* from #{table_name} where #{cond} limit 1"
+    if result = unpack @db.select "* from #{table_name} where #{cond} limit 1"
       @load result
 
   -- create from table of values, return loaded object
@@ -291,9 +291,9 @@ class BaseModel
 
     error "missing constraint to check" unless next t
 
-    cond = db.encode_clause t
-    table_name = db.escape_identifier @table_name!
-    nil != unpack db.select "1 from #{table_name} where #{cond} limit 1"
+    cond = @db.encode_clause t
+    table_name = @db.escape_identifier @table_name!
+    nil != unpack @db.select "1 from #{table_name} where #{cond} limit 1"
 
   @_check_constraint: (key, value, obj) =>
     return unless @constraints
@@ -316,7 +316,7 @@ class BaseModel
     cond = {}
     for key in *{@@primary_keys!}
       val = @[key]
-      val = db.NULL if val == nil
+      val = @@db.NULL if val == nil
 
       cond[key] = val
 
@@ -325,7 +325,7 @@ class BaseModel
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 
   delete: =>
-    res =  db.delete @@table_name!, @_primary_cond!
+    res =  @@db.delete @@table_name!, @_primary_cond!
     res.affected_rows and res.affected_rows > 0, res
 
   -- thing\update "col1", "col2", "col3"
@@ -342,11 +342,11 @@ class BaseModel
 
     if fields != "*"
       field_names = {fields, ...}
-      fields = table.concat [db.escape_identifier f for f in *field_names], ", "
+      fields = table.concat [@@db.escape_identifier f for f in *field_names], ", "
 
-    cond = db.encode_clause @_primary_cond!
-    tbl_name = db.escape_identifier @@table_name!
-    res = unpack db.select "#{fields} from #{tbl_name} where #{cond}"
+    cond = @@db.encode_clause @_primary_cond!
+    tbl_name = @@db.escape_identifier @@table_name!
+    res = unpack @@db.select "#{fields} from #{tbl_name} where #{cond}"
 
     unless res
       error "failed to find row to refresh from, did the primary key change?"

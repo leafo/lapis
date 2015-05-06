@@ -3,8 +3,8 @@ import setup_db, teardown_db from require "spec_postgres.helpers"
 
 import drop_tables from require "lapis.spec.db"
 
-import Model, enum from require "lapis.db.model"
-import types, create_table from require "lapis.db.schema"
+import Model, enum from require "lapis.db.postgres.model"
+import types, create_table from require "lapis.db.postgres.schema"
 
 class Users extends Model
   @create_table: =>

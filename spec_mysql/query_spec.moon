@@ -6,7 +6,6 @@ import setup_db, teardown_db from require "spec_mysql.helpers"
 import drop_tables from require "lapis.spec.db"
 import create_table, drop_table, types from schema
 
-
 describe "model", ->
   setup ->
     setup_db!

@@ -1,5 +1,3 @@
-db = require "lapis.db"
-
 assert_model = (primary_model, model_name) ->
   -- TODO: the primary model may influcence how related models are loaded
   models = require "models"
@@ -75,12 +73,12 @@ has_many = (name, opts) =>
       for k,v in pairs where
         clause[k] = v
 
-    clause = db.encode_clause clause
+    clause = @@db.encode_clause clause
 
     model\paginated "where #{clause}", fetch_opts
 
 polymorphic_belongs_to = (name, opts) =>
-  import Model, enum from require "lapis.db.model"
+  import enum from require "lapis.db.model"
   types = opts.polymorphic_belongs_to
 
   assert type(types) == "table", "missing types"

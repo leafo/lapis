@@ -4,6 +4,8 @@ import Enum, enum, BaseModel, singularize, add_relations
   from require "lapis.db.base_model"
 
 class Model extends BaseModel
+  @db: db
+
   -- create from table of values, return loaded object
   @create: (values, opts) =>
     if @constraints

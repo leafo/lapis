@@ -1,10 +1,10 @@
 
-db = require "lapis.db"
 import assert_env from require "lapis.environment"
 
 truncate_tables = (...) ->
-  assert_env "test", for: "truncate_tables"
+  db = require "lapis.db"
 
+  assert_env "test", for: "truncate_tables"
   tables = for t in *{...}
     if type(t) == "table"
       t\table_name!
@@ -17,6 +17,8 @@ truncate_tables = (...) ->
     db.delete table
 
 drop_tables = (...) ->
+  db = require "lapis.db"
+
   assert_env "test", for: "drop_tables"
 
   names = for t in *{...}
