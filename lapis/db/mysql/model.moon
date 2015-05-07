@@ -30,7 +30,7 @@ class Model extends BaseModel
       -- either luasql (field res.last_auto_id) or
       -- lua-resty-mysql (field res.insert_id) and
       new_id = res.last_auto_id or res.insert_id
-      if not values[@primary_key] and new_id
+      if not values[@primary_key] and new_id and new_id != 0
         values[@primary_key] = new_id
       @load values
     else

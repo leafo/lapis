@@ -24,8 +24,8 @@ class Posts extends Model
       {"user_id", types.integer null: true}
       {"title", types.text null: false}
       {"body", types.text null: false}
-      {"created_at", types.timestamp}
-      {"updated_at", types.timestamp}
+      {"created_at", types.datetime}
+      {"updated_at", types.datetime}
     }
 
 class Likes extends Model
@@ -43,8 +43,8 @@ class Likes extends Model
       {"user_id", types.integer}
       {"post_id", types.integer}
       {"count", types.integer}
-      {"created_at", types.timestamp}
-      {"updated_at", types.timestamp}
+      {"created_at", types.datetime}
+      {"updated_at", types.datetime}
 
       "PRIMARY KEY (user_id, post_id)"
     }
@@ -176,4 +176,61 @@ describe "model", ->
         assert.truthy (post\delete!)
         assert.falsy (post\delete!)
         assert.same {other_post}, Posts\select!
+
+  describe "primary key model", ->
+    before_each ->
+      Likes\create_table!
+
+    it "should find empty result by primary key", ->
+      assert.falsy (Likes\find 1,2)
+
+    it "should create", ->
+      like = Likes\create {
+        user_id: 40
+        post_id: 22
+        count: 1
+      }
+
+      assert.same 40, like.user_id
+      assert.same 22, like.post_id
+
+      assert.truthy like.created_at
+      assert.truthy like.updated_at
+
+      assert.same like, Likes\find 40, 22
+
+    describe "with rows", ->
+      local like, other_like
+
+      before_each ->
+        like = Likes\create {
+          user_id: 1
+          post_id: 2
+          count: 1
+        }
+
+        other_like = Likes\create {
+          user_id: 4
+          post_id: 6
+          count: 2
+        }
+
+      it "should delete row", ->
+        like\delete!
+
+        assert.has_error ->
+          like\refresh!
+
+        assert.same {other_like}, Likes\select!
+
+      it "should update row #ddd", ->
+        like\update {
+          count: 5
+        }
+
+        assert.same 5, like.count
+
+        assert.same like, Likes\find(like.user_id, like.post_id)
+        assert.same other_like, Likes\find(other_like.user_id, other_like.post_id)
+
 
