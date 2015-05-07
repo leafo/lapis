@@ -283,7 +283,7 @@ do
       end
       parsed.limit = tostring(self.per_page)
       local query = rebuild_query_clause(parsed)
-      local res = self.model:select(query, self.opts)
+      local res = self:_select(query, self.opts)
       local final = res[#res]
       res = self.prepare_results(res)
       if has_multi_fields then
@@ -291,6 +291,9 @@ do
       else
         return res, get_fields(final, self.field)
       end
+    end,
+    _select = function(self, ...)
+      return self.model:select(query, self.opts)
     end
   }
   _base_0.__index = _base_0

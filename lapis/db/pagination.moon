@@ -162,7 +162,7 @@ class OrderedPaginator extends Paginator
     parsed.limit = tostring @per_page
     query = rebuild_query_clause parsed
 
-    res = @model\select query, @opts
+    res = @_select query, @opts
 
     final = res[#res]
     res = @.prepare_results(res)
@@ -171,5 +171,8 @@ class OrderedPaginator extends Paginator
       res, get_fields final, unpack @field
     else
       res, get_fields final, @field
+
+  _select: (...) =>
+    @model\select query, @opts
 
 { :OffsetPaginator, :OrderedPaginator, :Paginator}
