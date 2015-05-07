@@ -36,6 +36,14 @@ class Model extends BaseModel
     else
       nil, "Failed to create #{@__name}"
 
+  @find_all: (...) =>
+    res = BaseModel.find_all @, ...
+    if res[1]
+      -- strip out extra data from query
+      [r for r in *res]
+    else
+      res
+
   -- thing\update "col1", "col2", "col3"
   -- thing\update {
   --   "col1", "col2"

@@ -135,6 +135,21 @@ do
       return nil, "Failed to create " .. tostring(self.__name)
     end
   end
+  self.find_all = function(self, ...)
+    local res = BaseModel.find_all(self, ...)
+    if res[1] then
+      local _accum_0 = { }
+      local _len_0 = 1
+      for _index_0 = 1, #res do
+        local r = res[_index_0]
+        _accum_0[_len_0] = r
+        _len_0 = _len_0 + 1
+      end
+      return _accum_0
+    else
+      return res
+    end
+  end
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
