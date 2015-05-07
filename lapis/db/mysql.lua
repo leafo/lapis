@@ -71,7 +71,7 @@ backends = {
       return result
     end
   end,
-  lua_resty_mysql = function()
+  resty_mysql = function()
     local after_dispatch, increment_perf
     do
       local _obj_0 = require("lapis.nginx.context")
@@ -95,7 +95,7 @@ backends = {
       if logger then
         logger.query(q)
       end
-      local db = ngx and ngx.ctx.lua_resty_mysql_db
+      local db = ngx and ngx.ctx.resty_mysql_db
       if not (db) then
         local err
         db, err = assert(mysql:new())
@@ -115,7 +115,7 @@ backends = {
         end
         assert(db:connect(options))
         if ngx then
-          ngx.ctx.lua_resty_mysql_db = db
+          ngx.ctx.resty_mysql_db = db
           after_dispatch(function()
             return db:set_keepalive(max_idle_timeout, pool_size)
           end)
@@ -152,7 +152,11 @@ set_backend = function(name, ...)
   if name == nil then
     name = "default"
   end
-  return assert(backends[name])(...)
+  local b = backends[name]
+  if not (b) then
+    error("failed to find mysql backend " .. tostring(name))
+  end
+  return b(...)
 end
 escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = function(val)
