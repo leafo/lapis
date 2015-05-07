@@ -38,10 +38,18 @@ class Paginator
 
     @per_page = @model.per_page
     @per_page = opts.per_page if opts
-    @prepare_results = opts.prepare_results if opts and opts.prepare_results
 
     @_clause = @db.interpolate_query clause, ...
     @opts = opts
+
+  select: (...) =>
+    @model\select ...
+
+  prepare_results: (items) =>
+    if pr = @opts and @opts.prepare_results
+      pr items
+    else
+      items
 
 class OffsetPaginator extends Paginator
   per_page: 10
@@ -55,14 +63,13 @@ class OffsetPaginator extends Paginator
         coroutine.yield results, page
         page += 1
 
-
   get_all: =>
-    @.prepare_results @model\select @_clause, @opts
+    @prepare_results @select @_clause, @opts
 
   -- 1 indexed page
   get_page: (page) =>
     page = (math.max 1, tonumber(page) or 0) - 1
-    @.prepare_results @model\select @_clause .. [[
+    @prepare_results @select @_clause .. [[
       limit ?
       offset ?
     ]], @per_page, @per_page * page, @opts
@@ -87,14 +94,9 @@ class OffsetPaginator extends Paginator
 
     @_count
 
-  prepare_results: (...) -> ...
-
-
 class OrderedPaginator extends Paginator
   order: "ASC" -- default sort order
   per_page: 10
-
-  prepare_results: (...) -> ...
 
   new: (model, @field, ...) =>
     super model, ...
@@ -162,17 +164,14 @@ class OrderedPaginator extends Paginator
     parsed.limit = tostring @per_page
     query = rebuild_query_clause parsed
 
-    res = @_select query, @opts
+    res = @select query, @opts
 
     final = res[#res]
-    res = @.prepare_results(res)
+    res = @prepare_results res
 
     if has_multi_fields
       res, get_fields final, unpack @field
     else
       res, get_fields final, @field
-
-  _select: (...) =>
-    @model\select query, @opts
 
 { :OffsetPaginator, :OrderedPaginator, :Paginator}

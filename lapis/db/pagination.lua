@@ -55,7 +55,21 @@ rebuild_query_clause = function(parsed)
 end
 local Paginator
 do
-  local _base_0 = { }
+  local _base_0 = {
+    select = function(self, ...)
+      return self.model:select(...)
+    end,
+    prepare_results = function(self, items)
+      do
+        local pr = self.opts and self.opts.prepare_results
+        if pr then
+          return pr(items)
+        else
+          return items
+        end
+      end
+    end
+  }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
     __init = function(self, model, clause, ...)
@@ -77,9 +91,6 @@ do
       self.per_page = self.model.per_page
       if opts then
         self.per_page = opts.per_page
-      end
-      if opts and opts.prepare_results then
-        self.prepare_results = opts.prepare_results
       end
       self._clause = self.db.interpolate_query(clause, ...)
       self.opts = opts
@@ -119,11 +130,11 @@ do
       end)
     end,
     get_all = function(self)
-      return self.prepare_results(self.model:select(self._clause, self.opts))
+      return self:prepare_results(self:select(self._clause, self.opts))
     end,
     get_page = function(self, page)
       page = (math.max(1, tonumber(page) or 0)) - 1
-      return self.prepare_results(self.model:select(self._clause .. [[      limit ?
+      return self:prepare_results(self:select(self._clause .. [[      limit ?
       offset ?
     ]], self.per_page, self.per_page * page, self.opts))
     end,
@@ -144,9 +155,6 @@ do
         self._count = unpack(self.db.select(query)).c
       end
       return self._count
-    end,
-    prepare_results = function(...)
-      return ...
     end
   }
   _base_0.__index = _base_0
@@ -185,9 +193,6 @@ do
   local _base_0 = {
     order = "ASC",
     per_page = 10,
-    prepare_results = function(...)
-      return ...
-    end,
     each_page = function(self)
       return coroutine.wrap(function()
         local tuple = { }
@@ -283,17 +288,14 @@ do
       end
       parsed.limit = tostring(self.per_page)
       local query = rebuild_query_clause(parsed)
-      local res = self:_select(query, self.opts)
+      local res = self:select(query, self.opts)
       local final = res[#res]
-      res = self.prepare_results(res)
+      res = self:prepare_results(res)
       if has_multi_fields then
         return res, get_fields(final, unpack(self.field))
       else
         return res, get_fields(final, self.field)
       end
-    end,
-    _select = function(self, ...)
-      return self.model:select(query, self.opts)
     end
   }
   _base_0.__index = _base_0
