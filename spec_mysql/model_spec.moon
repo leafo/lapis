@@ -14,6 +14,42 @@ class Users extends Model
       {"name", types.text}
     }
 
+class Posts extends Model
+  @timestamp: true
+
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"id", types.id}
+      {"user_id", types.integer null: true}
+      {"title", types.text null: false}
+      {"body", types.text null: false}
+      {"created_at", types.timestamp}
+      {"updated_at", types.timestamp}
+    }
+
+class Likes extends Model
+  @primary_key: {"user_id", "post_id"}
+  @timestamp: true
+
+  @relations: {
+    {"user", belongs_to: "Users"}
+    {"post", belongs_to: "Posts"}
+  }
+
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"user_id", types.integer}
+      {"post_id", types.integer}
+      {"count", types.integer}
+      {"created_at", types.timestamp}
+      {"updated_at", types.timestamp}
+
+      "PRIMARY KEY (user_id, post_id)"
+    }
+
+
 describe "model", ->
   setup ->
     setup_db!
@@ -58,4 +94,86 @@ describe "model", ->
           "Type": "text"
         }
       }, Users\columns!
+
+    describe "with some rows", ->
+      local first, second
+
+      before_each ->
+        first = Users\create { name: "first" }
+        second = Users\create { name: "second" }
+
+      it "should should find existing row", ->
+        assert.same first, Users\find first.id
+        assert.same second, Users\find second.id
+        assert.same second, Users\find name: "second"
+        assert.falsy Users\find name: "second", id: 1
+        assert.same first, Users\find id: "1"
+
+      it "it should select rows", ->
+        things = Users\select!
+        assert.same 2, #things
+
+        things = Users\select "order by name desc"
+        assert "second", things[1].name
+        assert "first", things[2].name
+
+      it "it should only select specified fields", ->
+        things = Users\select "order by id asc", fields: "id"
+        assert.same {{id: 1}, {id: 2}}, things
+
+      it "it should find all", ->
+        things = Users\find_all {1,3}
+        assert.same {first}, things
+
+        things = Users\find_all {1,2}, where: {
+          name: "second"
+        }
+
+        assert.same {second}, things
+
+  describe "timestamp model", ->
+    before_each ->
+      Posts\create_table!
+
+    it "should create empty row", ->
+      -- this fails in postgres, but mysql gives default values
+      Posts\create {}
+
+    it "should create model", ->
+      post = Posts\create {
+        title: "Hello world"
+        body: "Greetings"
+      }
+
+      assert.truthy post.created_at
+      assert.truthy post.updated_at
+      assert.same post.created_at, post.updated_at
+
+    describe "with row", ->
+      local post, other_post
+
+      before_each ->
+        post = Posts\create {
+          title: "Hello world"
+          body: "Greetings"
+        }
+
+        other_post = Posts\create {
+          title: "Meetings"
+          body: "Say all"
+        }
+
+      it "should update post", ->
+        res = post\update {
+          title: "Another world"
+        }
+
+        -- this is undocumented
+        assert.same 1, res.affected_rows
+        assert.same "Another world", post.title
+
+      it "should delete post", ->
+        assert.truthy (post\delete!)
+        assert.falsy (post\delete!)
+        assert.same {other_post}, Posts\select!
 
