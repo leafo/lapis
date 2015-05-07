@@ -149,9 +149,6 @@ backends = {
   end
 }
 set_backend = function(name, ...)
-  if name == nil then
-    name = "default"
-  end
   local b = backends[name]
   if not (b) then
     error("failed to find mysql backend " .. tostring(name))
@@ -201,8 +198,15 @@ init_logger = function()
 end
 init_db = function()
   local config = require("lapis.config").get()
-  local default_backend = config.mysql and config.mysql.backend or "default"
-  return set_backend(default_backend)
+  local backend = config.mysql and config.mysql.backend
+  if not (backend) then
+    if ngx then
+      backend = "resty_mysql"
+    else
+      backend = "luasql"
+    end
+  end
+  return set_backend(backend)
 end
 raw_query = function(...)
   init_logger()

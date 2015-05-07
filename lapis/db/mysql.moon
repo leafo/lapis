@@ -125,11 +125,10 @@ backends = {
       result
 }
 
-set_backend = (name="default", ...) ->
+set_backend = (name, ...) ->
   b = backends[name]
   unless b
     error "failed to find mysql backend #{name}"
-
   b ...
 
 escape_err = "LuaSQL connection or ngx is required to escape a string literal"
@@ -165,8 +164,14 @@ init_logger = ->
 
 init_db = ->
   config = require("lapis.config").get!
-  default_backend = config.mysql and config.mysql.backend or "default"
-  set_backend default_backend
+  backend = config.mysql and config.mysql.backend
+  unless backend
+    backend = if ngx
+      "resty_mysql"
+    else
+      "luasql"
+
+  set_backend backend
 
 raw_query = (...) ->
   init_logger!
