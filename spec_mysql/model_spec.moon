@@ -223,7 +223,7 @@ describe "model", ->
 
         assert.same {other_like}, Likes\select!
 
-      it "should update row #ddd", ->
+      it "should update row", ->
         like\update {
           count: 5
         }
@@ -232,5 +232,74 @@ describe "model", ->
 
         assert.same like, Likes\find(like.user_id, like.post_id)
         assert.same other_like, Likes\find(other_like.user_id, other_like.post_id)
+
+  describe "relations", ->
+    before_each ->
+      Users\create_table!
+      Posts\create_table!
+      Likes\create_table!
+
+      package.loaded.models = {
+        :Users, :Posts, :Likes
+      }
+
+    after_each ->
+      package.loaded.models = nil
+
+
+    it "should fetch relation", ->
+      user = Users\create { name: "yeah" }
+      post = Posts\create {
+        title: "hi"
+        body: "quality writing"
+      }
+
+      Likes\create {
+        user_id: user.id
+        post_id: post.id
+      }
+
+      like = unpack Likes\select!
+
+      assert.same user, like\get_user!
+      assert.same post, like\get_post!
+
+  describe "include_in", ->
+    before_each ->
+      Users\create_table!
+      Posts\create_table!
+      Likes\create_table!
+
+    before_each ->
+      for i=1,2
+        user = Users\create { name: "first" }
+        for i=1,2
+          Posts\create {
+            user_id: user.id
+            title: "My great post"
+            body: "This is about something"
+          }
+
+    it "should include users for posts", ->
+      posts = Posts\select!
+      Users\include_in posts, "user_id"
+      for post in *posts
+        assert post.user
+        assert.same post.user.id, post.user_id
+
+    it "should include flipped many posts for user", ->
+      users = Users\select!
+      Posts\include_in users, "user_id", {
+        flip: true
+        many: true
+      }
+
+      for user in *users
+        assert user.posts
+        assert.same 2, #user.posts
+
+        for post in *user.posts
+          assert.same user.id, post.user_id
+
 
 
