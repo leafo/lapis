@@ -237,6 +237,13 @@ return {
       return _fn_0(_base_0, ...)
     end
   end)(),
+  write_config_for = (function()
+    local _base_0 = runner
+    local _fn_0 = _base_0.write_config_for
+    return function(...)
+      return _fn_0(_base_0, ...)
+    end
+  end)(),
   compile_config = (function()
     local _base_0 = compiler
     local _fn_0 = _base_0.compile_config

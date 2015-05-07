@@ -169,6 +169,8 @@ compiler = NginxRunner.ConfigCompiler!
   start_nginx: runner\start_nginx
   find_nginx: runner\find_nginx
 
+  write_config_for: runner\write_config_for
+
   compile_config: compiler\compile_config
   compile_etlua_config: compiler\compile_etlua_config
 
