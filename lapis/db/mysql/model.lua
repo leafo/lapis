@@ -93,6 +93,23 @@ do
   _base_0.__class = _class_0
   local self = _class_0
   self.db = db
+  self.columns = function(self)
+    local columns = self.db.query("\n      SHOW COLUMNS FROM " .. tostring(self.db.escape_identifier(self:table_name())) .. "\n    ")
+    do
+      local _accum_0 = { }
+      local _len_0 = 1
+      for _index_0 = 1, #columns do
+        local c = columns[_index_0]
+        _accum_0[_len_0] = c
+        _len_0 = _len_0 + 1
+      end
+      columns = _accum_0
+    end
+    self.columns = function()
+      return columns
+    end
+    return columns
+  end
   self.create = function(self, values, opts)
     if self.constraints then
       for key in pairs(self.constraints) do

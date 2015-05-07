@@ -6,6 +6,14 @@ import Enum, enum, BaseModel, singularize, add_relations
 class Model extends BaseModel
   @db: db
 
+  @columns: =>
+    columns = @db.query "
+      SHOW COLUMNS FROM #{@db.escape_identifier @table_name!}
+    "
+    columns = [c for c in *columns] -- strip extra data from query
+    @columns = -> columns
+    columns
+
   -- create from table of values, return loaded object
   @create: (values, opts) =>
     if @constraints
