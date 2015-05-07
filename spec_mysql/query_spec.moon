@@ -34,7 +34,7 @@ describe "model", ->
 
     assert.same 1, #db.raw_query [[
       select * from information_schema.tables
-      where table_schema = "lapis_test"
+      where table_schema = "lapis_test" and table_name = "hello_worlds"
     ]]
 
     db.insert "hello_worlds", {
