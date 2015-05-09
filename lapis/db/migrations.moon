@@ -19,7 +19,7 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
     "PRIMARY KEY(name)"
   }
 
-run_migrations = (migrations) ->
+run_migrations = (migrations, prefix) ->
   import entity_exists from require "lapis.db.schema"
   unless entity_exists LapisMigrations\table_name!
     logger.notice "Table `#{LapisMigrations\table_name!}` does not exist, creating"
@@ -32,6 +32,10 @@ run_migrations = (migrations) ->
 
   count = 0
   for _, {name, fn} in ipairs tuples
+    if prefix
+      assert type(prefix) == "string", "got a prefix for `run_migrations` but it was not a string"
+      name = "#{prefix}_#{name}"
+
     unless exists[tostring name]
       logger.migration name
       fn name
