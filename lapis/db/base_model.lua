@@ -213,6 +213,9 @@ do
       end
     end
   end
+  self.find_model_for_relation = function(self, name)
+    return require("models")[name]
+  end
   self.primary_keys = function(self)
     if type(self.primary_key) == "table" then
       return unpack(self.primary_key)

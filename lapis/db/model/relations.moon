@@ -1,8 +1,6 @@
 assert_model = (primary_model, model_name) ->
-  -- TODO: the primary model may influcence how related models are loaded
-  models = require "models"
-  with m = models[model_name]
-    error "failed to find model `#{model_name}` for relationship" unless m
+  with m = primary_model\find_model_for_relation model_name
+    error "failed to find model `#{model_name}` for relation" unless m
 
 fetch = (name, opts) =>
   source = opts.fetch
