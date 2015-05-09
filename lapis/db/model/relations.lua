@@ -1,9 +1,9 @@
 local assert_model
 assert_model = function(primary_model, model_name)
   do
-    local m = primary_model:find_model_for_relation(model_name)
+    local m = primary_model:get_relation_model(model_name)
     if not (m) then
-      error("failed to find model `" .. tostring(model_name) .. "` for relationship")
+      error("failed to find model `" .. tostring(model_name) .. "` for relation")
     end
     return m
   end

@@ -1,5 +1,5 @@
 assert_model = (primary_model, model_name) ->
-  with m = primary_model\find_model_for_relation model_name
+  with m = primary_model\get_relation_model model_name
     error "failed to find model `#{model_name}` for relation" unless m
 
 fetch = (name, opts) =>

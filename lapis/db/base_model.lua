@@ -213,7 +213,7 @@ do
       end
     end
   end
-  self.find_model_for_relation = function(self, name)
+  self.get_relation_model = function(self, name)
     return require("models")[name]
   end
   self.primary_keys = function(self)

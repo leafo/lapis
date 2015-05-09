@@ -67,7 +67,7 @@ class BaseModel
     if r = child.relations
       add_relations child, r, @db
 
-  @find_model_for_relation: (name) =>
+  @get_relation_model: (name) =>
     require("models")[name]
 
   @primary_keys: =>
