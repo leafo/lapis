@@ -90,7 +90,14 @@ has_many = function(self, name, opts)
         end
       end
     end
-    return "where " .. tostring(self.__class.db.encode_clause(clause))
+    clause = "where " .. tostring(self.__class.db.encode_clause(clause))
+    do
+      local order = opts.order
+      if order then
+        clause = clause .. " order by " .. tostring(order)
+      end
+    end
+    return clause
   end
   self.__base[get_method] = function(self)
     local existing = self[name]

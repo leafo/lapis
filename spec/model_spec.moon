@@ -637,6 +637,7 @@ describe "lapis.db.model", ->
         @relations: {
           {"posts", has_many: "Posts"}
           {"more_posts", has_many: "Posts", where: {color: "blue"}}
+          {"fresh_posts", has_many: "Posts", order: "id desc"}
         }
 
       user = models.Users!
@@ -646,6 +647,7 @@ describe "lapis.db.model", ->
       user\get_posts!
 
       user\get_more_posts!
+      user\get_fresh_posts!
 
       assert_queries {
         'SELECT * from "posts" where "user_id" = 1234'
@@ -653,6 +655,7 @@ describe "lapis.db.model", ->
           [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue']]
           [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234]]
         }
+        'SELECT * from "posts" where "user_id" = 1234 order by id desc'
       }, queries
 
     it "should create relations for inheritance", ->

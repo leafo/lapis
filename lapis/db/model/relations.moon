@@ -69,7 +69,12 @@ has_many = (name, opts) =>
       for k,v in pairs where
         clause[k] = v
 
-    "where #{@@db.encode_clause clause}"
+    clause = "where #{@@db.encode_clause clause}"
+
+    if order = opts.order
+      clause ..= " order by #{order}"
+
+    clause
 
   @__base[get_method] = =>
     existing = @[name]
