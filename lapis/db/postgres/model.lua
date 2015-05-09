@@ -1,8 +1,8 @@
 local db = require("lapis.db.postgres")
-local Enum, enum, BaseModel, singularize, add_relations
+local BaseModel, Enum, enum
 do
   local _obj_0 = require("lapis.db.base_model")
-  Enum, enum, BaseModel, singularize, add_relations = _obj_0.Enum, _obj_0.enum, _obj_0.BaseModel, _obj_0.singularize, _obj_0.add_relations
+  BaseModel, Enum, enum = _obj_0.BaseModel, _obj_0.Enum, _obj_0.enum
 end
 local Model
 do

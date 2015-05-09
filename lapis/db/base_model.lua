@@ -1,7 +1,7 @@
-local underscore, escape_pattern, uniquify
+local underscore, escape_pattern, uniquify, singularize
 do
   local _obj_0 = require("lapis.util")
-  underscore, escape_pattern, uniquify = _obj_0.underscore, _obj_0.escape_pattern, _obj_0.uniquify
+  underscore, escape_pattern, uniquify, singularize = _obj_0.underscore, _obj_0.escape_pattern, _obj_0.uniquify, _obj_0.singularize
 end
 local insert, concat
 do
@@ -11,10 +11,7 @@ end
 local cjson = require("cjson")
 local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
-local singularize, Enum, enum, add_relations, BaseModel
-singularize = function(name)
-  return name:match("^(.*)s$") or name
-end
+local Enum
 do
   local _base_0 = {
     for_db = function(self, key)
@@ -55,6 +52,7 @@ do
   _base_0.__class = _class_0
   Enum = _class_0
 end
+local enum
 enum = function(tbl)
   local keys
   do
@@ -72,6 +70,7 @@ enum = function(tbl)
   end
   return setmetatable(tbl, Enum.__base)
 end
+local add_relations
 add_relations = function(self, relations)
   local relation_builders = require("lapis.db.model.relations")
   for _index_0 = 1, #relations do
@@ -104,6 +103,7 @@ add_relations = function(self, relations)
     end
   end
 end
+local BaseModel
 do
   local _base_0 = {
     _primary_cond = function(self)
@@ -529,6 +529,5 @@ return {
   BaseModel = BaseModel,
   Enum = Enum,
   enum = enum,
-  singularize = singularize,
   add_relations = add_relations
 }

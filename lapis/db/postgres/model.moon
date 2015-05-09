@@ -1,7 +1,6 @@
 db = require "lapis.db.postgres"
 
-import Enum, enum, BaseModel, singularize, add_relations
-  from require "lapis.db.base_model"
+import BaseModel, Enum, enum from require "lapis.db.base_model"
 
 class Model extends BaseModel
   @db: db

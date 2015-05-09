@@ -7,7 +7,7 @@ do
 end
 local floor
 floor = math.floor
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields, singularize
 do
   local u = url.unescape
   unescape = function(str)
@@ -512,6 +512,9 @@ get_fields = function(obj, key, ...)
   end
   return obj[key], get_fields(obj, ...)
 end
+singularize = function(name)
+  return (name:gsub("ies$", "y"):gsub("oes$", "o"):gsub("s$", ""))
+end
 return {
   unescape = unescape,
   escape = escape,
@@ -539,5 +542,6 @@ return {
   auto_table = auto_table,
   mixin_class = mixin_class,
   mixin = mixin,
-  get_fields = get_fields
+  get_fields = get_fields,
+  singularize = singularize
 }

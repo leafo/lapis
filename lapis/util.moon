@@ -358,10 +358,13 @@ get_fields = (obj, key, ...) ->
   return unless key
   obj[key], get_fields obj, ...
 
+singularize = (name) ->
+  -- TODO: not very good
+  (name\gsub("ies$", "y")\gsub("oes$", "o")\gsub("s$", ""))
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :from_json, :json_encodable, :build_url, :time_ago,
   :time_ago_in_words, :camelize, :title_case, :autoload, :auto_table,
-  :mixin_class, :mixin, :get_fields }
+  :mixin_class, :mixin, :get_fields, :singularize }

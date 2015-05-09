@@ -1,14 +1,9 @@
-import underscore, escape_pattern, uniquify from require "lapis.util"
+import underscore, escape_pattern, uniquify, singularize from require "lapis.util"
 import insert, concat from table
 
 cjson = require "cjson"
+
 import OffsetPaginator from require "lapis.db.pagination"
-
-local *
-
--- TODO: need a proper singularize
-singularize = (name)->
-  name\match"^(.*)s$" or name
 
 class Enum
   -- convert string to number, or let number pass through
@@ -365,5 +360,4 @@ class BaseModel
 
     @
 
-
-{ :BaseModel, :Enum, :enum, :singularize, :add_relations }
+{ :BaseModel, :Enum, :enum, :add_relations }

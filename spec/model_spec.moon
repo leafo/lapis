@@ -44,6 +44,14 @@ describe "lapis.db.model", ->
     queries = {}
     query_mock = {}
 
+  it "should get singular name", ->
+    assert.same "thing", (class Things extends Model)\singular_name!
+    assert.same "category", (class Categories extends Model)\singular_name!
+
+  it "should get table name", ->
+    assert.same "banned_users", (class BannedUsers extends Model)\table_name!
+    assert.same "categories", (class Categories extends Model)\table_name!
+
   it "should select", ->
     class Things extends Model
 
