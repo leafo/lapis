@@ -72,13 +72,15 @@ has_one = function(self, name, opts)
 end
 local has_many
 has_many = function(self, name, opts)
-  if opts.pager == false then
-    error("not yet")
-  end
   local source = opts.has_many
   assert(type(source) == "string", "Expecting model name for `has_many` relation")
   local get_method = opts.as or "get_" .. tostring(name)
-  self.__base[get_method] = function(self, fetch_opts)
+  local get_paginated_method = tostring(get_method) .. "_paginated"
+  self.__base[get_method] = function(self)
+    local existing = self[name]
+    if existing ~= nil then
+      return existing
+    end
     local model = assert_model(self.__class, source)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
     local clause = {
@@ -93,7 +95,30 @@ has_many = function(self, name, opts)
       end
     end
     clause = self.__class.db.encode_clause(clause)
-    return model:paginated("where " .. tostring(clause), fetch_opts)
+    do
+      local res = model:select("where " .. tostring(clause))
+      self[name] = res
+      return res
+    end
+  end
+  if not (opts.pager == false) then
+    self.__base[get_paginated_method] = function(self, fetch_opts)
+      local model = assert_model(self.__class, source)
+      local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
+      local clause = {
+        [foreign_key] = self[self.__class:primary_keys()]
+      }
+      do
+        local where = opts.where
+        if where then
+          for k, v in pairs(where) do
+            clause[k] = v
+          end
+        end
+      end
+      clause = self.__class.db.encode_clause(clause)
+      return model:paginated("where " .. tostring(clause), fetch_opts)
+    end
   end
 end
 local polymorphic_belongs_to

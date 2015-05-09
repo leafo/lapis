@@ -600,7 +600,7 @@ describe "lapis.db.model", ->
         'SELECT * from "user_data" where "owner_id" = 123 limit 1'
       }, queries
 
-    it "should make has_many getter", ->
+    it "should make has_many paginated getter", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.Posts = class extends Model
@@ -631,7 +631,7 @@ describe "lapis.db.model", ->
       }, queries
 
 
-    it "should make has_many paginated getter ", ->
+    it "should make has_many getter ", ->
       models.Posts = class extends Model
       models.Users = class extends Model
         @relations: {
