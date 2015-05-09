@@ -1266,7 +1266,8 @@ SELECT * from "user_profiles" where "owner_id" = 123;
 
 ### `has_many`
 
-A one to many relation, returns a [`Pager` object](#pagination).
+A one to many relation. It defines two methods, one that returns a [`Pager`
+object](#pagination), and one that fetches all of the objects.
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -1286,20 +1287,93 @@ class Users extends Model
   }
 ```
 
+We can use the `get_` method to fetch all the associated records. If the
+relation has already been fetched then it will return the cached value. The
+cached value is stored in a field on the model that matches the name of the
+relation.
+
 ```lua
-local posts = user:get_posts({per_page = 20}):get_page(3)
+local posts = user:get_posts()
 ```
 
 ```moon
-posts = user\get_posts(per_page: 20)\get_page 3
+posts = user\get_posts!
+```
+
+```sql
+SELECT * from "posts" where "user_id" = 123
+```
+
+The `has_many` relation also creates a `get_X_paginated` method for getting a
+pager that points to the related objects. This is useful if you know the
+relation could include a large number of things and it does not make sense to
+fetch them all at once.
+
+Any arguments passed to the paginated getter are passed to the pager's
+constructor, so you can specify things like `fields`, `prepare_reults`, and
+`per_page`:
+
+
+```lua
+local posts = user:get_posts_paginated({per_page = 20}):get_page(3)
+```
+
+```moon
+posts = user\get_posts_paginated(per_page: 20)\get_page 3
 ```
 
 ```sql
 SELECT * from "posts" where "user_id" = 123 LIMIT 20 OFFSET 40
 ```
 
-You can override the foreign key column name by passing a `key` relation
-property.
+
+The `has_many` relation supports a few more options:
+
+* `key` -- the foreign key to search on, defaults to appending `_id` to the singular form of the table name, eg. `Users` → `user_id`
+* `where` -- set additional constraints on the things returned, as a table
+* `order` -- a SQL fragment as a string used to specify `order by` clause in the queries
+* `as` -- specify the prefix of the generated methods (defaults to `get_NAME`)
+
+
+Here's a more complex exmaple using some of the options:
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  relations = {
+    {"authored_posts",
+			has_many = "Posts",
+			where = {deleted = false},
+			order = "id desc",
+			key = "poster_id"}
+  }
+})
+```
+
+```moon
+import Model from require "lapis.db.models"
+class Users extends Model
+  @relations: {
+    {"authored_posts"
+			has_many: "Posts"
+			where: {deleted: false}
+			order: "id desc"
+			key: "poster_id"}
+  }
+```
+
+```lua
+local posts = user:get_authored_posts()
+```
+
+```moon
+posts = user\get_authored_posts!
+```
+
+```sql
+SELECT * from "posts" where "poster_id" = 123 and deleted = FALSE order by id desc
+```
 
 ### `fetch`
 
