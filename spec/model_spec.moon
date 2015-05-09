@@ -613,12 +613,12 @@ describe "lapis.db.model", ->
       user = models.Users!
       user.id = 1234
 
-      user\get_posts!\get_page 1
-      user\get_posts!\get_page 2
+      user\get_posts_paginated!\get_page 1
+      user\get_posts_paginated!\get_page 2
 
-      user\get_more_posts!\get_page 2
+      user\get_more_posts_paginated!\get_page 2
 
-      user\get_posts(per_page: 44)\get_page 3
+      user\get_posts_paginated(per_page: 44)\get_page 3
 
       assert_queries {
         'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 0 '
@@ -628,6 +628,31 @@ describe "lapis.db.model", ->
           [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 limit 10 offset 10 ]]
         }
         'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
+      }, queries
+
+
+    it "should make has_many paginated getter ", ->
+      models.Posts = class extends Model
+      models.Users = class extends Model
+        @relations: {
+          {"posts", has_many: "Posts"}
+          {"more_posts", has_many: "Posts", where: {color: "blue"}}
+        }
+
+      user = models.Users!
+      user.id = 1234
+
+      user\get_posts!
+      user\get_posts!
+
+      user\get_more_posts!
+
+      assert_queries {
+        'SELECT * from "posts" where "user_id" = 1234'
+        {
+          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue']]
+          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234]]
+        }
       }, queries
 
     it "should create relations for inheritance", ->

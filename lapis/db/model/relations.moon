@@ -52,15 +52,15 @@ has_one = (name, opts) =>
       @[name] = obj
 
 has_many = (name, opts) =>
-  if opts.pager == false
-    error "not yet"
-
   source = opts.has_many
   assert type(source) == "string", "Expecting model name for `has_many` relation"
 
   get_method = opts.as or "get_#{name}"
+  get_paginated_method = "#{get_method}_paginated"
 
-  @__base[get_method] = (fetch_opts) =>
+  @__base[get_method] = =>
+    existing = @[name]
+    return existing if existing != nil
     model = assert_model @@, source
 
     foreign_key = opts.key or "#{@@singular_name!}_id"
@@ -75,7 +75,27 @@ has_many = (name, opts) =>
 
     clause = @@db.encode_clause clause
 
-    model\paginated "where #{clause}", fetch_opts
+    with res = model\select "where #{clause}"
+      @[name] = res
+
+  unless opts.pager == false
+    @__base[get_paginated_method] = (fetch_opts) =>
+      model = assert_model @@, source
+
+      foreign_key = opts.key or "#{@@singular_name!}_id"
+
+      clause = {
+        [foreign_key]: @[@@primary_keys!]
+      }
+
+      if where = opts.where
+        for k,v in pairs where
+          clause[k] = v
+
+      clause = @@db.encode_clause clause
+
+      model\paginated "where #{clause}", fetch_opts
+
 
 polymorphic_belongs_to = (name, opts) =>
   import enum from require "lapis.db.model"
