@@ -314,7 +314,7 @@ do
     if not flip and type(self.primary_key) == "table" then
       error("model must have singular primary key to include")
     end
-    local src_key = flip and "id" or foreign_key
+    local src_key = flip and (opts.local_key or "id") or foreign_key
     local include_ids
     do
       local _accum_0 = { }

@@ -172,7 +172,7 @@ class BaseModel
     if not flip and type(@primary_key) == "table"
       error "model must have singular primary key to include"
 
-    src_key = flip and "id" or foreign_key
+    src_key = flip and (opts.local_key or "id") or foreign_key
     include_ids = for record in *other_records
       with id = record[src_key]
         continue unless id
