@@ -32,8 +32,13 @@ class Model extends BaseModel
       db.insert @table_name!, values, @primary_keys!
 
     if res
+      if returning
+        for k in *returning
+          values[k] = res[1][k]
+
       for k,v in pairs res[1]
         values[k] = v
+
       @load values
     else
       nil, "Failed to create #{@__name}"
@@ -83,8 +88,8 @@ class Model extends BaseModel
     if returning
       with res = db.update @@table_name!, values, cond, unpack returning
         if update = unpack res
-          for k, v in pairs update
-            @[k] = v
+          for k in *returning
+            @[k] = update[k]
     else
       db.update @@table_name!, values, cond
 

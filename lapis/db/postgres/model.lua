@@ -76,8 +76,9 @@ do
           do
             local update = unpack(res)
             if update then
-              for k, v in pairs(update) do
-                self[k] = v
+              for _index_0 = 1, #returning do
+                local k = returning[_index_0]
+                self[k] = update[k]
               end
             end
           end
@@ -155,6 +156,12 @@ do
       res = db.insert(self:table_name(), values, self:primary_keys())
     end
     if res then
+      if returning then
+        for _index_0 = 1, #returning do
+          local k = returning[_index_0]
+          values[k] = res[1][k]
+        end
+      end
       for k, v in pairs(res[1]) do
         values[k] = v
       end
