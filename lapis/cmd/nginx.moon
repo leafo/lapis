@@ -1,9 +1,8 @@
 
 path = require "lapis.cmd.path"
-import get_free_port, default_environment from require "lapis.cmd.util"
+import shell_escape from path
 
-shell_escape = (str) ->
-  str\gsub "'", "''"
+import get_free_port, default_environment from require "lapis.cmd.util"
 
 class NginxRunner
   ConfigCompiler: require("lapis.cmd.nginx.config").ConfigCompiler
@@ -24,7 +23,11 @@ class NginxRunner
   }
 
   new: (opts={}) =>
+    if bp = opts.base_path
+      @set_base_path bp
+
     for k,v in pairs opts
+      continue if k == "base_path"
       @[k] = v
 
   exec: (cmd) =>
@@ -43,7 +46,7 @@ class NginxRunner
     nginx = @find_nginx!
     return nil, "can't find nginx" unless nginx
 
-    path.mkdir "logs"
+    path.mkdir path.join @base_path, "logs"
     @exec "touch '#{shell_escape path.join @base_path, "logs/error.log"}'"
     @exec "touch '#{shell_escape path.join @base_path, "logs/access.log"}'"
 

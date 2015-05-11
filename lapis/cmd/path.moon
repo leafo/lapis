@@ -1,6 +1,9 @@
 
 io = io
 
+shell_escape = (str) ->
+  str\gsub "'", "''"
+
 local *
 
 -- move up a directory
@@ -36,10 +39,10 @@ read_file = (path) ->
     file\close!
 
 mkdir = (path) ->
-  os.execute "mkdir -p #{path}"
+  os.execute "mkdir -p '#{shell_escape path}'"
 
 copy = (src, dest) ->
-  os.execute "cp #{src} #{dest}"
+  os.execute "cp '#{shell_escape src}' '#{shell_escape dest}'"
 
 join = (a, b) ->
   a = a\match"^(.*)/$" or a if a != "/"
@@ -48,6 +51,5 @@ join = (a, b) ->
   return a if b == ""
   a .. "/" .. b
 
-
 { :up, :exists, :normalize, :basepath, :filename, :write_file, :mkdir, :copy,
-  :join, :read_file }
+  :join, :read_file, :shell_escape }

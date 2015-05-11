@@ -1,4 +1,8 @@
 local io = io
+local shell_escape
+shell_escape = function(str)
+  return str:gsub("'", "''")
+end
 local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join
 up = function(path)
   path = path:gsub("/$", "")
@@ -43,10 +47,10 @@ read_file = function(path)
   end
 end
 mkdir = function(path)
-  return os.execute("mkdir -p " .. tostring(path))
+  return os.execute("mkdir -p '" .. tostring(shell_escape(path)) .. "'")
 end
 copy = function(src, dest)
-  return os.execute("cp " .. tostring(src) .. " " .. tostring(dest))
+  return os.execute("cp '" .. tostring(shell_escape(src)) .. "' '" .. tostring(shell_escape(dest)) .. "'")
 end
 join = function(a, b)
   if a ~= "/" then
@@ -71,5 +75,6 @@ return {
   mkdir = mkdir,
   copy = copy,
   join = join,
-  read_file = read_file
+  read_file = read_file,
+  shell_escape = shell_escape
 }

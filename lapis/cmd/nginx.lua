@@ -1,12 +1,10 @@
 local path = require("lapis.cmd.path")
+local shell_escape
+shell_escape = path.shell_escape
 local get_free_port, default_environment
 do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
-end
-local shell_escape
-shell_escape = function(str)
-  return str:gsub("'", "''")
 end
 local NginxRunner
 do
@@ -51,7 +49,7 @@ do
       if not (nginx) then
         return nil, "can't find nginx"
       end
-      path.mkdir("logs")
+      path.mkdir(path.join(self.base_path, "logs"))
       self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/error.log"))) .. "'")
       self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/access.log"))) .. "'")
       local root
@@ -202,8 +200,25 @@ do
       if opts == nil then
         opts = { }
       end
+      do
+        local bp = opts.base_path
+        if bp then
+          self:set_base_path(bp)
+        end
+      end
       for k, v in pairs(opts) do
-        self[k] = v
+        local _continue_0 = false
+        repeat
+          if k == "base_path" then
+            _continue_0 = true
+            break
+          end
+          self[k] = v
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
       end
     end,
     __base = _base_0,
