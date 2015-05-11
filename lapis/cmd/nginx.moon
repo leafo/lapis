@@ -60,7 +60,7 @@ class NginxRunner
     @exec cmd
 
   get_pid: =>
-    pidfile = io.open "logs/nginx.pid"
+    pidfile = io.open path.join @base_path, "logs/nginx.pid"
     return unless pidfile
     pid = pidfile\read "*a"
     pidfile\close!

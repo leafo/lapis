@@ -67,7 +67,7 @@ do
       return self:exec(cmd)
     end,
     get_pid = function(self)
-      local pidfile = io.open("logs/nginx.pid")
+      local pidfile = io.open(path.join(self.base_path, "logs/nginx.pid"))
       if not (pidfile) then
         return 
       end
