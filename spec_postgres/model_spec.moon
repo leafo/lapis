@@ -7,6 +7,18 @@ db = require "lapis.db.postgres"
 import Model, enum from require "lapis.db.postgres.model"
 import types, create_table from require "lapis.db.postgres.schema"
 
+assert_same_rows = (a, b) ->
+  a = {k,v for k,v in pairs a}
+  b = {k,v for k,v in pairs b}
+
+  a.created_at = nil
+  a.updated_at = nil
+
+  b.created_at = nil
+  b.updated_at = nil
+
+  assert.same a, b
+
 class Users extends Model
   @create_table: =>
     drop_tables @
@@ -225,8 +237,8 @@ describe "model", ->
 
         assert.same 5, like.count
 
-        assert.same like, Likes\find(like.user_id, like.post_id)
-        assert.same other_like, Likes\find(other_like.user_id, other_like.post_id)
+        assert_same_rows like, Likes\find(like.user_id, like.post_id)
+        assert_same_rows other_like, Likes\find(other_like.user_id, other_like.post_id)
 
   describe "returning", ->
     it "should create with returning", ->
