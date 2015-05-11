@@ -115,7 +115,7 @@ do
       if path.exists(self.compiled_config_path) then
         existing_config = path.read_file(self.compiled_config_path)
       end
-      local port = self:get_free_port()
+      local port = get_free_port()
       if type(environment) == "string" then
         environment = require("lapis.config").get(environment)
       end

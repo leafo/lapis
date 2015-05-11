@@ -1,8 +1,4 @@
 
--- CONFIG_PATH = "nginx.conf"
--- CONFIG_PATH_ETLUA = "nginx.conf.etlua"
--- COMPILED_CONFIG_PATH = "nginx.conf.compiled"
-
 path = require "lapis.cmd.path"
 import get_free_port, default_environment from require "lapis.cmd.util"
 
@@ -104,7 +100,7 @@ class NginxRunner
     existing_config = if path.exists @compiled_config_path
       path.read_file @compiled_config_path
 
-    port = @get_free_port!
+    port = get_free_port!
 
     if type(environment) == "string"
       environment = require("lapis.config").get environment
@@ -177,8 +173,3 @@ compiler = NginxRunner.ConfigCompiler!
   attach_server: runner\attach_server
   detach_server: runner\detach_server
 }
-
--- { :compile_config, :compile_etlua_config, :find_nginx, :start_nginx,
---   :send_hup, :send_term, :get_pid, :write_config_for, :attach_server,
---   :detach_server, :send_signal, :CONFIG_PATH,
---   :CONFIG_PATH_ETLUA }

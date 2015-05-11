@@ -49,6 +49,7 @@ debug_config_process = (cfg, port) ->
   }
 
   -- add query locations if upstream can be found
+  -- TODO: kill me when ngx_postgres support is removed
   if cfg\match "upstream%s+database"
     table.insert test_server, [[
       location = /http_query {
