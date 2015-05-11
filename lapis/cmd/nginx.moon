@@ -55,7 +55,7 @@ class NginxRunner
     else
       '"$(pwd)"/' .. "'#{shell_escape @base_path}'"
 
-    cmd = nginx .. " -p #{root} -c '#{shell_escape @compiled_config_path}'"
+    cmd = nginx .. " -p #{root} -c '#{shell_escape path.filename @compiled_config_path}'"
 
     if background
       cmd = cmd .. " > /dev/null 2>&1 &"

@@ -58,7 +58,7 @@ do
       else
         root = '"$(pwd)"/' .. "'" .. tostring(shell_escape(self.base_path)) .. "'"
       end
-      local cmd = nginx .. " -p " .. tostring(root) .. " -c '" .. tostring(shell_escape(self.compiled_config_path)) .. "'"
+      local cmd = nginx .. " -p " .. tostring(root) .. " -c '" .. tostring(shell_escape(path.filename(self.compiled_config_path))) .. "'"
       if background then
         cmd = cmd .. " > /dev/null 2>&1 &"
       end
