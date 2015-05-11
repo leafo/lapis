@@ -118,19 +118,19 @@ tasks = {
     name = "new",
     help = "create a new lapis project in the current directory",
     function(...)
-      local CONFIG_PATH, CONFIG_PATH_ETLUA
+      local config_path, config_path_etlua
       do
-        local _obj_0 = require("lapis.cmd.nginx")
-        CONFIG_PATH, CONFIG_PATH_ETLUA = _obj_0.CONFIG_PATH, _obj_0.CONFIG_PATH_ETLUA
+        local _obj_0 = require("lapis.cmd.nginx").nginx_runner
+        config_path, config_path_etlua = _obj_0.config_path, _obj_0.config_path_etlua
       end
       local flags = parse_flags(...)
-      if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA) then
+      if path.exists(config_path) or path.exists(config_path_etlua) then
         fail_with_message("nginx.conf already exists")
       end
       if flags["etlua-config"] then
-        write_file_safe(CONFIG_PATH_ETLUA, require("lapis.cmd.templates.config_etlua"))
+        write_file_safe(config_path_etlua, require("lapis.cmd.templates.config_etlua"))
       else
-        write_file_safe(CONFIG_PATH, require("lapis.cmd.templates.config"))
+        write_file_safe(config_path, require("lapis.cmd.templates.config"))
       end
       write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
       if flags.lua then

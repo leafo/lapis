@@ -154,7 +154,7 @@ compiler = NginxRunner.ConfigCompiler!
 
 {
   :NginxRunner
-  :runner
+  nginx_runner: runner
 
   get_pid: runner\get_pid
 

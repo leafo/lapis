@@ -194,7 +194,7 @@ local runner = NginxRunner()
 local compiler = NginxRunner.ConfigCompiler()
 return {
   NginxRunner = NginxRunner,
-  runner = runner,
+  nginx_runner = runner,
   get_pid = (function()
     local _base_0 = runner
     local _fn_0 = _base_0.get_pid
