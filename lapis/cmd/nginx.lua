@@ -4,6 +4,10 @@ do
   local _obj_0 = require("lapis.cmd.util")
   get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
 end
+local shell_escape
+shell_escape = function(str)
+  return str:gsub("'", "''")
+end
 local NginxRunner
 do
   local _base_0 = {
@@ -12,6 +16,7 @@ do
     config_path = "nginx.conf",
     config_path_etlua = "nginx.conf.etlua",
     compiled_config_path = "nginx.conf.compiled",
+    base_path = "",
     current_server = nil,
     nginx_bin = "nginx",
     nginx_search_paths = {
@@ -20,6 +25,24 @@ do
       "/usr/sbin/",
       ""
     },
+    exec = function(self, cmd)
+      return os.execute(cmd)
+    end,
+    set_base_path = function(self, p)
+      if p == nil then
+        p = ""
+      end
+      self.base_path = p
+      local _list_0 = {
+        "config_path",
+        "config_path_etlua",
+        "compiled_config_path"
+      }
+      for _index_0 = 1, #_list_0 do
+        local k = _list_0[_index_0]
+        self[k] = path.join(self.base_path, self.__class.__base[k])
+      end
+    end,
     start_nginx = function(self, background)
       if background == nil then
         background = false
@@ -29,13 +52,19 @@ do
         return nil, "can't find nginx"
       end
       path.mkdir("logs")
-      os.execute("touch logs/error.log")
-      os.execute("touch logs/access.log")
-      local cmd = nginx .. ' -p "$(pwd)"/ -c "' .. self.compiled_config_path .. '"'
+      self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/error.log"))) .. "'")
+      self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/access.log"))) .. "'")
+      local root
+      if self.base_path:match("^/") then
+        root = "'" .. tostring(shell_escape(self.base_path)) .. "'"
+      else
+        root = '"$(pwd)"/' .. "'" .. tostring(shell_escape(self.base_path)) .. "'"
+      end
+      local cmd = nginx .. " -p " .. tostring(root) .. " -c '" .. tostring(shell_escape(self.compiled_config_path)) .. "'"
       if background then
         cmd = cmd .. " > /dev/null 2>&1 &"
       end
-      return os.execute(cmd)
+      return self:exec(cmd)
     end,
     get_pid = function(self)
       local pidfile = io.open("logs/nginx.pid")
@@ -50,7 +79,7 @@ do
       do
         local pid = self:get_pid()
         if pid then
-          os.execute("kill -s " .. tostring(signal) .. " " .. tostring(pid))
+          self:exec("kill -s " .. tostring(signal) .. " " .. tostring(pid))
           return pid
         end
       end
@@ -59,7 +88,7 @@ do
       do
         local pid = self:get_pid()
         if pid then
-          os.execute("kill -HUP " .. tostring(pid))
+          self:exec("kill -HUP " .. tostring(pid))
           return pid
         end
       end
@@ -68,7 +97,7 @@ do
       do
         local pid = self:get_pid()
         if pid then
-          os.execute("kill " .. tostring(pid))
+          self:exec("kill " .. tostring(pid))
           return pid
         end
       end

@@ -2,6 +2,9 @@
 path = require "lapis.cmd.path"
 import get_free_port, default_environment from require "lapis.cmd.util"
 
+shell_escape = (str) ->
+  str\gsub "'", "''"
+
 class NginxRunner
   ConfigCompiler: require("lapis.cmd.nginx.config").ConfigCompiler
   AttachedServer: require("lapis.cmd.nginx.attached_server").AttachedServer
@@ -9,6 +12,7 @@ class NginxRunner
   config_path: "nginx.conf"
   config_path_etlua: "nginx.conf.etlua"
   compiled_config_path: "nginx.conf.compiled"
+  base_path: ""
   current_server: nil
 
   nginx_bin: "nginx"
@@ -23,20 +27,37 @@ class NginxRunner
     for k,v in pairs opts
       @[k] = v
 
+  exec: (cmd) =>
+    -- colors = require "ansicolors"
+    -- print colors("%{bright}%{red}exec: %{reset}") .. cmd
+    os.execute cmd
+
+  -- set the path of where nginx will run
+  set_base_path: (p="") =>
+    @base_path = p
+
+    for k in *{"config_path", "config_path_etlua", "compiled_config_path"}
+      @[k] = path.join @base_path, @@.__base[k]
+
   start_nginx: (background=false) =>
     nginx = @find_nginx!
     return nil, "can't find nginx" unless nginx
 
     path.mkdir "logs"
-    os.execute "touch logs/error.log"
-    os.execute "touch logs/access.log"
+    @exec "touch '#{shell_escape path.join @base_path, "logs/error.log"}'"
+    @exec "touch '#{shell_escape path.join @base_path, "logs/access.log"}'"
 
-    cmd = nginx .. ' -p "$(pwd)"/ -c "' .. @compiled_config_path .. '"'
+    root = if @base_path\match "^/"
+      "'#{shell_escape @base_path}'"
+    else
+      '"$(pwd)"/' .. "'#{shell_escape @base_path}'"
+
+    cmd = nginx .. " -p #{root} -c '#{shell_escape @compiled_config_path}'"
 
     if background
       cmd = cmd .. " > /dev/null 2>&1 &"
 
-    os.execute cmd
+    @exec cmd
 
   get_pid: =>
     pidfile = io.open "logs/nginx.pid"
@@ -47,17 +68,17 @@ class NginxRunner
 
   send_signal: (signal) =>
     if pid = @get_pid!
-      os.execute "kill -s #{signal} #{pid}"
+      @exec "kill -s #{signal} #{pid}"
       pid
 
   send_hup: =>
     if pid = @get_pid!
-      os.execute "kill -HUP #{pid}"
+      @exec "kill -HUP #{pid}"
       pid
 
   send_term: =>
     if pid = @get_pid!
-      os.execute "kill #{pid}"
+      @exec "kill #{pid}"
       pid
 
   -- find the path to the (openresty) nginx binary
