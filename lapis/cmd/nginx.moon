@@ -2,8 +2,6 @@
 path = require "lapis.cmd.path"
 import shell_escape from path
 
-import get_free_port, default_environment from require "lapis.cmd.util"
-
 class NginxRunner
   ConfigCompiler: require("lapis.cmd.nginx.config").ConfigCompiler
   AttachedServer: require("lapis.cmd.nginx.attached_server").AttachedServer
@@ -117,37 +115,10 @@ class NginxRunner
   attach_server: (environment, env_overrides) =>
     assert not @current_server, "a server is already attached (did you forget to detach?)"
 
-    import debug_config_process from require "lapis.cmd.nginx.attached_server"
-
-    pid = @get_pid!
-
-    existing_config = if path.exists @compiled_config_path
-      path.read_file @compiled_config_path
-
-    port = get_free_port!
-
-    if type(environment) == "string"
-      environment = require("lapis.config").get environment
-
-    if env_overrides
-      assert not getmetatable(env_overrides), "env_overrides already has metatable, aborting"
-      environment = setmetatable env_overrides, __index: environment
-
-    @write_config_for environment, debug_config_process, port
-
-    if pid
-      @send_hup!
-    else
-      @start_nginx true
-
-    server = @AttachedServer {
-      :environment
-      fresh: not pid
-      :port, :existing_config
-    }
-
-    server\wait_until_ready!
+    server = @AttachedServer!
+    server\start environment, env_overrides
     @current_server = server
+
     server
 
   detach_server: =>

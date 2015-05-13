@@ -1,49 +1,41 @@
 local path = require("lapis.cmd.path")
-local debug_config_process
-debug_config_process = function(cfg, port)
-  local run_code_action = [[    ngx.req.read_body()
-
-    -- hijack print to write to buffer
-    local old_print = print
-
-    local buffer = {}
-    print = function(...)
-      local str = table.concat({...}, "\t")
-      io.stdout:write(str .. "\n")
-      table.insert(buffer, str)
-    end
-
-    local success, err = pcall(loadstring(ngx.var.request_body))
-
-    if not success then
-      ngx.status = 500
-      print(err)
-    end
-
-    ngx.print(table.concat(buffer, "\n"))
-    print = old_print
-  ]]
-  run_code_action = run_code_action:gsub("\\", "\\\\"):gsub('"', '\\"')
-  local test_server = [[    server {
-      allow 127.0.0.1;
-      deny all;
-      listen ]] .. port .. [[;
-
-      location = /run_lua {
-        client_body_buffer_size 10m;
-        client_max_body_size 10m;
-        content_by_lua "
-          ]] .. run_code_action .. [[
-        ";
-      }
-    }
-  ]]
-  table.insert(test_server, "}")
-  return cfg:gsub("%f[%a]http%s-{", "http { " .. table.concat(test_server, "\n"))
-end
+local get_free_port
+get_free_port = require("lapis.cmd.util").get_free_port
 local AttachedServer
 do
   local _base_0 = {
+    start = function(self, environment, env_overrides)
+      if path.exists(self.runner.compiled_config_path) then
+        self.existing_config = path.read_file(self.runner.compiled_config_path)
+      end
+      self.port = get_free_port()
+      if type(environment) == "string" then
+        environment = require("lapis.config").get(environment)
+      end
+      if env_overrides then
+        assert(not getmetatable(env_overrides), "env_overrides already has metatable, aborting")
+        environment = setmetatable(env_overrides, {
+          __index = environment
+        })
+      end
+      local env = require("lapis.environment")
+      env.push(environment)
+      self.runner:write_config_for(environment, (function()
+        local _base_1 = self
+        local _fn_0 = _base_1.process_config
+        return function(...)
+          return _fn_0(_base_1, ...)
+        end
+      end)())
+      local pid = self.runner:get_pid()
+      self.fresh = not pid
+      if pid then
+        self.runner:send_hup()
+      else
+        self.runner:start_nginx(true)
+      end
+      return self:wait_until_ready()
+    end,
     wait_until = function(self, server_status)
       if server_status == nil then
         server_status = "open"
@@ -123,17 +115,53 @@ do
         }
       })
       return table.concat(buffer)
+    end,
+    process_config = function(self, cfg)
+      assert(self.port, "attached server doesn't have a port to bind rpc to")
+      local run_code_action = [[      ngx.req.read_body()
+
+      -- hijack print to write to buffer
+      local old_print = print
+
+      local buffer = {}
+      print = function(...)
+        local str = table.concat({...}, "\t")
+        io.stdout:write(str .. "\n")
+        table.insert(buffer, str)
+      end
+
+      local success, err = pcall(loadstring(ngx.var.request_body))
+
+      if not success then
+        ngx.status = 500
+        print(err)
+      end
+
+      ngx.print(table.concat(buffer, "\n"))
+      print = old_print
+    ]]
+      run_code_action = run_code_action:gsub("\\", "\\\\"):gsub('"', '\\"')
+      local test_server = [[      server {
+        allow 127.0.0.1;
+        deny all;
+        listen ]] .. self.port .. [[;
+
+        location = /run_lua {
+          client_body_buffer_size 10m;
+          client_max_body_size 10m;
+          content_by_lua "
+            ]] .. run_code_action .. [[
+          ";
+        }
+      }
+    ]]
+      return cfg:gsub("%f[%a]http%s-{", "http {\n" .. test_server)
     end
   }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
-    __init = function(self, runner, opts)
+    __init = function(self, runner)
       self.runner = runner
-      for k, v in pairs(opts) do
-        self[k] = v
-      end
-      local env = require("lapis.environment")
-      return env.push(self.environment)
     end,
     __base = _base_0,
     __name = "AttachedServer"

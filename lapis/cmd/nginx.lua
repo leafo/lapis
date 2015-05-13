@@ -1,11 +1,6 @@
 local path = require("lapis.cmd.path")
 local shell_escape
 shell_escape = path.shell_escape
-local get_free_port, default_environment
-do
-  local _obj_0 = require("lapis.cmd.util")
-  get_free_port, default_environment = _obj_0.get_free_port, _obj_0.default_environment
-end
 local NginxRunner
 do
   local _base_0 = {
@@ -135,36 +130,8 @@ do
     end,
     attach_server = function(self, environment, env_overrides)
       assert(not self.current_server, "a server is already attached (did you forget to detach?)")
-      local debug_config_process
-      debug_config_process = require("lapis.cmd.nginx.attached_server").debug_config_process
-      local pid = self:get_pid()
-      local existing_config
-      if path.exists(self.compiled_config_path) then
-        existing_config = path.read_file(self.compiled_config_path)
-      end
-      local port = get_free_port()
-      if type(environment) == "string" then
-        environment = require("lapis.config").get(environment)
-      end
-      if env_overrides then
-        assert(not getmetatable(env_overrides), "env_overrides already has metatable, aborting")
-        environment = setmetatable(env_overrides, {
-          __index = environment
-        })
-      end
-      self:write_config_for(environment, debug_config_process, port)
-      if pid then
-        self:send_hup()
-      else
-        self:start_nginx(true)
-      end
-      local server = self:AttachedServer({
-        environment = environment,
-        fresh = not pid,
-        port = port,
-        existing_config = existing_config
-      })
-      server:wait_until_ready()
+      local server = self:AttachedServer()
+      server:start(environment, env_overrides)
       self.current_server = server
       return server
     end,

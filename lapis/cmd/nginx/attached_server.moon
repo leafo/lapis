@@ -1,62 +1,35 @@
-
 path = require "lapis.cmd.path"
-
--- injects a debug server into the config
-debug_config_process = (cfg, port) ->
-  run_code_action = [[
-    ngx.req.read_body()
-
-    -- hijack print to write to buffer
-    local old_print = print
-
-    local buffer = {}
-    print = function(...)
-      local str = table.concat({...}, "\t")
-      io.stdout:write(str .. "\n")
-      table.insert(buffer, str)
-    end
-
-    local success, err = pcall(loadstring(ngx.var.request_body))
-
-    if not success then
-      ngx.status = 500
-      print(err)
-    end
-
-    ngx.print(table.concat(buffer, "\n"))
-    print = old_print
-  ]]
-
-  -- escape for nginx config
-  run_code_action = run_code_action\gsub("\\", "\\\\")\gsub('"', '\\"')
-
-  test_server = [[
-    server {
-      allow 127.0.0.1;
-      deny all;
-      listen ]] .. port .. [[;
-
-      location = /run_lua {
-        client_body_buffer_size 10m;
-        client_max_body_size 10m;
-        content_by_lua "
-          ]] .. run_code_action .. [[
-
-        ";
-      }
-    }
-  ]]
-
-  table.insert test_server, "}"
-  cfg\gsub "%f[%a]http%s-{", "http { " .. table.concat test_server, "\n"
+import get_free_port from require "lapis.cmd.util"
 
 class AttachedServer
-  new: (@runner, opts) =>
-    for k,v in pairs opts
-      @[k] = v
+  new: (@runner) =>
+
+  start: (environment, env_overrides) =>
+    @existing_config = if path.exists @runner.compiled_config_path
+      path.read_file @runner.compiled_config_path
+
+    @port = get_free_port!
+
+    if type(environment) == "string"
+      environment = require("lapis.config").get environment
+
+    if env_overrides
+      assert not getmetatable(env_overrides), "env_overrides already has metatable, aborting"
+      environment = setmetatable env_overrides, __index: environment
 
     env = require "lapis.environment"
-    env.push @environment
+    env.push environment
+
+    @runner\write_config_for environment, @\process_config
+
+    pid = @runner\get_pid!
+    @fresh = not pid
+    if pid
+      @runner\send_hup!
+    else
+      @runner\start_nginx true
+
+    @wait_until_ready!
 
   wait_until: (server_status="open") =>
     socket = require "socket"
@@ -134,6 +107,57 @@ class AttachedServer
     }
 
     table.concat buffer
+
+  -- this inserts a special server block in the config that gives remote access
+  -- to it over a special port/location.
+  process_config: (cfg) =>
+    assert @port, "attached server doesn't have a port to bind rpc to"
+
+    run_code_action = [[
+      ngx.req.read_body()
+
+      -- hijack print to write to buffer
+      local old_print = print
+
+      local buffer = {}
+      print = function(...)
+        local str = table.concat({...}, "\t")
+        io.stdout:write(str .. "\n")
+        table.insert(buffer, str)
+      end
+
+      local success, err = pcall(loadstring(ngx.var.request_body))
+
+      if not success then
+        ngx.status = 500
+        print(err)
+      end
+
+      ngx.print(table.concat(buffer, "\n"))
+      print = old_print
+    ]]
+
+    -- escape for nginx config
+    run_code_action = run_code_action\gsub("\\", "\\\\")\gsub('"', '\\"')
+
+    test_server = [[
+      server {
+        allow 127.0.0.1;
+        deny all;
+        listen ]] .. @port .. [[;
+
+        location = /run_lua {
+          client_body_buffer_size 10m;
+          client_max_body_size 10m;
+          content_by_lua "
+            ]] .. run_code_action .. [[
+
+          ";
+        }
+      }
+    ]]
+
+    cfg\gsub "%f[%a]http%s-{", "http {\n" .. test_server
 
 
 { :AttachedServer, :debug_config_process }
