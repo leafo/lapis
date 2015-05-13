@@ -5,8 +5,6 @@ import SpecServer from require "lapis.spec.server"
 server = SpecServer runner
 
 describe "server", ->
-  before_each ->
-
   setup ->
     server\load_test_server!
 
