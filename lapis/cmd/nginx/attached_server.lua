@@ -24,40 +24,20 @@ debug_config_process = function(cfg, port)
     print = old_print
   ]]
   run_code_action = run_code_action:gsub("\\", "\\\\"):gsub('"', '\\"')
-  local test_server = {
-    [[      server {
-        allow 127.0.0.1;
-        deny all;
-        listen ]] .. port .. [[;
+  local test_server = [[    server {
+      allow 127.0.0.1;
+      deny all;
+      listen ]] .. port .. [[;
 
-        location = /run_lua {
-          client_body_buffer_size 10m;
-          client_max_body_size 10m;
-          content_by_lua "
-            ]] .. run_code_action .. [[
-          ";
-        }
-    ]]
-  }
-  if cfg:match("upstream%s+database") then
-    table.insert(test_server, [[      location = /http_query {
-        postgres_pass database;
-        set_decode_base64 $query $http_x_query;
-        log_by_lua '
-          local logger = require "lapis.logging"
-          logger.query(ngx.var.query)
-        ';
-        postgres_query $query;
-        rds_json on;
+      location = /run_lua {
+        client_body_buffer_size 10m;
+        client_max_body_size 10m;
+        content_by_lua "
+          ]] .. run_code_action .. [[
+        ";
       }
-
-      location = /query {
-        internal;
-        postgres_pass database;
-        postgres_query $echo_request_body;
-      }
-    ]])
-  end
+    }
+  ]]
   table.insert(test_server, "}")
   return cfg:gsub("%f[%a]http%s-{", "http { " .. table.concat(test_server, "\n"))
 end
@@ -110,10 +90,6 @@ do
       else
         self.runner:send_hup()
       end
-      if self.old_backend then
-        local db = require("lapis.db")
-        db.set_backend("raw", self.old_backend)
-      end
       local env = require("lapis.environment")
       env.pop()
       return true
@@ -157,18 +133,7 @@ do
         self[k] = v
       end
       local env = require("lapis.environment")
-      env.push(self.environment)
-      local pg_config = self.environment.postgres
-      if pg_config and not pg_config.backend == "pgmoon" then
-        local db = require("lapis.db")
-        self.old_backend = db.set_backend("raw", (function()
-          local _base_1 = self
-          local _fn_0 = _base_1.query
-          return function(...)
-            return _fn_0(_base_1, ...)
-          end
-        end)())
-      end
+      return env.push(self.environment)
     end,
     __base = _base_0,
     __name = "AttachedServer"

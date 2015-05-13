@@ -30,52 +30,25 @@ debug_config_process = (cfg, port) ->
   -- escape for nginx config
   run_code_action = run_code_action\gsub("\\", "\\\\")\gsub('"', '\\"')
 
-  test_server = {
-    [[
-      server {
-        allow 127.0.0.1;
-        deny all;
-        listen ]] .. port .. [[;
+  test_server = [[
+    server {
+      allow 127.0.0.1;
+      deny all;
+      listen ]] .. port .. [[;
 
-        location = /run_lua {
-          client_body_buffer_size 10m;
-          client_max_body_size 10m;
-          content_by_lua "
-            ]] .. run_code_action .. [[
+      location = /run_lua {
+        client_body_buffer_size 10m;
+        client_max_body_size 10m;
+        content_by_lua "
+          ]] .. run_code_action .. [[
 
-          ";
-        }
-    ]]
-  }
-
-  -- add query locations if upstream can be found
-  -- TODO: kill me when ngx_postgres support is removed
-  if cfg\match "upstream%s+database"
-    table.insert test_server, [[
-      location = /http_query {
-        postgres_pass database;
-        set_decode_base64 $query $http_x_query;
-        log_by_lua '
-          local logger = require "lapis.logging"
-          logger.query(ngx.var.query)
-        ';
-        postgres_query $query;
-        rds_json on;
+        ";
       }
-
-      location = /query {
-        internal;
-        postgres_pass database;
-        postgres_query $echo_request_body;
-      }
-    ]]
+    }
+  ]]
 
   table.insert test_server, "}"
-
   cfg\gsub "%f[%a]http%s-{", "http { " .. table.concat test_server, "\n"
-
-
-
 
 class AttachedServer
   new: (@runner, opts) =>
@@ -85,12 +58,7 @@ class AttachedServer
     env = require "lapis.environment"
     env.push @environment
 
-    pg_config = @environment.postgres
-    if pg_config and not pg_config.backend == "pgmoon"
-      db = require "lapis.db"
-      @old_backend = db.set_backend "raw", @\query
-
-  wait_until: (server_status="open")=>
+  wait_until: (server_status="open") =>
     socket = require "socket"
     max_tries = 1000
     while true
@@ -126,10 +94,6 @@ class AttachedServer
       @wait_until_closed!
     else
       @runner\send_hup!
-
-    if @old_backend
-      db = require "lapis.db"
-      db.set_backend "raw", @old_backend
 
     env = require "lapis.environment"
     env.pop!
