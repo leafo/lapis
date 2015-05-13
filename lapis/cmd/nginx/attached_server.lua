@@ -32,7 +32,7 @@ do
       if pid then
         self.runner:send_hup()
       else
-        self.runner:start_nginx(true)
+        assert(self.runner:start_nginx(true))
       end
       return self:wait_until_ready()
     end,
@@ -155,6 +155,13 @@ do
         }
       }
     ]]
+      if self.runner.base_path ~= "" then
+        local default_path = os.getenv("LUA_PATH")
+        local default_cpath = os.getenv("LUA_CPATH")
+        local server_path = path.join(self.runner.base_path, "?.lua")
+        local server_cpath = path.join(self.runner.base_path, "?.so")
+        test_server = "\n        lua_package_path '" .. tostring(server_path) .. ";" .. tostring(default_path) .. "';\n        lua_package_cpath '" .. tostring(server_cpath) .. ";" .. tostring(default_cpath) .. "';\n      " .. test_server
+      end
       return cfg:gsub("%f[%a]http%s-{", "http {\n" .. test_server)
     end
   }

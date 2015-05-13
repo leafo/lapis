@@ -13,7 +13,15 @@ describe "server", ->
   teardown ->
     server\close_test_server!
 
-  it "should launch a server..", ->
+  it "should request basic page", ->
     status, res = server\request "/"
     assert.same 200, status
+
+  it "should request json page", ->
+    status, res = server\request "/world", {
+      expect: "json"
+    }
+
+    assert.same 200, status
+    assert.same { success: true }, res
 

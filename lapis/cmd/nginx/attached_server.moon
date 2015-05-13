@@ -27,7 +27,7 @@ class AttachedServer
     if pid
       @runner\send_hup!
     else
-      @runner\start_nginx true
+      assert @runner\start_nginx true
 
     @wait_until_ready!
 
@@ -112,7 +112,6 @@ class AttachedServer
   -- to it over a special port/location.
   process_config: (cfg) =>
     assert @port, "attached server doesn't have a port to bind rpc to"
-
     run_code_action = [[
       ngx.req.read_body()
 
@@ -156,6 +155,20 @@ class AttachedServer
         }
       }
     ]]
+
+    -- inject the lua path
+    if @runner.base_path != ""
+      default_path = os.getenv "LUA_PATH"
+      default_cpath = os.getenv "LUA_CPATH"
+
+      server_path = path.join @runner.base_path, "?.lua"
+      server_cpath = path.join @runner.base_path, "?.so"
+
+      test_server = "
+        lua_package_path '#{server_path};#{default_path}';
+        lua_package_cpath '#{server_cpath};#{default_cpath}';
+      " .. test_server
+
 
     cfg\gsub "%f[%a]http%s-{", "http {\n" .. test_server
 
