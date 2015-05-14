@@ -73,23 +73,6 @@ class AttachedServer
 
     true
 
-  query: (q) =>
-    ltn12 = require "ltn12"
-    http = require "socket.http"
-    mime = require "mime"
-    json = require "cjson"
-
-    buffer = {}
-    http.request {
-      url: "http://127.0.0.1:#{@port}/http_query"
-      sink: ltn12.sink.table(buffer)
-      headers: {
-        "x-query": mime.b64 q
-      }
-    }
-
-    json.decode table.concat buffer
-
   exec: (lua_code) =>
     assert loadstring lua_code -- syntax check code
 

@@ -86,21 +86,6 @@ do
       env.pop()
       return true
     end,
-    query = function(self, q)
-      local ltn12 = require("ltn12")
-      local http = require("socket.http")
-      local mime = require("mime")
-      local json = require("cjson")
-      local buffer = { }
-      http.request({
-        url = "http://127.0.0.1:" .. tostring(self.port) .. "/http_query",
-        sink = ltn12.sink.table(buffer),
-        headers = {
-          ["x-query"] = mime.b64(q)
-        }
-      })
-      return json.decode(table.concat(buffer))
-    end,
     exec = function(self, lua_code)
       assert(loadstring(lua_code))
       local ltn12 = require("ltn12")
