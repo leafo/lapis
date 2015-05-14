@@ -35,7 +35,7 @@ set = function(conf, k, v)
     end
   else
     if type(v) == "function" then
-      conf[k] = run_with_scope(v, { })
+      return merge_set(conf, k, run_with_scope(v, { }))
     else
       return merge_set(conf, k, v)
     end

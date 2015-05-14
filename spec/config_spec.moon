@@ -222,7 +222,7 @@ describe "lapis.config", ->
       postgres ->
         database "lazuli_dev"
 
-    assert.same { backend: "pgmoon" },config.get("beta").postgres
+    assert.same { backend: "pgmoon" }, config.get("beta").postgres
     assert.same { backend: "pgmoon", database: "lazuli_dev" }, config.get("gamma").postgres
 
 

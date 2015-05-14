@@ -145,7 +145,6 @@ get = do
 
 setmetatable {
   :get, :config, :merge_set, :default_config, :reset
-  :configs
 }, {
   __call: (...) => config ...
 }
