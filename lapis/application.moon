@@ -355,8 +355,6 @@ class Application
 
     res
 
-  serve: => -- TODO: alias to lapis.serve
-
   @before_filter: (fn) =>
     @__base.before_filters or= {}
     insert @before_filters, fn

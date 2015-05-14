@@ -414,7 +414,6 @@ do
       end
       return res
     end,
-    serve = function(self) end,
     default_route = function(self)
       if self.req.parsed_url.path:match("./$") then
         local stripped = self.req.parsed_url.path:match("^(.+)/+$")
