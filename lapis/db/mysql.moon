@@ -16,6 +16,8 @@ local conn, logger
 local *
 
 backends = {
+  -- the raw backend is a debug backend that lets you specify the function that
+  -- handles the query
   raw: (fn) ->
     with raw_query
       raw_query = fn
