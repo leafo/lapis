@@ -12,6 +12,7 @@ global: build
 
 build::
 	moonc lapis
+	moonc spec_openresty/s2
 
 watch:: build
 	moonc -w lapis
