@@ -485,7 +485,7 @@ of each argument.
 
 In most circumstances it is unnecessary to call write as the return value of an
 action is automatically passed to write. In before filters, write has the dual
-purpose of writing to the output and cancelling the any further actions from
+purpose of writing to the output and cancelling any further actions from
 running.
 
 ### `url_for(name_or_obj, params, query_params=nil, ...)`
