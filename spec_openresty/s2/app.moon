@@ -19,9 +19,9 @@ assert_same_rows = (a, b) ->
 
 class extends lapis.Application
   @before_filter ->
-    Users\create_table!
-    Posts\create_table!
-    Likes\create_table!
+    Users\truncate!
+    Posts\truncate!
+    Likes\truncate!
 
   "/": =>
     json: db.query "show tables like ?", "users"
@@ -30,10 +30,10 @@ class extends lapis.Application
     first = Users\create { name: "first" }
     second = Users\create { name: "second" }
 
-    assert.same 1, first.id
+    assert.truthy first.id
     assert.same "first", first.name
 
-    assert.same 2, second.id
+    assert.same first.id + 1, second.id
     assert.same "second", second.name
 
     -- TODO: looks like resty-mysql returns strings for count rows
@@ -45,11 +45,14 @@ class extends lapis.Application
     first = Users\create { name: "first" }
     second = Users\create { name: "second" }
 
+    assert.same "2", Users\count!
+
     assert.same first, Users\find first.id
     assert.same second, Users\find second.id
     assert.same second, Users\find name: "second"
-    assert.falsy Users\find name: "second", id: 1
-    assert.same first, Users\find id: "1"
+
+    assert.falsy Users\find name: "second", id: first.id
+    assert.same first, Users\find id: "#{first.id}"
 
     json: { success: true }
 
@@ -65,12 +68,12 @@ class extends lapis.Application
     assert "first", things[2].name
 
     things = Users\select "order by id asc", fields: "id"
-    assert.same {{id: 1}, {id: 2}}, things
+    assert.same {{id: first.id}, {id: second.id}}, things
 
-    things = Users\find_all {1,3}
+    things = Users\find_all {first.id, second.id + 22}
     assert.same {first}, things
 
-    things = Users\find_all {1,2}, where: {
+    things = Users\find_all {first.id,second.id}, where: {
       name: "second"
     }
 

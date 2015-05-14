@@ -43,9 +43,9 @@ do
       local second = Users:create({
         name = "second"
       })
-      assert.same(1, first.id)
+      assert.truthy(first.id)
       assert.same("first", first.name)
-      assert.same(2, second.id)
+      assert.same(first.id + 1, second.id)
       assert.same("second", second.name)
       assert.same("2", Users:count())
       return {
@@ -61,6 +61,7 @@ do
       local second = Users:create({
         name = "second"
       })
+      assert.same("2", Users:count())
       assert.same(first, Users:find(first.id))
       assert.same(second, Users:find(second.id))
       assert.same(second, Users:find({
@@ -68,10 +69,10 @@ do
       }))
       assert.falsy(Users:find({
         name = "second",
-        id = 1
+        id = first.id
       }))
       assert.same(first, Users:find({
-        id = "1"
+        id = tostring(first.id)
       }))
       return {
         json = {
@@ -96,22 +97,22 @@ do
       })
       assert.same({
         {
-          id = 1
+          id = first.id
         },
         {
-          id = 2
+          id = second.id
         }
       }, things)
       things = Users:find_all({
-        1,
-        3
+        first.id,
+        second.id + 22
       })
       assert.same({
         first
       }, things)
       things = Users:find_all({
-        1,
-        2
+        first.id,
+        second.id
       }, {
         where = {
           name = "second"
@@ -218,9 +219,9 @@ do
   _base_0.__class = _class_0
   local self = _class_0
   self:before_filter(function()
-    Users:create_table()
-    Posts:create_table()
-    return Likes:create_table()
+    Users:truncate()
+    Posts:truncate()
+    return Likes:truncate()
   end)
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
