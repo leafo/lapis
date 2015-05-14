@@ -4,7 +4,6 @@
 assert = require "luassert"
 
 assert_same_rows = (a, b) ->
-
   a = {k,v for k,v in pairs a}
   b = {k,v for k,v in pairs b}
 
@@ -162,7 +161,9 @@ assert_same_rows = (a, b) ->
         assert.has_error ->
           like\refresh!
 
-        assert.same {other_like}, Likes\select!
+        remaining = Likes\select!
+        assert.same 1, #remaining
+        assert_same_rows other_like, remaining[1]
 
       it "should update row", ->
         like\update {

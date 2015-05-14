@@ -13,6 +13,7 @@ global: build
 build::
 	moonc lapis
 	moonc spec_openresty/s2
+	moonc spec_mysql/models.moon
 
 watch:: build
 	moonc -w lapis
@@ -24,7 +25,6 @@ lint:
 test_db:
 	-dropdb -U postgres lapis_test
 	createdb -U postgres lapis_test
-
 
 mysql_test_db:
 	echo 'drop database if exists lapis_test' | mysql -u root
