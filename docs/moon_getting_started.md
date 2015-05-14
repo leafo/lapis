@@ -203,6 +203,7 @@ apply, so if you call `@write` then the rest of the action will not get run.
 
 ```moon
 lapis = require "lapis"
+import respond_to from require "lapis.application"
 
 class App extends lapis.Application
   "/edit_user/:id": respond_to {
