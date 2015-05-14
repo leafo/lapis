@@ -233,7 +233,7 @@ class="for_lua">`self.params`</span>.
 <span class="for_lua">You may have also seen the `app:get()` and `app:post()`
 methods being called in previous examples. These are wrappers around
 `respond_to` that let you quickly define an action for a particular HTTP verb.
-You'll find thes wrappers for the most common verbs: `get`, `post`, `delete`,
+You'll find these wrappers for the most common verbs: `get`, `post`, `delete`,
 `put`. For any others you'll need to use `respond_to`.</span>
 
 ```lua
