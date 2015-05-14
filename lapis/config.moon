@@ -62,28 +62,28 @@ set = (conf, k, v) ->
       merge_set conf, sub_k, sub_v
   else
     if type(v) == "function"
-      conf[k] = run_with_scope v, {}
+      merge_set conf, k, run_with_scope v, {}
     else
       merge_set conf, k, v
 
 scope_meta = {
   __index: (name) =>
-      val = _G[name]
-      return val unless val == nil
+    val = _G[name]
+    return val unless val == nil
 
-      with val = switch name
-          when "set"
-            (...) -> set @_conf, ...
-          when "unset"
-            (...) ->
-              for k in *{...}
-                @_conf[k] = nil
-          when "include"
-            (fn) -> run_with_scope fn, @_conf
-          else
-            (v) -> set @_conf, name, v
+    with val = switch name
+        when "set"
+          (...) -> set @_conf, ...
+        when "unset"
+          (...) ->
+            for k in *{...}
+              @_conf[k] = nil
+        when "include"
+          (fn) -> run_with_scope fn, @_conf
+        else
+          (v) -> set @_conf, name, v
 
-        @[name] = val
+      @[name] = val
 }
 
 config = (environment, fn) ->
@@ -145,6 +145,7 @@ get = do
 
 setmetatable {
   :get, :config, :merge_set, :default_config, :reset
+  :configs
 }, {
   __call: (...) => config ...
 }
