@@ -1,7 +1,7 @@
 
 import setup_db, teardown_db from require "spec_postgres.helpers"
 
-import drop_tables from require "lapis.spec.db"
+import drop_tables, truncate_tables from require "lapis.spec.db"
 
 db = require "lapis.db.postgres"
 import Model, enum from require "lapis.db.postgres.model"
@@ -15,6 +15,9 @@ class Users extends Model
       {"name", types.text}
       "PRIMARY KEY (id)"
     }
+
+  @truncate: =>
+    truncate_tables @
 
 class Posts extends Model
   @timestamp: true
@@ -30,6 +33,9 @@ class Posts extends Model
       {"updated_at", types.time}
       "PRIMARY KEY (id)"
     }
+
+  @truncate: =>
+    truncate_tables @
 
 class Likes extends Model
   @primary_key: {"user_id", "post_id"}
@@ -50,6 +56,9 @@ class Likes extends Model
       {"updated_at", types.time}
       "PRIMARY KEY (user_id, post_id)"
     }
+
+  @truncate: =>
+    truncate_tables @
 
 describe "model", ->
   setup ->

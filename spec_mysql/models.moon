@@ -1,6 +1,6 @@
 import Model, enum from require "lapis.db.mysql.model"
 import types, create_table from require "lapis.db.mysql.schema"
-import drop_tables from require "lapis.spec.db"
+import drop_tables, truncate_tables from require "lapis.spec.db"
 
 class Users extends Model
   @create_table: =>
@@ -9,6 +9,9 @@ class Users extends Model
       {"id", types.id}
       {"name", types.text}
     }
+
+  @truncate: =>
+    truncate_tables @
 
 class Posts extends Model
   @timestamp: true
@@ -23,6 +26,9 @@ class Posts extends Model
       {"created_at", types.datetime}
       {"updated_at", types.datetime}
     }
+
+  @truncate: =>
+    truncate_tables @
 
 class Likes extends Model
   @primary_key: {"user_id", "post_id"}
@@ -44,5 +50,8 @@ class Likes extends Model
 
       "PRIMARY KEY (user_id, post_id)"
     }
+
+  @truncate: =>
+    truncate_tables @
 
 {:Users, :Posts, :Likes}
