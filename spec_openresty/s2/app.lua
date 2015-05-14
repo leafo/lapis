@@ -5,7 +5,7 @@ local db = require "lapis.db"
 
 app:get("/", function()
   return {
-    json = db.query("show tables")
+    json = db.query("show tables like 'users'")
   }
 end)
 
