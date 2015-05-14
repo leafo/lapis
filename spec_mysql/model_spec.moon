@@ -6,6 +6,18 @@ import drop_tables from require "lapis.spec.db"
 import Model, enum from require "lapis.db.mysql.model"
 import types, create_table from require "lapis.db.mysql.schema"
 
+assert_same_rows = (a, b) ->
+  a = {k,v for k,v in pairs a}
+  b = {k,v for k,v in pairs b}
+
+  a.created_at = nil
+  a.updated_at = nil
+
+  b.created_at = nil
+  b.updated_at = nil
+
+  assert.same a, b
+
 class Users extends Model
   @create_table: =>
     drop_tables @
@@ -230,8 +242,9 @@ describe "model", ->
 
         assert.same 5, like.count
 
-        assert.same like, Likes\find(like.user_id, like.post_id)
-        assert.same other_like, Likes\find(other_like.user_id, other_like.post_id)
+        assert_same_rows like, Likes\find(like.user_id, like.post_id)
+        assert_same_rows other_like, Likes\find(other_like.user_id, other_like.post_id)
+
 
   describe "relations", ->
     before_each ->
