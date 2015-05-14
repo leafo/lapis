@@ -292,6 +292,9 @@ create query fetches the values of the primary keys and sets them on the
 instance using the PostgreSQL `RETURNING` statement. This is useful for getting
 the value of an auto-incrementing key from the insert statement.
 
+> In MySQL the *last insert id* is used to get the id of the row since the
+> `RETURNING` statement is not available.
+
 ```lua
 local user = Users:create({
   login = "superuser",
@@ -336,6 +339,9 @@ INSERT INTO "users" (position)
 VALUES ((select coalesce(max(position) + 1, 0) from users))
 RETURNING "id", "position"
 ```
+
+> Since `RETURNING` is not available in MySQL, this functionality is PostgreSQL
+> specific.
 
 If your model has any [constraints](#constraints) they will be checked before trying to create
 a new row. If a constraint fails then `nil` and the error message are returned
@@ -393,6 +399,8 @@ The output might look like this:
   }
 }
 ```
+
+> MySQL will return a slightly different format, but will contain the same information.
 
 ### `table_name()`
 

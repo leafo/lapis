@@ -2,10 +2,11 @@ title: Database Access
 --
 # Database Access
 
-Lapis comes with a set of classes and functions for working with
-[PostgreSQL](http://www.postgresql.org/). In the future other databases will be
-directly supported. In the meantime you're free to use other OpenResty database
-drivers, you just won't have access to Lapis' query API.
+Lapis comes with a set of classes and functions for working with either
+[PostgreSQL](http://www.postgresql.org/) or [MySQL](https://www.mysql.com/). In
+the future other databases will be directly supported. In the meantime, you're
+free to use other OpenResty database drivers, you just won't have access to
+Lapis' query API.
 
 Every query is performed asynchronously through the [OpenResty cosocket
 API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp). A request will yield
@@ -13,22 +14,29 @@ and resume automatically so there's no need to code with callbacks, queries can
 be written sequentially as if they were in a synchronous environment. Additionally
 connections to the server are automatically pooled for optimal performance.
 
-[*pgmoon*](https://github.com/leafo/pgmoon) is the driver used in Lapis for
-communicating with PostgreSQL. It has the advantage of being able to be used
-within OpenResty's cosocket API in addition to on the command line using
-LuaSocket's synchronous API.
+Depending on which database you use, a different library is used:
+
+[pgmoon](https://github.com/leafo/pgmoon) is the driver used to run
+PostgreSQL queries. It has the advantage of being able to be used within
+OpenResty's cosocket API in addition to on the command line using LuaSocket's
+synchronous API.
+
+When in the context of the server,
+[lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) is the driver
+used to run MySQL queries. When on the command line,
+[LuaSQL](http://keplerproject.github.io/luasql/doc/us/) with MySQL is used.
 
 ## Establishing A Connection
 
-The first step is to define the configuration for our server in the `postgres`
-block in our <span class="for_moon">`config.moon`</span><span
-class="for_lua">`config.lua`</span> file.
+You'll need to configure Lapis so it can connect to the database. If you're
+using PostgreSQL create a `postgres` block in our <span
+class="for_moon">`config.moon`</span><span class="for_lua">`config.lua`</span>
+file.
 
 ```lua
 -- config.lua
 config("development", {
   postgres = {
-    backend = "pgmoon",
     host = "127.0.0.1",
     user = "pg_user",
     password = "the_password",
@@ -41,7 +49,6 @@ config("development", {
 -- config.moon
 config "development", ->
   postgres ->
-    backend "pgmoon"
     host "127.0.0.1"
     user "pg_user"
     password "the_password"
@@ -52,6 +59,31 @@ config "development", ->
 leave those fields out if they aren't different from the defaults. If a
 non-default port is required it can be appended to the `host` with colon
 syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
+
+If you're using MySQL the approach is similar, but you will define a `mysql`
+block:
+
+```lua
+-- config.lua
+config("development", {
+  mysql = {
+    host = "127.0.0.1",
+    user = "mysql_user",
+    password = "the_password",
+    database = "my_database"
+  }
+})
+```
+
+```moon
+-- config.moon
+config "development", ->
+  mysql ->
+    host "127.0.0.1"
+    user "mysql_user"
+    password "the_password"
+    database "my_database"
+```
 
 You're now ready to start making queries.
 
@@ -165,7 +197,7 @@ INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 ```
 
 A query that fails to execute will raise a Lua error. The error will contain
-the message from PostgreSQL along with the query.
+the message from the database along with the query.
 
 ### `select(query, params...)`
 
@@ -223,6 +255,8 @@ res = db.insert "some_other_table", {
 ```sql
 INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
 ```
+
+> `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
 
 ### `update(table, values, conditions, params...)`
 
@@ -292,7 +326,7 @@ db.update "cats", {
 UPDATE "cats" SET "count" = count + 1, WHERE "id" = 1200 RETURNING count
 ```
 
-
+> `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
 
 ### `delete(table, conditions, params...)`
 
@@ -355,9 +389,9 @@ SELECT * from another_table where x = now()
 Returns a special value that will be inserted into the query using SQL's list
 syntax. It takes a single argument of an array table.
 
-The return value of this function can be used for any value passed to a SQL
-query. Each item in the list will be escaped with `escape_literal` before
-being inserted into the query.
+The return value of this function can be used in place of any regular value
+passed to a SQL query function. Each item in the list will be escaped with
+`escape_literal` before being inserted into the query.
 
 Note we can use it both in interpolation and in the clause to a `db.update`
 call:
@@ -500,6 +534,9 @@ create_table "users", {
 }
 ```
 
+> In MySQL you should use `types.id` to get an autoincrementing primary key ID.
+> Additionally you should not specify `PRIMARY KEY (id)` either.
+
 This will generate the following SQL:
 
 ```sql
@@ -589,7 +626,8 @@ CREATE INDEX ON "uploads" (name) WHERE not deleted;
 #### `drop_index(table_name, col1, col2...)`
 
 Drops an index from a table. It calculates the name of the index from the table
-name and columns. This is the same as the default index name generated by PostgreSQL.
+name and columns. This is the same as the default index name generated by
+database on creation.
 
 ```lua
 local drop_index = schema.drop_index
@@ -761,6 +799,9 @@ types.integer primary_key: true       --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text null: true                 --> text
 types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMARY KEY
 ```
+
+> MySQL has a complete different type set than PostgreSQL, see [MySQL
+> types](https://github.com/leafo/lapis/blob/master/lapis/db/mysql/schema.moon#L162)
 
 ## Database Migrations
 
