@@ -66,13 +66,13 @@ backends = {
     import after_dispatch, increment_perf from require "lapis.nginx.context"
 
     config = require("lapis.config").get!
-    mysql_config = assert config.mysql, "missing mysql configuration"
+    mysql_config = assert config.mysql, "missing mysql configuration for resty_mysql"
     host = mysql_config.host or "127.0.0.1"
     port = mysql_config.port or 3306
     path = mysql_config.path
-    database = assert mysql_config.database
-    user = assert mysql_config.user
-    password = assert mysql_config.password
+    database = assert mysql_config.database, "`database` missing from config for resty_mysql"
+    user = assert mysql_config.user, "`user` missing from config for resty_mysql"
+    password = mysql_config.password
     ssl = mysql_config.ssl
     ssl_verify = mysql_config.ssl_verify
     timeout = mysql_config.timeout or 10000 -- 10 seconds

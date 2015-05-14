@@ -184,6 +184,5 @@ do
   AttachedServer = _class_0
 end
 return {
-  AttachedServer = AttachedServer,
-  debug_config_process = debug_config_process
+  AttachedServer = AttachedServer
 }

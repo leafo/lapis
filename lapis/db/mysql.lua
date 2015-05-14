@@ -78,13 +78,13 @@ backends = {
       after_dispatch, increment_perf = _obj_0.after_dispatch, _obj_0.increment_perf
     end
     local config = require("lapis.config").get()
-    local mysql_config = assert(config.mysql, "missing mysql configuration")
+    local mysql_config = assert(config.mysql, "missing mysql configuration for resty_mysql")
     local host = mysql_config.host or "127.0.0.1"
     local port = mysql_config.port or 3306
     local path = mysql_config.path
-    local database = assert(mysql_config.database)
-    local user = assert(mysql_config.user)
-    local password = assert(mysql_config.password)
+    local database = assert(mysql_config.database, "`database` missing from config for resty_mysql")
+    local user = assert(mysql_config.user, "`user` missing from config for resty_mysql")
+    local password = mysql_config.password
     local ssl = mysql_config.ssl
     local ssl_verify = mysql_config.ssl_verify
     local timeout = mysql_config.timeout or 10000

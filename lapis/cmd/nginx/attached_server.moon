@@ -172,5 +172,4 @@ class AttachedServer
 
     cfg\gsub "%f[%a]http%s-{", "http {\n" .. test_server
 
-
-{ :AttachedServer, :debug_config_process }
+{ :AttachedServer }
