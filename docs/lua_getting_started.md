@@ -235,10 +235,17 @@ can be obtained by just requiring it by the module name: `"views.layout"`. As
 described above, etlua takes care of converting the `.etlua` file into something
 usable by Lua.
 
+## Next
+
+Read the [Requests and Actions guide][5] next to learn how Lapis routes HTTP
+requests and lets you respond to them.
+
 
 [1]: https://github.com/leafo/etlua
 [2]: getting_started.html
 [3]: configuration.html
 [4]: etlua_templates.html
+[5]: $root/reference/actions.html
+
 
 

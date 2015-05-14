@@ -98,7 +98,49 @@ class App extends lapis.Application
 It is currently not valid to put anything after the splat as the splat is
 greedy and will capture all characters.
 
-### Handling HTTP verbs
+## Named Routes
+
+It's useful to give names to your routes so links to other pages can be
+generated just by knowing the name of the page instead of hard-coding the
+structure of the URL.
+
+<span class="for_moon">If the route of the action is a table with a single
+pair, then the key of that table is the name and the value is the pattern.
+MoonScript gives us convenient syntax for representing this:</span><span
+class="for_lua">Every method on the application that defines a new route has a
+second form that takes the name of the route as the first argument:</span>
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("index", "/", function(self)
+  return self:url_for("user_profile", { name = "leaf" })
+end)
+
+app:match("user_profile", "/", function(self)
+  return "Hello " .. self.params.name .. ", go home: " .. self:url_for("index")
+end)
+```
+
+```moon
+lapis = require "lapis"
+
+class extends lapis.Application
+  [index: "/"]: =>
+    @url_for "user_profile", name: "leaf"
+
+  [user_profile: "/user/:name"]: =>
+    "Hello #{@params.name}, go home: #{@url_for "index"}"
+```
+
+We can generate the paths to various actions using <span
+class="for_moon">`@url_for`</span><span
+class="for_lua">`self:url_for()`</span>. The first argument is the name of the
+route, and the second optional argument is a table of values to fill a
+parameterized route with.
+
+## Handling HTTP verbs
 
 It's common to have a single action do different things depending on the HTTP
 verb. Lapis comes with some helpers to make writing these actions simple.
@@ -136,8 +178,10 @@ class App extends lapis.Application
 
 `respond_to` can also take a before filter of its own that will run before the
 corresponding HTTP verb action. We do this by specifying a `before` function.
-The same semantics of [before filters](#lapis-applications-before-filters)
-apply, so if you call `@write` then the rest of the action will not get run.
+The same semantics of [before filters](#before-filters) apply, so if you call
+<span class="for_moon">`@write`</span><span
+class="for_lua">`self:write()`</span> then the rest of the action will not get
+run.
 
 ```lua
 local lapis = require("lapis")
@@ -155,7 +199,7 @@ app:match("edit_user", "/edit-user/:id", respond_to({
   end,
   POST = function(self)
     self.user:update(self.params.user)
-    return { redirect_to = self.url_for("index") }
+    return { redirect_to = self:url_for("index") }
   end
 }))
 ```
@@ -180,6 +224,101 @@ class App extends lapis.Application
 
 ```
 
+On any `POST` request, regardless of whether `respond_to` is used or not, if
+the `Content-type` header is set to `application/x-www-form-urlencoded` then
+the body of the request will be parsed and all the parameters will be placed
+into <span class="for_moon">`@params`</span><span
+class="for_lua">`self.params`</span>.
+
+<span class="for_lua">You may have also seen the `app:get()` and `app:post()`
+methods being called in previous examples. These are wrappers around
+`respond_to` that let you quickly define an action for a particular HTTP verb.
+You'll find thes wrappers for the most common verbs: `get`, `post`, `delete`,
+`put`. For any others you'll need to use `respond_to`.</span>
+
+```lua
+app:get("/test", function(self)
+  return "I only render for GET requests"
+end)
+
+app:delete("/delete-account", function(self)
+  -- do something destructive
+end)
+
+```
+
+## Before Filters
+
+Sometimes you want a piece of code to run before every action. A good example
+of this is setting up the user session. We can declare a before filter, or a
+function that runs before every action, like so:
+
+```lua
+local app = lapis.Application()
+
+app:before_filter(function(self)
+  if self.session.user then
+    self.current_user = load_user(self.session.user)
+  end
+end)
+
+app:match("/", function(self)
+  return "current user is: " .. tostring(self.current_user)
+end)
+```
+
+```moon
+lapis = require "lapis"
+
+class App extends lapis.Application
+  @before_filter =>
+    if @session.user
+      @current_user = load_user @session.user
+
+  "/": =>
+    "current user is: #{@current_user}"
+```
+
+You are free to add as many as you like by calling <span
+class="for_moon">`@before_filter`</span><span
+class="for_lua">`app:before_filter`</span> multiple times. They will be run in
+the order they are registered.
+
+If a before filter calls the <span class="for_moon">`@write`</span><span
+class="for_lua">`self:write()`</span> method then the action will be cancelled.
+For example we can cancel the action and redirect to another page if some
+condition is not met:
+
+```lua
+local app = lapis.Application()
+
+app:before_filter(function(self)
+  if not user_meets_requirements() then
+    self:write({redirect_to = self:url_for("login")})
+  end
+end)
+
+app:match("login", "/login", function(self)
+  -- ...
+end)
+```
+
+```moon
+lapis = require "lapis"
+
+class App extends lapis.Application
+  @before_filter =>
+    unless user_meets_requirements!
+      @write redirect_to: @url_for "login"
+
+  [login: "/login"]: => ...
+```
+
+> <span class="for_moon">`@write`</span><span
+> class="for_lua">`self:write()`</span> is what processes the return value of a
+> regular action, so the same things you can return in an action can be passed
+> to <span class="for_moon">`@write`</span><span
+> class="for_lua">`self:write()`</span>
 
 ## Request Object
 
@@ -189,7 +328,7 @@ request object as `self` when in the context of an action.
 
 The request object has the following parameters:
 
-* <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all the get, post, and url parameters together
+* <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all the `GET`, `POST`, and URL parameters together
 * <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table (generated from `ngx` state)
 * <span class="for_moon">`@res`</span><span class="for_lua">`self.res`</span> -- raw response table (used to update `ngx` state)
 * <span class="for_moon">`@app`</span><span class="for_lua">`self.app`</span> -- the instance of the application
@@ -202,7 +341,7 @@ The request object has the following parameters:
 
 ### @req
 
-The raw request table <span class="for_lua">`@req`</span><span class="for_lua">`self.req`</span> wraps some of the data provided from `ngx`. Here is a list of the available properties.
+The raw request table <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> wraps some of the data provided from `ngx`. Here is a list of the available properties.
 
 * <span class="for_moon">`@req.headers`</span><span class="for_lua">`self.req.headers`</span> -- Request headers table
 * <span class="for_moon">`@req.parsed_url`</span><span class="for_lua">`self.req.parsed_url`</span> -- Request parsed url. A table containing `scheme`, `path`, `host`, `port`, and `query` properties.
@@ -695,5 +834,9 @@ class App extends lapis.Application
     super!
 ```
 
+The [`lapis-extensions`][2] module provides a default error handler that
+records errors in a database and can email you when they happen.
 
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
+[2]: https://github.com/leafo/lapis-exceptions
+
