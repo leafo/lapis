@@ -350,6 +350,43 @@ UPDATE "the_table" SET "count" = count + 1
 SELECT * from another_table where x = now()
 ```
 
+### `list({values...})`
+
+Returns a special value that will be inserted into the query using SQL's list
+syntax. It takes a single argument of an array table.
+
+The return value of this function can be used for any value passed to a SQL
+query. Each item in the list will be escaped with `escape_literal` before
+being inserted into the query.
+
+Note we can use it both in interpolation and in the clause to a `db.update`
+call:
+
+```lua
+local ids = db.list({3,2,1,5})
+local res = db.select("* from another table where id in ?", ids)
+
+db.update("the_table", {
+  height = 55
+}, {
+  id = ids
+})
+```
+
+```moon
+ids = db.list {3,2,1,5}
+res = db.select "* from another table where id in ?", ids
+
+db.update "the_table", {
+  height: 55
+}, { :ids }
+```
+
+```sql
+SELECT * from another table where id in (3, 2, 1, 5)
+UPDATE "the_table" SET "height" = 55 WHERE "ids" IN (3, 2, 1, 5)
+```
+
 ### `escape_literal(value)`
 
 Escapes a value for use in a query. A value is any type that can be stored in a
