@@ -114,7 +114,7 @@ app:match("create_account", "/create-account", respond_to({
     return { render = true }
   end,
   POST = function(self)
-    do_something(@params)
+    do_something(self.params)
     return { redirect_to = self:url_for("index") }
   end
 }))
@@ -129,7 +129,7 @@ class App extends lapis.Application
     GET: => render: true
 
     POST: =>
-      create_user @params
+      do_something @params
       redirect_to: @url_for "index"
   }
 ```
@@ -139,19 +139,19 @@ corresponding HTTP verb action. We do this by specifying a `before` function.
 The same semantics of [before filters](#lapis-applications-before-filters)
 apply, so if you call `@write` then the rest of the action will not get run.
 
-```moon
+```lua
 local lapis = require("lapis")
 local app = lapis.Application()
 
 app:match("edit_user", "/edit-user/:id", respond_to({
   before = function(self)
     self.user = Users:find(self.params.id)
-    if not self.user
-      self:write({status: 404, "Not Found"})
+    if not self.user then
+      self:write({"Not Found", status = 404})
     end
   end,
   GET = function(self)
-    return "Edit account " .. @user.name
+    return "Edit account " .. self.user.name
   end,
   POST = function(self)
     self.user:update(self.params.user)
