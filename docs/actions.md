@@ -18,20 +18,25 @@ will be used as the [*render options*](#render-options).
 If there is no route that matches the request then the default route handler is
 executed, read more in [*application callbacks*](#application-callbacks).
 
-## Routes -- URL Patterns
+## Routes & URL Patterns
 
 Route patterns use a special syntax to define dynamic parameters of the URL and
 assign a name to them. The simplest routes have no parameters though:
 
 
 ```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
 app:match("/", function(self) end)
 app:match("/hello", function(self) end)
 app:match("/users/all", function(self) end)
 ```
 
 ```moon
-class extends lapis.Application
+lapis = require "lapis"
+
+class App extends lapis.Application
   "/": =>
   "/hello": =>
   "/users/all": =>
@@ -49,14 +54,20 @@ The parameter will match all characters excluding `/`:
 app:match("/page/:page", function(self)
   print(self.params.page)
 end)
+
 app:match("/post/:post_id/:post_name", function(self) end)
 ```
 
 ```moon
-class extends lapis.Application
+lapis = require "lapis"
+
+class App extends lapis.Application
   "/page/:page": => print @params.page
   "/post/:post_id/:post_name": =>
 ```
+
+> In the example above we called `print` to debug. When running inside
+> OpenResty, the output of `print` is sent to the Nginx notice log.
 
 The captured values of the route parameters are saved in the `params` field of
 the request object by their name. A named parameter must contain at least 1
@@ -74,7 +85,9 @@ app:match("/user/:name/file/*", function(self) end)
 ```
 
 ```moon
-class extends lapis.Application
+lapis = require "lapis"
+
+class App extends lapis.Application
   "/browse/*": =>
     print @params.splat
 
@@ -84,6 +97,89 @@ class extends lapis.Application
 
 It is currently not valid to put anything after the splat as the splat is
 greedy and will capture all characters.
+
+### Handling HTTP verbs
+
+It's common to have a single action do different things depending on the HTTP
+verb. Lapis comes with some helpers to make writing these actions simple.
+`respond_to` takes a table indexed by HTTP verb with a value of the function to
+perform when the action receives that verb.
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("create_account", "/create-account", respond_to({
+  GET = function(self)
+    return { render = true }
+  end,
+  POST = function(self)
+    do_something(@params)
+    return { redirect_to = self:url_for("index") }
+  end
+}))
+```
+
+```moon
+lapis = require "lapis"
+import respond_to from require "lapis.application"
+
+class App extends lapis.Application
+  [create_account: "/create-account"]: respond_to {
+    GET: => render: true
+
+    POST: =>
+      create_user @params
+      redirect_to: @url_for "index"
+  }
+```
+
+`respond_to` can also take a before filter of its own that will run before the
+corresponding HTTP verb action. We do this by specifying a `before` function.
+The same semantics of [before filters](#lapis-applications-before-filters)
+apply, so if you call `@write` then the rest of the action will not get run.
+
+```moon
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("edit_user", "/edit-user/:id", respond_to({
+  before = function(self)
+    self.user = Users:find(self.params.id)
+    if not self.user
+      self:write({status: 404, "Not Found"})
+    end
+  end,
+  GET = function(self)
+    return "Edit account " .. @user.name
+  end,
+  POST = function(self)
+    self.user:update(self.params.user)
+    return { redirect_to = self.url_for("index") }
+  end
+}))
+```
+
+```moon
+lapis = require "lapis"
+import respond_to from require "lapis.application"
+
+class App extends lapis.Application
+  "/edit_user/:id": respond_to {
+    before: =>
+      @user = Users\find @params.id
+      @write status: 404, "Not Found" unless @user
+
+    GET: =>
+      "Edit account #{@user.name}..."
+
+    POST: =>
+      @user\update @params.user
+      redirect_to: @url_for "index"
+  }
+
+```
+
 
 ## Request Object
 
@@ -167,7 +263,7 @@ cookies to make them persist:
 ```moon
 date = require "date"
 
-class extends lapis.Application
+class App extends lapis.Application
   cookie_attributes: (name, value) =>
     expires = date(true)\adddays(365)\fmt "${http}"
     "Expires=#{expires}; Path=/; HttpOnly"
@@ -461,7 +557,7 @@ end)
 ```
 
 ```moon
-class extends lapis.Application
+class App extends lapis.Application
   "/hello": =>
     json: { hello: "world!" }
 ```
@@ -528,7 +624,7 @@ end
 ```
 
 ```moon
-class extends lapis.Application
+class App extends lapis.Application
   default_route: =>
     ngx.log ngx.NOTICE, "User hit unknown path #{@req.parsed_url.path}"
     @super!
@@ -563,7 +659,7 @@ end
 ```
 
 ```moon
-class extends lapis.Application
+class App extends lapis.Application
   handle_404: =>
     status: 404, layout: false, "Not Found!"
 ```
@@ -593,7 +689,7 @@ end
 ```
 
 ```moon
-class extends lapis.Application
+class App extends lapis.Application
   handle_error: (err, trace) =>
     ngx.log ngx.NOTICE, "There was an error! #{err}: #{trace}"
     super!
