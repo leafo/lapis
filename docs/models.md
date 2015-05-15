@@ -1198,6 +1198,9 @@ user = post\get_user!
 SELECT * from "users" where "user_id" = 123;
 ```
 
+The relation definition can take an optional `key` option to override what
+field is used on the current model to reference as the foreign key.
+
 ### `has_one`
 
 A relation that fetches a single related model. Similar to `belongs_to`, but

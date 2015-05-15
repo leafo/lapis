@@ -19,7 +19,7 @@ belongs_to = (name, opts) =>
   assert type(source) == "string", "Expecting model name for `belongs_to` relation"
 
   get_method = opts.as or "get_#{name}"
-  column_name = "#{name}_id"
+  column_name = opts.key or "#{name}_id"
 
   @__base[get_method] = =>
     return nil unless @[column_name]

@@ -30,7 +30,7 @@ belongs_to = function(self, name, opts)
   local source = opts.belongs_to
   assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
   local get_method = opts.as or "get_" .. tostring(name)
-  local column_name = tostring(name) .. "_id"
+  local column_name = opts.key or tostring(name) .. "_id"
   self.__base[get_method] = function(self)
     if not (self[column_name]) then
       return nil

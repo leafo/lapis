@@ -514,19 +514,27 @@ describe "lapis.db.model", ->
       models.Users = class extends Model
         @primary_key: "id"
 
+      models.CoolUsers = class extends Model
+        @primary_key: "user_id"
+
       class Posts extends Model
         @relations: {
           {"user", belongs_to: "Users"}
+          {"cool_user", belongs_to: "CoolUsers", key: "owner_id"}
         }
 
       post = Posts!
       post.user_id = 123
+      post.owner_id = 99
 
       assert post\get_user!
       assert post\get_user!
+
+      post\get_cool_user!
 
       assert_queries {
         'SELECT * from "users" where "id" = 123 limit 1'
+        'SELECT * from "cool_users" where "user_id" = 99 limit 1'
       }, queries
 
 
