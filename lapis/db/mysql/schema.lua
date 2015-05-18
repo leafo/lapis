@@ -55,8 +55,16 @@ create_table = function(name, columns, opts)
   if opts == nil then
     opts = { }
   end
+  local prefix
+  if opts.if_not_exists then
+    prefix = "CREATE TABLE IF NOT EXISTS "
+  else
+    prefix = "CREATE TABLE "
+  end
   local buffer = {
-    "CREATE TABLE IF NOT EXISTS " .. tostring(escape_identifier(name)) .. " ("
+    prefix,
+    escape_identifier(name),
+    " ("
   }
   local add
   add = function(...)

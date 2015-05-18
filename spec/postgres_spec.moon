@@ -223,7 +223,6 @@ tests = {
     "timestamp with time zone NOT NULL"
   }
 
-
   {
     ->
       import foreign_key, boolean, varchar, text from schema.types
@@ -243,7 +242,6 @@ tests = {
   PRIMARY KEY (user_id)
 );]]
   }
-
 
   {
     ->

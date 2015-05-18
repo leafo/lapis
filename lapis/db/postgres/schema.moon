@@ -24,10 +24,8 @@ entity_exists = (name) ->
   res = unpack db.select "COUNT(*) as c from pg_class where relname = #{name}"
   res.c > 0
 
-create_table = (name, columns, opts) ->
-  if_not_exists = opts and opts.if_not_exists
-
-  prefix = if if_not_exists
+create_table = (name, columns, opts={}) ->
+  prefix = if opts.if_not_exists
     "CREATE TABLE IF NOT EXISTS "
   else
     "CREATE TABLE "

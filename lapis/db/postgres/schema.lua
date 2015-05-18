@@ -49,9 +49,11 @@ entity_exists = function(name)
 end
 local create_table
 create_table = function(name, columns, opts)
-  local if_not_exists = opts and opts.if_not_exists
+  if opts == nil then
+    opts = { }
+  end
   local prefix
-  if if_not_exists then
+  if opts.if_not_exists then
     prefix = "CREATE TABLE IF NOT EXISTS "
   else
     prefix = "CREATE TABLE "

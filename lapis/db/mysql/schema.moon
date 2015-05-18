@@ -29,7 +29,12 @@ entity_exists = (name) ->
   res.c > 0
 
 create_table = (name, columns, opts={}) ->
-  buffer = {"CREATE TABLE IF NOT EXISTS #{escape_identifier name} ("}
+  prefix = if opts.if_not_exists
+    "CREATE TABLE IF NOT EXISTS "
+  else
+    "CREATE TABLE "
+
+  buffer = {prefix, escape_identifier(name), " ("}
   add = (...) -> append_all buffer, ...
 
   for i, c in ipairs columns
