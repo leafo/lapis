@@ -270,7 +270,6 @@ _truncate = (table) ->
   :escape_literal
   :escape_identifier
   :set_backend
-  :raw_query
   :format_date
   :init_logger
 

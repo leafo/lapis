@@ -84,7 +84,7 @@ create_table = function(name, columns, opts)
   end
   add(" CHARSET=", opts.charset or "UTF8")
   add(";")
-  return db.raw_query(concat(buffer))
+  return db.query(concat(buffer))
 end
 local drop_table
 drop_table = function(tname)

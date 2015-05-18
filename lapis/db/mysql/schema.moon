@@ -49,7 +49,7 @@ create_table = (name, columns, opts={}) ->
   add " CHARSET=", opts.charset or "UTF8"
   add ";"
 
-  db.raw_query concat buffer
+  db.query concat buffer
 
 drop_table = (tname) ->
   db.query "DROP TABLE IF EXISTS #{escape_identifier tname};"

@@ -13,8 +13,8 @@ describe "model", ->
   teardown ->
     teardown_db!
 
-  it "should run raw_query", ->
-    assert.truthy db.raw_query [[
+  it "should run query", ->
+    assert.truthy db.query [[
       select * from information_schema.tables
       where table_schema = "lapis_test"
     ]]
@@ -32,7 +32,7 @@ describe "model", ->
       {"name", types.varchar}
     }
 
-    assert.same 1, #db.raw_query [[
+    assert.same 1, #db.query [[
       select * from information_schema.tables
       where table_schema = "lapis_test" and table_name = "hello_worlds"
     ]]
