@@ -50,9 +50,10 @@ create_table = (name, columns, opts={}) ->
 
 create_index = (tname, ...) ->
   index_name = gen_index_name tname, ...
-  return if entity_exists index_name
-
   columns, options = extract_options {...}
+
+  if options.if_not_exists
+    return if entity_exists index_name
 
   buffer = {"CREATE"}
   append_all buffer, " UNIQUE" if options.unique

@@ -89,12 +89,14 @@ end
 local create_index
 create_index = function(tname, ...)
   local index_name = gen_index_name(tname, ...)
-  if entity_exists(index_name) then
-    return 
-  end
   local columns, options = extract_options({
     ...
   })
+  if options.if_not_exists then
+    if entity_exists(index_name) then
+      return 
+    end
+  end
   local buffer = {
     "CREATE"
   }
