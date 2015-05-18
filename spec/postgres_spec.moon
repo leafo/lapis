@@ -235,7 +235,7 @@ tests = {
         "PRIMARY KEY (user_id)"
       }
 
-    [[CREATE TABLE IF NOT EXISTS "user_data" (
+    [[CREATE TABLE "user_data" (
   "user_id" integer NOT NULL,
   "email_verified" boolean NOT NULL DEFAULT FALSE,
   "password_reset_token" character varying(255),
@@ -243,6 +243,22 @@ tests = {
   PRIMARY KEY (user_id)
 );]]
   }
+
+
+  {
+    ->
+      import foreign_key, boolean, varchar, text from schema.types
+      schema.create_table "join_stuff", {
+        {"hello_id", foreign_key}
+        {"world_id", foreign_key}
+      }, if_not_exists: true
+
+    [[CREATE TABLE IF NOT EXISTS "join_stuff" (
+  "hello_id" integer NOT NULL,
+  "world_id" integer NOT NULL
+);]]
+  }
+
 
   {
     -> schema.drop_table "user_data"
@@ -341,7 +357,6 @@ tests = {
       }
     }
   }
-
 
   {
     -> schema.gen_index_name "hello", "world"

@@ -48,9 +48,18 @@ entity_exists = function(name)
   return res.c > 0
 end
 local create_table
-create_table = function(name, columns)
+create_table = function(name, columns, opts)
+  local if_not_exists = opts and opts.if_not_exists
+  local prefix
+  if if_not_exists then
+    prefix = "CREATE TABLE IF NOT EXISTS "
+  else
+    prefix = "CREATE TABLE "
+  end
   local buffer = {
-    "CREATE TABLE IF NOT EXISTS " .. tostring(escape_identifier(name)) .. " ("
+    prefix,
+    escape_identifier(name),
+    " ("
   }
   local add
   add = function(...)
