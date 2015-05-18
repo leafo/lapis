@@ -183,6 +183,13 @@ build_helpers = function(escape_literal, escape_identifier)
 end
 local gen_index_name
 gen_index_name = function(...)
+  local count = select("#", ...)
+  local last_arg = select(count, ...)
+  if type(last_arg) == "table" and not is_raw(last_arg) then
+    if last_arg.index_name then
+      return last_arg.index_name
+    end
+  end
   local parts
   do
     local _accum_0 = { }

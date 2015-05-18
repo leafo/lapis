@@ -83,6 +83,12 @@ build_helpers = (escape_literal, escape_identifier) ->
   interpolate_query, encode_values, encode_assigns, encode_clause
 
 gen_index_name = (...) ->
+  -- pass index_name: "hello_world" to override generated index name
+  count = select "#", ...
+  last_arg = select count, ...
+  if type(last_arg) == "table" and not is_raw(last_arg)
+    return last_arg.index_name if last_arg.index_name
+
   parts = for p in *{...}
     if is_raw p
       p[1]\gsub("[^%w]+$", "")\gsub("[^%w]+", "_")

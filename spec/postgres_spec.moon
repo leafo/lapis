@@ -354,6 +354,11 @@ tests = {
   }
 
   {
+    -> schema.gen_index_name "hello", "world", index_name: "override_me_idx"
+    "override_me_idx"
+  }
+
+  {
     -> db.encode_case("x", { a: "b" })
     [[CASE x
 WHEN 'a' THEN 'b'
