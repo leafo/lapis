@@ -46,7 +46,7 @@ path = annotate(path, {
 local write_file_safe
 write_file_safe = function(file, content)
   if path.exists(file) then
-    return 
+    return nil, "file already exists: " .. tostring(file)
   end
   do
     local prefix = file:match("^(.+)/[^/]+$")
@@ -56,7 +56,8 @@ write_file_safe = function(file, content)
       end
     end
   end
-  return path.write_file(file, content)
+  path.write_file(file, content)
+  return true
 end
 local fail_with_message
 fail_with_message = function(msg)
@@ -272,17 +273,20 @@ tasks = {
   },
   {
     name = "generate",
-    usage = "generate template [args...]",
+    usage = "generate <template> [args...]",
     help = "generates a new file from template",
     function(template_name, ...)
       local tpl = require("lapis.cmd.templates." .. tostring(template_name))
       if not (type(tpl) == "table") then
         error("invalid template: " .. tostring(template_name))
       end
+      local writer = {
+        write = function(self, ...)
+          return assert(write_file_safe(...))
+        end
+      }
       tpl.check_args(...)
-      local out = tpl.content(...)
-      local fname = tpl.filename(...)
-      return write_file_safe(fname, out)
+      return tpl.write(writer, ...)
     end
   },
   {

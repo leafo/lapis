@@ -1,26 +1,31 @@
 local check_args
-check_args = function(name)
+check_args = function(name, more)
   if not (name) then
-    return error("model template takes arguments: name")
+    error("model template takes arguments: name")
   end
-end
-local content
-content = function(name)
-  local camelize
-  camelize = require("lapis.util").camelize
-  local class_name = camelize(name)
-  return [[db = require "lapis.db"
-import Model from require "lapis.db.model"
-
-class ]] .. class_name .. [[ extends Model
-]]
+  if name:match("%u") then
+    error("name should be underscore form, all lowercase")
+  end
+  if more then
+    return error("got a second argument to generator, did you mean to pass a string?")
+  end
 end
 local filename
 filename = function(name)
   return "models/" .. tostring(name) .. ".moon"
 end
+local write
+write = function(writer, name)
+  local camelize
+  camelize = require("lapis.util").camelize
+  local class_name = camelize(name)
+  return writer:write(filename(name), [[db = require "lapis.db"
+import Model from require "lapis.db.model"
+
+class ]] .. class_name .. [[ extends Model
+]])
+end
 return {
-  content = content,
-  filename = filename,
-  check_args = check_args
+  check_args = check_args,
+  write = write
 }

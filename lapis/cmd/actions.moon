@@ -29,12 +29,13 @@ path = annotate path, {
 }
 
 write_file_safe = (file, content) ->
-  return if path.exists file
+  return nil, "file already exists: #{file}" if path.exists file
 
   if prefix = file\match "^(.+)/[^/]+$"
     path.mkdir prefix unless path.exists prefix
 
   path.write_file file, content
+  true
 
 fail_with_message = (msg) ->
   print colors "%{bright}%{red}Aborting:%{reset} " .. msg
@@ -209,7 +210,7 @@ tasks = {
 
   {
     name: "generate"
-    usage: "generate template [args...]"
+    usage: "generate <template> [args...]"
     help: "generates a new file from template"
 
     (template_name, ...) ->
@@ -217,10 +218,10 @@ tasks = {
       unless type(tpl) == "table"
         error "invalid template: #{template_name}"
 
+      writer = { write: (...) => assert write_file_safe ...  }
+
       tpl.check_args ...
-      out = tpl.content ...
-      fname = tpl.filename ...
-      write_file_safe fname, out
+      tpl.write writer, ...
   }
 
   {
