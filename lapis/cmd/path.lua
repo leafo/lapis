@@ -3,7 +3,7 @@ local shell_escape
 shell_escape = function(str)
   return str:gsub("'", "''")
 end
-local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join
+local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join, exec
 up = function(path)
   path = path:gsub("/$", "")
   path = path:gsub("[^/]*$", "")
@@ -65,6 +65,25 @@ join = function(a, b)
   end
   return a .. "/" .. b
 end
+exec = function(cmd, ...)
+  local args
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    local _list_0 = {
+      ...
+    }
+    for _index_0 = 1, #_list_0 do
+      local x = _list_0[_index_0]
+      _accum_0[_len_0] = shell_escape(x)
+      _len_0 = _len_0 + 1
+    end
+    args = _accum_0
+  end
+  args = table.concat(args, " ")
+  local full_cmd = tostring(cmd) .. " " .. tostring(args)
+  return os.execute(full_cmd)
+end
 return {
   up = up,
   exists = exists,
@@ -76,5 +95,6 @@ return {
   copy = copy,
   join = join,
   read_file = read_file,
-  shell_escape = shell_escape
+  shell_escape = shell_escape,
+  exec = exec
 }

@@ -51,5 +51,12 @@ join = (a, b) ->
   return a if b == ""
   a .. "/" .. b
 
+exec = (cmd, ...) ->
+  args = [shell_escape x for x in *{...}]
+  args = table.concat args, " "
+
+  full_cmd = "#{cmd} #{args}"
+  os.execute full_cmd
+
 { :up, :exists, :normalize, :basepath, :filename, :write_file, :mkdir, :copy,
-  :join, :read_file, :shell_escape }
+  :join, :read_file, :shell_escape, :exec }
