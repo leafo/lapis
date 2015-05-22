@@ -195,6 +195,20 @@ describe "before filter", ->
     assert.same action_run, 1
     assert.same "stopped!", res
 
+  it "should create before filter for lua app", ->
+    app = lapis.Application!
+
+    local val
+
+    app\before_filter =>
+      @val = "yeah"
+
+    app\get "/", =>
+      val = @val
+
+    assert_request app, "/"
+    assert.same "yeah", val
+
 describe "stub_request", ->
   class SomeApp extends lapis.Application
     [cool_page: "/cool/:name"]: =>

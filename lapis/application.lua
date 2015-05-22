@@ -414,6 +414,12 @@ do
       end
       return res
     end,
+    before_filter = function(self, fn)
+      if not (rawget(self, "before_filters")) then
+        self.before_filters = { }
+      end
+      return insert(self.before_filters, fn)
+    end,
     default_route = function(self)
       if self.req.parsed_url.path:match("./$") then
         local stripped = self.req.parsed_url.path:match("^(.+)/+$")
@@ -534,9 +540,8 @@ do
       return self:match(route_name, path, responder)
     end
   end
-  self.before_filter = function(self, fn)
-    self.__base.before_filters = self.__base.before_filters or { }
-    return insert(self.before_filters, fn)
+  self.before_filter = function(self, ...)
+    return self.__base.before_filter(self.__base, ...)
   end
   self.include = function(self, other_app, opts, into)
     if into == nil then

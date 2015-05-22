@@ -355,8 +355,13 @@ class Application
 
     res
 
-  @before_filter: (fn) =>
-    @__base.before_filters or= {}
+  @before_filter: (...) =>
+    @__base.before_filter @__base, ...
+
+  before_filter: (fn) =>
+    unless rawget @, "before_filters"
+      @before_filters = {}
+
     insert @before_filters, fn
 
   -- copies all actions into this application, preserves before filters
