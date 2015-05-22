@@ -218,7 +218,12 @@ tasks = {
       unless type(tpl) == "table"
         error "invalid template: #{template_name}"
 
-      writer = { write: (...) => assert write_file_safe ...  }
+      writer = {
+        write: (...) => assert write_file_safe ...
+        mod_to_path: (mod) =>
+          mod\gsub "%.", "/"
+
+      }
 
       tpl.check_args ...
       tpl.write writer, ...

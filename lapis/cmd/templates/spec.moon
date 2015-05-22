@@ -11,8 +11,23 @@ check_args = (name, more) ->
 filename = (name) ->
   "spec/#{name}_spec.moon"
 
-write = (writer, name) ->
-  writer\write filename(name), [[import use_test_server from require "lapis.spec"
+
+spec_types = {
+  models: (name) ->
+    [[import use_test_env from require "lapis.spec"
+import request from require "lapis.spec.server"
+import truncate_tables from require "lapis.spec.db"
+
+describe "]] ..name .. [[", ->
+  use_test_env!
+
+  before_each ->
+
+  it "should ...", ->
+]]
+
+  applications: (name) ->
+    [[import use_test_server from require "lapis.spec"
 import request from require "lapis.spec.server"
 import truncate_tables from require "lapis.spec.db"
 
@@ -21,9 +36,16 @@ describe "]] ..name .. [[", ->
 
   before_each ->
 
-  it "should do something", ->
+  it "should ...", ->
 ]]
+}
 
+spec_types.helpers = spec_types.models
+
+write = (writer, name) ->
+  path = writer\mod_to_path name
+  prefix = name\match "^(.+)%."
+  writer\write filename(path), (spec_types[prefix] or spec_types.applications) name
 
 {:check_args, :write}
 

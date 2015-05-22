@@ -14,9 +14,22 @@ local filename
 filename = function(name)
   return "spec/" .. tostring(name) .. "_spec.moon"
 end
-local write
-write = function(writer, name)
-  return writer:write(filename(name), [[import use_test_server from require "lapis.spec"
+local spec_types = {
+  models = function(name)
+    return [[import use_test_env from require "lapis.spec"
+import request from require "lapis.spec.server"
+import truncate_tables from require "lapis.spec.db"
+
+describe "]] .. name .. [[", ->
+  use_test_env!
+
+  before_each ->
+
+  it "should ...", ->
+]]
+  end,
+  applications = function(name)
+    return [[import use_test_server from require "lapis.spec"
 import request from require "lapis.spec.server"
 import truncate_tables from require "lapis.spec.db"
 
@@ -25,8 +38,16 @@ describe "]] .. name .. [[", ->
 
   before_each ->
 
-  it "should do something", ->
-]])
+  it "should ...", ->
+]]
+  end
+}
+spec_types.helpers = spec_types.models
+local write
+write = function(writer, name)
+  local path = writer:mod_to_path(name)
+  local prefix = name:match("^(.+)%.")
+  return writer:write(filename(path), (spec_types[prefix] or spec_types.applications)(name))
 end
 return {
   check_args = check_args,

@@ -283,6 +283,9 @@ tasks = {
       local writer = {
         write = function(self, ...)
           return assert(write_file_safe(...))
+        end,
+        mod_to_path = function(self, mod)
+          return mod:gsub("%.", "/")
         end
       }
       tpl.check_args(...)
