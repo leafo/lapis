@@ -15,34 +15,7 @@ do
 end
 local path = require("lapis.cmd.path")
 local colors = require("ansicolors")
-local log = print
-local annotate
-annotate = function(obj, verbs)
-  return setmetatable({ }, {
-    __newindex = function(self, name, value)
-      obj[name] = value
-    end,
-    __index = function(self, name)
-      local fn = obj[name]
-      if not type(fn) == "function" then
-        return fn
-      end
-      if verbs[name] then
-        return function(...)
-          fn(...)
-          local first = ...
-          return log(verbs[name], first)
-        end
-      else
-        return fn
-      end
-    end
-  })
-end
-path = annotate(path, {
-  mkdir = colors("%{bright}%{magenta}made directory%{reset}"),
-  write_file = colors("%{bright}%{yellow}wrote%{reset}")
-})
+path = path:annotate()
 local write_file_safe
 write_file_safe = function(file, content)
   if path.exists(file) then

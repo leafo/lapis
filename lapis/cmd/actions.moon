@@ -6,27 +6,7 @@ import find_leda, start_leda from require "lapis.cmd.leda"
 path = require "lapis.cmd.path"
 colors = require "ansicolors"
 
-log = print
-annotate = (obj, verbs) ->
-  setmetatable {}, {
-    __newindex: (name, value) =>
-      obj[name] = value
-    __index: (name) =>
-      fn =  obj[name]
-      return fn if not type(fn) == "function"
-      if verbs[name]
-        (...) ->
-          fn ...
-          first = ...
-          log verbs[name], first
-      else
-        fn
-  }
-
-path = annotate path, {
-  mkdir: colors "%{bright}%{magenta}made directory%{reset}"
-  write_file: colors "%{bright}%{yellow}wrote%{reset}"
-}
+path = path\annotate!
 
 write_file_safe = (file, content) ->
   return nil, "file already exists: #{file}" if path.exists file

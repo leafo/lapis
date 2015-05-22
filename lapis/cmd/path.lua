@@ -3,7 +3,7 @@ local shell_escape
 shell_escape = function(str)
   return str:gsub("'", "''")
 end
-local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join, exec
+local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join, exec, mod
 up = function(path)
   path = path:gsub("/$", "")
   path = path:gsub("[^/]*$", "")
@@ -84,7 +84,7 @@ exec = function(cmd, ...)
   local full_cmd = tostring(cmd) .. " " .. tostring(args)
   return os.execute(full_cmd)
 end
-return {
+mod = {
   up = up,
   exists = exists,
   normalize = normalize,
@@ -98,3 +98,37 @@ return {
   shell_escape = shell_escape,
   exec = exec
 }
+do
+  local log = print
+  local annotate
+  annotate = function(obj, verbs)
+    return setmetatable({ }, {
+      __newindex = function(self, name, value)
+        obj[name] = value
+      end,
+      __index = function(self, name)
+        local fn = obj[name]
+        if not type(fn) == "function" then
+          return fn
+        end
+        if verbs[name] then
+          return function(...)
+            fn(...)
+            return log(verbs[name], (...))
+          end
+        else
+          return fn
+        end
+      end
+    })
+  end
+  mod.annotate = function()
+    local colors = require("ansicolors")
+    return annotate(mod, {
+      mkdir = colors("%{bright}%{magenta}made directory%{reset}"),
+      write_file = colors("%{bright}%{yellow}wrote%{reset}"),
+      exec = colors("%{bright}%{red}exec%{reset}")
+    })
+  end
+end
+return mod
