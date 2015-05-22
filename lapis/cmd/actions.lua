@@ -276,15 +276,16 @@ tasks = {
     usage = "generate <template> [args...]",
     help = "generates a new file from template",
     function(template_name, ...)
-      local tpl
+      local tpl, module_name
       pcall(function()
-        tpl = require("generators." .. tostring(template_name))
+        module_name = "generators." .. tostring(template_name)
+        tpl = require(module_name)
       end)
       if not (tpl) then
         tpl = require("lapis.cmd.templates." .. tostring(template_name))
       end
       if not (type(tpl) == "table") then
-        error("invalid template: " .. tostring(template_name))
+        error("invalid generator `" .. tostring(module_name or template_name) .. "`, module must be table")
       end
       local writer = {
         write = function(self, ...)
@@ -294,7 +295,12 @@ tasks = {
           return mod:gsub("%.", "/")
         end
       }
-      tpl.check_args(...)
+      if tpl.check_args then
+        tpl.check_args(...)
+      end
+      if not (type(tpl.write) == "function") then
+        error("generator `" .. tostring(module_name or template_name) .. "` is missing write function")
+      end
       return tpl.write(writer, ...)
     end
   },

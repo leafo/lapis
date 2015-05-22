@@ -214,16 +214,17 @@ tasks = {
     help: "generates a new file from template"
 
     (template_name, ...) ->
-      local tpl
+      local tpl, module_name
 
       pcall ->
-        tpl = require "generators.#{template_name}"
+        module_name = "generators.#{template_name}"
+        tpl = require module_name
 
       unless tpl
         tpl = require "lapis.cmd.templates.#{template_name}"
 
       unless type(tpl) == "table"
-        error "invalid template: #{template_name}"
+        error "invalid generator `#{module_name or template_name}`, module must be table"
 
       writer = {
         write: (...) => assert write_file_safe ...
@@ -232,7 +233,12 @@ tasks = {
 
       }
 
-      tpl.check_args ...
+      if tpl.check_args
+        tpl.check_args ...
+
+      unless type(tpl.write) == "function"
+        error "generator `#{module_name or template_name}` is missing write function"
+
       tpl.write writer, ...
   }
 
