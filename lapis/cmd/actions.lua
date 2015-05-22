@@ -276,7 +276,13 @@ tasks = {
     usage = "generate <template> [args...]",
     help = "generates a new file from template",
     function(template_name, ...)
-      local tpl = require("lapis.cmd.templates." .. tostring(template_name))
+      local tpl
+      pcall(function()
+        tpl = require("generators." .. tostring(template_name))
+      end)
+      if not (tpl) then
+        tpl = require("lapis.cmd.templates." .. tostring(template_name))
+      end
       if not (type(tpl) == "table") then
         error("invalid template: " .. tostring(template_name))
       end

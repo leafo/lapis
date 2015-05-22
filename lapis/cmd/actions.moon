@@ -214,7 +214,14 @@ tasks = {
     help: "generates a new file from template"
 
     (template_name, ...) ->
-      tpl = require "lapis.cmd.templates.#{template_name}"
+      local tpl
+
+      pcall ->
+        tpl = require "generators.#{template_name}"
+
+      unless tpl
+        tpl = require "lapis.cmd.templates.#{template_name}"
+
       unless type(tpl) == "table"
         error "invalid template: #{template_name}"
 
