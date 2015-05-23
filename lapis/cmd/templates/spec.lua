@@ -17,7 +17,6 @@ end
 local spec_types = {
   models = function(name)
     return [[import use_test_env from require "lapis.spec"
-import request from require "lapis.spec.server"
 import truncate_tables from require "lapis.spec.db"
 
 describe "]] .. name .. [[", ->
