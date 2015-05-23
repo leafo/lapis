@@ -196,6 +196,11 @@ untrusted strings otherwise you may be vulnerable to SQL injection. Use
 [`db.escape_identifier`](database.html#query-interface-escape_identifierstr) to
 escape column names.
 
+You can use the `load` option to change what model each result of the query is
+loaded as. By default it will convert each row to an instance of the model that
+is calling the `select` method. Passing `false` to load will return the results
+unaffected, as plain Lua tables.
+
 ### `find_all(primary_keys)`
 
 If you want to find many rows by their primary key you can use the `find_all`
