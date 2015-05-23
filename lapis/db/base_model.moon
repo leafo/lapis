@@ -117,7 +117,7 @@ class BaseModel
   --   @db.delete @table_name!, query, ...
 
   @select: (query="", ...) =>
-    opts = {}
+    local opts
     param_count = select "#", ...
 
     if param_count > 0
@@ -131,9 +131,14 @@ class BaseModel
     query = @db.interpolate_query query, ...
     tbl_name = @db.escape_identifier @table_name!
 
-    fields = opts.fields or "*"
+    load_as = opts and opts.load
+    fields = opts and opts.fields or "*"
     if res = @db.select "#{fields} from #{tbl_name} #{query}"
-      @load_all res
+      return res if load_as == false
+      if load_as
+        load_as\load_all res
+      else
+        @load_all res
 
   @count: (clause, ...) =>
     tbl_name = @db.escape_identifier @table_name!

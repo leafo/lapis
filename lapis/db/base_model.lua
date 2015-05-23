@@ -277,7 +277,7 @@ do
     if query == nil then
       query = ""
     end
-    local opts = { }
+    local opts
     local param_count = select("#", ...)
     if param_count > 0 then
       local last = select(param_count, ...)
@@ -291,11 +291,19 @@ do
     end
     query = self.db.interpolate_query(query, ...)
     local tbl_name = self.db.escape_identifier(self:table_name())
-    local fields = opts.fields or "*"
+    local load_as = opts and opts.load
+    local fields = opts and opts.fields or "*"
     do
       local res = self.db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " " .. tostring(query))
       if res then
-        return self:load_all(res)
+        if load_as == false then
+          return res
+        end
+        if load_as then
+          return load_as:load_all(res)
+        else
+          return self:load_all(res)
+        end
       end
     end
   end
