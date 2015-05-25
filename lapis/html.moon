@@ -2,7 +2,8 @@
 import concat, insert from table
 
 _G = _G
-import type, pairs, ipairs, tostring, getfenv, setfenv from _G
+import type, pairs, ipairs, tostring, getfenv, setfenv, getmetatable,
+  setmetatable, table from _G
 
 import locked_fn, release_fn from require "lapis.util.functions"
 

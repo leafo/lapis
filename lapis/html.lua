@@ -4,8 +4,8 @@ do
   concat, insert = _obj_0.concat, _obj_0.insert
 end
 local _G = _G
-local type, pairs, ipairs, tostring, getfenv, setfenv
-type, pairs, ipairs, tostring, getfenv, setfenv = _G.type, _G.pairs, _G.ipairs, _G.tostring, _G.getfenv, _G.setfenv
+local type, pairs, ipairs, tostring, getfenv, setfenv, getmetatable, setmetatable, table
+type, pairs, ipairs, tostring, getfenv, setfenv, getmetatable, setmetatable, table = _G.type, _G.pairs, _G.ipairs, _G.tostring, _G.getfenv, _G.setfenv, _G.getmetatable, _G.setmetatable, _G.table
 local locked_fn, release_fn
 do
   local _obj_0 = require("lapis.util.functions")
