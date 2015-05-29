@@ -17,6 +17,17 @@ describe "application", ->
     assert.has_error ->
       mock_request App, "/world"
 
+  it "should mock a request with double headers #ddd", ->
+    mock_request App, "/hello", {
+      method: "POST"
+      headers: {
+        ["Content-type"]: {
+          "hello"
+          "world"
+        }
+      }
+    }
+
 -- tests a series of requests
 describe "session app", ->
   class SessionApp extends lapis.Application
@@ -34,8 +45,9 @@ describe "session app", ->
     assert.same "greetings", res
 
 describe "mock action", ->
-  assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
-    "hello"
+  it "should mock action", ->
+    assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
+      "hello"
 
 describe "json request", ->
   import json_params from require "lapis.application"
