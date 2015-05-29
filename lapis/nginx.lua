@@ -110,7 +110,7 @@ local ngx_req = {
     return build_url(t.parsed_url)
   end,
   params_post = function(t)
-    local content_type = t.headers["content_type"] or ""
+    local content_type = t.headers["content-type"] or ""
     if not (type(content_type) == "string") then
       content_type = ""
     end
