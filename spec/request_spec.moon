@@ -17,7 +17,7 @@ describe "application", ->
     assert.has_error ->
       mock_request App, "/world"
 
-  it "should mock a request with double headers #ddd", ->
+  it "should mock a request with double headers", ->
     mock_request App, "/hello", {
       method: "POST"
       headers: {

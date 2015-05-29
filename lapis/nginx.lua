@@ -110,7 +110,11 @@ local ngx_req = {
     return build_url(t.parsed_url)
   end,
   params_post = function(t)
-    local content_type = (t.headers["content-type"] or ""):lower()
+    local content_type = t.headers["content_type"] or ""
+    if not (type(content_type) == "string") then
+      content_type = ""
+    end
+    content_type = content_type:lower()
     local params
     if content_type:match(escape_pattern("multipart/form-data")) then
       params = parse_multipart()
