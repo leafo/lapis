@@ -150,6 +150,7 @@ describe "lapis.db.model", ->
     p\get_all!
     assert.same 127, p\total_items!
     assert.same 13, p\num_pages!
+    assert.falsy p\has_items!
 
     p\get_page 1
     p\get_page 4
@@ -175,7 +176,8 @@ describe "lapis.db.model", ->
 
     assert_queries {
       'SELECT * from "things" where group_id = 123 order by name asc'
-      'SELECT COUNT(*) as c from "things" where group_id = 123 '
+      'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
+      'SELECT 1 FROM "things" where group_id = 123 limit 1'
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 0 '
       'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 30 '
       'SELECT * from "things" order by name asc limit 25 offset 50 '
@@ -183,7 +185,7 @@ describe "lapis.db.model", ->
       'SELECT hello, world from "things" limit 12 offset 12 '
       'SELECT * from "things" order by BLAH limit 10 offset 0 '
       'SELECT * from "things" order by BLAH limit 10 offset 10 '
-      'SELECT COUNT(*) as c from "things" join whales on color = blue '
+      'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
       'SELECT * from "things" join whales on color = blue order by BLAH limit 10 offset 10 '
     }, queries
 

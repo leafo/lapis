@@ -141,6 +141,15 @@ do
     num_pages = function(self)
       return math.ceil(self:total_items() / self.per_page)
     end,
+    has_items = function(self)
+      local parsed = self.db.parse_clause(self._clause)
+      parsed.limit = "1"
+      parsed.offset = nil
+      parsed.order = nil
+      local tbl_name = self.db.escape_identifier(self.model:table_name())
+      local res = self.db.query("SELECT 1 FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed)))
+      return not not unpack(res)
+    end,
     total_items = function(self)
       if not (self._count) then
         local parsed = self.db.parse_clause(self._clause)
@@ -151,7 +160,7 @@ do
           error("Paginator can't calculate total items in a query with group by")
         end
         local tbl_name = self.db.escape_identifier(self.model:table_name())
-        local query = "COUNT(*) as c from " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
+        local query = "COUNT(*) AS c FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
         self._count = unpack(self.db.select(query)).c
       end
       return self._count

@@ -77,6 +77,17 @@ class OffsetPaginator extends Paginator
   num_pages: =>
     math.ceil @total_items! / @per_page
 
+  has_items: =>
+    parsed = @db.parse_clause(@_clause)
+    parsed.limit = "1"
+    parsed.offset = nil
+    parsed.order = nil
+
+    tbl_name = @db.escape_identifier @model\table_name!
+    res = @db.query "SELECT 1 FROM #{tbl_name} #{rebuild_query_clause parsed}"
+
+    not not unpack res
+
   total_items: =>
     unless @_count
       parsed = @db.parse_clause(@_clause)
@@ -89,7 +100,7 @@ class OffsetPaginator extends Paginator
         error "Paginator can't calculate total items in a query with group by"
 
       tbl_name = @db.escape_identifier @model\table_name!
-      query = "COUNT(*) as c from #{tbl_name} #{rebuild_query_clause parsed}"
+      query = "COUNT(*) AS c FROM #{tbl_name} #{rebuild_query_clause parsed}"
       @_count = unpack(@db.select query).c
 
     @_count
