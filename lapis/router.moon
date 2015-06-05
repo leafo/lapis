@@ -99,8 +99,9 @@ class Router
     if query
       if type(query) == "table"
         query = encode_query_string query
-      path ..= "?" .. query
 
+      if query != ""
+        path ..= "?" .. query
     path
 
   resolve: (route, ...) =>

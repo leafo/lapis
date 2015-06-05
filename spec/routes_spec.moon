@@ -120,6 +120,10 @@ describe "named routes", ->
     url = r\url_for "profile", { name: "adam" }, "required"
     assert.same "/profile/adam?required", url
 
+  it "generates url with empty query params", ->
+    url = r\url_for "profile", { name: "adam" }, {}
+    assert.same "/profile/adam", url
+
   it "should create param from object", ->
     user = {
       url_key: (route_name, param_name) =>
