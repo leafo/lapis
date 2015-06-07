@@ -1347,7 +1347,7 @@ relation could include a large number of things and it does not make sense to
 fetch them all at once.
 
 Any arguments passed to the paginated getter are passed to the pager's
-constructor, so you can specify things like `fields`, `prepare_reults`, and
+constructor, so you can specify things like `fields`, `prepare_results`, and
 `per_page`:
 
 
