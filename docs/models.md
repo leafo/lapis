@@ -541,7 +541,7 @@ DELETE FROM "users" WHERE "id" = 1
 ```
 
 `delete` will return `true` if the row was actually deleted. It's important to
-check this value to avoid any race condtions when running code in response to a
+check this value to avoid any race conditions when running code in response to a
 delete.
 
 Consider the following code:
