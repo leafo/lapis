@@ -148,7 +148,7 @@ URL to a named route:
 <div class="about_page">
   <p>This is a great page!</p>
   <p>
-    <a href="<% url_for("index") %>">Return home</a>
+    <a href="<%= url_for("index") %>">Return home</a>
   </p>
 </div>
 ```
@@ -172,8 +172,8 @@ To render a sub-template you can use the `render` helper function:
 ```html
 <!-- views/navigation.etlua -->
 <div class="nav_bar">
-  <a href="<% url_for("index") %>">Home</a>
-  <a href="<% url_for("about") %>">About</a>
+  <a href="<%= url_for("index") %>">Home</a>
+  <a href="<%= url_for("about") %>">About</a>
 </div>
 ```
 

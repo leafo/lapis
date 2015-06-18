@@ -179,7 +179,7 @@ print widget\render_to_string!
 ```
 
 If you want to use helpers like `@url_for` you also need to include them in the
-widget instance. Any object can be included as a helper, and it's methods will
+widget instance. Any object can be included as a helper, and its methods will
 be made available inside of the widget.
 
 ```moon
