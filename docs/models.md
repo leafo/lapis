@@ -1,4 +1,5 @@
-
+title: Models
+--
 # Models
 
 Lapis provides a `Model` base class for making Lua tables that can be
