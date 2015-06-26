@@ -262,6 +262,9 @@ local types = setmetatable({
   text = C("text"),
   time = T("timestamp"),
   date = C("date"),
+  enum = C("integer", {
+    null = false
+  }),
   integer = C("integer", {
     null = false,
     default = 0
