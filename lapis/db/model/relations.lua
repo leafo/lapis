@@ -137,7 +137,8 @@ polymorphic_belongs_to = function(self, name, opts)
     end
     return _tbl_0
   end)())
-  self["preload_" .. tostring(name) .. "s"] = function(self, objs)
+  self["preload_" .. tostring(name) .. "s"] = function(self, objs, preload_opts)
+    local fields = preload_opts and preload_opts.fields
     for _index_0 = 1, #types do
       local _des_0 = types[_index_0]
       local type_name, model_name
@@ -157,7 +158,8 @@ polymorphic_belongs_to = function(self, name, opts)
         filtered = _accum_0
       end
       model:include_in(filtered, id_col, {
-        as = name
+        as = name,
+        fields = fields and fields[type_name]
       })
     end
     return objs

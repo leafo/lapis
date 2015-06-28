@@ -690,7 +690,7 @@ describe "lapis.db.model", ->
       assert Child.get_user, "expecting get_user"
       assert Child.get_category, "expecting get_category"
 
-    describe "polymorphic belongs to #ddd", ->
+    describe "polymorphic belongs to", ->
       local Foos, Bars, Bazs, Items
 
       before_each ->
@@ -804,6 +804,34 @@ describe "lapis.db.model", ->
           'SELECT * from "bars" where "id" in (2)'
         }, queries
 
+      it "preloads with fields", ->
+        items = {
+          Items\load {
+            object_type: 1
+            object_id: 111
+          }
+
+          Items\load {
+            object_type: 2
+            object_id: 112
+          }
+
+          Items\load {
+            object_type: 3
+            object_id: 113
+          }
+        }
+
+        Items\preload_objects items, fields: {
+          bar: "a, b"
+          baz: "c, d"
+        }
+
+        assert_queries {
+          'SELECT * from "foos" where "id" in (111)'
+          'SELECT a, b from "bars" where "id" in (112)'
+          'SELECT c, d from "bazs" where "id" in (113)'
+        }, queries
 
   describe "enum", ->
     import enum from require "lapis.db.model"

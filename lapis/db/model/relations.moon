@@ -105,11 +105,16 @@ polymorphic_belongs_to = (name, opts) =>
 
   @[enum_name] = enum { assert(v[1], "missing type name"), k for k,v in pairs types}
 
-  @["preload_#{name}s"] = (objs) =>
+  @["preload_#{name}s"] = (objs, preload_opts) =>
+    fields = preload_opts and preload_opts.fields
+
     for {type_name, model_name} in *types
       model = assert_model @@, model_name
       filtered = [o for o in *objs when o[type_col] == @@[enum_name][type_name]]
-      model\include_in filtered, id_col, as: name
+      model\include_in filtered, id_col, {
+        as: name
+        fields: fields and fields[type_name]
+      }
 
     objs
 
