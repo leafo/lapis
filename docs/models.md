@@ -1117,7 +1117,7 @@ end
 
 ```moon
 if pager\has_items!
-  -- ...
+  do_something!
 ```
 
 ```sql
@@ -1380,10 +1380,10 @@ local Model = require("lapis.db.model").Model
 local Users = Model:extend("users", {
   relations = {
     {"authored_posts",
-			has_many = "Posts",
-			where = {deleted = false},
-			order = "id desc",
-			key = "poster_id"}
+      has_many = "Posts",
+      where = {deleted = false},
+      order = "id desc",
+      key = "poster_id"}
   }
 })
 ```
@@ -1393,10 +1393,10 @@ import Model from require "lapis.db.models"
 class Users extends Model
   @relations: {
     {"authored_posts"
-			has_many: "Posts"
-			where: {deleted: false}
-			order: "id desc"
-			key: "poster_id"}
+      has_many: "Posts"
+      where: {deleted: false}
+      order: "id desc"
+      key: "poster_id"}
   }
 ```
 
