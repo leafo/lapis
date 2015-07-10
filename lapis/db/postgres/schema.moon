@@ -121,6 +121,10 @@ class ColumnType
     for k,v in pairs @default_options
       opts[k] = v unless opts[k] != nil
 
+    if opts.array
+      for i=1,type(opts.array) == "number" and opts.array or 1
+        out ..= "[]"
+
     unless opts.null
       out ..= " NOT NULL"
 

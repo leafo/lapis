@@ -171,6 +171,11 @@ do
           opts[k] = v
         end
       end
+      if opts.array then
+        for i = 1, type(opts.array) == "number" and opts.array or 1 do
+          out = out .. "[]"
+        end
+      end
       if not (opts.null) then
         out = out .. " NOT NULL"
       end

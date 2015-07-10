@@ -209,6 +209,21 @@ tests = {
   }
 
   {
+    -> tostring schema.types.integer array: true, null: true, default: '{1}', unique: true
+    "integer[] DEFAULT '{1}' UNIQUE"
+  }
+
+  {
+    -> tostring schema.types.integer array: 1
+    "integer[] NOT NULL DEFAULT 0"
+  }
+
+  {
+    -> tostring schema.types.integer array: 3
+    "integer[][][] NOT NULL DEFAULT 0"
+  }
+
+  {
     -> tostring schema.types.serial
     "serial NOT NULL"
   }
