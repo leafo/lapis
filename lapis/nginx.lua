@@ -98,11 +98,12 @@ local ngx_req = {
   parsed_url = function(t)
     local uri = ngx.var.request_uri
     uri = uri:match("(.-)%?") or uri
+    local host_header = ngx.var.http_host
     return {
       scheme = ngx.var.scheme,
       path = uri,
       host = ngx.var.host,
-      port = ngx.var.http_host:match(":(%d+)$"),
+      port = host_header and host_header:match(":(%d+)$"),
       query = ngx.var.args
     }
   end,
