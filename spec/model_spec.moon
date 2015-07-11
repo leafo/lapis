@@ -502,6 +502,18 @@ describe "lapis.db.model", ->
         [[UPDATE "things" SET "name" = 'changed from update' WHERE "id" = 101]]
       }, queries
 
+  describe "inheritance", ->
+    it "returns correct cached table name", ->
+      class FirstModel extends Model
+      class SecondModel extends FirstModel
+      assert.same "first_model", FirstModel\table_name!
+      assert.same "second_model", SecondModel\table_name!
+
+    it "returns correct cached table name when flipped", ->
+      class FirstModel extends Model
+      class SecondModel extends FirstModel
+      assert.same "second_model", SecondModel\table_name!
+      assert.same "first_model", FirstModel\table_name!
 
   describe "relations", ->
     local models

@@ -1,6 +1,8 @@
 import underscore, escape_pattern, uniquify, singularize from require "lapis.util"
 import insert, concat from table
 
+import require, type, setmetatable, rawget, assert, pairs, unpack, error, next from _G
+
 cjson = require "cjson"
 
 import OffsetPaginator from require "lapis.db.pagination"
@@ -83,9 +85,10 @@ class BaseModel
       { [@primary_key]: ... }
 
   @table_name: =>
-    name = underscore @__name
-    @table_name = -> name
-    name
+    unless rawget @, "__table_name"
+      @__table_name = underscore @__name
+
+    @__table_name
 
   -- used as the forign key name when preloading objects over a relation
   -- user_posts -> user_post
