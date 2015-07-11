@@ -60,6 +60,16 @@ class Likes extends Model
   @truncate: =>
     truncate_tables @
 
+
+class HasArrays extends Model
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"id", types.serial}
+      {"tags", types.text array: true}
+      "PRIMARY KEY (id)"
+    }
+
 describe "model", ->
   setup ->
     setup_db!
@@ -142,4 +152,42 @@ describe "model", ->
 
       post\update user_id: db.raw "(case when false then 1234 else null end)"
       assert.same nil, post.user_id
+
+  describe "arrays #ddd", ->
+    before_each ->
+      HasArrays\create_table!
+
+    it "inserts a new row", ->
+      res = HasArrays\create {
+        tags: db.array {"hello", "world"}
+      }
+
+      assert.same {
+        id: 1
+        tags: {"hello", "world"}
+      }, res
+
+    it "fetches rows with arrays", ->
+      db.query "insert into #{db.escape_identifier HasArrays\table_name!}
+        (tags) values ('{one,two,three}')"
+
+      db.query "insert into #{db.escape_identifier HasArrays\table_name!}
+        (tags) values ('{food,hat}')"
+
+      assert.same {
+        {id: 1, tags: {"one", "two", "three"}}
+        {id: 2, tags: {"food", "hat"}}
+      }, HasArrays\select "order by id asc"
+
+    it "updates model with array", ->
+      res = HasArrays\create {
+        tags: db.array {"hello", "world"}
+      }
+
+      res\update tags: db.array {"yeah"}
+      assert.same {"yeah"}, unpack(HasArrays\select!).tags
+
+      table.insert res.tags, "okay"
+      res\update "tags"
+      assert.same {"yeah", "okay"}, unpack(HasArrays\select!).tags
 

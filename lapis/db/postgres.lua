@@ -12,6 +12,18 @@ do
   local _obj_0 = require("lapis.db.base")
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list
 end
+local array
+array = function(t)
+  local PostgresArray
+  PostgresArray = require("pgmoon.arrays").PostgresArray
+  return PostgresArray(t)
+end
+local is_array
+is_array = function(v)
+  local PostgresArray
+  PostgresArray = require("pgmoon.arrays").PostgresArray
+  return getmetatable(v) == PostgresArray.__base
+end
 local backends = {
   raw = function(fn)
     do
@@ -121,6 +133,11 @@ escape_literal = function(val)
       end
       assert(escaped_items[1], "can't flatten empty list")
       return "(" .. tostring(concat(escaped_items, ", ")) .. ")"
+    end
+    if is_array(val) then
+      local encode_array
+      encode_array = require("pgmoon.arrays").encode_array
+      return encode_array(val, escape_literal)
     end
     if is_raw(val) then
       return val[1]
@@ -357,6 +374,8 @@ return {
   is_raw = is_raw,
   list = list,
   is_list = is_list,
+  array = array,
+  is_array = is_array,
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,

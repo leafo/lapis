@@ -50,6 +50,11 @@ tests = {
   }
 
   {
+    -> db.escape_literal db.array {1,2,3,4,5}
+    "ARRAY[1,2,3,4,5]"
+  }
+
+  {
     -> db.interpolate_query "select * from cool where hello = ?", "world"
     "select * from cool where hello = 'world'"
   }

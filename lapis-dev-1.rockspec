@@ -24,7 +24,7 @@ dependencies = {
 	"luafilesystem",
 	"luasocket",
 	"mimetypes",
-	"pgmoon",
+	"pgmoon >= 1.2.0",
 }
 
 build = {

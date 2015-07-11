@@ -16,6 +16,14 @@ import
   list
   from require "lapis.db.base"
 
+array = (t) ->
+  import PostgresArray from require "pgmoon.arrays"
+  PostgresArray t
+
+is_array = (v) ->
+  import PostgresArray from require "pgmoon.arrays"
+  getmetatable(v) == PostgresArray.__base
+
 backends = {
   -- the raw backend is a debug backend that lets you specify the function that
   -- handles the query
@@ -96,6 +104,10 @@ escape_literal = (val) ->
         escaped_items = [escape_literal item for item in *val[1]]
         assert escaped_items[1], "can't flatten empty list"
         return "(#{concat escaped_items, ", "})"
+
+      if is_array val
+        import encode_array from require "pgmoon.arrays"
+        return encode_array val, escape_literal
 
       return val[1] if is_raw val
       error "unknown table passed to `escape_literal`"
@@ -285,9 +297,10 @@ encode_case = (exp, t, on_else) ->
   concat buff
 
 {
-  :query, :raw, :is_raw, :list, :is_list, :NULL, :TRUE, :FALSE, :escape_literal,
-  :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :format_date, :encode_case, :init_logger
+  :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
+  :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
+  :encode_clause, :interpolate_query, :parse_clause, :format_date,
+  :encode_case, :init_logger
 
   :set_backend
 
