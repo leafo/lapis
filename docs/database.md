@@ -421,6 +421,35 @@ SELECT * from another table where id in (3, 2, 1, 5)
 UPDATE "the_table" SET "height" = 55 WHERE "ids" IN (3, 2, 1, 5)
 ```
 
+### `array({values...})`
+
+Converts the argument passed to an array type that will be inserted/updated
+using PostgreSQL's array syntax. This function does not exist for MySQL.
+
+The return value of this function can be used in place of any regular value
+passed to a SQL query function. Each item in the list will be escaped with
+`escape_literal` before being inserted into the query.
+
+The argument is converted, not copied. If you need to avoid modifying the
+argument then create a copy before passing it to this function.
+
+
+```lua
+db.insert("some_table", {
+  tags = db.array({"hello", "world"})
+})
+```
+
+```moon
+db.insert "some_table", {
+  tags: db.array {"hello", "world"}
+}
+```
+
+```sql
+INSERT INTO "some_table" ("tags") VALUES (ARRAY['hello','world'])
+```
+
 ### `escape_literal(value)`
 
 Escapes a value for use in a query. A value is any type that can be stored in a
