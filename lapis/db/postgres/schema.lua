@@ -167,8 +167,19 @@ do
     __call = function(self, opts)
       local out = self.base
       for k, v in pairs(self.default_options) do
-        if not (opts[k] ~= nil) then
-          opts[k] = v
+        local _continue_0 = false
+        repeat
+          if k == "default" and opts.array then
+            _continue_0 = true
+            break
+          end
+          if not (opts[k] ~= nil) then
+            opts[k] = v
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
         end
       end
       if opts.array then

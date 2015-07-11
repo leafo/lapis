@@ -119,6 +119,8 @@ class ColumnType
     out = @base
 
     for k,v in pairs @default_options
+      -- don't use the types default default since it's not an array
+      continue if k == "default" and opts.array
       opts[k] = v unless opts[k] != nil
 
     if opts.array

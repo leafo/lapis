@@ -220,12 +220,12 @@ tests = {
 
   {
     -> tostring schema.types.integer array: 1
-    "integer[] NOT NULL DEFAULT 0"
+    "integer[] NOT NULL"
   }
 
   {
     -> tostring schema.types.integer array: 3
-    "integer[][][] NOT NULL DEFAULT 0"
+    "integer[][][] NOT NULL"
   }
 
   {
