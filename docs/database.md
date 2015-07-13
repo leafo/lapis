@@ -812,6 +812,7 @@ options. The options include:
 * `null: boolean` -- determines if the column is `NOT NULL`
 * `unique: boolean` -- determines if the column has a unique index
 * `primary_key: boolean` -- determines if the column is the primary key
+* `array: bool|number` -- makes the type an array (PostgreSQL Only), pass number to set how many dimensions the array is, `true` == `1`
 
 Here are some examples:
 
@@ -820,6 +821,7 @@ types.integer({ default = 1, null = true })  --> integer DEFAULT 1
 types.integer({ primary_key = true })        --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text({ null = true })                  --> text
 types.varchar({ primary_key = true })        --> character varying(255) NOT NULL PRIMARY KEY
+types.real({ array = true })                 --> real[]
 ```
 
 ```moon
@@ -827,6 +829,8 @@ types.integer default: 1, null: true  --> integer DEFAULT 1
 types.integer primary_key: true       --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text null: true                 --> text
 types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMARY KEY
+types.real array: true                --> real[]
+types.text array: 2                   --> real[][]
 ```
 
 > MySQL has a complete different type set than PostgreSQL, see [MySQL
