@@ -69,10 +69,8 @@ class OffsetPaginator extends Paginator
   -- 1 indexed page
   get_page: (page) =>
     page = (math.max 1, tonumber(page) or 0) - 1
-    @prepare_results @select @_clause .. [[
-      limit ?
-      offset ?
-    ]], @per_page, @per_page * page, @opts
+    @prepare_results @select @_clause .. [[ LIMIT ? OFFSET ?]],
+      @per_page, @per_page * page, @opts
 
   num_pages: =>
     math.ceil @total_items! / @per_page

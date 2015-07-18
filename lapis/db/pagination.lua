@@ -134,9 +134,7 @@ do
     end,
     get_page = function(self, page)
       page = (math.max(1, tonumber(page) or 0)) - 1
-      return self:prepare_results(self:select(self._clause .. [[      limit ?
-      offset ?
-    ]], self.per_page, self.per_page * page, self.opts))
+      return self:prepare_results(self:select(self._clause .. [[ LIMIT ? OFFSET ?]], self.per_page, self.per_page * page, self.opts))
     end,
     num_pages = function(self)
       return math.ceil(self:total_items() / self.per_page)

@@ -178,15 +178,15 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where group_id = 123 order by name asc'
       'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
       'SELECT 1 FROM "things" where group_id = 123 limit 1'
-      'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 0 '
-      'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 30 '
-      'SELECT * from "things" order by name asc limit 25 offset 50 '
-      'SELECT hello, world from "things" limit 12 offset 12 '
-      'SELECT hello, world from "things" limit 12 offset 12 '
-      'SELECT * from "things" order by BLAH limit 10 offset 0 '
-      'SELECT * from "things" order by BLAH limit 10 offset 10 '
+      'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
+      'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
+      'SELECT * from "things" order by name asc LIMIT 25 OFFSET 50'
+      'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+      'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+      'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 0'
+      'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 10'
       'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
-      'SELECT * from "things" join whales on color = blue order by BLAH limit 10 offset 10 '
+      'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
     }, queries
 
 
@@ -651,13 +651,13 @@ describe "lapis.db.model", ->
       user\get_posts_paginated(per_page: 44)\get_page 3
 
       assert_queries {
-        'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 0 '
-        'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 10 '
+        'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 0'
+        'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 10'
         {
-          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue' limit 10 offset 10 ]]
-          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 limit 10 offset 10 ]]
+          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
+          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
         }
-        'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
+        'SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 88'
       }, queries
 
 
