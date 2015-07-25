@@ -5,6 +5,10 @@ json = require "cjson"
 import concat, insert from table
 import floor from math
 
+-- TODO: make this a dependency
+local date
+pcall -> date = require "date"
+
 local *
 
 -- todo: consider renaming to url_escape/url_unescape
@@ -166,60 +170,55 @@ build_url = (parts) ->
 
   out
 
-time_ago = do
-  -- TODO: make this a dependency
-  local date
-  pcall -> date = require "date"
+date_diff = (later, sooner) ->
+  if later < sooner
+    sooner, later = later, sooner
 
-  (time) ->
-    sooner = date time
-    later = date true
+  diff = date.diff later, sooner
 
-    if later < sooner
-      sooner, later = later, sooner
+  times = {}
 
-    diff = date.diff later, sooner
+  days = floor diff\spandays()
 
-    times = {}
+  if days >= 365
+    years = floor diff\spandays() / 365
+    times.years = years
+    insert times, {"years", years}
 
-    days = floor diff\spandays()
+    diff\addyears -years
+    days -= years * 365
 
-    if days >= 365
-      years = floor diff\spandays() / 365
-      times.years = years
-      insert times, {"years", years}
+  if days >= 1
+    times.days = days
+    insert times, {"days", days}
 
-      diff\addyears -years
-      days -= years * 365
+    diff\adddays -days
 
-    if days >= 1
-      times.days = days
-      insert times, {"days", days}
+  hours = floor diff\spanhours()
+  if hours >= 1
+    times.hours = hours
+    insert times, {"hours", hours}
 
-      diff\adddays -days
+    diff\addhours -hours
 
-    hours = floor diff\spanhours()
-    if hours >= 1
-      times.hours = hours
-      insert times, {"hours", hours}
+  minutes = floor diff\spanminutes()
+  if minutes >= 1
+    times.minutes = minutes
+    insert times, {"minutes", minutes}
 
-      diff\addhours -hours
+    diff\addminutes -minutes
 
-    minutes = floor diff\spanminutes()
-    if minutes >= 1
-      times.minutes = minutes
-      insert times, {"minutes", minutes}
+  seconds = floor diff\spanseconds()
+  if seconds >= 1 or not next(times)
+    times.seconds = seconds
+    insert times, {"seconds", seconds}
 
-      diff\addminutes -minutes
+    diff\addseconds -seconds
 
-    seconds = floor diff\spanseconds()
-    if seconds >= 1 or not next(times)
-      times.seconds = seconds
-      insert times, {"seconds", seconds}
+  times, true
 
-      diff\addseconds -seconds
-
-    times, true
+time_ago = (time) ->
+  date_diff date(true), date(time)
 
 time_ago_in_words = do
   singular = {
@@ -248,10 +247,9 @@ time_ago_in_words = do
 
     out .. " " .. suffix
 
-title_case = do
-  (str) ->
-    (str\gsub "%S+", (chunk) ->
-      chunk\gsub "^.", string.upper)
+title_case = (str) ->
+  (str\gsub "%S+", (chunk) ->
+    chunk\gsub "^.", string.upper)
 
 autoload = do
   try_require = (mod_name) ->
@@ -367,4 +365,4 @@ singularize = (name) ->
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :from_json, :json_encodable, :build_url, :time_ago,
   :time_ago_in_words, :camelize, :title_case, :autoload, :auto_table,
-  :mixin_class, :mixin, :get_fields, :singularize }
+  :mixin_class, :mixin, :get_fields, :singularize, :date_diff }
