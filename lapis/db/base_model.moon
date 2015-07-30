@@ -8,12 +8,15 @@ cjson = require "cjson"
 import OffsetPaginator from require "lapis.db.pagination"
 
 class Enum
+  debug = =>
+    "(contains: #{table.concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
+
   -- convert string to number, or let number pass through
   for_db: (key) =>
     if type(key) == "string"
-      (assert @[key], "enum does not contain key #{key}")
+      (assert @[key], "enum does not contain key #{key} #{debug @}")
     elseif type(key) == "number"
-      assert @[key], "enum does not contain val #{key}"
+      assert @[key], "enum does not contain val #{key} #{debug @}"
       key
     else
       error "don't know how to handle type #{type key} for enum"
@@ -21,11 +24,11 @@ class Enum
   -- convert number to string, or let string pass through
   to_name: (val) =>
     if type(val) == "string"
-      assert @[val], "enum does not contain key #{val}"
+      assert @[val], "enum does not contain key #{val} #{debug @}"
       val
     elseif type(val) == "number"
       key = @[val]
-      (assert key, "enum does not contain val #{val}")
+      (assert key, "enum does not contain val #{val} #{debug @}")
     else
       error "don't know how to handle type #{type val} for enum"
 

@@ -18,12 +18,13 @@ local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
 local Enum
 do
+  local debug
   local _base_0 = {
     for_db = function(self, key)
       if type(key) == "string" then
-        return (assert(self[key], "enum does not contain key " .. tostring(key)))
+        return (assert(self[key], "enum does not contain key " .. tostring(key) .. " " .. tostring(debug(self))))
       elseif type(key) == "number" then
-        assert(self[key], "enum does not contain val " .. tostring(key))
+        assert(self[key], "enum does not contain val " .. tostring(key) .. " " .. tostring(debug(self)))
         return key
       else
         return error("don't know how to handle type " .. tostring(type(key)) .. " for enum")
@@ -31,11 +32,11 @@ do
     end,
     to_name = function(self, val)
       if type(val) == "string" then
-        assert(self[val], "enum does not contain key " .. tostring(val))
+        assert(self[val], "enum does not contain key " .. tostring(val) .. " " .. tostring(debug(self)))
         return val
       elseif type(val) == "number" then
         local key = self[val]
-        return (assert(key, "enum does not contain val " .. tostring(val)))
+        return (assert(key, "enum does not contain val " .. tostring(val) .. " " .. tostring(debug(self))))
       else
         return error("don't know how to handle type " .. tostring(type(val)) .. " for enum")
       end
@@ -55,6 +56,18 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  debug = function(self)
+    return "(contains: " .. tostring(table.concat((function()
+      local _accum_0 = { }
+      local _len_0 = 1
+      for i, v in ipairs(self) do
+        _accum_0[_len_0] = tostring(i) .. ":" .. tostring(v)
+        _len_0 = _len_0 + 1
+      end
+      return _accum_0
+    end)(), ", ")) .. ")"
+  end
   Enum = _class_0
 end
 local enum
