@@ -46,15 +46,17 @@ parse_query_string = do
 -- todo: handle nested tables
 -- takes either { hello: "world"} or { {"hello", "world"} }
 encode_query_string = (t, sep="&") ->
+  _escape = ngx and ngx.escape_uri or escape
+
   i = 0
   buf = {}
   for k,v in pairs t
     if type(k) == "number" and type(v) == "table"
       {k,v} = v
 
-    buf[i + 1] = escape k
+    buf[i + 1] = _escape k
     buf[i + 2] = "="
-    buf[i + 3] = escape v
+    buf[i + 3] = _escape v
     buf[i + 4] = sep
     i += 4
 

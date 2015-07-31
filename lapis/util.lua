@@ -63,15 +63,16 @@ encode_query_string = function(t, sep)
   if sep == nil then
     sep = "&"
   end
+  local _escape = ngx and ngx.escape_uri or escape
   local i = 0
   local buf = { }
   for k, v in pairs(t) do
     if type(k) == "number" and type(v) == "table" then
       k, v = v[1], v[2]
     end
-    buf[i + 1] = escape(k)
+    buf[i + 1] = _escape(k)
     buf[i + 2] = "="
-    buf[i + 3] = escape(v)
+    buf[i + 3] = _escape(v)
     buf[i + 4] = sep
     i = i + 4
   end
