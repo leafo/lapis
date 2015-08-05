@@ -203,6 +203,45 @@ tests = {
     -> schema.rename_table "goods", "sweets"
     "RENAME TABLE `goods` TO `sweets`"
   }
+
+  {
+    name: "schema.create_table"
+
+    ->
+      schema.create_table "top_posts", {
+        {"id", schema.types.id}
+        {"user_id", schema.types.integer null: true}
+        {"title", schema.types.text null: false}
+        {"body", schema.types.text null: false}
+        {"created_at", schema.types.datetime}
+        {"updated_at", schema.types.datetime}
+      }
+
+    [[CREATE TABLE `top_posts` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT,
+  `title` TEXT NOT NULL,
+  `body` TEXT NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `updated_at` DATETIME NOT NULL
+) CHARSET=UTF8;]]
+  }
+
+
+  {
+    name: "schema.create_table not exists"
+    ->
+      schema.create_table "tags", {
+        {"id", schema.types.id}
+        {"tag", schema.types.varchar}
+      }, if_not_exists: true
+
+    [[CREATE TABLE IF NOT EXISTS `tags` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `tag` VARCHAR(255) NOT NULL
+) CHARSET=UTF8;]]
+  }
+
 }
 
 local old_query_fn
@@ -214,7 +253,11 @@ describe "lapis.db.mysql", ->
     db.set_backend "raw", old_query_fn
 
   for group in *tests
-    it "should match", ->
+    name = "should match"
+    if group.name
+      name ..= " #{group.name}"
+
+    it name, ->
       output = group[1]!
       if #group > 2
         assert.one_of output, { unpack group, 2 }

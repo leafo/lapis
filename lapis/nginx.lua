@@ -98,11 +98,12 @@ local ngx_req = {
   parsed_url = function(t)
     local uri = ngx.var.request_uri
     uri = uri:match("(.-)%?") or uri
+    local host_header = ngx.var.http_host
     return {
       scheme = ngx.var.scheme,
       path = uri,
       host = ngx.var.host,
-      port = ngx.var.http_host:match(":(%d+)$"),
+      port = host_header and host_header:match(":(%d+)$"),
       query = ngx.var.args
     }
   end,
@@ -110,7 +111,11 @@ local ngx_req = {
     return build_url(t.parsed_url)
   end,
   params_post = function(t)
-    local content_type = (t.headers["content-type"] or ""):lower()
+    local content_type = t.headers["content-type"] or ""
+    if not (type(content_type) == "string") then
+      content_type = ""
+    end
+    content_type = content_type:lower()
     local params
     if content_type:match(escape_pattern("multipart/form-data")) then
       params = parse_multipart()

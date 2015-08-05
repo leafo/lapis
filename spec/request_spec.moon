@@ -17,6 +17,17 @@ describe "application", ->
     assert.has_error ->
       mock_request App, "/world"
 
+  it "should mock a request with double headers", ->
+    mock_request App, "/hello", {
+      method: "POST"
+      headers: {
+        ["Content-type"]: {
+          "hello"
+          "world"
+        }
+      }
+    }
+
 -- tests a series of requests
 describe "session app", ->
   class SessionApp extends lapis.Application
@@ -34,8 +45,9 @@ describe "session app", ->
     assert.same "greetings", res
 
 describe "mock action", ->
-  assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
-    "hello"
+  it "should mock action", ->
+    assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
+      "hello"
 
 describe "json request", ->
   import json_params from require "lapis.application"
@@ -194,6 +206,20 @@ describe "before filter", ->
     _, res = assert_request SomeApp, "/hello/stop"
     assert.same action_run, 1
     assert.same "stopped!", res
+
+  it "should create before filter for lua app", ->
+    app = lapis.Application!
+
+    local val
+
+    app\before_filter =>
+      @val = "yeah"
+
+    app\get "/", =>
+      val = @val
+
+    assert_request app, "/"
+    assert.same "yeah", val
 
 describe "stub_request", ->
   class SomeApp extends lapis.Application

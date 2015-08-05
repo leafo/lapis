@@ -50,6 +50,11 @@ tests = {
   }
 
   {
+    -> db.escape_literal db.array {1,2,3,4,5}
+    "ARRAY[1,2,3,4,5]"
+  }
+
+  {
     -> db.interpolate_query "select * from cool where hello = ?", "world"
     "select * from cool where hello = 'world'"
   }
@@ -209,6 +214,21 @@ tests = {
   }
 
   {
+    -> tostring schema.types.integer array: true, null: true, default: '{1}', unique: true
+    "integer[] DEFAULT '{1}' UNIQUE"
+  }
+
+  {
+    -> tostring schema.types.integer array: 1
+    "integer[] NOT NULL"
+  }
+
+  {
+    -> tostring schema.types.integer array: 3
+    "integer[][][] NOT NULL"
+  }
+
+  {
     -> tostring schema.types.serial
     "serial NOT NULL"
   }
@@ -223,7 +243,6 @@ tests = {
     "timestamp with time zone NOT NULL"
   }
 
-
   {
     ->
       import foreign_key, boolean, varchar, text from schema.types
@@ -235,7 +254,7 @@ tests = {
         "PRIMARY KEY (user_id)"
       }
 
-    [[CREATE TABLE IF NOT EXISTS "user_data" (
+    [[CREATE TABLE "user_data" (
   "user_id" integer NOT NULL,
   "email_verified" boolean NOT NULL DEFAULT FALSE,
   "password_reset_token" character varying(255),
@@ -243,6 +262,21 @@ tests = {
   PRIMARY KEY (user_id)
 );]]
   }
+
+  {
+    ->
+      import foreign_key, boolean, varchar, text from schema.types
+      schema.create_table "join_stuff", {
+        {"hello_id", foreign_key}
+        {"world_id", foreign_key}
+      }, if_not_exists: true
+
+    [[CREATE TABLE IF NOT EXISTS "join_stuff" (
+  "hello_id" integer NOT NULL,
+  "world_id" integer NOT NULL
+);]]
+  }
+
 
   {
     -> schema.drop_table "user_data"
@@ -342,7 +376,6 @@ tests = {
     }
   }
 
-
   {
     -> schema.gen_index_name "hello", "world"
     "hello_world_idx"
@@ -351,6 +384,11 @@ tests = {
   {
     -> schema.gen_index_name "yes", "please", db.raw "upper(dad)"
     "yes_please_upper_dad_idx"
+  }
+
+  {
+    -> schema.gen_index_name "hello", "world", index_name: "override_me_idx"
+    "override_me_idx"
   }
 
   {
@@ -400,24 +438,17 @@ describe "lapis.db.postgres", ->
         assert.same group[2], output
 
   it "should create index", ->
-    old_select = db.select
-    db.select = -> { { c: 0 } }
     input = schema.create_index "user_data", "one", "two"
     assert.same input, [[CREATE INDEX "user_data_one_two_idx" ON "user_data" ("one", "two");]]
-    db.select = old_select
 
   it "should create index with expression", ->
-    old_select = db.select
-    db.select = -> { { c: 0 } }
     input = schema.create_index "user_data", db.raw("lower(name)"), "height"
     assert.same input, [[CREATE INDEX "user_data_lower_name_height_idx" ON "user_data" (lower(name), "height");]]
-    db.select = old_select
-
 
   it "should create not create duplicate index", ->
     old_select = db.select
     db.select = -> { { c: 1 } }
-    input = schema.create_index "user_data", "one", "two"
+    input = schema.create_index "user_data", "one", "two", if_not_exists: true
     assert.same input, nil
     db.select = old_select
 

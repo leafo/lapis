@@ -333,6 +333,31 @@ describe "lapis.util", ->
     assert.equal "yeah", mod.hello_world
     assert.equal "yeah", mod.HelloWorld
 
+  it "should singularize words", ->
+    words = {
+      {"banks", "bank"}
+      {"chemists", "chemist"}
+      {"hospitals", "hospital"}
+      {"letters", "letter"}
+
+      {"vallys", "vally"}
+      {"keys", "key"}
+
+      {"industries", "industry"}
+      {"ladies", "lady"}
+
+      {"heroes", "hero"}
+      {"torpedoes", "torpedo"}
+
+      -- these will never work
+      -- {"halves", "half"}
+      -- {"leaves", "leaf"}
+      -- {"wives", "wife"}
+    }
+
+    for {plural, single} in *words
+      assert.same single, util.singularize plural
+
 describe "lapis.util.mixin", ->
   it "should mixin mixins", ->
     import insert from table

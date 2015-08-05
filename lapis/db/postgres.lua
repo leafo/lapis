@@ -5,7 +5,6 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local proxy_location = "/query"
 local raw_query
 local logger
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list
@@ -13,32 +12,19 @@ do
   local _obj_0 = require("lapis.db.base")
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list
 end
+local array
+array = function(t)
+  local PostgresArray
+  PostgresArray = require("pgmoon.arrays").PostgresArray
+  return PostgresArray(t)
+end
+local is_array
+is_array = function(v)
+  local PostgresArray
+  PostgresArray = require("pgmoon.arrays").PostgresArray
+  return getmetatable(v) == PostgresArray.__base
+end
 local backends = {
-  default = function(_proxy)
-    if _proxy == nil then
-      _proxy = proxy_location
-    end
-    local parser = require("rds.parser")
-    raw_query = function(str)
-      if logger then
-        logger.query(str)
-      end
-      local res = ngx.location.capture(_proxy, {
-        body = str
-      })
-      local out, err = parser.parse(res.body)
-      if not (out) then
-        error(tostring(err) .. ": " .. tostring(str))
-      end
-      do
-        local resultset = out.resultset
-        if resultset then
-          return resultset
-        end
-      end
-      return out
-    end
-  end,
   raw = function(fn)
     do
       raw_query = fn
@@ -93,9 +79,6 @@ local backends = {
 }
 local set_backend
 set_backend = function(name, ...)
-  if name == nil then
-    name = "default"
-  end
   return assert(backends[name])(...)
 end
 local init_logger
@@ -108,8 +91,11 @@ end
 local init_db
 init_db = function()
   local config = require("lapis.config").get()
-  local default_backend = config.postgres and config.postgres.backend or "default"
-  return set_backend(default_backend)
+  local backend = config.postgres and config.postgres.backend
+  if not (backend) then
+    backend = "pgmoon"
+  end
+  return set_backend(backend)
 end
 local escape_identifier
 escape_identifier = function(ident)
@@ -147,6 +133,11 @@ escape_literal = function(val)
       end
       assert(escaped_items[1], "can't flatten empty list")
       return "(" .. tostring(concat(escaped_items, ", ")) .. ")"
+    end
+    if is_array(val) then
+      local encode_array
+      encode_array = require("pgmoon.arrays").encode_array
+      return encode_array(val, escape_literal)
     end
     if is_raw(val) then
       return val[1]
@@ -383,6 +374,8 @@ return {
   is_raw = is_raw,
   list = list,
   is_list = is_list,
+  array = array,
+  is_array = is_array,
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,

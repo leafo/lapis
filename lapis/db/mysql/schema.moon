@@ -19,8 +19,22 @@ extract_options = (cols) ->
 
   cols, options
 
+entity_exists = (name) ->
+  config = require("lapis.config").get!
+  mysql_config = assert config.mysql, "missing mysql configuration"
+  database = escape_literal assert mysql_config.database
+  name = escape_literal name
+  res = unpack db.select "COUNT(*) as c from information_schema.tables where
+    table_schema = #{database} and table_name = #{name} LIMIT 1"
+  res.c > 0
+
 create_table = (name, columns, opts={}) ->
-  buffer = {"CREATE TABLE IF NOT EXISTS #{escape_identifier name} ("}
+  prefix = if opts.if_not_exists
+    "CREATE TABLE IF NOT EXISTS "
+  else
+    "CREATE TABLE "
+
+  buffer = {prefix, escape_identifier(name), " ("}
   add = (...) -> append_all buffer, ...
 
   for i, c in ipairs columns
@@ -40,7 +54,7 @@ create_table = (name, columns, opts={}) ->
   add " CHARSET=", opts.charset or "UTF8"
   add ";"
 
-  db.raw_query concat buffer
+  db.query concat buffer
 
 drop_table = (tname) ->
   db.query "DROP TABLE IF EXISTS #{escape_identifier tname};"
@@ -174,9 +188,7 @@ types = setmetatable {
 
 
 {
-  -- TODO:
-  -- :entity_exists
-
+  :entity_exists
   :gen_index_name
 
   :types

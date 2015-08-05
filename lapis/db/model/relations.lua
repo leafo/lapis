@@ -1,11 +1,9 @@
-local db = require("lapis.db")
 local assert_model
 assert_model = function(primary_model, model_name)
-  local models = require("models")
   do
-    local m = models[model_name]
+    local m = primary_model:get_relation_model(model_name)
     if not (m) then
-      error("failed to find model `" .. tostring(model_name) .. "` for relationship")
+      error("failed to find model `" .. tostring(model_name) .. "` for relation")
     end
     return m
   end
@@ -32,7 +30,7 @@ belongs_to = function(self, name, opts)
   local source = opts.belongs_to
   assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
   local get_method = opts.as or "get_" .. tostring(name)
-  local column_name = tostring(name) .. "_id"
+  local column_name = opts.key or tostring(name) .. "_id"
   self.__base[get_method] = function(self)
     if not (self[column_name]) then
       return nil
@@ -73,14 +71,12 @@ has_one = function(self, name, opts)
 end
 local has_many
 has_many = function(self, name, opts)
-  if opts.pager == false then
-    error("not yet")
-  end
   local source = opts.has_many
   assert(type(source) == "string", "Expecting model name for `has_many` relation")
   local get_method = opts.as or "get_" .. tostring(name)
-  self.__base[get_method] = function(self, fetch_opts)
-    local model = assert_model(self.__class, source)
+  local get_paginated_method = tostring(get_method) .. "_paginated"
+  local build_query
+  build_query = function(self)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
     local clause = {
       [foreign_key] = self[self.__class:primary_keys()]
@@ -93,17 +89,38 @@ has_many = function(self, name, opts)
         end
       end
     end
-    clause = db.encode_clause(clause)
-    return model:paginated("where " .. tostring(clause), fetch_opts)
+    clause = "where " .. tostring(self.__class.db.encode_clause(clause))
+    do
+      local order = opts.order
+      if order then
+        clause = clause .. " order by " .. tostring(order)
+      end
+    end
+    return clause
+  end
+  self.__base[get_method] = function(self)
+    local existing = self[name]
+    if existing ~= nil then
+      return existing
+    end
+    local model = assert_model(self.__class, source)
+    do
+      local res = model:select(build_query(self))
+      self[name] = res
+      return res
+    end
+  end
+  if not (opts.pager == false) then
+    self.__base[get_paginated_method] = function(self, fetch_opts)
+      local model = assert_model(self.__class, source)
+      return model:paginated(build_query(self), fetch_opts)
+    end
   end
 end
 local polymorphic_belongs_to
 polymorphic_belongs_to = function(self, name, opts)
-  local Model, enum
-  do
-    local _obj_0 = require("lapis.db.model")
-    Model, enum = _obj_0.Model, _obj_0.enum
-  end
+  local enum
+  enum = require("lapis.db.model").enum
   local types = opts.polymorphic_belongs_to
   assert(type(types) == "table", "missing types")
   local type_col = tostring(name) .. "_type"
@@ -120,7 +137,8 @@ polymorphic_belongs_to = function(self, name, opts)
     end
     return _tbl_0
   end)())
-  self["preload_" .. tostring(name) .. "s"] = function(self, objs)
+  self["preload_" .. tostring(name) .. "s"] = function(self, objs, preload_opts)
+    local fields = preload_opts and preload_opts.fields
     for _index_0 = 1, #types do
       local _des_0 = types[_index_0]
       local type_name, model_name
@@ -140,7 +158,8 @@ polymorphic_belongs_to = function(self, name, opts)
         filtered = _accum_0
       end
       model:include_in(filtered, id_col, {
-        as = name
+        as = name,
+        fields = fields and fields[type_name]
       })
     end
     return objs

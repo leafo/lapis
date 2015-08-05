@@ -213,4 +213,16 @@ describe "lapis.config", ->
     }), config.get "dad"
 
 
+  it "should merge subsequent blocks", ->
+    config {"alpha","beta","gamma"}, ->
+      postgres ->
+        backend "pgmoon"
+
+    config "gamma", ->
+      postgres ->
+        database "lazuli_dev"
+
+    assert.same { backend: "pgmoon" }, config.get("beta").postgres
+    assert.same { backend: "pgmoon", database: "lazuli_dev" }, config.get("gamma").postgres
+
 

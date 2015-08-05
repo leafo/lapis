@@ -24,8 +24,13 @@ entity_exists = (name) ->
   res = unpack db.select "COUNT(*) as c from pg_class where relname = #{name}"
   res.c > 0
 
-create_table = (name, columns) ->
-  buffer = {"CREATE TABLE IF NOT EXISTS #{escape_identifier name} ("}
+create_table = (name, columns, opts={}) ->
+  prefix = if opts.if_not_exists
+    "CREATE TABLE IF NOT EXISTS "
+  else
+    "CREATE TABLE "
+
+  buffer = {prefix, escape_identifier(name), " ("}
   add = (...) -> append_all buffer, ...
 
   for i, c in ipairs columns
@@ -45,9 +50,10 @@ create_table = (name, columns) ->
 
 create_index = (tname, ...) ->
   index_name = gen_index_name tname, ...
-  return if entity_exists index_name
-
   columns, options = extract_options {...}
+
+  if options.if_not_exists
+    return if entity_exists index_name
 
   buffer = {"CREATE"}
   append_all buffer, " UNIQUE" if options.unique
@@ -113,7 +119,13 @@ class ColumnType
     out = @base
 
     for k,v in pairs @default_options
+      -- don't use the types default default since it's not an array
+      continue if k == "default" and opts.array
       opts[k] = v unless opts[k] != nil
+
+    if opts.array
+      for i=1,type(opts.array) == "number" and opts.array or 1
+        out ..= "[]"
 
     unless opts.null
       out ..= " NOT NULL"
@@ -151,6 +163,7 @@ types = setmetatable {
   text:         C "text"
   time:         T "timestamp"
   date:         C "date"
+  enum:         C "smallint", null: false
   integer:      C "integer", null: false, default: 0
   numeric:      C "numeric", null: false, default: 0
   real:         C "real", null: false, default: 0

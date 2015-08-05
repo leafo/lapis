@@ -18,8 +18,17 @@ default_config = {
   -- measure_performance: false
   -- show_queries: false
   -- mysql: {
+  --   backend: "" -- luasql, resty_mysql
+  --   host: ""
+  --   port: ""
+  --   path: "" -- unix domain socket
   --   database: ""
   --   user: ""
+  --   ssl: boolean -- for resty_mysql
+  --   ssl_verify: boolean -- for resty_mysql
+  --   timeout: ms -- for resty_mysql
+  --   max_idle_timeout: ms -- for resty_mysql
+  --   pool_size: integer -- for resty_mysql
   -- }
   -- postgres: {
   --   backend: ""
@@ -53,28 +62,28 @@ set = (conf, k, v) ->
       merge_set conf, sub_k, sub_v
   else
     if type(v) == "function"
-      conf[k] = run_with_scope v, {}
+      merge_set conf, k, run_with_scope v, {}
     else
       merge_set conf, k, v
 
 scope_meta = {
   __index: (name) =>
-      val = _G[name]
-      return val unless val == nil
+    val = _G[name]
+    return val unless val == nil
 
-      with val = switch name
-          when "set"
-            (...) -> set @_conf, ...
-          when "unset"
-            (...) ->
-              for k in *{...}
-                @_conf[k] = nil
-          when "include"
-            (fn) -> run_with_scope fn, @_conf
-          else
-            (v) -> set @_conf, name, v
+    with val = switch name
+        when "set"
+          (...) -> set @_conf, ...
+        when "unset"
+          (...) ->
+            for k in *{...}
+              @_conf[k] = nil
+        when "include"
+          (fn) -> run_with_scope fn, @_conf
+        else
+          (v) -> set @_conf, name, v
 
-        @[name] = val
+      @[name] = val
 }
 
 config = (environment, fn) ->

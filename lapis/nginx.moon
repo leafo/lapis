@@ -60,12 +60,13 @@ ngx_req = {
   parsed_url: (t) ->
     uri = ngx.var.request_uri
     uri = uri\match("(.-)%?") or uri
+    host_header = ngx.var.http_host
 
     {
       scheme: ngx.var.scheme
       path: uri
       host: ngx.var.host
-      port: ngx.var.http_host\match ":(%d+)$"
+      port: host_header and host_header\match ":(%d+)$"
       query: ngx.var.args
     }
 
@@ -73,7 +74,10 @@ ngx_req = {
     build_url t.parsed_url
 
   params_post: (t) ->
-    content_type = (t.headers["content-type"] or "")\lower!
+    content_type = t.headers["content-type"] or ""
+    content_type = "" unless type(content_type) == "string"
+    content_type = content_type\lower!
+
     params = if content_type\match escape_pattern "multipart/form-data"
       parse_multipart!
     elseif content_type\match escape_pattern "application/x-www-form-urlencoded"

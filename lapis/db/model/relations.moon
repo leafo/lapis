@@ -1,10 +1,6 @@
-db = require "lapis.db"
-
 assert_model = (primary_model, model_name) ->
-  -- TODO: the primary model may influcence how related models are loaded
-  models = require "models"
-  with m = models[model_name]
-    error "failed to find model `#{model_name}` for relationship" unless m
+  with m = primary_model\get_relation_model model_name
+    error "failed to find model `#{model_name}` for relation" unless m
 
 fetch = (name, opts) =>
   source = opts.fetch
@@ -23,7 +19,7 @@ belongs_to = (name, opts) =>
   assert type(source) == "string", "Expecting model name for `belongs_to` relation"
 
   get_method = opts.as or "get_#{name}"
-  column_name = "#{name}_id"
+  column_name = opts.key or "#{name}_id"
 
   @__base[get_method] = =>
     return nil unless @[column_name]
@@ -54,17 +50,13 @@ has_one = (name, opts) =>
       @[name] = obj
 
 has_many = (name, opts) =>
-  if opts.pager == false
-    error "not yet"
-
   source = opts.has_many
   assert type(source) == "string", "Expecting model name for `has_many` relation"
 
   get_method = opts.as or "get_#{name}"
+  get_paginated_method = "#{get_method}_paginated"
 
-  @__base[get_method] = (fetch_opts) =>
-    model = assert_model @@, source
-
+  build_query = =>
     foreign_key = opts.key or "#{@@singular_name!}_id"
 
     clause = {
@@ -75,12 +67,28 @@ has_many = (name, opts) =>
       for k,v in pairs where
         clause[k] = v
 
-    clause = db.encode_clause clause
+    clause = "where #{@@db.encode_clause clause}"
 
-    model\paginated "where #{clause}", fetch_opts
+    if order = opts.order
+      clause ..= " order by #{order}"
+
+    clause
+
+  @__base[get_method] = =>
+    existing = @[name]
+    return existing if existing != nil
+    model = assert_model @@, source
+
+    with res = model\select build_query(@)
+      @[name] = res
+
+  unless opts.pager == false
+    @__base[get_paginated_method] = (fetch_opts) =>
+      model = assert_model @@, source
+      model\paginated build_query(@), fetch_opts
 
 polymorphic_belongs_to = (name, opts) =>
-  import Model, enum from require "lapis.db.model"
+  import enum from require "lapis.db.model"
   types = opts.polymorphic_belongs_to
 
   assert type(types) == "table", "missing types"
@@ -97,11 +105,16 @@ polymorphic_belongs_to = (name, opts) =>
 
   @[enum_name] = enum { assert(v[1], "missing type name"), k for k,v in pairs types}
 
-  @["preload_#{name}s"] = (objs) =>
+  @["preload_#{name}s"] = (objs, preload_opts) =>
+    fields = preload_opts and preload_opts.fields
+
     for {type_name, model_name} in *types
       model = assert_model @@, model_name
       filtered = [o for o in *objs when o[type_col] == @@[enum_name][type_name]]
-      model\include_in filtered, id_col, as: name
+      model\include_in filtered, id_col, {
+        as: name
+        fields: fields and fields[type_name]
+      }
 
     objs
 

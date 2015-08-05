@@ -48,9 +48,20 @@ entity_exists = function(name)
   return res.c > 0
 end
 local create_table
-create_table = function(name, columns)
+create_table = function(name, columns, opts)
+  if opts == nil then
+    opts = { }
+  end
+  local prefix
+  if opts.if_not_exists then
+    prefix = "CREATE TABLE IF NOT EXISTS "
+  else
+    prefix = "CREATE TABLE "
+  end
   local buffer = {
-    "CREATE TABLE IF NOT EXISTS " .. tostring(escape_identifier(name)) .. " ("
+    prefix,
+    escape_identifier(name),
+    " ("
   }
   local add
   add = function(...)
@@ -78,12 +89,14 @@ end
 local create_index
 create_index = function(tname, ...)
   local index_name = gen_index_name(tname, ...)
-  if entity_exists(index_name) then
-    return 
-  end
   local columns, options = extract_options({
     ...
   })
+  if options.if_not_exists then
+    if entity_exists(index_name) then
+      return 
+    end
+  end
   local buffer = {
     "CREATE"
   }
@@ -154,8 +167,24 @@ do
     __call = function(self, opts)
       local out = self.base
       for k, v in pairs(self.default_options) do
-        if not (opts[k] ~= nil) then
-          opts[k] = v
+        local _continue_0 = false
+        repeat
+          if k == "default" and opts.array then
+            _continue_0 = true
+            break
+          end
+          if not (opts[k] ~= nil) then
+            opts[k] = v
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+      if opts.array then
+        for i = 1, type(opts.array) == "number" and opts.array or 1 do
+          out = out .. "[]"
         end
       end
       if not (opts.null) then
@@ -249,6 +278,9 @@ local types = setmetatable({
   text = C("text"),
   time = T("timestamp"),
   date = C("date"),
+  enum = C("smallint", {
+    null = false
+  }),
   integer = C("integer", {
     null = false,
     default = 0

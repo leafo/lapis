@@ -105,7 +105,9 @@ do
         if type(query) == "table" then
           query = encode_query_string(query)
         end
-        path = path .. ("?" .. query)
+        if query ~= "" then
+          path = path .. ("?" .. query)
+        end
       end
       return path
     end,

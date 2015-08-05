@@ -1,8 +1,6 @@
 import concat from table
 import type, tostring, pairs, select from _G
 
-proxy_location = "/query"
-
 local raw_query
 local logger
 
@@ -18,21 +16,17 @@ import
   list
   from require "lapis.db.base"
 
+array = (t) ->
+  import PostgresArray from require "pgmoon.arrays"
+  PostgresArray t
+
+is_array = (v) ->
+  import PostgresArray from require "pgmoon.arrays"
+  getmetatable(v) == PostgresArray.__base
+
 backends = {
-  default: (_proxy=proxy_location) ->
-    parser = require "rds.parser"
-    raw_query = (str) ->
-      logger.query str if logger
-      res = ngx.location.capture _proxy, {
-        body: str
-      }
-      out, err = parser.parse res.body
-      error "#{err}: #{str}" unless out
-
-      if resultset = out.resultset
-        return resultset
-      out
-
+  -- the raw backend is a debug backend that lets you specify the function that
+  -- handles the query
   raw: (fn) ->
     with raw_query
       raw_query = fn
@@ -75,7 +69,7 @@ backends = {
       res
 }
 
-set_backend = (name="default", ...) ->
+set_backend = (name, ...) ->
   assert(backends[name]) ...
 
 init_logger = ->
@@ -85,8 +79,11 @@ init_logger = ->
 
 init_db = ->
   config = require("lapis.config").get!
-  default_backend = config.postgres and config.postgres.backend or "default"
-  set_backend default_backend
+  backend = config.postgres and config.postgres.backend
+  unless backend
+    backend = "pgmoon"
+
+  set_backend backend
 
 escape_identifier = (ident) ->
   return ident[1] if is_raw ident
@@ -107,6 +104,10 @@ escape_literal = (val) ->
         escaped_items = [escape_literal item for item in *val[1]]
         assert escaped_items[1], "can't flatten empty list"
         return "(#{concat escaped_items, ", "})"
+
+      if is_array val
+        import encode_array from require "pgmoon.arrays"
+        return encode_array val, escape_literal
 
       return val[1] if is_raw val
       error "unknown table passed to `escape_literal`"
@@ -296,9 +297,10 @@ encode_case = (exp, t, on_else) ->
   concat buff
 
 {
-  :query, :raw, :is_raw, :list, :is_list, :NULL, :TRUE, :FALSE, :escape_literal,
-  :escape_identifier, :encode_values, :encode_assigns, :encode_clause,
-  :interpolate_query, :parse_clause, :format_date, :encode_case, :init_logger
+  :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
+  :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
+  :encode_clause, :interpolate_query, :parse_clause, :format_date,
+  :encode_case, :init_logger
 
   :set_backend
 

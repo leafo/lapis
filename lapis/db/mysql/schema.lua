@@ -41,13 +41,30 @@ extract_options = function(cols)
   end
   return cols, options
 end
+local entity_exists
+entity_exists = function(name)
+  local config = require("lapis.config").get()
+  local mysql_config = assert(config.mysql, "missing mysql configuration")
+  local database = escape_literal(assert(mysql_config.database))
+  name = escape_literal(name)
+  local res = unpack(db.select("COUNT(*) as c from information_schema.tables where\n    table_schema = " .. tostring(database) .. " and table_name = " .. tostring(name) .. " LIMIT 1"))
+  return res.c > 0
+end
 local create_table
 create_table = function(name, columns, opts)
   if opts == nil then
     opts = { }
   end
+  local prefix
+  if opts.if_not_exists then
+    prefix = "CREATE TABLE IF NOT EXISTS "
+  else
+    prefix = "CREATE TABLE "
+  end
   local buffer = {
-    "CREATE TABLE IF NOT EXISTS " .. tostring(escape_identifier(name)) .. " ("
+    prefix,
+    escape_identifier(name),
+    " ("
   }
   local add
   add = function(...)
@@ -75,7 +92,7 @@ create_table = function(name, columns, opts)
   end
   add(" CHARSET=", opts.charset or "UTF8")
   add(";")
-  return db.raw_query(concat(buffer))
+  return db.query(concat(buffer))
 end
 local drop_table
 drop_table = function(tname)
@@ -253,6 +270,7 @@ local types = setmetatable({
   end
 })
 return {
+  entity_exists = entity_exists,
   gen_index_name = gen_index_name,
   types = types,
   create_table = create_table,

@@ -1,6 +1,9 @@
+config = require "lapis.config"
+config.default_config.postgres = {backend: "pgmoon"}
+config.reset true
 
 db = require "lapis.db.postgres"
-import Model from require "lapis.db.model"
+import Model from require "lapis.db.postgres.model"
 import with_query_fn, assert_queries from require "spec.helpers"
 
 time = 1376377000
@@ -40,6 +43,14 @@ describe "lapis.db.model", ->
   before_each ->
     queries = {}
     query_mock = {}
+
+  it "should get singular name", ->
+    assert.same "thing", (class Things extends Model)\singular_name!
+    assert.same "category", (class Categories extends Model)\singular_name!
+
+  it "should get table name", ->
+    assert.same "banned_users", (class BannedUsers extends Model)\table_name!
+    assert.same "categories", (class Categories extends Model)\table_name!
 
   it "should select", ->
     class Things extends Model
@@ -139,6 +150,7 @@ describe "lapis.db.model", ->
     p\get_all!
     assert.same 127, p\total_items!
     assert.same 13, p\num_pages!
+    assert.falsy p\has_items!
 
     p\get_page 1
     p\get_page 4
@@ -164,16 +176,17 @@ describe "lapis.db.model", ->
 
     assert_queries {
       'SELECT * from "things" where group_id = 123 order by name asc'
-      'SELECT COUNT(*) as c from "things" where group_id = 123 '
-      'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 0 '
-      'SELECT * from "things" where group_id = 123 order by name asc limit 10 offset 30 '
-      'SELECT * from "things" order by name asc limit 25 offset 50 '
-      'SELECT hello, world from "things" limit 12 offset 12 '
-      'SELECT hello, world from "things" limit 12 offset 12 '
-      'SELECT * from "things" order by BLAH limit 10 offset 0 '
-      'SELECT * from "things" order by BLAH limit 10 offset 10 '
-      'SELECT COUNT(*) as c from "things" join whales on color = blue '
-      'SELECT * from "things" join whales on color = blue order by BLAH limit 10 offset 10 '
+      'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
+      'SELECT 1 FROM "things" where group_id = 123 limit 1'
+      'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
+      'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
+      'SELECT * from "things" order by name asc LIMIT 25 OFFSET 50'
+      'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+      'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+      'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 0'
+      'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 10'
+      'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
+      'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
     }, queries
 
 
@@ -489,6 +502,18 @@ describe "lapis.db.model", ->
         [[UPDATE "things" SET "name" = 'changed from update' WHERE "id" = 101]]
       }, queries
 
+  describe "inheritance", ->
+    it "returns correct cached table name", ->
+      class FirstModel extends Model
+      class SecondModel extends FirstModel
+      assert.same "first_model", FirstModel\table_name!
+      assert.same "second_model", SecondModel\table_name!
+
+    it "returns correct cached table name when flipped", ->
+      class FirstModel extends Model
+      class SecondModel extends FirstModel
+      assert.same "second_model", SecondModel\table_name!
+      assert.same "first_model", FirstModel\table_name!
 
   describe "relations", ->
     local models
@@ -503,19 +528,27 @@ describe "lapis.db.model", ->
       models.Users = class extends Model
         @primary_key: "id"
 
+      models.CoolUsers = class extends Model
+        @primary_key: "user_id"
+
       class Posts extends Model
         @relations: {
           {"user", belongs_to: "Users"}
+          {"cool_user", belongs_to: "CoolUsers", key: "owner_id"}
         }
 
       post = Posts!
       post.user_id = 123
+      post.owner_id = 99
 
       assert post\get_user!
       assert post\get_user!
+
+      post\get_cool_user!
 
       assert_queries {
         'SELECT * from "users" where "id" = 123 limit 1'
+        'SELECT * from "cool_users" where "user_id" = 99 limit 1'
       }, queries
 
 
@@ -597,7 +630,7 @@ describe "lapis.db.model", ->
         'SELECT * from "user_data" where "owner_id" = 123 limit 1'
       }, queries
 
-    it "should make has_many getter", ->
+    it "should make has_many paginated getter", ->
       query_mock['SELECT'] = { { id: 101 } }
 
       models.Posts = class extends Model
@@ -610,21 +643,49 @@ describe "lapis.db.model", ->
       user = models.Users!
       user.id = 1234
 
-      user\get_posts!\get_page 1
-      user\get_posts!\get_page 2
+      user\get_posts_paginated!\get_page 1
+      user\get_posts_paginated!\get_page 2
 
-      user\get_more_posts!\get_page 2
+      user\get_more_posts_paginated!\get_page 2
 
-      user\get_posts(per_page: 44)\get_page 3
+      user\get_posts_paginated(per_page: 44)\get_page 3
 
       assert_queries {
-        'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 0 '
-        'SELECT * from "posts" where "user_id" = 1234 limit 10 offset 10 '
+        'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 0'
+        'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 10'
         {
-          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue' limit 10 offset 10 ]]
-          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 limit 10 offset 10 ]]
+          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
+          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
         }
-        'SELECT * from "posts" where "user_id" = 1234 limit 44 offset 88 '
+        'SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 88'
+      }, queries
+
+
+    it "should make has_many getter ", ->
+      models.Posts = class extends Model
+      models.Users = class extends Model
+        @relations: {
+          {"posts", has_many: "Posts"}
+          {"more_posts", has_many: "Posts", where: {color: "blue"}}
+          {"fresh_posts", has_many: "Posts", order: "id desc"}
+        }
+
+      user = models.Users!
+      user.id = 1234
+
+      user\get_posts!
+      user\get_posts!
+
+      user\get_more_posts!
+      user\get_fresh_posts!
+
+      assert_queries {
+        'SELECT * from "posts" where "user_id" = 1234'
+        {
+          [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue']]
+          [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234]]
+        }
+        'SELECT * from "posts" where "user_id" = 1234 order by id desc'
       }, queries
 
     it "should create relations for inheritance", ->
@@ -641,7 +702,7 @@ describe "lapis.db.model", ->
       assert Child.get_user, "expecting get_user"
       assert Child.get_category, "expecting get_category"
 
-    describe "polymorphic belongs to #ddd", ->
+    describe "polymorphic belongs to", ->
       local Foos, Bars, Bazs, Items
 
       before_each ->
@@ -755,6 +816,34 @@ describe "lapis.db.model", ->
           'SELECT * from "bars" where "id" in (2)'
         }, queries
 
+      it "preloads with fields", ->
+        items = {
+          Items\load {
+            object_type: 1
+            object_id: 111
+          }
+
+          Items\load {
+            object_type: 2
+            object_id: 112
+          }
+
+          Items\load {
+            object_type: 3
+            object_id: 113
+          }
+        }
+
+        Items\preload_objects items, fields: {
+          bar: "a, b"
+          baz: "c, d"
+        }
+
+        assert_queries {
+          'SELECT * from "foos" where "id" in (111)'
+          'SELECT a, b from "bars" where "id" in (112)'
+          'SELECT c, d from "bazs" where "id" in (113)'
+        }, queries
 
   describe "enum", ->
     import enum from require "lapis.db.model"

@@ -62,7 +62,7 @@ create_migrations_table = function(table_name)
   })
 end
 local run_migrations
-run_migrations = function(migrations)
+run_migrations = function(migrations, prefix)
   local entity_exists
   entity_exists = require("lapis.db.schema").entity_exists
   if not (entity_exists(LapisMigrations:table_name())) then
@@ -99,6 +99,10 @@ run_migrations = function(migrations)
   for _, _des_0 in ipairs(tuples) do
     local name, fn
     name, fn = _des_0[1], _des_0[2]
+    if prefix then
+      assert(type(prefix) == "string", "got a prefix for `run_migrations` but it was not a string")
+      name = tostring(prefix) .. "_" .. tostring(name)
+    end
     if not (exists[tostring(name)]) then
       logger.migration(name)
       fn(name)

@@ -6,35 +6,16 @@ import find_leda, start_leda from require "lapis.cmd.leda"
 path = require "lapis.cmd.path"
 colors = require "ansicolors"
 
-log = print
-annotate = (obj, verbs) ->
-  setmetatable {}, {
-    __newindex: (name, value) =>
-      obj[name] = value
-    __index: (name) =>
-      fn =  obj[name]
-      return fn if not type(fn) == "function"
-      if verbs[name]
-        (...) ->
-          fn ...
-          first = ...
-          log verbs[name], first
-      else
-        fn
-  }
-
-path = annotate path, {
-  mkdir: colors "%{bright}%{magenta}made directory%{reset}"
-  write_file: colors "%{bright}%{yellow}wrote%{reset}"
-}
+path = path\annotate!
 
 write_file_safe = (file, content) ->
-  return if path.exists file
+  return nil, "file already exists: #{file}" if path.exists file
 
   if prefix = file\match "^(.+)/[^/]+$"
     path.mkdir prefix unless path.exists prefix
 
   path.write_file file, content
+  true
 
 fail_with_message = (msg) ->
   print colors "%{bright}%{red}Aborting:%{reset} " .. msg
@@ -70,16 +51,16 @@ tasks = {
     help: "create a new lapis project in the current directory"
 
     (...) ->
-      import CONFIG_PATH, CONFIG_PATH_ETLUA from require "lapis.cmd.nginx"
+      import config_path, config_path_etlua from require("lapis.cmd.nginx").nginx_runner
       flags = parse_flags ...
 
-      if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA)
+      if path.exists(config_path) or path.exists(config_path_etlua)
         fail_with_message "nginx.conf already exists"
 
       if flags["etlua-config"]
-        write_file_safe CONFIG_PATH_ETLUA, require "lapis.cmd.templates.config_etlua"
+        write_file_safe config_path_etlua, require "lapis.cmd.templates.config_etlua"
       else
-        write_file_safe CONFIG_PATH, require "lapis.cmd.templates.config"
+        write_file_safe config_path, require "lapis.cmd.templates.config"
 
       write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
 
@@ -209,18 +190,36 @@ tasks = {
 
   {
     name: "generate"
-    usage: "generate template [args...]"
+    usage: "generate <template> [args...]"
     help: "generates a new file from template"
 
     (template_name, ...) ->
-      tpl = require "lapis.cmd.templates.#{template_name}"
-      unless type(tpl) == "table"
-        error "invalid template: #{template_name}"
+      local tpl, module_name
 
-      tpl.check_args ...
-      out = tpl.content ...
-      fname = tpl.filename ...
-      write_file_safe fname, out
+      pcall ->
+        module_name = "generators.#{template_name}"
+        tpl = require module_name
+
+      unless tpl
+        tpl = require "lapis.cmd.templates.#{template_name}"
+
+      unless type(tpl) == "table"
+        error "invalid generator `#{module_name or template_name}`, module must be table"
+
+      writer = {
+        write: (...) => assert write_file_safe ...
+        mod_to_path: (mod) =>
+          mod\gsub "%.", "/"
+
+      }
+
+      if tpl.check_args
+        tpl.check_args ...
+
+      unless type(tpl.write) == "function"
+        error "generator `#{module_name or template_name}` is missing write function"
+
+      tpl.write writer, ...
   }
 
   {

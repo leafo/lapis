@@ -15,38 +15,11 @@ do
 end
 local path = require("lapis.cmd.path")
 local colors = require("ansicolors")
-local log = print
-local annotate
-annotate = function(obj, verbs)
-  return setmetatable({ }, {
-    __newindex = function(self, name, value)
-      obj[name] = value
-    end,
-    __index = function(self, name)
-      local fn = obj[name]
-      if not type(fn) == "function" then
-        return fn
-      end
-      if verbs[name] then
-        return function(...)
-          fn(...)
-          local first = ...
-          return log(verbs[name], first)
-        end
-      else
-        return fn
-      end
-    end
-  })
-end
-path = annotate(path, {
-  mkdir = colors("%{bright}%{magenta}made directory%{reset}"),
-  write_file = colors("%{bright}%{yellow}wrote%{reset}")
-})
+path = path:annotate()
 local write_file_safe
 write_file_safe = function(file, content)
   if path.exists(file) then
-    return 
+    return nil, "file already exists: " .. tostring(file)
   end
   do
     local prefix = file:match("^(.+)/[^/]+$")
@@ -56,7 +29,8 @@ write_file_safe = function(file, content)
       end
     end
   end
-  return path.write_file(file, content)
+  path.write_file(file, content)
+  return true
 end
 local fail_with_message
 fail_with_message = function(msg)
@@ -118,19 +92,19 @@ tasks = {
     name = "new",
     help = "create a new lapis project in the current directory",
     function(...)
-      local CONFIG_PATH, CONFIG_PATH_ETLUA
+      local config_path, config_path_etlua
       do
-        local _obj_0 = require("lapis.cmd.nginx")
-        CONFIG_PATH, CONFIG_PATH_ETLUA = _obj_0.CONFIG_PATH, _obj_0.CONFIG_PATH_ETLUA
+        local _obj_0 = require("lapis.cmd.nginx").nginx_runner
+        config_path, config_path_etlua = _obj_0.config_path, _obj_0.config_path_etlua
       end
       local flags = parse_flags(...)
-      if path.exists(CONFIG_PATH) or path.exists(CONFIG_PATH_ETLUA) then
+      if path.exists(config_path) or path.exists(config_path_etlua) then
         fail_with_message("nginx.conf already exists")
       end
       if flags["etlua-config"] then
-        write_file_safe(CONFIG_PATH_ETLUA, require("lapis.cmd.templates.config_etlua"))
+        write_file_safe(config_path_etlua, require("lapis.cmd.templates.config_etlua"))
       else
-        write_file_safe(CONFIG_PATH, require("lapis.cmd.templates.config"))
+        write_file_safe(config_path, require("lapis.cmd.templates.config"))
       end
       write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
       if flags.lua then
@@ -272,17 +246,35 @@ tasks = {
   },
   {
     name = "generate",
-    usage = "generate template [args...]",
+    usage = "generate <template> [args...]",
     help = "generates a new file from template",
     function(template_name, ...)
-      local tpl = require("lapis.cmd.templates." .. tostring(template_name))
-      if not (type(tpl) == "table") then
-        error("invalid template: " .. tostring(template_name))
+      local tpl, module_name
+      pcall(function()
+        module_name = "generators." .. tostring(template_name)
+        tpl = require(module_name)
+      end)
+      if not (tpl) then
+        tpl = require("lapis.cmd.templates." .. tostring(template_name))
       end
-      tpl.check_args(...)
-      local out = tpl.content(...)
-      local fname = tpl.filename(...)
-      return write_file_safe(fname, out)
+      if not (type(tpl) == "table") then
+        error("invalid generator `" .. tostring(module_name or template_name) .. "`, module must be table")
+      end
+      local writer = {
+        write = function(self, ...)
+          return assert(write_file_safe(...))
+        end,
+        mod_to_path = function(self, mod)
+          return mod:gsub("%.", "/")
+        end
+      }
+      if tpl.check_args then
+        tpl.check_args(...)
+      end
+      if not (type(tpl.write) == "function") then
+        error("generator `" .. tostring(module_name or template_name) .. "` is missing write function")
+      end
+      return tpl.write(writer, ...)
     end
   },
   {

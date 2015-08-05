@@ -11,7 +11,7 @@ do
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
 end
 local conn, logger
-local backends, set_backend, escape_err, escape_literal, escape_identifier, raw_query, init_logger, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
+local backends, set_backend, escape_err, escape_literal, escape_identifier, init_logger, init_db, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
 backends = {
   raw = function(fn)
     do
@@ -23,7 +23,7 @@ backends = {
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
-    conn = assert(luasql:connect(mysql_config.database, mysql_config.user))
+    conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
     raw_query = function(q)
       if logger then
         logger.query(q)
@@ -35,10 +35,32 @@ backends = {
         last_auto_id = conn:getlastautoid()
       }
       if has_rows then
+        local colnames = cur:getcolnames()
+        local coltypes = cur:getcoltypes()
+        assert(#colnames == #coltypes)
+        local name2type = { }
+        for i = 1, #colnames do
+          local colname = colnames[i]
+          local coltype = coltypes[i]
+          name2type[colname] = coltype
+        end
         while true do
           do
             local row = cur:fetch({ }, "a")
             if row then
+              for colname, value in pairs(row) do
+                local coltype = name2type[colname]
+                if coltype == 'number(1)' then
+                  if value == '1' then
+                    value = true
+                  else
+                    value = false
+                  end
+                elseif coltype:match('number') then
+                  value = tonumber(value)
+                end
+                row[colname] = value
+              end
               table.insert(result, row)
             else
               break
@@ -48,21 +70,106 @@ backends = {
       end
       return result
     end
+  end,
+  resty_mysql = function()
+    local after_dispatch, increment_perf
+    do
+      local _obj_0 = require("lapis.nginx.context")
+      after_dispatch, increment_perf = _obj_0.after_dispatch, _obj_0.increment_perf
+    end
+    local config = require("lapis.config").get()
+    local mysql_config = assert(config.mysql, "missing mysql configuration for resty_mysql")
+    local host = mysql_config.host or "127.0.0.1"
+    local port = mysql_config.port or 3306
+    local path = mysql_config.path
+    local database = assert(mysql_config.database, "`database` missing from config for resty_mysql")
+    local user = assert(mysql_config.user, "`user` missing from config for resty_mysql")
+    local password = mysql_config.password
+    local ssl = mysql_config.ssl
+    local ssl_verify = mysql_config.ssl_verify
+    local timeout = mysql_config.timeout or 10000
+    local max_idle_timeout = mysql_config.max_idle_timeout or 10000
+    local pool_size = mysql_config.pool_size or 100
+    local mysql = require("resty.mysql")
+    raw_query = function(q)
+      if logger then
+        logger.query(q)
+      end
+      local db = ngx and ngx.ctx.resty_mysql_db
+      if not (db) then
+        local err
+        db, err = assert(mysql:new())
+        db:set_timeout(timeout)
+        local options = {
+          database = database,
+          user = user,
+          password = password,
+          ssl = ssl,
+          ssl_verify = ssl_verify
+        }
+        if path then
+          options.path = path
+        else
+          options.host = host
+          options.port = port
+        end
+        assert(db:connect(options))
+        if ngx then
+          ngx.ctx.resty_mysql_db = db
+          after_dispatch(function()
+            return db:set_keepalive(max_idle_timeout, pool_size)
+          end)
+        end
+      end
+      local start_time
+      if ngx and config.measure_performance then
+        ngx.update_time()
+        start_time = ngx.now()
+      end
+      local res, err, errcode, sqlstate = assert(db:query(q))
+      local result
+      if err == 'again' then
+        result = {
+          res
+        }
+        while err == 'again' do
+          res, err, errcode, sqlstate = assert(db:read_result())
+          table.insert(result, res)
+        end
+      else
+        result = res
+      end
+      if start_time then
+        ngx.update_time()
+        increment_perf("db_time", ngx.now() - start_time)
+        increment_perf("db_count", 1)
+      end
+      return result
+    end
   end
 }
 set_backend = function(name, ...)
-  if name == nil then
-    name = "default"
+  local b = backends[name]
+  if not (b) then
+    error("failed to find mysql backend " .. tostring(name))
   end
-  return assert(backends[name])(...)
+  return b(...)
 end
-escape_err = "a connection is required to escape a string literal"
+escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = function(val)
   local _exp_0 = type(val)
   if "number" == _exp_0 then
     return tostring(val)
   elseif "string" == _exp_0 then
-    return "'" .. tostring(assert(conn, escape_err):escape(val)) .. "'"
+    if conn then
+      return "'" .. tostring(conn:escape(val)) .. "'"
+    else
+      if ngx then
+        return ngx.quote_sql_str(val)
+      else
+        error(escape_err)
+      end
+    end
   elseif "boolean" == _exp_0 then
     return val and "TRUE" or "FALSE"
   elseif "table" == _exp_0 then
@@ -83,15 +190,28 @@ escape_identifier = function(ident)
   ident = tostring(ident)
   return '`' .. (ident:gsub('`', '``')) .. '`'
 end
-raw_query = function(...)
-  set_backend("luasql")
-  return raw_query(...)
-end
 init_logger = function()
   local config = require("lapis.config").get()
   if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries then
     logger = require("lapis.logging")
   end
+end
+init_db = function()
+  local config = require("lapis.config").get()
+  local backend = config.mysql and config.mysql.backend
+  if not (backend) then
+    if ngx then
+      backend = "resty_mysql"
+    else
+      backend = "luasql"
+    end
+  end
+  return set_backend(backend)
+end
+raw_query = function(...)
+  init_logger()
+  init_db()
+  return raw_query(...)
 end
 interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers(escape_literal, escape_identifier)
 append_all = function(t, ...)
@@ -175,7 +295,6 @@ return {
   escape_literal = escape_literal,
   escape_identifier = escape_identifier,
   set_backend = set_backend,
-  raw_query = raw_query,
   format_date = format_date,
   init_logger = init_logger,
   select = _select,

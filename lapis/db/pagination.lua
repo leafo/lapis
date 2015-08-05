@@ -1,4 +1,3 @@
-local db = require("lapis.db")
 local insert, concat
 do
   local _obj_0 = table
@@ -56,7 +55,21 @@ rebuild_query_clause = function(parsed)
 end
 local Paginator
 do
-  local _base_0 = { }
+  local _base_0 = {
+    select = function(self, ...)
+      return self.model:select(...)
+    end,
+    prepare_results = function(self, items)
+      do
+        local pr = self.opts and self.opts.prepare_results
+        if pr then
+          return pr(items)
+        else
+          return items
+        end
+      end
+    end
+  }
   _base_0.__index = _base_0
   local _class_0 = setmetatable({
     __init = function(self, model, clause, ...)
@@ -64,6 +77,7 @@ do
         clause = ""
       end
       self.model = model
+      self.db = self.model.__class.db
       local param_count = select("#", ...)
       local opts
       if param_count > 0 then
@@ -78,10 +92,7 @@ do
       if opts then
         self.per_page = opts.per_page
       end
-      if opts and opts.prepare_results then
-        self.prepare_results = opts.prepare_results
-      end
-      self._clause = db.interpolate_query(clause, ...)
+      self._clause = self.db.interpolate_query(clause, ...)
       self.opts = opts
     end,
     __base = _base_0,
@@ -119,34 +130,38 @@ do
       end)
     end,
     get_all = function(self)
-      return self.prepare_results(self.model:select(self._clause, self.opts))
+      return self:prepare_results(self:select(self._clause, self.opts))
     end,
     get_page = function(self, page)
       page = (math.max(1, tonumber(page) or 0)) - 1
-      return self.prepare_results(self.model:select(self._clause .. [[      limit ?
-      offset ?
-    ]], self.per_page, self.per_page * page, self.opts))
+      return self:prepare_results(self:select(self._clause .. [[ LIMIT ? OFFSET ?]], self.per_page, self.per_page * page, self.opts))
     end,
     num_pages = function(self)
       return math.ceil(self:total_items() / self.per_page)
     end,
+    has_items = function(self)
+      local parsed = self.db.parse_clause(self._clause)
+      parsed.limit = "1"
+      parsed.offset = nil
+      parsed.order = nil
+      local tbl_name = self.db.escape_identifier(self.model:table_name())
+      local res = self.db.query("SELECT 1 FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed)))
+      return not not unpack(res)
+    end,
     total_items = function(self)
       if not (self._count) then
-        local parsed = db.parse_clause(self._clause)
+        local parsed = self.db.parse_clause(self._clause)
         parsed.limit = nil
         parsed.offset = nil
         parsed.order = nil
         if parsed.group then
           error("Paginator can't calculate total items in a query with group by")
         end
-        local tbl_name = db.escape_identifier(self.model:table_name())
-        local query = "COUNT(*) as c from " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
-        self._count = unpack(db.select(query)).c
+        local tbl_name = self.db.escape_identifier(self.model:table_name())
+        local query = "COUNT(*) AS c FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
+        self._count = unpack(self.db.select(query)).c
       end
       return self._count
-    end,
-    prepare_results = function(...)
-      return ...
     end
   }
   _base_0.__index = _base_0
@@ -185,9 +200,6 @@ do
   local _base_0 = {
     order = "ASC",
     per_page = 10,
-    prepare_results = function(...)
-      return ...
-    end,
     each_page = function(self)
       return coroutine.wrap(function()
         local tuple = { }
@@ -213,8 +225,8 @@ do
       return self:get_ordered("DESC", ...)
     end,
     get_ordered = function(self, order, ...)
-      local parsed = assert(db.parse_clause(self._clause))
-      local has_multi_fields = type(self.field) == "table" and not db.is_raw(self.field)
+      local parsed = assert(self.db.parse_clause(self._clause))
+      local has_multi_fields = type(self.field) == "table" and not self.db.is_raw(self.field)
       local escaped_fields
       if has_multi_fields then
         do
@@ -223,14 +235,14 @@ do
           local _list_0 = self.field
           for _index_0 = 1, #_list_0 do
             local f = _list_0[_index_0]
-            _accum_0[_len_0] = db.escape_identifier(f)
+            _accum_0[_len_0] = self.db.escape_identifier(f)
             _len_0 = _len_0 + 1
           end
           escaped_fields = _accum_0
         end
       else
         escaped_fields = {
-          db.escape_identifier(self.field)
+          self.db.escape_identifier(self.field)
         }
       end
       if parsed.order then
@@ -263,9 +275,9 @@ do
             local _value_0
             local _exp_0 = order:lower()
             if "asc" == _exp_0 then
-              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and ">" or ">=") .. " " .. tostring(db.escape_literal(pos))
+              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and ">" or ">=") .. " " .. tostring(self.db.escape_literal(pos))
             elseif "desc" == _exp_0 then
-              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and "<" or "<=") .. " " .. tostring(db.escape_literal(pos))
+              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and "<" or "<=") .. " " .. tostring(self.db.escape_literal(pos))
             else
               _value_0 = error("don't know how to handle order " .. tostring(order))
             end
@@ -283,9 +295,9 @@ do
       end
       parsed.limit = tostring(self.per_page)
       local query = rebuild_query_clause(parsed)
-      local res = self.model:select(query, self.opts)
+      local res = self:select(query, self.opts)
       local final = res[#res]
-      res = self.prepare_results(res)
+      res = self:prepare_results(res)
       if has_multi_fields then
         return res, get_fields(final, unpack(self.field))
       else

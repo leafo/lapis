@@ -6,7 +6,6 @@ import setup_db, teardown_db from require "spec_mysql.helpers"
 import drop_tables from require "lapis.spec.db"
 import create_table, drop_table, types from schema
 
-
 describe "model", ->
   setup ->
     setup_db!
@@ -14,8 +13,8 @@ describe "model", ->
   teardown ->
     teardown_db!
 
-  it "should run raw_query", ->
-    assert.truthy db.raw_query [[
+  it "should run query", ->
+    assert.truthy db.query [[
       select * from information_schema.tables
       where table_schema = "lapis_test"
     ]]
@@ -33,9 +32,9 @@ describe "model", ->
       {"name", types.varchar}
     }
 
-    assert.same 1, #db.raw_query [[
+    assert.same 1, #db.query [[
       select * from information_schema.tables
-      where table_schema = "lapis_test"
+      where table_schema = "lapis_test" and table_name = "hello_worlds"
     ]]
 
     db.insert "hello_worlds", {
