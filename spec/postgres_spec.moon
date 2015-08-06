@@ -219,6 +219,16 @@ tests = {
   }
 
   {
+    -> tostring schema.types.text array: true, null: false
+    "text[] NOT NULL"
+  }
+
+  {
+    -> tostring schema.types.text array: true, null: true
+    "text[]"
+  }
+
+  {
     -> tostring schema.types.integer array: 1
     "integer[] NOT NULL"
   }
