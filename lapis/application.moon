@@ -118,7 +118,9 @@ class Request
 
       layout_path = @options.layout
       layout_cls = if type(layout_path) == "string"
-         require "#{@app.views_prefix}.#{layout_path}"
+        require "#{@app.views_prefix}.#{layout_path}"
+      elseif type(@app.layout) == "string"
+        require "#{@app.views_prefix}.#{@app.layout}"
       else
         @app.layout
 
