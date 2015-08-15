@@ -63,6 +63,7 @@ create_migrations_table = function(table_name)
 end
 local run_migrations
 run_migrations = function(migrations, prefix)
+  assert(type(migrations) == "table", "expecting a table of migrations for run_migrations")
   local entity_exists
   entity_exists = require("lapis.db.schema").entity_exists
   if not (entity_exists(LapisMigrations:table_name())) then

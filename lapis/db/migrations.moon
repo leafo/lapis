@@ -20,6 +20,8 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
   }
 
 run_migrations = (migrations, prefix) ->
+  assert type(migrations) == "table", "expecting a table of migrations for run_migrations"
+
   import entity_exists from require "lapis.db.schema"
   unless entity_exists LapisMigrations\table_name!
     logger.notice "Table `#{LapisMigrations\table_name!}` does not exist, creating"
