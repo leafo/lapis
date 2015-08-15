@@ -909,3 +909,42 @@ describe "lapis.db.model", ->
         assert.same "bar", e\to_name "bar"
         assert.same "bar", e\to_name 4
 
+  describe "scoped model", ->
+    it "creates a scoped model with prefix only", ->
+      CoolThingsModel = Model\scoped_model "cool_things_"
+
+      package.loaded.models = {
+        Worlds: "itworks"
+      }
+
+      class Hellos extends CoolThingsModel
+
+      assert.same "cool_things_hellos", Hellos\table_name!
+      assert.same "hello", Hellos\singular_name!
+
+      assert.same "itworks", Hellos\get_relation_model "Worlds"
+
+    it "creates a scoped model with prefix, module, and external", ->
+      GreatModel = Model\scoped_model "great_", "great.models", {
+        Users: true
+      }
+
+      package.loaded.models = {
+        Twos: "itdoesntowkr"
+        Users: "definitelyworks"
+      }
+
+      package.loaded["great.models"] = {
+        Twos: "itworks"
+      }
+
+      class Ones extends GreatModel
+
+      assert.same "great_ones", Ones\table_name!
+      assert.same "one", Ones\singular_name!
+
+      assert.same "itworks", Ones\get_relation_model "Twos"
+      assert.same "definitelyworks", Ones\get_relation_model "Users"
+
+
+

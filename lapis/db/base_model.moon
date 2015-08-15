@@ -93,6 +93,21 @@ class BaseModel
 
     @__table_name
 
+  @scoped_model: (base_model, prefix, mod, external_models) ->
+    class extends @
+      @get_relation_model: if mod
+        (name) =>
+          if external_models and external_models[name]
+            base_model\get_relation_model name
+          else
+            require(mod)[name]
+
+      @table_name: =>
+        "#{prefix}#{base_model.table_name(@)}"
+
+      @singular_name: =>
+        singularize base_model.table_name @
+
   -- used as the forign key name when preloading objects over a relation
   -- user_posts -> user_post
   @singular_name: =>

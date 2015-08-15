@@ -260,6 +260,57 @@ do
     end
     return self.__table_name
   end
+  self.scoped_model = function(base_model, prefix, mod, external_models)
+    do
+      local _parent_0 = self
+      local _base_1 = { }
+      _base_1.__index = _base_1
+      setmetatable(_base_1, _parent_0.__base)
+      local _class_1 = setmetatable({
+        __init = function(self, ...)
+          return _parent_0.__init(self, ...)
+        end,
+        __base = _base_1,
+        __name = nil,
+        __parent = _parent_0
+      }, {
+        __index = function(cls, name)
+          local val = rawget(_base_1, name)
+          if val == nil then
+            return _parent_0[name]
+          else
+            return val
+          end
+        end,
+        __call = function(cls, ...)
+          local _self_0 = setmetatable({}, _base_1)
+          cls.__init(_self_0, ...)
+          return _self_0
+        end
+      })
+      _base_1.__class = _class_1
+      local self = _class_1
+      if mod then
+        self.get_relation_model = function(self, name)
+          if external_models and external_models[name] then
+            return base_model:get_relation_model(name)
+          else
+            return require(mod)[name]
+          end
+        end
+      end
+      self.table_name = function(self)
+        return tostring(prefix) .. tostring(base_model.table_name(self))
+      end
+      self.singular_name = function(self)
+        return singularize(base_model.table_name(self))
+      end
+      if _parent_0.__inherited then
+        _parent_0.__inherited(_parent_0, _class_1)
+      end
+      return _class_1
+    end
+  end
   self.singular_name = function(self)
     return singularize(self:table_name())
   end
