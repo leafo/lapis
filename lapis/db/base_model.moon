@@ -94,7 +94,7 @@ class BaseModel
     @__table_name
 
   @scoped_model: (base_model, prefix, mod, external_models) ->
-    class extends @
+    class extends base_model
       @get_relation_model: if mod
         (name) =>
           if external_models and external_models[name]

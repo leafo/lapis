@@ -262,7 +262,7 @@ do
   end
   self.scoped_model = function(base_model, prefix, mod, external_models)
     do
-      local _parent_0 = self
+      local _parent_0 = base_model
       local _base_1 = { }
       _base_1.__index = _base_1
       setmetatable(_base_1, _parent_0.__base)
