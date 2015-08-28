@@ -14,6 +14,10 @@ class ErrorPage extends html.Widget
           margin: 20px;
         }
 
+        pre {
+          white-space: pre-wrap;
+        }
+
         .box {
           background: white;
           overflow: hidden;
