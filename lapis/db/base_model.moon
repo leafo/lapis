@@ -196,7 +196,7 @@ class BaseModel
     many = opts and opts.many
 
     if not flip and type(@primary_key) == "table"
-      error "model must have singular primary key to include"
+      error "#{@table_name!} must have singular primary key for include_in"
 
     src_key = flip and (opts.local_key or "id") or foreign_key
     include_ids = for record in *other_records
@@ -264,7 +264,7 @@ class BaseModel
       by_key = by_key.key or @primary_key
 
     if type(by_key) == "table" and by_key[1] != "raw"
-      error "find_all must have a singular key to search"
+      error "#{@table_name!} find_all must have a singular key to search"
 
     return {} if #ids == 0
     flat_ids = concat [@db.escape_literal id for id in *ids], ", "
@@ -290,7 +290,7 @@ class BaseModel
   -- find by primary key, or by table of conds
   @find: (...) =>
     first = select 1, ...
-    error "(#{@table_name!}) trying to find with no conditions" if first == nil
+    error "#{@table_name!} trying to find with no conditions" if first == nil
 
     cond = if "table" == type first
       @db.encode_clause (...)
@@ -373,7 +373,7 @@ class BaseModel
     res = unpack @@db.select "#{fields} from #{tbl_name} where #{cond}"
 
     unless res
-      error "failed to find row to refresh from, did the primary key change?"
+      error "#{@@table_name!} failed to find row to refresh from, did the primary key change?"
 
     if field_names
       for field in *field_names

@@ -186,7 +186,7 @@ do
       local tbl_name = self.__class.db.escape_identifier(self.__class:table_name())
       local res = unpack(self.__class.db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
       if not (res) then
-        error("failed to find row to refresh from, did the primary key change?")
+        error(tostring(self.__class:table_name()) .. " failed to find row to refresh from, did the primary key change?")
       end
       if field_names then
         for _index_0 = 1, #field_names do
@@ -388,7 +388,7 @@ do
     local flip = opts and opts.flip
     local many = opts and opts.many
     if not flip and type(self.primary_key) == "table" then
-      error("model must have singular primary key to include")
+      error(tostring(self:table_name()) .. " must have singular primary key for include_in")
     end
     local src_key = flip and (opts.local_key or "id") or foreign_key
     local include_ids
@@ -495,7 +495,7 @@ do
       by_key = by_key.key or self.primary_key
     end
     if type(by_key) == "table" and by_key[1] ~= "raw" then
-      error("find_all must have a singular key to search")
+      error(tostring(self:table_name()) .. " find_all must have a singular key to search")
     end
     if #ids == 0 then
       return { }
@@ -537,7 +537,7 @@ do
   self.find = function(self, ...)
     local first = select(1, ...)
     if first == nil then
-      error("(" .. tostring(self:table_name()) .. ") trying to find with no conditions")
+      error(tostring(self:table_name()) .. " trying to find with no conditions")
     end
     local cond
     if "table" == type(first) then
