@@ -265,7 +265,7 @@ config "development", ->
   measure_performance true
 
 class App extends lapis.Application
-  @before_filter: =>
+  @before_filter =>
     after_dispatch ->
       print to_json(ngx.ctx.performance)
 
