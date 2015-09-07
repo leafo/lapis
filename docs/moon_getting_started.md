@@ -66,7 +66,7 @@ class App extends lapis.Application
     -- Render HTML inline for simplicity
     @html ->
       h1 "My homepage"
-      a href: @url_for("foods"), "Check out my favorite foods"
+      a href: @url_for("list_foods"), "Check out my favorite foods"
 
   [list_foods: "/foods"]: =>
     @html ->
