@@ -182,7 +182,7 @@ do
       end
     end,
     build_url = function(self, path, options)
-      if path and path:match("^%a+:") or path:match("^//") then
+      if path and (path:match("^%a+:") or path:match("^//")) then
         return path
       end
       local parsed
