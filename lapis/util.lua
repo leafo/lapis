@@ -255,7 +255,9 @@ build_url = function(parts)
         host = host .. (":" .. parts.port)
       end
       if parts.scheme then
-        host = parts.scheme .. ":" .. host
+        if parts.scheme ~= "" then
+          host = parts.scheme .. ":" .. host
+        end
       end
       if parts.path and out:sub(1, 1) ~= "/" then
         out = "/" .. out

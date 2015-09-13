@@ -163,7 +163,8 @@ build_url = (parts) ->
       host ..= ":" .. parts.port
 
     if parts.scheme
-      host = parts.scheme .. ":" .. host
+      if parts.scheme != ""
+        host = parts.scheme .. ":" .. host
 
     if parts.path and out\sub(1,1) != "/"
       out = "/" .. out
