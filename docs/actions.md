@@ -142,10 +142,13 @@ parameterized route with.
 
 ## Handling HTTP verbs
 
+### `respond_to({verbs: actions})`
+
 It's common to have a single action do different things depending on the HTTP
 verb. Lapis comes with some helpers to make writing these actions simple.
 `respond_to` takes a table indexed by HTTP verb with a value of the function to
-perform when the action receives that verb.
+perform when the action receives that verb. You may optionally also supply a
+`default` table entry to handle all remaining verbs.
 
 ```lua
 local lapis = require("lapis")
@@ -158,6 +161,9 @@ app:match("create_account", "/create-account", respond_to({
   POST = function(self)
     do_something(self.params)
     return { redirect_to = self:url_for("index") }
+  end,
+  default = function(self)
+    return "I don't know what you want, but you should use GET or POST."
   end
 }))
 ```
@@ -173,6 +179,9 @@ class App extends lapis.Application
     POST: =>
       do_something @params
       redirect_to: @url_for "index"
+    
+    default: =>
+      "I don't know what you want, but you should use GET or POST."
   }
 ```
 
@@ -181,7 +190,8 @@ corresponding HTTP verb action. We do this by specifying a `before` function.
 The same semantics of [before filters](#before-filters) apply, so if you call
 <span class="for_moon">`@write`</span><span
 class="for_lua">`self:write()`</span> then the rest of the action will not get
-run.
+run. Note that the `before` function does not apply to the `default`, if you
+supplied one.
 
 ```lua
 local lapis = require("lapis")
@@ -246,6 +256,32 @@ app:delete("/delete-account", function(self)
 end)
 
 ```
+
+### `app:handle_405(allowed_methods)`
+
+If a client attempts to access an action with a verb that wasn't defined in the
+table passed to `respond_to` and there was no `default` either, the request
+falls through to the application's `handle_405` method. The default
+implementation of `handle_405` looks like this:
+
+```lua
+  handle_405 = function(self, allowed)
+    self.res.headers["Allow"] = table.concat(allowed, ", ")
+    return {
+      status = 405,
+      layout = false
+    }
+  end
+```
+
+```moon
+  handle_405: (allowed) =>
+    @res.headers["Allow"] = table.concat allowed, ", "
+    status: 405, layout: false
+```
+
+You can override `handle_405` in your application. Note that it must take a
+table of allowed methods as argument (e.g. `{'GET', 'HEAD'}`).
 
 ## Before Filters
 

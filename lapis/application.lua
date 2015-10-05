@@ -436,6 +436,13 @@ do
     handle_404 = function(self)
       return error("Failed to find route: " .. tostring(self.req.cmd_url))
     end,
+    handle_405 = function(self, allowed)
+      self.res.headers["Allow"] = table.concat(allowed, ", ")
+      return {
+        status = 405,
+        layout = false
+      }
+    end,
     handle_error = function(self, err, trace, error_page)
       if error_page == nil then
         error_page = self.app.error_page
@@ -623,8 +630,22 @@ do
           end
         end
         return fn(self)
+      elseif tbl.default then
+        return tbl.default(self)
       else
-        return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
+        local methods
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for k, v in pairs(tbl) do
+            if k == k:upper() then
+              _accum_0[_len_0] = k
+              _len_0 = _len_0 + 1
+            end
+          end
+          methods = _accum_0
+        end
+        return self.app.handle_405(self, methods)
       end
     end
     do

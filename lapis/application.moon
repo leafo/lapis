@@ -412,6 +412,10 @@ class Application
 
   handle_404: =>
     error "Failed to find route: #{@req.cmd_url}"
+  
+  handle_405: (allowed) =>
+    @res.headers["Allow"] = table.concat allowed, ", "
+    status: 405, layout: false
 
   handle_error: (err, trace, error_page=@app.error_page) =>
     r = @app.Request @, @req, @res
@@ -453,8 +457,11 @@ respond_to = do
         if before = tbl.before
           return if run_before_filter before, @
         fn @
+      elseif tbl.default
+        tbl.default @
       else
-        error "don't know how to respond to #{@req.cmd_mth}"
+        methods = [k for k, v in pairs tbl when k == k\upper!]
+        @app.handle_405 @, methods
 
     if error_response = tbl.on_error
       out = capture_errors out, error_response
