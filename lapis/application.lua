@@ -657,6 +657,25 @@ do
     return out
   end
 end
+local restrict
+restrict = function(methods, action)
+  if action == nil then
+    action = methods
+    methods = {
+      'GET',
+      'HEAD'
+    }
+  end
+  return function(self)
+    for _index_0 = 1, #methods do
+      local method = methods[_index_0]
+      if self.req.cmd_mth == method then
+        return action(self)
+      end
+    end
+    return self.app.handle_405(self, methods)
+  end
+end
 local default_error_response
 default_error_response = function()
   return {
@@ -739,6 +758,7 @@ return {
   Request = Request,
   Application = Application,
   respond_to = respond_to,
+  restrict = restrict,
   capture_errors = capture_errors,
   capture_errors_json = capture_errors_json,
   json_params = json_params,

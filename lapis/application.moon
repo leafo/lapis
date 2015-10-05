@@ -468,6 +468,15 @@ respond_to = do
 
     out
 
+restrict = (methods, action) ->
+  if action == nil
+    action = methods
+    methods = {'GET', 'HEAD'}
+  =>
+    for method in *methods
+      return action @ if @req.cmd_mth == method
+    @app.handle_405 @, methods
+
 default_error_response = -> { render: true }
 capture_errors = (fn, error_response=default_error_response) ->
   if type(fn) == "table"
@@ -516,7 +525,7 @@ json_params = (fn) ->
     fn @, ...
 
 {
-  :Request, :Application, :respond_to
+  :Request, :Application, :respond_to, :restrict
   :capture_errors, :capture_errors_json
   :json_params, :assert_error, :yield_error
 }

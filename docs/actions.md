@@ -257,11 +257,88 @@ end)
 
 ```
 
+### `restrict(verbs={"GET", "HEAD"}, action)`
+
+Another common pattern is to allow only particular verbs, but not do different
+things depending on the chosen verb. For example, a write-only interface may
+allow both PUT and POST and handle them in the same way, while permitting
+nothing else.
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("upload", "/file/upload", restrict({"PUT", "POST"},
+  function(self)
+    local upload = Files:create({
+      -- name, mime type, content...
+    })
+    return {
+      redirect_to = self:url_for(file, {id = upload.id})
+    }
+  end
+))
+```
+
+```moon
+lapis = require "lapis"
+import restrict from require "lapis.application"
+
+class App extends lapis.Application
+  [upload: "/file/upload"]: restrict {"PUT", "POST"}, =>
+    upload = Files\create {
+      -- name, mime type, content...
+    }
+    redirect_to: @url_for(file, id: upload.id)
+```
+
+Another use case would be an action where the GET action is the same as the
+HEAD action plus some additional work. Allowing GET and HEAD but nothing else
+is so common, that the table of allowed verbs can be left out for this
+particular scenario.
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("index", "/", restrict(
+  function(self)
+    local render, layout = false, false
+    if self.req.cmd_mth == "GET" then
+      render, layout = true, true
+    end
+    -- perform database access
+    -- set status code, options and special headers
+    return {
+      render = render,
+      layout = layout,
+      options = options,
+      status = status
+    }
+  end
+))
+```
+
+```moon
+lapis = require "lapis"
+import restrict from require "lapis.application"
+
+class App extends lapis.Application
+  [index: "/"]: restrict =>
+    render, layout = false, false
+    if @req.cmd_mth == "GET"
+      render, layout = true, true
+    -- perform database access
+    -- set status code, options and special headers
+    :render, :layout, :options, :status
+```
+
 ### `app:handle_405(allowed_methods)`
 
 If a client attempts to access an action with a verb that wasn't defined in the
 table passed to `respond_to` and there was no `default` either, the request
-falls through to the application's `handle_405` method. The default
+falls through to the application's `handle_405` method. The same happens to
+requests with a verb that was disallowed in a `restrict` action. The default
 implementation of `handle_405` looks like this:
 
 ```lua
