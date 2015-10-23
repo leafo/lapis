@@ -149,10 +149,11 @@ Any `@` variables set in the action can be accessed in the widget. Additionally
 any of the helper functions like `@url_for` are also accessible.
 
 ```moon
--- web.moon
-[index: "/"]: =>
-  @page_title = "Welcome To My Page"
-  render: true
+-- app.moon
+class App extends lapis.Application
+  [index: "/"]: =>
+    @page_title = "Welcome To My Page"
+    render: true
 ```
 
 ```moon
