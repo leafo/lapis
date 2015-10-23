@@ -1,7 +1,7 @@
-local default_environment, columnize
+local default_environment, columnize, parse_flags
 do
   local _obj_0 = require("lapis.cmd.util")
-  default_environment, columnize = _obj_0.default_environment, _obj_0.columnize
+  default_environment, columnize, parse_flags = _obj_0.default_environment, _obj_0.columnize, _obj_0.parse_flags
 end
 local find_nginx, start_nginx, write_config_for, get_pid
 do
@@ -36,46 +36,6 @@ local fail_with_message
 fail_with_message = function(msg)
   print(colors("%{bright}%{red}Aborting:%{reset} " .. msg))
   return os.exit(1)
-end
-local parse_flags
-parse_flags = function(...)
-  local input = {
-    ...
-  }
-  local flags = { }
-  local filtered
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #input do
-      local _continue_0 = false
-      repeat
-        local arg = input[_index_0]
-        do
-          local flag = arg:match("^%-%-?(.+)$")
-          if flag then
-            local k, v = flag:match("(.-)=(.*)")
-            if k then
-              flags[k] = v
-            else
-              flags[flag] = true
-            end
-            _continue_0 = true
-            break
-          end
-        end
-        local _value_0 = arg
-        _accum_0[_len_0] = _value_0
-        _len_0 = _len_0 + 1
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
-    filtered = _accum_0
-  end
-  return flags, unpack(filtered)
 end
 local actions
 local get_action
@@ -367,5 +327,6 @@ end
 return {
   actions = actions,
   execute = execute,
-  get_action = get_action
+  get_action = get_action,
+  parse_flags = parse_flags
 }

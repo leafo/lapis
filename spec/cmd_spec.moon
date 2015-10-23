@@ -99,3 +99,27 @@ describe "lapis.cmd.actions", ->
     _G.print = ->
     execute {"help"}
     _G.print = p
+
+describe "lapis.cmd.util", ->
+  it "columnizes", ->
+    import columnize from require "lapis.cmd.util"
+
+    columnize {
+      {"hello", "here is some info"}
+      {"what is going on", "this is going to be a lot of text so it wraps around the end"}
+      {"this is something", "not so much here"}
+      {"else", "yeah yeah yeah not so much okay goodbye"}
+    }
+
+  it "parses flags", ->
+    import parse_flags from require "lapis.cmd.util"
+    parsed = { parse_flags unpack { "hello", "--world", "-h=1", "yeah" } }
+    assert.same {
+      {
+        h: "1"
+        world: true
+      }
+      "hello"
+      "yeah"
+    }, parsed
+

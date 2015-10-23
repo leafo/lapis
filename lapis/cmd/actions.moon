@@ -1,5 +1,5 @@
 
-import default_environment, columnize from require "lapis.cmd.util"
+import default_environment, columnize, parse_flags from require "lapis.cmd.util"
 import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 import find_leda, start_leda from require "lapis.cmd.leda"
 
@@ -20,22 +20,6 @@ write_file_safe = (file, content) ->
 fail_with_message = (msg) ->
   print colors "%{bright}%{red}Aborting:%{reset} " .. msg
   os.exit 1
-
-parse_flags = (...) ->
-  input = {...}
-  flags = {}
-
-  filtered = for arg in *input
-    if flag = arg\match "^%-%-?(.+)$"
-      k,v = flag\match "(.-)=(.*)"
-      if k
-        flags[k] = v
-      else
-        flags[flag] = true
-      continue
-    arg
-
-  flags, unpack filtered
 
 local actions
 
@@ -83,7 +67,6 @@ actions = {
         tup_files = require "lapis.cmd.templates.tup"
         for fname, content in pairs tup_files
           write_file_safe fname, content
-
   }
 
   {
@@ -237,7 +220,6 @@ actions = {
       print colors "Lapis #{require "lapis.version"}"
       print "usage: lapis <action> [arguments]"
 
-
       nginx = find_nginx!
       leda = find_leda!
       if nginx
@@ -284,5 +266,5 @@ execute = (args) ->
 
     os.exit 1
 
-{ :actions, :execute, :get_action }
+{ :actions, :execute, :get_action, :parse_flags }
 
