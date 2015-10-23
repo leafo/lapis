@@ -62,7 +62,9 @@ actions = {
         local _obj_0 = require("lapis.cmd.nginx").nginx_runner
         config_path, config_path_etlua = _obj_0.config_path, _obj_0.config_path_etlua
       end
-      local flags = parse_flags(...)
+      local flags = parse_flags({
+        ...
+      })
       if path.exists(config_path) or path.exists(config_path_etlua) then
         fail_with_message("nginx.conf already exists")
       end
@@ -286,20 +288,43 @@ format_error = function(msg)
 end
 local execute
 execute = function(args)
-  local action_name = args[1] or actions.default
+  do
+    local _tbl_0 = { }
+    for i, a in pairs(args) do
+      if type(i) == "number" and i > 0 then
+        _tbl_0[i] = a
+      end
+    end
+    args = _tbl_0
+  end
+  local flags, plain_args = parse_flags(args)
+  local action_name = plain_args[1] or actions.default
+  local action = get_action(action_name)
+  local stripped = false
   local action_args
   do
     local _accum_0 = { }
     local _len_0 = 1
-    for i, a in ipairs(args) do
-      if i > 1 then
-        _accum_0[_len_0] = a
+    for _index_0 = 1, #args do
+      local _continue_0 = false
+      repeat
+        local a = args[_index_0]
+        if not stripped and a == action_name then
+          stripped = true
+          _continue_0 = true
+          break
+        end
+        local _value_0 = a
+        _accum_0[_len_0] = _value_0
         _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
     action_args = _accum_0
   end
-  local action = get_action(action_name)
   if not (action) then
     print(format_error("unknown command `" .. tostring(action_name) .. "'"))
     get_action("help")[1](unpack(action_args))
@@ -309,7 +334,6 @@ execute = function(args)
   return xpcall((function()
     return fn(unpack(action_args))
   end), function(err)
-    local flags = parse_flags(unpack(action_args))
     if not (flags.trace) then
       err = err:match("^.-:.-:.(.*)$") or err
     end

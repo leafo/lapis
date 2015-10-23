@@ -113,13 +113,23 @@ describe "lapis.cmd.util", ->
 
   it "parses flags", ->
     import parse_flags from require "lapis.cmd.util"
-    parsed = { parse_flags unpack { "hello", "--world", "-h=1", "yeah" } }
+    flags, args = parse_flags { "hello", "--world", "-h=1", "yeah" }
+
     assert.same {
-      {
-        h: "1"
-        world: true
-      }
+      h: "1"
+      world: true
+    }, flags
+
+    assert.same {
       "hello"
       "yeah"
-    }, parsed
+    }, args
+
+    flags, args = parse_flags { "new", "dad" }
+    assert.same {}, flags
+    assert.same {
+      "new"
+      "dad"
+    }, args
+
 

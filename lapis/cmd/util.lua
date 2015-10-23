@@ -137,10 +137,7 @@ do
   end
 end
 local parse_flags
-parse_flags = function(...)
-  local input = {
-    ...
-  }
+parse_flags = function(input)
   local flags = { }
   local filtered
   do
@@ -174,7 +171,7 @@ parse_flags = function(...)
     end
     filtered = _accum_0
   end
-  return flags, unpack(filtered)
+  return flags, filtered
 end
 return {
   columnize = columnize,

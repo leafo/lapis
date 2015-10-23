@@ -79,8 +79,7 @@ default_environment = do
 
     _env
 
-parse_flags = (...) ->
-  input = {...}
+parse_flags = (input) ->
   flags = {}
 
   filtered = for arg in *input
@@ -93,6 +92,6 @@ parse_flags = (...) ->
       continue
     arg
 
-  flags, unpack filtered
+  flags, filtered
 
 { :columnize, :split, :random_string, :get_free_port, :default_environment, :parse_flags }

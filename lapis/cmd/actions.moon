@@ -43,7 +43,7 @@ actions = {
 
     (...) ->
       import config_path, config_path_etlua from require("lapis.cmd.nginx").nginx_runner
-      flags = parse_flags ...
+      flags = parse_flags { ... }
 
       if path.exists(config_path) or path.exists(config_path_etlua)
         fail_with_message "nginx.conf already exists"
@@ -242,10 +242,19 @@ format_error = (msg) ->
   colors "%{bright red}Error:%{reset} #{msg}"
 
 execute = (args) ->
-  action_name = args[1] or actions.default
-  action_args = [a for i, a in ipairs args when i > 1]
+  args = {i, a for i, a in pairs(args) when type(i) == "number" and i > 0}
+  flags, plain_args = parse_flags args
 
+  action_name = plain_args[1] or actions.default
   action = get_action action_name
+
+  stripped = false
+  action_args = for a in *args
+    if not stripped and a == action_name
+      stripped = true
+      continue
+
+    a
 
   unless action
     print format_error "unknown command `#{action_name}'"
@@ -254,7 +263,6 @@ execute = (args) ->
 
   fn = assert(action[1], "action `#{action_name}' not implemented")
   xpcall (-> fn unpack action_args), (err) ->
-    flags = parse_flags unpack action_args
     err = err\match("^.-:.-:.(.*)$") or err unless flags.trace
     msg = colors "%{bright red}Error:%{reset} #{err}"
     if flags.trace
