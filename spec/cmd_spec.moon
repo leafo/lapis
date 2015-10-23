@@ -75,7 +75,7 @@ hello: what's up]], compiled
     assert.same "env LAPIS_ENVIRONMENT;\nthing: #{val}", compiled
 
 describe "lapis.cmd.actions", ->
-  import get_action from require "lapis.cmd.actions"
+  import get_action, execute from require "lapis.cmd.actions"
 
   it "gets built in action", ->
     action = get_action "help"
@@ -94,3 +94,8 @@ describe "lapis.cmd.actions", ->
     action = get_action "cool"
     assert.same "cool", action.name
 
+  it "executes help", ->
+    p = _G.print
+    _G.print = ->
+    execute {"help"}
+    _G.print = p
