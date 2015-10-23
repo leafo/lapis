@@ -77,21 +77,21 @@ parse_flags = function(...)
   end
   return flags, unpack(filtered)
 end
-local tasks
-local get_task
-get_task = function(name)
-  for k, v in ipairs(tasks) do
+local actions
+local get_action
+get_action = function(name)
+  for k, v in ipairs(actions) do
     if v.name == name then
       return v
     end
   end
-  local task
+  local action
   pcall(function()
-    task = require("lapis.cmd.actions." .. tostring(name))
+    action = require("lapis.cmd.actions." .. tostring(name))
   end)
-  return task
+  return action
 end
-tasks = {
+actions = {
   default = "help",
   {
     name = "new",
@@ -304,8 +304,8 @@ tasks = {
       print(columnize((function()
         local _accum_0 = { }
         local _len_0 = 1
-        for _index_0 = 1, #tasks do
-          local t = tasks[_index_0]
+        for _index_0 = 1, #actions do
+          local t = actions[_index_0]
           if not t.hidden then
             _accum_0[_len_0] = {
               t.usage or t.name,
@@ -326,8 +326,8 @@ format_error = function(msg)
 end
 local execute
 execute = function(args)
-  local task_name = args[1] or tasks.default
-  local task_args
+  local action_name = args[1] or actions.default
+  local action_args
   do
     local _accum_0 = { }
     local _len_0 = 1
@@ -337,19 +337,19 @@ execute = function(args)
         _len_0 = _len_0 + 1
       end
     end
-    task_args = _accum_0
+    action_args = _accum_0
   end
-  local task = get_task(task_name)
-  if not (task) then
-    print(format_error("unknown command `" .. tostring(task_name) .. "'"))
-    get_task("help")[1](unpack(task_args))
+  local action = get_action(action_name)
+  if not (action) then
+    print(format_error("unknown command `" .. tostring(action_name) .. "'"))
+    get_action("help")[1](unpack(action_args))
     return 
   end
-  local fn = assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")
+  local fn = assert(action[1], "action `" .. tostring(action_name) .. "' not implemented")
   return xpcall((function()
-    return fn(unpack(task_args))
+    return fn(unpack(action_args))
   end), function(err)
-    local flags = parse_flags(unpack(task_args))
+    local flags = parse_flags(unpack(action_args))
     if not (flags.trace) then
       err = err:match("^.-:.-:.(.*)$") or err
     end
@@ -365,7 +365,7 @@ execute = function(args)
   end)
 end
 return {
-  tasks = tasks,
+  actions = actions,
   execute = execute,
-  get_task = get_task
+  get_action = get_action
 }

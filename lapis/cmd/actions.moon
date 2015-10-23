@@ -37,20 +37,20 @@ parse_flags = (...) ->
 
   flags, unpack filtered
 
-local tasks
+local actions
 
-get_task = (name) ->
-  for k,v in ipairs tasks
+get_action = (name) ->
+  for k,v in ipairs actions
     return v if v.name == name
 
   -- no match, try package
-  local task
+  local action
   pcall ->
-    task = require "lapis.cmd.actions.#{name}"
+    action = require "lapis.cmd.actions.#{name}"
 
-  task
+  action
 
-tasks = {
+actions = {
   default: "help"
 
   {
@@ -251,7 +251,7 @@ tasks = {
       print!
       print "Available actions:"
       print!
-      print columnize [ { t.usage or t.name, t.help } for t in *tasks when not t.hidden ]
+      print columnize [ { t.usage or t.name, t.help } for t in *actions when not t.hidden ]
       print!
   }
 }
@@ -260,19 +260,19 @@ format_error = (msg) ->
   colors "%{bright red}Error:%{reset} #{msg}"
 
 execute = (args) ->
-  task_name = args[1] or tasks.default
-  task_args = [a for i, a in ipairs args when i > 1]
+  action_name = args[1] or actions.default
+  action_args = [a for i, a in ipairs args when i > 1]
 
-  task = get_task(task_name)
+  action = get_action action_name
 
-  unless task
-    print format_error "unknown command `#{task_name}'"
-    get_task("help")[1] unpack task_args
+  unless action
+    print format_error "unknown command `#{action_name}'"
+    get_action("help")[1] unpack action_args
     return
 
-  fn = assert(task[1], "action `#{task_name}' not implemented")
-  xpcall (-> fn unpack task_args), (err) ->
-    flags = parse_flags unpack task_args
+  fn = assert(action[1], "action `#{action_name}' not implemented")
+  xpcall (-> fn unpack action_args), (err) ->
+    flags = parse_flags unpack action_args
     err = err\match("^.-:.-:.(.*)$") or err unless flags.trace
     msg = colors "%{bright red}Error:%{reset} #{err}"
     if flags.trace
@@ -284,5 +284,5 @@ execute = (args) ->
 
     os.exit 1
 
-{ :tasks, :execute, :get_task }
+{ :actions, :execute, :get_action }
 

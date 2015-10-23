@@ -74,23 +74,23 @@ hello: what's up]], compiled
     compiled = nginx.compile_etlua_config "thing: <%- cool %>"
     assert.same "env LAPIS_ENVIRONMENT;\nthing: #{val}", compiled
 
-  describe "actions", ->
-    import get_task from require "lapis.cmd.actions"
+describe "lapis.cmd.actions", ->
+  import get_action from require "lapis.cmd.actions"
 
-    it "gets built in action", ->
-      action = get_task "help"
-      assert.same "help", action.name
+  it "gets built in action", ->
+    action = get_action "help"
+    assert.same "help", action.name
 
-    it "gets nil for invalid action", ->
-      action = get_task "wazzupf2323"
-      assert.same nil, action
+  it "gets nil for invalid action", ->
+    action = get_action "wazzupf2323"
+    assert.same nil, action
 
-    it "gets action from module", ->
-      package.loaded["lapis.cmd.actions.cool"] = {
-        name: "cool"
-        ->
-      }
+  it "gets action from module", ->
+    package.loaded["lapis.cmd.actions.cool"] = {
+      name: "cool"
+      ->
+    }
 
-      action = get_task "cool"
-      assert.same "cool", action.name
+    action = get_action "cool"
+    assert.same "cool", action.name
 
