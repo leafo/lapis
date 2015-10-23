@@ -85,6 +85,11 @@ get_task = function(name)
       return v
     end
   end
+  local task
+  pcall(function()
+    task = require("lapis.cmd.actions." .. tostring(name))
+  end)
+  return task
 end
 tasks = {
   default = "help",
@@ -361,5 +366,6 @@ execute = function(args)
 end
 return {
   tasks = tasks,
-  execute = execute
+  execute = execute,
+  get_task = get_task
 }

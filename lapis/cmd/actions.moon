@@ -43,6 +43,13 @@ get_task = (name) ->
   for k,v in ipairs tasks
     return v if v.name == name
 
+  -- no match, try package
+  local task
+  pcall ->
+    task = require "lapis.cmd.actions.#{name}"
+
+  task
+
 tasks = {
   default: "help"
 
@@ -277,5 +284,5 @@ execute = (args) ->
 
     os.exit 1
 
-{ :tasks, :execute }
+{ :tasks, :execute, :get_task }
 
