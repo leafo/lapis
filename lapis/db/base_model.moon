@@ -349,7 +349,7 @@ class BaseModel
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 
   delete: =>
-    res =  @@db.delete @@table_name!, @_primary_cond!
+    res = @@db.delete @@table_name!, @_primary_cond!
     res.affected_rows and res.affected_rows > 0, res
 
   -- thing\update "col1", "col2", "col3"
