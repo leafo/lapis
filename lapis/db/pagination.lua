@@ -227,6 +227,8 @@ do
     get_ordered = function(self, order, ...)
       local parsed = assert(self.db.parse_clause(self._clause))
       local has_multi_fields = type(self.field) == "table" and not self.db.is_raw(self.field)
+      local table_name = self.model:table_name()
+      local prefix = self.db.escape_identifier(table_name) .. "."
       local escaped_fields
       if has_multi_fields then
         do
@@ -235,14 +237,14 @@ do
           local _list_0 = self.field
           for _index_0 = 1, #_list_0 do
             local f = _list_0[_index_0]
-            _accum_0[_len_0] = self.db.escape_identifier(f)
+            _accum_0[_len_0] = prefix .. self.db.escape_identifier(f)
             _len_0 = _len_0 + 1
           end
           escaped_fields = _accum_0
         end
       else
         escaped_fields = {
-          self.db.escape_identifier(self.field)
+          prefix .. self.db.escape_identifier(self.field)
         }
       end
       if parsed.order then
