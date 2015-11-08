@@ -200,7 +200,11 @@ do
         parsed.query = query
       end
       parsed.path = path
-      if parsed.port == "80" then
+      local scheme = parsed.scheme or "http"
+      if scheme == "http" and parsed.port == "80" then
+        parsed.port = nil
+      end
+      if scheme == "https" and parsed.port == "443" then
         parsed.port = nil
       end
       if options then
