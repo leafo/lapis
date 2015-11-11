@@ -18,12 +18,13 @@ local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
 local Enum
 do
+  local debug
   local _base_0 = {
     for_db = function(self, key)
       if type(key) == "string" then
-        return (assert(self[key], "enum does not contain key " .. tostring(key)))
+        return (assert(self[key], "enum does not contain key " .. tostring(key) .. " " .. tostring(debug(self))))
       elseif type(key) == "number" then
-        assert(self[key], "enum does not contain val " .. tostring(key))
+        assert(self[key], "enum does not contain val " .. tostring(key) .. " " .. tostring(debug(self)))
         return key
       else
         return error("don't know how to handle type " .. tostring(type(key)) .. " for enum")
@@ -31,11 +32,11 @@ do
     end,
     to_name = function(self, val)
       if type(val) == "string" then
-        assert(self[val], "enum does not contain key " .. tostring(val))
+        assert(self[val], "enum does not contain key " .. tostring(val) .. " " .. tostring(debug(self)))
         return val
       elseif type(val) == "number" then
         local key = self[val]
-        return (assert(key, "enum does not contain val " .. tostring(val)))
+        return (assert(key, "enum does not contain val " .. tostring(val) .. " " .. tostring(debug(self))))
       else
         return error("don't know how to handle type " .. tostring(type(val)) .. " for enum")
       end
@@ -55,6 +56,18 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  debug = function(self)
+    return "(contains: " .. tostring(table.concat((function()
+      local _accum_0 = { }
+      local _len_0 = 1
+      for i, v in ipairs(self) do
+        _accum_0[_len_0] = tostring(i) .. ":" .. tostring(v)
+        _len_0 = _len_0 + 1
+      end
+      return _accum_0
+    end)(), ", ")) .. ")"
+  end
   Enum = _class_0
 end
 local enum
@@ -173,7 +186,7 @@ do
       local tbl_name = self.__class.db.escape_identifier(self.__class:table_name())
       local res = unpack(self.__class.db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(cond)))
       if not (res) then
-        error("failed to find row to refresh from, did the primary key change?")
+        error(tostring(self.__class:table_name()) .. " failed to find row to refresh from, did the primary key change?")
       end
       if field_names then
         for _index_0 = 1, #field_names do
@@ -246,6 +259,57 @@ do
       self.__table_name = underscore(self.__name)
     end
     return self.__table_name
+  end
+  self.scoped_model = function(base_model, prefix, mod, external_models)
+    do
+      local _parent_0 = base_model
+      local _base_1 = { }
+      _base_1.__index = _base_1
+      setmetatable(_base_1, _parent_0.__base)
+      local _class_1 = setmetatable({
+        __init = function(self, ...)
+          return _parent_0.__init(self, ...)
+        end,
+        __base = _base_1,
+        __name = nil,
+        __parent = _parent_0
+      }, {
+        __index = function(cls, name)
+          local val = rawget(_base_1, name)
+          if val == nil then
+            return _parent_0[name]
+          else
+            return val
+          end
+        end,
+        __call = function(cls, ...)
+          local _self_0 = setmetatable({}, _base_1)
+          cls.__init(_self_0, ...)
+          return _self_0
+        end
+      })
+      _base_1.__class = _class_1
+      local self = _class_1
+      if mod then
+        self.get_relation_model = function(self, name)
+          if external_models and external_models[name] then
+            return base_model:get_relation_model(name)
+          else
+            return require(mod)[name]
+          end
+        end
+      end
+      self.table_name = function(self)
+        return tostring(prefix) .. tostring(base_model.table_name(self))
+      end
+      self.singular_name = function(self)
+        return singularize(base_model.table_name(self))
+      end
+      if _parent_0.__inherited then
+        _parent_0.__inherited(_parent_0, _class_1)
+      end
+      return _class_1
+    end
   end
   self.singular_name = function(self)
     return singularize(self:table_name())
@@ -324,7 +388,7 @@ do
     local flip = opts and opts.flip
     local many = opts and opts.many
     if not flip and type(self.primary_key) == "table" then
-      error("model must have singular primary key to include")
+      error(tostring(self:table_name()) .. " must have singular primary key for include_in")
     end
     local src_key = flip and (opts.local_key or "id") or foreign_key
     local include_ids
@@ -431,7 +495,7 @@ do
       by_key = by_key.key or self.primary_key
     end
     if type(by_key) == "table" and by_key[1] ~= "raw" then
-      error("find_all must have a singular key to search")
+      error(tostring(self:table_name()) .. " find_all must have a singular key to search")
     end
     if #ids == 0 then
       return { }
@@ -473,7 +537,7 @@ do
   self.find = function(self, ...)
     local first = select(1, ...)
     if first == nil then
-      error("(" .. tostring(self:table_name()) .. ") trying to find with no conditions")
+      error(tostring(self:table_name()) .. " trying to find with no conditions")
     end
     local cond
     if "table" == type(first) then

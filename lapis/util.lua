@@ -7,7 +7,11 @@ do
 end
 local floor
 floor = math.floor
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields, singularize
+local date
+pcall(function()
+  date = require("date")
+end)
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, date_diff, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields, singularize
 do
   local u = url.unescape
   unescape = function(str)
@@ -59,15 +63,16 @@ encode_query_string = function(t, sep)
   if sep == nil then
     sep = "&"
   end
+  local _escape = ngx and ngx.escape_uri or escape
   local i = 0
   local buf = { }
   for k, v in pairs(t) do
     if type(k) == "number" and type(v) == "table" then
       k, v = v[1], v[2]
     end
-    buf[i + 1] = escape(k)
+    buf[i + 1] = _escape(k)
     buf[i + 2] = "="
-    buf[i + 3] = escape(v)
+    buf[i + 3] = _escape(v)
     buf[i + 4] = sep
     i = i + 4
   end
@@ -250,7 +255,9 @@ build_url = function(parts)
         host = host .. (":" .. parts.port)
       end
       if parts.scheme then
-        host = parts.scheme .. ":" .. host
+        if parts.scheme ~= "" then
+          host = parts.scheme .. ":" .. host
+        end
       end
       if parts.path and out:sub(1, 1) ~= "/" then
         out = "/" .. out
@@ -260,67 +267,62 @@ build_url = function(parts)
   end
   return out
 end
-do
-  local date
-  pcall(function()
-    date = require("date")
-  end)
-  time_ago = function(time)
-    local sooner = date(time)
-    local later = date(true)
-    if later < sooner then
-      sooner, later = later, sooner
-    end
-    local diff = date.diff(later, sooner)
-    local times = { }
-    local days = floor(diff:spandays())
-    if days >= 365 then
-      local years = floor(diff:spandays() / 365)
-      times.years = years
-      insert(times, {
-        "years",
-        years
-      })
-      diff:addyears(-years)
-      days = days - (years * 365)
-    end
-    if days >= 1 then
-      times.days = days
-      insert(times, {
-        "days",
-        days
-      })
-      diff:adddays(-days)
-    end
-    local hours = floor(diff:spanhours())
-    if hours >= 1 then
-      times.hours = hours
-      insert(times, {
-        "hours",
-        hours
-      })
-      diff:addhours(-hours)
-    end
-    local minutes = floor(diff:spanminutes())
-    if minutes >= 1 then
-      times.minutes = minutes
-      insert(times, {
-        "minutes",
-        minutes
-      })
-      diff:addminutes(-minutes)
-    end
-    local seconds = floor(diff:spanseconds())
-    if seconds >= 1 or not next(times) then
-      times.seconds = seconds
-      insert(times, {
-        "seconds",
-        seconds
-      })
-      diff:addseconds(-seconds)
-    end
-    return times, true
+date_diff = function(later, sooner)
+  if later < sooner then
+    sooner, later = later, sooner
   end
+  local diff = date.diff(later, sooner)
+  local times = { }
+  local days = floor(diff:spandays())
+  if days >= 365 then
+    local years = floor(diff:spandays() / 365)
+    times.years = years
+    insert(times, {
+      "years",
+      years
+    })
+    diff:addyears(-years)
+    days = days - (years * 365)
+  end
+  if days >= 1 then
+    times.days = days
+    insert(times, {
+      "days",
+      days
+    })
+    diff:adddays(-days)
+  end
+  local hours = floor(diff:spanhours())
+  if hours >= 1 then
+    times.hours = hours
+    insert(times, {
+      "hours",
+      hours
+    })
+    diff:addhours(-hours)
+  end
+  local minutes = floor(diff:spanminutes())
+  if minutes >= 1 then
+    times.minutes = minutes
+    insert(times, {
+      "minutes",
+      minutes
+    })
+    diff:addminutes(-minutes)
+  end
+  local seconds = floor(diff:spanseconds())
+  if seconds >= 1 or not next(times) then
+    times.seconds = seconds
+    insert(times, {
+      "seconds",
+      seconds
+    })
+    diff:addseconds(-seconds)
+  end
+  return times, true
+end
+time_ago = function(time)
+  return date_diff(date(true), date(time))
 end
 do
   local singular = {
@@ -357,12 +359,10 @@ do
     return out .. " " .. suffix
   end
 end
-do
-  title_case = function(str)
-    return (str:gsub("%S+", function(chunk)
-      return chunk:gsub("^.", string.upper)
-    end))
-  end
+title_case = function(str)
+  return (str:gsub("%S+", function(chunk)
+    return chunk:gsub("^.", string.upper)
+  end))
 end
 do
   local try_require
@@ -543,5 +543,6 @@ return {
   mixin_class = mixin_class,
   mixin = mixin,
   get_fields = get_fields,
-  singularize = singularize
+  singularize = singularize,
+  date_diff = date_diff
 }

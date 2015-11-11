@@ -79,12 +79,19 @@ default_environment = do
 
     _env
 
-if ... == "test"
-  print columnize {
-    {"hello", "here is some info"}
-    {"what is going on", "this is going to be a lot of text so it wraps around the end"}
-    {"this is something", "not so much here"}
-    {"else", "yeah yeah yeah not so much okay goodbye"}
-  }
+parse_flags = (input) ->
+  flags = {}
 
-{ :columnize, :split, :random_string, :get_free_port, :default_environment }
+  filtered = for arg in *input
+    if flag = arg\match "^%-%-?(.+)$"
+      k,v = flag\match "(.-)=(.*)"
+      if k
+        flags[k] = v
+      else
+        flags[flag] = true
+      continue
+    arg
+
+  flags, filtered
+
+{ :columnize, :split, :random_string, :get_free_port, :default_environment, :parse_flags }

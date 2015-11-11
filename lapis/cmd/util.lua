@@ -136,30 +136,48 @@ do
     return _env
   end
 end
-if ... == "test" then
-  print(columnize({
-    {
-      "hello",
-      "here is some info"
-    },
-    {
-      "what is going on",
-      "this is going to be a lot of text so it wraps around the end"
-    },
-    {
-      "this is something",
-      "not so much here"
-    },
-    {
-      "else",
-      "yeah yeah yeah not so much okay goodbye"
-    }
-  }))
+local parse_flags
+parse_flags = function(input)
+  local flags = { }
+  local filtered
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for _index_0 = 1, #input do
+      local _continue_0 = false
+      repeat
+        local arg = input[_index_0]
+        do
+          local flag = arg:match("^%-%-?(.+)$")
+          if flag then
+            local k, v = flag:match("(.-)=(.*)")
+            if k then
+              flags[k] = v
+            else
+              flags[flag] = true
+            end
+            _continue_0 = true
+            break
+          end
+        end
+        local _value_0 = arg
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    filtered = _accum_0
+  end
+  return flags, filtered
 end
 return {
   columnize = columnize,
   split = split,
   random_string = random_string,
   get_free_port = get_free_port,
-  default_environment = default_environment
+  default_environment = default_environment,
+  parse_flags = parse_flags
 }

@@ -137,10 +137,13 @@ class OrderedPaginator extends Paginator
     parsed = assert @db.parse_clause @_clause
     has_multi_fields = type(@field) == "table" and not @db.is_raw @field
 
+    table_name = @model\table_name!
+    prefix = @db.escape_identifier(table_name) .. "."
+
     escaped_fields = if has_multi_fields
-      [@db.escape_identifier f for f in *@field]
+      [prefix .. @db.escape_identifier f for f in *@field]
     else
-      { @db.escape_identifier @field }
+      { prefix .. @db.escape_identifier @field }
 
     if parsed.order
       error "order should not be provided for #{@@__name}"

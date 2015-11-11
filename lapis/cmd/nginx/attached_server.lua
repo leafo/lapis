@@ -91,7 +91,7 @@ do
       local ltn12 = require("ltn12")
       local http = require("socket.http")
       local buffer = { }
-      http.request({
+      local _, status = http.request({
         url = "http://127.0.0.1:" .. tostring(self.port) .. "/run_lua",
         sink = ltn12.sink.table(buffer),
         source = ltn12.source.string(lua_code),
@@ -99,6 +99,9 @@ do
           ["content-length"] = #lua_code
         }
       })
+      if not (status == 200) then
+        error("Failed to exec code on server, got: " .. tostring(status))
+      end
       return table.concat(buffer)
     end,
     process_config = function(self, cfg)

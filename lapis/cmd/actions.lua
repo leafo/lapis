@@ -1,7 +1,7 @@
-local default_environment, columnize
+local default_environment, columnize, parse_flags
 do
   local _obj_0 = require("lapis.cmd.util")
-  default_environment, columnize = _obj_0.default_environment, _obj_0.columnize
+  default_environment, columnize, parse_flags = _obj_0.default_environment, _obj_0.columnize, _obj_0.parse_flags
 end
 local find_nginx, start_nginx, write_config_for, get_pid
 do
@@ -37,56 +37,21 @@ fail_with_message = function(msg)
   print(colors("%{bright}%{red}Aborting:%{reset} " .. msg))
   return os.exit(1)
 end
-local parse_flags
-parse_flags = function(...)
-  local input = {
-    ...
-  }
-  local flags = { }
-  local filtered
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for _index_0 = 1, #input do
-      local _continue_0 = false
-      repeat
-        local arg = input[_index_0]
-        do
-          local flag = arg:match("^%-%-?(.+)$")
-          if flag then
-            local k, v = flag:match("(.-)=(.*)")
-            if k then
-              flags[k] = v
-            else
-              flags[flag] = true
-            end
-            _continue_0 = true
-            break
-          end
-        end
-        local _value_0 = arg
-        _accum_0[_len_0] = _value_0
-        _len_0 = _len_0 + 1
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
-    filtered = _accum_0
-  end
-  return flags, unpack(filtered)
-end
-local tasks
-local get_task
-get_task = function(name)
-  for k, v in ipairs(tasks) do
+local actions
+local get_action
+get_action = function(name)
+  for k, v in ipairs(actions) do
     if v.name == name then
       return v
     end
   end
+  local action
+  pcall(function()
+    action = require("lapis.cmd.actions." .. tostring(name))
+  end)
+  return action
 end
-tasks = {
+actions = {
   default = "help",
   {
     name = "new",
@@ -97,7 +62,9 @@ tasks = {
         local _obj_0 = require("lapis.cmd.nginx").nginx_runner
         config_path, config_path_etlua = _obj_0.config_path, _obj_0.config_path_etlua
       end
-      local flags = parse_flags(...)
+      local flags = parse_flags({
+        ...
+      })
       if path.exists(config_path) or path.exists(config_path_etlua) then
         fail_with_message("nginx.conf already exists")
       end
@@ -299,8 +266,8 @@ tasks = {
       print(columnize((function()
         local _accum_0 = { }
         local _len_0 = 1
-        for _index_0 = 1, #tasks do
-          local t = tasks[_index_0]
+        for _index_0 = 1, #actions do
+          local t = actions[_index_0]
           if not t.hidden then
             _accum_0[_len_0] = {
               t.usage or t.name,
@@ -321,30 +288,52 @@ format_error = function(msg)
 end
 local execute
 execute = function(args)
-  local task_name = args[1] or tasks.default
-  local task_args
+  do
+    local _tbl_0 = { }
+    for i, a in pairs(args) do
+      if type(i) == "number" and i > 0 then
+        _tbl_0[i] = a
+      end
+    end
+    args = _tbl_0
+  end
+  local flags, plain_args = parse_flags(args)
+  local action_name = plain_args[1] or actions.default
+  local action = get_action(action_name)
+  local stripped = false
+  local action_args
   do
     local _accum_0 = { }
     local _len_0 = 1
-    for i, a in ipairs(args) do
-      if i > 1 then
-        _accum_0[_len_0] = a
+    for _index_0 = 1, #args do
+      local _continue_0 = false
+      repeat
+        local a = args[_index_0]
+        if not stripped and a == action_name then
+          stripped = true
+          _continue_0 = true
+          break
+        end
+        local _value_0 = a
+        _accum_0[_len_0] = _value_0
         _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
-    task_args = _accum_0
+    action_args = _accum_0
   end
-  local task = get_task(task_name)
-  if not (task) then
-    print(format_error("unknown command `" .. tostring(task_name) .. "'"))
-    get_task("help")[1](unpack(task_args))
+  if not (action) then
+    print(format_error("unknown command `" .. tostring(action_name) .. "'"))
+    get_action("help")[1](unpack(action_args))
     return 
   end
-  local fn = assert(task[1], "action `" .. tostring(task_name) .. "' not implemented")
+  local fn = assert(action[1], "action `" .. tostring(action_name) .. "' not implemented")
   return xpcall((function()
-    return fn(unpack(task_args))
+    return fn(unpack(action_args))
   end), function(err)
-    local flags = parse_flags(unpack(task_args))
     if not (flags.trace) then
       err = err:match("^.-:.-:.(.*)$") or err
     end
@@ -360,6 +349,8 @@ execute = function(args)
   end)
 end
 return {
-  tasks = tasks,
-  execute = execute
+  actions = actions,
+  execute = execute,
+  get_action = get_action,
+  parse_flags = parse_flags
 }

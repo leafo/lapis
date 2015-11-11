@@ -1,5 +1,5 @@
 
-import default_environment, columnize from require "lapis.cmd.util"
+import default_environment, columnize, parse_flags from require "lapis.cmd.util"
 import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 import find_leda, start_leda from require "lapis.cmd.leda"
 
@@ -21,29 +21,20 @@ fail_with_message = (msg) ->
   print colors "%{bright}%{red}Aborting:%{reset} " .. msg
   os.exit 1
 
-parse_flags = (...) ->
-  input = {...}
-  flags = {}
+local actions
 
-  filtered = for arg in *input
-    if flag = arg\match "^%-%-?(.+)$"
-      k,v = flag\match "(.-)=(.*)"
-      if k
-        flags[k] = v
-      else
-        flags[flag] = true
-      continue
-    arg
-
-  flags, unpack filtered
-
-local tasks
-
-get_task = (name) ->
-  for k,v in ipairs tasks
+get_action = (name) ->
+  for k,v in ipairs actions
     return v if v.name == name
 
-tasks = {
+  -- no match, try package
+  local action
+  pcall ->
+    action = require "lapis.cmd.actions.#{name}"
+
+  action
+
+actions = {
   default: "help"
 
   {
@@ -52,7 +43,7 @@ tasks = {
 
     (...) ->
       import config_path, config_path_etlua from require("lapis.cmd.nginx").nginx_runner
-      flags = parse_flags ...
+      flags = parse_flags { ... }
 
       if path.exists(config_path) or path.exists(config_path_etlua)
         fail_with_message "nginx.conf already exists"
@@ -76,7 +67,6 @@ tasks = {
         tup_files = require "lapis.cmd.templates.tup"
         for fname, content in pairs tup_files
           write_file_safe fname, content
-
   }
 
   {
@@ -230,7 +220,6 @@ tasks = {
       print colors "Lapis #{require "lapis.version"}"
       print "usage: lapis <action> [arguments]"
 
-
       nginx = find_nginx!
       leda = find_leda!
       if nginx
@@ -244,7 +233,7 @@ tasks = {
       print!
       print "Available actions:"
       print!
-      print columnize [ { t.usage or t.name, t.help } for t in *tasks when not t.hidden ]
+      print columnize [ { t.usage or t.name, t.help } for t in *actions when not t.hidden ]
       print!
   }
 }
@@ -253,19 +242,27 @@ format_error = (msg) ->
   colors "%{bright red}Error:%{reset} #{msg}"
 
 execute = (args) ->
-  task_name = args[1] or tasks.default
-  task_args = [a for i, a in ipairs args when i > 1]
+  args = {i, a for i, a in pairs(args) when type(i) == "number" and i > 0}
+  flags, plain_args = parse_flags args
 
-  task = get_task(task_name)
+  action_name = plain_args[1] or actions.default
+  action = get_action action_name
 
-  unless task
-    print format_error "unknown command `#{task_name}'"
-    get_task("help")[1] unpack task_args
+  stripped = false
+  action_args = for a in *args
+    if not stripped and a == action_name
+      stripped = true
+      continue
+
+    a
+
+  unless action
+    print format_error "unknown command `#{action_name}'"
+    get_action("help")[1] unpack action_args
     return
 
-  fn = assert(task[1], "action `#{task_name}' not implemented")
-  xpcall (-> fn unpack task_args), (err) ->
-    flags = parse_flags unpack task_args
+  fn = assert(action[1], "action `#{action_name}' not implemented")
+  xpcall (-> fn unpack action_args), (err) ->
     err = err\match("^.-:.-:.(.*)$") or err unless flags.trace
     msg = colors "%{bright red}Error:%{reset} #{err}"
     if flags.trace
@@ -277,5 +274,5 @@ execute = (args) ->
 
     os.exit 1
 
-{ :tasks, :execute }
+{ :actions, :execute, :get_action, :parse_flags }
 

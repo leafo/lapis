@@ -157,7 +157,7 @@ class Request
   -- @build_url "cats", host: "leafo.net", port: 2000 --> http://leafo.net:2000/cats
   -- Where example.com is the host of the request, and 8080 is current port
   build_url: (path, options) =>
-    return path if path and path\match "^%a+:"
+    return path if path and (path\match("^%a+:") or path\match "^//")
 
     parsed = { k,v for k,v in pairs @req.parsed_url }
     parsed.query = nil
@@ -169,7 +169,12 @@ class Request
 
     parsed.path = path
 
-    if parsed.port == "80"
+    scheme = parsed.scheme or "http"
+
+    if scheme == "http" and parsed.port == "80"
+      parsed.port = nil
+
+    if scheme == "https" and parsed.port == "443"
       parsed.port = nil
 
     if options

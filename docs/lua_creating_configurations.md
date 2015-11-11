@@ -27,7 +27,7 @@ config({"development", "production"}, {
 })
 
 config("production", {
-  email_enabled = false,
+  email_enabled = true,
   postgres = {
     database = "my_app_prod"
   }

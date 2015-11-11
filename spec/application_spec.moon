@@ -33,6 +33,16 @@ describe "request:build_url", ->
       mock_app "/hello", { host: "leaf", port: 2000 }, =>
         @build_url @req.parsed_url.path
 
+  it "doesn't include default port for scheme http", ->
+    assert.same "http://leaf/whoa",
+      mock_app "/hello", { host: "leaf", port: 80 }, =>
+        @build_url "whoa"
+
+  it "doesn't include default port for scheme https", ->
+    assert.same "https://leaf/whoa",
+      mock_app "/hello", { host: "leaf", scheme: "https", port: 443 }, =>
+        @build_url "whoa"
+
   it "should build url with overridden query", ->
     assert.same "http://localhost/please?yes=no",
       mock_app "/hello", {}, =>

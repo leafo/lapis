@@ -200,8 +200,8 @@ describe "lapis.db.model", ->
     res, np = pager\get_page 123
 
     assert_queries {
-      'SELECT * from "things" where color = blue order by "id" ASC limit 10'
-      'SELECT * from "things" where "id" > 123 and (color = blue) order by "id" ASC limit 10'
+      'SELECT * from "things" where color = blue order by "things"."id" ASC limit 10'
+      'SELECT * from "things" where "things"."id" > 123 and (color = blue) order by "things"."id" ASC limit 10'
     }, queries
 
   it "should ordered paginate with multiple keys", ->
@@ -227,16 +227,16 @@ describe "lapis.db.model", ->
     pager\before 32, 42
 
     assert_queries {
-      'SELECT * from "things" where color = blue order by "id" ASC, "updated_at" ASC limit 10'
+      'SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
 
-      'SELECT * from "things" where color = blue order by "id" ASC, "updated_at" ASC limit 10'
-      'SELECT * from "things" where color = blue order by "id" DESC, "updated_at" DESC limit 10'
+      'SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+      'SELECT * from "things" where color = blue order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
 
-      'SELECT * from "things" where "id" > 100 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
-      'SELECT * from "things" where "id" < 32 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
+      'SELECT * from "things" where "things"."id" > 100 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+      'SELECT * from "things" where "things"."id" < 32 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
 
-      'SELECT * from "things" where "id" >= 100 and "updated_at" > 200 and (color = blue) order by "id" ASC, "updated_at" ASC limit 10'
-      'SELECT * from "things" where "id" <= 32 and "updated_at" < 42 and (color = blue) order by "id" DESC, "updated_at" DESC limit 10'
+      'SELECT * from "things" where "things"."id" >= 100 and "things"."updated_at" > 200 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+      'SELECT * from "things" where "things"."id" <= 32 and "things"."updated_at" < 42 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
     }, queries
 
 
@@ -908,4 +908,43 @@ describe "lapis.db.model", ->
 
         assert.same "bar", e\to_name "bar"
         assert.same "bar", e\to_name 4
+
+  describe "scoped model", ->
+    it "creates a scoped model with prefix only", ->
+      CoolThingsModel = Model\scoped_model "cool_things_"
+
+      package.loaded.models = {
+        Worlds: "itworks"
+      }
+
+      class Hellos extends CoolThingsModel
+
+      assert.same "cool_things_hellos", Hellos\table_name!
+      assert.same "hello", Hellos\singular_name!
+
+      assert.same "itworks", Hellos\get_relation_model "Worlds"
+
+    it "creates a scoped model with prefix, module, and external", ->
+      GreatModel = Model\scoped_model "great_", "great.models", {
+        Users: true
+      }
+
+      package.loaded.models = {
+        Twos: "itdoesntowkr"
+        Users: "definitelyworks"
+      }
+
+      package.loaded["great.models"] = {
+        Twos: "itworks"
+      }
+
+      class Ones extends GreatModel
+
+      assert.same "great_ones", Ones\table_name!
+      assert.same "one", Ones\singular_name!
+
+      assert.same "itworks", Ones\get_relation_model "Twos"
+      assert.same "definitelyworks", Ones\get_relation_model "Users"
+
+
 

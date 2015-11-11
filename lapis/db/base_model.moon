@@ -8,12 +8,15 @@ cjson = require "cjson"
 import OffsetPaginator from require "lapis.db.pagination"
 
 class Enum
+  debug = =>
+    "(contains: #{table.concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
+
   -- convert string to number, or let number pass through
   for_db: (key) =>
     if type(key) == "string"
-      (assert @[key], "enum does not contain key #{key}")
+      (assert @[key], "enum does not contain key #{key} #{debug @}")
     elseif type(key) == "number"
-      assert @[key], "enum does not contain val #{key}"
+      assert @[key], "enum does not contain val #{key} #{debug @}"
       key
     else
       error "don't know how to handle type #{type key} for enum"
@@ -21,11 +24,11 @@ class Enum
   -- convert number to string, or let string pass through
   to_name: (val) =>
     if type(val) == "string"
-      assert @[val], "enum does not contain key #{val}"
+      assert @[val], "enum does not contain key #{val} #{debug @}"
       val
     elseif type(val) == "number"
       key = @[val]
-      (assert key, "enum does not contain val #{val}")
+      (assert key, "enum does not contain val #{val} #{debug @}")
     else
       error "don't know how to handle type #{type val} for enum"
 
@@ -89,6 +92,21 @@ class BaseModel
       @__table_name = underscore @__name
 
     @__table_name
+
+  @scoped_model: (base_model, prefix, mod, external_models) ->
+    class extends base_model
+      @get_relation_model: if mod
+        (name) =>
+          if external_models and external_models[name]
+            base_model\get_relation_model name
+          else
+            require(mod)[name]
+
+      @table_name: =>
+        "#{prefix}#{base_model.table_name(@)}"
+
+      @singular_name: =>
+        singularize base_model.table_name @
 
   -- used as the forign key name when preloading objects over a relation
   -- user_posts -> user_post
@@ -178,7 +196,7 @@ class BaseModel
     many = opts and opts.many
 
     if not flip and type(@primary_key) == "table"
-      error "model must have singular primary key to include"
+      error "#{@table_name!} must have singular primary key for include_in"
 
     src_key = flip and (opts.local_key or "id") or foreign_key
     include_ids = for record in *other_records
@@ -246,7 +264,7 @@ class BaseModel
       by_key = by_key.key or @primary_key
 
     if type(by_key) == "table" and by_key[1] != "raw"
-      error "find_all must have a singular key to search"
+      error "#{@table_name!} find_all must have a singular key to search"
 
     return {} if #ids == 0
     flat_ids = concat [@db.escape_literal id for id in *ids], ", "
@@ -272,7 +290,7 @@ class BaseModel
   -- find by primary key, or by table of conds
   @find: (...) =>
     first = select 1, ...
-    error "(#{@table_name!}) trying to find with no conditions" if first == nil
+    error "#{@table_name!} trying to find with no conditions" if first == nil
 
     cond = if "table" == type first
       @db.encode_clause (...)
@@ -331,7 +349,7 @@ class BaseModel
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 
   delete: =>
-    res =  @@db.delete @@table_name!, @_primary_cond!
+    res = @@db.delete @@table_name!, @_primary_cond!
     res.affected_rows and res.affected_rows > 0, res
 
   -- thing\update "col1", "col2", "col3"
@@ -355,7 +373,7 @@ class BaseModel
     res = unpack @@db.select "#{fields} from #{tbl_name} where #{cond}"
 
     unless res
-      error "failed to find row to refresh from, did the primary key change?"
+      error "#{@@table_name!} failed to find row to refresh from, did the primary key change?"
 
     if field_names
       for field in *field_names

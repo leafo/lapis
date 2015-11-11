@@ -121,6 +121,26 @@ tests = {
   }
 
   {
+    ->
+      util.build_url {
+        host: "dad.com"
+        path: "/test"
+        fragment: "cool_thing"
+      }
+    "//dad.com/test#cool_thing"
+  }
+
+  {
+    ->
+      util.build_url {
+        scheme: ""
+        host: "leafo.net"
+      }
+    "//leafo.net"
+  }
+
+
+  {
     -> util.time_ago os.time! - 34234349
 
     {

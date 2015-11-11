@@ -80,7 +80,7 @@ class AttachedServer
     http = require "socket.http"
 
     buffer = {}
-    http.request {
+    _, status = http.request {
       url: "http://127.0.0.1:#{@port}/run_lua"
       sink: ltn12.sink.table buffer
       source: ltn12.source.string lua_code
@@ -88,6 +88,9 @@ class AttachedServer
         "content-length": #lua_code
       }
     }
+
+    unless status == 200
+      error "Failed to exec code on server, got: #{status}"
 
     table.concat buffer
 
