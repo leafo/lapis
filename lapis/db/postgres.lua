@@ -24,12 +24,9 @@ is_array = function(v)
   PostgresArray = require("pgmoon.arrays").PostgresArray
   return getmetatable(v) == PostgresArray.__base
 end
-local backends = {
+local BACKENDS = {
   raw = function(fn)
-    do
-      raw_query = fn
-      return raw_query
-    end
+    return fn
   end,
   pgmoon = function()
     local after_dispatch, increment_perf
@@ -40,7 +37,7 @@ local backends = {
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
     local pgmoon_conn
-    raw_query = function(str)
+    return function(str)
       local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       if not (pgmoon) then
         local Postgres
@@ -79,7 +76,15 @@ local backends = {
 }
 local set_backend
 set_backend = function(name, ...)
-  return assert(backends[name])(...)
+  raw_query = assert(BACKENDS[name], "invalid backend")(...)
+end
+local set_raw_query
+set_raw_query = function(fn)
+  raw_query = fn
+end
+local get_raw_query
+get_raw_query = function()
+  return raw_query
 end
 local init_logger
 init_logger = function()
@@ -390,6 +395,8 @@ return {
   encode_case = encode_case,
   init_logger = init_logger,
   set_backend = set_backend,
+  set_raw_query = set_raw_query,
+  get_raw_query = get_raw_query,
   select = _select,
   insert = _insert,
   update = _update,

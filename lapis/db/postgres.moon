@@ -24,12 +24,10 @@ is_array = (v) ->
   import PostgresArray from require "pgmoon.arrays"
   getmetatable(v) == PostgresArray.__base
 
-backends = {
+BACKENDS = {
   -- the raw backend is a debug backend that lets you specify the function that
   -- handles the query
-  raw: (fn) ->
-    with raw_query
-      raw_query = fn
+  raw: (fn) -> fn
 
   pgmoon: ->
     import after_dispatch, increment_perf from require "lapis.nginx.context"
@@ -38,7 +36,7 @@ backends = {
     pg_config = assert config.postgres, "missing postgres configuration"
     local pgmoon_conn
 
-    raw_query = (str) ->
+    (str) ->
       pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
 
       unless pgmoon
@@ -70,7 +68,13 @@ backends = {
 }
 
 set_backend = (name, ...) ->
-  assert(backends[name]) ...
+  raw_query = assert(BACKENDS[name], "invalid backend") ...
+
+set_raw_query = (fn) ->
+  raw_query = fn
+
+get_raw_query = ->
+  raw_query
 
 init_logger = ->
   config = require("lapis.config").get!
@@ -80,6 +84,7 @@ init_logger = ->
 init_db = ->
   config = require("lapis.config").get!
   backend = config.postgres and config.postgres.backend
+
   unless backend
     backend = "pgmoon"
 
@@ -303,6 +308,8 @@ encode_case = (exp, t, on_else) ->
   :encode_case, :init_logger
 
   :set_backend
+  :set_raw_query
+  :get_raw_query
 
   select: _select
   insert: _insert
