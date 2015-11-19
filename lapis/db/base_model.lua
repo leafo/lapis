@@ -194,6 +194,8 @@ do
           self[field] = res[field]
         end
       else
+        local relations = require("lapis.db.model.relations")
+        self[relations.LOADED_KEY] = nil
         for k, v in pairs(self) do
           self[k] = nil
         end

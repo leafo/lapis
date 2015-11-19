@@ -1,3 +1,4 @@
+local LOADED_KEY = { }
 local assert_model
 assert_model = function(primary_model, model_name)
   do
@@ -15,8 +16,16 @@ fetch = function(self, name, opts)
   local get_method = opts.as or "get_" .. tostring(name)
   self.__base[get_method] = function(self)
     local existing = self[name]
-    if existing ~= nil then
+    local loaded = self[LOADED_KEY]
+    if loaded and loaded[get_method] then
       return existing
+    end
+    if loaded then
+      loaded[get_method] = true
+    else
+      self[LOADED_KEY] = {
+        [get_method] = true
+      }
     end
     do
       local obj = source(self)
@@ -36,8 +45,16 @@ belongs_to = function(self, name, opts)
       return nil
     end
     local existing = self[name]
-    if existing ~= nil then
+    local loaded = self[LOADED_KEY]
+    if loaded and loaded[get_method] then
       return existing
+    end
+    if loaded then
+      loaded[get_method] = true
+    else
+      self[LOADED_KEY] = {
+        [get_method] = true
+      }
     end
     local model = assert_model(self.__class, source)
     do
@@ -54,8 +71,16 @@ has_one = function(self, name, opts)
   local get_method = opts.as or "get_" .. tostring(name)
   self.__base[get_method] = function(self)
     local existing = self[name]
-    if existing ~= nil then
+    local loaded = self[LOADED_KEY]
+    if loaded and loaded[get_method] then
       return existing
+    end
+    if loaded then
+      loaded[get_method] = true
+    else
+      self[LOADED_KEY] = {
+        [get_method] = true
+      }
     end
     local model = assert_model(self.__class, source)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
@@ -100,8 +125,16 @@ has_many = function(self, name, opts)
   end
   self.__base[get_method] = function(self)
     local existing = self[name]
-    if existing ~= nil then
+    local loaded = self[LOADED_KEY]
+    if loaded and loaded[get_method] then
       return existing
+    end
+    if loaded then
+      loaded[get_method] = true
+    else
+      self[LOADED_KEY] = {
+        [get_method] = true
+      }
     end
     local model = assert_model(self.__class, source)
     do
@@ -196,6 +229,17 @@ polymorphic_belongs_to = function(self, name, opts)
     if existing ~= nil then
       return existing
     end
+    local loaded = self[LOADED_KEY]
+    if loaded and loaded[get_method] then
+      return existing
+    end
+    if loaded then
+      loaded[get_method] = true
+    else
+      self[LOADED_KEY] = {
+        [get_method] = true
+      }
+    end
     do
       local t = self[type_col]
       if t then
@@ -214,5 +258,6 @@ return {
   belongs_to = belongs_to,
   has_one = has_one,
   has_many = has_many,
-  polymorphic_belongs_to = polymorphic_belongs_to
+  polymorphic_belongs_to = polymorphic_belongs_to,
+  LOADED_KEY = LOADED_KEY
 }

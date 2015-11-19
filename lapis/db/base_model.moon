@@ -379,6 +379,8 @@ class BaseModel
       for field in *field_names
         @[field] = res[field]
     else
+      relations = require "lapis.db.model.relations"
+      @[relations.LOADED_KEY] = nil -- unload all relations
       for k,v in pairs @
         @[k] = nil
 

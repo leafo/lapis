@@ -153,7 +153,7 @@ describe "model", ->
       post\update user_id: db.raw "(case when false then 1234 else null end)"
       assert.same nil, post.user_id
 
-  describe "arrays #ddd", ->
+  describe "arrays", ->
     before_each ->
       HasArrays\create_table!
 

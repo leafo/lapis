@@ -206,6 +206,25 @@ assert_same_rows = (a, b) ->
       assert.same user, like\get_user!
       assert.same post, like\get_post!
 
+    it "does not query multiple times for filled relations", ->
+      user = Users\create { name: "yeah" }
+      like = Likes\create {
+        user_id: user.id
+        post_id: -1
+      }
+
+      assert.same user.id, like\get_user!.id
+      assert.same user.id, like\get_user!.id
+
+    it "does not query multiple times for unfilled relations", ->
+      like = Likes\create {
+        user_id: -1
+        post_id: -1
+      }
+
+      print like\get_user!
+      print like\get_user!
+
   describe "include_in", ->
     before_each ->
       Users\create_table!

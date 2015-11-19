@@ -1,3 +1,5 @@
+LOADED_KEY = {}
+
 assert_model = (primary_model, model_name) ->
   with m = primary_model\get_relation_model model_name
     error "failed to find model `#{model_name}` for relation" unless m
@@ -10,7 +12,14 @@ fetch = (name, opts) =>
 
   @__base[get_method] = =>
     existing = @[name]
-    return existing if existing != nil
+
+    loaded = @[LOADED_KEY]
+    return existing if loaded and loaded[get_method]
+    if loaded
+      loaded[get_method] = true
+    else
+      @[LOADED_KEY] = { [get_method]: true }
+
     with obj = source @
       @[name] = obj
 
@@ -24,7 +33,14 @@ belongs_to = (name, opts) =>
   @__base[get_method] = =>
     return nil unless @[column_name]
     existing = @[name]
-    return existing if existing != nil
+
+    loaded = @[LOADED_KEY]
+    return existing if loaded and loaded[get_method]
+    if loaded
+      loaded[get_method] = true
+    else
+      @[LOADED_KEY] = { [get_method]: true }
+
     model = assert_model @@, source
     with obj = model\find @[column_name]
       @[name] = obj
@@ -37,7 +53,14 @@ has_one = (name, opts) =>
 
   @__base[get_method] = =>
     existing = @[name]
-    return existing if existing != nil
+
+    loaded = @[LOADED_KEY]
+    return existing if loaded and loaded[get_method]
+    if loaded
+      loaded[get_method] = true
+    else
+      @[LOADED_KEY] = { [get_method]: true }
+
     model = assert_model @@, source
 
     foreign_key = opts.key or "#{@@singular_name!}_id"
@@ -76,7 +99,14 @@ has_many = (name, opts) =>
 
   @__base[get_method] = =>
     existing = @[name]
-    return existing if existing != nil
+
+    loaded = @[LOADED_KEY]
+    return existing if loaded and loaded[get_method]
+    if loaded
+      loaded[get_method] = true
+    else
+      @[LOADED_KEY] = { [get_method]: true }
+
     model = assert_model @@, source
 
     with res = model\select build_query(@)
@@ -143,10 +173,18 @@ polymorphic_belongs_to = (name, opts) =>
     existing = @[name]
     return existing if existing != nil
 
+    loaded = @[LOADED_KEY]
+    return existing if loaded and loaded[get_method]
+    if loaded
+      loaded[get_method] = true
+    else
+      @[LOADED_KEY] = { [get_method]: true }
+
+
     if t = @[type_col]
       model = @@[model_for_type_method] @@, t
       with obj = model\find @[id_col]
         @[name] = obj
 
 
-{ :fetch, :belongs_to, :has_one, :has_many, :polymorphic_belongs_to }
+{ :fetch, :belongs_to, :has_one, :has_many, :polymorphic_belongs_to, :LOADED_KEY }
