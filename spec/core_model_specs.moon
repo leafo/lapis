@@ -177,6 +177,8 @@ assert_same_rows = (a, b) ->
 
 
   describe "relations", ->
+    local query_log, query_fn
+
     before_each ->
       Users\create_table!
       Posts\create_table!
@@ -186,8 +188,18 @@ assert_same_rows = (a, b) ->
         :Users, :Posts, :Likes
       }
 
+      query_log = {}
+      db = require "lapis.db"
+
+      query_fn = db.get_raw_query!
+      db.set_raw_query (q) ->
+        table.insert query_log, q
+        query_fn q
+
     after_each ->
       package.loaded.models = nil
+      db = require "lapis.db"
+      db.set_raw_query query_fn
 
     it "should fetch relation", ->
       user = Users\create { name: "yeah" }
@@ -216,14 +228,20 @@ assert_same_rows = (a, b) ->
       assert.same user.id, like\get_user!.id
       assert.same user.id, like\get_user!.id
 
+      -- The insert x 2 and select
+      assert.same 3, #query_log
+
     it "does not query multiple times for unfilled relations", ->
       like = Likes\create {
         user_id: -1
         post_id: -1
       }
 
-      print like\get_user!
-      print like\get_user!
+      like\get_user!
+      like\get_user!
+
+      -- The insert and select
+      assert.same 2, #query_log
 
   describe "include_in", ->
     before_each ->
