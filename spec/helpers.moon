@@ -20,12 +20,14 @@ assert\register "assertion",
   "one_of", one_of, "assertion.one_of.positive", "assertion.one_of.negative"
 
 with_query_fn = (q, run, db=require "lapis.db.postgres") ->
-  old_query = db.set_backend "raw", q
+  old_query = db.get_raw_query!
+  db.set_raw_query q
   if not run
-    -> db.set_backend "raw", old_query
+    -> db.set_raw_query old_query
   else
     with run!
-      db.set_backend "raw", old_query
+      db.set_raw_query old_query
+
 
 assert_queries = (expected, result) ->
   assert #expected == #result, "number of expected queries does not match number received"
