@@ -15,12 +15,10 @@ import
 local conn, logger
 local *
 
-backends = {
+BACKENDS = {
   -- the raw backend is a debug backend that lets you specify the function that
   -- handles the query
-  raw: (fn) ->
-    with raw_query
-      raw_query = fn
+  raw: (fn) -> fn
 
   luasql: ->
     config = require("lapis.config").get!
@@ -30,7 +28,7 @@ backends = {
     conn = assert luasql\connect mysql_config.database,
       mysql_config.user, mysql_config.password
 
-    raw_query = (q) ->
+    (q) ->
       logger.query q if logger
       cur = assert conn\execute q
       has_rows = type(cur) != "number"
@@ -83,7 +81,7 @@ backends = {
 
     mysql = require "resty.mysql"
 
-    raw_query = (q) ->
+    (q) ->
       logger.query q if logger
 
       db = ngx and ngx.ctx.resty_mysql_db
@@ -128,10 +126,17 @@ backends = {
 }
 
 set_backend = (name, ...) ->
-  b = backends[name]
-  unless b
-    error "failed to find mysql backend #{name}"
-  b ...
+  backend = BACKENDS[name]
+  unless backend
+    error "Failed to find MySQL backend: #{name}"
+
+  raw_query = backend ...
+
+set_raw_query = (fn) ->
+  raw_query = fn
+
+get_raw_query = ->
+  raw_query
 
 escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = (val) ->
@@ -269,9 +274,13 @@ _truncate = (table) ->
   :query
   :escape_literal
   :escape_identifier
-  :set_backend
+
   :format_date
   :init_logger
+
+  :set_backend
+  :set_raw_query
+  :get_raw_query
 
   select: _select
   insert: _insert

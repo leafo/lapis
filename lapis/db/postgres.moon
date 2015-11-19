@@ -68,7 +68,11 @@ BACKENDS = {
 }
 
 set_backend = (name, ...) ->
-  raw_query = assert(BACKENDS[name], "invalid backend") ...
+  backend = BACKENDS[name]
+  unless backend
+    error "Failed to find PostgreSQL backend: #{name}"
+
+  raw_query = backend ...
 
 set_raw_query = (fn) ->
   raw_query = fn
@@ -305,7 +309,9 @@ encode_case = (exp, t, on_else) ->
   :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
   :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
   :encode_clause, :interpolate_query, :parse_clause, :format_date,
-  :encode_case, :init_logger
+  :encode_case
+
+  :init_logger
 
   :set_backend
   :set_raw_query

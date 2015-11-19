@@ -11,20 +11,17 @@ do
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
 end
 local conn, logger
-local backends, set_backend, escape_err, escape_literal, escape_identifier, init_logger, init_db, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
-backends = {
+local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_err, escape_literal, escape_identifier, init_logger, init_db, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
+BACKENDS = {
   raw = function(fn)
-    do
-      raw_query = fn
-      return raw_query
-    end
+    return fn
   end,
   luasql = function()
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
     conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
-    raw_query = function(q)
+    return function(q)
       if logger then
         logger.query(q)
       end
@@ -91,7 +88,7 @@ backends = {
     local max_idle_timeout = mysql_config.max_idle_timeout or 10000
     local pool_size = mysql_config.pool_size or 100
     local mysql = require("resty.mysql")
-    raw_query = function(q)
+    return function(q)
       if logger then
         logger.query(q)
       end
@@ -149,11 +146,17 @@ backends = {
   end
 }
 set_backend = function(name, ...)
-  local b = backends[name]
-  if not (b) then
-    error("failed to find mysql backend " .. tostring(name))
+  local backend = BACKENDS[name]
+  if not (backend) then
+    error("Failed to find MySQL backend: " .. tostring(name))
   end
-  return b(...)
+  raw_query = backend(...)
+end
+set_raw_query = function(fn)
+  raw_query = fn
+end
+get_raw_query = function()
+  return raw_query
 end
 escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = function(val)
@@ -294,9 +297,11 @@ return {
   query = query,
   escape_literal = escape_literal,
   escape_identifier = escape_identifier,
-  set_backend = set_backend,
   format_date = format_date,
   init_logger = init_logger,
+  set_backend = set_backend,
+  set_raw_query = set_raw_query,
+  get_raw_query = get_raw_query,
   select = _select,
   insert = _insert,
   update = _update,

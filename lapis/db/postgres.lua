@@ -76,7 +76,11 @@ local BACKENDS = {
 }
 local set_backend
 set_backend = function(name, ...)
-  raw_query = assert(BACKENDS[name], "invalid backend")(...)
+  local backend = BACKENDS[name]
+  if not (backend) then
+    error("Failed to find PostgreSQL backend: " .. tostring(name))
+  end
+  raw_query = backend(...)
 end
 local set_raw_query
 set_raw_query = function(fn)
