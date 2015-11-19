@@ -7,6 +7,7 @@ install:
   - sudo apt-get install luarocks
   - mkdir -p ~/.luarocks
   - echo 'rocks_servers = { "http://luarocks.org" }' > ~/.luarocks/config.lua
+  - sudo luarocks install luasec
   - sudo luarocks install https://luarocks.org/manifests/olivine-labs/busted-2.0.rc11-0.rockspec
   - sudo luarocks install moonscript
   - sudo luarocks install luacrypto
