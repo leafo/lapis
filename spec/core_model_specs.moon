@@ -243,6 +243,31 @@ assert_same_rows = (a, b) ->
       -- The insert and select
       assert.same 2, #query_log
 
+    it "lets you manually fill a relation", ->
+      like = Likes\create {
+        user_id: -1
+        post_id: -1
+      }
+
+      like.user = "Hello world!"
+      assert.same "Hello world!", like\get_user!
+      assert.same 1, #query_log
+
+    it "lets a preload fill a relation", ->
+      post = Posts\create {
+        title: "Hello world"
+        body: "Greetings"
+      }
+
+      like = Likes\create {
+        user_id: -1
+        post_id: post.id
+      }
+
+      Posts\include_in {like}, "post_id"
+      assert.truthy like\get_post!
+      assert.same 3, #query_log
+
   describe "include_in", ->
     before_each ->
       Users\create_table!

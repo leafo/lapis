@@ -17,7 +17,7 @@ fetch = function(self, name, opts)
   self.__base[get_method] = function(self)
     local existing = self[name]
     local loaded = self[LOADED_KEY]
-    if loaded and loaded[get_method] then
+    if existing ~= nil or loaded and loaded[get_method] then
       return existing
     end
     if loaded then
@@ -46,7 +46,7 @@ belongs_to = function(self, name, opts)
     end
     local existing = self[name]
     local loaded = self[LOADED_KEY]
-    if loaded and loaded[get_method] then
+    if existing ~= nil or loaded and loaded[get_method] then
       return existing
     end
     if loaded then
@@ -72,7 +72,7 @@ has_one = function(self, name, opts)
   self.__base[get_method] = function(self)
     local existing = self[name]
     local loaded = self[LOADED_KEY]
-    if loaded and loaded[get_method] then
+    if existing ~= nil or loaded and loaded[get_method] then
       return existing
     end
     if loaded then
@@ -126,7 +126,7 @@ has_many = function(self, name, opts)
   self.__base[get_method] = function(self)
     local existing = self[name]
     local loaded = self[LOADED_KEY]
-    if loaded and loaded[get_method] then
+    if existing ~= nil or loaded and loaded[get_method] then
       return existing
     end
     if loaded then
@@ -230,7 +230,7 @@ polymorphic_belongs_to = function(self, name, opts)
       return existing
     end
     local loaded = self[LOADED_KEY]
-    if loaded and loaded[get_method] then
+    if existing ~= nil or loaded and loaded[get_method] then
       return existing
     end
     if loaded then

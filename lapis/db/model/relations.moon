@@ -14,7 +14,7 @@ fetch = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[get_method]
     if loaded
       loaded[get_method] = true
     else
@@ -35,7 +35,7 @@ belongs_to = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[get_method]
     if loaded
       loaded[get_method] = true
     else
@@ -55,7 +55,7 @@ has_one = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[get_method]
     if loaded
       loaded[get_method] = true
     else
@@ -101,7 +101,7 @@ has_many = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[get_method]
     if loaded
       loaded[get_method] = true
     else
@@ -174,7 +174,7 @@ polymorphic_belongs_to = (name, opts) =>
     return existing if existing != nil
 
     loaded = @[LOADED_KEY]
-    return existing if loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[get_method]
     if loaded
       loaded[get_method] = true
     else
