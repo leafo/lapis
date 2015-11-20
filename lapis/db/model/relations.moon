@@ -18,7 +18,7 @@ find_relation = (model, name) ->
 clear_loaded_relation = (item, name) ->
   item[name] = nil
   if loaded = item[LOADED_KEY]
-    l[name] = nil
+    loaded[name] = nil
   true
 
 fetch = (name, opts) =>

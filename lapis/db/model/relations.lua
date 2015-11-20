@@ -42,7 +42,7 @@ clear_loaded_relation = function(item, name)
   do
     local loaded = item[LOADED_KEY]
     if loaded then
-      l[name] = nil
+      loaded[name] = nil
     end
   end
   return true
