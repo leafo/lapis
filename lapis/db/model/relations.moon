@@ -1,4 +1,4 @@
-LOADED_KEY = {}
+LOADED_KEY = setmetatable {}, __tostring: => "::loaded_relations::"
 
 assert_model = (primary_model, model_name) ->
   with m = primary_model\get_relation_model model_name
@@ -15,6 +15,12 @@ find_relation = (model, name) ->
   if p = model.__parent
     find_relation p, name
 
+clear_loaded_relation = (item, name) ->
+  item[name] = nil
+  if loaded = item[LOADED_KEY]
+    l[name] = nil
+  true
+
 fetch = (name, opts) =>
   source = opts.fetch
   assert type(source) == "function", "Expecting function for `fetch` relation"
@@ -25,11 +31,11 @@ fetch = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if existing != nil or loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[name]
     if loaded
-      loaded[get_method] = true
+      loaded[name] = true
     else
-      @[LOADED_KEY] = { [get_method]: true }
+      @[LOADED_KEY] = { [name]: true }
 
     with obj = source @
       @[name] = obj
@@ -46,11 +52,11 @@ belongs_to = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if existing != nil or loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[name]
     if loaded
-      loaded[get_method] = true
+      loaded[name] = true
     else
-      @[LOADED_KEY] = { [get_method]: true }
+      @[LOADED_KEY] = { [name]: true }
 
     model = assert_model @@, source
     with obj = model\find @[column_name]
@@ -66,11 +72,11 @@ has_one = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if existing != nil or loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[name]
     if loaded
-      loaded[get_method] = true
+      loaded[name] = true
     else
-      @[LOADED_KEY] = { [get_method]: true }
+      @[LOADED_KEY] = { [name]: true }
 
     model = assert_model @@, source
 
@@ -112,11 +118,11 @@ has_many = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if existing != nil or loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[name]
     if loaded
-      loaded[get_method] = true
+      loaded[name] = true
     else
-      @[LOADED_KEY] = { [get_method]: true }
+      @[LOADED_KEY] = { [name]: true }
 
     model = assert_model @@, source
 
@@ -184,19 +190,18 @@ polymorphic_belongs_to = (name, opts) =>
     existing = @[name]
 
     loaded = @[LOADED_KEY]
-    return existing if existing != nil or loaded and loaded[get_method]
+    return existing if existing != nil or loaded and loaded[name]
     if loaded
-      loaded[get_method] = true
+      loaded[name] = true
     else
-      @[LOADED_KEY] = { [get_method]: true }
+      @[LOADED_KEY] = { [name]: true }
 
     if t = @[type_col]
       model = @@[model_for_type_method] @@, t
       with obj = model\find @[id_col]
         @[name] = obj
 
-
 {
   :fetch, :belongs_to, :has_one, :has_many, :polymorphic_belongs_to,
-  :find_relation, :LOADED_KEY
+  :find_relation, :clear_loaded_relation, :LOADED_KEY
 }
