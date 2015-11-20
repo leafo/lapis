@@ -3,6 +3,7 @@ local get_free_port
 get_free_port = require("lapis.cmd.util").get_free_port
 local AttachedServer
 do
+  local _class_0
   local _base_0 = {
     start = function(self, environment, env_overrides)
       if path.exists(self.runner.compiled_config_path) then
@@ -154,7 +155,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self, runner)
       self.runner = runner
     end,

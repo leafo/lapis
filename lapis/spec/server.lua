@@ -10,6 +10,7 @@ do
 end
 local SpecServer
 do
+  local _class_0
   local _base_0 = {
     current_server = nil,
     load_test_server = function(self)
@@ -122,7 +123,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self, runner)
       self.runner = runner
       self.runner = self.runner or require("lapis.cmd.nginx").nginx_runner

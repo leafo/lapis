@@ -139,6 +139,7 @@ element = function(buffer, name, attrs, ...)
 end
 local Buffer
 do
+  local _class_0
   local _base_0 = {
     builders = {
       html_5 = function(...)
@@ -308,7 +309,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self, buffer)
       self.buffer = buffer
       self.old_env = { }
@@ -347,6 +348,7 @@ local helper_key = setmetatable({ }, {
 })
 local Widget
 do
+  local _class_0
   local _base_0 = {
     _set_helper_chain = function(self, chain)
       return rawset(self, helper_key, chain)
@@ -494,7 +496,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self, opts)
       if opts then
         for k, v in pairs(opts) do

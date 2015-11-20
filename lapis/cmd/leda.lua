@@ -3,6 +3,7 @@ local path = require("lapis.cmd.path")
 local leda
 local Leda
 do
+  local _class_0
   local _base_0 = {
     paths = {
       "/usr/local/bin",
@@ -50,7 +51,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function() end,
     __base = _base_0,
     __name = "Leda"

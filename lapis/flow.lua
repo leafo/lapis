@@ -15,11 +15,12 @@ is_flow = function(cls)
   return is_flow(cls.__parent)
 end
 do
+  local _class_0
   local _base_0 = {
     expose_assigns = false
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self, _req, obj)
       if obj == nil then
         obj = { }

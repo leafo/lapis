@@ -8,11 +8,12 @@ _class = function(name, tbl, extend)
   local cls
   if extend then
     do
+      local _class_0
       local _parent_0 = extend
       local _base_0 = { }
       _base_0.__index = _base_0
       setmetatable(_base_0, _parent_0.__base)
-      local _class_0 = setmetatable({
+      _class_0 = setmetatable({
         __init = tbl and tbl.new,
         __base = _base_0,
         __name = "cls",
@@ -21,7 +22,10 @@ _class = function(name, tbl, extend)
         __index = function(cls, name)
           local val = rawget(_base_0, name)
           if val == nil then
-            return _parent_0[name]
+            local parent = rawget(cls, "__parent")
+            if parent then
+              return parent[name]
+            end
           else
             return val
           end
@@ -40,9 +44,10 @@ _class = function(name, tbl, extend)
     end
   else
     do
+      local _class_0
       local _base_0 = { }
       _base_0.__index = _base_0
-      local _class_0 = setmetatable({
+      _class_0 = setmetatable({
         __init = tbl and tbl.new,
         __base = _base_0,
         __name = "cls"

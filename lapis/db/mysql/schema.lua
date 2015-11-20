@@ -160,6 +160,7 @@ rename_table = function(tname_from, tname_to)
 end
 local ColumnType
 do
+  local _class_0
   local _base_0 = {
     default_options = {
       null = false
@@ -220,7 +221,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self, base, default_options)
       self.base, self.default_options = base, default_options
     end,

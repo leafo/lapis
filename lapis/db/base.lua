@@ -6,9 +6,10 @@ end
 local NULL = { }
 local DBRaw
 do
+  local _class_0
   local _base_0 = { }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function() end,
     __base = _base_0,
     __name = "DBRaw"
@@ -35,9 +36,10 @@ is_raw = function(val)
 end
 local DBList
 do
+  local _class_0
   local _base_0 = { }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function() end,
     __base = _base_0,
     __name = "DBList"

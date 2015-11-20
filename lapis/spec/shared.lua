@@ -1,5 +1,6 @@
 local Dict
 do
+  local _class_0
   local _base_0 = {
     get = function(self, key)
       return self.store[key], self.flags[key]
@@ -47,7 +48,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self)
       return self:flush_all()
     end,

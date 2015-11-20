@@ -24,6 +24,7 @@ reduce = function(items, fn)
 end
 local Router
 do
+  local _class_0
   local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, symbol, chunk
   local _base_0 = {
     add_route = function(self, route, responder)
@@ -124,7 +125,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  local _class_0 = setmetatable({
+  _class_0 = setmetatable({
     __init = function(self)
       self.routes = { }
       self.named_routes = { }
