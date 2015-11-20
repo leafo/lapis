@@ -14,17 +14,22 @@ class Model extends BaseModel
 
     values._timestamp = true if @timestamp
 
-    local returning
+    local returning, return_all
 
     if opts and opts.returning
-      returning = { @primary_keys! }
-      for field in *opts.returning
-        table.insert returning, field
+      if opts.returning == "*"
+        return_all = true
+        returning = { db.raw "*" }
+      else
+        returning = { @primary_keys! }
+        for field in *opts.returning
+          table.insert returning, field
 
-    for k, v in pairs values
-      if db.is_raw v
-        returning or= {@primary_keys!}
-        table.insert returning, k
+    unless return_all
+      for k, v in pairs values
+        if db.is_raw v
+          returning or= {@primary_keys!}
+          table.insert returning, k
 
     res = if returning
       db.insert @table_name!, values, unpack returning
@@ -32,7 +37,7 @@ class Model extends BaseModel
       db.insert @table_name!, values, @primary_keys!
 
     if res
-      if returning
+      if returning and not return_all
         for k in *returning
           values[k] = res[1][k]
 

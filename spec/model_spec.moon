@@ -299,6 +299,15 @@ describe "lapis.db.model", ->
       }
     }, queries
 
+  it "should create model with returning *", ->
+    query_mock['INSERT'] = { { id: 101, color: "blue" } }
+
+    class Hi extends Model
+    Hi\create { color: "blue" }, returning: "*"
+
+    assert_queries {
+      [[INSERT INTO "hi" ("color") VALUES ('blue') RETURNING *]]
+    }, queries
 
   it "should refresh model", ->
     class Things extends Model
