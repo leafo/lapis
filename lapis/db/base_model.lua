@@ -197,7 +197,14 @@ do
         end
       else
         local relations = require("lapis.db.model.relations")
-        self[relations.LOADED_KEY] = nil
+        do
+          local loaded_relations = self[relations.LOADED_KEY]
+          if loaded_relations then
+            for name in pairs(loaded_relations) do
+              relations.clear_loaded_relation(self, name)
+            end
+          end
+        end
         for k, v in pairs(self) do
           self[k] = nil
         end
