@@ -9,6 +9,29 @@ assert_model = function(primary_model, model_name)
     return m
   end
 end
+local find_relation
+find_relation = function(model, name)
+  if not (model) then
+    return 
+  end
+  do
+    local rs = model.relations
+    if rs then
+      for _index_0 = 1, #rs do
+        local relation = rs[_index_0]
+        if relation[1] == name then
+          return relation
+        end
+      end
+    end
+  end
+  do
+    local p = model.__parent
+    if p then
+      return find_relation(p, name)
+    end
+  end
+end
 local fetch
 fetch = function(self, name, opts)
   local source = opts.fetch
@@ -226,9 +249,6 @@ polymorphic_belongs_to = function(self, name, opts)
   end
   self.__base[get_method] = function(self)
     local existing = self[name]
-    if existing ~= nil then
-      return existing
-    end
     local loaded = self[LOADED_KEY]
     if existing ~= nil or loaded and loaded[get_method] then
       return existing
@@ -259,5 +279,6 @@ return {
   has_one = has_one,
   has_many = has_many,
   polymorphic_belongs_to = polymorphic_belongs_to,
+  find_relation = find_relation,
   LOADED_KEY = LOADED_KEY
 }

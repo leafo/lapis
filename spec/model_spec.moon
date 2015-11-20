@@ -845,6 +845,25 @@ describe "lapis.db.model", ->
           'SELECT c, d from "bazs" where "id" in (113)'
         }, queries
 
+    it "should find relation", ->
+      import find_relation from require "lapis.db.model.relations"
+
+      class Posts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+          {"cool_user", belongs_to: "CoolUsers", key: "owner_id"}
+        }
+
+      class BetterPosts extends Posts
+        @relations: {
+          {"tags", has_many: "Tags"}
+        }
+
+      assert.same {"user", belongs_to: "Users"}, (find_relation Posts, "user")
+      assert.same nil, (find_relation Posts, "not there")
+      assert.same {"cool_user", belongs_to: "CoolUsers", key: "owner_id"},
+        (find_relation BetterPosts, "cool_user")
+
   describe "enum", ->
     import enum from require "lapis.db.model"
 

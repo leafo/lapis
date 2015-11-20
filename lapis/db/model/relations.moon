@@ -4,6 +4,17 @@ assert_model = (primary_model, model_name) ->
   with m = primary_model\get_relation_model model_name
     error "failed to find model `#{model_name}` for relation" unless m
 
+find_relation = (model, name) ->
+  return unless model
+
+  if rs = model.relations
+    for relation in *rs
+      if relation[1] == name
+        return relation
+
+  if p = model.__parent
+    find_relation p, name
+
 fetch = (name, opts) =>
   source = opts.fetch
   assert type(source) == "function", "Expecting function for `fetch` relation"
@@ -171,7 +182,6 @@ polymorphic_belongs_to = (name, opts) =>
 
   @__base[get_method] = =>
     existing = @[name]
-    return existing if existing != nil
 
     loaded = @[LOADED_KEY]
     return existing if existing != nil or loaded and loaded[get_method]
@@ -180,11 +190,13 @@ polymorphic_belongs_to = (name, opts) =>
     else
       @[LOADED_KEY] = { [get_method]: true }
 
-
     if t = @[type_col]
       model = @@[model_for_type_method] @@, t
       with obj = model\find @[id_col]
         @[name] = obj
 
 
-{ :fetch, :belongs_to, :has_one, :has_many, :polymorphic_belongs_to, :LOADED_KEY }
+{
+  :fetch, :belongs_to, :has_one, :has_many, :polymorphic_belongs_to,
+  :find_relation, :LOADED_KEY
+}
