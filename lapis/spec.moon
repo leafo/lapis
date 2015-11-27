@@ -13,4 +13,20 @@ use_test_server = ->
   setup -> load_test_server!
   teardown -> close_test_server!
 
-{:use_test_env, :use_test_server}
+assert_no_queries = (fn=error"missing function") ->
+  assert = require "luassert"
+  db = require "lapis.db"
+
+  old_query = db.get_raw_query!
+
+  query_log = {}
+  db.set_raw_query (...) ->
+    table.insert query_log, (...)
+    old_query ...
+
+  res, err = pcall fn
+  db.set_raw_query old_query
+  assert res, err
+  assert.same {}, query_log
+
+{:use_test_env, :use_test_server, :assert_no_queries}

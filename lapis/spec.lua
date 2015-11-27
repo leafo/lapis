@@ -35,7 +35,26 @@ use_test_server = function()
     return close_test_server()
   end)
 end
+local assert_no_queries
+assert_no_queries = function(fn)
+  if fn == nil then
+    fn = error("missing function")
+  end
+  local assert = require("luassert")
+  local db = require("lapis.db")
+  local old_query = db.get_raw_query()
+  local query_log = { }
+  db.set_raw_query(function(...)
+    table.insert(query_log, (...))
+    return old_query(...)
+  end)
+  local res, err = pcall(fn)
+  db.set_raw_query(old_query)
+  assert(res, err)
+  return assert.same({ }, query_log)
+end
 return {
   use_test_env = use_test_env,
-  use_test_server = use_test_server
+  use_test_server = use_test_server,
+  assert_no_queries = assert_no_queries
 }

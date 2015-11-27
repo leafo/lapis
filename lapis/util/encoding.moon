@@ -22,7 +22,6 @@ encode_with_secret = (object, secret=config.secret, sep=".") ->
   signature = encode_base64 hmac_sha1 secret, msg
   msg .. sep .. signature
 
-
 decode_with_secret = (msg_and_sig, secret=config.secret) ->
   json = require "cjson"
 

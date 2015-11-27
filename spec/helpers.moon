@@ -28,7 +28,6 @@ with_query_fn = (q, run, db=require "lapis.db.postgres") ->
     with run!
       db.set_raw_query old_query
 
-
 assert_queries = (expected, result) ->
   assert #expected == #result, "number of expected queries does not match number received"
   for i, q in ipairs expected
