@@ -63,16 +63,32 @@ for tag in *void_tags
 
 ------------------
 
+classnames = (t) ->
+  ccs = for k,v in pairs t
+    if type(k) == "number"
+      v
+    else
+      continue unless v
+      k
+
+  table.concat ccs, " "
+
 element_attributes = (buffer, t) ->
   return unless type(t) == "table"
 
   for k,v in pairs t
     if type(k) == "string" and not k\match "^__"
-      if type(v) == "boolean"
+      vtype = type(v)
+      if vtype == "boolean"
         if v
           buffer\write " ", k
       else
-        buffer\write " ", k, "=", '"', escape(tostring(v)), '"'
+        if vtype == "table" and k == "class"
+          v = classnames v
+        else
+          v = tostring v
+
+        buffer\write " ", k, "=", '"', escape(v), '"'
   nil
 
 element = (buffer, name, attrs, ...) ->
@@ -359,5 +375,5 @@ class Widget
     @_buffer.widget = old_widget
     nil
 
-{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :CONTENT_FOR_PREFIX }
+{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :classnames, :CONTENT_FOR_PREFIX }
 

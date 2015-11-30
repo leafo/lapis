@@ -26,6 +26,15 @@ describe "lapis.html", ->
 
     assert.same [[<b>what is going on?</b><div><pre class="cool"><span>hello world</span></pre></div>&lt;div&gt;this is captured&lt;/div&gt;<link rel="icon"/><div>raw test</div>&lt;div&gt;raw test&lt;/div&gt;<!DOCTYPE HTML><html lang="en"><div>what is going on there?</div></html>]], output
 
+  it "should render html class table syntax", ->
+    output = render_html ->
+      div class: {"hello", "world", cool: true, notcool: false}
+      div class: {}
+      div class: {ok: "fool"}
+      div class: {cool: nil}
+
+    assert.same '<div class="hello world cool"></div><div class=""></div><div class="ok"></div><div class=""></div>', output
+
   it "should render more html", ->
     output = render_html ->
       element "leaf", {"hello"}, "world"
