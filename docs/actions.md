@@ -834,7 +834,7 @@ class App extends lapis.Application
     super!
 ```
 
-The [`lapis-extensions`][2] module provides a default error handler that
+The [`lapis-exceptions`][2] module provides a default error handler that
 records errors in a database and can email you when they happen.
 
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
