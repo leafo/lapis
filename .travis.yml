@@ -22,7 +22,7 @@ install:
   - luarocks install moonscript
   - luarocks install luaposix
   - luarocks install date
-  - luarocks install luasql-mysql
+  - luarocks install luasql-mysql MYSQL_INCDIR=/usr/include/mysql
   - luarocks make
 
 before_script:
