@@ -20,7 +20,7 @@ tar -xzf "$pcre_tar"
 
 pcre_dir="$base_dir/$(find . -maxdepth 1 -type d | grep pcre-)"
 
-install_dir="$TRAVIS_BUILD_DIR/install/openresty"
+install_dir="install/openresty"
 
 echo "$(tput setaf 2)Building openresty...$(tput sgr0)"
 (
