@@ -11,10 +11,12 @@ services:
 env:
   global:
     - LUAROCKS=2.2.2
+    - OPENRESTY=1.9.3.2
   matrix:
     - LUA=luajit2.1
 
 before_install:
+  - source install_openresty.sh
   - source .travis/setenv_lua.sh
 
 install:
