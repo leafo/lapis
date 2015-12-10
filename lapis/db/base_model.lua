@@ -305,15 +305,17 @@ do
       })
       _base_1.__class = _class_1
       local self = _class_1
-      if mod then
-        self.get_relation_model = function(self, name)
-          if external_models and external_models[name] then
-            return base_model:get_relation_model(name)
-          else
-            return require(mod)[name]
+      self.get_relation_model = (function()
+        if mod then
+          return function(self, name)
+            if external_models and external_models[name] then
+              return base_model:get_relation_model(name)
+            else
+              return require(mod)[name]
+            end
           end
         end
-      end
+      end)()
       self.table_name = function(self)
         return tostring(prefix) .. tostring(base_model.table_name(self))
       end

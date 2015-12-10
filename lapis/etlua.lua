@@ -74,7 +74,7 @@ do
     _tpl_fn = nil,
     content_for = function(self, name, val)
       if val then
-        return _class_0.__parent.content_for(self, name, val)
+        return _class_0.__parent.__base.content_for(self, name, val)
       else
         do
           val = self[CONTENT_FOR_PREFIX .. name]
