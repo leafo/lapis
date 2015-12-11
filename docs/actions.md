@@ -1,5 +1,6 @@
-title: Requests and Actions
---
+{
+  title: "Requests and Actions"
+}
 # Requests and Actions
 
 Every HTTP request that is handled by Lapis follows the same basic flow after

@@ -1,5 +1,6 @@
-title: Lua Configuration Syntax
---
+{
+  title: "Lua Configuration Syntax"
+}
 <div class="override_lang" data-lang="lua"></div>
 
 # Lua Configuration Syntax

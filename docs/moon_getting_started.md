@@ -1,5 +1,6 @@
-title: Creating a Lapis Application with MoonScript
---
+{
+  title: "Creating a Lapis Application with MoonScript"
+}
 <div class="override_lang"></div>
 
 # Creating a Lapis Application with MoonScript

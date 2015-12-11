@@ -1,6 +1,6 @@
-title: etlua Templates
---
-
+{
+  title: "etlua Templates"
+}
 # `etlua` Templates
 
 [`etlua`][1] is a templating language that lets you render the result of Lua

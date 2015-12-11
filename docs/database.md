@@ -1,5 +1,6 @@
-title: Database Access
---
+{
+  title: "Database Access"
+}
 # Database Access
 
 Lapis comes with a set of classes and functions for working with either

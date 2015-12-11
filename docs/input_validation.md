@@ -1,5 +1,6 @@
-title: Input Validation
---
+{
+  title: "Input Validation"
+}
 # Input Validation
 
 ## Example Validation

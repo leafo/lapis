@@ -1,5 +1,6 @@
-title: Getting Started With Lapis
---
+{
+  title: "Getting Started With Lapis"
+}
 # Getting Started With Lapis
 
 [Lapis](http://leafo.net/lapis/) is a web framework written for Lua and

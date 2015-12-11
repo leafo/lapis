@@ -1,5 +1,6 @@
-title: HTML Generation
---
+{
+  title: "HTML Generation"
+}
 <div class="override_lang"></div>
 
 # HTML Generation

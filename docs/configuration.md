@@ -1,5 +1,6 @@
-title: Configuration and Environments
---
+{
+  title: "Configuration and Environments"
+}
 # Configuration and Environments
 
 Lapis is designed to run your server in different configurations called

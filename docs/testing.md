@@ -1,5 +1,6 @@
-title: Testing
---
+{
+  title: "Testing"
+}
 # Testing
 
 Lapis comes with utilities for handling two types of testing.

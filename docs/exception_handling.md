@@ -1,5 +1,6 @@
-title: Exception Handling 
---
+{
+  title: "Exception Handling"
+}
 # Exception Handling
 
 ## The Kinds of Errors
