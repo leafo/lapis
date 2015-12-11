@@ -52,8 +52,28 @@ need to call `element "div"`.
 > If you want to create a `<table>` or `<select>` tag you'll need to use
 > `element` because Lua uses those names in the built-in modules.
 
-All strings passed to the HTML builder functions are escaped automatically. You
-never have to worry about introducing any cross site scripting vulnerabilities.
+All strings passed to the HTML builder functions (attribute names, values, or
+tag contents) are escaped automatically. You never have to worry about
+introducing any cross site scripting vulnerabilities.
+
+### Special attributes
+
+The `class` attribute can be passed as a table, and the class list will be
+constructed from it. The table can contain either array element, or hash
+elements:
+
+```moon
+div {
+class: {"one", "two", three: false, four: true}
+}, "Hello world!"
+```
+
+Will generate:
+
+```html
+<html class: "one two four">Hello world!</div>
+```
+
 
 ### Helper functions
 
