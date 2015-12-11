@@ -64,7 +64,7 @@ elements:
 
 ```moon
 div {
-class: {"one", "two", three: false, four: true}
+  class: {"one", "two", three: false, four: true}
 }, "Hello world!"
 ```
 

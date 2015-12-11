@@ -1227,6 +1227,10 @@ SELECT * from "users" where "user_id" = 123;
 The relation definition can take an optional `key` option to override what
 field is used on the current model to reference as the foreign key.
 
+If the relation returns `nil` from the database, then that will be cached on
+the model and subsequent calls will return `nil` without issuing another query.
+You can call the `refresh` method to clear the relation caches.
+
 ### `has_one`
 
 A relation that fetches a single related model. Similar to `belongs_to`, but
@@ -1300,6 +1304,10 @@ profile = user\get_user_profile!
 ```sql
 SELECT * from "user_profiles" where "owner_id" = 123;
 ```
+
+If the relation returns `nil` from the database, then that will be cached on
+the model and subsequent calls will return `nil` without issuing another query.
+You can call the `refresh` method to clear the relation caches.
 
 ### `has_many`
 
