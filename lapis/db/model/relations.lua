@@ -40,7 +40,7 @@ local preload_relations
 preload_relations = function(self, objects, name, ...)
   local preloader = self.relation_preloaders[name]
   if not (preloader) then
-    error("Model " .. tostring(self.__name) .. " not have a preloader for " .. tostring(name))
+    error("Model " .. tostring(self.__name) .. " doesn't have preloader for " .. tostring(name))
   end
   preloader(self, objects)
   if ... then
