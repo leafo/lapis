@@ -37,19 +37,33 @@ find_relation = function(model, name)
   end
 end
 local preload_relations
-preload_relations = function(self, objects, ...)
-  local names = {
-    ...
-  }
-  for _index_0 = 1, #names do
-    local name = names[_index_0]
-    local preloader = self.relation_preloaders[name]
-    if not (preloader) then
-      error("Model " .. tostring(self.__name) .. " not have a preloader for " .. tostring(name))
-    end
-    preloader(self, objects)
+preload_relations = function(self, objects, name, ...)
+  local preloader = self.relation_preloaders[name]
+  if not (preloader) then
+    error("Model " .. tostring(self.__name) .. " not have a preloader for " .. tostring(name))
   end
-  return true
+  preloader(self, objects)
+  if ... then
+    return self:preload_relations(objects, ...)
+  else
+    return true
+  end
+end
+local mark_loaded_relations
+mark_loaded_relations = function(items, name)
+  for _index_0 = 1, #items do
+    local item = items[_index_0]
+    do
+      local loaded = item[LOADED_KEY]
+      if loaded then
+        loaded[name] = true
+      else
+        item[LOADED_KEY] = {
+          [name] = true
+        }
+      end
+    end
+  end
 end
 local clear_loaded_relation
 clear_loaded_relation = function(item, name)
@@ -176,6 +190,7 @@ belongs_to = function(self, name, opts)
   end
   self.relation_preloaders[name] = function(self, objects, ...)
     local model = assert_model(self.__class, source)
+    mark_loaded_relations(objects, name)
     return model:include_in(objects, column_name, ...)
   end
 end
@@ -213,6 +228,7 @@ has_one = function(self, name, opts)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
     preload_opts = preload_opts or { }
     preload_opts.flip = true
+    mark_loaded_relations(objects, name)
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end
@@ -277,6 +293,7 @@ has_many = function(self, name, opts)
     local preload_opts = preload_opts or { }
     preload_opts.flip = true
     preload_opts.many = true
+    mark_loaded_relations(objects, name)
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end
@@ -302,6 +319,7 @@ polymorphic_belongs_to = function(self, name, opts)
   end)())
   self.relation_preloaders[name] = function(self, objs, preload_opts)
     local fields = preload_opts and preload_opts.fields
+    mark_loaded_relations(objs, name)
     for _index_0 = 1, #types do
       local _des_0 = types[_index_0]
       local type_name, model_name

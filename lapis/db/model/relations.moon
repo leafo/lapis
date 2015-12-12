@@ -16,16 +16,24 @@ find_relation = (model, name) ->
     find_relation p, name
 
 
-preload_relations = (objects, ...) =>
-  names = {...}
-  for name in *names
-    preloader = @relation_preloaders[name]
-    unless preloader
-      error "Model #{@__name} not have a preloader for #{name}"
+preload_relations = (objects, name, ...) =>
+  preloader = @relation_preloaders[name]
+  unless preloader
+    error "Model #{@__name} not have a preloader for #{name}"
 
-    preloader @, objects
+  preloader @, objects
 
-  true
+  if ...
+    @preload_relations objects, ...
+  else
+    true
+
+mark_loaded_relations = (items, name) ->
+  for item in *items
+    if loaded = item[LOADED_KEY]
+      loaded[name] = true
+    else
+      item[LOADED_KEY] = { [name]: true }
 
 clear_loaded_relation = (item, name) ->
   item[name] = nil
@@ -97,6 +105,7 @@ belongs_to = (name, opts) =>
 
   @relation_preloaders[name] = (objects, ...) =>
     model = assert_model @@, source
+    mark_loaded_relations objects, name
     model\include_in objects, column_name, ...
 
 has_one = (name, opts) =>
@@ -132,6 +141,7 @@ has_one = (name, opts) =>
 
     preload_opts or= {}
     preload_opts.flip = true
+    mark_loaded_relations objects, name
     model\include_in objects, foreign_key, preload_opts
 
 has_many = (name, opts) =>
@@ -186,6 +196,7 @@ has_many = (name, opts) =>
     preload_opts or= {}
     preload_opts.flip = true
     preload_opts.many = true
+    mark_loaded_relations objects, name
     model\include_in objects, foreign_key, preload_opts
 
 polymorphic_belongs_to = (name, opts) =>
@@ -208,6 +219,7 @@ polymorphic_belongs_to = (name, opts) =>
 
   @relation_preloaders[name] = (objs, preload_opts) =>
     fields = preload_opts and preload_opts.fields
+    mark_loaded_relations objs, name
 
     for {type_name, model_name} in *types
       model = assert_model @@, model_name

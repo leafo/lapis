@@ -486,3 +486,20 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "tags" where "post_id" in (888)]]
       }
 
+      import LOADED_KEY from require "lapis.db.model.relations"
+
+      assert.same {
+        user: true
+        date: true
+        tags: true
+      }, post[LOADED_KEY]
+
+      before_count = #get_queries!
+
+      post\get_user!
+      post\get_date!
+      post\get_tags!
+
+      assert.same, before_count, #get_queries!
+
+
