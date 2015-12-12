@@ -561,6 +561,46 @@ describe "lapis.db.model", ->
       }, queries
 
 
+    it "should make belongs_to getter with inheritance", ->
+      query_mock['SELECT'] = { { id: 101 } }
+
+      models.Users = class extends Model
+        @primary_key: "id"
+
+      class Posts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
+
+        get_user: =>
+          with user = super!
+            user.color = "green"
+
+      post = Posts!
+      post.user_id = 123
+      assert.same {
+        id: 101
+        color: "green"
+      }, post\get_user!
+
+    it "caches nil result from belongs_to_fetch", ->
+      query_mock['SELECT'] = { }
+
+      models.Users = class extends Model
+        @primary_key: "id"
+
+      class Posts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
+
+      post = Posts!
+      post.user_id = 123
+
+      assert.same nil, post\get_user!
+      assert.same nil, post\get_user!
+      assert.same 1, #queries
+
     it "should make fetch getter", ->
       called = 0
 
