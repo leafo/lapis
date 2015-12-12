@@ -16,8 +16,11 @@ end
 local cjson = require("cjson")
 local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
-local add_relations
-add_relations = require("lapis.db.model.relations").add_relations
+local add_relations, mark_loaded_relations
+do
+  local _obj_0 = require("lapis.db.model.relations")
+  add_relations, mark_loaded_relations = _obj_0.add_relations, _obj_0.mark_loaded_relations
+end
 local Enum
 do
   local _class_0
@@ -461,6 +464,12 @@ do
           for _index_0 = 1, #other_records do
             local other = other_records[_index_0]
             other[field_name] = records[other[src_key]]
+          end
+          do
+            local for_relation = opts and opts.for_relation
+            if for_relation then
+              mark_loaded_relations(other_records, for_relation)
+            end
           end
         end
       end

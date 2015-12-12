@@ -188,10 +188,11 @@ belongs_to = function(self, name, opts)
       return obj
     end
   end
-  self.relation_preloaders[name] = function(self, objects, ...)
+  self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
-    mark_loaded_relations(objects, name)
-    return model:include_in(objects, column_name, ...)
+    preload_opts = preload_opts or { }
+    preload_opts.for_relation = name
+    return model:include_in(objects, column_name, preload_opts)
   end
 end
 local has_one
@@ -228,7 +229,7 @@ has_one = function(self, name, opts)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
     preload_opts = preload_opts or { }
     preload_opts.flip = true
-    mark_loaded_relations(objects, name)
+    preload_opts.for_relation = name
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end
@@ -293,7 +294,7 @@ has_many = function(self, name, opts)
     local preload_opts = preload_opts or { }
     preload_opts.flip = true
     preload_opts.many = true
-    mark_loaded_relations(objects, name)
+    preload_opts.for_relation = name
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end
@@ -319,7 +320,6 @@ polymorphic_belongs_to = function(self, name, opts)
   end)())
   self.relation_preloaders[name] = function(self, objs, preload_opts)
     local fields = preload_opts and preload_opts.fields
-    mark_loaded_relations(objs, name)
     for _index_0 = 1, #types do
       local _des_0 = types[_index_0]
       local type_name, model_name
@@ -339,6 +339,7 @@ polymorphic_belongs_to = function(self, name, opts)
         filtered = _accum_0
       end
       model:include_in(filtered, id_col, {
+        for_relation = name,
         as = name,
         fields = fields and fields[type_name]
       })
@@ -445,5 +446,6 @@ return {
   clear_loaded_relation = clear_loaded_relation,
   LOADED_KEY = LOADED_KEY,
   add_relations = add_relations,
-  get_relations_class = get_relations_class
+  get_relations_class = get_relations_class,
+  mark_loaded_relations = mark_loaded_relations
 }

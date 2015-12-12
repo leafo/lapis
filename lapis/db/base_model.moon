@@ -6,7 +6,7 @@ import require, type, setmetatable, rawget, assert, pairs, unpack, error, next f
 cjson = require "cjson"
 
 import OffsetPaginator from require "lapis.db.pagination"
-import add_relations from require "lapis.db.model.relations"
+import add_relations, mark_loaded_relations from require "lapis.db.model.relations"
 
 class Enum
   debug = =>
@@ -226,6 +226,9 @@ class BaseModel
 
         for other in *other_records
           other[field_name] = records[other[src_key]]
+
+        if for_relation = opts and opts.for_relation
+          mark_loaded_relations other_records, for_relation
 
     other_records
 

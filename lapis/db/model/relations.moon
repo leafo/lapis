@@ -15,7 +15,6 @@ find_relation = (model, name) ->
   if p = model.__parent
     find_relation p, name
 
-
 preload_relations = (objects, name, ...) =>
   preloader = @relation_preloaders[name]
   unless preloader
@@ -103,10 +102,11 @@ belongs_to = (name, opts) =>
     with obj = model\find @[column_name]
       @[name] = obj
 
-  @relation_preloaders[name] = (objects, ...) =>
+  @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
-    mark_loaded_relations objects, name
-    model\include_in objects, column_name, ...
+    preload_opts or= {}
+    preload_opts.for_relation = name
+    model\include_in objects, column_name, preload_opts
 
 has_one = (name, opts) =>
   source = opts.has_one
@@ -141,7 +141,7 @@ has_one = (name, opts) =>
 
     preload_opts or= {}
     preload_opts.flip = true
-    mark_loaded_relations objects, name
+    preload_opts.for_relation = name
     model\include_in objects, foreign_key, preload_opts
 
 has_many = (name, opts) =>
@@ -196,7 +196,7 @@ has_many = (name, opts) =>
     preload_opts or= {}
     preload_opts.flip = true
     preload_opts.many = true
-    mark_loaded_relations objects, name
+    preload_opts.for_relation = name
     model\include_in objects, foreign_key, preload_opts
 
 polymorphic_belongs_to = (name, opts) =>
@@ -219,12 +219,12 @@ polymorphic_belongs_to = (name, opts) =>
 
   @relation_preloaders[name] = (objs, preload_opts) =>
     fields = preload_opts and preload_opts.fields
-    mark_loaded_relations objs, name
 
     for {type_name, model_name} in *types
       model = assert_model @@, model_name
       filtered = [o for o in *objs when o[type_col] == @@[enum_name][type_name]]
       model\include_in filtered, id_col, {
+        for_relation: name
         as: name
         fields: fields and fields[type_name]
       }
@@ -299,5 +299,5 @@ add_relations = (relations) =>
 
 {
   :relation_builders, :find_relation, :clear_loaded_relation, :LOADED_KEY
-  :add_relations, :get_relations_class
+  :add_relations, :get_relations_class, :mark_loaded_relations
 }
