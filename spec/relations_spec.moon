@@ -458,8 +458,8 @@ describe "lapis.db.model.relations", ->
 
       assert.same 2, #get_queries!
 
-  describe "preload_relations #ddd", ->
-    it "should preload many relations", ->
+  describe "preload_relations", ->
+    it "should preload many relations that return empty", ->
       mock_query "SELECT", {}
 
       models.Dates = class Dates extends Model
@@ -502,4 +502,46 @@ describe "lapis.db.model.relations", ->
 
       assert.same, before_count, #get_queries!
 
+    it "should preload with correct name", ->
+      mock_query "SELECT", {
+        { id: 1, name: "last" }
+        { id: 2, name: "first" }
+        { id: 3, name: "default" }
+      }
+
+      models.Topics = class Topics extends Model
+
+      class Categories extends Model
+        @relations: {
+          {"last_topic", belongs_to: "Topics"}
+          {"first_topic", belongs_to: "Topics"}
+          {"topic", belongs_to: "Topics"}
+        }
+
+      cat = Categories\load {
+        id: 1243
+        last_topic_id: 1
+        first_topic_id: 2
+        topic_id: 3
+      }
+
+      Categories\preload_relations {cat}, "last_topic", "first_topic", "topic"
+      assert.same 3, #get_queries!
+
+      assert.same {
+        id: 1
+        name: "last"
+      }, cat\get_last_topic!
+
+      assert.same {
+        id: 2
+        name: "first"
+      }, cat\get_first_topic!
+
+      assert.same {
+        id: 3
+        name: "default"
+      }, cat\get_topic!
+
+      assert.same 3, #get_queries!
 
