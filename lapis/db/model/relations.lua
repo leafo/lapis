@@ -85,6 +85,15 @@ get_relations_class = function(model)
   if rawget(parent, "_relations_class") then
     return parent
   end
+  local preloaders = { }
+  do
+    local inherited = parent.relation_preloaders
+    if inherited then
+      setmetatable(preloaders, {
+        __index = inherited
+      })
+    end
+  end
   local relations_class
   do
     local _class_0
@@ -123,7 +132,7 @@ get_relations_class = function(model)
     local self = _class_0
     self.__name = tostring(model.__name) .. "Relations"
     self._relations_class = true
-    self.relation_preloaders = { }
+    self.relation_preloaders = preloaders
     self.preload_relations = preload_relations
     if _parent_0.__inherited then
       _parent_0.__inherited(_parent_0, _class_0)

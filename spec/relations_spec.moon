@@ -459,7 +459,7 @@ describe "lapis.db.model.relations", ->
       assert.same 2, #get_queries!
 
   describe "preload_relations", ->
-    it "should preload many relations that return empty", ->
+    it "preloads many relations that return empty", ->
       mock_query "SELECT", {}
 
       models.Dates = class Dates extends Model
@@ -502,7 +502,7 @@ describe "lapis.db.model.relations", ->
 
       assert.same, before_count, #get_queries!
 
-    it "should preload with correct name", ->
+    it "preloads with correct name", ->
       mock_query "SELECT", {
         { id: 1, name: "last" }
         { id: 2, name: "first" }
@@ -544,4 +544,25 @@ describe "lapis.db.model.relations", ->
       }, cat\get_topic!
 
       assert.same 3, #get_queries!
+
+    it "finds inherited preloaders", ->
+      models.Users = class Users extends Model
+
+      class SimplePosts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
+
+      class JointPosts extends SimplePosts
+        @relations: {
+          {"second_user", belongs_to: "Users"}
+        }
+
+      p = JointPosts\load {
+        id: 999
+        user_id: 1
+        second_user_id: 2
+      }
+
+      JointPosts\preload_relations {p}, "user", "second_user"
 

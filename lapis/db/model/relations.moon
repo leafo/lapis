@@ -48,11 +48,15 @@ get_relations_class = (model) ->
   if rawget parent, "_relations_class"
     return parent
 
+  preloaders = {}
+  if inherited = parent.relation_preloaders
+    setmetatable preloaders, __index: inherited
+
   relations_class = class extends model.__parent
     @__name: "#{model.__name}Relations"
     @_relations_class: true
 
-    @relation_preloaders: {}
+    @relation_preloaders: preloaders
 
     @preload_relations: preload_relations
     clear_loaded_relation: clear_loaded_relation
