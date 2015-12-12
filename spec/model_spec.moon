@@ -4,45 +4,26 @@ config.reset true
 
 db = require "lapis.db.postgres"
 import Model from require "lapis.db.postgres.model"
-import with_query_fn, assert_queries from require "spec.helpers"
+import stub_queries, assert_queries from require "spec.helpers"
 
 time = 1376377000
 
 describe "lapis.db.model", ->
-  local queries
-  local query_mock
+  get_queries, mock_query = stub_queries!
 
-  local restore_query
   local old_date
 
+  with old = assert_queries
+    assert_queries = (expected) ->
+      old expected, get_queries!
+
   setup ->
-    export ngx = { null: nil }
-
-    restore_query = with_query_fn (q) ->
-      table.insert queries, (q\gsub("%s+", " ")\gsub("[\n\t]", " "))
-
-      -- try to find a mock
-      for k,v in pairs query_mock
-        if q\match k
-          if type(v) == "function"
-            v = v!
-
-          return v
-
-      {}
-
     old_date = os.date
     os.date = (str) ->
       old_date str, time
 
   teardown ->
-    export ngx = nil
-    restore_query!
     os.date = old_date
-
-  before_each ->
-    queries = {}
-    query_mock = {}
 
   it "should get singular name", ->
     assert.same "thing", (class Things extends Model)\singular_name!
@@ -65,7 +46,7 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where id = 1234'
       'SELECT hello from "things" '
       'SELECT hello, world from "things" where id = 1234'
-    }, queries
+    }
 
 
   it "should find", ->
@@ -137,11 +118,11 @@ describe "lapis.db.model", ->
         [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
         [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
       }
-    }, queries
+    }
 
   it "should paginate", ->
-    query_mock['COUNT%(%*%)'] = {{ c: 127 }}
-    query_mock['BLAH'] = {{ hello: "world"}}
+    mock_query "COUNT%(%*%)", {{ c: 127 }}
+    mock_query "BLAH", {{ hello: "world"}}
 
     class Things extends Model
 
@@ -187,8 +168,7 @@ describe "lapis.db.model", ->
       'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 10'
       'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
       'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
-    }, queries
-
+    }
 
   it "should ordered paginate", ->
     import OrderedPaginator from require "lapis.db.pagination"
@@ -202,13 +182,13 @@ describe "lapis.db.model", ->
     assert_queries {
       'SELECT * from "things" where color = blue order by "things"."id" ASC limit 10'
       'SELECT * from "things" where "things"."id" > 123 and (color = blue) order by "things"."id" ASC limit 10'
-    }, queries
+    }
 
   it "should ordered paginate with multiple keys", ->
     import OrderedPaginator from require "lapis.db.pagination"
     class Things extends Model
 
-    query_mock['SELECT'] = { { id: 101, updated_at: 300 }, { id: 102, updated_at: 301 } }
+    mock_query "SELECT", { { id: 101, updated_at: 300 }, { id: 102, updated_at: 301 } }
 
     pager = OrderedPaginator Things, {"id", "updated_at"}, "where color = blue"
 
@@ -237,12 +217,13 @@ describe "lapis.db.model", ->
 
       'SELECT * from "things" where "things"."id" >= 100 and "things"."updated_at" > 200 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
       'SELECT * from "things" where "things"."id" <= 32 and "things"."updated_at" < 42 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
-    }, queries
+    }
 
 
   it "should create model", ->
+    mock_query "INSERT", { { id: 101 } }
+
     class Things extends Model
-    query_mock['INSERT'] = { { id: 101 } }
 
     thing = Things\create color: "blue"
 
@@ -256,7 +237,7 @@ describe "lapis.db.model", ->
     class OtherThings extends Model
       @primary_key: {"id_a", "id_b"}
 
-    query_mock['INSERT'] = { { id_a: "hello", id_b: "world" } }
+    mock_query "INSERT", { { id_a: "hello", id_b: "world" } }
 
     thing3 = OtherThings\create id_a: 120, height: "400px"
 
@@ -277,10 +258,10 @@ describe "lapis.db.model", ->
         [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
         [[INSERT INTO "other_things" ("id_a", "height") VALUES (120, '400px') RETURNING "id_a", "id_b"]]
       }
-    }, queries
+    }
 
   it "should create model with options", ->
-    query_mock['INSERT'] = { { id: 101 } }
+    mock_query "INSERT", { { id: 101 } }
 
     class TimedThings extends Model
       @timestamp: true
@@ -297,21 +278,21 @@ describe "lapis.db.model", ->
         [[INSERT INTO "timed_things" ("updated_at", "color", "created_at") VALUES ('2013-08-13 06:56:40', 'blue', '2013-08-13 06:56:40') RETURNING "id", "height"]]
         [[INSERT INTO "timed_things" ("updated_at", "created_at", "color") VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'blue') RETURNING "id", "height"]]
       }
-    }, queries
+    }
 
   it "should create model with returning *", ->
-    query_mock['INSERT'] = { { id: 101, color: "blue" } }
+    mock_query "INSERT", { { id: 101, color: "blue" } }
 
     class Hi extends Model
     Hi\create { color: "blue" }, returning: "*"
 
     assert_queries {
       [[INSERT INTO "hi" ("color") VALUES ('blue') RETURNING *]]
-    }, queries
+    }
 
   it "should refresh model", ->
     class Things extends Model
-    query_mock['SELECT'] = { { id: 123 } }
+    mock_query "SELECT", { { id: 123 } }
 
     instance = Things\load { id: 123 }
     instance\refresh!
@@ -327,14 +308,13 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where "id" = 123'
       'SELECT "hello" from "things" where "id" = 123'
       'SELECT "foo", "bar" from "things" where "id" = 123'
-    }, queries
-
+    }
 
   it "should refresh model with composite primary key", ->
     class Things extends Model
       @primary_key: {"a", "b"}
 
-    query_mock['SELECT'] = { { a: "hello", b: false } }
+    mock_query "SELECT", { { a: "hello", b: false } }
     instance = Things\load { a: "hello", b: false }
     instance\refresh!
 
@@ -346,8 +326,7 @@ describe "lapis.db.model", ->
     assert_queries {
       [[SELECT * from "things" where "a" = 'hello' AND "b" = FALSE]]
       [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
-    }, queries
-
+    }
 
   it "should update model", ->
     class Things extends Model
@@ -389,7 +368,7 @@ describe "lapis.db.model", ->
       }
       [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
       [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
-    }, queries
+    }
 
   it "should delete model", ->
     class Things extends Model
@@ -414,17 +393,16 @@ describe "lapis.db.model", ->
         [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
         [[DELETE FROM "things" WHERE "key2" = 4821 AND "key1" = 'blah blag']]
       }
-    }, queries
-
+    }
 
   it "should check unique constraint", ->
     class Things extends Model
 
-    query_mock['SELECT 1'] = {{ yes: 1 }}
+    mock_query "SELECT 1", {{ yes: 1 }}
 
     assert.same true, Things\check_unique_constraint "name", "world"
 
-    query_mock['SELECT 1'] = {}
+    mock_query "SELECT 1", {}
 
     assert.same false, Things\check_unique_constraint color: "red", height: 10
 
@@ -434,9 +412,7 @@ describe "lapis.db.model", ->
         [[SELECT 1 from "things" where "height" = 10 AND "color" = 'red' limit 1]]
         [[SELECT 1 from "things" where "color" = 'red' AND "height" = 10 limit 1]]
       }
-    }, queries
-
-
+    }
 
   it "should include other association", ->
     class Things extends Model
@@ -455,7 +431,7 @@ describe "lapis.db.model", ->
       [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]]
       [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110) and "dad" = TRUE]]
       [[SELECT one, two, three from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
-    }, queries
+    }
 
   it "should create model with extend syntax", ->
     m = Model\extend "the_things", {
@@ -472,7 +448,7 @@ describe "lapis.db.model", ->
 
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
-      query_mock['INSERT'] = { { id: 101 } }
+      mock_query "INSERT", { { id: 101 } }
 
       class Things extends Model
         @constraints: {
@@ -484,7 +460,7 @@ describe "lapis.db.model", ->
       thing = Things\load { id: 0, name: "hello" }
       assert.same { nil, "name can't be hello"}, { thing\update "name" }
 
-      assert_queries { }, queries
+      assert_queries {}
 
     it "should prevent create for missing field", ->
       class Things extends Model
@@ -496,7 +472,7 @@ describe "lapis.db.model", ->
       assert.same { nil, "missing `name`"}, { Things\create! }
 
     it "should allow to update values on create and on update", ->
-      query_mock['INSERT'] = { { id: 101 } }
+      mock_query "INSERT", { { id: 101 } }
 
       class Things extends Model
         @constraints: {
@@ -509,7 +485,7 @@ describe "lapis.db.model", ->
       assert_queries {
         [[INSERT INTO "things" ("name") VALUES ('changed from create') RETURNING "id"]]
         [[UPDATE "things" SET "name" = 'changed from update' WHERE "id" = 101]]
-      }, queries
+      }
 
   describe "inheritance", ->
     it "returns correct cached table name", ->

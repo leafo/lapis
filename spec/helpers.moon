@@ -36,4 +36,39 @@ assert_queries = (expected, result) ->
     else
       assert.same q, result[i]
 
-{ :with_query_fn, :assert_queries }
+stub_queries = ->
+  import setup, teardown, before_each from require "busted"
+  local queries, query_mock
+
+  get_queries = -> queries
+
+  mock_query = (pattern, result) ->
+    query_mock[pattern] = result
+
+  local restore
+  setup ->
+    _G.ngx = { null: nil }
+    restore = with_query_fn (q) ->
+      table.insert queries, (q\gsub("%s+", " ")\gsub("[\n\t]", " "))
+
+      -- try to find a mock
+      for k,v in pairs query_mock
+        if q\match k
+          return if type(v) == "function"
+            v!
+          else
+            v
+
+      {}
+
+  teardown ->
+    _G.ngx = nil
+    restore!
+
+  before_each ->
+    queries = {}
+    query_mock = {}
+
+  get_queries, mock_query
+
+{ :with_query_fn, :assert_queries, :stub_queries }
