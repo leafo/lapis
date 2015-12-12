@@ -710,6 +710,7 @@ describe "lapis.db.model", ->
 
       assert Child.get_user, "expecting get_user"
       assert Child.get_category, "expecting get_category"
+      assert.same nil, rawget Child, "get_user"
 
     describe "polymorphic belongs to", ->
       local Foos, Bars, Bazs, Items
