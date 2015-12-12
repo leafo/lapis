@@ -1,10 +1,17 @@
-local _class, _super
-_class = function(name, tbl, extend)
-  if not (type(name) == "string") then
-    extend = tbl
-    tbl = name
-    name = nil
+local make_super
+make_super = function(cls)
+  return function(self, method, ...)
+    local fn
+    if method == "new" then
+      fn = cls.__parent.__init
+    else
+      fn = cls.__parent.__base[method]
+    end
+    return fn(self, ...)
   end
+end
+local _class
+_class = function(name, tbl, extend, setup_fn)
   local cls
   if extend then
     do
@@ -37,6 +44,16 @@ _class = function(name, tbl, extend)
         end
       })
       _base_0.__class = _class_0
+      local self = _class_0
+      self.__base.super = make_super(self.__class)
+      self.__name = name
+      if tbl then
+        tbl.new = nil
+        for k, v in pairs(tbl) do
+          self.__base[k] = v
+        end
+      end
+      local _ = setup_fn and setup_fn(self)
       if _parent_0.__inherited then
         _parent_0.__inherited(_parent_0, _class_0)
       end
@@ -60,36 +77,21 @@ _class = function(name, tbl, extend)
         end
       })
       _base_0.__class = _class_0
+      local self = _class_0
+      self.__base.super = make_super(self.__class)
+      self.__name = name
+      if tbl then
+        tbl.new = nil
+        for k, v in pairs(tbl) do
+          self.__base[k] = v
+        end
+      end
+      local _ = setup_fn and setup_fn(self)
       cls = _class_0
-    end
-  end
-  local base = cls.__base
-  if tbl then
-    tbl.new = nil
-    for k, v in pairs(tbl) do
-      base[k] = v
-    end
-  end
-  base.super = base.super or _super
-  cls.__name = name
-  do
-    local inherited = extend and extend.__inherited
-    if inherited then
-      inherited(extend, cls)
     end
   end
   return cls
 end
-_super = function(instance, method, ...)
-  local parent_method
-  if method == "new" then
-    parent_method = instance.__class.__parent.__init
-  else
-    parent_method = instance.__class.__parent.__base[method]
-  end
-  return parent_method(instance, ...)
-end
 return {
-  class = _class,
-  super = _super
+  class = _class
 }

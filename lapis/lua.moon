@@ -1,41 +1,44 @@
 
-local *
+make_super = (cls) ->
+  (method, ...) =>
+    fn = if method == "new"
+      cls.__parent.__init
+    else
+      cls.__parent.__base[method]
 
-_class = (name, tbl, extend) ->
-  unless type(name) == "string"
-    extend = tbl
-    tbl = name
-    name = nil
+    fn @, ...
 
+-- _class "Hello", {
+--   print_name: => print "hello!"
+-- }, AnotherClass
+_class = (name, tbl, extend, setup_fn) ->
   cls = if extend
     class extends extend
       new: tbl and tbl.new
+
+      @__base.super = make_super @__class
+      @__name: name
+
+      if tbl
+        tbl.new = nil
+        for k,v in pairs tbl
+          @__base[k] = v
+
+      setup_fn and setup_fn @
   else
     class
       new: tbl and tbl.new
 
-  base = cls.__base
+      @__base.super = make_super @__class
+      @__name: name
 
-  if tbl
-    tbl.new = nil
-    for k,v in pairs tbl
-      base[k] = v
+      if tbl
+        tbl.new = nil
+        for k,v in pairs tbl
+          @__base[k] = v
 
-  base.super or= _super
-
-  cls.__name = name
-
-  if inherited = extend and extend.__inherited
-    inherited extend, cls
+      setup_fn and setup_fn @
 
   cls
 
-_super = (instance, method, ...) ->
-  parent_method = if method == "new"
-    instance.__class.__parent.__init
-  else
-    instance.__class.__parent.__base[method]
-
-  parent_method instance, ...
-
-{ class: _class, super: _super }
+{ class: _class }
