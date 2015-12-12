@@ -2,15 +2,18 @@
 describe "lapis.lua", ->
   it "works with super", ->
     lua = require "lapis.lua"
+    count = 0
+
     local *
 
     Base = lua.class "Base", {
-      new: => print "yeah"
+      new: =>
+        count += 2
     }
 
     LuaClass = lua.class "LuaClass", {
       new: =>
-        print "hello!"
+        count += 3
         LuaClass\super @, "new"
 
     }, Base
@@ -19,4 +22,7 @@ describe "lapis.lua", ->
     }, LuaClass
 
     LuaClass2!
+
+    assert.same 5, count
+
 
