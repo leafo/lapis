@@ -1,12 +1,11 @@
 
-make_super = (cls) ->
-  (method, ...) =>
-    fn = if method == "new"
-      cls.__parent.__init
-    else
-      cls.__parent.__base[method]
+_super = (cls, self, method, ...) ->
+  fn = if method == "new"
+    cls.__parent.__init
+  else
+    cls.__parent.__base[method]
 
-    fn @, ...
+  fn @, ...
 
 -- _class "Hello", {
 --   print_name: => print "hello!"
@@ -15,8 +14,7 @@ _class = (name, tbl, extend, setup_fn) ->
   cls = if extend
     class extends extend
       new: tbl and tbl.new
-
-      @__base.super = make_super @__class
+      @super: _super
       @__name: name
 
       if tbl
@@ -28,8 +26,7 @@ _class = (name, tbl, extend, setup_fn) ->
   else
     class
       new: tbl and tbl.new
-
-      @__base.super = make_super @__class
+      @super: _super
       @__name: name
 
       if tbl

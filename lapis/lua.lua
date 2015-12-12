@@ -1,14 +1,12 @@
-local make_super
-make_super = function(cls)
-  return function(self, method, ...)
-    local fn
-    if method == "new" then
-      fn = cls.__parent.__init
-    else
-      fn = cls.__parent.__base[method]
-    end
-    return fn(self, ...)
+local _super
+_super = function(cls, self, method, ...)
+  local fn
+  if method == "new" then
+    fn = cls.__parent.__init
+  else
+    fn = cls.__parent.__base[method]
   end
+  return fn(self, ...)
 end
 local _class
 _class = function(name, tbl, extend, setup_fn)
@@ -45,7 +43,7 @@ _class = function(name, tbl, extend, setup_fn)
       })
       _base_0.__class = _class_0
       local self = _class_0
-      self.__base.super = make_super(self.__class)
+      self.super = _super
       self.__name = name
       if tbl then
         tbl.new = nil
@@ -78,7 +76,7 @@ _class = function(name, tbl, extend, setup_fn)
       })
       _base_0.__class = _class_0
       local self = _class_0
-      self.__base.super = make_super(self.__class)
+      self.super = _super
       self.__name = name
       if tbl then
         tbl.new = nil
