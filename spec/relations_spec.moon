@@ -382,7 +382,7 @@ describe "lapis.db.model.relations", ->
         'SELECT c, d from "bazs" where "id" in (113)'
       }
 
-  it "should find relation", ->
+  it "finds relation", ->
     import find_relation from require "lapis.db.model.relations"
 
     class Posts extends Model
@@ -400,4 +400,61 @@ describe "lapis.db.model.relations", ->
     assert.same nil, (find_relation Posts, "not there")
     assert.same {"cool_user", belongs_to: "CoolUsers", key: "owner_id"},
       (find_relation BetterPosts, "cool_user")
+
+
+  it "clears loaded relation cached with value", ->
+    mock_query "SELECT", {
+      {id: 777, name: "hello"}
+    }
+    models.Users = class Users extends Model
+
+    class Posts extends Model
+      @relations: {
+        {"user", belongs_to: "Users"}
+      }
+
+    post = Posts\load {
+      id: 1
+      user_id: 1
+    }
+
+    post\get_user!
+    post\get_user!
+
+    assert.same 1, #get_queries!
+
+    assert.not.nil post.user
+
+    post\clear_loaded_relation "user"
+
+    assert.nil post.user
+
+    post\get_user!
+
+    assert.same 2, #get_queries!
+
+  it "clears loaded relation cached with nil", ->
+    mock_query "SELECT", {}
+
+    models.Users = class Users extends Model
+
+    class Posts extends Model
+      @relations: {
+        {"user", belongs_to: "Users"}
+      }
+
+    post = Posts\load {
+      id: 1
+      user_id: 1
+    }
+
+    post\get_user!
+    post\get_user!
+
+    assert.same 1, #get_queries!
+
+    post\clear_loaded_relation "user"
+    post\get_user!
+
+    assert.same 2, #get_queries!
 
