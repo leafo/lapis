@@ -975,4 +975,3 @@ describe "lapis.db.model", ->
       assert.same "definitelyworks", Ones\get_relation_model "Users"
 
 
-

@@ -577,16 +577,22 @@ do
       tbl = { }
     end
     local lua = require("lapis.lua")
-    do
-      local cls = lua.class(table_name, tbl, self)
+    local class_fields = {
+      "primary_key",
+      "timestamp",
+      "constraints",
+      "relations"
+    }
+    return lua.class(table_name, tbl, self, function(cls)
       cls.table_name = function()
         return table_name
       end
-      cls.primary_key = tbl.primary_key
-      cls.timestamp = tbl.timestamp
-      cls.constraints = tbl.constraints
-      return cls
-    end
+      for _index_0 = 1, #class_fields do
+        local f = class_fields[_index_0]
+        cls[f] = tbl[f]
+        cls.__base[f] = nil
+      end
+    end)
   end
   BaseModel = _class_0
 end

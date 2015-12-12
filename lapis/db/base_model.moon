@@ -308,11 +308,16 @@ class BaseModel
   -- alternative to MoonScript inheritance
   @extend: (table_name, tbl={}) =>
     lua = require "lapis.lua"
-    with cls = lua.class table_name, tbl, @
-      .table_name = -> table_name
-      .primary_key = tbl.primary_key
-      .timestamp = tbl.timestamp
-      .constraints = tbl.constraints
+
+    class_fields = {
+      "primary_key", "timestamp", "constraints", "relations"
+    }
+
+    lua.class table_name, tbl, @, (cls) ->
+      cls.table_name = -> table_name
+      for f in *class_fields
+        cls[f] = tbl[f]
+        cls.__base[f] = nil
 
   _primary_cond: =>
     cond = {}
