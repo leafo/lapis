@@ -4,6 +4,35 @@ assert_model = (primary_model, model_name) ->
   with m = primary_model\get_relation_model model_name
     error "failed to find model `#{model_name}` for relation" unless m
 
+find_relation = (model, name) ->
+  return unless model
+
+  if rs = model.relations
+    for relation in *rs
+      if relation[1] == name
+        return relation
+
+  if p = model.__parent
+    find_relation p, name
+
+
+preload_relations = (objects, ...) =>
+  names = {...}
+  for name in *names
+    preloader = @relation_preloaders[name]
+    unless preloader
+      error "Model #{@__name} not have a preloader for #{name}"
+
+    preloader @, objects
+
+  true
+
+clear_loaded_relation = (item, name) ->
+  item[name] = nil
+  if loaded = item[LOADED_KEY]
+    loaded[name] = nil
+  true
+
 get_relations_class = (model) ->
   parent = model.__parent
   unless parent
@@ -16,26 +45,14 @@ get_relations_class = (model) ->
     @__name: "#{model.__name}Relations"
     @_relations_class: true
 
+    @relation_preloaders: {}
+
+    @preload_relations: preload_relations
+    clear_loaded_relation: clear_loaded_relation
+
   model.__parent = relations_class
   setmetatable model.__base, relations_class.__base
   relations_class
-
-find_relation = (model, name) ->
-  return unless model
-
-  if rs = model.relations
-    for relation in *rs
-      if relation[1] == name
-        return relation
-
-  if p = model.__parent
-    find_relation p, name
-
-clear_loaded_relation = (item, name) ->
-  item[name] = nil
-  if loaded = item[LOADED_KEY]
-    loaded[name] = nil
-  true
 
 fetch = (name, opts) =>
   source = opts.fetch
@@ -78,6 +95,10 @@ belongs_to = (name, opts) =>
     with obj = model\find @[column_name]
       @[name] = obj
 
+  @relation_preloaders[name] = (objects, ...) =>
+    model = assert_model @@, source
+    model\include_in objects, column_name, ...
+
 has_one = (name, opts) =>
   source = opts.has_one
   assert type(source) == "string", "Expecting model name for `has_one` relation"
@@ -104,6 +125,14 @@ has_one = (name, opts) =>
 
     with obj = model\find clause
       @[name] = obj
+
+  @relation_preloaders[name] = (objects, preload_opts) =>
+    model = assert_model @@, source
+    foreign_key = opts.key or "#{@@singular_name!}_id"
+
+    preload_opts or= {}
+    preload_opts.flip = true
+    model\include_in objects, foreign_key, preload_opts
 
 has_many = (name, opts) =>
   source = opts.has_many
@@ -150,6 +179,15 @@ has_many = (name, opts) =>
       model = assert_model @@, source
       model\paginated build_query(@), fetch_opts
 
+  @relation_preloaders[name] = (objects, ...) =>
+    model = assert_model @@, source
+    foreign_key = opts.key or "#{@@singular_name!}_id"
+
+    preload_opts or= {}
+    preload_opts.flip = true
+    preload_opts.many = true
+    model\include_in objects, foreign_key, preload_opts
+
 polymorphic_belongs_to = (name, opts) =>
   import enum from require "lapis.db.model"
   types = opts.polymorphic_belongs_to
@@ -168,7 +206,7 @@ polymorphic_belongs_to = (name, opts) =>
 
   @[enum_name] = enum { assert(v[1], "missing type name"), k for k,v in pairs types}
 
-  @["preload_#{name}s"] = (objs, preload_opts) =>
+  @relation_preloaders[name] = (objs, preload_opts) =>
     fields = preload_opts and preload_opts.fields
 
     for {type_name, model_name} in *types
@@ -180,6 +218,9 @@ polymorphic_belongs_to = (name, opts) =>
       }
 
     objs
+
+  -- TODO: deprecate this for the new `preload_relations` method
+  @["preload_#{name}s"] = @relation_preloaders[name]
 
   @[model_for_type_method] = (t) =>
     type_name = @[enum_name]\to_name t

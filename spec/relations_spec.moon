@@ -401,60 +401,88 @@ describe "lapis.db.model.relations", ->
     assert.same {"cool_user", belongs_to: "CoolUsers", key: "owner_id"},
       (find_relation BetterPosts, "cool_user")
 
+  describe "clear_loaded_relation", ->
+    it "clears loaded relation cached with value", ->
+      mock_query "SELECT", {
+        {id: 777, name: "hello"}
+      }
+      models.Users = class Users extends Model
 
-  it "clears loaded relation cached with value", ->
-    mock_query "SELECT", {
-      {id: 777, name: "hello"}
-    }
-    models.Users = class Users extends Model
+      class Posts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
 
-    class Posts extends Model
-      @relations: {
-        {"user", belongs_to: "Users"}
+      post = Posts\load {
+        id: 1
+        user_id: 1
       }
 
-    post = Posts\load {
-      id: 1
-      user_id: 1
-    }
+      post\get_user!
+      post\get_user!
 
-    post\get_user!
-    post\get_user!
+      assert.same 1, #get_queries!
 
-    assert.same 1, #get_queries!
+      assert.not.nil post.user
 
-    assert.not.nil post.user
+      post\clear_loaded_relation "user"
 
-    post\clear_loaded_relation "user"
+      assert.nil post.user
 
-    assert.nil post.user
+      post\get_user!
 
-    post\get_user!
+      assert.same 2, #get_queries!
 
-    assert.same 2, #get_queries!
+    it "clears loaded relation cached with nil", ->
+      mock_query "SELECT", {}
 
-  it "clears loaded relation cached with nil", ->
-    mock_query "SELECT", {}
+      models.Users = class Users extends Model
 
-    models.Users = class Users extends Model
+      class Posts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+        }
 
-    class Posts extends Model
-      @relations: {
-        {"user", belongs_to: "Users"}
+      post = Posts\load {
+        id: 1
+        user_id: 1
       }
 
-    post = Posts\load {
-      id: 1
-      user_id: 1
-    }
+      post\get_user!
+      post\get_user!
 
-    post\get_user!
-    post\get_user!
+      assert.same 1, #get_queries!
 
-    assert.same 1, #get_queries!
+      post\clear_loaded_relation "user"
+      post\get_user!
 
-    post\clear_loaded_relation "user"
-    post\get_user!
+      assert.same 2, #get_queries!
 
-    assert.same 2, #get_queries!
+  describe "preload_relations #ddd", ->
+    it "should preload many relations", ->
+      mock_query "SELECT", {}
+
+      models.Dates = class Dates extends Model
+      models.Users = class Users extends Model
+      models.Tags = class Tags extends Model
+
+      class Posts extends Model
+        @relations: {
+          {"user", belongs_to: "Users"}
+          {"date", has_one: "Dates"}
+          {"tags", has_many: "Tags"}
+        }
+
+      post = Posts\load {
+        id: 888
+        user_id: 234
+      }
+
+      Posts\preload_relations {post}, "user", "date", "tags"
+
+      assert_queries {
+        [[SELECT * from "users" where "id" in (234)]]
+        [[SELECT * from "dates" where "post_id" in (888)]]
+        [[SELECT * from "tags" where "post_id" in (888)]]
+      }
 

@@ -13,6 +13,55 @@ assert_model = function(primary_model, model_name)
     return m
   end
 end
+local find_relation
+find_relation = function(model, name)
+  if not (model) then
+    return 
+  end
+  do
+    local rs = model.relations
+    if rs then
+      for _index_0 = 1, #rs do
+        local relation = rs[_index_0]
+        if relation[1] == name then
+          return relation
+        end
+      end
+    end
+  end
+  do
+    local p = model.__parent
+    if p then
+      return find_relation(p, name)
+    end
+  end
+end
+local preload_relations
+preload_relations = function(self, objects, ...)
+  local names = {
+    ...
+  }
+  for _index_0 = 1, #names do
+    local name = names[_index_0]
+    local preloader = self.relation_preloaders[name]
+    if not (preloader) then
+      error("Model " .. tostring(self.__name) .. " not have a preloader for " .. tostring(name))
+    end
+    preloader(self, objects)
+  end
+  return true
+end
+local clear_loaded_relation
+clear_loaded_relation = function(item, name)
+  item[name] = nil
+  do
+    local loaded = item[LOADED_KEY]
+    if loaded then
+      loaded[name] = nil
+    end
+  end
+  return true
+end
 local get_relations_class
 get_relations_class = function(model)
   local parent = model.__parent
@@ -26,7 +75,9 @@ get_relations_class = function(model)
   do
     local _class_0
     local _parent_0 = model.__parent
-    local _base_0 = { }
+    local _base_0 = {
+      clear_loaded_relation = clear_loaded_relation
+    }
     _base_0.__index = _base_0
     setmetatable(_base_0, _parent_0.__base)
     _class_0 = setmetatable({
@@ -58,6 +109,8 @@ get_relations_class = function(model)
     local self = _class_0
     self.__name = tostring(model.__name) .. "Relations"
     self._relations_class = true
+    self.relation_preloaders = { }
+    self.preload_relations = preload_relations
     if _parent_0.__inherited then
       _parent_0.__inherited(_parent_0, _class_0)
     end
@@ -66,40 +119,6 @@ get_relations_class = function(model)
   model.__parent = relations_class
   setmetatable(model.__base, relations_class.__base)
   return relations_class
-end
-local find_relation
-find_relation = function(model, name)
-  if not (model) then
-    return 
-  end
-  do
-    local rs = model.relations
-    if rs then
-      for _index_0 = 1, #rs do
-        local relation = rs[_index_0]
-        if relation[1] == name then
-          return relation
-        end
-      end
-    end
-  end
-  do
-    local p = model.__parent
-    if p then
-      return find_relation(p, name)
-    end
-  end
-end
-local clear_loaded_relation
-clear_loaded_relation = function(item, name)
-  item[name] = nil
-  do
-    local loaded = item[LOADED_KEY]
-    if loaded then
-      loaded[name] = nil
-    end
-  end
-  return true
 end
 local fetch
 fetch = function(self, name, opts)
@@ -155,6 +174,10 @@ belongs_to = function(self, name, opts)
       return obj
     end
   end
+  self.relation_preloaders[name] = function(self, objects, ...)
+    local model = assert_model(self.__class, source)
+    return model:include_in(objects, column_name, ...)
+  end
 end
 local has_one
 has_one = function(self, name, opts)
@@ -184,6 +207,13 @@ has_one = function(self, name, opts)
       self[name] = obj
       return obj
     end
+  end
+  self.relation_preloaders[name] = function(self, objects, preload_opts)
+    local model = assert_model(self.__class, source)
+    local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
+    preload_opts = preload_opts or { }
+    preload_opts.flip = true
+    return model:include_in(objects, foreign_key, preload_opts)
   end
 end
 local has_many
@@ -241,6 +271,14 @@ has_many = function(self, name, opts)
       return model:paginated(build_query(self), fetch_opts)
     end
   end
+  self.relation_preloaders[name] = function(self, objects, ...)
+    local model = assert_model(self.__class, source)
+    local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
+    local preload_opts = preload_opts or { }
+    preload_opts.flip = true
+    preload_opts.many = true
+    return model:include_in(objects, foreign_key, preload_opts)
+  end
 end
 local polymorphic_belongs_to
 polymorphic_belongs_to = function(self, name, opts)
@@ -262,7 +300,7 @@ polymorphic_belongs_to = function(self, name, opts)
     end
     return _tbl_0
   end)())
-  self["preload_" .. tostring(name) .. "s"] = function(self, objs, preload_opts)
+  self.relation_preloaders[name] = function(self, objs, preload_opts)
     local fields = preload_opts and preload_opts.fields
     for _index_0 = 1, #types do
       local _des_0 = types[_index_0]
@@ -289,6 +327,7 @@ polymorphic_belongs_to = function(self, name, opts)
     end
     return objs
   end
+  self["preload_" .. tostring(name) .. "s"] = self.relation_preloaders[name]
   self[model_for_type_method] = function(self, t)
     local type_name = self[enum_name]:to_name(t)
     for _index_0 = 1, #types do
