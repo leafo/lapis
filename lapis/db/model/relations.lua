@@ -13,6 +13,60 @@ assert_model = function(primary_model, model_name)
     return m
   end
 end
+local get_relations_class
+get_relations_class = function(model)
+  local parent = model.__parent
+  if not (parent) then
+    error("model does not have parent class")
+  end
+  if rawget(parent, "_relations_class") then
+    return parent
+  end
+  local relations_class
+  do
+    local _class_0
+    local _parent_0 = model.__parent
+    local _base_0 = { }
+    _base_0.__index = _base_0
+    setmetatable(_base_0, _parent_0.__base)
+    _class_0 = setmetatable({
+      __init = function(self, ...)
+        return _class_0.__parent.__init(self, ...)
+      end,
+      __base = _base_0,
+      __name = "relations_class",
+      __parent = _parent_0
+    }, {
+      __index = function(cls, name)
+        local val = rawget(_base_0, name)
+        if val == nil then
+          local parent = rawget(cls, "__parent")
+          if parent then
+            return parent[name]
+          end
+        else
+          return val
+        end
+      end,
+      __call = function(cls, ...)
+        local _self_0 = setmetatable({}, _base_0)
+        cls.__init(_self_0, ...)
+        return _self_0
+      end
+    })
+    _base_0.__class = _class_0
+    local self = _class_0
+    self.__name = tostring(model.__name) .. "Relations"
+    self._relations_class = true
+    if _parent_0.__inherited then
+      _parent_0.__inherited(_parent_0, _class_0)
+    end
+    relations_class = _class_0
+  end
+  model.__parent = relations_class
+  setmetatable(model.__base, relations_class.__base)
+  return relations_class
+end
 local find_relation
 find_relation = function(model, name)
   if not (model) then
@@ -288,13 +342,51 @@ polymorphic_belongs_to = function(self, name, opts)
     end
   end
 end
-return {
+local relation_builders = {
   fetch = fetch,
   belongs_to = belongs_to,
   has_one = has_one,
   has_many = has_many,
-  polymorphic_belongs_to = polymorphic_belongs_to,
+  polymorphic_belongs_to = polymorphic_belongs_to
+}
+local add_relations
+add_relations = function(self, relations)
+  local cls = get_relations_class(self)
+  for _index_0 = 1, #relations do
+    local _continue_0 = false
+    repeat
+      local relation = relations[_index_0]
+      local name = assert(relation[1], "missing relation name")
+      local built = false
+      for k in pairs(relation) do
+        do
+          local builder = relation_builders[k]
+          if builder then
+            builder(cls, name, relation)
+            built = true
+            break
+          end
+        end
+      end
+      if built then
+        _continue_0 = true
+        break
+      end
+      local flatten_params
+      flatten_params = require("lapis.logging").flatten_params
+      error("don't know how to create relation `" .. tostring(flatten_params(relation)) .. "`")
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+end
+return {
+  relation_builders = relation_builders,
   find_relation = find_relation,
   clear_loaded_relation = clear_loaded_relation,
-  LOADED_KEY = LOADED_KEY
+  LOADED_KEY = LOADED_KEY,
+  add_relations = add_relations,
+  get_relations_class = get_relations_class
 }

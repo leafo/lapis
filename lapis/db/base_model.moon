@@ -6,6 +6,7 @@ import require, type, setmetatable, rawget, assert, pairs, unpack, error, next f
 cjson = require "cjson"
 
 import OffsetPaginator from require "lapis.db.pagination"
+import add_relations from require "lapis.db.model.relations"
 
 class Enum
   debug = =>
@@ -39,29 +40,6 @@ enum = (tbl) ->
 
   setmetatable tbl, Enum.__base
 
--- class Things extends Model
---   @relations: {
---     {"user", has_one: "Users"}
---     {"posts", has_many: "Posts", pager: true, order: "id ASC"}
---   }
-add_relations = (relations) =>
-  relation_builders = require "lapis.db.model.relations"
-
-  for relation in *relations
-    name = assert relation[1], "missing relation name"
-    built = false
-
-    for k in pairs relation
-      if builder = relation_builders[k]
-        builder @, name, relation
-        built = true
-        break
-
-    continue if built
-
-    import flatten_params from require "lapis.logging"
-    error "don't know how to create relation `#{flatten_params relation}`"
-
 class BaseModel
   @db: nil -- set in implementing class
 
@@ -69,7 +47,7 @@ class BaseModel
   @primary_key: "id"
 
   @__inherited: (child) =>
-    if r = child.relations
+    if r = rawget child, "relations"
       add_relations child, r, @db
 
   @get_relation_model: (name) =>
@@ -395,4 +373,4 @@ class BaseModel
 
     @
 
-{ :BaseModel, :Enum, :enum, :add_relations }
+{ :BaseModel, :Enum, :enum }

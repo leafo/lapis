@@ -16,6 +16,8 @@ end
 local cjson = require("cjson")
 local OffsetPaginator
 OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
+local add_relations
+add_relations = require("lapis.db.model.relations").add_relations
 local Enum
 do
   local _class_0
@@ -88,39 +90,6 @@ enum = function(tbl)
     tbl[tbl[key]] = key
   end
   return setmetatable(tbl, Enum.__base)
-end
-local add_relations
-add_relations = function(self, relations)
-  local relation_builders = require("lapis.db.model.relations")
-  for _index_0 = 1, #relations do
-    local _continue_0 = false
-    repeat
-      local relation = relations[_index_0]
-      local name = assert(relation[1], "missing relation name")
-      local built = false
-      for k in pairs(relation) do
-        do
-          local builder = relation_builders[k]
-          if builder then
-            builder(self, name, relation)
-            built = true
-            break
-          end
-        end
-      end
-      if built then
-        _continue_0 = true
-        break
-      end
-      local flatten_params
-      flatten_params = require("lapis.logging").flatten_params
-      error("don't know how to create relation `" .. tostring(flatten_params(relation)) .. "`")
-      _continue_0 = true
-    until true
-    if not _continue_0 then
-      break
-    end
-  end
 end
 local BaseModel
 do
@@ -236,7 +205,7 @@ do
   self.primary_key = "id"
   self.__inherited = function(self, child)
     do
-      local r = child.relations
+      local r = rawget(child, "relations")
       if r then
         return add_relations(child, r, self.db)
       end
@@ -624,6 +593,5 @@ end
 return {
   BaseModel = BaseModel,
   Enum = Enum,
-  enum = enum,
-  add_relations = add_relations
+  enum = enum
 }

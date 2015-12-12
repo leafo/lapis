@@ -4,6 +4,22 @@ assert_model = (primary_model, model_name) ->
   with m = primary_model\get_relation_model model_name
     error "failed to find model `#{model_name}` for relation" unless m
 
+get_relations_class = (model) ->
+  parent = model.__parent
+  unless parent
+    error "model does not have parent class"
+
+  if rawget parent, "_relations_class"
+    return parent
+
+  relations_class = class extends model.__parent
+    @__name: "#{model.__name}Relations"
+    @_relations_class: true
+
+  model.__parent = relations_class
+  setmetatable model.__base, relations_class.__base
+  relations_class
+
 find_relation = (model, name) ->
   return unless model
 
@@ -201,7 +217,34 @@ polymorphic_belongs_to = (name, opts) =>
       with obj = model\find @[id_col]
         @[name] = obj
 
-{
+
+relation_builders = {
   :fetch, :belongs_to, :has_one, :has_many, :polymorphic_belongs_to,
-  :find_relation, :clear_loaded_relation, :LOADED_KEY
+}
+
+-- add_relations, Things, {
+--   {"user", has_one: "Users"}
+--   {"posts", has_many: "Posts", pager: true, order: "id ASC"}
+-- }
+add_relations = (relations) =>
+  cls = get_relations_class @
+
+  for relation in *relations
+    name = assert relation[1], "missing relation name"
+    built = false
+
+    for k in pairs relation
+      if builder = relation_builders[k]
+        builder cls, name, relation
+        built = true
+        break
+
+    continue if built
+
+    import flatten_params from require "lapis.logging"
+    error "don't know how to create relation `#{flatten_params relation}`"
+
+{
+  :relation_builders, :find_relation, :clear_loaded_relation, :LOADED_KEY
+  :add_relations, :get_relations_class
 }
