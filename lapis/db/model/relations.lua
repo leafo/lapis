@@ -297,13 +297,16 @@ has_many = function(self, name, opts)
       return model:paginated(build_query(self), fetch_opts)
     end
   end
-  self.relation_preloaders[name] = function(self, objects, ...)
+  self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
-    local preload_opts = preload_opts or { }
+    preload_opts = preload_opts or { }
     preload_opts.flip = true
     preload_opts.many = true
     preload_opts.for_relation = name
+    preload_opts.order = opts.order
+    preload_opts.as = name
+    preload_opts.where = opts.where
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end

@@ -193,7 +193,7 @@ has_many = (name, opts) =>
       model = assert_model @@, source
       model\paginated build_query(@), fetch_opts
 
-  @relation_preloaders[name] = (objects, ...) =>
+  @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
     foreign_key = opts.key or "#{@@singular_name!}_id"
 
@@ -201,6 +201,9 @@ has_many = (name, opts) =>
     preload_opts.flip = true
     preload_opts.many = true
     preload_opts.for_relation = name
+    preload_opts.order = opts.order
+    preload_opts.as = name
+    preload_opts.where = opts.where
     model\include_in objects, foreign_key, preload_opts
 
 polymorphic_belongs_to = (name, opts) =>

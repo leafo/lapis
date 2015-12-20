@@ -198,6 +198,9 @@ class BaseModel
       if opts and opts.where
         query ..= " and " .. @db.encode_clause opts.where
 
+      if order = many and opts.order
+        query ..= " order by #{order}"
+
       if res = @db.select query
         records = {}
         if many

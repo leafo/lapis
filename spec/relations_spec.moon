@@ -459,7 +459,7 @@ describe "lapis.db.model.relations", ->
       assert.same 2, #get_queries!
 
   describe "preload_relations", ->
-    it "preloads many relations that return empty", ->
+    it "preloads relations that return empty", ->
       mock_query "SELECT", {}
 
       models.Dates = class Dates extends Model
@@ -501,6 +501,35 @@ describe "lapis.db.model.relations", ->
       post\get_tags!
 
       assert.same, before_count, #get_queries!
+
+
+    it "preloads many relation with order and name", ->
+      mock_query "SELECT", {
+        { primary_thing_id: 123, name: "whaz" }
+      }
+
+      models.Tags = class Tags extends Model
+
+      class Things extends Model
+        @relations: {
+          {"cool_tags"
+            has_many: "Tags"
+            order: "name asc"
+            where: { deleted: false }
+            key: "primary_thing_id"
+          }
+        }
+
+      thing = Things\load { id: 123 }
+      Things\preload_relations {thing}, "cool_tags"
+      assert.same {
+        { primary_thing_id: 123, name: "whaz" }
+      }, thing.cool_tags
+
+      error get_queries!
+      assert_queries {
+        [[SELECT * from "tags" where "primary_thing_id" in (123) and \"deleted\" = FALSE order by name asc]]
+      }
 
     it "preloads with correct name", ->
       mock_query "SELECT", {

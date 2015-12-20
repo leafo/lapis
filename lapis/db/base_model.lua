@@ -430,6 +430,12 @@ do
         query = query .. (" and " .. self.db.encode_clause(opts.where))
       end
       do
+        local order = many and opts.order
+        if order then
+          query = query .. " order by " .. tostring(order)
+        end
+      end
+      do
         local res = self.db.select(query)
         if res then
           local records = { }
