@@ -526,9 +526,8 @@ describe "lapis.db.model.relations", ->
         { primary_thing_id: 123, name: "whaz" }
       }, thing.cool_tags
 
-      error get_queries!
       assert_queries {
-        [[SELECT * from "tags" where "primary_thing_id" in (123) and \"deleted\" = FALSE order by name asc]]
+        [[SELECT * from "tags" where "primary_thing_id" in (123) and "deleted" = FALSE order by name asc]]
       }
 
     it "preloads with correct name", ->
