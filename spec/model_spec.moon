@@ -414,24 +414,6 @@ describe "lapis.db.model", ->
       }
     }
 
-  it "should include other association", ->
-    class Things extends Model
-
-    class ThingItems extends Model
-
-    things = [Things\load { id: i, thing_id: 100 + i } for i=1,10]
-
-    ThingItems\include_in things, "thing_id"
-    ThingItems\include_in things, "thing_id", flip: true
-    ThingItems\include_in things, "thing_id", where: { dad: true }
-    ThingItems\include_in things, "thing_id", fields: "one, two, three"
-
-    assert_queries {
-      [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
-      [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]]
-      [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110) and "dad" = TRUE]]
-      [[SELECT one, two, three from "thing_items" where "id" in (101, 102, 103, 104, 105, 106, 107, 108, 109, 110)]]
-    }
 
   it "should create model with extend syntax", ->
     m = Model\extend "the_things", {
@@ -445,6 +427,84 @@ describe "lapis.db.model", ->
     assert.same "the_things", m\table_name!
     assert.same {"hello", "world"}, { m\primary_keys! }
     assert.truthy m.constraints.hello
+
+  describe "include_in", ->
+    local Things, ThingItems, things
+
+    before_each ->
+      class Things extends Model
+      class ThingItems extends Model
+      things = [Things\load { id: i, other_id: (i + 7) * 2, thing_id: 100 + i } for i=1,5]
+
+    it "with no options", ->
+      ThingItems\include_in things, "thing_id"
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
+      }
+
+    it "with flip", ->
+      ThingItems\include_in things, "thing_id", flip: true
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5)]]
+      }
+
+    it "with where", ->
+      ThingItems\include_in things, "thing_id", where: { dad: true }
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) and "dad" = TRUE]]
+      }
+
+    it "with fields", ->
+      ThingItems\include_in things, "thing_id", fields: "one, two, three"
+
+      assert_queries {
+        [[SELECT one, two, three from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
+      }
+
+    it "with order", ->
+      ThingItems\include_in things, "thing_id", order: "title desc", many: true
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) order by title desc]]
+      }
+
+    it "with group", ->
+      ThingItems\include_in things, "thing_id", group: "yeah"
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) group by yeah]]
+      }
+
+    it "with local key", ->
+      ThingItems\include_in things, "thing_id", local_key: "other_id", flip: true
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "thing_id" in (16, 18, 20, 22, 24)]]
+      }
+
+    it "with for relation", ->
+      ThingItems\include_in things, "thing_id", for_relation: "yeahs"
+      import LOADED_KEY from require "lapis.db.model.relations"
+      for thing in *things
+        assert.same thing[LOADED_KEY], { yeahs: true }
+
+    it "combines many options", ->
+      ThingItems\include_in things, "thing_id", {
+        fields: "yeah, count(*)"
+        where: { deleted: false }
+        group: "yeah"
+        flip: true
+        order: "color desc"
+        many: true
+        local_key: "other_id"
+      }
+
+      assert_queries {
+        [[SELECT yeah, count(*) from "thing_items" where "thing_id" in (16, 18, 20, 22, 24) and "deleted" = FALSE order by color desc group by yeah]]
+      }
 
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
