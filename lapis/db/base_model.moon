@@ -172,6 +172,7 @@ class BaseModel
     fields = opts and opts.fields or "*"
     flip = opts and opts.flip
     many = opts and opts.many
+    value_fn = opts and opts.value
 
     if not flip and type(@primary_key) == "table"
       error "#{@table_name!} must have singular primary key for include_in"
@@ -201,6 +202,9 @@ class BaseModel
       if order = many and opts.order
         query ..= " order by #{order}"
 
+      if group = opts and opts.group
+        query ..= " group by #{group}"
+
       if res = @db.select query
         records = {}
         if many
@@ -210,10 +214,16 @@ class BaseModel
             if records[t_key] == nil
               records[t_key] = {}
 
-            insert records[t_key], @load t
+            row = @load t
+            row = value_fn row if value_fn
+
+            insert records[t_key], row
         else
           for t in *res
-            records[t[find_by]] = @load t
+            row = @load t
+            row = value_fn row if value_fn
+
+            records[t[find_by]] = row
 
         field_name = if opts and opts.as
           opts.as

@@ -376,6 +376,7 @@ do
     local fields = opts and opts.fields or "*"
     local flip = opts and opts.flip
     local many = opts and opts.many
+    local value_fn = opts and opts.value
     if not flip and type(self.primary_key) == "table" then
       error(tostring(self:table_name()) .. " must have singular primary key for include_in")
     end
@@ -436,6 +437,12 @@ do
         end
       end
       do
+        local group = opts and opts.group
+        if group then
+          query = query .. " group by " .. tostring(group)
+        end
+      end
+      do
         local res = self.db.select(query)
         if res then
           local records = { }
@@ -446,12 +453,20 @@ do
               if records[t_key] == nil then
                 records[t_key] = { }
               end
-              insert(records[t_key], self:load(t))
+              local row = self:load(t)
+              if value_fn then
+                row = value_fn(row)
+              end
+              insert(records[t_key], row)
             end
           else
             for _index_0 = 1, #res do
               local t = res[_index_0]
-              records[t[find_by]] = self:load(t)
+              local row = self:load(t)
+              if value_fn then
+                row = value_fn(row)
+              end
+              records[t[find_by]] = row
             end
           end
           local field_name
