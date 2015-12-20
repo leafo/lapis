@@ -506,6 +506,24 @@ describe "lapis.db.model", ->
         [[SELECT yeah, count(*) from "thing_items" where "thing_id" in (16, 18, 20, 22, 24) and "deleted" = FALSE order by color desc group by yeah]]
       }
 
+    it "applies value function", ->
+      mock_query "SELECT", {
+        {thing_id: 1, count: 222}
+        {thing_id: 2, count: 9}
+      }
+
+      ThingItems\include_in {things[1]}, "thing_id", {
+        flip: true
+        value: (res) -> res.count
+      }
+
+      assert.same {
+        thing_item: 222
+        thing_id: 101
+        other_id: 16
+        id: 1
+      }, things[1]
+
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
       mock_query "INSERT", { { id: 101 } }
