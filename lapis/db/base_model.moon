@@ -240,6 +240,9 @@ class BaseModel
         for other in *other_records
           other[field_name] = records[other[src_key]]
 
+          if many and not other[field_name]
+            other[field_name] = {}
+
         if for_relation = opts and opts.for_relation
           mark_loaded_relations other_records, for_relation
 

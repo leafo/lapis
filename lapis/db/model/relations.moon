@@ -204,6 +204,7 @@ has_many = (name, opts) =>
     preload_opts.order = opts.order
     preload_opts.as = name
     preload_opts.where = opts.where
+
     model\include_in objects, foreign_key, preload_opts
 
 polymorphic_belongs_to = (name, opts) =>

@@ -524,6 +524,23 @@ describe "lapis.db.model", ->
         id: 1
       }, things[1]
 
+    it "fetches many", ->
+      mock_query "SELECT", {
+        {thing_id: 1, name: "one"}
+        {thing_id: 1, count: "two"}
+      }
+
+      things = {things[1], things[2]}
+      ThingItems\include_in things, "thing_id", flip: true, many: true
+
+      assert.same {
+        {thing_id: 1, name: "one"}
+        {thing_id: 1, count: "two"}
+      }, things[1].thing_items
+
+      assert.same {}, things[2].thing_items
+
+
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
       mock_query "INSERT", { { id: 101 } }

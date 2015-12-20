@@ -485,6 +485,9 @@ do
           for _index_0 = 1, #other_records do
             local other = other_records[_index_0]
             other[field_name] = records[other[src_key]]
+            if many and not other[field_name] then
+              other[field_name] = { }
+            end
           end
           do
             local for_relation = opts and opts.for_relation
