@@ -146,6 +146,7 @@ has_one = (name, opts) =>
     preload_opts or= {}
     preload_opts.flip = true
     preload_opts.for_relation = name
+    preload_opts.as = name
     model\include_in objects, foreign_key, preload_opts
 
 has_many = (name, opts) =>

@@ -239,6 +239,7 @@ has_one = function(self, name, opts)
     preload_opts = preload_opts or { }
     preload_opts.flip = true
     preload_opts.for_relation = name
+    preload_opts.as = name
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end

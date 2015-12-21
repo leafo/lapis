@@ -502,7 +502,6 @@ describe "lapis.db.model.relations", ->
 
       assert.same, before_count, #get_queries!
 
-
     it "preloads many relation with order and name", ->
       mock_query "SELECT", {
         { primary_thing_id: 123, name: "whaz" }
@@ -530,7 +529,7 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "tags" where "primary_thing_id" in (123) and "deleted" = FALSE order by name asc]]
       }
 
-    it "preloads with correct name", ->
+    it "preloads belongs_to with correct name", ->
       mock_query "SELECT", {
         { id: 1, name: "last" }
         { id: 2, name: "first" }
@@ -559,19 +558,35 @@ describe "lapis.db.model.relations", ->
       assert.same {
         id: 1
         name: "last"
-      }, cat\get_last_topic!
+      }, cat\get_last_topic!, cat.last_topic
 
       assert.same {
         id: 2
         name: "first"
-      }, cat\get_first_topic!
+      }, cat\get_first_topic!, cat.first_topic
 
       assert.same {
         id: 3
         name: "default"
-      }, cat\get_topic!
+      }, cat\get_topic!, cat.topic
 
       assert.same 3, #get_queries!
+
+    it "preloads has_one with correct name", ->
+      mock_query "SELECT", {
+        {user_id: 1, name: "cool dude"}
+      }
+
+      models.UserData = class UserData extends Model
+
+      class Users extends Model
+        @relations: {
+          {"data", has_one: "UserData"}
+        }
+
+      user = Users\load id: 1
+      Users\preload_relations {user}, "data"
+      assert.same {user_id: 1, name: "cool dude"}, user.data, user\get_data!
 
     it "finds inherited preloaders", ->
       models.Users = class Users extends Model
