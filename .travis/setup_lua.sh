@@ -41,7 +41,7 @@ if [ "$LUAJIT" == "yes" ]; then
   if [ "$LUA" == "luajit" ]; then
     curl http://luajit.org/download/$LUAJIT_BASE.tar.gz | tar xz;
   else
-    git clone http://luajit.org/git/luajit-2.0.git $LUAJIT_BASE;
+    git clone https://github.com/LuaJIT/LuaJIT.git $LUAJIT_BASE;
   fi
 
   cd $LUAJIT_BASE
