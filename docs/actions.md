@@ -119,7 +119,7 @@ app:match("index", "/", function(self)
   return self:url_for("user_profile", { name = "leaf" })
 end)
 
-app:match("user_profile", "/", function(self)
+app:match("user_profile", "/user/:name", function(self)
   return "Hello " .. self.params.name .. ", go home: " .. self:url_for("index")
 end)
 ```
@@ -840,4 +840,3 @@ records errors in a database and can email you when they happen.
 
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
-
