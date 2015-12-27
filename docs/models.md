@@ -454,8 +454,10 @@ relation.
 
 ### `include_in(model_instances, column_name, opts={})`
 
-Finds instances of the current model and loads them into an array containing instances of another model. This is used to preload relations in a single query. Returns the `model_instances` table. Read more in
-[Preloading Association](#preloading-associations)
+Finds instances of the current model and loads them into an array containing
+instances of another model. This is used to preload relations in a single
+query. Returns the `model_instances` array table. Read more in [Preloading
+Associations](#preloading-associations)
 
 ### `paginated(query, ...)`
 
