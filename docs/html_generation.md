@@ -18,9 +18,9 @@ all the features of MoonScript or Lua. No need to learn any goofy templating
 syntax with arbitrary restrictions.
 
 In the context of a HTML renderer, the environment exposes functions that
-create HTML tags. The tag builder functins are generated on the fly as you call
-them. The output of these functions is written into a buffer that is compiled
-in the end and returned as the result
+create HTML tags. The tag builder functions are generated on the fly as you
+call them. The output of these functions is written into a buffer that is
+compiled in the end and returned as the result
 
 Here are some examples of the HTML generation:
 
