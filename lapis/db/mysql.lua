@@ -11,7 +11,7 @@ do
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
 end
 local conn, logger
-local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_err, escape_literal, escape_identifier, init_logger, init_db, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
+local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
 BACKENDS = {
   raw = function(fn)
     return fn
@@ -158,7 +158,6 @@ end
 get_raw_query = function()
   return raw_query
 end
-escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = function(val)
   local _exp_0 = type(val)
   if "number" == _exp_0 then
@@ -170,7 +169,8 @@ escape_literal = function(val)
       if ngx then
         return ngx.quote_sql_str(val)
       else
-        error(escape_err)
+        connect()
+        return escape_literal(val)
       end
     end
   elseif "boolean" == _exp_0 then
@@ -211,9 +211,12 @@ init_db = function()
   end
   return set_backend(backend)
 end
-raw_query = function(...)
+connect = function()
   init_logger()
-  init_db()
+  return init_db()
+end
+raw_query = function(...)
+  connect()
   return raw_query(...)
 end
 interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers(escape_literal, escape_identifier)
@@ -285,6 +288,7 @@ _truncate = function(table)
   return raw_query("TRUNCATE " .. escape_identifier(table))
 end
 return {
+  connect = connect,
   raw = raw,
   is_raw = is_raw,
   NULL = NULL,

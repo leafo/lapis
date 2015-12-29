@@ -162,9 +162,13 @@ append_all = function(t, ...)
     t[#t + 1] = select(i, ...)
   end
 end
-raw_query = function(...)
+local connect
+connect = function()
   init_logger()
-  init_db()
+  return init_db()
+end
+raw_query = function(...)
+  connect()
   return raw_query(...)
 end
 local query
@@ -378,6 +382,7 @@ encode_case = function(exp, t, on_else)
   return concat(buff)
 end
 return {
+  connect = connect,
   query = query,
   raw = raw,
   is_raw = is_raw,

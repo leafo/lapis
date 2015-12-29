@@ -129,9 +129,12 @@ append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
 
-raw_query = (...) ->
+connect = ->
   init_logger!
-  init_db! -- sets raw query to default backend
+  init_db! -- replaces raw_query to default backend
+
+raw_query = (...) ->
+  connect!
   raw_query ...
 
 query = (str, ...) ->
@@ -306,6 +309,7 @@ encode_case = (exp, t, on_else) ->
   concat buff
 
 {
+  :connect
   :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
   :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
   :encode_clause, :interpolate_query, :parse_clause, :format_date,

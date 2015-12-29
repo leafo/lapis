@@ -138,7 +138,6 @@ set_raw_query = (fn) ->
 get_raw_query = ->
   raw_query
 
-escape_err = "LuaSQL connection or ngx is required to escape a string literal"
 escape_literal = (val) ->
   switch type val
     when "number"
@@ -149,7 +148,8 @@ escape_literal = (val) ->
       else if ngx
         return ngx.quote_sql_str(val)
       else
-        error escape_err
+        connect!
+        return escape_literal val
     when "boolean"
       return val and "TRUE" or "FALSE"
     when "table"
@@ -180,9 +180,12 @@ init_db = ->
 
   set_backend backend
 
-raw_query = (...) ->
+connect = ->
   init_logger!
-  init_db! -- sets raw query to default backend
+  init_db! -- replaces raw_query to default backend
+
+raw_query = (...) ->
+  connect!
   raw_query ...
 
 interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers escape_literal, escape_identifier
@@ -264,6 +267,7 @@ _truncate = (table) ->
 -- }
 
 {
+  :connect
   :raw, :is_raw, :NULL, :TRUE, :FALSE,
 
   :encode_values
