@@ -100,6 +100,69 @@ describe "lapis.cmd.actions", ->
     execute {"help"}
     _G.print = p
 
+
+describe "lapis.cmd.actions.execute", ->
+  import join, shell_escape from require "lapis.cmd.path"
+  local cmd
+  local old_dir, new_dir
+  lfs = require "lfs"
+
+  before_each ->
+    cmd = require "lapis.cmd.actions"
+    -- replace the annotated path with silent one
+    cmd.set_path require "lapis.cmd.path"
+
+    old_dir = lfs.currentdir!
+    new_dir = join old_dir, "spec_tmp_app"
+    assert lfs.mkdir new_dir
+    assert lfs.chdir new_dir
+
+  after_each ->
+    assert lfs.chdir old_dir
+    os.execute "rm -r '#{shell_escape new_dir}'"
+
+  assert_files = (files) ->
+    have_files = for f in lfs.dir(lfs.currentdir!)
+      continue if f\match "^%.*$"
+      f
+
+    have_files = {f, true for f in *have_files}
+    assert.same {f, true for f in *files}, have_files
+
+  describe "new", ->
+    it "default app", ->
+      cmd.execute { [0]: "lapis", "new" }
+
+      assert_files {
+        "app.moon", "mime.types", "models.moon", "nginx.conf"
+      }
+
+    it "etlua config", ->
+      cmd.execute { [0]: "lapis", "new", "--etlua-config" }
+
+      assert_files {
+        "app.moon", "mime.types", "models.moon", "nginx.conf.etlua"
+      }
+
+    it "lua default", ->
+      cmd.execute { [0]: "lapis", "new", "--lua" }
+      assert_files {
+        "app.lua", "mime.types", "models.lua", "nginx.conf"
+      }
+
+    it "has tup", ->
+      cmd.execute { [0]: "lapis", "new", "--tup" }
+      assert_files {
+        "app.moon", "mime.types", "models.moon", "nginx.conf", "Tupfile", "Tuprules.tup"
+      }
+
+    it "has git", ->
+      cmd.execute { [0]: "lapis", "new", "--git" }
+      assert_files {
+        "app.moon", "mime.types", "models.moon", "nginx.conf", ".gitignore"
+      }
+
+
 describe "lapis.cmd.util", ->
   it "columnizes", ->
     import columnize from require "lapis.cmd.util"

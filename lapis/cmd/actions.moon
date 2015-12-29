@@ -7,6 +7,7 @@ path = require "lapis.cmd.path"
 colors = require "ansicolors"
 
 path = path\annotate!
+set_path = (p) -> path = p
 
 write_file_safe = (file, content) ->
   return nil, "file already exists: #{file}" if path.exists file
@@ -276,5 +277,5 @@ execute = (args) ->
 
     os.exit 1
 
-{ :actions, :execute, :get_action, :parse_flags }
+{ :actions, :execute, :get_action, :parse_flags, :set_path }
 

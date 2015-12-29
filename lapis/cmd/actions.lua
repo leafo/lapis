@@ -16,6 +16,10 @@ end
 local path = require("lapis.cmd.path")
 local colors = require("ansicolors")
 path = path:annotate()
+local set_path
+set_path = function(p)
+  path = p
+end
 local write_file_safe
 write_file_safe = function(file, content)
   if path.exists(file) then
@@ -354,5 +358,6 @@ return {
   actions = actions,
   execute = execute,
   get_action = get_action,
-  parse_flags = parse_flags
+  parse_flags = parse_flags,
+  set_path = set_path
 }
