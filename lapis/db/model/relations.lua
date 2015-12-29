@@ -36,6 +36,12 @@ find_relation = function(model, name)
     end
   end
 end
+local preload_relation
+preload_relation = function(self, objects, name, ...)
+  local preloader = self.relation_preloaders[name]
+  preloader(self, objects, ...)
+  return true
+end
 local preload_relations
 preload_relations = function(self, objects, name, ...)
   local preloader = self.relation_preloaders[name]
@@ -134,6 +140,7 @@ get_relations_class = function(model)
     self._relations_class = true
     self.relation_preloaders = preloaders
     self.preload_relations = preload_relations
+    self.preload_relation = preload_relation
     if _parent_0.__inherited then
       _parent_0.__inherited(_parent_0, _class_0)
     end
@@ -305,9 +312,9 @@ has_many = function(self, name, opts)
     preload_opts.flip = true
     preload_opts.many = true
     preload_opts.for_relation = name
-    preload_opts.order = opts.order
     preload_opts.as = name
-    preload_opts.where = opts.where
+    preload_opts.order = preload_opts.order or opts.order
+    preload_opts.where = preload_opts.where or opts.where
     return model:include_in(objects, foreign_key, preload_opts)
   end
 end

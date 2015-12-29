@@ -502,6 +502,22 @@ describe "lapis.db.model.relations", ->
 
       assert.same, before_count, #get_queries!
 
+    it "preloads single relation with opts", ->
+      models.Tags = class Tags extends Model
+
+      class Posts extends Model
+        @relations: {
+          {"tags", has_many: "Tags", order: "a desc"}
+        }
+
+      Posts\preload_relation {Posts\load id: 123}, "tags", {
+        fields: "a,b"
+        order: "b asc"
+      }
+      assert_queries {
+        [[SELECT a,b from "tags" where "post_id" in (123) order by b asc]]
+      }
+
     it "preloads many relation with order and name", ->
       mock_query "SELECT", {
         { primary_thing_id: 123, name: "whaz" }

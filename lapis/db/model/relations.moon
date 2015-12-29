@@ -15,6 +15,11 @@ find_relation = (model, name) ->
   if p = model.__parent
     find_relation p, name
 
+preload_relation = (objects, name, ...) =>
+  preloader = @relation_preloaders[name]
+  preloader @, objects, ...
+  true
+
 preload_relations = (objects, name, ...) =>
   preloader = @relation_preloaders[name]
   unless preloader
@@ -59,6 +64,8 @@ get_relations_class = (model) ->
     @relation_preloaders: preloaders
 
     @preload_relations: preload_relations
+    @preload_relation: preload_relation
+
     clear_loaded_relation: clear_loaded_relation
 
   model.__parent = relations_class
@@ -202,9 +209,10 @@ has_many = (name, opts) =>
     preload_opts.flip = true
     preload_opts.many = true
     preload_opts.for_relation = name
-    preload_opts.order = opts.order
     preload_opts.as = name
-    preload_opts.where = opts.where
+
+    preload_opts.order or= opts.order
+    preload_opts.where or= opts.where
 
     model\include_in objects, foreign_key, preload_opts
 
