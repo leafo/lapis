@@ -121,13 +121,22 @@ describe "lapis.cmd.actions.execute", ->
     assert lfs.chdir old_dir
     os.execute "rm -r '#{shell_escape new_dir}'"
 
-  assert_files = (files) ->
-    have_files = for f in lfs.dir(lfs.currentdir!)
+  list_files = (dir, accum={}, prefix="") ->
+    for f in lfs.dir dir
       continue if f\match "^%.*$"
-      f
+      relative_name = join prefix, f
+      if "directory" == lfs.attributes relative_name, "mode"
+        list_files join(dir, f), accum, relative_name
+      else
+        table.insert accum, relative_name
 
-    have_files = {f, true for f in *have_files}
-    assert.same {f, true for f in *files}, have_files
+    accum
+
+  assert_files = (files) ->
+    have_files = list_files lfs.currentdir!
+    table.sort files
+    table.sort have_files
+    assert.same files, have_files
 
   describe "new", ->
     it "default app", ->
@@ -161,6 +170,24 @@ describe "lapis.cmd.actions.execute", ->
       assert_files {
         "app.moon", "mime.types", "models.moon", "nginx.conf", ".gitignore"
       }
+
+  describe "build", ->
+    it "buils app", ->
+      cmd.execute { [0]: "lapis", "new" }
+      cmd.execute { [0]: "lapis", "build" }
+
+      assert_files {
+        "app.moon", "mime.types", "models.moon", "nginx.conf", "nginx.conf.compiled"
+      }
+
+  describe "generate", ->
+    it "generates model", ->
+      cmd.execute { [0]: "lapis", "generate", "model", "things" }
+      assert_files { "models/things.moon" }
+
+    it "generates spec", ->
+      cmd.execute { [0]: "lapis", "generate", "spec", "models.things" }
+      assert_files { "spec/models/things_spec.moon" }
 
 
 describe "lapis.cmd.util", ->
