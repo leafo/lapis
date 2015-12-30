@@ -29,8 +29,11 @@ used to run MySQL queries. When on the command line,
 
 ## Establishing A Connection
 
-You'll need to configure Lapis so it can connect to the database. If you're
-using PostgreSQL create a `postgres` block in our <span
+You'll need to configure Lapis so it can connect to the database.
+
+### PostgreSQL
+
+If you're using PostgreSQL create a `postgres` block in our <span
 class="for_moon">`config.moon`</span><span class="for_lua">`config.lua`</span>
 file.
 
@@ -60,6 +63,8 @@ config "development", ->
 leave those fields out if they aren't different from the defaults. If a
 non-default port is required it can be appended to the `host` with colon
 syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
+
+### MySQL
 
 If you're using MySQL the approach is similar, but you will define a `mysql`
 block:
