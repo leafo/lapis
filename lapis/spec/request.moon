@@ -170,10 +170,11 @@ mock_request = (app_cls, url, opts={}) ->
 
   body = concat(buffer)
 
-  if out_headers.x_lapis_error
-    json = require "cjson"
-    {:status, :err, :trace} = json.decode body
-    error "\n#{status}\n#{err}\n#{trace}"
+  unless opts.allow_error
+    if out_headers.x_lapis_error
+      json = require "cjson"
+      {:status, :err, :trace} = json.decode body
+      error "\n#{status}\n#{err}\n#{trace}"
 
   if opts.expect == "json"
     json = require "cjson"
