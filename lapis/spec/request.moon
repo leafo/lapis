@@ -126,7 +126,7 @@ mock_request = (app_cls, url, opts={}) ->
 
     req: {
       read_body: ->
-      get_body_data: -> opts.body or encode_query_string opts.post
+      get_body_data: -> opts.body or opts.post and encode_query_string(opts.post) or nil
       get_headers: -> headers
       get_uri_args: ->
         out = {}
