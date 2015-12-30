@@ -774,6 +774,11 @@ table of model instances. The second argument is the column name of the foreign
 key found in the array of model instances that maps to the primary key of the
 class calling the `include_in`.
 
+`include_in` is a low level way of loading associated rows. Whenever possible
+you should opt to use relations and `preload_relation` instead, it will save
+you the trouble of remembering what arguments you need to pass to `include_in`.
+Read more about [preloading relations](#preloading-relations).
+
 The name of the inserted property is derived from the name of the foreign key.
 In this case, `user` was derived from the foreign key `user_id`. If we want to
 manually specify the name we can do something like this:
