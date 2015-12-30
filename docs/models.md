@@ -1153,10 +1153,9 @@ class Posts extends Model
   }
 ```
 
-Relations will automatically add methods to models to make fetching the
-associated model instances easy. For example the `belongs_to` relation from the
-example above would make a `get_user` method:
-
+Lapis will automatically add a handful of methods for reach relation to the
+model class to make fetching the associated row easy.  For example the
+`belongs_to` relation from the example above would make a `get_user` method:
 
 ```lua
 local post = Posts:find(1)
@@ -1450,6 +1449,78 @@ class Users extends Model
   }
 ```
 
+## Preloading relations
+
+In addtion to the method to fetch the associated rows on a single model
+instace, relations also provide a way to preload the rows for mmany instances
+of the model. For an explanation of why preloading rows is necessary, read
+the [Preloading associations](#preloading-associations) guide.
+
+### `preload_relation(instances, name, ...)`
+
+The class method `preload_relation` takes an array table of instances of the
+model, and the name of a relation. It fills all the instances with the
+associated models with a single query. It's equivalent to calling `include_in`
+with the options that match the relation definition.
+
+If any of the relations return `nil`, the loaded flag is set on the instace so
+calling the `get_` method does not trigger another query.
+
+Any additional arguments are merged in the options to the call to `include_in`.
+
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Posts = Model:extend("posts", {
+  relations = {
+    {"user", belongs_to = "Users"}
+  }
+})
+```
+
+```moon
+import Model from require "lapis.db.models"
+
+class Posts extends Model
+  @relations: {
+    {"user", belongs_to: "Users"}
+  }
+```
+
+A `get_` method is added to the model to fetch the associated row:
+
+```lua
+local posts = Posts:select() -- select all the posts
+-- load the user on all the posts
+Posts:preload_relation(posts, "user")
+```
+
+```moon
+posts = Posts\select! -- select all the posts
+-- load the user for all th posts
+Posts\preload_relation posts, "user"
+```
+
+```sql
+SELECT * from "users" where "id" in (3,4,5,6,7);
+```
+
+### `preload_relations(instances, names...)`
+
+`preload_relations` is a helper method for calling `preload_relation` many
+times with different relations. This form does not support passing any options
+to the preloaders.
+
+```lua
+-- load three separate relations
+Posts:preload_relations(posts, "user", "tags", "category")
+```
+
+```moon
+-- load three separate relations
+Posts\preload_relations posts, "user", "tags", "category"
+```
 
 ## Enum
 
