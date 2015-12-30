@@ -418,7 +418,7 @@ do
       if not (success) then
         self.handle_error(r, err, trace)
       end
-      return res
+      return success, r
     end,
     before_filter = function(self, fn)
       if not (rawget(self, "before_filters")) then

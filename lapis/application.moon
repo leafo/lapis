@@ -341,6 +341,7 @@ class Application
 
   dispatch: (req, res) =>
     local err, trace, r
+
     success = xpcall (->
         r = @.Request @, req, res
 
@@ -358,7 +359,7 @@ class Application
     unless success
       @.handle_error r, err, trace
 
-    res
+    success, r
 
   @before_filter: (...) =>
     @__base.before_filter @__base, ...
