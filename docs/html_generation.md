@@ -35,6 +35,8 @@ element "table", width: "100%", ->  -- <table width="100%"></table>
 
 div class: "footer", "The Foot"     -- <div class="footer">The Foot</div>
 
+input required: true"               -- <input required/>
+
 div ->                              -- <div>Hey</div>
   text "Hey"
 
