@@ -117,20 +117,31 @@ element_attributes = function(buffer, t)
     return 
   end
   for k, v in pairs(t) do
-    if type(k) == "string" and not k:match("^__") then
-      local vtype = type(v)
-      if vtype == "boolean" then
-        if v then
-          buffer:write(" ", k)
-        end
-      else
-        if vtype == "table" and k == "class" then
-          v = classnames(v)
+    local _continue_0 = false
+    repeat
+      if type(k) == "string" and not k:match("^__") then
+        local vtype = type(v)
+        if vtype == "boolean" then
+          if v then
+            buffer:write(" ", k)
+          end
         else
-          v = tostring(v)
+          if vtype == "table" and k == "class" then
+            v = classnames(v)
+            if v == "" then
+              _continue_0 = true
+              break
+            end
+          else
+            v = tostring(v)
+          end
+          buffer:write(" ", k, "=", '"', escape(v), '"')
         end
-        buffer:write(" ", k, "=", '"', escape(v), '"')
       end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
   end
   return nil

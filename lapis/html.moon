@@ -85,6 +85,7 @@ element_attributes = (buffer, t) ->
       else
         if vtype == "table" and k == "class"
           v = classnames v
+          continue if v == ""
         else
           v = tostring v
 
