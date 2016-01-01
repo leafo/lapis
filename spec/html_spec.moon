@@ -33,7 +33,7 @@ describe "lapis.html", ->
       div class: {ok: "fool"}
       div class: {cool: nil}
 
-    assert.same '<div class="hello world cool"></div><div class=""></div><div class="ok"></div><div class=""></div>', output
+    assert.same '<div class="hello world cool"></div><div></div><div class="ok"></div><div></div>', output
 
   it "should render more html", ->
     output = render_html ->
