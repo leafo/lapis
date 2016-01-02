@@ -240,7 +240,7 @@ make sure `/` loads without errors:
 
 ```lua
 local request = require("lapis.spec.server").request
-local use_test_server = require("lapis.spec")
+local use_test_server = require("lapis.spec").use_test_server
 
 describe("my site", function()
   use_test_server()
