@@ -229,7 +229,7 @@ time_ago_in_words = do
     days: "day"
     hours: "hour"
     minutes: "minute"
-    second: "second"
+    seconds: "second"
   }
 
   (time, parts=1, suffix="ago") ->

@@ -332,7 +332,7 @@ do
     days = "day",
     hours = "hour",
     minutes = "minute",
-    second = "second"
+    seconds = "second"
   }
   time_ago_in_words = function(time, parts, suffix)
     if parts == nil then
