@@ -150,6 +150,7 @@ perform when the action receives that verb.
 
 ```lua
 local lapis = require("lapis")
+local respond_to = require("lapis.application").respond_to
 local app = lapis.Application()
 
 app:match("create_account", "/create-account", respond_to({
@@ -186,6 +187,7 @@ run.
 
 ```lua
 local lapis = require("lapis")
+local respond_to = require("lapis.application").respond_to
 local app = lapis.Application()
 
 app:match("edit_user", "/edit-user/:id", respond_to({
