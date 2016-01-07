@@ -575,7 +575,7 @@ When the form is submitted, the file is stored as a table with `filename` and
 class="for_lua">`self.params`</span> under the name of the form input:
 
 ```lua
-locl app = lapis.Application()
+local app = lapis.Application()
 
 app:post("/my_action", function(self)
   local file = self.params.uploaded_file
