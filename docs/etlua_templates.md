@@ -126,7 +126,7 @@ class App extends lapis.Application
 ```html
 <!-- views/my_template.etlua -->
 <ul class="list">
-<% for item in pets do %>
+<% for i, item in ipairs(pets) do %>
   <li><%= item %></li>
 <% end %>
 </ul>
