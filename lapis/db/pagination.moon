@@ -154,19 +154,42 @@ class OrderedPaginator extends Paginator
     parsed.order = table.concat ["#{f} #{order}" for f in *escaped_fields], ", "
 
     if ...
-      positions = {...}
-      pos_count = #positions
-      orders = for i, pos in ipairs positions
-        field = escaped_fields[i]
-        switch order\lower!
-          when "asc"
-            "#{field} #{i == pos_count and ">" or ">="} #{@db.escape_literal pos}"
-          when "desc"
-            "#{field} #{i == pos_count and "<" or "<="} #{@db.escape_literal pos}"
-          else
-            error "don't know how to handle order #{order}"
+      op = switch order\lower!
+        when "asc"
+          ">"
+        when "desc"
+          "<"
 
-      order_clause = table.concat orders, " and "
+      pos_count = select "#", ...
+      if pos_count > #escaped_fields
+        error "passed in too many values for paginated query (expected #{#escaped_fields}, got #{pos_count})"
+
+      order_clause = if 1 == pos_count
+        order_clause = "#{escaped_fields[1]} #{op} #{@db.escape_literal (...)}"
+      else
+        positions = {...}
+        buffer = {"("}
+
+        for i in ipairs positions
+          unless escaped_fields[i]
+            error "passed in too many values for paginated query (expected #{#escaped_fields}, got #{pos_count})"
+
+          insert buffer, escaped_fields[i]
+          insert buffer, ", "
+
+        buffer[#buffer] = nil
+
+        insert buffer, ") "
+        insert buffer, op
+        insert buffer, " ("
+
+        for pos in *positions
+          insert buffer, @db.escape_literal pos
+          insert buffer, ", "
+
+        buffer[#buffer] = nil
+        insert buffer, ")"
+        concat buffer
 
       if parsed.where
         parsed.where = "#{order_clause} and (#{parsed.where})"

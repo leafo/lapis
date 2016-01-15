@@ -270,31 +270,47 @@ do
         return _accum_0
       end)(), ", ")
       if ... then
-        local positions = {
-          ...
-        }
-        local pos_count = #positions
-        local orders
-        do
-          local _accum_0 = { }
-          local _len_0 = 1
-          for i, pos in ipairs(positions) do
-            local field = escaped_fields[i]
-            local _value_0
-            local _exp_0 = order:lower()
-            if "asc" == _exp_0 then
-              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and ">" or ">=") .. " " .. tostring(self.db.escape_literal(pos))
-            elseif "desc" == _exp_0 then
-              _value_0 = tostring(field) .. " " .. tostring(i == pos_count and "<" or "<=") .. " " .. tostring(self.db.escape_literal(pos))
-            else
-              _value_0 = error("don't know how to handle order " .. tostring(order))
-            end
-            _accum_0[_len_0] = _value_0
-            _len_0 = _len_0 + 1
-          end
-          orders = _accum_0
+        local op
+        local _exp_0 = order:lower()
+        if "asc" == _exp_0 then
+          op = ">"
+        elseif "desc" == _exp_0 then
+          op = "<"
         end
-        local order_clause = table.concat(orders, " and ")
+        local pos_count = select("#", ...)
+        if pos_count > #escaped_fields then
+          error("passed in too many values for paginated query (expected " .. tostring(#escaped_fields) .. ", got " .. tostring(pos_count) .. ")")
+        end
+        local order_clause
+        if 1 == pos_count then
+          order_clause = tostring(escaped_fields[1]) .. " " .. tostring(op) .. " " .. tostring(self.db.escape_literal((...)))
+        else
+          local positions = {
+            ...
+          }
+          local buffer = {
+            "("
+          }
+          for i in ipairs(positions) do
+            if not (escaped_fields[i]) then
+              error("passed in too many values for paginated query (expected " .. tostring(#escaped_fields) .. ", got " .. tostring(pos_count) .. ")")
+            end
+            insert(buffer, escaped_fields[i])
+            insert(buffer, ", ")
+          end
+          buffer[#buffer] = nil
+          insert(buffer, ") ")
+          insert(buffer, op)
+          insert(buffer, " (")
+          for _index_0 = 1, #positions do
+            local pos = positions[_index_0]
+            insert(buffer, self.db.escape_literal(pos))
+            insert(buffer, ", ")
+          end
+          buffer[#buffer] = nil
+          insert(buffer, ")")
+          order_clause = concat(buffer)
+        end
         if parsed.where then
           parsed.where = tostring(order_clause) .. " and (" .. tostring(parsed.where) .. ")"
         else

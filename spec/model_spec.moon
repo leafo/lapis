@@ -215,8 +215,8 @@ describe "lapis.db.model", ->
       'SELECT * from "things" where "things"."id" > 100 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
       'SELECT * from "things" where "things"."id" < 32 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
 
-      'SELECT * from "things" where "things"."id" >= 100 and "things"."updated_at" > 200 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-      'SELECT * from "things" where "things"."id" <= 32 and "things"."updated_at" < 42 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
+      'SELECT * from "things" where ("things"."id", "things"."updated_at") > (100, 200) and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+      'SELECT * from "things" where ("things"."id", "things"."updated_at") < (32, 42) and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
     }
 
 
