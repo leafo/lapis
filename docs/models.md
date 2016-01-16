@@ -1133,6 +1133,163 @@ if pager\has_items!
 SELECT 1 FROM "users" where group_id = 123 limit 1
 ```
 
+## Ordered paginator
+
+The default paginator uses `LIMIT` and `OFFSET` to handle fetching pages. For
+large data sets, this can become inefficient for viewing later pages since the
+database has to scan past all the proceeding rows when handling the offset.
+
+An alternative way to handling pagination is using a `WHERE` clause along with
+an `ORDER` and `LIMIT`. If the right index is on the table then the database
+can skip directly to the rows that should be contained in the page.
+
+With this method you don't get page numbers, but instead must keep track of the
+last index of the previous page. This is best represented with a *load more*
+button on your site.
+
+The `OrderedPaginator` class is a subclass of the `Paginator` that uses this
+method to paginate results.
+
+Here's an example model:
+
+```lua
+create_table("events", {
+  { "id", types.serial },
+  { "user_id", types.foreign_key },
+  { "data", types.text },
+
+  "PRIMARY KEY(id)"
+})
+
+local Events = Model:extend("events")
+```
+
+```moon
+create_table "users", {
+  { "id", types.serial }
+  { "user_id", types.foreign_key }
+  { "data", types.text }
+
+  "PRIMARY KEY(id)"
+}
+
+class Events extends Model
+```
+
+Here's how to instantiate an ordered pager that can iterate over the `events`
+table for a specific user id, in ascending order:
+
+```lua
+local OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+local pager = OrderedPaginator(Events, "id", "where user_id = ?", 123, {
+  per_page = 50
+})
+```
+
+```moon
+import OrderedPaginator from require "lapis.db.pagination"
+pager = OrderedPaginator Events, "id", "where user_id = ?", 123, {
+  per_page: 50
+}
+```
+
+The `OrderedPager` constructor function mathces the same interface as the
+regular `Pager` except it takes an additional argument after the model name:
+the name of the column(s) to order by.
+
+Call `get_page` with no arguments to get the first page of results. In addition
+to the results of the query, the addition arguments contain the values that
+should be passed to get page to get the next page of results.
+
+```lua
+-- get the first page
+local results, next_page = pager:get_page()
+
+-- get the next page
+local results_2, next_page = pager:get_page(next_page)
+```
+
+```moon
+-- get the first page
+results, next_page = pager\get_page!
+
+-- get the next page
+results_2, next_page = pager\get_page next_page
+```
+
+```sql
+SELECT * from "events" where user_id = 123 order by "events"."id" ASC limit 50
+SELECT * from "events" where "events"."id" > 4832 and (user_id = 123) order by "events"."id" ASC limit 50
+```
+
+### Pagination order
+
+The pagination order can be specified by the `order` field in the options
+table. The default is `asc`.
+
+```lua
+local OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+local pager = OrderedPaginator(Events, "id", "where user_id = ?", 123, {
+  order = "desc",
+})
+```
+
+```moon
+import OrderedPaginator from require "lapis.db.pagination"
+pager = OrderedPaginator Events, "id", "where user_id = ?", 123, {
+  order = "desc",
+}
+```
+
+This will affect any calls to `get_page` on the paginator.
+
+Additionally, the `after` and `before` methods on the paginator let you fetch
+results in a specific order. They both share the same interface as `get_page`,
+but `after` will always fetch ascneding, and `before` will always fetch
+descending.
+
+
+### Composite ordering
+
+If you have a model that has a composite sorting key (made up of more than one
+column), you can pass a table array as the ordering column:
+
+```lua
+local OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+local pager = OrderedPaginator(SomeModel, {"user_id", "post_id"})
+```
+
+```moon
+import OrderedPaginator from require "lapis.db.pagination"
+pager = OrderedPaginator SomeModel, {"user_id", "post_id"}
+```
+
+The `get_page` method on the paginator takes as many arguments as there are
+columns. Additionally, it will return that many additional values after the
+results to be passed on as the next page
+
+
+```lua
+-- get the first page
+local results, last_user_id, last_post_id = pager:get_page()
+
+-- get the next page
+local results_2 = pager:get_page(last_user_id, last_post_id)
+```
+
+```moon
+-- get the first page
+results, last_user_id, last_post_id = pager\get_page!
+
+-- get the next page
+results_2 = pager\get_page last_user_id, last_post_id
+```
+
+```sql
+SELECT * from "some_model" order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
+SELECT * from "some_model" where ("some_model"."user_id", "some_model"."post_id") > (232, 582) order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
+```
+
 ## Describing Relationships
 
 Often your models are connected to other models by use of a *foreign_key*. You
@@ -1453,6 +1610,7 @@ class Users extends Model
     }
   }
 ```
+
 
 ## Preloading relations
 
