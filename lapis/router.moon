@@ -36,7 +36,6 @@ route_precedence = (flags) ->
 class Router
   alpha = R("az", "AZ", "__")
   alpha_num = alpha + R("09")
-  slug = (P(1) - "/") ^ 1
 
   make_var = (str) -> { "var", str\sub 2 }
   make_splat = -> { "splat" }
@@ -63,9 +62,11 @@ class Router
         when "splat"
           inside = P 1
           inside -= exlude if exlude
-          Cg P(inside)^1, "splat"
+          Cg inside^1, "splat"
         when "var"
-          Cg slug, value
+          inside = P(1) - "/"
+          inside -= exlude if exlude
+          Cg inside^1, value
         when "literal"
           P value
 

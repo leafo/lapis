@@ -36,7 +36,7 @@ end
 local Router
 do
   local _class_0
-  local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, var, chunk
+  local alpha, alpha_num, make_var, make_splat, make_lit, splat, var, chunk
   local _base_0 = {
     add_route = function(self, route, responder)
       self.p = nil
@@ -178,24 +178,21 @@ do
   local self = _class_0
   alpha = R("az", "AZ", "__")
   alpha_num = alpha + R("09")
-  slug = (P(1) - "/") ^ 1
   make_var = function(str)
-    local name = str:sub(2)
     return {
       "var",
-      Cg(slug, name)
+      str:sub(2)
     }
   end
   make_splat = function()
     return {
-      "splat",
-      Cg(P(1) ^ 1, "splat")
+      "splat"
     }
   end
   make_lit = function(str)
     return {
       "literal",
-      P(str)
+      str
     }
   end
   splat = P("*")
@@ -203,13 +200,34 @@ do
   chunk = var / make_var + splat / make_splat
   chunk = (1 - chunk) ^ 1 / make_lit + chunk
   self.route_grammar = Ct(chunk ^ 1) / function(parts)
-    local patt = nil
+    local patt
     local flags = { }
-    for _index_0 = 1, #parts do
-      local _des_0 = parts[_index_0]
-      local t, part
-      t, part = _des_0[1], _des_0[2]
-      flags[t] = true
+    for i, _des_0 in ipairs(parts) do
+      local kind, value
+      kind, value = _des_0[1], _des_0[2]
+      local following = parts[i + 1]
+      local exlude
+      if following and following[1] == "literal" then
+        exlude = following[2]
+      end
+      flags[kind] = true
+      local part
+      local _exp_0 = kind
+      if "splat" == _exp_0 then
+        local inside = P(1)
+        if exlude then
+          inside = inside - exlude
+        end
+        part = Cg(inside ^ 1, "splat")
+      elseif "var" == _exp_0 then
+        local inside = P(1) - "/"
+        if exlude then
+          inside = inside - exlude
+        end
+        part = Cg(inside ^ 1, value)
+      elseif "literal" == _exp_0 then
+        part = P(value)
+      end
       if patt then
         patt = patt * part
       else
