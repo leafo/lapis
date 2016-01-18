@@ -22,10 +22,21 @@ reduce = function(items, fn)
   end
   return left
 end
+local route_precedence
+route_precedence = function(flags)
+  local p = 0
+  if flags.var then
+    p = p + 1
+  end
+  if flags.splat then
+    p = p + 2
+  end
+  return p
+end
 local Router
 do
   local _class_0
-  local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, symbol, chunk
+  local alpha, alpha_num, slug, make_var, make_splat, make_lit, splat, var, chunk
   local _base_0 = {
     add_route = function(self, route, responder)
       self.p = nil
@@ -47,24 +58,47 @@ do
       return error("failed to find route: " .. route)
     end,
     build = function(self)
-      self.p = reduce((function()
+      local by_precedence = { }
+      local _list_0 = self.routes
+      for _index_0 = 1, #_list_0 do
+        local r = _list_0[_index_0]
+        local pattern, flags = self:build_route(unpack(r))
+        local p = route_precedence(flags)
+        by_precedence[p] = by_precedence[p] or { }
+        table.insert(by_precedence[p], pattern)
+      end
+      local precedences
+      do
         local _accum_0 = { }
         local _len_0 = 1
-        local _list_0 = self.routes
-        for _index_0 = 1, #_list_0 do
-          local r = _list_0[_index_0]
-          _accum_0[_len_0] = self:build_route(unpack(r))
+        for k in pairs(by_precedence) do
+          _accum_0[_len_0] = k
           _len_0 = _len_0 + 1
         end
-        return _accum_0
-      end)(), function(a, b)
-        return a + b
-      end)
+        precedences = _accum_0
+      end
+      table.sort(precedences)
+      self.p = nil
+      for _index_0 = 1, #precedences do
+        local p = precedences[_index_0]
+        local _list_1 = by_precedence[p]
+        for _index_1 = 1, #_list_1 do
+          local pattern = _list_1[_index_1]
+          if self.p then
+            self.p = self.p + pattern
+          else
+            self.p = pattern
+          end
+        end
+      end
+      self.p = self.p or P(-1)
     end,
     build_route = function(self, path, responder, name)
-      return self.__class.route_grammar:match(path) * -1 / function(params)
+      local pattern, flags = self.__class.route_grammar:match(path)
+      pattern = pattern * -1 / function(params)
         return params, responder, path, name
       end
+      return pattern, flags
     end,
     fill_path = function(self, path, params, route_name)
       if params == nil then
@@ -93,7 +127,7 @@ do
           end
         end
       end
-      local patt = Cs((symbol / replace + 1) ^ 0)
+      local patt = Cs((var / replace + 1) ^ 0)
       return patt:match(path)
     end,
     url_for = function(self, name, params, query)
@@ -147,23 +181,42 @@ do
   slug = (P(1) - "/") ^ 1
   make_var = function(str)
     local name = str:sub(2)
-    return Cg(slug, name)
+    return {
+      "var",
+      Cg(slug, name)
+    }
   end
   make_splat = function()
-    return Cg(P(1) ^ 1, "splat")
+    return {
+      "splat",
+      Cg(P(1) ^ 1, "splat")
+    }
   end
   make_lit = function(str)
-    return P(str)
+    return {
+      "literal",
+      P(str)
+    }
   end
   splat = P("*")
-  symbol = P(":") * alpha * alpha_num ^ 0
-  chunk = symbol / make_var + splat / make_splat
+  var = P(":") * alpha * alpha_num ^ 0
+  chunk = var / make_var + splat / make_splat
   chunk = (1 - chunk) ^ 1 / make_lit + chunk
   self.route_grammar = Ct(chunk ^ 1) / function(parts)
-    local patt = reduce(parts, function(a, b)
-      return a * b
-    end)
-    return Ct(patt)
+    local patt = nil
+    local flags = { }
+    for _index_0 = 1, #parts do
+      local _des_0 = parts[_index_0]
+      local t, part
+      t, part = _des_0[1], _des_0[2]
+      flags[t] = true
+      if patt then
+        patt = patt * part
+      else
+        patt = part
+      end
+    end
+    return Ct(patt), flags
   end
   Router = _class_0
 end

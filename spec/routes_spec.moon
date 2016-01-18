@@ -138,3 +138,27 @@ describe "named routes", ->
   it "should not build url", ->
     assert.has_error (-> r\url_for "fake_url", name: user),
       "Missing route named fake_url"
+
+describe "route precedence", ->
+  local r
+  handler = (...) -> { ... }
+
+  before_each ->
+    r = Router!
+    r\add_route "/*", handler
+    r\add_route "/:slug", handler
+    r\add_route "/hello", handler
+
+    r.default_route = -> "failed to find route"
+
+  it "matches literal route first", ->
+    out = r\resolve "/hello"
+    assert.same { {}, "/hello" }, out
+
+  it "matches var route second", ->
+    out = r\resolve "/world"
+    assert.same { {slug: "world"}, "/:slug" }, out
+
+  it "matches slug last", ->
+    out = r\resolve "/whoa/zone"
+    assert.same { { splat: "whoa/zone" }, "/*" }, out

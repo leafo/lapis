@@ -22,6 +22,17 @@ reduce = (items, fn) ->
     left = fn left, items[i]
   left
 
+route_precedence = (flags) ->
+  p = 0
+
+  if flags.var
+    p += 1
+
+  if flags.splat
+    p += 2
+
+  p
+
 class Router
   alpha = R("az", "AZ", "__")
   alpha_num = alpha + R("09")
@@ -29,23 +40,40 @@ class Router
 
   make_var = (str) ->
     name = str\sub 2
-    Cg slug, name
+    {
+      "var"
+      Cg slug, name
+    }
 
   make_splat = ->
-    Cg P(1)^1, "splat"
+    {
+      "splat"
+      Cg P(1)^1, "splat"
+    }
 
-  make_lit = (str) -> P(str)
+  make_lit = (str) ->
+    {
+      "literal"
+      P str
+    }
 
   splat = P"*"
-  symbol = P":" * alpha * alpha_num^0
+  var = P":" * alpha * alpha_num^0
 
-  -- chunk = (1 - symbol)^1 / make_lit + symbol / make_var
-  chunk = symbol / make_var + splat / make_splat
+  chunk = var / make_var + splat / make_splat
   chunk = (1 - chunk)^1 / make_lit + chunk
 
   @route_grammar = Ct(chunk^1) / (parts) ->
-    patt = reduce parts, (a,b) -> a * b
-    Ct patt
+    patt = nil
+    flags = {}
+    for {t, part} in *parts
+      flags[t] = true
+      patt = if patt
+        patt * part
+      else
+        part
+
+    Ct(patt), flags
 
   new: =>
     @routes = {}
@@ -68,11 +96,33 @@ class Router
     error "failed to find route: " .. route
 
   build: =>
-    @p = reduce [@build_route unpack r for r in *@routes], (a, b) -> a + b
+    by_precedence = {}
+
+    for r in *@routes
+      pattern, flags = @build_route unpack r
+      p = route_precedence flags
+      by_precedence[p] or= {}
+      table.insert by_precedence[p], pattern
+
+    precedences = [k for k in pairs by_precedence]
+    table.sort precedences
+
+    @p = nil
+    for p in *precedences
+      for pattern in *by_precedence[p]
+        if @p
+          @p += pattern
+        else
+          @p = pattern
+
+    @p or= P -1
   
   build_route: (path, responder, name) =>
-    @@route_grammar\match(path) * -1 / (params) ->
+    pattern, flags = @@route_grammar\match(path)
+    pattern = pattern * -1 / (params) ->
       params, responder, path, name
+
+    pattern, flags
 
   fill_path: (path, params={}, route_name) =>
     replace = (s) ->
@@ -88,7 +138,7 @@ class Router
       else
         ""
 
-    patt = Cs (symbol / replace + 1)^0
+    patt = Cs (var / replace + 1)^0
     patt\match(path)
 
   url_for: (name, params, query) =>
