@@ -38,24 +38,9 @@ class Router
   alpha_num = alpha + R("09")
   slug = (P(1) - "/") ^ 1
 
-  make_var = (str) ->
-    name = str\sub 2
-    {
-      "var"
-      Cg slug, name
-    }
-
-  make_splat = ->
-    {
-      "splat"
-      Cg P(1)^1, "splat"
-    }
-
-  make_lit = (str) ->
-    {
-      "literal"
-      P str
-    }
+  make_var = (str) -> { "var", str\sub 2 }
+  make_splat = -> { "splat" }
+  make_lit = (str) -> { "literal", str }
 
   splat = P"*"
   var = P":" * alpha * alpha_num^0
@@ -64,10 +49,26 @@ class Router
   chunk = (1 - chunk)^1 / make_lit + chunk
 
   @route_grammar = Ct(chunk^1) / (parts) ->
-    patt = nil
+    local patt
     flags = {}
-    for {t, part} in *parts
-      flags[t] = true
+
+    for i, {kind, value} in ipairs parts
+      following = parts[i+1]
+      exlude = if following and following[1] == "literal"
+        following[2]
+
+      flags[kind] = true
+
+      part = switch kind
+        when "splat"
+          inside = P 1
+          inside -= exlude if exlude
+          Cg P(inside)^1, "splat"
+        when "var"
+          Cg slug, value
+        when "literal"
+          P value
+
       patt = if patt
         patt * part
       else
