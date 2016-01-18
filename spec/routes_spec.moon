@@ -162,3 +162,17 @@ describe "route precedence", ->
   it "matches slug last", ->
     out = r\resolve "/whoa/zone"
     assert.same { { splat: "whoa/zone" }, "/*" }, out
+
+  it "preserves declare order among routes with same precedence", ->
+    r = Router!
+    r\add_route "/*", handler
+
+    for i=1,20
+      r\add_route "/:slug#{i}", handler
+
+    r\add_route "/hello", handler
+
+    out = r\resolve "/hey"
+    assert.same { { slug1: "hey" }, "/:slug1" }, out
+
+
