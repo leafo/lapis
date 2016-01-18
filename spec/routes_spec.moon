@@ -74,6 +74,33 @@ describe "basic route matching", ->
       "*"
     }, r\resolve "hello_world"
 
+  it "should match splat with trailing literal", ->
+    router = Router!
+    router\add_route "/*/hello"
+    router\build!
+
+    assert.same {
+      {
+        splat: "one/two"
+      }
+      nil
+      "/*/hello"
+    }, {router.p\match "/one/two/hello"}
+
+
+  it "should match var with trailing literal", ->
+    router = Router!
+    router\add_route "/hi/:one-:two"
+    router\build!
+
+    assert.same {
+      {
+        one: "blah"
+        two: "blorgbeef-fe"
+      }
+      nil
+      "/hi/:one-:two"
+    }, {router.p\match "/hi/blah-blorgbeef-fe"}
 
 describe "named routes", ->
   local r
