@@ -137,7 +137,7 @@ describe "named routes", ->
   -- TODO: this is incorrect
   it "should generate correct url", ->
     url = r\url_for "splatted", slug: "cool", splat: "hello"
-    assert.same "/page/cool/*", url
+    assert.same "/page/cool/hello", url
 
   it "should generate url with query string as table", ->
     url = r\url_for "profile", { name: "adam" }, hello: "world"

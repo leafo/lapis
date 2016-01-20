@@ -117,6 +117,7 @@ do
       local splat = P("*")
       local var = P(":") * alpha * alpha_num ^ 0
       self.var = var
+      self.splat = splat
       local chunk = var / make_var + splat / make_splat
       chunk = (1 - chunk) ^ 1 / make_lit + chunk
       local compile_chunks
@@ -251,7 +252,7 @@ do
           end
         end
       end
-      local patt = Cs((self.parser.var / replace + 1) ^ 0)
+      local patt = Cs((self.parser.var / replace + self.parser.splat / (params.splat or "") + 1) ^ 0)
       return patt:match(path)
     end,
     url_for = function(self, name, params, query)

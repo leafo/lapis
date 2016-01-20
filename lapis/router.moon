@@ -90,6 +90,7 @@ class RouteParser
     splat = P"*"
     var = P":" * alpha * alpha_num^0
     @var = var
+    @splat = splat
 
     chunk = var / make_var + splat / make_splat
     chunk = (1 - chunk)^1 / make_lit + chunk
@@ -177,7 +178,12 @@ class Router
       else
         ""
 
-    patt = Cs (@parser.var / replace + 1)^0
+    patt = Cs (
+      @parser.var / replace +
+      @parser.splat / (params.splat or "") +
+      1
+    )^0
+
     patt\match(path)
 
   url_for: (name, params, query) =>
