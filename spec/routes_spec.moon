@@ -213,6 +213,7 @@ describe "optional parts", ->
       "/zone(/:game(/:user)(*))"
     }, out
 
+
 describe "route precedence", ->
   local r
   handler = (...) -> { ... }
@@ -248,5 +249,24 @@ describe "route precedence", ->
 
     out = r\resolve "/hey"
     assert.same { { slug1: "hey" }, "/:slug1" }, out
+
+  it "more specific takes precedence", ->
+    pending "todo"
+    r = Router!
+    r\add_route "/test/:game", handler
+    r\add_route "/test/:game-world", handler
+
+    out = r\resolve "/test/hello-world"
+    assert.same { { game: "hello" }, "/test/:game-world" }, out
+
+  it "non-optional takes precedence", ->
+    pending "todo"
+    r = Router!
+    r\add_route "/test(/:game)", handler
+    r\add_route "/test/:game", handler
+
+    out = r\resolve "/test/thing"
+    assert.same { { game: "thing" }, "/test/:game" }, out
+
 
 
