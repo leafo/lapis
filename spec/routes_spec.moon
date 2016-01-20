@@ -166,6 +166,53 @@ describe "named routes", ->
     assert.has_error (-> r\url_for "fake_url", name: user),
       "Missing route named fake_url"
 
+describe "optional parts", ->
+  local r
+  handler = (...) -> { ... }
+
+  before_each ->
+    r = Router!
+    r\add_route "/test(/:game)", handler
+    r\add_route "/zone(/:game(/:user)(*))", handler
+    r\add_route "/test/me", handler
+
+    r.default_route = -> "failed to find route"
+
+  it "matches without optional", ->
+    out = r\resolve "/test/yeah"
+    assert.same { {game: "yeah"}, "/test(/:game)" }, out
+
+  it "matches with optional part", ->
+    out = r\resolve "/test/ozone"
+    assert.same { {game: "ozone"}, "/test(/:game)" }, out
+
+  it "fails to find", ->
+    out = r\resolve "/test/ozone/"
+    assert.same "failed to find route", out
+
+  it "lets literal route take precedence", ->
+    out = r\resolve "/test/me"
+    assert.same { {}, "/test/me" }, out
+
+  it "matches without any optionals", ->
+    out = r\resolve "/zone"
+    assert.same { {}, "/zone(/:game(/:user)(*))" }, out
+
+  it "matches with one optional", ->
+    out = r\resolve "/zone/drone"
+    assert.same { { game: "drone"}, "/zone(/:game(/:user)(*))" }, out
+
+  it "matches with two optional", ->
+    out = r\resolve "/zone/drone/leafo"
+    assert.same { { game: "drone", user: "leafo" }, "/zone(/:game(/:user)(*))" }, out
+
+  it "matches with three optional", ->
+    out = r\resolve "/zone/drone/leafo/here"
+    assert.same {
+      { game: "drone", user: "leafo", splat: "/here" }
+      "/zone(/:game(/:user)(*))"
+    }, out
+
 describe "route precedence", ->
   local r
   handler = (...) -> { ... }
