@@ -33,10 +33,134 @@ route_precedence = function(flags)
   end
   return p
 end
+local RouteParser
+do
+  local _class_0
+  local _base_0 = {
+    parse = function(self, route)
+      return self.grammar:match(route)
+    end,
+    compile_chunks = function(self, chunks)
+      local patt
+      local flags = { }
+      for i, _des_0 in ipairs(chunks) do
+        local kind, value, sub_flags
+        kind, value, sub_flags = _des_0[1], _des_0[2], _des_0[3]
+        local following = chunks[i + 1]
+        local exclude
+        if following and following[1] == "literal" then
+          exclude = following[2]
+        end
+        flags[kind] = true
+        local part
+        local _exp_0 = kind
+        if "splat" == _exp_0 then
+          local inside = P(1)
+          if exclude then
+            inside = inside - exclude
+          end
+          part = Cg(inside ^ 1, "splat")
+        elseif "var" == _exp_0 then
+          local inside = P(1) - "/"
+          if exclude then
+            inside = inside - exclude
+          end
+          part = Cg(inside ^ 1, value)
+        elseif "literal" == _exp_0 then
+          part = P(value)
+        elseif "optional" == _exp_0 then
+          for k, v in pairs(sub_flags) do
+            flags[k] = flags[k] or v
+          end
+          part = value ^ -1
+        else
+          part = error("unknown node: " .. tostring(kind))
+        end
+        if patt then
+          patt = patt * part
+        else
+          patt = part
+        end
+      end
+      return patt, flags
+    end,
+    build_grammar = function(self)
+      local alpha = R("az", "AZ", "__")
+      local alpha_num = alpha + R("09")
+      local make_var
+      make_var = function(str)
+        return {
+          "var",
+          str:sub(2)
+        }
+      end
+      local make_splat
+      make_splat = function()
+        return {
+          "splat"
+        }
+      end
+      local make_lit
+      make_lit = function(str)
+        return {
+          "literal",
+          str
+        }
+      end
+      local make_optional
+      make_optional = function(...)
+        return {
+          "optional",
+          ...
+        }
+      end
+      local splat = P("*")
+      local var = P(":") * alpha * alpha_num ^ 0
+      self.var = var
+      local chunk = var / make_var + splat / make_splat
+      chunk = (1 - chunk) ^ 1 / make_lit + chunk
+      local compile_chunks
+      do
+        local _base_1 = self
+        local _fn_0 = _base_1.compile_chunks
+        compile_chunks = function(...)
+          return _fn_0(_base_1, ...)
+        end
+      end
+      return P({
+        "route",
+        optional_literal = (1 - P(")") - V("chunk")) ^ 1 / make_lit,
+        optional_route = Ct((V("chunk") + V("optional_literal")) ^ 1) / compile_chunks,
+        optional = P("(") * V("optional_route") * P(")") / make_optional,
+        literal = (1 - V("chunk")) ^ 1 / make_lit,
+        chunk = var / make_var + splat / make_splat + V("optional"),
+        route = Ct((V("chunk") + V("literal")) ^ 1) / compile_chunks / function(p, f)
+          return Ct(p) * -1, f
+        end
+      })
+    end
+  }
+  _base_0.__index = _base_0
+  _class_0 = setmetatable({
+    __init = function(self)
+      self.grammar = self:build_grammar()
+    end,
+    __base = _base_0,
+    __name = "RouteParser"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  RouteParser = _class_0
+end
 local Router
 do
   local _class_0
-  local alpha, alpha_num, make_var, make_splat, make_lit, splat, var, chunk
   local _base_0 = {
     add_route = function(self, route, responder)
       self.p = nil
@@ -94,8 +218,8 @@ do
       self.p = self.p or P(-1)
     end,
     build_route = function(self, path, responder, name)
-      local pattern, flags = self.__class.route_grammar:match(path)
-      pattern = pattern * -1 / function(params)
+      local pattern, flags = self.parser:parse(path)
+      pattern = pattern / function(params)
         return params, responder, path, name
       end
       return pattern, flags
@@ -127,7 +251,7 @@ do
           end
         end
       end
-      local patt = Cs((var / replace + 1) ^ 0)
+      local patt = Cs((self.parser.var / replace + 1) ^ 0)
       return patt:match(path)
     end,
     url_for = function(self, name, params, query)
@@ -163,6 +287,7 @@ do
     __init = function(self)
       self.routes = { }
       self.named_routes = { }
+      self.parser = RouteParser()
     end,
     __base = _base_0,
     __name = "Router"
@@ -175,69 +300,9 @@ do
     end
   })
   _base_0.__class = _class_0
-  local self = _class_0
-  alpha = R("az", "AZ", "__")
-  alpha_num = alpha + R("09")
-  make_var = function(str)
-    return {
-      "var",
-      str:sub(2)
-    }
-  end
-  make_splat = function()
-    return {
-      "splat"
-    }
-  end
-  make_lit = function(str)
-    return {
-      "literal",
-      str
-    }
-  end
-  splat = P("*")
-  var = P(":") * alpha * alpha_num ^ 0
-  chunk = var / make_var + splat / make_splat
-  chunk = (1 - chunk) ^ 1 / make_lit + chunk
-  self.route_grammar = Ct(chunk ^ 1) / function(parts)
-    local patt
-    local flags = { }
-    for i, _des_0 in ipairs(parts) do
-      local kind, value
-      kind, value = _des_0[1], _des_0[2]
-      local following = parts[i + 1]
-      local exlude
-      if following and following[1] == "literal" then
-        exlude = following[2]
-      end
-      flags[kind] = true
-      local part
-      local _exp_0 = kind
-      if "splat" == _exp_0 then
-        local inside = P(1)
-        if exlude then
-          inside = inside - exlude
-        end
-        part = Cg(inside ^ 1, "splat")
-      elseif "var" == _exp_0 then
-        local inside = P(1) - "/"
-        if exlude then
-          inside = inside - exlude
-        end
-        part = Cg(inside ^ 1, value)
-      elseif "literal" == _exp_0 then
-        part = P(value)
-      end
-      if patt then
-        patt = patt * part
-      else
-        patt = part
-      end
-    end
-    return Ct(patt), flags
-  end
   Router = _class_0
 end
 return {
-  Router = Router
+  Router = Router,
+  RouteParser = RouteParser
 }
