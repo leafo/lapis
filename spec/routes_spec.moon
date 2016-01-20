@@ -134,7 +134,6 @@ describe "named routes", ->
     url = r\url_for "game", user_slug: "leafo", game_slug: "x-moon"
     assert.same "/game/leafo/x-moon", url
 
-  -- TODO: this is incorrect
   it "should generate correct url", ->
     url = r\url_for "splatted", slug: "cool", splat: "hello"
     assert.same "/page/cool/hello", url
