@@ -46,7 +46,7 @@ class RouteParser
     local patt
     flags = {}
 
-    for i, {kind, value, sub_flags} in ipairs chunks
+    for i, {kind, value, val_params} in ipairs chunks
       following = chunks[i+1]
       exclude = if following and following[1] == "literal"
         following[2]
@@ -59,13 +59,14 @@ class RouteParser
           inside -= exclude if exclude
           Cg inside^1, "splat"
         when "var"
-          inside = P(1) - "/"
+          char = val_params and @compile_character_class(val_params) or P 1
+          inside = char - "/"
           inside -= exclude if exclude
           Cg inside^1, value
         when "literal"
           P value
         when "optional"
-          for k,v in pairs sub_flags
+          for k,v in pairs val_params
             flags[k] or= v
           value^-1
         else
@@ -119,21 +120,23 @@ class RouteParser
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
 
-    make_var = (str) -> { "var", str\sub 2 }
+    make_var = (str, char_class) -> { "var", str\sub(2), char_class }
     make_splat = -> { "splat" }
     make_lit = (str) -> { "literal", str }
     make_optional = (...) -> { "optional", ... }
 
     splat = P"*"
     var = P":" * alpha * alpha_num^0
+
     @var = var
     @splat = splat
+
+    var = C(var) * (P"[" * C((1 - P"]")^1) * P"]")^-1
 
     chunk = var / make_var + splat / make_splat
     chunk = (1 - chunk)^1 / make_lit + chunk
 
     compile_chunks = @\compile_chunks
-
 
     P {
       "route"

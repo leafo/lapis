@@ -44,8 +44,8 @@ do
       local patt
       local flags = { }
       for i, _des_0 in ipairs(chunks) do
-        local kind, value, sub_flags
-        kind, value, sub_flags = _des_0[1], _des_0[2], _des_0[3]
+        local kind, value, val_params
+        kind, value, val_params = _des_0[1], _des_0[2], _des_0[3]
         local following = chunks[i + 1]
         local exclude
         if following and following[1] == "literal" then
@@ -61,7 +61,8 @@ do
           end
           part = Cg(inside ^ 1, "splat")
         elseif "var" == _exp_0 then
-          local inside = P(1) - "/"
+          local char = val_params and self:compile_character_class(val_params) or P(1)
+          local inside = char - "/"
           if exclude then
             inside = inside - exclude
           end
@@ -69,7 +70,7 @@ do
         elseif "literal" == _exp_0 then
           part = P(value)
         elseif "optional" == _exp_0 then
-          for k, v in pairs(sub_flags) do
+          for k, v in pairs(val_params) do
             flags[k] = flags[k] or v
           end
           part = value ^ -1
@@ -141,10 +142,11 @@ do
       local alpha = R("az", "AZ", "__")
       local alpha_num = alpha + R("09")
       local make_var
-      make_var = function(str)
+      make_var = function(str, char_class)
         return {
           "var",
-          str:sub(2)
+          str:sub(2),
+          char_class
         }
       end
       local make_splat
@@ -171,6 +173,7 @@ do
       local var = P(":") * alpha * alpha_num ^ 0
       self.var = var
       self.splat = splat
+      var = C(var) * (P("[") * C((1 - P("]")) ^ 1) * P("]")) ^ -1
       local chunk = var / make_var + splat / make_splat
       chunk = (1 - chunk) ^ 1 / make_lit + chunk
       local compile_chunks
