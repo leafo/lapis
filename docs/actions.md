@@ -48,7 +48,7 @@ must match the entire path of the request. That means a request to
 `/hello/world` will not match the route `/hello`.
 
 You can specify a named parameter with a `:` followed immediately by the name.
-The parameter will match all characters excluding `/`:
+The parameter will match all characters excluding `/` (in the general case):
 
 
 ```lua
@@ -74,15 +74,17 @@ The captured values of the route parameters are saved in the `params` field of
 the request object by their name. A named parameter must contain at least 1
 character, and will fail to match otherwise.
 
-There's one other capture type, a splat. A splat, or `*` will match at least 1
-character all the way to the end of the path (including `/`). The splat is
-stored in a `splat` fields in the `params` table of the request object.
+A splat is another kind of pattern that will match as much as it can, including
+any `/` characters.  The splat is stored in a `splat`  named parameter in the
+`params` table of the request object. It's just a single `*`
 
 ```lua
 app:match("/browse/*", function(self)
   print(self.params.splat)
 end)
-app:match("/user/:name/file/*", function(self) end)
+app:match("/user/:name/file/*", function(self)
+  print(self.params.name, self.params.splat)
+end)
 ```
 
 ```moon
@@ -96,8 +98,49 @@ class App extends lapis.Application
     print @params.name, @params.splat
 ```
 
-It is currently not valid to put anything after the splat as the splat is
-greedy and will capture all characters.
+If you put any text directly after the splat or the named parameter it will not
+be included in the named parameter. For example you can match URLs that end in
+`.zip` with `/files/:filename.zip`
+
+### Optional route components
+
+Parentheses can be used to make a section of the route optional:
+
+```
+/projects/:username(/:project)
+```
+
+The above would match either `/projects/leafo`  or `/projects/leafo/lapis`. Any
+parameters within optional components that don't match will have a value of
+`nil` from within the action.
+
+### Parameter character classes
+
+A character class can be applied to a named parameter to restrict what
+characters can match. The syntax modeled after Lua's pattern character classes. This
+route will make sure the that `user_id` named parameter only contains digits:
+
+```
+/user/:user_id[%d]/posts
+```
+
+And this route would only match hexadecimal strings for the `hex` parameter.
+
+```
+/color/:hex[a-fA-F%d]
+```
+
+
+### Route precedence
+
+Routes are search in order of precedence first. Routes of the seame precdence
+are then search in the order that they are defined. The route precedence from
+highest to lowest is:
+
+* Literal routes `/hello/world`
+* Variable routes `/hello/:variable`
+* Splat routes routes `/hello/*`
+
 
 ## Named Routes
 
