@@ -84,6 +84,53 @@ do
       end
       return patt, flags
     end,
+    compile_character_class = function(self, chars)
+      local class_pattern = Ct((C(P("%") * S("adw")) + C(1)) ^ 1)
+      local plain_chars = { }
+      local patterns
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        local _list_0 = class_pattern:match(chars)
+        for _index_0 = 1, #_list_0 do
+          local _continue_0 = false
+          repeat
+            local item = _list_0[_index_0]
+            local _exp_0 = item
+            if "%a" == _exp_0 then
+              _accum_0[_len_0] = R("az", "AZ")
+            elseif "%d" == _exp_0 then
+              _accum_0[_len_0] = R("09")
+            elseif "%w" == _exp_0 then
+              _accum_0[_len_0] = R("09", "aa", "ZZ")
+            else
+              table.insert(plain_chars, item)
+              _continue_0 = true
+              break
+            end
+            _len_0 = _len_0 + 1
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
+          end
+        end
+        patterns = _accum_0
+      end
+      if next(plain_chars) then
+        table.insert(patterns, S(table.concat(plain_chars)))
+      end
+      local out
+      for _index_0 = 1, #patterns do
+        local p = patterns[_index_0]
+        if out then
+          out = out + p
+        else
+          out = p
+        end
+      end
+      return out or P(-1)
+    end,
     build_grammar = function(self)
       local alpha = R("az", "AZ", "__")
       local alpha_num = alpha + R("09")

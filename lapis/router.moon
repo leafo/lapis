@@ -78,6 +78,36 @@ class RouteParser
 
     patt, flags
 
+  -- convert character class, like %d to an lpeg pattern
+  compile_character_class: (chars) =>
+    class_pattern = Ct (C(P"%" * S"adw") + C(1))^1
+
+    plain_chars = {}
+    patterns = for item in *class_pattern\match chars
+      switch item
+        when "%a"
+          R "az", "AZ"
+        when "%d"
+          R "09"
+        when "%w"
+          R "09", "aa", "ZZ"
+        else
+          table.insert plain_chars, item
+          continue
+
+
+    if next plain_chars
+      table.insert patterns, S table.concat plain_chars
+
+    local out
+    for p in *patterns
+      if out
+        out += p
+      else
+        out = p
+
+    out or P -1
+
   build_grammar: =>
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
