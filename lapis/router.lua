@@ -85,13 +85,15 @@ do
       return patt, flags
     end,
     compile_character_class = function(self, chars)
-      local class_pattern = Ct((C(P("%") * S("adw")) + C(1)) ^ 1)
+      self.character_class_pattern = self.character_class_pattern or Ct(C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)
+        return tostring(a) .. tostring(b)
+      end) + 1) ^ 1)
       local plain_chars = { }
       local patterns
       do
         local _accum_0 = { }
         local _len_0 = 1
-        local _list_0 = class_pattern:match(chars)
+        local _list_0 = self.character_class_pattern:match(chars)
         for _index_0 = 1, #_list_0 do
           local _continue_0 = false
           repeat
@@ -104,9 +106,13 @@ do
             elseif "%w" == _exp_0 then
               _accum_0[_len_0] = R("09", "aa", "ZZ")
             else
-              table.insert(plain_chars, item)
-              _continue_0 = true
-              break
+              if #item == 2 then
+                _accum_0[_len_0] = R(item)
+              else
+                table.insert(plain_chars, item)
+                _continue_0 = true
+                break
+              end
             end
             _len_0 = _len_0 + 1
             _continue_0 = true
