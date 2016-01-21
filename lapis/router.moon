@@ -95,7 +95,7 @@ class RouteParser
         when "%d"
           R "09"
         when "%w"
-          R "09", "aa", "ZZ"
+          R "09", "az", "AZ"
         else
           if #item == 2
             R item

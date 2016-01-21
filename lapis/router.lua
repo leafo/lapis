@@ -105,7 +105,7 @@ do
             elseif "%d" == _exp_0 then
               _accum_0[_len_0] = R("09")
             elseif "%w" == _exp_0 then
-              _accum_0[_len_0] = R("09", "aa", "ZZ")
+              _accum_0[_len_0] = R("09", "az", "AZ")
             else
               if #item == 2 then
                 _accum_0[_len_0] = R(item)

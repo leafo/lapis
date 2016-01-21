@@ -1,5 +1,5 @@
 
-import Router from require "lapis.router"
+import Router, RouteParser from require "lapis.router"
 
 describe "basic route matching", ->
   local r
@@ -8,6 +8,7 @@ describe "basic route matching", ->
   before_each ->
     r = Router!
     r\add_route "/hello", handler
+    r\add_route "/hello/:name[%d]", handler
     r\add_route "/hello/:name", handler
     r\add_route "/hello/:name/world", handler
     r\add_route "/static/*", handler
@@ -19,6 +20,10 @@ describe "basic route matching", ->
   it "should match static route", ->
     out = r\resolve "/hello"
     assert.same { {}, "/hello" }, out
+
+  it "should match character class route", ->
+    out = r\resolve "/hello/234"
+    assert.same { { name: "234" }, "/hello/:name[%d]" }, out
 
   it "should match param route", ->
     out = r\resolve "/hello/world2323"
@@ -101,6 +106,56 @@ describe "basic route matching", ->
       nil
       "/hi/:one-:two"
     }, {router.p\match "/hi/blah-blorgbeef-fe"}
+
+describe "character classes", ->
+  local r, g
+  before_each ->
+    r = RouteParser!
+    g = r\build_grammar!
+
+  it "it matches %d", ->
+    p = g\match("/:hello[%d]") * -1
+
+    assert.same nil, (p\match "/what")
+    assert.same nil, (p\match "/")
+    assert.same { hello: "1223"}, (p\match "/1223")
+    assert.same { hello: "1"}, (p\match "/1")
+
+  it "it matches %a", ->
+    p = g\match("/:world[%a]") * -1
+
+    assert.same { world: "what" }, (p\match "/what")
+    assert.same nil, (p\match "/1223")
+    assert.same nil, (p\match "/1")
+
+  it "it matches %w", ->
+    p = g\match("/:lee[%w]") * -1
+
+    assert.same { lee: "what" }, (p\match "/what")
+    assert.same { lee: "999" }, (p\match "/999")
+    assert.same { lee: "aj23" }, (p\match "/aj23")
+
+    assert.same nil, (p\match "/2lll__")
+    assert.same nil, (p\match "/")
+
+  it "it matches range", ->
+    p = g\match("/:ben[a-f]") * -1
+    assert.same nil, (p\match "/what")
+    assert.same { ben: "abf" }, (p\match "/abf")
+
+  it "it matches literal characters", ->
+    p = g\match("/:andy[12fg]") * -1
+    assert.same nil, (p\match "/what")
+    assert.same { andy: "12" }, (p\match "/12")
+    assert.same { andy: "f2" }, (p\match "/f2")
+
+
+  it "it matches combination characters", ->
+    p = g\match("/:dap[a%dd-g]") * -1
+    assert.same nil, (p\match "/what")
+    assert.same { dap: "a3" }, (p\match "/a3")
+    assert.same { dap: "9a99f" }, (p\match "/9a99f")
+
 
 describe "named routes", ->
   local r
