@@ -111,18 +111,15 @@ do
           exclude = P(value)
           chunk_pattern = P(value)
         elseif "optional" == _exp_0 then
-          local inner, inner_flags = self:compile_chunks(value, chunks, i)
+          local inner, inner_flags, inner_exclude = self:compile_chunks(value, chunks, i)
           for k, v in pairs(inner_flags) do
             flags[k] = flags[k] or v
           end
-          local _exp_1 = value[1][1]
-          if "splat" == _exp_1 or "var" == _exp_1 then
-            local _ = nil
-          else
+          if inner_exclude then
             if exclude then
-              exclude = inner + exclude
+              exclude = inner_exclude + exclude
             else
-              exclude = inner
+              exclude = inner_exclude
             end
           end
           chunk_pattern = inner ^ -1
@@ -135,7 +132,7 @@ do
           patt = chunk_pattern
         end
       end
-      return patt, flags
+      return patt, flags, exclude
     end,
     compile_character_class = function(self, chars)
       self.character_class_pattern = self.character_class_pattern or Ct(C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)

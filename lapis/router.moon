@@ -90,19 +90,16 @@ class RouteParser
           exclude = P value
           P value
         when "optional"
-          inner, inner_flags = @compile_chunks value, chunks, i
+          inner, inner_flags, inner_exclude = @compile_chunks value, chunks, i
 
           for k,v in pairs inner_flags
             flags[k] or= v
 
-          switch value[1][1]
-            when "splat", "var"
-              nil
+          if inner_exclude
+            if exclude
+              exclude = inner_exclude + exclude
             else
-              if exclude
-                exclude = inner + exclude
-              else
-                exclude = inner
+              exclude = inner_exclude
 
           inner^-1
         else
@@ -113,7 +110,7 @@ class RouteParser
       else
         chunk_pattern
 
-    patt, flags
+    patt, flags, exclude
 
   -- convert character class, like %d to an lpeg pattern
   compile_character_class: (chars) =>
