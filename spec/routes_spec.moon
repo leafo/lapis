@@ -127,6 +127,13 @@ describe "parsing spec", ->
       {"/a3", {dap: "a3"}}
       {"/9a99f", {dap: "9a99f"}}
     }}
+
+    {"/:nope[^.]", {
+      {"/good", {nope: "good"}}
+      {"/", nil}
+      {"/one.two", nil}
+    }}
+
   }
     do_test = (pattern, test, result) ->
       it "matches `#{pattern}` with `#{test}`", ->

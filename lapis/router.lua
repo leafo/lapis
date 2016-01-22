@@ -137,9 +137,10 @@ do
       return patt, flags, exclude
     end,
     compile_character_class = function(self, chars)
-      self.character_class_pattern = self.character_class_pattern or Ct(C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)
+      self.character_class_pattern = self.character_class_pattern or Ct(C("^") ^ -1 * C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)
         return tostring(a) .. tostring(b)
       end) + 1) ^ 1)
+      local negate = false
       local plain_chars = { }
       local patterns
       do
@@ -151,7 +152,11 @@ do
           repeat
             local item = _list_0[_index_0]
             local _exp_0 = item
-            if "%a" == _exp_0 then
+            if "^" == _exp_0 then
+              negate = true
+              _continue_0 = true
+              break
+            elseif "%a" == _exp_0 then
               _accum_0[_len_0] = R("az", "AZ")
             elseif "%d" == _exp_0 then
               _accum_0[_len_0] = R("09")
@@ -186,6 +191,9 @@ do
         else
           out = p
         end
+      end
+      if negate then
+        out = 1 - out
       end
       return out or P(-1)
     end,
