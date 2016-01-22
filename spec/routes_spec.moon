@@ -8,9 +8,140 @@ build_router = (routes) ->
       r\add_route pattern, handler
     r.default_route = -> "failed to find route"
 
+
+describe "parsing spec", ->
+  for {pattern, test, result} in *{
+    {"/:yeah", "ddd", nil}
+    {"/:yeah", "/okay", {yeah: "okay"}}
+    {"/:yeah", "/okay.com", {yeah: "okay.com"}}
+
+    -- exclude var
+    {":thing-:hello", "a-b", {thing: "a", hello: "b"}}
+
+    {":thing(-:hello)", {
+      {"a-b", {thing: "a", hello: "b"}}
+      {"az", {thing: "az"}}
+      {"i/fail", nil}
+    }}
+
+    -- exclude splat
+    {"/hi/*-:hello", "/hi/a/b/c-okay", {splat: "a/b/c", hello: "okay"}}
+    {"*/hello", "whoa/zone/hello", {splat: "whoa/zone"}}
+    {":one.*", "sure-thing.com", {splat: "com", one: "sure-thing"}}
+
+    -- splat with optional exclude from format
+    {"/browse/*(.:format)", {
+      {"/browse/things", {splat: "things"}}
+      {"/browse/things.zip", {splat: "things", format: "zip"}}
+      {"/browse/things.tar.gz", {splat: "things", format: "tar.gz"}}
+    }}
+
+    -- splat doesn't cancel out var
+    {":one(*)", "hello_world", { one: "hello_world"}}
+
+    {"/zone(/:game(/:user))", "/zone/drone/leafo",
+      { game: "drone", user: "leafo"}}
+
+    {"/:game(/:user)(*)", "/drone/leafo/hi",
+      { game: "drone", user: "leafo", splat: "/hi" }}
+
+    -- many optional
+    {"/zone(/:game(/:user)(*))",  {
+      {"/zone", {}}
+      {"/zone/leafo", { game: "leafo"}}
+      {"/zone/leafo/beefo", { game: "leafo", user: "beefo"}}
+      {"/zone/drone/leafo/here", { game: "drone", user: "leafo", splat: "/here" }}
+    }}
+
+    -- many optional with format
+    {"/zone(/:game(/:user)(*))(.:format)",  {
+      -- same as above, nothing changed
+      {"/zone", {}}
+      {"/zone/leafo", { game: "leafo"}}
+      {"/zone/leafo/beefo", { game: "leafo", user: "beefo"}}
+      {"/zone/drone/leafo/here", { game: "drone", user: "leafo", splat: "/here" }}
+
+      -- with formats
+      {"/zone.zip", { format: "zip"}}
+      {"/zone/leafo.jpeg", { game: "leafo", format: "jpeg"}}
+      {"/zone/leafo/beefo.moon", { game: "leafo", user: "beefo", format: "moon"}}
+      {"/zone/drone/leafo/here.leaf", {
+        game: "drone"
+        user: "leafo"
+        splat: "/here"
+        format: "leaf"
+      }}
+    }}
+
+    -- adjacent optionals
+    {"/manifest(-:version)(.:format)", {
+      {"/manifest", {}}
+      {"/manifest-first.json", { version: "first", format: "json"}}
+      {"/manifest.json", { format: "json"}}
+      {"/manifest-first", { version: "first" }}
+    }}
+
+    -- moonrocks workaround
+    -- TODO: make (-:version)(.:format) work for -5.1.zip
+    {"/manifest(-:a.:b)(.:format)", {
+      {"/manifest-5.1.json", { a: "5", b: "1", format: "json" }}
+      {"/manifest-5.1", { a: "5", b: "1" }}
+      {"/manifest.json", { format: "json" }}
+    }}
+
+    -- character classes
+    {"/:hello[%d]", {
+      {"/what", nil}
+      {"/", nil}
+      {"/1223", { hello: "1223"}}
+      {"/1", { hello: "1"}}
+    }}
+
+    {"/:world[%a]", {
+      {"/what", { world: "what"}}
+      {"/1223", nil}
+      {"/1"}
+    }}
+
+    {"/:lee[%w]", {
+      {"/what", {lee: "what"}}
+      {"/999", {lee: "999"}}
+      {"/aj23", {lee: "aj23"}}
+      {"/2lll__", nil}
+      {"/", nil}
+    }}
+
+    {"/:ben[a-f]", {
+      {"/what", nil}
+      {"/abf", {ben: "abf"}}
+    }}
+
+    {"/:andy[12fg]", {
+      {"/what", nil}
+      {"/12", {andy: "12"}}
+      {"/f2", {andy: "f2"}}
+    }}
+
+    {"/:dap[a%dd-g]", {
+      {"/what", nil}
+      {"/a3", {dap: "a3"}}
+      {"/9a99f", {dap: "9a99f"}}
+    }}
+  }
+    do_test = (pattern, test, result) ->
+      it "matches `#{pattern}` with `#{test}`", ->
+        parser = RouteParser!
+        p = assert parser\parse pattern
+        assert.same result, (p\match test)
+
+    if type(test) == "table"
+      for {_test, result} in *test
+        do_test pattern, _test, result
+    else
+      do_test pattern, test, result
+
 describe "with router", ->
   local r
-  handler = (...) -> { ... }
 
   describe "basic router", ->
     before_each ->
@@ -86,55 +217,6 @@ describe "with router", ->
       "*"
     }, r\resolve "hello_world"
 
-describe "character classes", ->
-  local r, g
-  before_each ->
-    r = RouteParser!
-    g = r\build_grammar!
-
-  it "it matches %d", ->
-    p = g\match("/:hello[%d]") * -1
-
-    assert.same nil, (p\match "/what")
-    assert.same nil, (p\match "/")
-    assert.same { hello: "1223"}, (p\match "/1223")
-    assert.same { hello: "1"}, (p\match "/1")
-
-  it "it matches %a", ->
-    p = g\match("/:world[%a]") * -1
-
-    assert.same { world: "what" }, (p\match "/what")
-    assert.same nil, (p\match "/1223")
-    assert.same nil, (p\match "/1")
-
-  it "it matches %w", ->
-    p = g\match("/:lee[%w]") * -1
-
-    assert.same { lee: "what" }, (p\match "/what")
-    assert.same { lee: "999" }, (p\match "/999")
-    assert.same { lee: "aj23" }, (p\match "/aj23")
-
-    assert.same nil, (p\match "/2lll__")
-    assert.same nil, (p\match "/")
-
-  it "it matches range", ->
-    p = g\match("/:ben[a-f]") * -1
-    assert.same nil, (p\match "/what")
-    assert.same { ben: "abf" }, (p\match "/abf")
-
-  it "it matches literal characters", ->
-    p = g\match("/:andy[12fg]") * -1
-    assert.same nil, (p\match "/what")
-    assert.same { andy: "12" }, (p\match "/12")
-    assert.same { andy: "f2" }, (p\match "/f2")
-
-
-  it "it matches combination characters", ->
-    p = g\match("/:dap[a%dd-g]") * -1
-    assert.same nil, (p\match "/what")
-    assert.same { dap: "a3" }, (p\match "/a3")
-    assert.same { dap: "9a99f" }, (p\match "/9a99f")
-
 
 describe "named routes", ->
   local r
@@ -199,7 +281,6 @@ describe "named routes", ->
 
 describe "optional parts", ->
   local r
-  handler = (...) -> { ... }
 
   describe "basic router", ->
     before_each ->
