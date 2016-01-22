@@ -63,11 +63,9 @@ class RouteParser
 
     out
 
-  compile_chunks: (chunks, parents, parent_idx) =>
+  compile_chunks: (chunks, exclude=nil) =>
     local patt
     flags = {}
-
-    exclude = nil
 
     for i=#chunks,1,-1
       chunk = chunks[i]
@@ -82,6 +80,7 @@ class RouteParser
           Cg inside^1, "splat"
         when "var"
           char = val_params and @compile_character_class(val_params) or P 1
+
           inside = char - "/"
           inside -= exclude if exclude
           exclude = nil
@@ -90,7 +89,7 @@ class RouteParser
           exclude = P value
           P value
         when "optional"
-          inner, inner_flags, inner_exclude = @compile_chunks value, chunks, i
+          inner, inner_flags, inner_exclude = @compile_chunks value, exclude
 
           for k,v in pairs inner_flags
             flags[k] or= v

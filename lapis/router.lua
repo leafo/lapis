@@ -81,10 +81,12 @@ do
       end
       return out
     end,
-    compile_chunks = function(self, chunks, parents, parent_idx)
+    compile_chunks = function(self, chunks, exclude)
+      if exclude == nil then
+        exclude = nil
+      end
       local patt
       local flags = { }
-      local exclude = nil
       for i = #chunks, 1, -1 do
         local chunk = chunks[i]
         local kind, value, val_params
@@ -111,7 +113,7 @@ do
           exclude = P(value)
           chunk_pattern = P(value)
         elseif "optional" == _exp_0 then
-          local inner, inner_flags, inner_exclude = self:compile_chunks(value, chunks, i)
+          local inner, inner_flags, inner_exclude = self:compile_chunks(value, exclude)
           for k, v in pairs(inner_flags) do
             flags[k] = flags[k] or v
           end
