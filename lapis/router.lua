@@ -40,17 +40,54 @@ do
     parse = function(self, route)
       return self.grammar:match(route)
     end,
+    compile_exclude = function(self, current_p, chunks, k)
+      if k == nil then
+        k = 1
+      end
+      local out
+      for _index_0 = k, #chunks do
+        local _continue_0 = false
+        repeat
+          local _des_0 = chunks[_index_0]
+          local kind, value, val_params
+          kind, value, val_params = _des_0[1], _des_0[2], _des_0[3]
+          local _exp_0 = kind
+          if "literal" == _exp_0 then
+            if out then
+              out = out + value
+            else
+              out = value
+            end
+            break
+          elseif "optional" == _exp_0 then
+            local p = route_precedence(val_params)
+            if current_p < p then
+              _continue_0 = true
+              break
+            end
+            if out then
+              out = out + value
+            else
+              out = value
+            end
+          else
+            break
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+      return out
+    end,
     compile_chunks = function(self, chunks)
       local patt
       local flags = { }
       for i, _des_0 in ipairs(chunks) do
         local kind, value, val_params
         kind, value, val_params = _des_0[1], _des_0[2], _des_0[3]
-        local following = chunks[i + 1]
-        local exclude
-        if following and following[1] == "literal" then
-          exclude = following[2]
-        end
+        local exclude = self:compile_exclude(route_precedence(flags), chunks, i + 1)
         flags[kind] = true
         local part
         local _exp_0 = kind
@@ -83,7 +120,7 @@ do
           patt = part
         end
       end
-      return patt, flags
+      return patt, flags, chunks
     end,
     compile_character_class = function(self, chars)
       self.character_class_pattern = self.character_class_pattern or Ct(C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)

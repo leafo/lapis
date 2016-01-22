@@ -33,7 +33,6 @@ route_precedence = (flags) ->
 
   p
 
-
 class RouteParser
   new: =>
     @grammar = @build_grammar!
@@ -42,14 +41,34 @@ class RouteParser
   parse: (route) =>
     @grammar\match route
 
-  compile_chunks: (chunks) =>
+  compile_exclude: (current_p, chunks, k=1) =>
+    local out
+    for {kind, value, val_params} in *chunks[k,]
+      switch kind
+        when "literal"
+          if out
+            out += value
+          else
+            out = value
+          break
+        when "optional"
+          p = route_precedence val_params
+          continue if current_p < p
+          if out
+            out += value
+          else
+            out = value
+        else
+          break
+
+    out
+
+  compile_chunks: (chunks, parents, parent_idx) =>
     local patt
     flags = {}
 
     for i, {kind, value, val_params} in ipairs chunks
-      following = chunks[i+1]
-      exclude = if following and following[1] == "literal"
-        following[2]
+      exclude = nil
 
       flags[kind] = true
 
@@ -66,9 +85,12 @@ class RouteParser
         when "literal"
           P value
         when "optional"
-          for k,v in pairs val_params
-            flags[k] or= v
-          value^-1
+          inner, inner_flags = @compile_chunks value, chunks, i
+          inner^-1
+
+          -- for k,v in pairs val_params
+          --   flags[k] or= v
+          -- value^-1
         else
           error "unknown node: #{kind}"
 
@@ -123,7 +145,7 @@ class RouteParser
     make_var = (str, char_class) -> { "var", str\sub(2), char_class }
     make_splat = -> { "splat" }
     make_lit = (str) -> { "literal", str }
-    make_optional = (...) -> { "optional", ... }
+    make_optional = (children) -> { "optional", children }
 
     splat = P"*"
     var = P":" * alpha * alpha_num^0
@@ -138,19 +160,19 @@ class RouteParser
 
     compile_chunks = @\compile_chunks
 
-    P {
+    g = P {
       "route"
       optional_literal: (1 - P")" - V"chunk")^1 / make_lit
-      optional_route: Ct((V"chunk" + V"optional_literal")^1) / compile_chunks
+      optional_route: Ct((V"chunk" + V"optional_literal")^1)
       optional: P"(" * V"optional_route" * P")" / make_optional
 
       literal: (1 - V"chunk")^1 / make_lit
       chunk: var / make_var + splat / make_splat + V"optional"
 
-      route: Ct((V"chunk" + V"literal")^1) / compile_chunks / (p, f) ->
-        Ct(p) * -1, f
-
+      route: Ct((V"chunk" + V"literal")^1)
     }
+
+    g / @\compile_chunks / (p, f) -> Ct(p) * -1, f
 
 
 class Router

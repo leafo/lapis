@@ -224,49 +224,90 @@ describe "optional parts", ->
   local r
   handler = (...) -> { ... }
 
-  before_each ->
-    r = Router!
-    r\add_route "/test(/:game)", handler
-    r\add_route "/zone(/:game(/:user)(*))", handler
-    r\add_route "/test/me", handler
+  describe "basic router", ->
+    before_each ->
+      r = Router!
+      r\add_route "/test(/:game)", handler
+      r\add_route "/zone(/:game(/:user)(*))", handler
+      r\add_route "/test/me", handler
 
-    r.default_route = -> "failed to find route"
+      r.default_route = -> "failed to find route"
 
-  it "matches without optional", ->
-    out = r\resolve "/test/yeah"
-    assert.same { {game: "yeah"}, "/test(/:game)" }, out
+    it "matches without optional", ->
+      out = r\resolve "/test/yeah"
+      assert.same { {game: "yeah"}, "/test(/:game)" }, out
 
-  it "matches with optional part", ->
-    out = r\resolve "/test/ozone"
-    assert.same { {game: "ozone"}, "/test(/:game)" }, out
+    it "matches with optional part", ->
+      out = r\resolve "/test/ozone"
+      assert.same { {game: "ozone"}, "/test(/:game)" }, out
 
-  it "fails to find", ->
-    out = r\resolve "/test/ozone/"
-    assert.same "failed to find route", out
+    it "fails to find", ->
+      out = r\resolve "/test/ozone/"
+      assert.same "failed to find route", out
 
-  it "lets literal route take precedence", ->
-    out = r\resolve "/test/me"
-    assert.same { {}, "/test/me" }, out
+    it "lets literal route take precedence", ->
+      out = r\resolve "/test/me"
+      assert.same { {}, "/test/me" }, out
 
-  it "matches without any optionals", ->
-    out = r\resolve "/zone"
-    assert.same { {}, "/zone(/:game(/:user)(*))" }, out
+    it "matches without any optionals", ->
+      out = r\resolve "/zone"
+      assert.same { {}, "/zone(/:game(/:user)(*))" }, out
 
-  it "matches with one optional", ->
-    out = r\resolve "/zone/drone"
-    assert.same { { game: "drone"}, "/zone(/:game(/:user)(*))" }, out
+    it "matches with one optional", ->
+      out = r\resolve "/zone/drone"
+      assert.same { { game: "drone"}, "/zone(/:game(/:user)(*))" }, out
 
-  it "matches with two optional", ->
-    out = r\resolve "/zone/drone/leafo"
-    assert.same { { game: "drone", user: "leafo" }, "/zone(/:game(/:user)(*))" }, out
+    it "matches with two optional", ->
+      out = r\resolve "/zone/drone/leafo"
+      assert.same { { game: "drone", user: "leafo" }, "/zone(/:game(/:user)(*))" }, out
 
-  it "matches with three optional", ->
-    out = r\resolve "/zone/drone/leafo/here"
+    it "matches with three optional", ->
+      out = r\resolve "/zone/drone/leafo/here"
+      assert.same {
+        { game: "drone", user: "leafo", splat: "/here" }
+        "/zone(/:game(/:user)(*))"
+      }, out
+
+  describe "exlucde character optional router", ->
+    before_each ->
+      r = Router!
+      r\add_route "/manifests", handler
+      r\add_route "/manifest(-:version)(.:format)", handler
+
+    it "matches with no optional parts", ->
+      assert.same {
+        {}
+        "/manifest(-:version)(.:format)"
+      }, (r\resolve "/manifest")
+
+    it "matches with first optional part", ->
+      assert.same {
+        { version: "5.1" }
+        "/manifest(-:version)(.:format)"
+      }, (r\resolve "/manifest-5.1")
+
+    it "matches with last optional part", ->
+      assert.same {
+        { format: "zip" }
+        "/manifest(-:version)(.:format)"
+      }, (r\resolve "/manifest.zip")
+
+    it "matches with both optional parts", ->
+      assert.same {
+        { version: "5.1", format: "json" }
+        "/manifest(-:version)(.:format)"
+      }, (r\resolve "/manifest-5.1.json")
+
+  it "excludes from optional field", ->
+
+
+  it "doesn't let splat cancel out var", ->
+    parser = RouteParser!
+    p = parser\parse ":thing(*)"
     assert.same {
-      { game: "drone", user: "leafo", splat: "/here" }
-      "/zone(/:game(/:user)(*))"
-    }, out
-
+      splat: "/on"
+      thing: "whatgoing"
+    }, (p\match "whatgoing/on")
 
 describe "route precedence", ->
   local r
