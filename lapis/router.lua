@@ -81,46 +81,61 @@ do
       end
       return out
     end,
-    compile_chunks = function(self, chunks)
+    compile_chunks = function(self, chunks, parents, parent_idx)
       local patt
       local flags = { }
-      for i, _des_0 in ipairs(chunks) do
+      local exclude = nil
+      for i = #chunks, 1, -1 do
+        local chunk = chunks[i]
         local kind, value, val_params
-        kind, value, val_params = _des_0[1], _des_0[2], _des_0[3]
-        local exclude = self:compile_exclude(route_precedence(flags), chunks, i + 1)
+        kind, value, val_params = chunk[1], chunk[2], chunk[3]
         flags[kind] = true
-        local part
+        local chunk_pattern
         local _exp_0 = kind
         if "splat" == _exp_0 then
           local inside = P(1)
           if exclude then
             inside = inside - exclude
           end
-          part = Cg(inside ^ 1, "splat")
+          exclude = nil
+          chunk_pattern = Cg(inside ^ 1, "splat")
         elseif "var" == _exp_0 then
           local char = val_params and self:compile_character_class(val_params) or P(1)
           local inside = char - "/"
           if exclude then
             inside = inside - exclude
           end
-          part = Cg(inside ^ 1, value)
+          exclude = nil
+          chunk_pattern = Cg(inside ^ 1, value)
         elseif "literal" == _exp_0 then
-          part = P(value)
+          exclude = P(value)
+          chunk_pattern = P(value)
         elseif "optional" == _exp_0 then
-          for k, v in pairs(val_params) do
+          local inner, inner_flags = self:compile_chunks(value, chunks, i)
+          for k, v in pairs(inner_flags) do
             flags[k] = flags[k] or v
           end
-          part = value ^ -1
+          local _exp_1 = value[1][1]
+          if "splat" == _exp_1 or "var" == _exp_1 then
+            local _ = nil
+          else
+            if exclude then
+              exclude = inner + exclude
+            else
+              exclude = inner
+            end
+          end
+          chunk_pattern = inner ^ -1
         else
-          part = error("unknown node: " .. tostring(kind))
+          chunk_pattern = error("unknown node: " .. tostring(kind))
         end
         if patt then
-          patt = patt * part
+          patt = chunk_pattern * patt
         else
-          patt = part
+          patt = chunk_pattern
         end
       end
-      return patt, flags, chunks
+      return patt, flags
     end,
     compile_character_class = function(self, chars)
       self.character_class_pattern = self.character_class_pattern or Ct(C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)
@@ -200,10 +215,10 @@ do
         }
       end
       local make_optional
-      make_optional = function(...)
+      make_optional = function(children)
         return {
           "optional",
-          ...
+          children
         }
       end
       local splat = P("*")
@@ -221,17 +236,24 @@ do
           return _fn_0(_base_1, ...)
         end
       end
-      return P({
+      local g = P({
         "route",
         optional_literal = (1 - P(")") - V("chunk")) ^ 1 / make_lit,
-        optional_route = Ct((V("chunk") + V("optional_literal")) ^ 1) / compile_chunks,
+        optional_route = Ct((V("chunk") + V("optional_literal")) ^ 1),
         optional = P("(") * V("optional_route") * P(")") / make_optional,
         literal = (1 - V("chunk")) ^ 1 / make_lit,
         chunk = var / make_var + splat / make_splat + V("optional"),
-        route = Ct((V("chunk") + V("literal")) ^ 1) / compile_chunks / function(p, f)
-          return Ct(p) * -1, f
-        end
+        route = Ct((V("chunk") + V("literal")) ^ 1)
       })
+      return g / (function()
+        local _base_1 = self
+        local _fn_0 = _base_1.compile_chunks
+        return function(...)
+          return _fn_0(_base_1, ...)
+        end
+      end)() / function(p, f)
+        return Ct(p) * -1, f
+      end
     end
   }
   _base_0.__index = _base_0

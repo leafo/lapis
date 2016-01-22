@@ -67,37 +67,51 @@ class RouteParser
     local patt
     flags = {}
 
-    for i, {kind, value, val_params} in ipairs chunks
-      exclude = nil
+    exclude = nil
 
+    for i=#chunks,1,-1
+      chunk = chunks[i]
+      {kind, value, val_params} = chunk
       flags[kind] = true
 
-      part = switch kind
+      chunk_pattern = switch kind
         when "splat"
           inside = P 1
           inside -= exclude if exclude
+          exclude = nil
           Cg inside^1, "splat"
         when "var"
           char = val_params and @compile_character_class(val_params) or P 1
           inside = char - "/"
           inside -= exclude if exclude
+          exclude = nil
           Cg inside^1, value
         when "literal"
+          exclude = P value
           P value
         when "optional"
           inner, inner_flags = @compile_chunks value, chunks, i
-          inner^-1
 
-          -- for k,v in pairs val_params
-          --   flags[k] or= v
-          -- value^-1
+          for k,v in pairs inner_flags
+            flags[k] or= v
+
+          switch value[1][1]
+            when "splat", "var"
+              nil
+            else
+              if exclude
+                exclude = inner + exclude
+              else
+                exclude = inner
+
+          inner^-1
         else
           error "unknown node: #{kind}"
 
       patt = if patt
-        patt * part
+        chunk_pattern * patt
       else
-        part
+        chunk_pattern
 
     patt, flags
 
