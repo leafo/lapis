@@ -230,9 +230,9 @@ do
       end
       local splat = P("*")
       local var = P(":") * alpha * alpha_num ^ 0
+      var = C(var) * (P("[") * C((1 - P("]")) ^ 1) * P("]")) ^ -1
       self.var = var
       self.splat = splat
-      var = C(var) * (P("[") * C((1 - P("]")) ^ 1) * P("]")) ^ -1
       local chunk = var / make_var + splat / make_splat
       chunk = (1 - chunk) ^ 1 / make_lit + chunk
       local compile_chunks
@@ -383,7 +383,9 @@ do
       end
       local patt = Cs(P({
         "string",
-        replacement = self.parser.var / replace + self.parser.splat / (params.splat or "") + V("optional"),
+        replacement = self.parser.var / replace + self.parser.splat / (function()
+          return replace(":splat")
+        end) + V("optional"),
         optional = Cmt("(", function(_, k)
           optional_stack = {
             hits = 0,
