@@ -49,7 +49,7 @@ symbols and replaces them with `-`.
 Iterates over array table `tbl` appending all unique values into a new array
 table, then returns the new one.
 
-###  `trim(str)
+###  `trim(str)`
 
 Trims the whitespace off of both sides of a string.
 
