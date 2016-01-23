@@ -210,6 +210,39 @@ describe "application inline html", ->
     status, body = assert_request HtmlApp, "/"
     assert.same "<div>hello world</div>", body
 
+describe "default layout", ->
+  after_each ->
+    package.loaded["views.test_layout"] = nil
+
+  it "uses widget as layout", ->
+    import Widget from require "lapis.html"
+    class TestApp extends lapis.Application
+      layout: class Layout extends Widget
+        content: =>
+          h1 "hello world"
+          @content_for "inner"
+          div class: "footer"
+
+      "/": => "yeah"
+
+    status, body = assert_request TestApp, "/"
+    assert.same [[<h1>hello world</h1>yeah<div class="footer"></div>]], body
+
+  it "uses module name as layout", ->
+    import Widget from require "lapis.html"
+    class Layout extends Widget
+      content: =>
+        div class: "content", ->
+          @content_for "inner"
+
+    package.loaded["views.test_layout"] = Layout
+    class TestApp extends lapis.Application
+      layout: "test_layout"
+      "/": => "yeah"
+
+    status, body = assert_request TestApp, "/"
+    assert.same [[<div class="content">yeah</div>]], body
+
 describe "application error capturing", ->
   import capture_errors, capture_errors_json, assert_error,
     yield_error from require "lapis.application"
