@@ -49,7 +49,7 @@ symbols and replaces them with `-`.
 Iterates over array table `tbl` appending all unique values into a new array
 table, then returns the new one.
 
-###  `trim(str)
+###  `trim(str)`
 
 Trims the whitespace off of both sides of a string.
 
@@ -119,6 +119,13 @@ Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 ###  `from_json(str)`
 
 Converts JSON to table, a direct wrapper around Lua CJSON's `decode`.
+
+### `time_ago_in_words(date, [parts=1], [suffix="ago"])`
+
+Returns a string in the format "1 day ago".
+
+`parts` allows you to add more words. With `parts=2`, the string
+returned would be in the format `1 day, 4 hours ago`.
 
 ### Encoding Methods
 
