@@ -52,7 +52,7 @@ describe "mock action", ->
 describe "json request", ->
   import json_params from require "lapis.application"
 
-  it "should parse json body", ->
+  it "should parse json object body", ->
     local res
     class SomeApp extends lapis.Application
       "/": json_params =>
@@ -66,6 +66,21 @@ describe "json request", ->
     }
 
     assert.same 1234, res
+
+  it "should parse json array body", ->
+    local res
+    class SomeApp extends lapis.Application
+      "/": json_params =>
+        res = @params
+
+    assert_request SomeApp, "/", {
+      headers: {
+        "content-type": "application/json"
+      }
+      body: '[1,"hello", {}]'
+    }
+
+    assert.same {1, "hello", {}}, res
 
   it "should not fail on invalid json", ->
     class SomeApp extends lapis.Application
