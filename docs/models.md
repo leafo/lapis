@@ -1237,7 +1237,7 @@ local pager = OrderedPaginator(Events, "id", "where user_id = ?", 123, {
 ```moon
 import OrderedPaginator from require "lapis.db.pagination"
 pager = OrderedPaginator Events, "id", "where user_id = ?", 123, {
-  order = "desc",
+  order: "desc"
 }
 ```
 
