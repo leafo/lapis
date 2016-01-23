@@ -16,6 +16,7 @@ dependencies = {
 	"lua ~> 5.1",
 
 	"ansicolors",
+	"date",
 	"etlua",
 	"loadkit",
 	"lpeg",
