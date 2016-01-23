@@ -8,8 +8,7 @@ build_router = (routes) ->
       r\add_route pattern, handler
     r.default_route = -> "failed to find route"
 
-
-describe "parsing spec", ->
+describe "RouteParser.parse", ->
   for {pattern, test, result} in *{
     {"/:yeah", "ddd", nil}
     {"/:yeah", "/okay", {yeah: "okay"}}
@@ -147,6 +146,53 @@ describe "parsing spec", ->
     else
       do_test pattern, test, result
 
+
+describe "Router.fill_path", ->
+  for {route, expected, params} in *{
+    {"/what", "/what"}
+    {"/thing/:user_id/other/:cool_id", "/thing/1/other/world", {
+      user_id: 1
+      cool_id: "world"
+    }}
+
+    {"/thing/:okay/*", {
+      {"/thing/yeah/", { okay: "yeah" }}
+      {"/thing/yeah/good/zone", { okay: "yeah", splat: "good/zone"}}
+    }}
+
+    {"/hello/:world(.:format)", {
+      {"/hello/yeah.please", { world: "yeah", format: "please" }}
+      {"/hello/yeah", { world: "yeah"}}
+      {"/hello/", {}}
+    }}
+
+    {"/games(/:user(/:game(/*)))", {
+      {"/games", {}}
+      {"/games/leafo", { user: "leafo" }}
+      {"/games/leafo/zmoon", { user: "leafo", game: "zmoon" }}
+      {"/games", { game: "zmoon" }}
+      {"/games/leafo/zmoon/good-dogs", {
+        user: "leafo"
+        game: "zmoon"
+        splat: "good-dogs"
+      }}
+    }}
+
+    {"/:hello[%d]", "/zone", {
+      hello: "zone"
+    }}
+  }
+    do_test = (route, params, expected) ->
+      r = Router!
+      assert.same expected, r\fill_path route, params
+
+    if type(expected) == "table"
+      for {_expected, _params} in *expected
+        do_test route, _params, _expected
+    else
+      do_test route, params, expected
+
+
 describe "with router", ->
   local r
 
@@ -235,6 +281,7 @@ describe "named routes", ->
       { profile_settings: "/profile/:name/settings" }
       { game: "/game/:user_slug/:game_slug" }
       { splatted: "/page/:slug/*" }
+      { optional: "/page(.:format)" }
     }
 
   it "should match", ->
@@ -285,6 +332,14 @@ describe "named routes", ->
   it "should not build url", ->
     assert.has_error (-> r\url_for "fake_url", name: user),
       "Missing route named fake_url"
+
+  it "builds url with optional component", ->
+    url = r\url_for "optional", { format: "zip" }
+    assert.same "/page.zip", url
+
+  it "builds url exlucing optional component", ->
+    url = r\url_for "optional"
+    assert.same "/page", url
 
 describe "optional parts", ->
   local r
