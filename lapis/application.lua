@@ -3,18 +3,30 @@ local url = require("socket.url")
 local session = require("lapis.session")
 local lapis_config = require("lapis.config")
 local Router
-Router = require("lapis.router").Router
+do
+  local _obj_0 = require("lapis.router")
+  Router = _obj_0.Router
+end
 local html_writer
-html_writer = require("lapis.html").html_writer
+do
+  local _obj_0 = require("lapis.html")
+  html_writer = _obj_0.html_writer
+end
 local increment_perf
-increment_perf = require("lapis.nginx.context").increment_perf
+do
+  local _obj_0 = require("lapis.nginx.context")
+  increment_perf = _obj_0.increment_perf
+end
 local parse_cookie_string, to_json, build_url, auto_table
 do
   local _obj_0 = require("lapis.util")
   parse_cookie_string, to_json, build_url, auto_table = _obj_0.parse_cookie_string, _obj_0.to_json, _obj_0.build_url, _obj_0.auto_table
 end
 local insert
-insert = table.insert
+do
+  local _obj_0 = table
+  insert = _obj_0.insert
+end
 local json = require("cjson")
 local capture_errors, capture_errors_json, respond_to
 local set_and_truthy
@@ -46,23 +58,24 @@ do
     add_params = function(self, params, name)
       self[name] = params
       for k, v in pairs(params) do
-        do
-          local front = k:match("^([^%[]+)%[")
-          if front then
-            local curr = self.params
-            for match in k:gmatch("%[(.-)%]") do
-              local new = curr[front]
-              if new == nil then
-                new = { }
-                curr[front] = new
-              end
-              curr = new
-              front = match
+        local front
+        if type(k) == "string" then
+          front = k:match("^([^%[]+)%[")
+        end
+        if front then
+          local curr = self.params
+          for match in k:gmatch("%[(.-)%]") do
+            local new = curr[front]
+            if new == nil then
+              new = { }
+              curr[front] = new
             end
-            curr[front] = v
-          else
-            self.params[k] = v
+            curr = new
+            front = match
           end
+          curr[front] = v
+        else
+          self.params[k] = v
         end
       end
     end,

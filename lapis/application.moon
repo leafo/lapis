@@ -43,7 +43,8 @@ class Request
     @[name] = params
     for k,v in pairs params
       -- expand nested[param][keys]
-      if front = k\match "^([^%[]+)%["
+      front = k\match "^([^%[]+)%[" if type(k) == "string"
+      if front
         curr = @params
         for match in k\gmatch "%[(.-)%]"
           new = curr[front]
