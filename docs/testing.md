@@ -100,7 +100,7 @@ options in a table:
 * `port` -- The port of the mocked server (defaults to `80`)
 * `scheme` -- The scheme of the mocked server (defaults to `"http"`)
 * `prev` -- A table of the response headers from a previous `mock_request`
-
+* `allow_error` -- Don't automatically convert 500 server errors into Lua errors (defaults to `false`)
 
 If you want to simulate a series of requests that use persistant data like
 cookies or sessions you can use the `prev` option in the table. It takes the
