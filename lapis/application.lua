@@ -145,6 +145,8 @@ do
         local layout_cls
         if type(layout_path) == "string" then
           layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(layout_path))
+        elseif type(self.app.layout) == "string" then
+          layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(self.app.layout))
         else
           layout_cls = self.app.layout
         end
