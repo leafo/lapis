@@ -120,6 +120,13 @@ Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
 
 Converts JSON to table, a direct wrapper around Lua CJSON's `decode`.
 
+### `time_ago_in_words(date, [parts=1], [suffix="ago"])`
+
+Returns a string in the format "1 day ago".
+
+`parts` allows you to add more words. With `parts=2`, the string
+returned would be in the format `1 day, 4 hours ago`.
+
 ### Encoding Methods
 
 Encoding functions are found in:
