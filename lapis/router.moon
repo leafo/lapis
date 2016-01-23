@@ -243,6 +243,8 @@ class Router
     pattern, flags
 
   fill_path: (path, params={}, route_name) =>
+    local optional_stack
+
     replace = (s) ->
       param_name = s\sub 2
       if val = params[param_name]
@@ -252,17 +254,40 @@ class Router
           else
             obj_name = val.__class and val.__class.__name or type(val)
             error "Don't know how to serialize object for url: #{obj_name}"
-        val
+        optional_stack.hits += 1 if optional_stack
+        val, true
       else
+        optional_stack.misses += 1 if optional_stack
         ""
 
-    patt = Cs (
-      @parser.var / replace +
-      @parser.splat / (params.splat or "") +
-      1
-    )^0
+    patt = Cs P {
+      "string"
 
-    patt\match(path)
+      replacement: @parser.var / replace +
+        @parser.splat / (params.splat or "") +
+        V"optional"
+
+      optional: Cmt("(", (_, k) ->
+        optional_stack = {
+          hits: 0
+          misses: 0
+          prev: optional_stack
+        }
+
+        true, ""
+      ) * Cmt Cs((V"replacement" + 1 - ")")^0) * P")", (_, k, match) ->
+        result = optional_stack
+        optional_stack = optional_stack.prev
+
+        if result.hits > 0 and result.misses == 0
+          true, match
+        else
+          true, ""
+
+      string: (V"replacement" + 1)^0
+    }
+
+    patt\match path
 
   url_for: (name, params, query) =>
     return params unless name
