@@ -52,7 +52,7 @@ test_input = (input, func, args) ->
   args = {args} if type(args) != "table"
   fn input, unpack args
 
-validate = (object, validations) ->
+validate = (object, validations, opts = {}) ->
   errors = {}
   for v in *validations
     key = v[1]
@@ -69,7 +69,10 @@ validate = (object, validations) ->
       continue unless type(fn) == "string"
       success, msg = test_input input, fn, args
       unless success
-        insert errors, (error_msg or msg)\format key
+        if opts.keys and opts.keys == true
+          errors[key] = (error_msg or msg)\format key
+        else
+          insert errors, (error_msg or msg)\format key
         break
 
   next(errors) and errors

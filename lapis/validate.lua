@@ -65,7 +65,10 @@ test_input = function(input, func, args)
   return fn(input, unpack(args))
 end
 local validate
-validate = function(object, validations)
+validate = function(object, validations, opts)
+  if opts == nil then
+    opts = { }
+  end
   local errors = { }
   for _index_0 = 1, #validations do
     local _continue_0 = false
@@ -90,7 +93,11 @@ validate = function(object, validations)
           end
           local success, msg = test_input(input, fn, args)
           if not (success) then
-            insert(errors, (error_msg or msg):format(key))
+            if opts.keys and opts.keys == true then
+              errors[key] = (error_msg or msg):format(key)
+            else
+              insert(errors, (error_msg or msg):format(key))
+            end
             break
           end
           _continue_1 = true

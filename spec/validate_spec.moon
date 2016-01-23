@@ -87,3 +87,14 @@ describe "lapis.validate", ->
     it "should match", ->
       errors = validate o, input
       assert.same errors, output
+  
+  it "should get key with error", ->
+    errors = validate o, {
+      { "age", exists: true }
+      { "name", exists: true }
+      { "rupture", exists: true, "rupture is required" }
+    }, {keys: true }
+    assert.same errors, {
+      age: "age must be provided",
+      rupture: "rupture is required"
+    }
