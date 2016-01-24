@@ -42,9 +42,8 @@ actions = {
     name: "new"
     help: "create a new lapis project in the current directory"
 
-    (...) ->
+    (flags) ->
       import config_path, config_path_etlua from require("lapis.cmd.nginx").nginx_runner
-      flags = parse_flags { ... }
 
       if path.exists(config_path) or path.exists(config_path_etlua)
         fail_with_message "nginx.conf already exists"
@@ -77,7 +76,7 @@ actions = {
     usage: "server [environment]"
     help: "build config and start server"
 
-    (environment=default_environment!) ->
+    (flags, environment=default_environment!) ->
       nginx = find_nginx!
       leda = find_leda!
 
@@ -97,7 +96,7 @@ actions = {
     usage: "build [environment]"
     help: "build config, send HUP if server running"
 
-    (environment=default_environment!) ->
+    (flags, environment=default_environment!) ->
       write_config_for environment
 
       import send_hup from require "lapis.cmd.nginx"
@@ -138,7 +137,7 @@ actions = {
     hidden: true
     help: "send arbitrary signal to running server"
 
-    (signal) ->
+    (flags, signal) ->
       assert signal, "Missing signal"
       import send_signal from require "lapis.cmd.nginx"
 
@@ -154,7 +153,7 @@ actions = {
     usage: "exec <lua-string>"
     help: "execute Lua on the server"
 
-    (code, environment=default_environment!) ->
+    (flags, code, environment=default_environment!) ->
       fail_with_message("missing lua-string: exec <lua-string>") unless code
       import attach_server from require "lapis.cmd.nginx"
 
@@ -171,7 +170,7 @@ actions = {
     usage: "migrate [environment]"
     help: "run migrations"
 
-    (environment=default_environment!) ->
+    (flags, environment=default_environment!) ->
       env = require "lapis.environment"
       env.push environment, show_queries: true
 
@@ -186,7 +185,7 @@ actions = {
     usage: "generate <template> [args...]"
     help: "generates a new file from template"
 
-    (template_name, ...) ->
+    (flags, template_name, ...) ->
       local tpl, module_name
 
       pcall ->
@@ -251,21 +250,15 @@ execute = (args) ->
   action_name = plain_args[1] or actions.default
   action = get_action action_name
 
-  stripped = false
-  action_args = for a in *args
-    if not stripped and a == action_name
-      stripped = true
-      continue
-
-    a
+  rest = [arg for arg in *plain_args[2,]]
 
   unless action
     print format_error "unknown command `#{action_name}'"
-    get_action("help")[1] unpack action_args
+    get_action("help")[1] unpack rest
     return
 
   fn = assert(action[1], "action `#{action_name}' not implemented")
-  xpcall (-> fn unpack action_args), (err) ->
+  xpcall (-> fn flags, unpack rest), (err) ->
     err = err\match("^.-:.-:.(.*)$") or err unless flags.trace
     msg = colors "%{bright red}Error:%{reset} #{err}"
     if flags.trace

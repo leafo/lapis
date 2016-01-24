@@ -60,15 +60,12 @@ actions = {
   {
     name = "new",
     help = "create a new lapis project in the current directory",
-    function(...)
+    function(flags)
       local config_path, config_path_etlua
       do
         local _obj_0 = require("lapis.cmd.nginx").nginx_runner
         config_path, config_path_etlua = _obj_0.config_path, _obj_0.config_path_etlua
       end
-      local flags = parse_flags({
-        ...
-      })
       if path.exists(config_path) or path.exists(config_path_etlua) then
         fail_with_message("nginx.conf already exists")
       end
@@ -100,7 +97,7 @@ actions = {
     name = "server",
     usage = "server [environment]",
     help = "build config and start server",
-    function(environment)
+    function(flags, environment)
       if environment == nil then
         environment = default_environment()
       end
@@ -121,7 +118,7 @@ actions = {
     name = "build",
     usage = "build [environment]",
     help = "build config, send HUP if server running",
-    function(environment)
+    function(flags, environment)
       if environment == nil then
         environment = default_environment()
       end
@@ -167,7 +164,7 @@ actions = {
     name = "signal",
     hidden = true,
     help = "send arbitrary signal to running server",
-    function(signal)
+    function(flags, signal)
       assert(signal, "Missing signal")
       local send_signal
       send_signal = require("lapis.cmd.nginx").send_signal
@@ -183,7 +180,7 @@ actions = {
     name = "exec",
     usage = "exec <lua-string>",
     help = "execute Lua on the server",
-    function(code, environment)
+    function(flags, code, environment)
       if environment == nil then
         environment = default_environment()
       end
@@ -204,7 +201,7 @@ actions = {
     name = "migrate",
     usage = "migrate [environment]",
     help = "run migrations",
-    function(environment)
+    function(flags, environment)
       if environment == nil then
         environment = default_environment()
       end
@@ -221,7 +218,7 @@ actions = {
     name = "generate",
     usage = "generate <template> [args...]",
     help = "generates a new file from template",
-    function(template_name, ...)
+    function(flags, template_name, ...)
       local tpl, module_name
       pcall(function()
         module_name = "generators." .. tostring(template_name)
@@ -306,39 +303,25 @@ execute = function(args)
   local flags, plain_args = parse_flags(args)
   local action_name = plain_args[1] or actions.default
   local action = get_action(action_name)
-  local stripped = false
-  local action_args
+  local rest
   do
     local _accum_0 = { }
     local _len_0 = 1
-    for _index_0 = 1, #args do
-      local _continue_0 = false
-      repeat
-        local a = args[_index_0]
-        if not stripped and a == action_name then
-          stripped = true
-          _continue_0 = true
-          break
-        end
-        local _value_0 = a
-        _accum_0[_len_0] = _value_0
-        _len_0 = _len_0 + 1
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
+    for _index_0 = 2, #plain_args do
+      local arg = plain_args[_index_0]
+      _accum_0[_len_0] = arg
+      _len_0 = _len_0 + 1
     end
-    action_args = _accum_0
+    rest = _accum_0
   end
   if not (action) then
     print(format_error("unknown command `" .. tostring(action_name) .. "'"))
-    get_action("help")[1](unpack(action_args))
+    get_action("help")[1](unpack(rest))
     return 
   end
   local fn = assert(action[1], "action `" .. tostring(action_name) .. "' not implemented")
   return xpcall((function()
-    return fn(unpack(action_args))
+    return fn(flags, unpack(rest))
   end), function(err)
     if not (flags.trace) then
       err = err:match("^.-:.-:.(.*)$") or err
