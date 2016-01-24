@@ -150,6 +150,8 @@ describe "RouteParser.parse", ->
 describe "Router.fill_path", ->
   for {route, expected, params} in *{
     {"/what", "/what"}
+    {"/what(/world)", "/what"}
+
     {"/thing/:user_id/other/:cool_id", "/thing/1/other/world", {
       user_id: 1
       cool_id: "world"
