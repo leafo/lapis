@@ -106,9 +106,7 @@ be included in the named parameter. For example you can match URLs that end in
 
 Parentheses can be used to make a section of the route optional:
 
-```
-/projects/:username(/:project)
-```
+    /projects/:username(/:project)
 
 The above would match either `/projects/leafo`  or `/projects/leafo/lapis`. Any
 parameters within optional components that don't match will have a value of
@@ -120,27 +118,20 @@ A character class can be applied to a named parameter to restrict what
 characters can match. The syntax modeled after Lua's pattern character classes. This
 route will make sure the that `user_id` named parameter only contains digits:
 
-```
-/user/:user_id[%d]/posts
-```
+    /user/:user_id[%d]/posts
 
 And this route would only match hexadecimal strings for the `hex` parameter.
 
-```
-/color/:hex[a-fA-F%d]
-```
-
+    /color/:hex[a-fA-F%d]
 
 ### Route precedence
 
-Routes are search in order of precedence first. Routes of the seame precdence
-are then search in the order that they are defined. The route precedence from
-highest to lowest is:
+Routes are searched first by precedence, then by the order they were defined.
+Route precedence from highest to lowest is:
 
 * Literal routes `/hello/world`
 * Variable routes `/hello/:variable`
 * Splat routes routes `/hello/*`
-
 
 ## Named Routes
 
@@ -184,7 +175,8 @@ class="for_lua">`self:url_for()`</span>. The first argument is the name of the
 route, and the second optional argument is a table of values to fill a
 parameterized route with.
 
-[Read more about `url_for`](#request-object-methods/url_for).
+[Read more about `url_for`](#request-object-methods/url_for) to see the
+different ways to generate URLs to pages.
 
 ## Handling HTTP verbs
 
