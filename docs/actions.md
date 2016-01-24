@@ -985,11 +985,21 @@ end
 class App extends lapis.Application
   handle_error: (err, trace) =>
     ngx.log ngx.NOTICE, "There was an error! #{err}: #{trace}"
-    super!
+    super err, trace
 ```
 
 The [`lapis-exceptions`][2] module provides a default error handler that
 records errors in a database and can email you when they happen.
+
+Note that the error handler does not work like other request handlers. Although
+a request argument is passed as the first argument, it may be in an incomplete
+state due to where the error occurred.
+
+Additionally the error handlers return values are ignored.
+
+It's recommended to preserve the default error handler since it will also embed
+stack trace information when in the `test` environment to ensure tests can print
+a full error message on failed tests.
 
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
