@@ -153,6 +153,13 @@ describe "lapis.cmd.actions.execute", ->
         "app.moon", "mime.types", "models.moon", "nginx.conf.etlua"
       }
 
+    it "command line flags can go anywhere", ->
+      cmd.execute { [0]: "lapis", "--etlua-config", "new" }
+
+      assert_files {
+        "app.moon", "mime.types", "models.moon", "nginx.conf.etlua"
+      }
+
     it "lua default", ->
       cmd.execute { [0]: "lapis", "new", "--lua" }
       assert_files {
