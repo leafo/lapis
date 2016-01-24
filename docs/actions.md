@@ -547,7 +547,7 @@ Generates a URL for `name_or_obj`.
 If `name_or_obj` is a string, then the route of that name is looked up and
 filled using the values in params. If no route exists then an error is thrown.
 
-Given the following route:
+Given the following routes:
 
 
 ```lua
@@ -586,9 +586,8 @@ self:url_for("user_data", { user_id = 123, data_field = "height"})
 
 If the third argument, `query_params`, is supplied, it will be converted into
 query parameters and appended to the end of the generated URL. If the route
-doesn't take any params an `nil`, or empty object, must be passed as the second
-argument.
-
+doesn't take  any parameters in the URL then `nil`, or empty object, must be
+passed as the second argument:
 
 ```lua
 -- returns: /data/123/height?sort=asc
@@ -613,7 +612,7 @@ parameters then it will never be included.
 Given the following route:
 
 ```lua
-app:match("user_page", "/user/:username(/:page)(.:format)" function(self)
+app:match("user_page", "/user/:username(/:page)(.:format)", function(self)
   -- ...
 end)
 ```
@@ -626,16 +625,74 @@ class App extends lapis.Application
 The following URLs can be generated:
 
 ```lua
+-- returns: /user/leafo
+self:url_for("user_page", { username = "leafo" })
+
+-- returns: /user/leafo/projects
+self:url_for("user_page", { username = "leafo", page = "projects" })
+
+-- returns: /user/leafo.json
+self:url_for("user_page", { username = "leafo", format = "json" })
+
+-- returns: /user/leafo/code.json
+self:url_for("user_page", { username = "leafo", page = "code", format = "json" })
+```
+
+```moon
+-- returns: /user/leafo
+@url_for "user_page", username: "leafo"
+
+-- returns: /user/leafo/projects
+@url_for "user_page", username: "leafo", page: "projects"
+
+-- returns: /user/leafo.json
+@url_for "user_page", username: "leafo", format: "json"
+
+-- returns: /user/leafo/code.json
+@url_for "user_page", username: "leafo", page: "code", format: "json"
+```
+
+If a route contains a splat, the value can be provieded via the parameter named
+`splat`:
+
+```lua
+app:match("browse", "/browse(/*)", function(self)
+  -- ...
+end)
+```
+
+```moon
+class App extends lapis.Application
+  [browse: "/browse(/*)"]: => -- ...
+```
+
+```lua
+-- returns: /browse
+self:url_for("browse")
+
+-- returns: /browse/games/recent
+self:url_for("browse", { splat = "games/recent" })
+```
+
+```moon
+-- returns: /browse
+@url_for "browse"
+
+-- returns: /browse/games/recent
+@url_for "browse", splat: "games/recent"
 ```
 
 #### Passing an object to `url_for`
 
-If `name_or_obj` is a table, then the `url_params` method is called on the
-object. The arguments passed to `url_params` are the request, followed by all
-the remaining arguments passed to `url_for`. The result of `url_params` is used
-to call `url_for` again.
+If `name_or_obj` is a table, then the `url_params` method is called on that
+table, and the return values are passed to `url_for`.
 
-For example, consider a `Users` model that defines a `url_params` method:
+The `url_params` method takes as arguments the `request` object, followed by
+anything else passed to `url_for` originally.
+
+It's common to implement `url_params` on models, giving them the ability to
+define what page they represent. For example, consider a `Users` model that
+defines a `url_params` method, which goes to the profile page of the user:
 
 ```lua
 local Users = Model:extend("users", {
