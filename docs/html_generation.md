@@ -74,7 +74,7 @@ div {
 Will generate:
 
 ```html
-<html class="one two four">Hello world!</div>
+<div class="one two four">Hello world!</div>
 ```
 
 
