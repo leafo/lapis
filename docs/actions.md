@@ -13,8 +13,10 @@ All actions are called with one argument, a [*request
 object*](#request-object).
 
 The return value of the action is used to render the output. A string return
-value will be rendered to the browser directly. A table return value
-will be used as the [*render options*](#render-options).
+value will be rendered to the browser directly. A table return value will be
+used as the [*render options*](#render-options). If there is more than one
+return value, all of them are merged into the final result. You can return both
+strings and tables to control the output.
 
 If there is no route that matches the request then the default route handler is
 executed, read more in [*application callbacks*](#application-callbacks).
