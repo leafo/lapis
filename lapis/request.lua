@@ -125,35 +125,8 @@ do
   _base_0.__class = _class_0
   local self = _class_0
   self.support = {
-    add_params = function(self, params, name)
-      self[name] = params
-      for k, v in pairs(params) do
-        local front
-        if type(k) == "string" then
-          front = k:match("^([^%[]+)%[")
-        end
-        if front then
-          local curr = self.params
-          for match in k:gmatch("%[(.-)%]") do
-            local new = curr[front]
-            if new == nil then
-              new = { }
-              curr[front] = new
-            end
-            curr = new
-            front = match
-          end
-          curr[front] = v
-        else
-          self.params[k] = v
-        end
-      end
-    end,
     render = function(self)
-      if opts then
-        self.options = opts
-      end
-      session.write_session(self)
+      self.__class.support.write_session(self)
       self.__class.support.write_cookies(self)
       if self.options.status then
         self.res.status = self.options.status
@@ -259,6 +232,7 @@ do
         end
       end
     end,
+    write_session = session.write_session,
     write_cookies = function(self)
       if not (next(self.cookies)) then
         return 
@@ -272,6 +246,30 @@ do
           end
         end
         self.res:add_header("Set-Cookie", cookie)
+      end
+    end,
+    add_params = function(self, params, name)
+      self[name] = params
+      for k, v in pairs(params) do
+        local front
+        if type(k) == "string" then
+          front = k:match("^([^%[]+)%[")
+        end
+        if front then
+          local curr = self.params
+          for match in k:gmatch("%[(.-)%]") do
+            local new = curr[front]
+            if new == nil then
+              new = { }
+              curr[front] = new
+            end
+            curr = new
+            front = match
+          end
+          curr[front] = v
+        else
+          self.params[k] = v
+        end
       end
     end
   }

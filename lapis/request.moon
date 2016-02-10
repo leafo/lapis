@@ -18,30 +18,10 @@ class Request
   -- these are like methods but we don't put them on the request object so they
   -- don't take up names that someone might use
   @support: {
-    add_params: (params, name) =>
-      @[name] = params
-      for k,v in pairs params
-        -- expand nested[param][keys]
-        front = k\match "^([^%[]+)%[" if type(k) == "string"
-        if front
-          curr = @params
-          for match in k\gmatch "%[(.-)%]"
-            new = curr[front]
-            if new == nil
-              new = {}
-              curr[front] = new
-            curr = new
-            front = match
-          curr[front] = v
-        else
-          @params[k] = v
-
     -- write what is in @options and @buffer into the output
     -- this is called once, and done last
     render: =>
-      @options = opts if opts
-
-      session.write_session @
+      @@support.write_session @
       @@support.write_cookies @
 
       if @options.status
@@ -129,6 +109,8 @@ class Request
         else
           content
 
+    write_session: session.write_session
+
     write_cookies: =>
       return unless next @cookies
 
@@ -138,6 +120,24 @@ class Request
           cookie ..= "; " .. extra
 
         @res\add_header "Set-Cookie", cookie
+
+    add_params: (params, name) =>
+      @[name] = params
+      for k,v in pairs params
+        -- expand nested[param][keys]
+        front = k\match "^([^%[]+)%[" if type(k) == "string"
+        if front
+          curr = @params
+          for match in k\gmatch "%[(.-)%]"
+            new = curr[front]
+            if new == nil
+              new = {}
+              curr[front] = new
+            curr = new
+            front = match
+          curr[front] = v
+        else
+          @params[k] = v
   }
 
   new: (@app, @req, @res) =>
