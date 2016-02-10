@@ -154,7 +154,7 @@ describe "500 error", ->
           content_type: "text/html"
           "hello!"
         }
-        r\render!
+        r.__class.support.render r
         r
 
       "/": => error "I am an error!"

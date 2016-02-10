@@ -60,7 +60,7 @@ cached = function(fn_or_tbl)
       end
     end
     self:write(fn(self))
-    self:render()
+    self.__class.support.render(self)
     local cache_response = {
       {
         content_type = self.res.headers["Content-type"],

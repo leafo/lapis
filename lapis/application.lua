@@ -110,12 +110,13 @@ do
     end,
     wrap_handler = function(self, handler)
       return function(params, path, name, r)
+        local support = r.__class.support
         do
           local _with_0 = r
           _with_0.route_name = name
-          _with_0:add_params(r.req.params_get, "GET")
-          _with_0:add_params(r.req.params_post, "POST")
-          _with_0:add_params(params, "url_params")
+          support.add_params(r, r.req.params_get, "GET")
+          support.add_params(r, r.req.params_post, "POST")
+          support.add_params(r, params, "url_params")
           if self.before_filters then
             local _list_0 = self.before_filters
             for _index_0 = 1, #_list_0 do
@@ -138,7 +139,7 @@ do
           local handler = self:wrap_handler(self.default_route)
           handler({ }, nil, "default_route", r)
         end
-        r:render()
+        r.__class.support.render(r)
         return logger.request(r)
       end), function(_err)
         err = _err
@@ -200,7 +201,7 @@ do
           })
         })
       end
-      r:render()
+      r.__class.support.render(r)
       logger.request(r)
       return r
     end,
@@ -441,7 +442,7 @@ json_params = function(fn)
             obj, err = json.decode(ngx.req.get_body_data())
           end)
           if obj then
-            self:add_params(obj, "json")
+            self.__class.support.add_params(self, obj, "json")
           end
         end
       end

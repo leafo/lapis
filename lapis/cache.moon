@@ -52,7 +52,7 @@ cached = (fn_or_tbl) ->
       return cache_value
 
     @write fn @
-    @render!
+    @@support.render @
 
     -- you can't mix hash/array in json so we make two tables
     cache_response = {

@@ -127,12 +127,14 @@ class Application
 
   wrap_handler: (handler) =>
     (params, path, name, r) ->
+      support = r.__class.support
+
       with r
         .route_name = name
 
-        \add_params r.req.params_get, "GET"
-        \add_params r.req.params_post, "POST"
-        \add_params params, "url_params"
+        support.add_params r, r.req.params_get, "GET"
+        support.add_params r, r.req.params_post, "POST"
+        support.add_params r, params, "url_params"
 
         if @before_filters
           for filter in *@before_filters
@@ -151,7 +153,7 @@ class Application
           handler = @wrap_handler @default_route
           handler {}, nil, "default_route", r
 
-        r\render!
+        r.__class.support.render r
         logger.request r),
       (_err) ->
         err = _err
@@ -241,7 +243,8 @@ class Application
         content_type: "text/html"
         error_page { status: 500, :err, :trace }
       }
-    r\render!
+
+    r.__class.support.render r
     logger.request r
     r
 
@@ -311,7 +314,7 @@ json_params = (fn) ->
         ngx.req.read_body!
         local obj
         pcall -> obj, err = json.decode ngx.req.get_body_data!
-        @add_params obj, "json" if obj
+        @@support.add_params @, obj, "json" if obj
 
     fn @, ...
 
