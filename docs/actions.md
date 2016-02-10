@@ -844,6 +844,7 @@ Here is the list of options that can be written
 * `render` -- causes a view to be rendered with the request. If the value is
   `true` then the name of the route is used as the view name. Otherwise the value must be a string or a view class.
 * `content_type` -- sets the `Content-type` header
+* `headers` -- a table of headers to add to the response
 * `json` -- causes the request to return the JSON encoded value of the property. The content type is set to `application/json` as well.
 * `layout` -- changes the layout from the default defined by the application
 * `redirect_to` -- sets status to 302 and sets `Location` header to value. Supports both relative and absolute URLs. (Combine with `status` to perform 301 redirect)
