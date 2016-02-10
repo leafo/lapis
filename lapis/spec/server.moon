@@ -88,10 +88,10 @@ class SpecServer
     body = table.concat buffer
 
     headers = normalize_headers headers
-    if headers.x_lapis_error
+    if error_blob = headers.x_lapis_error
       json = require "cjson"
-      {:status, :err, :trace} = json.decode body
-      error "\n#{status}\n#{err}\n#{trace}"
+      {:summary, :err, :trace} = json.decode error_blob
+      error "\n#{summary}\n#{err}\n#{trace}"
 
     if opts.expect == "json"
       json = require "cjson"
