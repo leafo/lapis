@@ -117,11 +117,16 @@ The above would match either `/projects/leafo`  or `/projects/leafo/lapis`. Any
 parameters within optional components that don't match will have a value of
 `nil` from within the action.
 
+These optional components can be nested and chained as much as you like:
+
+    /settings(/:username(/:page))(.:format)
+
 ### Parameter character classes
 
 A character class can be applied to a named parameter to restrict what
-characters can match. The syntax modeled after Lua's pattern character classes. This
-route will make sure the that `user_id` named parameter only contains digits:
+characters can match. The syntax modeled after Lua's pattern character classes.
+This route will make sure the that `user_id` named parameter only contains
+digits:
 
     /user/:user_id[%d]/posts
 
