@@ -1017,8 +1017,6 @@ Lapis' default error page shows an entire stack trace, so it's recommended to
 replace it with a custom one in your production envrionments, and log the
 exception in the background.
 
-### Exception tracking
-
 The [`lapis-exceptions`][2] module augments the error handler to records errors
 in a database. It can also email you when there's an exception.
 
