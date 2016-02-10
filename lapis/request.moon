@@ -184,29 +184,30 @@ class Request
 
     build_url parsed
 
-  write: (...) =>
-    for thing in *{...}
-      t = type(thing)
-      -- is it callable?
-      if t == "table"
-        mt = getmetatable(thing)
-        if mt and mt.__call
-          t = "function"
+  write: (thing, ...) =>
+    t = type(thing)
+    -- is it callable?
+    if t == "table"
+      mt = getmetatable(thing)
+      if mt and mt.__call
+        t = "function"
 
-      switch t
-        when "string"
-          insert @buffer, thing
-        when "table"
-          -- see if there are options
-          for k,v in pairs thing
-            if type(k) == "string"
-              @options[k] = v
-            else
-              @write v
-        when "function"
-          @write thing @buffer
-        when "nil"
-          nil -- ignore
-        else
-          error "Don't know how to write: (#{t}) #{thing}"
+    switch t
+      when "string"
+        insert @buffer, thing
+      when "table"
+        -- see if there are options
+        for k,v in pairs thing
+          if type(k) == "string"
+            @options[k] = v
+          else
+            @write v
+      when "function"
+        @write thing @buffer
+      when "nil"
+        nil -- ignore
+      else
+        error "Don't know how to write: (#{t}) #{thing}"
+
+    @write ... if ...
 
