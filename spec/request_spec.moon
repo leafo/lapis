@@ -207,34 +207,6 @@ describe "lapis.request", ->
 
 
 -- these seem like an application spec and not a request one
-describe "500 error", ->
-  it "should render error page", ->
-    class ErrorApp extends lapis.Application
-      "/": =>
-        error "I am an error!"
-
-    assert.has_error ->
-      mock_request ErrorApp, "/"
-
-  it "should run custom error action", ->
-    class ErrorApp extends lapis.Application
-      handle_error: (err, msg) =>
-        r = @app.Request self, @req, @res
-        r\write {
-          status: 500
-          layout: false
-          content_type: "text/html"
-          "hello!"
-        }
-        r.__class.support.render r
-        r
-
-      "/": => error "I am an error!"
-
-    status, body = mock_request ErrorApp, "/"
-    assert.same 500, status
-    assert.same "hello!", body
-
 describe "before filter", ->
   it "should run before filter", ->
     local val

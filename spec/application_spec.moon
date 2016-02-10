@@ -19,6 +19,7 @@ describe "application", ->
     assert.same action2, (SomeApp\find_action "world")
     assert.same nil, (SomeApp\find_action "nothing")
 
+-- this should be in request spec...
 describe "request:build_url", ->
   it "should build url", ->
     assert.same "http://localhost", mock_app "/hello", {}, =>
@@ -57,6 +58,7 @@ describe "request:build_url", ->
     assert.same "http://leafo.net",
       mock_app "/hello", { host: "leaf", port: 2000 }, =>
         @build_url "http://leafo.net"
+
 
 describe "application inheritance", ->
   local result
@@ -361,4 +363,35 @@ describe "instance app", ->
 
     assert.same routes, [tuple[1] for tuple in *app.router.routes]
 
+describe "errors", ->
+  class ErrorApp extends lapis.Application
+    "/": =>
+      error "I am an error!"
 
+  it "should render default error page", ->
+    status, body, h = mock_request ErrorApp, "/", allow_error: true
+    assert.same 500, status
+    assert.truthy (body\match "I am an error")
+
+    -- only set on test env
+    assert.truthy h["X-Lapis-Error"]
+
+  it "raises error in spec by default", ->
+    assert.has_error ->
+      mock_request ErrorApp, "/"
+
+  it "renders custom error page", ->
+    class CustomErrorApp extends lapis.Application
+      handle_error: (err, msg) =>
+        assert.truthy @original_request
+        "hello world", layout: false, status: 444
+
+      "/": =>
+        error "I am an error!"
+
+    status, body, h = mock_request CustomErrorApp, "/", allow_error: true
+    assert.same 444, status
+    assert.same "hello world", body
+
+    -- should still be set
+    assert.truthy h["X-Lapis-Error"]
