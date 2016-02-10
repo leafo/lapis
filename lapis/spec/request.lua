@@ -218,14 +218,17 @@ mock_request = function(app_cls, url, opts)
   out_headers = normalize_headers(out_headers)
   local body = concat(buffer)
   if not (opts.allow_error) then
-    if out_headers.x_lapis_error then
-      local json = require("cjson")
-      local status, err, trace
-      do
-        local _obj_0 = json.decode(body)
-        status, err, trace = _obj_0.status, _obj_0.err, _obj_0.trace
+    do
+      local error_blob = out_headers.x_lapis_error
+      if error_blob then
+        local json = require("cjson")
+        local summary, err, trace
+        do
+          local _obj_0 = json.decode(error_blob)
+          summary, err, trace = _obj_0.summary, _obj_0.err, _obj_0.trace
+        end
+        error("\n" .. tostring(summary) .. "\n" .. tostring(err) .. "\n" .. tostring(trace))
       end
-      error("\n" .. tostring(status) .. "\n" .. tostring(err) .. "\n" .. tostring(trace))
     end
   end
   if opts.expect == "json" then

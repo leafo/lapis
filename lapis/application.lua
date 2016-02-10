@@ -131,6 +131,28 @@ do
         end
       end
     end,
+    render_request = function(self, r)
+      r.__class.support.render(r)
+      return logger.request(r)
+    end,
+    render_error_request = function(self, r, err, trace)
+      local config = lapis_config.get()
+      r:write(self.handle_error(r, err, trace))
+      if config._name == "test" then
+        r.options.headers = r.options.headers or { }
+        local param_dump = logger.flatten_params(r.original_request.url_params)
+        local error_payload = {
+          summary = "[" .. tostring(r.original_request.req.cmd_mth) .. "] " .. tostring(r.original_request.req.cmd_url) .. " " .. tostring(param_dump),
+          err = err,
+          trace = trace
+        }
+        local to_json
+        to_json = require("lapis.util").to_json
+        r.options.headers["X-Lapis-Error"] = to_json(error_payload)
+      end
+      r.__class.support.render(r)
+      return logger.request(r)
+    end,
     dispatch = function(self, req, res)
       local err, trace, r
       local success = xpcall((function()
@@ -139,14 +161,15 @@ do
           local handler = self:wrap_handler(self.default_route)
           handler({ }, nil, "default_route", r)
         end
-        r.__class.support.render(r)
-        return logger.request(r)
+        return self:render_request(r)
       end), function(_err)
         err = _err
         trace = debug.traceback("", 2)
       end)
       if not (success) then
-        self.handle_error(r, err, trace)
+        local error_request = self.Request(self, req, res)
+        error_request.original_request = r
+        self:render_error_request(error_request, err, trace)
       end
       return success, r
     end,
@@ -172,38 +195,15 @@ do
     handle_404 = function(self)
       return error("Failed to find route: " .. tostring(self.req.cmd_url))
     end,
-    handle_error = function(self, err, trace, error_page)
-      if error_page == nil then
-        error_page = self.app.error_page
-      end
-      local r = self.app.Request(self, self.req, self.res)
-      local config = lapis_config.get()
-      if config._name == "test" then
-        local param_dump = logger.flatten_params(self.url_params)
-        r.res:add_header("X-Lapis-Error", "true")
-        r:write({
-          status = 500,
-          json = {
-            status = "[" .. tostring(r.req.cmd_mth) .. "] " .. tostring(r.req.cmd_url) .. " " .. tostring(param_dump),
-            err = err,
-            trace = trace
-          }
-        })
-      else
-        r:write({
-          status = 500,
-          layout = false,
-          content_type = "text/html",
-          error_page({
-            status = 500,
-            err = err,
-            trace = trace
-          })
-        })
-      end
-      r.__class.support.render(r)
-      logger.request(r)
-      return r
+    handle_error = function(self, err, trace)
+      self.status = 500
+      self.err = err
+      self.trace = trace
+      return {
+        status = 500,
+        layout = false,
+        render = self.app.error_page
+      }
     end,
     cookie_attributes = function(self, name, value)
       return "Path=/; HttpOnly"

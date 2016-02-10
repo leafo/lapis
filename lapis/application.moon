@@ -142,6 +142,32 @@ class Application
 
         \write handler r
 
+
+  render_request: (r) =>
+    r.__class.support.render r
+    logger.request r
+
+  render_error_request: (r, err, trace) =>
+    config = lapis_config.get!
+    r\write @.handle_error r, err, trace
+
+    if config._name == "test"
+      r.options.headers or= {}
+
+      param_dump = logger.flatten_params r.original_request.url_params
+
+      error_payload = {
+        summary: "[#{r.original_request.req.cmd_mth}] #{r.original_request.req.cmd_url} #{param_dump}"
+        :err, :trace
+      }
+
+      import to_json from require "lapis.util"
+      r.options.headers["X-Lapis-Error"] = to_json error_payload
+
+    r.__class.support.render r
+    logger.request r
+
+
   dispatch: (req, res) =>
     local err, trace, r
 
@@ -153,14 +179,16 @@ class Application
           handler = @wrap_handler @default_route
           handler {}, nil, "default_route", r
 
-        r.__class.support.render r
-        logger.request r),
+        @render_request r),
       (_err) ->
         err = _err
         trace = debug.traceback "", 2
 
     unless success
-      @.handle_error r, err, trace
+      -- create a new request to handle the rendering the error
+      error_request = @.Request @, req, res
+      error_request.original_request = r
+      @render_error_request error_request, err, trace
 
     success, r
 
@@ -222,31 +250,16 @@ class Application
   handle_404: =>
     error "Failed to find route: #{@req.cmd_url}"
 
-  handle_error: (err, trace, error_page=@app.error_page) =>
-    r = @app.Request @, @req, @res
+  handle_error: (err, trace) =>
+    @status = 500
+    @err = err
+    @trace = trace
 
-    config = lapis_config.get!
-    if config._name == "test"
-      param_dump = logger.flatten_params @url_params
-      r.res\add_header "X-Lapis-Error", "true"
-      r\write {
-        status: 500
-        json: {
-          status: "[#{r.req.cmd_mth}] #{r.req.cmd_url} #{param_dump}"
-          :err, :trace
-        }
-      }
-    else
-      r\write {
-        status: 500
-        layout: false
-        content_type: "text/html"
-        error_page { status: 500, :err, :trace }
-      }
-
-    r.__class.support.render r
-    logger.request r
-    r
+    {
+      status: 500
+      layout: false
+      render: @app.error_page
+    }
 
   cookie_attributes: (name, value) =>
     "Path=/; HttpOnly"
