@@ -93,6 +93,61 @@ describe "json request", ->
       body: 'helloworldland'
     }
 
+describe "write", ->
+  write = (fn, ...) ->
+    class A extends lapis.Application
+      layout: false
+      "/": fn
+
+    mock_request A, "/", ...
+
+  it "writes nothing, sets default content type", ->
+    status, body, h = write ->
+
+    assert.same 200, status
+    assert.same "", body
+    assert.same "text/html", h["Content-Type"]
+
+  it "writes status code", ->
+    status, body, h = write -> status: 420
+    assert.same 420, status
+
+  it "writes content type", ->
+    _, _, h = write -> content_type: "text/javascript"
+    assert.same "text/javascript", h["Content-Type"]
+
+  it "writes headers", ->
+    _, _, h = write -> {
+      headers: {
+        "X-Lapis-Cool": "zone"
+        "Cache-control": "nope"
+      }
+    }
+
+    assert.same "zone", h["X-Lapis-Cool"]
+    assert.same "nope", h["Cache-Control"]
+
+  it "does redirect", ->
+    status, _, h = write -> { redirect_to: "/hi" }
+
+    assert.same 302, status
+    assert.same "http://localhost/hi", h["Location"]
+
+  it "does permanent redirect", ->
+    status, _, h = write -> { redirect_to: "/loaf", status: 301 }
+
+    assert.same 301, status
+    assert.same "http://localhost/loaf", h["Location"]
+
+  it "writes string to buffer", ->
+    status, body, h = write -> "hello"
+    assert.same "hello", body
+
+  it "writes many things to buffer, with options", ->
+    status, body, h = write -> "hello", "world", status: 404
+    assert.same 404, status
+    assert.same "helloworld", body
+
 
 describe "cookies", ->
   class CookieApp extends lapis.Application
