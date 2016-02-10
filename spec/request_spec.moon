@@ -148,6 +148,10 @@ describe "write", ->
     assert.same 404, status
     assert.same "helloworld", body
 
+  it "writes json", ->
+    status, body, h = write -> json: { items: {1,2,3,4} }
+    assert.same [[{"items":[1,2,3,4]}]], body
+    assert.same "application/json", h["Content-Type"]
 
 describe "cookies", ->
   class CookieApp extends lapis.Application
