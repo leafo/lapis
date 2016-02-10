@@ -9,8 +9,11 @@ that a URL must match. When you define a route you also include an *action*. An
 action is a regular Lua/MoonScript function that will be called if the
 associated route matches.
 
-All actions are called with one argument, a [*request
-object*](#request-object).
+All actions are invoked with one argument, a [*request
+object*](#request-object). The request object is where you'll store all the
+data you want to share between your actions and views. Additionally, the
+request object is your interface to the webserver on how the result is sent to
+the client.
 
 The return value of the action is used to render the output. A string return
 value will be rendered to the browser directly. A table return value will be
@@ -376,10 +379,16 @@ The request object has the following parameters:
 * <span class="for_moon">`@app`</span><span class="for_lua">`self.app`</span> -- the instance of the application
 * <span class="for_moon">`@cookies`</span><span class="for_lua">`self.cookies`</span> -- the table of cookies, can be assigned to set new cookies. Only supports strings as values
 * <span class="for_moon">`@session`</span><span class="for_lua">`self.session`</span> -- signed session table. Can store values of any type that can be JSON encoded. Is backed by cookies
-* <span class="for_moon">`@options`</span><span class="for_lua">`self.options`</span> -- set of options that controls how the request is rendered to Nginx
-* <span class="for_moon">`@buffer`</span><span class="for_lua">`self.buffer`</span> -- the output buffer
 * <span class="for_moon">`@route_name`</span><span class="for_lua">`self.route_name`</span> -- the name of the route that matched the request if it has one
+* <span class="for_moon">`@options`</span><span class="for_lua">`self.options`</span> -- set of options that controls how the request is rendered, set via `write`
+* <span class="for_moon">`@buffer`</span><span class="for_lua">`self.buffer`</span> -- the output buffer, typically you'll not need to touch this manually, set via `write`
 
+Additionally the request object has the following methods:
+
+* `write(options, ...)` -- instructs the request how to render the result
+* `url_for(route, params, ...)` -- get the URL for a named route, or object
+* `build_url(path, params)` -- build a fully qualified URL from a path and parameters
+* `html(fn)` -- generate a string using the HTML builder syntax
 
 ### @req
 
@@ -430,8 +439,9 @@ end)
 ```
 
 ```moon
-"/sets-cookie": =>
-  @cookies.foo = "bar"
+class App extends lapis.Application
+  "/sets-cookie": =>
+    @cookies.foo = "bar"
 ```
 
 By default all cookies are given the additional attributes `Path=/; HttpOnly`
