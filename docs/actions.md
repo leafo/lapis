@@ -985,31 +985,42 @@ If you want to have your own error handling logic you can override the method
 `handle_error`:
 
 ```lua
+-- config.custom_error_page is made up for this example
 app.handle_error = function(self, err, trace)
-  ngx.log(ngx.NOTICE, "There was an error! " .. err .. ": " ..trace)
-  lapis.Application.handle_error(self, err, trace)
+  if config.custom_error_page then
+    return { render = "my_custom_error_page" }
+  else
+    return lapis.Application.handle_error(self, err, trace)
+  end
 end
 ```
 
 ```moon
+-- config.custom_error_page is made up for this example
 class App extends lapis.Application
   handle_error: (err, trace) =>
-    ngx.log ngx.NOTICE, "There was an error! #{err}: #{trace}"
-    super err, trace
+    if config.custom_error_page
+      { render: "my_custom_error_page" }
+    else
+      super err, trace
 ```
 
-The [`lapis-exceptions`][2] module provides a default error handler that
-records errors in a database and can email you when they happen.
+The request object, or `self`, passed to the error handler is not the one that
+was created for the request that failed. Lapis provides a new one since the
+existing one maybe have been partially written to when it failed.
 
-Note that the error handler does not work like other request handlers. Although
-a request argument is passed as the first argument, it may be in an incomplete
-state due to where the error occurred.
+You can access the original request object with <span
+class="for_moon">`@original_request`</span><span
+class="for_lua">`self.original_request`</span>
 
-Additionally the error handlers return values are ignored.
+Lapis' default error page shows an entire stack trace, so it's recommended to
+replace it with a custom one in your production envrionments, and log the
+exception in the background.
 
-It's recommended to preserve the default error handler since it will also embed
-stack trace information when in the `test` environment to ensure tests can print
-a full error message on failed tests.
+### Exception tracking
+
+The [`lapis-exceptions`][2] module augments the error handler to records errors
+in a database. It can also email you when there's an exception.
 
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
