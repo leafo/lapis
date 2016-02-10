@@ -36,9 +36,9 @@ class Request
         else
           @params[k] = v
 
-    -- render the request into the response object
-    -- this is done last!
-    render: (opts=false) =>
+    -- write what is in @options and @buffer into the output
+    -- this is called once, and done last
+    render: =>
       @options = opts if opts
 
       session.write_session @
@@ -46,6 +46,10 @@ class Request
 
       if @options.status
         @res.status = @options.status
+
+      if @options.headers
+        for k,v in pairs @options.headers
+          @res\add_header k, v
 
       if obj = @options.json
         @res.headers["Content-Type"] = "application/json"

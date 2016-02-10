@@ -149,10 +149,7 @@ do
         end
       end
     end,
-    render = function(self, opts)
-      if opts == nil then
-        opts = false
-      end
+    render = function(self)
       if opts then
         self.options = opts
       end
@@ -160,6 +157,11 @@ do
       self.__class.support.write_cookies(self)
       if self.options.status then
         self.res.status = self.options.status
+      end
+      if self.options.headers then
+        for k, v in pairs(self.options.headers) do
+          self.res:add_header(k, v)
+        end
       end
       do
         local obj = self.options.json
