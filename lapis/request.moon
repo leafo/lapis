@@ -148,6 +148,14 @@ class Request
     @cookies = auto_table -> parse_cookie_string @req.headers.cookie
     @session = session.lazy_session @
 
+  flow: (flow) =>
+    key = "_flow_#{flow}"
+
+    unless @[key]
+      @[key] = require("#{@app.flows_prefix}.#{flow}") @
+
+    @[key]
+
   html: (fn) => html_writer fn
 
   url_for: (first, ...) =>

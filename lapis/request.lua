@@ -26,6 +26,13 @@ local Request
 do
   local _class_0
   local _base_0 = {
+    flow = function(self, flow)
+      local key = "_flow_" .. tostring(flow)
+      if not (self[key]) then
+        self[key] = require(tostring(self.app.flows_prefix) .. "." .. tostring(flow))(self)
+      end
+      return self[key]
+    end,
     html = function(self, fn)
       return html_writer(fn)
     end,

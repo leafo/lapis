@@ -26,6 +26,7 @@ do
     layout = require("lapis.views.layout"),
     error_page = require("lapis.views.error"),
     views_prefix = "views",
+    flows_prefix = "flows",
     enable = function(self, feature)
       local fn = require("lapis.features." .. tostring(feature))
       if type(fn) == "function" then

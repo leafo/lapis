@@ -25,7 +25,9 @@ class Application
   Request: require "lapis.request"
   layout: require "lapis.views.layout"
   error_page: require "lapis.views.error"
+
   views_prefix: "views"
+  flows_prefix: "flows"
 
   -- find action for named route in this application
   @find_action: (name) =>
