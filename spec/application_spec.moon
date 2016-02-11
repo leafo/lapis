@@ -289,7 +289,7 @@ describe "instancing", ->
     assert.same "http://localhost/hello", headers.location
 
   it "should include another app", ->
-    do return -- TODO
+    do return pending "implement include for instances"
     local res
 
     sub_app = lapis.Application!
@@ -299,7 +299,7 @@ describe "instancing", ->
     app\get "/cool", => res = "cool"
     app\include sub_app
 
-  it "should preserve order of route #preserve", ->
+  it "should preserve order of route", ->
     app = lapis.Application!
 
     routes = for i=1,20
@@ -344,6 +344,26 @@ describe "errors", ->
     assert.truthy h["X-Lapis-Error"]
 
 
+describe "custom request", ->
+  it "renders with custom request (overriding supuport)", ->
+    class R extends lapis.Application.Request
+      @support: {
+        load_session: =>
+          @session = {"cool"}
+
+        write_session: =>
+      }
+
+    local the_session
+    class A extends lapis.Application
+      Request: R
+
+      "/": =>
+        the_session = @session
+        "ok"
+
+    mock_request A, "/"
+    assert.same {"cool"}, the_session
 
 -- should be requrest spec?
 describe "inline html", ->

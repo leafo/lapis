@@ -452,7 +452,7 @@ json_params = function(fn)
   end
 end
 return {
-  Request = require("lapis.request"),
+  Request = Application.Request,
   Application = Application,
   respond_to = respond_to,
   capture_errors = capture_errors,

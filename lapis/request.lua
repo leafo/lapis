@@ -114,10 +114,8 @@ do
       self.buffer = { }
       self.params = { }
       self.options = { }
-      self.cookies = auto_table(function()
-        return parse_cookie_string(self.req.headers.cookie)
-      end)
-      self.session = session.lazy_session(self)
+      self.__class.support.load_cookies(self)
+      return self.__class.support.load_session(self)
     end,
     __base = _base_0,
     __name = "Request"
@@ -131,7 +129,28 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
+  self.__inherited = function(self, child)
+    do
+      local support = rawget(child, "support")
+      if support then
+        if getmetatable(support) then
+          return 
+        end
+        return setmetatable(support, {
+          __index = self.support
+        })
+      end
+    end
+  end
   self.support = {
+    load_cookies = function(self)
+      self.cookies = auto_table(function()
+        return parse_cookie_string(self.req.headers.cookie)
+      end)
+    end,
+    load_session = function(self)
+      self.session = session.lazy_session(self)
+    end,
     render = function(self)
       self.__class.support.write_session(self)
       self.__class.support.write_cookies(self)

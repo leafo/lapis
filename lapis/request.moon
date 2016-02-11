@@ -15,9 +15,23 @@ set_and_truthy = (val, default=true) ->
   val
 
 class Request
+  @__inherited: (child) =>
+    -- add inheritance to support methods
+    if support = rawget child, "support"
+      return if getmetatable support
+      setmetatable support, {
+        __index: @support
+      }
+
   -- these are like methods but we don't put them on the request object so they
   -- don't take up names that someone might use
   @support: {
+    load_cookies: =>
+      @cookies = auto_table -> parse_cookie_string @req.headers.cookie
+
+    load_session: =>
+      @session = session.lazy_session @
+
     -- write what is in @options and @buffer into the output
     -- this is called once, and done last
     render: =>
@@ -145,8 +159,8 @@ class Request
     @params = {}
     @options = {}
 
-    @cookies = auto_table -> parse_cookie_string @req.headers.cookie
-    @session = session.lazy_session @
+    @@support.load_cookies @
+    @@support.load_session @
 
   flow: (flow) =>
     key = "_flow_#{flow}"

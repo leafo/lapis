@@ -334,7 +334,7 @@ json_params = (fn) ->
     fn @, ...
 
 {
-  Request: require "lapis.request"
+  Request: Application.Request
 
   :Application, :respond_to
   :capture_errors, :capture_errors_json
