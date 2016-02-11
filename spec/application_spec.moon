@@ -6,7 +6,7 @@ import mock_action, mock_request, assert_request from require "lapis.spec.reques
 mock_app = (...) ->
   mock_action lapis.Application, ...
 
-describe "application", ->
+describe "find_action", ->
   action1 = ->
   action2 = ->
 
@@ -14,53 +14,12 @@ describe "application", ->
     [hello: "/cool-dad"]: action1
     [world: "/another-dad"]: action2
 
-  it "should find the action", ->
+  it "finds action", ->
     assert.same action1, (SomeApp\find_action "hello")
     assert.same action2, (SomeApp\find_action "world")
     assert.same nil, (SomeApp\find_action "nothing")
 
--- this should be in request spec...
-describe "request:build_url", ->
-  it "should build url", ->
-    assert.same "http://localhost", mock_app "/hello", {}, =>
-      @build_url!
-
-  it "should build url with path", ->
-    assert.same "http://localhost/hello_dog", mock_app "/hello", {}, =>
-      @build_url "hello_dog"
-
-  it "should build url with host and port", ->
-    assert.same "http://leaf:2000/hello",
-      mock_app "/hello", { host: "leaf", port: 2000 }, =>
-        @build_url @req.parsed_url.path
-
-  it "doesn't include default port for scheme http", ->
-    assert.same "http://leaf/whoa",
-      mock_app "/hello", { host: "leaf", port: 80 }, =>
-        @build_url "whoa"
-
-  it "doesn't include default port for scheme https", ->
-    assert.same "https://leaf/whoa",
-      mock_app "/hello", { host: "leaf", scheme: "https", port: 443 }, =>
-        @build_url "whoa"
-
-  it "should build url with overridden query", ->
-    assert.same "http://localhost/please?yes=no",
-      mock_app "/hello", {}, =>
-        @build_url "please?okay=world", { query: "yes=no" }
-
-  it "should build url with overridden port and host", ->
-    assert.same "http://yes:4545/cat?sure=dad",
-      mock_app "/hello", { host: "leaf", port: 2000 }, =>
-        @build_url "cat?sure=dad", host: "yes", port: 4545
-
-  it "should return arg if already build url", ->
-    assert.same "http://leafo.net",
-      mock_app "/hello", { host: "leaf", port: 2000 }, =>
-        @build_url "http://leafo.net"
-
-
-describe "application inheritance", ->
+describe "inheritance", ->
   local result
 
   before_each ->
@@ -90,8 +49,7 @@ describe "application inheritance", ->
     assert.same 200, status
     assert.same "child yeah", result
 
-
-describe "application composition", ->
+describe "@include", ->
   local result
 
   before_each ->
@@ -188,8 +146,8 @@ describe "application composition", ->
     assert.same "/sub/hello", req\url_for "sub_hello"
     assert.same "/world", req\url_for "world"
 
-describe "application default route", ->
-  it "should hit default route", ->
+describe "default route", ->
+  it "hits default route", ->
     local res
 
     class App extends lapis.Application
@@ -200,17 +158,6 @@ describe "application default route", ->
     status, body = mock_request App, "/hello", {}
     assert.same 200, status
     assert.same "bingo!", res
-
-describe "application inline html", ->
-  class HtmlApp extends lapis.Application
-    layout: false
-
-    "/": =>
-      @html -> div "hello world"
-
-  it "should render html", ->
-    status, body = assert_request HtmlApp, "/"
-    assert.same "<div>hello world</div>", body
 
 describe "default layout", ->
   after_each ->
@@ -245,7 +192,7 @@ describe "default layout", ->
     status, body = assert_request TestApp, "/"
     assert.same [[<div class="content">yeah</div>]], body
 
-describe "application error capturing", ->
+describe "error capturing", ->
   import capture_errors, capture_errors_json, assert_error,
     yield_error from require "lapis.application"
 
@@ -283,7 +230,7 @@ describe "application error capturing", ->
     assert.same [[{"errors":["something bad happened!"]}]], body
     assert.same "application/json", headers["Content-Type"]
 
-describe "instance app", ->
+describe "instancing", ->
   it "should match a route", ->
     local res
     app = lapis.Application!
@@ -368,7 +315,7 @@ describe "errors", ->
     "/": =>
       error "I am an error!"
 
-  it "should render default error page", ->
+  it "renders default error page", ->
     status, body, h = mock_request ErrorApp, "/", allow_error: true
     assert.same 500, status
     assert.truthy (body\match "I am an error")
@@ -395,3 +342,62 @@ describe "errors", ->
 
     -- should still be set
     assert.truthy h["X-Lapis-Error"]
+
+
+
+-- should be requrest spec?
+describe "inline html", ->
+  class HtmlApp extends lapis.Application
+    layout: false
+
+    "/": =>
+      @html -> div "hello world"
+
+  it "should render html", ->
+    status, body = assert_request HtmlApp, "/"
+    assert.same "<div>hello world</div>", body
+
+
+
+-- this should be in request spec...
+describe "request:build_url", ->
+  it "should build url", ->
+    assert.same "http://localhost", mock_app "/hello", {}, =>
+      @build_url!
+
+  it "should build url with path", ->
+    assert.same "http://localhost/hello_dog", mock_app "/hello", {}, =>
+      @build_url "hello_dog"
+
+  it "should build url with host and port", ->
+    assert.same "http://leaf:2000/hello",
+      mock_app "/hello", { host: "leaf", port: 2000 }, =>
+        @build_url @req.parsed_url.path
+
+  it "doesn't include default port for scheme http", ->
+    assert.same "http://leaf/whoa",
+      mock_app "/hello", { host: "leaf", port: 80 }, =>
+        @build_url "whoa"
+
+  it "doesn't include default port for scheme https", ->
+    assert.same "https://leaf/whoa",
+      mock_app "/hello", { host: "leaf", scheme: "https", port: 443 }, =>
+        @build_url "whoa"
+
+  it "should build url with overridden query", ->
+    assert.same "http://localhost/please?yes=no",
+      mock_app "/hello", {}, =>
+        @build_url "please?okay=world", { query: "yes=no" }
+
+  it "should build url with overridden port and host", ->
+    assert.same "http://yes:4545/cat?sure=dad",
+      mock_app "/hello", { host: "leaf", port: 2000 }, =>
+        @build_url "cat?sure=dad", host: "yes", port: 4545
+
+  it "should return arg if already build url", ->
+    assert.same "http://leafo.net",
+      mock_app "/hello", { host: "leaf", port: 2000 }, =>
+        @build_url "http://leafo.net"
+
+
+
