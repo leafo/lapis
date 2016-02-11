@@ -9,72 +9,90 @@ config = require"lapis.config".get!
 import insert from table
 import setmetatable, getmetatable, rawset, rawget from _G
 
-hmac = (str) ->
-  encode_base64 hmac_sha1 config.secret, str
+hmac = (str, secret) ->
+  encode_base64 hmac_sha1 secret, str
 
-encode_session = (tbl) ->
+encode_session = (tbl, secret=config.secret) ->
   s = encode_base64 json.encode tbl
-  if config.secret
-    s ..= "\n--#{hmac s}"
+  if secret
+    s ..= "\n--#{hmac s, secret}"
   s
 
-get_session = (r) ->
+get_session = (r, secret=config.secret) ->
   cookie = r.cookies[config.session_name]
-  return {} unless cookie
 
-  if config.secret
-    real_cookie, sig = cookie\match "^(.*)\n%-%-(.*)$"
-    unless real_cookie and sig == hmac real_cookie
-      return {}
+  return nil, "no cookie" unless cookie
+
+  real_cookie, sig = cookie\match "^(.*)\n%-%-(.*)$"
+
+  if real_cookie
+    return nil, "rejecting signed session" unless secret
+    unless sig == hmac real_cookie, secret
+      return nil, "invalid secret"
+
     cookie = real_cookie
+  elseif secret
+    return nil, "missing secret"
 
-  _, session = pcall ->
+  success, session = pcall ->
     json.decode (decode_base64 cookie)
 
-  session or {}
+  unless success
+    return nil, "invalid session serialization"
+
+  session
 
 -- r.session should be a `lazy_session`
 write_session = (r) ->
   current = r.session
-  current_mt = getmetatable current
+  return nil, "missing session object" unless current
 
-  -- see if the session has changed
-  if next(current) != nil or current_mt[1]
-    s = {}
+  mt = getmetatable current
+  return nil, "session object not lazy session" unless mt
 
-    -- triggers auto_table to load the current session if it hasn't yet
-    current[s]
+  -- abort unless session has been changed
+  return nil, "session unchanged" unless next(current) != nil or mt[1]
 
-    -- copy old session
-    if index = current_mt.__index
-      for k,v in pairs index
-        s[k] = v
+  s = {} -- the flattened session object
 
-    -- copy new values
-    for k,v in pairs current
+  -- triggers auto_table to load the current session if it hasn't yet
+  current[s]
+
+  -- copy old session
+  if index = mt.__index
+    for k,v in pairs index
       s[k] = v
 
-    -- copy an deleted values
-    for name in *current_mt
-      s[name] = nil if rawget(current, name) == nil
+  -- copy new values
+  for k,v in pairs current
+    s[k] = v
 
-    r.cookies[config.session_name] = encode_session(s)
+  -- copy an deleted values
+  for name in *mt
+    s[name] = nil if rawget(current, name) == nil
+
+  r.cookies[config.session_name] = mt.encode_session s
+  true
 
 lazy_session = do
-
   __newindex = (key, val) =>
+    -- we mark what new fields have been written by adding them to the array
+    -- slots of the metatable in order to detect and write removed fields
     insert getmetatable(@), key
     rawset @, key, val
 
   __index = (key) =>
     mt = getmetatable @
-    s = get_session mt.req
+    s = mt.get_session(mt.req) or {}
     mt.__index = s
     s[key]
 
-  (req) ->
+  (req, opts) ->
     setmetatable {}, {
       :__index, :__newindex, :req
+
+      get_session: opts and opts.get_session or get_session
+      encode_session: opts and opts.encode_session or encode_session
     }
 
 { :get_session, :write_session, :encode_session, :lazy_session }
