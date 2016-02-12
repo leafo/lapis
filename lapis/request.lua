@@ -63,10 +63,10 @@ do
       end
       parsed.path = path
       local scheme = parsed.scheme or "http"
-      if scheme == "http" and parsed.port == "80" then
+      if scheme == "http" and (parsed.port == "80" or parsed.port == 80) then
         parsed.port = nil
       end
-      if scheme == "https" and parsed.port == "443" then
+      if scheme == "https" and (parsed.port == "443" or parsed.port == 443) then
         parsed.port = nil
       end
       if options then

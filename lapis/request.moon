@@ -198,10 +198,10 @@ class Request
 
     scheme = parsed.scheme or "http"
 
-    if scheme == "http" and parsed.port == "80"
+    if scheme == "http" and (parsed.port == "80" or parsed.port == 80)
       parsed.port = nil
 
-    if scheme == "https" and parsed.port == "443"
+    if scheme == "https" and (parsed.port == "443" or parsed.port == 443)
       parsed.port = nil
 
     if options
