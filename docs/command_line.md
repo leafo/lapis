@@ -112,7 +112,7 @@ This will run any outstanding migrations. It will also create the migrations
 table if it does not exist yet.
 
 This command expects a `migrations` module as described in [Running
-Migrations](#database-migrations-running-migrations).
+Migrations](database.html#database-migrations/running-migrations).
 
 It executes on the server approximately this code:
 

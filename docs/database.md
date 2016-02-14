@@ -937,7 +937,7 @@ After creating the file, ensure that it is compiled to Lua and run `lapis
 migrate`. The command will first create the migrations table if it doesn't
 exist yet then it will run every migration that hasn't been executed yet.
 
-Read more about [the migrate command](#command-line-interface-lapis-migrate).
+Read more about [the migrate command](command_line.html#command-reference/lapis-migrate).
 
 ### Manually Running Migrations
 
