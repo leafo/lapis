@@ -111,7 +111,7 @@ class App extends lapis.Application
   "/hello": => "Hello World!"
 ```
 
-In this example, the route `"/helo"` is matched to a function that
+In this example, the route `"/hello"` is matched to a function that
 returns `"Hello World!"`
 
 The action is the function called in response to a route matching the path of a
