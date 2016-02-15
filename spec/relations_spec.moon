@@ -183,8 +183,8 @@ describe "lapis.db.model.relations", ->
 
     assert_queries {
       {
-        [[SELECT * from "user_data" where "owner_id" = 123 and "state" = 'good' limit 1]]
-        [[SELECT * from "user_data" where "state" = 'good' and "owner_id" = 123 limit 1]]
+        [[SELECT * from "user_data" where "owner_id" = 123 AND "state" = 'good' limit 1]]
+        [[SELECT * from "user_data" where "state" = 'good' AND "owner_id" = 123 limit 1]]
       }
     }
 
@@ -539,6 +539,33 @@ describe "lapis.db.model.relations", ->
       }
       assert_queries {
         [[SELECT a,b from "tags" where "post_id" in (123) order by b asc]]
+      }
+
+    it "preloads has_one with where", ->
+      mock_query "SELECT", {
+        { thing_id: 123, name: "whaz" }
+      }
+
+      models.Files = class Files extends Model
+
+      class Things extends Model
+        @relations: {
+          {"beta_file"
+            has_one: "Files"
+            where: { deleted: false }
+          }
+        }
+
+      thing = Things\load { id: 123 }
+      Things\preload_relations { thing }, "beta_file"
+
+      assert.same {
+        thing_id: 123
+        name: "whaz"
+      }, thing.beta_file
+
+      assert_queries {
+        [[SELECT * from "files" where "thing_id" in (123) and "deleted" = FALSE]]
       }
 
     it "preloads many relation with order and name", ->
