@@ -143,6 +143,10 @@ has_one = (name, opts) =>
       [foreign_key]: @[@@primary_keys!]
     }
 
+    if where = opts.where
+      for k,v in pairs where
+        clause[k] = v
+
     with obj = model\find clause
       @[name] = obj
 

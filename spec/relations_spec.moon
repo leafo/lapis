@@ -166,6 +166,29 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "user_data" where "owner_id" = 123 limit 1'
     }
 
+
+  it "should make has_one getter with where clause", ->
+    mock_query "SELECT", { { id: 101 } }
+
+    models.UserData = class extends Model
+
+    models.Users = class Users extends Model
+      @relations: {
+        {"data", has_one: "UserData", key: "owner_id", where: { state: "good"} }
+      }
+
+    user = Users!
+    user.id = 123
+    assert user\get_data!
+
+    assert_queries {
+      {
+        [[SELECT * from "user_data" where "owner_id" = 123 and "state" = 'good' limit 1]]
+        [[SELECT * from "user_data" where "state" = 'good' and "owner_id" = 123 limit 1]]
+      }
+    }
+
+
   it "should make has_many paginated getter", ->
     mock_query "SELECT", { { id: 101 } }
 
