@@ -15,8 +15,11 @@ truncate_tables = function(...)
     }
     for _index_0 = 1, #_list_0 do
       local t = _list_0[_index_0]
-      if type(t) == "table" then
+      local _exp_0 = type(t)
+      if "table" == _exp_0 then
         _accum_0[_len_0] = t:table_name()
+      elseif "nil" == _exp_0 then
+        _accum_0[_len_0] = error("nil passed to truncate tables, perhaps a bad reference?")
       else
         _accum_0[_len_0] = t
       end
