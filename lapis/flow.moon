@@ -19,9 +19,11 @@ class Flow
     if is_flow @_req.__class
       @_req = @_req._req
 
-    proxy = setmetatable obj, getmetatable @
+    old_mt = getmetatable @
+    proxy = setmetatable obj, old_mt
 
     mt = {
+      __call: old_mt.__call
       __index: (key) =>
         val = proxy[key]
         return val if val != nil

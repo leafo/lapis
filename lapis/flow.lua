@@ -30,8 +30,10 @@ do
       if is_flow(self._req.__class) then
         self._req = self._req._req
       end
-      local proxy = setmetatable(obj, getmetatable(self))
+      local old_mt = getmetatable(self)
+      local proxy = setmetatable(obj, old_mt)
       local mt = {
+        __call = old_mt.__call,
         __index = function(self, key)
           local val = proxy[key]
           if val ~= nil then

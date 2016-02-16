@@ -130,5 +130,10 @@ describe "lapis.flow", ->
 
     assert.same {hello: "world"}, r
 
+  it "lets flow have __call metamethod", ->
+    class CallableFlow extends Flow
+      __call: (field) => @[field]
 
+    f = CallableFlow { cool: "zone" }
+    assert.same "zone", f "cool"
 
