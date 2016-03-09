@@ -661,7 +661,7 @@ self:url_for("user_page", { username = "leafo", page = "code", format = "json" }
 @url_for "user_page", username: "leafo", page: "code", format: "json"
 ```
 
-If a route contains a splat, the value can be provieded via the parameter named
+If a route contains a splat, the value can be provided via the parameter named
 `splat`:
 
 ```lua
