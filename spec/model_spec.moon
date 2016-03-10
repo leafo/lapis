@@ -41,13 +41,16 @@ describe "lapis.db.model", ->
     Things\select fields: "hello" -- broke
     Things\select "where id = ?", 1234, fields: "hello, world"
 
+    -- doesn't try to interpolate with no params
+    Things\select "where color = '?'"
+
     assert_queries {
       'SELECT * from "things" '
       'SELECT * from "things" where id = 1234'
       'SELECT hello from "things" '
       'SELECT hello, world from "things" where id = 1234'
+      [[SELECT * from "things" where color = '?']]
     }
-
 
   it "should find", ->
     class Things extends Model
