@@ -49,6 +49,10 @@ build_helpers = (escape_literal, escape_identifier) ->
     i = 0
     (query\gsub "%?", ->
       i += 1
+
+      if values[i] == nil
+        error "missing replacement #{i} for interpolated query"
+
       escape_literal values[i])
 
   -- (col1, col2, col3) VALUES (val1, val2, val3)

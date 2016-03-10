@@ -121,6 +121,9 @@ build_helpers = function(escape_literal, escape_identifier)
     local i = 0
     return (query:gsub("%?", function()
       i = i + 1
+      if values[i] == nil then
+        error("missing replacement " .. tostring(i) .. " for interpolated query")
+      end
       return escape_literal(values[i])
     end))
   end
