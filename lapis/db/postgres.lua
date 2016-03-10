@@ -7,10 +7,10 @@ do
 end
 local raw_query
 local logger
-local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
 do
   local _obj_0 = require("lapis.db.base")
-  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_encodable
 end
 local array
 array = function(t)
@@ -23,6 +23,16 @@ is_array = function(v)
   local PostgresArray
   PostgresArray = require("pgmoon.arrays").PostgresArray
   return getmetatable(v) == PostgresArray.__base
+end
+local _is_encodable
+_is_encodable = function(item)
+  if is_encodable(item) then
+    return true
+  end
+  if is_array(item) then
+    return true
+  end
+  return false
 end
 local BACKENDS = {
   raw = function(fn)
@@ -410,5 +420,6 @@ return {
   insert = _insert,
   update = _update,
   delete = _delete,
-  truncate = _truncate
+  truncate = _truncate,
+  is_encodable = _is_encodable
 }

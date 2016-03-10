@@ -1,8 +1,6 @@
 
 import setmetatable, getmetatable, tostring from _G
 
-NULL = {}
-
 class DBRaw
 raw = (val) -> setmetatable {tostring val}, DBRaw.__base
 is_raw = (val) -> getmetatable(val) == DBRaw.__base
@@ -11,8 +9,23 @@ class DBList
 list = (items) -> setmetatable {items}, DBList.__base
 is_list = (val) -> getmetatable(val) == DBList.__base
 
+-- is item a value we can insert into a query
+is_encodable = (item) ->
+  switch type(item)
+    when "table"
+      switch getmetatable(item)
+        when DBList.__base, DBRaw.__base
+          true
+        else
+          false
+    when "function", "userdata"
+      false
+    else
+      true
+
 TRUE = raw"TRUE"
 FALSE = raw"FALSE"
+NULL = raw"NULL"
 
 import concat from table
 import select from _G
@@ -100,5 +113,5 @@ gen_index_name = (...) ->
   concat(parts, "_") .. "_idx"
 
 {
-  :NULL, :TRUE, :FALSE, :raw, :is_raw, :list, :is_list, :format_date, :build_helpers, :gen_index_name
+  :NULL, :TRUE, :FALSE, :raw, :is_raw, :list, :is_list, :is_encodable, :format_date, :build_helpers, :gen_index_name
 }

@@ -5,10 +5,10 @@ do
 end
 local concat
 concat = table.concat
-local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_encodable
 do
   local _obj_0 = require("lapis.db.base")
-  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_encodable
 end
 local conn, logger
 local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
@@ -294,6 +294,7 @@ return {
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,
+  is_encodable = is_encodable,
   encode_values = encode_values,
   encode_assigns = encode_assigns,
   encode_clause = encode_clause,

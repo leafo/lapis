@@ -10,6 +10,7 @@ import
   format_date
   is_raw
   raw
+  is_encodable
   from require "lapis.db.base"
 
 local conn, logger
@@ -269,6 +270,7 @@ _truncate = (table) ->
 {
   :connect
   :raw, :is_raw, :NULL, :TRUE, :FALSE,
+  :is_encodable
 
   :encode_values
   :encode_assigns

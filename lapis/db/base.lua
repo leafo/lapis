@@ -3,7 +3,6 @@ do
   local _obj_0 = _G
   setmetatable, getmetatable, tostring = _obj_0.setmetatable, _obj_0.getmetatable, _obj_0.tostring
 end
-local NULL = { }
 local DBRaw
 do
   local _class_0
@@ -64,8 +63,25 @@ local is_list
 is_list = function(val)
   return getmetatable(val) == DBList.__base
 end
+local is_encodable
+is_encodable = function(item)
+  local _exp_0 = type(item)
+  if "table" == _exp_0 then
+    local _exp_1 = getmetatable(item)
+    if DBList.__base == _exp_1 or DBRaw.__base == _exp_1 then
+      return true
+    else
+      return false
+    end
+  elseif "function" == _exp_0 or "userdata" == _exp_0 then
+    return false
+  else
+    return true
+  end
+end
 local TRUE = raw("TRUE")
 local FALSE = raw("FALSE")
+local NULL = raw("NULL")
 local concat
 concat = table.concat
 local select
@@ -230,6 +246,7 @@ return {
   is_raw = is_raw,
   list = list,
   is_list = is_list,
+  is_encodable = is_encodable,
   format_date = format_date,
   build_helpers = build_helpers,
   gen_index_name = gen_index_name

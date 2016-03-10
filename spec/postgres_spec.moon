@@ -428,6 +428,71 @@ WHEN 'a' THEN 'b'
 ELSE FALSE
 END]]
   }
+
+  {
+    -> db.is_encodable "hello"
+    true
+  }
+
+  {
+    -> db.is_encodable 2323
+    true
+  }
+
+  {
+    -> db.is_encodable true
+    true
+  }
+
+  {
+    -> db.is_encodable ->
+    false
+  }
+
+  {
+    -> db.is_encodable newproxy!
+    false
+  }
+
+  {
+    -> db.is_encodable db.array {1,2,3}
+    true
+  }
+
+  {
+    -> db.is_encodable db.NULL
+    true
+  }
+
+  {
+    -> db.is_encodable db.TRUE
+    true
+  }
+
+  {
+    -> db.is_encodable db.FALSE
+    true
+  }
+
+  {
+    -> db.is_encodable {}
+    false
+  }
+
+  {
+    -> db.is_raw "hello"
+    false
+  }
+
+  {
+    -> db.is_raw db.raw "hello wrold"
+    true
+  }
+
+  {
+    -> db.is_raw db.list {1,2,3}
+    false
+  }
 }
 
 
