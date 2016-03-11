@@ -17,7 +17,7 @@ class Model extends BaseModel
 
     values._timestamp = true if @timestamp
 
-    local returning, return_all
+    local returning, return_all, nil_fields
 
     if opts and opts.returning
       if opts.returning == "*"
@@ -30,7 +30,11 @@ class Model extends BaseModel
 
     unless return_all
       for k, v in pairs values
-        if db.is_raw v
+        if v == db.NULL
+          nil_fields or= {}
+          nil_fields[k] = true
+          continue
+        elseif db.is_raw v
           returning or= {@primary_keys!}
           table.insert returning, k
 
@@ -46,6 +50,10 @@ class Model extends BaseModel
 
       for k,v in pairs res[1]
         values[k] = v
+
+      if nil_fields
+        for k in pairs nil_fields
+          values[k] = nil
 
       @load values
     else

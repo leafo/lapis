@@ -99,6 +99,18 @@ describe "model", ->
     assert.has_error ->
       Posts\create {}
 
+  describe "create", ->
+    it "creates a new post", ->
+      post = Posts\create {
+        title: "yo"
+        body: "okay!"
+        user_id: db.NULL
+      }
+
+      assert.same "yo", post.title
+      assert.same nil, post.user_id
+      assert.same "okay!", post.body
+
   describe "update", ->
     local post
     before_each ->

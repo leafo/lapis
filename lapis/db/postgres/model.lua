@@ -143,7 +143,7 @@ do
     if self.timestamp then
       values._timestamp = true
     end
-    local returning, return_all
+    local returning, return_all, nil_fields
     if opts and opts.returning then
       if opts.returning == "*" then
         return_all = true
@@ -163,11 +163,23 @@ do
     end
     if not (return_all) then
       for k, v in pairs(values) do
-        if db.is_raw(v) then
-          returning = returning or {
-            self:primary_keys()
-          }
-          table.insert(returning, k)
+        local _continue_0 = false
+        repeat
+          if v == db.NULL then
+            nil_fields = nil_fields or { }
+            nil_fields[k] = true
+            _continue_0 = true
+            break
+          elseif db.is_raw(v) then
+            returning = returning or {
+              self:primary_keys()
+            }
+            table.insert(returning, k)
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
         end
       end
     end
@@ -186,6 +198,9 @@ do
       end
       for k, v in pairs(res[1]) do
         values[k] = v
+      end
+      for k in pairs(nil_fields) do
+        values[k] = nil
       end
       return self:load(values)
     else
