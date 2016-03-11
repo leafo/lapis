@@ -1,5 +1,8 @@
 db = require "lapis.db.postgres"
 
+import select, pairs, unpack, type, select from _G
+import insert from table
+
 import BaseModel, Enum, enum from require "lapis.db.base_model"
 
 class Model extends BaseModel

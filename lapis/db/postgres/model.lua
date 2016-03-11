@@ -1,4 +1,11 @@
 local db = require("lapis.db.postgres")
+local select, pairs, unpack, type
+do
+  local _obj_0 = _G
+  select, pairs, unpack, type, select = _obj_0.select, _obj_0.pairs, _obj_0.unpack, _obj_0.type, _obj_0.select
+end
+local insert
+insert = table.insert
 local BaseModel, Enum, enum
 do
   local _obj_0 = require("lapis.db.base_model")
