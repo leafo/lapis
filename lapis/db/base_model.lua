@@ -338,15 +338,18 @@ do
     local param_count = select("#", ...)
     if param_count > 0 then
       local last = select(param_count, ...)
-      if type(last) == "table" then
+      if not self.db.is_encodable(last) then
         opts = last
+        param_count = param_count - 1
       end
     end
     if type(query) == "table" then
       opts = query
       query = ""
     end
-    query = self.db.interpolate_query(query, ...)
+    if param_count > 0 then
+      query = self.db.interpolate_query(query, ...)
+    end
     local tbl_name = self.db.escape_identifier(self:table_name())
     local load_as = opts and opts.load
     local fields = opts and opts.fields or "*"

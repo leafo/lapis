@@ -121,13 +121,18 @@ class BaseModel
 
     if param_count > 0
       last = select param_count, ...
-      opts = last if type(last) == "table"
+      if not @db.is_encodable last
+        opts = last
+        param_count -= 1
+
 
     if type(query) == "table"
       opts = query
       query = ""
 
-    query = @db.interpolate_query query, ...
+    if param_count > 0
+      query = @db.interpolate_query query, ...
+
     tbl_name = @db.escape_identifier @table_name!
 
     load_as = opts and opts.load
