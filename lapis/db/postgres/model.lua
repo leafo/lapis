@@ -66,7 +66,9 @@ do
       end
       local returning
       for k, v in pairs(values) do
-        if db.is_raw(v) then
+        if v == db.NULL then
+          self[k] = nil
+        elseif db.is_raw(v) then
           returning = returning or { }
           table.insert(returning, k)
         end

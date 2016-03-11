@@ -86,7 +86,9 @@ class Model extends BaseModel
 
     local returning
     for k, v in pairs values
-      if db.is_raw v
+      if v == db.NULL
+        @[k] = nil
+      elseif db.is_raw(v)
         returning or= {}
         table.insert returning, k
 
