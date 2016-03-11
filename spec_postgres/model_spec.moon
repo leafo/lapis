@@ -99,6 +99,36 @@ describe "model", ->
     assert.has_error ->
       Posts\create {}
 
+  describe "update", ->
+    local post
+    before_each ->
+      Posts\create_table!
+      post = Posts\create {
+        title: "yo"
+        body: "okay!"
+      }
+
+    it "does a basic update", ->
+      post\update {
+        title: "sure"
+        user_id: 234
+      }
+
+      assert.same "sure", post.title
+      assert.same 234, post.user_id
+      assert.same "okay!", post.body
+
+    it "updates a field to null", ->
+      post\update { user_id: 234 }
+
+      assert.same 234, post.user_id
+
+      post\update {
+        user_id: db.NULL
+      }
+
+      assert.same nil, post.user_id
+
   describe "returning", ->
     it "should create with returning", ->
       Likes\create_table!
