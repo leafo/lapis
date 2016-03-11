@@ -199,8 +199,10 @@ do
       for k, v in pairs(res[1]) do
         values[k] = v
       end
-      for k in pairs(nil_fields) do
-        values[k] = nil
+      if nil_fields then
+        for k in pairs(nil_fields) do
+          values[k] = nil
+        end
       end
       return self:load(values)
     else
