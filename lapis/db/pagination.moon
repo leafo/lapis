@@ -30,7 +30,9 @@ class Paginator
 
     opts = if param_count > 0
       last = select param_count, ...
-      type(last) == "table" and last
+      if type(last) == "table" and not @db.is_encodable last
+        param_count -= 1
+        last
     elseif type(clause) == "table"
       opts = clause
       clause = ""
@@ -39,7 +41,11 @@ class Paginator
     @per_page = @model.per_page
     @per_page = opts.per_page if opts
 
-    @_clause = @db.interpolate_query clause, ...
+    @_clause = if param_count > 0
+      @db.interpolate_query clause, ...
+    else
+      clause
+
     @opts = opts
 
   select: (...) =>
@@ -69,8 +75,10 @@ class OffsetPaginator extends Paginator
   -- 1 indexed page
   get_page: (page) =>
     page = (math.max 1, tonumber(page) or 0) - 1
-    @prepare_results @select @_clause .. [[ LIMIT ? OFFSET ?]],
+    limit = @db.interpolate_query " LIMIT ? OFFSET ?",
       @per_page, @per_page * page, @opts
+
+    @prepare_results @select @_clause .. limit, @opts
 
   num_pages: =>
     math.ceil @total_items! / @per_page

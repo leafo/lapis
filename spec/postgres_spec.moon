@@ -480,6 +480,11 @@ END]]
   }
 
   {
+    -> db.is_encodable nil
+    false
+  }
+
+  {
     -> db.is_raw "hello"
     false
   }

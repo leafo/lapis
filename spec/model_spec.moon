@@ -158,6 +158,10 @@ describe "lapis.db.model", ->
     p6\total_items!
     p6\get_page 2
 
+    p7 = Things\paginated "where color = '?'"
+    p7\total_items!
+    p7\get_page 3
+
     assert_queries {
       'SELECT * from "things" where group_id = 123 order by name asc'
       'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
@@ -171,6 +175,8 @@ describe "lapis.db.model", ->
       'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 10'
       'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
       'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
+      [[SELECT COUNT(*) AS c FROM "things" where color = '?']]
+      [[SELECT * from "things" where color = '?' LIMIT 10 OFFSET 20]]
     }
 
   it "should ordered paginate", ->

@@ -83,7 +83,10 @@ do
       local opts
       if param_count > 0 then
         local last = select(param_count, ...)
-        opts = type(last) == "table" and last
+        if type(last) == "table" and not self.db.is_encodable(last) then
+          param_count = param_count - 1
+          opts = last
+        end
       elseif type(clause) == "table" then
         opts = clause
         clause = ""
@@ -93,7 +96,11 @@ do
       if opts then
         self.per_page = opts.per_page
       end
-      self._clause = self.db.interpolate_query(clause, ...)
+      if param_count > 0 then
+        self._clause = self.db.interpolate_query(clause, ...)
+      else
+        self._clause = clause
+      end
       self.opts = opts
     end,
     __base = _base_0,
@@ -136,7 +143,8 @@ do
     end,
     get_page = function(self, page)
       page = (math.max(1, tonumber(page) or 0)) - 1
-      return self:prepare_results(self:select(self._clause .. [[ LIMIT ? OFFSET ?]], self.per_page, self.per_page * page, self.opts))
+      local limit = self.db.interpolate_query(" LIMIT ? OFFSET ?", self.per_page, self.per_page * page, self.opts)
+      return self:prepare_results(self:select(self._clause .. limit, self.opts))
     end,
     num_pages = function(self)
       return math.ceil(self:total_items() / self.per_page)
