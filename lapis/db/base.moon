@@ -18,7 +18,7 @@ is_encodable = (item) ->
           true
         else
           false
-    when "function", "userdata"
+    when "function", "userdata", "nil"
       false
     else
       true

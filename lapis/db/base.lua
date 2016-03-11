@@ -73,7 +73,7 @@ is_encodable = function(item)
     else
       return false
     end
-  elseif "function" == _exp_0 or "userdata" == _exp_0 then
+  elseif "function" == _exp_0 or "userdata" == _exp_0 or "nil" == _exp_0 then
     return false
   else
     return true
