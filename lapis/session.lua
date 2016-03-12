@@ -125,5 +125,6 @@ return {
   get_session = get_session,
   write_session = write_session,
   encode_session = encode_session,
-  lazy_session = lazy_session
+  lazy_session = lazy_session,
+  flatten_session = flatten_session
 }
