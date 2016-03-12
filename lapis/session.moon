@@ -42,6 +42,29 @@ get_session = (r, secret=config.secret) ->
 
   session
 
+-- convert a lazy session into a plain table
+flatten_session = (sess) ->
+  mt = getmetatable sess
+  s = {} -- the flattened session object
+
+  -- triggers auto_table to load the current session if it hasn't yet
+  sess[s]
+
+  -- copy old session
+  if index = mt.__index
+    for k,v in pairs index
+      s[k] = v
+
+  -- copy new values
+  for k,v in pairs sess
+    s[k] = v
+
+  -- copy an deleted values
+  for name in *mt
+    s[name] = nil if rawget(sess, name) == nil
+
+  s
+
 -- r.session should be a `lazy_session`
 write_session = (r) ->
   current = r.session
@@ -53,24 +76,7 @@ write_session = (r) ->
   -- abort unless session has been changed
   return nil, "session unchanged" unless next(current) != nil or mt[1]
 
-  s = {} -- the flattened session object
-
-  -- triggers auto_table to load the current session if it hasn't yet
-  current[s]
-
-  -- copy old session
-  if index = mt.__index
-    for k,v in pairs index
-      s[k] = v
-
-  -- copy new values
-  for k,v in pairs current
-    s[k] = v
-
-  -- copy an deleted values
-  for name in *mt
-    s[name] = nil if rawget(current, name) == nil
-
+  s = flatten_session current
   r.cookies[config.session_name] = mt.encode_session s
   true
 
@@ -95,4 +101,4 @@ lazy_session = do
       encode_session: opts and opts.encode_session or encode_session
     }
 
-{ :get_session, :write_session, :encode_session, :lazy_session }
+{ :get_session, :write_session, :encode_session, :lazy_session, :flatten_session }

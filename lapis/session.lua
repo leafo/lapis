@@ -56,6 +56,30 @@ get_session = function(r, secret)
   end
   return session
 end
+local flatten_session
+flatten_session = function(sess)
+  local mt = getmetatable(sess)
+  local s = { }
+  local _ = sess[s]
+  do
+    local index = mt.__index
+    if index then
+      for k, v in pairs(index) do
+        s[k] = v
+      end
+    end
+  end
+  for k, v in pairs(sess) do
+    s[k] = v
+  end
+  for _index_0 = 1, #mt do
+    local name = mt[_index_0]
+    if rawget(sess, name) == nil then
+      s[name] = nil
+    end
+  end
+  return s
+end
 local write_session
 write_session = function(r)
   local current = r.session
@@ -69,25 +93,7 @@ write_session = function(r)
   if not (next(current) ~= nil or mt[1]) then
     return nil, "session unchanged"
   end
-  local s = { }
-  local _ = current[s]
-  do
-    local index = mt.__index
-    if index then
-      for k, v in pairs(index) do
-        s[k] = v
-      end
-    end
-  end
-  for k, v in pairs(current) do
-    s[k] = v
-  end
-  for _index_0 = 1, #mt do
-    local name = mt[_index_0]
-    if rawget(current, name) == nil then
-      s[name] = nil
-    end
-  end
+  local s = flatten_session(current)
   r.cookies[config.session_name] = mt.encode_session(s)
   return true
 end
