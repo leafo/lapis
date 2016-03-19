@@ -301,6 +301,10 @@ class Router
         path ..= "?" .. query
     path
 
+  match: (route) =>
+    @build! unless @p
+    @p\match route
+
   resolve: (route, ...) =>
     @build! unless @p
     params, responder, path, name = @p\match route

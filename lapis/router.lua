@@ -422,6 +422,12 @@ do
       end
       return path
     end,
+    match = function(self, route)
+      if not (self.p) then
+        self:build()
+      end
+      return self.p:match(route)
+    end,
     resolve = function(self, route, ...)
       if not (self.p) then
         self:build()
