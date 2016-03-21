@@ -150,6 +150,57 @@ $ curl \
 
 ## How do I respond to GET, POST, DELETE or other HTTP verbs?
 
+The `respond_to` action decorator function gives a basic framework for running
+different code depending on the HTTP method.
+
+> `try_to_login` is a hypothetical functions, and not regularly globally
+> available
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+local respond_to = require("lapis.application").respond_to
+
+app:match("/", respond_to({
+  before = function(self)
+    if self.session.current_user
+      self:write({ redirect_to = "/" })
+    end
+  end,
+  GET = function(self)
+    return { render = true }
+  end,
+  POST = function(self)
+    self.session.current_user =
+      try_to_login(self.params.username, self.params.password)
+
+    return { redirect_to = "/" }
+  end
+}))
+```
+
+```moon
+lapis = require "lapis"
+import respond_to from require "lapis.application"
+
+class App extends lapis.Application
+  "/login": respond_to {
+    before: =>
+      -- do common setup
+      if @session.current_user
+        @write redirect_to: "/"
+
+    GET: =>
+      -- render the view
+      render: true
+
+    POST: =>
+      -- handle the form submission
+      @session.current_user = try_to_login(@params.username, @params.password)
+      redirect_to: "/"
+  }
+```
+
 ## How do I work with forms?
 
 ## How do I restart a running server, or reload the code?
