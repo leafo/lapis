@@ -203,12 +203,60 @@ class App extends lapis.Application
 
 ## How do I work with forms?
 
+
 ## How do I restart a running server, or reload the code?
+
+Once the server is started, you can use the `laips term` command from your
+command line to stop the server.
+
+If you're deploying new code, then you can hot-reload the code without any
+downtime using the `lapis build` command.
 
 ## How do I disable the stack trace on the error page?
 
+By default Lapis will print the stack trace for any server errors. You can
+prevent this from happening by overriding the `handle_error` method on your
+application:
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
+function app:handle_error(err, trace)
+  return "There was an error"
+end
+```
+
+```moon
+lapis = require "lapis"
+import respond_to from require "lapis.application"
+
+class App extends lapis.Application
+  handle_error: (err, trace) =>
+    "There was an error"
+```
+
 ## What versions of Lua are supported?
+
+Lapis is designed to work with LuaJIT. You can use Lua 5.1 to run Lapis from
+the command line as well. You can use modules installed for Lua 5.1 with
+LuaJIT.
 
 ## How do I handle multiple domains and subdomains?
 
+Lapis doesn't make any distinction between domains and subdomains. You can use
+Nginx configuration `location` blocks to identify different domains. Within the
+matched block you can execute the desired Lapis application.
+
 ## How can I read the entire body of the request?
+
+Lapis currently doesn't provide an interface for reading the raw body. You have
+to use the interface provided by `ngx_lua`.
+
+First load the body into memory by calling `ngx.req.read_body()`. Next call
+`ngx.req.get_body_data()` to get the contents of the body.
+
+If the body does not fit in to the size set by the Nginx configuration
+directive `client_max_body_size` then these functions will fail and return
+`nil`.
+
