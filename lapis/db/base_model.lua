@@ -430,7 +430,7 @@ do
       local tbl_name = self.db.escape_identifier(self:table_name())
       local find_by_escaped = self.db.escape_identifier(find_by)
       local query = tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_escaped) .. " in (" .. tostring(flat_ids) .. ")"
-      if opts and opts.where then
+      if opts and opts.where and next(opts.where) then
         query = query .. (" and " .. self.db.encode_clause(opts.where))
       end
       do

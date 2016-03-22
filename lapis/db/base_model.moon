@@ -202,7 +202,7 @@ class BaseModel
 
       query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
 
-      if opts and opts.where
+      if opts and opts.where and next opts.where
         query ..= " and " .. @db.encode_clause opts.where
 
       if order = many and opts.order
