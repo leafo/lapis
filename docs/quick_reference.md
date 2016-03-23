@@ -37,8 +37,38 @@ class App extends lapis.Application
 
 ## How do I write a HTTP header?
 
-The `res` field of the `self` has a `headers` field that lets you set headers.
-Here's how you would set the `Content-type` header:
+There are two ways to write headers. In these examples we set the
+`Access-Control-Allow-Origin` header to `*`
+
+You can return a headers field (or pass it to `write`) from an action:
+
+```lua
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("/", function(self)
+  return {
+    "OK"
+    headers = {
+      ["Access-Control-Allow-Origin"] = "*"
+    }
+  }
+end)
+```
+
+```moon
+lapis = require "lapis"
+
+class App extends lapis.Application
+  "/": =>
+    "ok", {
+      headers: {
+        "Access-Control-Allow-Origin" = "*"
+      }
+    }
+```
+Alternatively, the `res` field of the `self` has a `headers` field that lets
+you set headers.
 
 ```lua
 local lapis = require("lapis")
