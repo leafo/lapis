@@ -14,8 +14,13 @@ describe "Router", ->
     router = Router!
     f = ->
     router\add_route "/hello", f
-
     assert.same {{}, f, "/hello"}, {router\match "/hello"}
+
+  it "fails to match a route", ->
+    router = Router!
+    f = ->
+    router\add_route "/hello", f
+    assert.same {}, {router\match "/zone"}
 
 describe "RouteParser.parse", ->
   for {pattern, test, result} in *{
