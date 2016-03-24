@@ -8,6 +8,15 @@ build_router = (routes) ->
       r\add_route pattern, handler
     r.default_route = -> "failed to find route"
 
+
+describe "Router", ->
+  it "matches a route", ->
+    router = Router!
+    f = ->
+    router\add_route "/hello", f
+
+    assert.same {{}, f, "/hello"}, {router\match "/hello"}
+
 describe "RouteParser.parse", ->
   for {pattern, test, result} in *{
     {"/:yeah", "ddd", nil}
