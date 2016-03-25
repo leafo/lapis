@@ -48,7 +48,7 @@ local app = lapis.Application()
 
 app:match("/", function(self)
   return {
-    "OK"
+    "OK",
     headers = {
       ["Access-Control-Allow-Origin"] = "*"
     }
@@ -63,10 +63,11 @@ class App extends lapis.Application
   "/": =>
     "ok", {
       headers: {
-        "Access-Control-Allow-Origin" = "*"
+        "Access-Control-Allow-Origin": "*"
       }
     }
 ```
+
 Alternatively, the `res` field of the `self` has a `headers` field that lets
 you set headers.
 
@@ -101,7 +102,7 @@ local lapis = require("lapis")
 local app = lapis.Application()
 
 app:match("/", function(self)
-  return { content_type: "text/rss", "<rss version="2.0"></rss>" }
+  return { content_type = "text/rss", [[<rss version="2.0"></rss>]] }
 end)
 ```
 
@@ -110,7 +111,7 @@ lapis = require "lapis"
 
 class App extends lapis.Application
   "/": =>
-    "<rss version="2.0"></rss>", content_type: "text/rss"
+    [[<rss version="2.0"></rss>]], content_type: "text/rss"
 ```
 
 
@@ -125,7 +126,7 @@ local app = lapis.Application()
 app:match("/", function(self)
   return {
     json = {
-      success = true
+      success = true,
       message = "hello world"
     }
   }
@@ -194,7 +195,7 @@ local respond_to = require("lapis.application").respond_to
 app:match("/", respond_to({
   -- do common setup
   before = function(self)
-    if self.session.current_user
+    if self.session.current_user then
       self:write({ redirect_to = "/" })
     end
   end,
