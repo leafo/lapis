@@ -234,9 +234,6 @@ class App extends lapis.Application
   }
 ```
 
-## How do I work with forms?
-
-
 ## How do I restart a running server, or reload the code?
 
 Once the server is started, you can use the `laips term` command from your
