@@ -52,79 +52,125 @@ describe "lapis.db.model", ->
       [[SELECT * from "things" where color = '?']]
     }
 
-  it "should find", ->
-    class Things extends Model
+  describe "find", ->
+    it "basic", ->
+      class Things extends Model
 
-    Things\find "hello"
-    Things\find cat: true, weight: 120
+      Things\find "hello"
+      Things\find cat: true, weight: 120
 
-    Things\find_all { 1,2,3,4,5 }
-    Things\find_all { "yeah" }
-    Things\find_all { }
-
-    Things\find_all { 1,2,4 }, "dad"
-    Things\find_all { 1,2,4 }, fields: "hello"
-    Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
-    Things\find_all { 1,2,4 }, where: {}
-
-    Things\find_all { 1,2,4 }, {
-      fields: "hello, world"
-      key: "dad"
-      where: {
-        color: "blue"
-        height: "10px"
+      assert_queries {
+        [[SELECT * from "things" where "id" = 'hello' limit 1]]
+        {
+          [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
+          [[SELECT * from "things" where "weight" = 120 AND "cat" = TRUE limit 1]]
+        }
       }
-    }
 
-    Things\find_all { 1,2,4 }, {
-      fields: "hello, world"
-      key: "dad"
-      where: {
-        color: "blue"
-      }
-      clause: {
-        "order by id limit ?", 1234
-      }
-    }
+    it "composite primary key", ->
+      class Things2 extends Model
+        @primary_key: {"hello", "world"}
 
-    Things\find_all { 1,2,4 }, {
-      fields: "hello, world"
-      key: "dad"
-      where: {
-        color: "blue"
+      Things2\find 1,2
+      assert_queries {
+        {
+          [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
+          [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
+        }
       }
-      clause: "group by color"
-    }
 
-    class Things2 extends Model
-      @primary_key: {"hello", "world"}
+  describe "find_all", ->
+    local Things
+    before_each ->
+      class Things extends Model
 
-    Things2\find 1,2
-
-    assert_queries {
-      [[SELECT * from "things" where "id" = 'hello' limit 1]]
-      {
-        [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
-        [[SELECT * from "things" where "weight" = 120 AND "cat" = TRUE limit 1]]
+    it "many ids", ->
+      Things\find_all { 1,2,3,4,5 }
+      assert_queries {
+        [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
       }
-      [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
-      [[SELECT * from "things" where "id" in ('yeah')]]
-      [[SELECT * from "things" where "dad" in (1, 2, 4)]]
-      [[SELECT hello from "things" where "id" in (1, 2, 4)]]
-      [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
-      [[SELECT * from "things" where "id" in (1, 2, 4)]]
 
-      {
-        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
-        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
+    it "single id", ->
+      Things\find_all { "yeah" }
+      assert_queries {
+        [[SELECT * from "things" where "id" in ('yeah')]]
       }
-      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' order by id limit 1234]]
-      [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' group by color]]
-      {
-        [[SELECT * from "things" where "world" = 2 AND "hello" = 1 limit 1]]
-        [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
+
+    it "empty ids", ->
+      assert.same {}, Things\find_all {}
+      assert_queries {}
+
+    it "custom field", ->
+      Things\find_all { 1,2,4 }, "dad"
+      assert_queries {
+        [[SELECT * from "things" where "dad" in (1, 2, 4)]]
       }
-    }
+    
+    it "with fields option", ->
+      Things\find_all { 1,2,4 }, fields: "hello"
+      assert_queries {
+        [[SELECT hello from "things" where "id" in (1, 2, 4)]]
+      }
+    
+    it "with multiple field and key option", ->
+      Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
+      assert_queries {
+        [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
+      }
+
+    it "with empty where option", ->
+      Things\find_all { 1,2,4 }, where: {}
+      assert_queries {
+        [[SELECT * from "things" where "id" in (1, 2, 4)]]
+      }
+
+    it "with complex options", ->
+      Things\find_all { 1,2,4 }, {
+        fields: "hello, world"
+        key: "dad"
+        where: {
+          color: "blue"
+          height: "10px"
+        }
+      }
+
+      assert_queries {
+        {
+          [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
+          [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
+        }
+      }
+
+    it "with complex options & interpolated clause", ->
+      Things\find_all { 1,2,4 }, {
+        fields: "hello, world"
+        key: "dad"
+        where: {
+          color: "blue"
+        }
+        clause: {
+          "order by id limit ?", 1234
+        }
+      }
+
+      assert_queries {
+        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' order by id limit 1234]]
+      }
+
+    it "with complex options & plain clause", ->
+      Things\find_all { 1,2,4 }, {
+        fields: "hello, world"
+        key: "dad"
+        where: {
+          color: "blue"
+        }
+        clause: "group by color"
+      }
+
+      assert_queries {
+        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' group by color]]
+      }
+
 
   it "should paginate", ->
     mock_query "COUNT%(%*%)", {{ c: 127 }}
