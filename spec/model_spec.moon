@@ -87,13 +87,13 @@ describe "lapis.db.model", ->
     it "many ids", ->
       Things\find_all { 1,2,3,4,5 }
       assert_queries {
-        [[SELECT * from "things" where "id" in (1, 2, 3, 4, 5)]]
+        [[SELECT * from "things" WHERE "id" IN (1, 2, 3, 4, 5)]]
       }
 
     it "single id", ->
       Things\find_all { "yeah" }
       assert_queries {
-        [[SELECT * from "things" where "id" in ('yeah')]]
+        [[SELECT * from "things" WHERE "id" IN ('yeah')]]
       }
 
     it "empty ids", ->
@@ -103,25 +103,25 @@ describe "lapis.db.model", ->
     it "custom field", ->
       Things\find_all { 1,2,4 }, "dad"
       assert_queries {
-        [[SELECT * from "things" where "dad" in (1, 2, 4)]]
+        [[SELECT * from "things" WHERE "dad" IN (1, 2, 4)]]
       }
     
     it "with fields option", ->
       Things\find_all { 1,2,4 }, fields: "hello"
       assert_queries {
-        [[SELECT hello from "things" where "id" in (1, 2, 4)]]
+        [[SELECT hello from "things" WHERE "id" IN (1, 2, 4)]]
       }
     
     it "with multiple field and key option", ->
       Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
       assert_queries {
-        [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
+        [[SELECT hello, world from "things" WHERE "dad" IN (1, 2, 4)]]
       }
 
     it "with empty where option", ->
       Things\find_all { 1,2,4 }, where: {}
       assert_queries {
-        [[SELECT * from "things" where "id" in (1, 2, 4)]]
+        [[SELECT * from "things" WHERE "id" IN (1, 2, 4)]]
       }
 
     it "with complex options", ->
@@ -134,10 +134,16 @@ describe "lapis.db.model", ->
         }
       }
 
+      -- :/
       assert_queries {
         {
-          [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
-          [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
+          [[SELECT hello, world from "things" WHERE "dad" IN (1, 2, 4) AND "height" = '10px' AND "color" = 'blue']]
+          [[SELECT hello, world from "things" WHERE "height" = '10px' AND "dad" IN (1, 2, 4) AND "color" = 'blue']]
+          [[SELECT hello, world from "things" WHERE "height" = '10px' AND "color" = 'blue' AND "dad" IN (1, 2, 4)]]
+
+          [[SELECT hello, world from "things" WHERE "dad" IN (1, 2, 4) AND "color" = 'blue' AND "height" = '10px']]
+          [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) AND "height" = '10px']]
+          [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "height" = '10px' AND "dad" IN (1, 2, 4)]]
         }
       }
 
@@ -154,7 +160,10 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' order by id limit 1234]]
+        {
+          [[SELECT hello, world from "things" WHERE "dad" IN (1, 2, 4) AND "color" = 'blue' order by id limit 1234]]
+          [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) order by id limit 1234]]
+        }
       }
 
     it "with complex options & plain clause", ->
@@ -168,7 +177,10 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' group by color]]
+        {
+          [[SELECT hello, world from "things" WHERE "dad" IN (1, 2, 4) AND "color" = 'blue' group by color]]
+          [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) group by color]]
+        }
       }
 
 

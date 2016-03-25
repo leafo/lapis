@@ -255,14 +255,12 @@ class BaseModel
     other_records
 
   @find_all: (ids, by_key=@primary_key) =>
-    where = nil
-    clause = nil
-    fields = "*"
+    local extra_where, clause, fields
 
     -- parse opts
     if type(by_key) == "table"
       fields = by_key.fields or fields
-      where = by_key.where
+      extra_where = by_key.where
       clause = by_key.clause
       by_key = by_key.key or @primary_key
 
@@ -270,14 +268,14 @@ class BaseModel
       error "#{@table_name!} find_all must have a singular key to search"
 
     return {} if #ids == 0
-    flat_ids = concat [@db.escape_literal id for id in *ids], ", "
-    primary = @db.escape_identifier by_key
-    tbl_name = @db.escape_identifier @table_name!
 
-    query = fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
+    @db.list ids
+    where = { [by_key]: @db.list ids }
+    if extra_where
+      for k,v in pairs extra_where
+        where[k] = v
 
-    if where and next where
-      query ..= " and " .. @db.encode_clause where
+    query = "WHERE " .. @db.encode_clause where
 
     if clause
       if type(clause) == "table"
@@ -286,9 +284,7 @@ class BaseModel
 
       query ..= " " .. clause
 
-    if res = @db.select query
-      @load r for r in *res
-      res
+    @select query, fields: fields
 
   -- find by primary key, or by table of conds
   @find: (...) =>
