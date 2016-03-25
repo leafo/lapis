@@ -15,6 +15,7 @@ Lapis is production ready, use it on your next huge project.
   * <http://streak.club> - [source](https://github.com/leafo/streak.club)
   * <http://mundodescuento.com/>
   * [Ludum Dare game browser](http://ludumdare.itch.io) - [source](https://github.com/leafo/ludum-dare-browser)
+  * <https://pasta.cf/> - [source](https://github.com/starius/pasta)
 
 ## Running Tests
 
