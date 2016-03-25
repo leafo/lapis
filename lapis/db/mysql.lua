@@ -5,10 +5,10 @@ do
 end
 local concat
 concat = table.concat
-local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_encodable
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
 do
   local _obj_0 = require("lapis.db.base")
-  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_encodable
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_encodable
 end
 local conn, logger
 local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
@@ -179,6 +179,22 @@ escape_literal = function(val)
     if val == NULL then
       return "NULL"
     end
+    if is_list(val) then
+      local escaped_items
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        local _list_0 = val[1]
+        for _index_0 = 1, #_list_0 do
+          local item = _list_0[_index_0]
+          _accum_0[_len_0] = escape_literal(item)
+          _len_0 = _len_0 + 1
+        end
+        escaped_items = _accum_0
+      end
+      assert(escaped_items[1], "can't flatten empty list")
+      return "(" .. tostring(concat(escaped_items, ", ")) .. ")"
+    end
     if is_raw(val) then
       return val[1]
     end
@@ -294,6 +310,8 @@ return {
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,
+  list = list,
+  is_list = is_list,
   is_encodable = is_encodable,
   encode_values = encode_values,
   encode_assigns = encode_assigns,
