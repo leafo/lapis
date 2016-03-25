@@ -12,16 +12,6 @@ do
 end
 local insert
 insert = table.insert
-local set_and_truthy
-set_and_truthy = function(val, default)
-  if default == nil then
-    default = true
-  end
-  if val == nil then
-    return default
-  end
-  return val
-end
 local Request
 do
   local _class_0
@@ -190,8 +180,13 @@ do
           return 
         end
       end
-      local has_layout = self.app.layout and set_and_truthy(self.options.layout, true)
-      if has_layout then
+      local layout
+      if self.options.layout ~= nil then
+        layout = self.options.layout
+      else
+        layout = self.app.layout
+      end
+      if layout then
         self.layout_opts = {
           _content_for_inner = nil
         }
@@ -221,17 +216,14 @@ do
           increment_perf("view_time", ngx.now() - start_time)
         end
       end
-      if has_layout then
+      if layout then
         local inner = self.buffer
         self.buffer = { }
-        local layout_path = self.options.layout
         local layout_cls
-        if type(layout_path) == "string" then
-          layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(layout_path))
-        elseif type(self.app.layout) == "string" then
-          layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(self.app.layout))
+        if type(layout) == "string" then
+          layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(layout))
         else
-          layout_cls = self.app.layout
+          layout_cls = layout
         end
         local start_time
         if config.measure_performance then
@@ -241,7 +233,7 @@ do
         self.layout_opts._content_for_inner = self.layout_opts._content_for_inner or function()
           return raw(inner)
         end
-        local layout = layout_cls(self.layout_opts)
+        layout = layout_cls(self.layout_opts)
         layout:include_helper(self)
         layout:render(self.buffer)
         if start_time then

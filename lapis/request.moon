@@ -10,10 +10,6 @@ import parse_cookie_string, to_json, build_url, auto_table from require "lapis.u
 
 import insert from table
 
-set_and_truthy = (val, default=true) ->
-  return default if val == nil
-  val
-
 class Request
   @__inherited: (child) =>
     -- add inheritance to support methods
@@ -64,8 +60,12 @@ class Request
         @res.status or= 302
         return
 
-      has_layout = @app.layout and set_and_truthy(@options.layout, true)
-      @layout_opts = if has_layout
+      layout = if @options.layout != nil
+        @options.layout
+      else
+        @app.layout
+
+      @layout_opts = if layout
         { _content_for_inner: nil }
 
       widget = @options.render
@@ -90,17 +90,14 @@ class Request
           ngx.update_time!
           increment_perf "view_time", ngx.now! - start_time
 
-      if has_layout
+      if layout
         inner = @buffer
         @buffer = {}
 
-        layout_path = @options.layout
-        layout_cls = if type(layout_path) == "string"
-          require "#{@app.views_prefix}.#{layout_path}"
-        elseif type(@app.layout) == "string"
-          require "#{@app.views_prefix}.#{@app.layout}"
+        layout_cls = if type(layout) == "string"
+          require "#{@app.views_prefix}.#{layout}"
         else
-          @app.layout
+          layout
 
         start_time = if config.measure_performance
           ngx.update_time!

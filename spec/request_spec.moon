@@ -204,7 +204,49 @@ describe "lapis.request", ->
       _, _, h = mock_request app, "/"
       assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
 
+  describe "layouts", ->
+    after_each = ->
+      package.loaded["views.another_layout"] = nil
 
+    it "renders without layout", ->
+      class LayoutApp extends lapis.Application
+        layout: "cool_layout"
+        "/": => "hello", layout: false
+
+      status, res = mock_request LayoutApp, "/"
+      assert.same "hello", res
+
+    it "renders with layout by name", ->
+      import Widget from require "lapis.html"
+      package.loaded["views.another_layout"] = class extends Widget
+        content: =>
+          text "*"
+          @content_for "inner"
+          text "^"
+
+      class LayoutApp extends lapis.Application
+        layout: "cool_layout"
+        "/": => "hello", layout: "another_layout"
+
+      status, res = mock_request LayoutApp, "/"
+      assert.same "*hello^", res
+
+    it "renders layout with class", ->
+      import Widget from require "lapis.html"
+
+      class Layout extends Widget
+        content: =>
+          text "("
+          @content_for "inner"
+          text ")"
+
+      class LayoutApp extends lapis.Application
+        layout: "cool_layout"
+        "/": =>
+          "hello", layout: Layout
+
+      status, res = mock_request LayoutApp, "/"
+      assert.same "(hello)", res
 
 -- these seem like an application spec and not a request one
 describe "before filter", ->
