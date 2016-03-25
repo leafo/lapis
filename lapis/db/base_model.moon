@@ -276,7 +276,7 @@ class BaseModel
 
     query = fields .. " from #{tbl_name} where #{primary} in (#{flat_ids})"
 
-    if where
+    if where and next where
       query ..= " and " .. @db.encode_clause where
 
     if clause

@@ -65,6 +65,7 @@ describe "lapis.db.model", ->
     Things\find_all { 1,2,4 }, "dad"
     Things\find_all { 1,2,4 }, fields: "hello"
     Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
+    Things\find_all { 1,2,4 }, where: {}
 
     Things\find_all { 1,2,4 }, {
       fields: "hello, world"
@@ -111,6 +112,8 @@ describe "lapis.db.model", ->
       [[SELECT * from "things" where "dad" in (1, 2, 4)]]
       [[SELECT hello from "things" where "id" in (1, 2, 4)]]
       [[SELECT hello, world from "things" where "dad" in (1, 2, 4)]]
+      [[SELECT * from "things" where "id" in (1, 2, 4)]]
+
       {
         [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "height" = '10px' AND "color" = 'blue']]
         [[SELECT hello, world from "things" where "dad" in (1, 2, 4) and "color" = 'blue' AND "height" = '10px']]
@@ -464,6 +467,13 @@ describe "lapis.db.model", ->
 
       assert_queries {
         [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) and "dad" = TRUE]]
+      }
+
+    it "with empty where", ->
+      ThingItems\include_in things, "thing_id", where: { }
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
       }
 
     it "with fields", ->

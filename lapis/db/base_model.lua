@@ -535,7 +535,7 @@ do
     local primary = self.db.escape_identifier(by_key)
     local tbl_name = self.db.escape_identifier(self:table_name())
     local query = fields .. " from " .. tostring(tbl_name) .. " where " .. tostring(primary) .. " in (" .. tostring(flat_ids) .. ")"
-    if where then
+    if where and next(where) then
       query = query .. (" and " .. self.db.encode_clause(where))
     end
     if clause then
