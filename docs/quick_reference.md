@@ -124,9 +124,9 @@ local app = lapis.Application()
 
 app:match("/", function(self)
   return {
-    json: {
-      success: true
-      message: "hello world"
+    json = {
+      success = true
+      message = "hello world"
     }
   }
 end)
@@ -192,14 +192,17 @@ local app = lapis.Application()
 local respond_to = require("lapis.application").respond_to
 
 app:match("/", respond_to({
+  -- do common setup
   before = function(self)
     if self.session.current_user
       self:write({ redirect_to = "/" })
     end
   end,
+  -- render the view
   GET = function(self)
     return { render = true }
   end,
+  -- handle the form submission
   POST = function(self)
     self.session.current_user =
       try_to_login(self.params.username, self.params.password)
@@ -289,4 +292,3 @@ First load the body into memory by calling `ngx.req.read_body()`. Next call
 If the body does not fit in to the size set by the Nginx configuration
 directive `client_max_body_size` then these functions will fail and return
 `nil`.
-
