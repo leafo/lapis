@@ -423,31 +423,48 @@ do
   end
   local notifier
   notifier = function()
-    init_db()
+    if not (get_handle) then
+      init_db()
+    end
     local handle = get_handle()
+    handle.sock:settimeout(TIMEOUT * 1000)
     local reader
     reader = function()
-      while true do
+      while handle do
         local operation = handle:wait()
-        if operation and operation.operation == 'notification' then
+        if not (operation) then
+          handle = nil
+          changes_sema:post()
+          return 
+        end
+        if operation.operation == 'notification' then
           notify(operation.channel, operation.payload)
         end
       end
     end
     local writer
     writer = function()
-      while true do
+      while handle do
         changes_sema:wait(TIMEOUT)
-        for _index_0 = 1, #changes do
-          local change = changes[_index_0]
-          assert(handle:post(change))
+        if handle then
+          for _index_0 = 1, #changes do
+            local change = changes[_index_0]
+            if not (handle:post(change)) then
+              handle = nil
+              return 
+            end
+          end
+          changes = { }
         end
-        changes = { }
       end
     end
     local reader_co = ngx.thread.spawn(reader)
     local writer_co = ngx.thread.spawn(writer)
-    return ngx.thread.wait(reader_co, writer_co)
+    for channel in pairs(queues) do
+      change_channel("LISTEN", channel)
+    end
+    ngx.thread.wait(reader_co, writer_co)
+    return ngx.timer.at(0.0, notifier)
   end
   post = function(channel, payload)
     if payload == nil then

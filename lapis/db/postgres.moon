@@ -345,25 +345,43 @@ do
       sema\post(-sema\count!)
 
   notifier = ->
-    init_db! -- replaces get_handle to default backend
+    unless get_handle
+      init_db! -- replaces get_handle to default backend
     handle = get_handle!
+    handle.sock\settimeout(TIMEOUT * 1000)
 
     reader = ->
-      while true
+      while handle
         operation = handle\wait!
-        if operation and operation.operation == 'notification'
+        unless operation
+          handle = nil
+          changes_sema\post!
+          return
+        if operation.operation == 'notification'
           notify operation.channel, operation.payload
 
     writer = ->
-      while true
+      while handle
         changes_sema\wait TIMEOUT
-        for change in *changes
-          assert handle\post change
-        changes = {}
+        if handle
+          for change in *changes
+            unless handle\post change
+              handle = nil
+              return
+          changes = {}
 
     reader_co = ngx.thread.spawn reader
     writer_co = ngx.thread.spawn writer
+
+    -- resume channels added before timeout
+    -- can cause double "LISTEN" which are not an error
+    for channel in pairs(queues)
+      change_channel "LISTEN", channel
+
     ngx.thread.wait reader_co, writer_co
+
+    -- timeout or other error occurred. Restart
+    ngx.timer.at 0.0, notifier
 
   post = (channel, payload='') ->
     query "NOTIFY " .. escape_identifier(channel) ..
