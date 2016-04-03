@@ -6,6 +6,7 @@ do
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
 local raw_query
+local get_handle
 local logger
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
 do
@@ -47,7 +48,8 @@ local BACKENDS = {
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
     local pgmoon_conn
-    return function(str)
+    local pgmoon_getter
+    pgmoon_getter = function()
       local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       if not (pgmoon) then
         local Postgres
@@ -63,6 +65,11 @@ local BACKENDS = {
           pgmoon_conn = pgmoon
         end
       end
+      return pgmoon
+    end
+    local query_impl
+    query_impl = function(str)
+      local pgmoon = pgmoon_getter()
       local start_time
       if ngx and config.measure_performance then
         ngx.update_time()
@@ -82,6 +89,7 @@ local BACKENDS = {
       end
       return res
     end
+    return query_impl, pgmoon_getter
   end
 }
 local set_backend
@@ -90,7 +98,7 @@ set_backend = function(name, ...)
   if not (backend) then
     error("Failed to find PostgreSQL backend: " .. tostring(name))
   end
-  raw_query = backend(...)
+  raw_query, get_handle = backend(...)
 end
 local set_raw_query
 set_raw_query = function(fn)
@@ -391,6 +399,84 @@ encode_case = function(exp, t, on_else)
   append_all(buff, "\nEND")
   return concat(buff)
 end
+local wait, post
+do
+  local changes_sema
+  local changes = { }
+  local queues = { }
+  local TIMEOUT = 5 * 60
+  local change_channel
+  change_channel = function(action, channel)
+    table.insert(changes, action .. " " .. escape_identifier(channel))
+    return changes_sema:post()
+  end
+  local notify
+  notify = function(channel, payload)
+    local queue = queues[channel]
+    if queue then
+      queues[channel] = nil
+      change_channel("UNLISTEN", channel)
+      queue.payload = payload
+      local sema = queue.sema
+      return sema:post(-sema:count())
+    end
+  end
+  local notifier
+  notifier = function()
+    init_db()
+    local handle = get_handle()
+    local reader
+    reader = function()
+      while true do
+        local operation = handle:wait()
+        if operation and operation.operation == 'notification' then
+          notify(operation.channel, operation.payload)
+        end
+      end
+    end
+    local writer
+    writer = function()
+      while true do
+        changes_sema:wait(TIMEOUT)
+        for _index_0 = 1, #changes do
+          local change = changes[_index_0]
+          assert(handle:post(change))
+        end
+        changes = { }
+      end
+    end
+    local reader_co = ngx.thread.spawn(reader)
+    local writer_co = ngx.thread.spawn(writer)
+    return ngx.thread.wait(reader_co, writer_co)
+  end
+  post = function(channel, payload)
+    if payload == nil then
+      payload = ''
+    end
+    return query("NOTIFY " .. escape_identifier(channel) .. ", " .. escape_literal(payload))
+  end
+  wait = function(channel)
+    local semaphore = require("ngx.semaphore")
+    if not (changes_sema) then
+      changes_sema = semaphore.new()
+      ngx.timer.at(0.0, notifier)
+    end
+    local queue = queues[channel]
+    if not (queue) then
+      queue = {
+        sema = assert(semaphore.new())
+      }
+      queues[channel] = queue
+      change_channel("LISTEN", channel)
+    end
+    while true do
+      if queue.sema:wait(TIMEOUT) then
+        break
+      end
+    end
+    return queue.payload
+  end
+end
 return {
   connect = connect,
   query = query,
@@ -416,6 +502,8 @@ return {
   set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
+  post = post,
+  wait = wait,
   select = _select,
   insert = _insert,
   update = _update,
