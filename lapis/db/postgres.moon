@@ -329,11 +329,29 @@ do
   changes = {}
   queues = {}
   TIMEOUT = 5 * 60 -- 5 minutes
+  notify_counter = 0
+  CLEANUP_PERIOD = 10000
 
   change_channel = (action, channel) ->
     -- push SQL command to "notifier"
     table.insert changes, action .. " " .. escape_identifier(channel)
     changes_sema\post!
+
+  cleanup_queues = ->
+    -- remove unused channels
+    new_queues = {}
+    for channel, queue in pairs(queues)
+      if queue.sema\count! < 0
+        new_queues[channel] = queue
+      else
+        change_channel "UNLISTEN", channel
+    queues = new_queues
+
+  listen_queues = ->
+    -- resume used channels
+    changes = {}
+    for channel in pairs(queues)
+      change_channel "LISTEN", channel
 
   notify = (channel, payload) ->
     queue = queues[channel]
@@ -342,7 +360,13 @@ do
       change_channel "UNLISTEN", channel
       queue.payload = payload
       sema = queue.sema
-      sema\post(-sema\count!)
+      if sema\count! < 0
+        sema\post(-sema\count!)
+
+    notify_counter += 1
+    if notify_counter == CLEANUP_PERIOD
+      notify_counter = 0
+      cleanup_queues!
 
   notifier = ->
     unless get_handle
@@ -373,14 +397,12 @@ do
     reader_co = ngx.thread.spawn reader
     writer_co = ngx.thread.spawn writer
 
-    -- resume channels added before timeout
-    -- can cause double "LISTEN" which are not an error
-    for channel in pairs(queues)
-      change_channel "LISTEN", channel
-
     ngx.thread.wait reader_co, writer_co
 
-    -- timeout or other error occurred. Restart
+    -- timeout or other error occurred
+    cleanup_queues!
+    listen_queues!
+    -- restart
     ngx.timer.at 0.0, notifier
 
   post = (channel, payload='') ->

@@ -405,10 +405,31 @@ do
   local changes = { }
   local queues = { }
   local TIMEOUT = 5 * 60
+  local notify_counter = 0
+  local CLEANUP_PERIOD = 10000
   local change_channel
   change_channel = function(action, channel)
     table.insert(changes, action .. " " .. escape_identifier(channel))
     return changes_sema:post()
+  end
+  local cleanup_queues
+  cleanup_queues = function()
+    local new_queues = { }
+    for channel, queue in pairs(queues) do
+      if queue.sema:count() < 0 then
+        new_queues[channel] = queue
+      else
+        change_channel("UNLISTEN", channel)
+      end
+    end
+    queues = new_queues
+  end
+  local listen_queues
+  listen_queues = function()
+    changes = { }
+    for channel in pairs(queues) do
+      change_channel("LISTEN", channel)
+    end
   end
   local notify
   notify = function(channel, payload)
@@ -418,7 +439,14 @@ do
       change_channel("UNLISTEN", channel)
       queue.payload = payload
       local sema = queue.sema
-      return sema:post(-sema:count())
+      if sema:count() < 0 then
+        sema:post(-sema:count())
+      end
+    end
+    notify_counter = notify_counter + 1
+    if notify_counter == CLEANUP_PERIOD then
+      notify_counter = 0
+      return cleanup_queues()
     end
   end
   local notifier
@@ -460,10 +488,9 @@ do
     end
     local reader_co = ngx.thread.spawn(reader)
     local writer_co = ngx.thread.spawn(writer)
-    for channel in pairs(queues) do
-      change_channel("LISTEN", channel)
-    end
     ngx.thread.wait(reader_co, writer_co)
+    cleanup_queues()
+    listen_queues()
     return ngx.timer.at(0.0, notifier)
   end
   post = function(channel, payload)
