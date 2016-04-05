@@ -12,8 +12,8 @@ of this method is that it's faster and errors happen within the test process.
 The second type uses the test server. The test server is a temporary Nginx
 server spawned for the duration of your tests that allows you to issue full
 HTTP requests. The advantage is you can test both Nginx configuration and your
-application at the same time. It very closely resembles how your application
-will run in production.
+application at the same time, as well as allow your application to use ngx.*
+features. It very closely resembles how your application will run in production.
 
 You are free to use any testing framework you like, but in these examples we'll
 be using [Busted](http://olivinelabs.com/busted/).
