@@ -227,10 +227,11 @@ describe "my_site", ->
 ```
 
 The test server will either spawn a new Nginx if one isn't running, or it will
-take over your development server until `close_test_server` is called. Taking
-over the development server can be useful because the same stdout is used, so
-any output from the server is written to a terminal you might already have
-open.
+take over your development server until `close_test_server` is called 
+(`use_test_server` automatically calls that for you, but you can call it manually
+if you wish). Taking over the development server can be useful because the same 
+stdout is used, so any output from the server is written to a terminal you might 
+already have open.
 
 ### `request(path, options={})`
 
