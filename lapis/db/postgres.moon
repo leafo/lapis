@@ -328,45 +328,39 @@ do
   local changes_sema
   changes = {}
   queues = {}
+  setmetatable queues, {
+    __mode: 'v'
+  }
   TIMEOUT = 5 * 60 -- 5 minutes
-  notify_counter = 0
-  CLEANUP_PERIOD = 10000
+
+  set_gc = (t, finalizer) ->
+    mt = {__gc: finalizer}
+    setmetatable t, mt
+    if _G.newproxy
+      -- tables' finalizers don't work in Lua 5.1
+      mt.newproxy = _G.newproxy true
+      getmetatable(mt.newproxy).__gc = finalizer
 
   change_channel = (action, channel) ->
     -- push SQL command to "notifier"
     table.insert changes, action .. " " .. escape_identifier(channel)
     changes_sema\post!
 
-  cleanup_queues = ->
-    -- remove unused channels
-    new_queues = {}
-    for channel, queue in pairs(queues)
-      if queue.sema\count! < 0
-        new_queues[channel] = queue
-      else
-        change_channel "UNLISTEN", channel
-    queues = new_queues
-
   listen_queues = ->
     -- resume used channels
     changes = {}
-    for channel in pairs(queues)
-      change_channel "LISTEN", channel
+    for channel, queue in pairs(queues)
+      if queue.sema\count! < 0
+        change_channel "LISTEN", channel
 
   notify = (channel, payload) ->
     queue = queues[channel]
     if queue
       queues[channel] = nil
-      change_channel "UNLISTEN", channel
       queue.payload = payload
       sema = queue.sema
       if sema\count! < 0
         sema\post(-sema\count!)
-
-    notify_counter += 1
-    if notify_counter == CLEANUP_PERIOD
-      notify_counter = 0
-      cleanup_queues!
 
   notifier = ->
     unless get_handle
@@ -400,7 +394,6 @@ do
     ngx.thread.wait reader_co, writer_co
 
     -- timeout or other error occurred
-    cleanup_queues!
     listen_queues!
     -- restart
     ngx.timer.at 0.0, notifier
@@ -424,6 +417,10 @@ do
       queue = {
         sema: assert semaphore.new!
       }
+      set_gc queue, ->
+        if not queues[channel]
+          change_channel "UNLISTEN", channel
+
       queues[channel] = queue
 
       change_channel "LISTEN", channel

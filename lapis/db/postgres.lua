@@ -404,31 +404,33 @@ do
   local changes_sema
   local changes = { }
   local queues = { }
+  setmetatable(queues, {
+    __mode = 'v'
+  })
   local TIMEOUT = 5 * 60
-  local notify_counter = 0
-  local CLEANUP_PERIOD = 10000
+  local set_gc
+  set_gc = function(t, finalizer)
+    local mt = {
+      __gc = finalizer
+    }
+    setmetatable(t, mt)
+    if _G.newproxy then
+      mt.newproxy = _G.newproxy(true)
+      getmetatable(mt.newproxy).__gc = finalizer
+    end
+  end
   local change_channel
   change_channel = function(action, channel)
     table.insert(changes, action .. " " .. escape_identifier(channel))
     return changes_sema:post()
   end
-  local cleanup_queues
-  cleanup_queues = function()
-    local new_queues = { }
-    for channel, queue in pairs(queues) do
-      if queue.sema:count() < 0 then
-        new_queues[channel] = queue
-      else
-        change_channel("UNLISTEN", channel)
-      end
-    end
-    queues = new_queues
-  end
   local listen_queues
   listen_queues = function()
     changes = { }
-    for channel in pairs(queues) do
-      change_channel("LISTEN", channel)
+    for channel, queue in pairs(queues) do
+      if queue.sema:count() < 0 then
+        change_channel("LISTEN", channel)
+      end
     end
   end
   local notify
@@ -436,17 +438,11 @@ do
     local queue = queues[channel]
     if queue then
       queues[channel] = nil
-      change_channel("UNLISTEN", channel)
       queue.payload = payload
       local sema = queue.sema
       if sema:count() < 0 then
-        sema:post(-sema:count())
+        return sema:post(-sema:count())
       end
-    end
-    notify_counter = notify_counter + 1
-    if notify_counter == CLEANUP_PERIOD then
-      notify_counter = 0
-      return cleanup_queues()
     end
   end
   local notifier
@@ -489,7 +485,6 @@ do
     local reader_co = ngx.thread.spawn(reader)
     local writer_co = ngx.thread.spawn(writer)
     ngx.thread.wait(reader_co, writer_co)
-    cleanup_queues()
     listen_queues()
     return ngx.timer.at(0.0, notifier)
   end
@@ -510,6 +505,11 @@ do
       queue = {
         sema = assert(semaphore.new())
       }
+      set_gc(queue, function()
+        if not queues[channel] then
+          return change_channel("UNLISTEN", channel)
+        end
+      end)
       queues[channel] = queue
       change_channel("LISTEN", channel)
     end
