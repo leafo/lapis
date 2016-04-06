@@ -407,7 +407,9 @@ do
   setmetatable(queues, {
     __mode = 'v'
   })
+  local pending_unlisten = { }
   local TIMEOUT = 5 * 60
+  local UNLISTEN_TIMEOUT = 15
   local set_gc
   set_gc = function(t, finalizer)
     local mt = {
@@ -431,6 +433,9 @@ do
       if queue.sema:count() < 0 then
         change_channel("LISTEN", channel)
       end
+    end
+    for channel in pairs(pending_unlisten) do
+      change_channel("LISTEN", channel)
     end
   end
   local notify
@@ -507,10 +512,20 @@ do
       }
       set_gc(queue, function()
         if not queues[channel] then
-          return change_channel("UNLISTEN", channel)
+          local label = { }
+          pending_unlisten[channel] = label
+          return ngx.timer.at(UNLISTEN_TIMEOUT, function()
+            if pending_unlisten[channel] == label then
+              pending_unlisten[channel] = nil
+              if not queues[channel] then
+                return change_channel("UNLISTEN", channel)
+              end
+            end
+          end)
         end
       end)
       queues[channel] = queue
+      pending_unlisten[channel] = nil
       change_channel("LISTEN", channel)
     end
     while true do

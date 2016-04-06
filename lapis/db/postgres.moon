@@ -331,7 +331,9 @@ do
   setmetatable queues, {
     __mode: 'v'
   }
+  pending_unlisten = {}
   TIMEOUT = 5 * 60 -- 5 minutes
+  UNLISTEN_TIMEOUT = 15 -- seconds
 
   set_gc = (t, finalizer) ->
     mt = {__gc: finalizer}
@@ -352,6 +354,8 @@ do
     for channel, queue in pairs(queues)
       if queue.sema\count! < 0
         change_channel "LISTEN", channel
+    for channel in pairs(pending_unlisten)
+      change_channel "LISTEN", channel
 
   notify = (channel, payload) ->
     queue = queues[channel]
@@ -418,10 +422,19 @@ do
         sema: assert semaphore.new!
       }
       set_gc queue, ->
+        -- Prevent losing notifications. Send UNLISTEN command after
+        -- a channel being unused for some time.
         if not queues[channel]
-          change_channel "UNLISTEN", channel
+          label = {}
+          pending_unlisten[channel] = label
+          ngx.timer.at UNLISTEN_TIMEOUT, ->
+            if pending_unlisten[channel] == label
+              pending_unlisten[channel] = nil
+              if not queues[channel]
+                change_channel "UNLISTEN", channel
 
       queues[channel] = queue
+      pending_unlisten[channel] = nil
 
       change_channel "LISTEN", channel
 
