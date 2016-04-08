@@ -140,7 +140,7 @@ has_one = (name, opts) =>
     foreign_key = opts.key or "#{@@singular_name!}_id"
 
     clause = {
-      [foreign_key]: @[@@primary_keys!]
+      [foreign_key]: @[opts.local_key or @@primary_keys!]
     }
 
     if where = opts.where
@@ -153,12 +153,14 @@ has_one = (name, opts) =>
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
     foreign_key = opts.key or "#{@@singular_name!}_id"
+    local_key = opts.local_key
 
     preload_opts or= {}
     preload_opts.flip = true
     preload_opts.for_relation = name
     preload_opts.as = name
     preload_opts.where or= opts.where
+    preload_opts.local_key = local_key
     model\include_in objects, foreign_key, preload_opts
 
 has_many = (name, opts) =>

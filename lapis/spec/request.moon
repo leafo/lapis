@@ -217,6 +217,7 @@ mock_action = (app_cls, url, opts, fn) ->
   assert_request A, url, opts
   unpack ret
 
+-- creates a reuest object and returns it
 stub_request = (app_cls, url="/", opts={}) ->
   local stub
 

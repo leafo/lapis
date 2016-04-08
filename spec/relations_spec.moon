@@ -166,6 +166,24 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "user_data" where "owner_id" = 123 limit 1'
     }
 
+  it "should make has_one getter key and local key", ->
+    mock_query "SELECT", { { id: 101, thing_email: "leafo@leafo" } }
+
+    models.Things = class extends Model
+
+    models.Users = class Users extends Model
+      @relations: {
+        {"data", has_one: "Things", local_key: "email", key: "thing_email"}
+      }
+
+    user = Users!
+    user.id = 123
+    user.email = "leafo@leafo"
+    assert user\get_data!
+
+    assert_queries {
+      [[SELECT * from "things" where "thing_email" = 'leafo@leafo' limit 1]]
+    }
 
   it "should make has_one getter with where clause", ->
     mock_query "SELECT", { { id: 101 } }
@@ -540,6 +558,34 @@ describe "lapis.db.model.relations", ->
       assert_queries {
         [[SELECT a,b from "tags" where "post_id" in (123) order by b asc]]
       }
+
+    it "preloads has_one with key and local_key #ddd", ->
+      mock_query "SELECT", {
+        { id: 99, thing_email: "notleafo@leafo" }
+        { id: 101, thing_email: "leafo@leafo" }
+      }
+
+      models.Things = class extends Model
+
+      models.Users = class Users extends Model
+        @relations: {
+          {"thing", has_one: "Things", local_key: "email", key: "thing_email"}
+        }
+
+      user = Users!
+      user.id = 123
+      user.email = "leafo@leafo"
+
+      Users\preload_relations {user}, "thing"
+
+      assert_queries {
+        [[SELECT * from "things" where "thing_email" in ('leafo@leafo')]]
+      }
+
+      assert.same {
+        id: 101
+        thing_email: "leafo@leafo"
+      }, user.thing
 
     it "preloads has_one with where", ->
       mock_query "SELECT", {
