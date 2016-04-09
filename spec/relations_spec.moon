@@ -721,3 +721,38 @@ describe "lapis.db.model.relations", ->
 
       JointPosts\preload_relations {p}, "user", "second_user"
 
+  describe "broken (or confusing) #ddd", ->
+    -- these need to be fixed?
+    it "doesn't match has_many load and preload", ->
+      models.UserItems = class UserItems extends Model
+        @primary_key: "user_id"
+
+        @relations: {
+          {"application", has_one: "ItemApplications", key: "user_id"}
+        }
+
+        new: (user_id) =>
+          @user_id = assert user_id, "missing user id"
+
+      models.ItemApplications = class ItemApplications extends Model
+        id = 1
+        new: (user_id) =>
+          @user_id = assert user_id, "missing user id"
+          @id = id
+          id += 1
+
+      -- the getter works as expected
+      ui = UserItems 100
+      ui\get_application!
+
+
+      -- preloading does not
+      ui2 = UserItems 100
+      UserItems\preload_relations {ui2}, "application"
+
+      assert_queries {
+        [[SELECT * from "item_applications" where "user_id" = 100 limit 1]]
+        -- Expecting new query here
+      }
+
+
