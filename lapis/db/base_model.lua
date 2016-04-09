@@ -383,7 +383,7 @@ do
     if not flip and type(self.primary_key) == "table" then
       error(tostring(self:table_name()) .. " must have singular primary key for include_in")
     end
-    local src_key = flip and (opts.local_key or "id") or foreign_key
+    local src_key = flip and (opts.local_key or self:primary_keys()) or foreign_key
     local include_ids
     do
       local _accum_0 = { }
