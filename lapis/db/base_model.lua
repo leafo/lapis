@@ -385,7 +385,7 @@ do
     end
     local src_key
     if flip then
-      src_key = opts.local_key or self:primary_keys()
+      src_key = opts.local_key or "id"
     else
       src_key = foreign_key
     end

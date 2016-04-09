@@ -185,7 +185,9 @@ class BaseModel
 
     -- the column named to look up values in list of our records
     src_key = if flip
-      opts.local_key or @primary_keys!
+      -- we use id as a default since we don't have accurat primary key for
+      -- model of other_records (might be mixed)
+      opts.local_key or "id"
     else
       foreign_key
 

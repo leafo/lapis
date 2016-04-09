@@ -559,7 +559,7 @@ describe "lapis.db.model.relations", ->
         [[SELECT a,b from "tags" where "post_id" in (123) order by b asc]]
       }
 
-    it "preloads has_one with key and local_key #ddd", ->
+    it "preloads has_one with key and local_key", ->
       mock_query "SELECT", {
         { id: 99, thing_email: "notleafo@leafo" }
         { id: 101, thing_email: "leafo@leafo" }
@@ -721,9 +721,13 @@ describe "lapis.db.model.relations", ->
 
       JointPosts\preload_relations {p}, "user", "second_user"
 
-  describe "broken (or confusing) #ddd", ->
-    -- these need to be fixed?
-    it "doesn't match has_many load and preload", ->
+  describe "has_one", ->
+    it "preloads when using custom keys", ->
+      mock_query "SELECT", {
+        {user_id: 100, name: "first"}
+        {user_id: 101, name: "second"}
+      }
+
       models.UserItems = class UserItems extends Model
         @primary_key: "user_id"
 
@@ -741,18 +745,18 @@ describe "lapis.db.model.relations", ->
           @id = id
           id += 1
 
-      -- the getter works as expected
       ui = UserItems 100
-      ui\get_application!
+      a = assert ui\get_application!, "expected to get relation"
+      assert.same 100, a.user_id
 
-
-      -- preloading does not
-      ui2 = UserItems 100
+      ui2 = UserItems 101
       UserItems\preload_relations {ui2}, "application"
+      a = assert ui2.application, "expected to get relation"
+      assert.same 101, a.user_id
 
       assert_queries {
         [[SELECT * from "item_applications" where "user_id" = 100 limit 1]]
-        -- Expecting new query here
+        [[SELECT * from "item_applications" where "user_id" in (101)]]
       }
 
 

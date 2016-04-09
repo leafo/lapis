@@ -152,8 +152,9 @@ has_one = (name, opts) =>
 
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
+
     foreign_key = opts.key or "#{@@singular_name!}_id"
-    local_key = opts.local_key
+    local_key = opts.local_key or @@primary_keys!
 
     preload_opts or= {}
     preload_opts.flip = true
