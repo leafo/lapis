@@ -206,7 +206,6 @@ describe "lapis.db.model.relations", ->
       }
     }
 
-
   it "should make has_many paginated getter", ->
     mock_query "SELECT", { { id: 101 } }
 
