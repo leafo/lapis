@@ -44,6 +44,7 @@ build = {
 		["lapis.cmd.templates.app_lua"] = "lapis/cmd/templates/app_lua.lua",
 		["lapis.cmd.templates.config"] = "lapis/cmd/templates/config.lua",
 		["lapis.cmd.templates.config_etlua"] = "lapis/cmd/templates/config_etlua.lua",
+		["lapis.cmd.templates.flow"] = "lapis/cmd/templates/flow.lua",
 		["lapis.cmd.templates.gitignore"] = "lapis/cmd/templates/gitignore.lua",
 		["lapis.cmd.templates.mime_types"] = "lapis/cmd/templates/mime_types.lua",
 		["lapis.cmd.templates.model"] = "lapis/cmd/templates/model.lua",
