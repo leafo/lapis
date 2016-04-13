@@ -11,9 +11,15 @@ else
   encode_base64 = (...) -> (b64 ...)
   decode_base64 = (...) -> (unb64 ...)
 
-  crypto = require "crypto"
-  hmac_sha1 = (secret, str) ->
-    crypto.hmac.digest "sha1", str, secret, true
+  if pcall require, "openssl.hmac"
+    openssl_hmac = require "openssl.hmac"
+    hmac_sha1 = (secret, str) ->
+      hmac = openssl_hmac.new secret, "sha1"
+      hmac\final str
+  else
+    crypto = require "crypto"
+    hmac_sha1 = (secret, str) ->
+      crypto.hmac.digest "sha1", str, secret, true
 
 encode_with_secret = (object, secret=config.secret, sep=".") ->
   json = require "cjson"
