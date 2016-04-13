@@ -68,8 +68,8 @@ parse_multipart = function()
   return out
 end
 local ngx_req = {
-  headers = function()
-    return ngx.req.get_headers()
+  referer = function()
+    return ngx.var.http_referer or ""
   end,
   cmd_mth = function()
     return ngx.var.request_method
@@ -80,20 +80,32 @@ local ngx_req = {
   relpath = function(t)
     return t.parsed_url.path
   end,
+  srv = function()
+    return ngx.var.server_addr
+  end,
+  built_url = function(t)
+    return build_url(t.parsed_url)
+  end,
+  headers = function()
+    return ngx.req.get_headers()
+  end,
+  method = function()
+    return ngx.var.request_method
+  end,
   scheme = function()
     return ngx.var.scheme
   end,
   port = function()
     return ngx.var.server_port
   end,
-  srv = function()
+  server_addr = function()
     return ngx.var.server_addr
   end,
   remote_addr = function()
     return ngx.var.remote_addr
   end,
-  referer = function()
-    return ngx.var.http_referer or ""
+  request_uri = function()
+    return ngx.var.request_uri
   end,
   parsed_url = function(t)
     local uri = ngx.var.request_uri
@@ -106,9 +118,6 @@ local ngx_req = {
       port = host_header and host_header:match(":(%d+)$"),
       query = ngx.var.args
     }
-  end,
-  built_url = function(t)
-    return build_url(t.parsed_url)
   end,
   params_post = function(t)
     local content_type = t.headers["content-type"] or ""
