@@ -15,9 +15,17 @@ else
   decode_base64 = function(...)
     return (unb64(...))
   end
-  local crypto = require("crypto")
-  hmac_sha1 = function(secret, str)
-    return crypto.hmac.digest("sha1", str, secret, true)
+  if pcall(require, "openssl.hmac") then
+    local openssl_hmac = require("openssl.hmac")
+    hmac_sha1 = function(secret, str)
+      local hmac = openssl_hmac.new(secret, "sha1")
+      return hmac:final(str)
+    end
+  else
+    local crypto = require("crypto")
+    hmac_sha1 = function(secret, str)
+      return crypto.hmac.digest("sha1", str, secret, true)
+    end
   end
 end
 local encode_with_secret
