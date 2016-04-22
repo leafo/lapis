@@ -1315,7 +1315,7 @@ class Posts extends Model
   }
 ```
 
-Lapis will automatically add a handful of methods for reach relation to the
+Lapis will automatically add a handful of methods for each relation to the
 model class to make fetching the associated row easy.  For example the
 `belongs_to` relation from the example above would make a `get_user` method:
 
