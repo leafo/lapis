@@ -207,6 +207,7 @@ belongs_to = function(self, name, opts)
   self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
     preload_opts = preload_opts or { }
+    preload_opts.as = name
     preload_opts.for_relation = name
     return model:include_in(objects, column_name, preload_opts)
   end
