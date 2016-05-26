@@ -3,7 +3,6 @@ local shell_escape
 shell_escape = path.shell_escape
 local NginxRunner
 do
-  local _class_0
   local _base_0 = {
     ConfigCompiler = require("lapis.cmd.nginx.config").ConfigCompiler,
     AttachedServer = require("lapis.cmd.nginx.attached_server").AttachedServer,
@@ -14,6 +13,7 @@ do
     current_server = nil,
     nginx_bin = "nginx",
     nginx_search_paths = {
+      "/opt/openresty/nginx/sbin/",
       "/usr/local/openresty/nginx/sbin/",
       "/usr/local/opt/openresty/bin/",
       "/usr/sbin/",
@@ -163,7 +163,7 @@ do
     end
   }
   _base_0.__index = _base_0
-  _class_0 = setmetatable({
+  local _class_0 = setmetatable({
     __init = function(self, opts)
       if opts == nil then
         opts = { }
