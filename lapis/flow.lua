@@ -21,14 +21,15 @@ do
   }
   _base_0.__index = _base_0
   _class_0 = setmetatable({
-    __init = function(self, _req, obj)
+    __init = function(self, _, obj)
       if obj == nil then
         obj = { }
       end
-      self._req = _req
-      assert(self._req, "flow missing request")
-      if is_flow(self._req.__class) then
-        self._req = self._req._req
+      self._ = _
+      assert(self._, "missing flow target")
+      self._req = self._
+      if is_flow(self._.__class) then
+        self._ = self._._
       end
       local old_mt = getmetatable(self)
       local proxy = setmetatable(obj, old_mt)
@@ -39,10 +40,10 @@ do
           if val ~= nil then
             return val
           end
-          val = self._req[key]
+          val = self._[key]
           if type(val) == "function" then
             val = function(_, ...)
-              return self._req[key](self._req, ...)
+              return self._[key](self._, ...)
             end
             rawset(self, key, val)
           end
@@ -66,12 +67,12 @@ do
           mt.__newindex = function(self, key, val)
             if allowed_assigns then
               if allowed_assigns[key] then
-                self._req[key] = val
+                self._[key] = val
               else
                 return rawset(self, key, val)
               end
             else
-              self._req[key] = val
+              self._[key] = val
             end
           end
         end

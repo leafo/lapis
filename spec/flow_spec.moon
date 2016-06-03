@@ -107,8 +107,8 @@ describe "lapis.flow", ->
     a = AlphaFlow r
     b = BetaFlow a
 
-    assert.same a._req, r
-    assert.same b._req, r
+    assert.same a._, r
+    assert.same b._, r
 
   it "should create a flow with another flow with inheritance", ->
     class AlphaFlow extends Flow
@@ -125,7 +125,7 @@ describe "lapis.flow", ->
     g = GammaFlow r
     b = BetaFlow g
 
-    assert.same b._req, r
+    assert.same b._, r
     b\set_something!
 
     assert.same {hello: "world"}, r
