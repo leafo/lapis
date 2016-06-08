@@ -27,11 +27,11 @@ validate_token = function(req, key)
   if not (msg) then
     return nil, "malformed csrf token"
   end
-  sig = ngx.decode_base64(sig)
-  if not (sig == ngx.hmac_sha1(config.secret, msg)) then
+  sig = decode_base64(sig)
+  if not (sig == hmac_sha1(config.secret, msg)) then
     return nil, "invalid csrf token (bad sig)"
   end
-  msg = json.decode(ngx.decode_base64(msg))
+  msg = json.decode(decode_base64(msg))
   if not (msg.key == key) then
     return nil, "invalid csrf token (bad key)"
   end
