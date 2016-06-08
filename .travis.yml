@@ -19,6 +19,7 @@ before_install:
 
 install:
   - luarocks install busted
+  - luarocks install lpeg 0.10.2
   - luarocks install moonscript
   - luarocks install luaposix
   - luarocks install date
