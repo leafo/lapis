@@ -1,8 +1,8 @@
 local insert
 insert = table.insert
 local lpeg = require("lpeglabel")
-local R, S, V, P
-R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
+local R, S, V, P, T
+R, S, V, P, T = lpeg.R, lpeg.S, lpeg.V, lpeg.P, lpeg.T
 local C, Cs, Ct, Cmt, Cg, Cb, Cc
 C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
 local encode_query_string
@@ -38,7 +38,15 @@ do
   local _class_0
   local _base_0 = {
     parse = function(self, route)
-      return self.grammar:match(route)
+      local result, label, suffix = self.grammar:match(route)
+      if result == nil then
+        local msg = "syntax error in route:"
+        msg = msg .. ("\n" .. route)
+        msg = msg .. ("\n" .. (" "):rep(route:len() - suffix:len()) .. "^")
+        msg = msg .. ("\n" .. self.__class.labels[label][2])
+        error(msg)
+      end
+      return result, label
     end,
     compile_exclude = function(self, current_p, chunks, k)
       if k == nil then
@@ -198,6 +206,17 @@ do
       return out or P(-1)
     end,
     build_grammar = function(self)
+      local expect
+      expect = function(patt, label_name)
+        for i, _des_0 in ipairs(self.__class.labels) do
+          local ln, msg
+          ln, msg = _des_0[1], _des_0[2]
+          if ln == label_name then
+            return patt + T(i)
+          end
+        end
+        return error("label not found")
+      end
       local alpha = R("az", "AZ", "__")
       local alpha_num = alpha + R("09")
       local make_var
@@ -229,8 +248,8 @@ do
         }
       end
       local splat = P("*")
-      local var = P(":") * alpha * alpha_num ^ 0
-      var = C(var) * (P("[") * C((1 - P("]")) ^ 1) * P("]")) ^ -1
+      local var = P(":") * expect(alpha * alpha_num ^ 0, "mis_name")
+      var = C(var) * (P("[") * expect(C((1 - P("]")) ^ 1), "mis_class") * expect(P("]"), "mis_close_bracket")) ^ -1
       self.var = var
       self.splat = splat
       local chunk = var / make_var + splat / make_splat
@@ -247,7 +266,7 @@ do
         "route",
         optional_literal = (1 - P(")") - V("chunk")) ^ 1 / make_lit,
         optional_route = Ct((V("chunk") + V("optional_literal")) ^ 1),
-        optional = P("(") * V("optional_route") * P(")") / make_optional,
+        optional = P("(") * expect(V("optional_route"), "mis_route") * expect(P(")"), "mis_close_paren") / make_optional,
         literal = (1 - V("chunk")) ^ 1 / make_lit,
         chunk = var / make_var + splat / make_splat + V("optional"),
         route = Ct((V("chunk") + V("literal")) ^ 1)
@@ -279,6 +298,29 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  self.labels = {
+    {
+      "mis_name",
+      "missing a variable name after the ':'"
+    },
+    {
+      "mis_class",
+      "missing a character class after the '['"
+    },
+    {
+      "mis_close_bracket",
+      "missing the closing ']'"
+    },
+    {
+      "mis_route",
+      "missing an optional route after the '('"
+    },
+    {
+      "mis_close_paren",
+      "missing the closing ')'"
+    }
+  }
   RouteParser = _class_0
 end
 local Router
