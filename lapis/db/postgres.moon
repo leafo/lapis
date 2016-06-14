@@ -231,10 +231,27 @@ _truncate = (...) ->
 parse_clause = do
   local grammar
 
+  labels = {
+    {"exp_join_body",     "expected a body after 'JOIN'"},
+    {"exp_clause",        "expected a clause after the keyword"},
+    {"mis_close_paren",   "missing the closing ')'"},
+    {"exp_oby",           "expected a 'BY' after 'ORDER'"},
+    {"exp_gby",           "expected a 'BY' after 'GROUP'"},
+    {"mis_close_squote",  "missing the closing single quote"},
+    {"mis_close_dquote",  "missing the closing double quote"},
+  }
+
   make_grammar = ->
     basic_keywords = {"where", "having", "limit", "offset"}
 
-    import P, R, C, S, Cmt, Ct, Cg, V from require "lpeglabel"
+    import P, R, C, S, Cmt, Ct, Cg, V, T from require "lpeglabel"
+
+    expect = (patt, label_name) ->
+      for i, {ln, msg} in ipairs labels
+        if ln == label_name
+          return patt + T(i)
+
+      error "label not found"
 
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
@@ -242,8 +259,8 @@ parse_clause = do
     some_white = S" \t\r\n"^1
     word = alpha_num^1
 
-    single_string = P"'" * (P"''" + (P(1) - P"'"))^0 * P"'"
-    double_string = P'"' * (P'""' + (P(1) - P'"'))^0 * P'"'
+    single_string = P"'" * (P"''" + (P(1) - P"'"))^0 * expect(P"'", "mis_close_squote")
+    double_string = P'"' * (P'""' + (P(1) - P'"'))^0 * expect(P'"', "mis_close_dquote")
     strings = single_string + double_string
 
     -- case insensitive word
@@ -260,11 +277,11 @@ parse_clause = do
       p * -alpha_num
 
     balanced_parens = P {
-      P"(" * (V(1) + strings + (P(1) - ")"))^0  * P")"
+      P"(" * (V(1) + strings + (P(1) - ")"))^0  * expect(P")", "mis_close_paren")
     }
 
-    order_by = ci"order" * some_white * ci"by" / "order"
-    group_by = ci"group" * some_white * ci"by" / "group"
+    order_by = ci"order" * some_white * expect(ci"by", "exp_oby") / "order"
+    group_by = ci"group" * some_white * expect(ci"by", "exp_gby") / "group"
 
     keyword = order_by + group_by
 
@@ -280,11 +297,11 @@ parse_clause = do
     start_join = join_type * ci"join"
 
     join_body = (balanced_parens + strings + (P(1) - start_join - keyword))^1
-    join_tuple = Ct C(start_join) * C(join_body)
+    join_tuple = Ct C(start_join) * expect(C(join_body), "exp_join_body")
 
     joins = (#start_join * Ct join_tuple^1) / (joins) -> {"join", joins}
 
-    clause = Ct (keyword * C clause_content)
+    clause = Ct (keyword * expect(C(clause_content), "exp_clause"))
     grammar = white * Ct joins^-1 * clause^0
 
   (clause) ->
@@ -292,9 +309,16 @@ parse_clause = do
 
     make_grammar! unless grammar
 
-    parsed = if tuples = grammar\match clause
-      { unpack t for t in *tuples }
+    tuples, label, suffix = grammar\match clause
 
+    if tuples == nil
+      pos = clause\len() - suffix\len() + 1
+      msg = "failed to parse clause: `#{clause}`"
+      msg ..= "\n" .. labels[label][2] .. " on index #{pos}"
+
+      return nil, msg
+
+    parsed = { unpack t for t in *tuples }
     if not parsed or (not next(parsed) and not clause\match "^%s*$")
       return nil, "failed to parse clause: `#{clause}`"
 
