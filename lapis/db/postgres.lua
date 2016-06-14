@@ -296,7 +296,7 @@ do
     }
     local P, R, C, S, Cmt, Ct, Cg, V
     do
-      local _obj_0 = require("lpeg")
+      local _obj_0 = require("lpeglabel")
       P, R, C, S, Cmt, Ct, Cg, V = _obj_0.P, _obj_0.R, _obj_0.C, _obj_0.S, _obj_0.Cmt, _obj_0.Ct, _obj_0.Cg, _obj_0.V
     end
     local alpha = R("az", "AZ", "__")
@@ -309,7 +309,7 @@ do
     local strings = single_string + double_string
     local ci
     ci = function(str)
-      S = require("lpeg").S
+      S = require("lpeglabel").S
       local p
       for c in str:gmatch(".") do
         local char = S(tostring(c:lower()) .. tostring(c:upper()))

@@ -234,7 +234,7 @@ parse_clause = do
   make_grammar = ->
     basic_keywords = {"where", "having", "limit", "offset"}
 
-    import P, R, C, S, Cmt, Ct, Cg, V from require "lpeg"
+    import P, R, C, S, Cmt, Ct, Cg, V from require "lpeglabel"
 
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
@@ -248,7 +248,7 @@ parse_clause = do
 
     -- case insensitive word
     ci = (str) ->
-      import S from require "lpeg"
+      import S from require "lpeglabel"
       local p
 
       for c in str\gmatch "."

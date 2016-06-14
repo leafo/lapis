@@ -6,7 +6,7 @@
 
 import insert from table
 
-lpeg = require "lpeg"
+lpeg = require "lpeglabel"
 
 import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg

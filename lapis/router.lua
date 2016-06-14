@@ -1,6 +1,6 @@
 local insert
 insert = table.insert
-local lpeg = require("lpeg")
+local lpeg = require("lpeglabel")
 local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P
 local C, Cs, Ct, Cmt, Cg, Cb, Cc
