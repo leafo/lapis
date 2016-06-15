@@ -20,7 +20,18 @@ BACKENDS = {
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
-    conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
+    local conn_opts = {
+      mysql_config.database,
+      mysql_config.user,
+      mysql_config.password
+    }
+    if mysql_config.host then
+      table.insert(conn_opts, mysql_config.host)
+      if mysql_config.port then
+        table.insert(conn_opts, mysql_config.port)
+      end
+    end
+    conn = assert(luasql:connect(unpack(conn_opts)))
     return function(q)
       if logger then
         logger.query(q)
