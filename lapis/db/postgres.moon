@@ -2,6 +2,7 @@ import concat from table
 import type, tostring, pairs, select from _G
 
 local raw_query
+local get_handle
 local logger
 
 import
@@ -42,7 +43,7 @@ BACKENDS = {
     pg_config = assert config.postgres, "missing postgres configuration"
     local pgmoon_conn
 
-    (str) ->
+    pgmoon_getter = ->
       pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
 
       unless pgmoon
@@ -55,6 +56,11 @@ BACKENDS = {
           after_dispatch -> pgmoon\keepalive!
         else
           pgmoon_conn = pgmoon
+
+      pgmoon
+
+    query_impl = (str) ->
+      pgmoon = pgmoon_getter!
 
       start_time = if ngx and config.measure_performance
         ngx.update_time!
@@ -71,6 +77,8 @@ BACKENDS = {
       if not res and err
         error "#{str}\n#{err}"
       res
+
+    return query_impl, pgmoon_getter
 }
 
 set_backend = (name, ...) ->
@@ -78,7 +86,7 @@ set_backend = (name, ...) ->
   unless backend
     error "Failed to find PostgreSQL backend: #{name}"
 
-  raw_query = backend ...
+  raw_query, get_handle = backend ...
 
 set_raw_query = (fn) ->
   raw_query = fn
@@ -314,6 +322,128 @@ encode_case = (exp, t, on_else) ->
   append_all buff, "\nEND"
   concat buff
 
+local wait, post
+
+do
+  local changes_sema
+  changes = {}
+  queues = {}
+  setmetatable queues, {
+    __mode: 'v'
+  }
+  pending_unlisten = {}
+  TIMEOUT = 5 * 60 -- 5 minutes
+  UNLISTEN_TIMEOUT = 15 -- seconds
+
+  set_gc = (t, finalizer) ->
+    mt = {__gc: finalizer}
+    setmetatable t, mt
+    if _G.newproxy
+      -- tables' finalizers don't work in Lua 5.1
+      mt.newproxy = _G.newproxy true
+      getmetatable(mt.newproxy).__gc = finalizer
+
+  change_channel = (action, channel) ->
+    -- push SQL command to "notifier"
+    table.insert changes, action .. " " .. escape_identifier(channel)
+    changes_sema\post!
+
+  listen_queues = ->
+    -- resume used channels
+    changes = {}
+    for channel, queue in pairs(queues)
+      if queue.sema\count! < 0
+        change_channel "LISTEN", channel
+    for channel in pairs(pending_unlisten)
+      change_channel "LISTEN", channel
+
+  notify = (channel, payload) ->
+    queue = queues[channel]
+    if queue
+      queues[channel] = nil
+      queue.payload = payload
+      sema = queue.sema
+      if sema\count! < 0
+        sema\post(-sema\count!)
+
+  notifier = ->
+    unless get_handle
+      init_db! -- replaces get_handle to default backend
+    handle = get_handle!
+    handle.sock\settimeout(TIMEOUT * 1000)
+
+    reader = ->
+      while handle
+        operation = handle\wait!
+        unless operation
+          handle = nil
+          changes_sema\post!
+          return
+        if operation.operation == 'notification'
+          notify operation.channel, operation.payload
+
+    writer = ->
+      while handle
+        changes_sema\wait TIMEOUT
+        if handle
+          for change in *changes
+            unless handle\post change
+              handle = nil
+              return
+          changes = {}
+
+    reader_co = ngx.thread.spawn reader
+    writer_co = ngx.thread.spawn writer
+
+    ngx.thread.wait reader_co, writer_co
+
+    -- timeout or other error occurred
+    listen_queues!
+    -- restart
+    ngx.timer.at 0.0, notifier
+
+  post = (channel, payload='') ->
+    query "NOTIFY " .. escape_identifier(channel) ..
+      ", " .. escape_literal(payload)
+
+  wait = (channel) ->
+    semaphore = require "ngx.semaphore"
+
+    unless changes_sema
+      -- start backgroud light thread "notifier"
+      -- which (un)listens on channels
+      -- and waits for notifications
+      changes_sema = semaphore.new!
+      ngx.timer.at 0.0, notifier
+
+    queue = queues[channel]
+    unless queue
+      queue = {
+        sema: assert semaphore.new!
+      }
+      set_gc queue, ->
+        -- Prevent losing notifications. Send UNLISTEN command after
+        -- a channel being unused for some time.
+        if not queues[channel]
+          label = {}
+          pending_unlisten[channel] = label
+          ngx.timer.at UNLISTEN_TIMEOUT, ->
+            if pending_unlisten[channel] == label
+              pending_unlisten[channel] = nil
+              if not queues[channel]
+                change_channel "UNLISTEN", channel
+
+      queues[channel] = queue
+      pending_unlisten[channel] = nil
+
+      change_channel "LISTEN", channel
+
+    while true
+      if queue.sema\wait TIMEOUT
+        break
+
+    return queue.payload
+
 {
   :connect
   :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
@@ -326,6 +456,8 @@ encode_case = (exp, t, on_else) ->
   :set_backend
   :set_raw_query
   :get_raw_query
+
+  :post, :wait,
 
   select: _select
   insert: _insert
