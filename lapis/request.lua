@@ -155,7 +155,7 @@ do
       do
         local obj = self.options.json
         if obj then
-          self.res.headers["Content-Type"] = "application/json"
+          self.res.headers["Content-Type"] = self.res.headers["Content-Type"] or "application/json"
           self.res.content = to_json(obj)
           return 
         end
