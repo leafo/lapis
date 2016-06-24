@@ -28,8 +28,11 @@ BACKENDS = {
     mysql_config = assert config.mysql, "missing mysql configuration"
 
     luasql = require("luasql.mysql").mysql!
-    conn = assert luasql\connect mysql_config.database,
-      mysql_config.user, mysql_config.password
+    conn_opts = { mysql_config.database, mysql_config.user, mysql_config.password }
+    if mysql_config.host
+      table.insert conn_opts, mysql_config.host
+      if mysql_config.port then table.insert conn_opts, mysql_config.port
+    conn = assert luasql\connect unpack(conn_opts)
 
     (q) ->
       logger.query q if logger

@@ -116,6 +116,7 @@ belongs_to = (name, opts) =>
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
     preload_opts or= {}
+    preload_opts.as = name
     preload_opts.for_relation = name
     model\include_in objects, column_name, preload_opts
 
