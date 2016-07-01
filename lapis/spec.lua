@@ -10,10 +10,20 @@ use_test_env = function(env_name)
   end
   local env = require("lapis.environment")
   setup(function()
+    local connect
+    connect = require("lapis.db").connect
+    if connect then
+      connect()
+    end
     return env.push(env_name)
   end)
   return teardown(function()
-    return env.pop()
+    env.pop()
+    local disconnect
+    disconnect = require("lapis.db").disconnect
+    if disconnect then
+      return disconnect()
+    end
   end)
 end
 local use_test_server

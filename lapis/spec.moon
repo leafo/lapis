@@ -3,8 +3,17 @@ use_test_env = (env_name="test") ->
   import setup, teardown from require "busted"
   env = require "lapis.environment"
 
-  setup -> env.push env_name
-  teardown -> env.pop!
+  setup ->
+    import connect from require "lapis.db"
+    connect! if connect
+
+    env.push env_name
+
+  teardown ->
+    env.pop!
+
+    import disconnect from require "lapis.db"
+    disconnect! if disconnect
 
 use_test_server = ->
   import setup, teardown from require "busted"
