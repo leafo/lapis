@@ -1,19 +1,23 @@
 
-use_test_env = (env_name="test") ->
+use_db_connection = ->
   import setup, teardown from require "busted"
-  env = require "lapis.environment"
 
   setup ->
     import connect from require "lapis.db"
     connect! if connect
 
-    env.push env_name
-
   teardown ->
-    env.pop!
-
     import disconnect from require "lapis.db"
     disconnect! if disconnect
+
+use_test_env = (env_name="test") ->
+  import setup, teardown from require "busted"
+  env = require "lapis.environment"
+
+  setup -> env.push env_name
+  teardown -> env.pop!
+
+  use_db_connection!
 
 use_test_server = ->
   import setup, teardown from require "busted"
@@ -21,6 +25,8 @@ use_test_server = ->
 
   setup -> load_test_server!
   teardown -> close_test_server!
+
+  use_db_connection!
 
 assert_no_queries = (fn=error"missing function") ->
   assert = require "luassert"
