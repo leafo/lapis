@@ -1,7 +1,7 @@
 import concat from table
 import type, tostring, pairs, select from _G
 
-local raw_query
+local raw_query, raw_disconnect
 local logger
 
 import
@@ -42,7 +42,7 @@ BACKENDS = {
     pg_config = assert config.postgres, "missing postgres configuration"
     local pgmoon_conn
 
-    (str) ->
+    _query = (str) ->
       pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
 
       unless pgmoon
@@ -71,6 +71,15 @@ BACKENDS = {
       if not res and err
         error "#{str}\n#{err}"
       res
+
+    _disconnect = ->
+      return unless pgmoon_conn
+
+      pgmoon_conn\disconnect!
+      pgmoon_conn = nil
+      true
+
+    _query, _disconnect
 }
 
 set_backend = (name, ...) ->
@@ -78,7 +87,7 @@ set_backend = (name, ...) ->
   unless backend
     error "Failed to find PostgreSQL backend: #{name}"
 
-  raw_query = backend ...
+  raw_query, raw_disconnect = backend ...
 
 set_raw_query = (fn) ->
   raw_query = fn
@@ -139,6 +148,11 @@ connect = ->
   init_logger!
   init_db! -- replaces raw_query to default backend
 
+disconnect = ->
+  assert raw_disconnect, "no active connection"
+  raw_disconnect!
+
+-- this default implementation is replaced when the connection is established
 raw_query = (...) ->
   connect!
   raw_query ...
@@ -316,6 +330,7 @@ encode_case = (exp, t, on_else) ->
 
 {
   :connect
+  :disconnect
   :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
   :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
   :encode_clause, :interpolate_query, :parse_clause, :format_date,

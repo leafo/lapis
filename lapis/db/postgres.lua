@@ -5,7 +5,7 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local raw_query
+local raw_query, raw_disconnect
 local logger
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
 do
@@ -47,7 +47,8 @@ local BACKENDS = {
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
     local pgmoon_conn
-    return function(str)
+    local _query
+    _query = function(str)
       local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       if not (pgmoon) then
         local Postgres
@@ -82,6 +83,16 @@ local BACKENDS = {
       end
       return res
     end
+    local _disconnect
+    _disconnect = function()
+      if not (pgmoon_conn) then
+        return 
+      end
+      pgmoon_conn:disconnect()
+      pgmoon_conn = nil
+      return true
+    end
+    return _query, _disconnect
   end
 }
 local set_backend
@@ -90,7 +101,7 @@ set_backend = function(name, ...)
   if not (backend) then
     error("Failed to find PostgreSQL backend: " .. tostring(name))
   end
-  raw_query = backend(...)
+  raw_query, raw_disconnect = backend(...)
 end
 local set_raw_query
 set_raw_query = function(fn)
@@ -176,6 +187,11 @@ local connect
 connect = function()
   init_logger()
   return init_db()
+end
+local disconnect
+disconnect = function()
+  assert(raw_disconnect, "no active connection")
+  return raw_disconnect()
 end
 raw_query = function(...)
   connect()
@@ -393,6 +409,7 @@ encode_case = function(exp, t, on_else)
 end
 return {
   connect = connect,
+  disconnect = disconnect,
   query = query,
   raw = raw,
   is_raw = is_raw,
