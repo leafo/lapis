@@ -159,7 +159,7 @@ class extends lapis.Application
       a href: @url_for("login"), "Log in"
 ```
 
-In this example `applications/user.moon` is a module that returns the
+In this example `applications/users.moon` is a module that returns the
 sub-application. The `include` class method is used to load this application
 into our root one. `include` copies all the routes of the other application,
 leaving the original untouched.
