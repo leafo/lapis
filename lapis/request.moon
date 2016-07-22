@@ -42,7 +42,7 @@ class Request
           @res\add_header k, v
 
       if obj = @options.json
-        @res.headers["Content-Type"] or= "application/json"
+        @res.headers["Content-Type"] = @options.content_type or "application/json"
         @res.content = to_json obj
         return
 
