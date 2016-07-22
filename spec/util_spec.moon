@@ -255,6 +255,91 @@ tests = {
   }
 
   {
+    -> util.trim "᠎Mongolian vowel separator᠎"
+    "Mongolian vowel separator"
+  }
+
+  {
+    -> util.trim " en quad "
+    "en quad"
+  }
+
+  {
+    -> util.trim " em quad "
+    "em quad"
+  }
+
+  {
+    -> util.trim " en space "
+    "em space"
+  }
+
+  {
+    -> util.trim " em space "
+    "em space"
+  }
+
+  {
+    -> util.trim " three-per-em space "
+    "three-per-em space"
+  }
+
+  {
+    -> util.trim " four-per-em space "
+    "four-per-em space"
+  }
+
+  {
+    -> util.trim " six-per-em space "
+    "six-per-em space"
+  }
+
+  {
+    -> util.trim " figure space "
+    "figure space"
+  }
+
+  {
+    -> util.trim " punctuation space "
+    "punctuation space"
+  }
+
+  {
+    -> util.trim " thin space "
+    "thin space"
+  }
+
+  {
+    -> util.trim " hair space "
+    "hair space"
+  }
+
+  {
+    -> util.trim "​zero width space​"
+    "zero width space"
+  }
+
+  {
+    -> util.trim " narrow no-break space "
+    "narrow no-break space"
+  }
+
+  {
+    -> util.trim " medium mathematical space "
+    "medium mathematical space"
+  }
+
+  {
+    -> util.trim "　ideographic space　"
+    "ideographic space"
+  }
+
+  {
+    -> util.trim "﻿zero width no-break space﻿"
+    "zero width no-break space"
+  }
+
+  {
     -> util.trim_filter {
       "     ", " thing ",
       yes: "    "
