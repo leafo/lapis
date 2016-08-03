@@ -1,7 +1,6 @@
 {
   title: "HTML Generation"
 }
-<div class="override_lang"></div>
 
 # HTML Generation
 
@@ -23,6 +22,37 @@ call them. The output of these functions is written into a buffer that is
 compiled in the end and returned as the result
 
 Here are some examples of the HTML generation:
+
+```lua
+div()                 -- <div></div>
+b("Hello World")      -- <b>Hello World</b>
+div("hi<br/>")        -- <div>hi&lt;br/&gt;</div>
+text("Hi!")           -- Hi!
+raw("<br/>")          -- <br/>
+
+element("table", {    -- <table width="100%"></table>
+  width = "100%"
+}, function() end)
+
+div({                 -- <div class="footer">The Foot</div>
+  class = "footer"
+}, "The Foot")
+
+input({               -- <input required/>
+  required = true
+})
+
+div(function()        -- <div>Hey</div>
+  return text("Hey")
+end)
+
+div({
+  class = "header"    -- <div class="header"><h2>My Site</h2>
+}, function()         --    <p>Welcome!</p></div>
+  h2("My Site")
+  return p("Welcome!")
+end)
+```
 
 ```moon
 div!                -- <div></div>
@@ -65,6 +95,17 @@ The `class` attribute can be passed as a table, and the class list will be
 constructed from it. The table can contain either array element, or hash
 elements:
 
+```lua
+return div({
+  class = {
+    "one",
+    "two",
+    three = false,
+    four = true
+  }
+}, "Hello world!")
+```
+
 ```moon
 div {
   class: {"one", "two", three: false, four: true}
@@ -92,6 +133,23 @@ In addition to the tag functions, a few other helper functions are also availabl
 
 If we want to generate HTML directly in our action we can use the `@html`
 method:
+
+```lua
+return {
+  ["/"] = function(self)
+    return self:html(function()
+      h1({
+        class = "header"
+      }, "Hello")
+      return div({
+        class = "body"
+      }, function()
+        return text("Welcome to my site!")
+      end)
+    end)
+  end
+}
+```
 
 ```moon
 "/": =>
@@ -141,6 +199,16 @@ The `render` option key is used to render a widget. For example you can render
 the `"index"` widget from our action by returning a table with render set to
 the name of the widget:
 
+```lua
+return {
+  ["/"] = function(self)
+    return {
+      render = "index"
+    }
+  end
+}
+```
+
 ```moon
 "/": =>
   render: "index"
@@ -148,6 +216,18 @@ the name of the widget:
 
 If the action has a name, then we can set render to `true` to load the widget
 with the same name as the action:
+
+```lua
+return {
+  [{
+    index = "/"
+  }] = function(self)
+    return {
+      render = true
+    }
+  end
+}
+```
 
 ```moon
 [index: "/"]: =>
@@ -339,6 +419,12 @@ If a string is used as the value of a content block then it will be escaped
 before written to the buffer. If you want to insert a raw string then you can
 use a builder function in conjunction with the `raw` function:
 
+```lua
+self:content_for("footer", function()
+  return raw("<pre>this wont' be escaped</pre>")
+end)
+```
+
 ```moon
 @content_for "footer", ->
   raw "<pre>this wont' be escaped</pre>"
@@ -360,6 +446,10 @@ class MyView extends Widget
 
 ## HTML Module
 
+```lua
+local html = require "lapis.html"
+```
+
 ```moon
 html = require "lapis.html"
 ```
@@ -370,6 +460,17 @@ Runs the function, `fn` in the HTML rendering context as described above.
 Returns the resulting HTML. The HTML context will automatically convert any
 reference to an undefined global variable into a function that will render the
 appropriate tag.
+
+```lua
+local render_html = require("lapis.html").render_html
+print(render_html(function()
+  return return div({
+    class = "item"
+  }, function()
+    return strong("Hello!")
+  end)
+end))
+```
 
 ```moon
 import render_html from require "lapis.html"
@@ -388,4 +489,3 @@ Escapes any HTML special characters in the string. The following are escaped:
  * `>` -- `&gt;`
  * `"` -- `&quot;`
  * `'` -- `&#039;`
-
