@@ -505,7 +505,7 @@ end)
 
 By default the session is stored in a cookie called `lapis_session`. You can
 overwrite the name of the session using the `session_name` [configuration
-variable](#configuration-and-environments). Sessions are signed with your
+variable](configuration.html). Sessions are signed with your
 application secret, which is stored in the configuration value `secret`. It is
 highly recommended to change this from the default.
 
