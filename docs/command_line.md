@@ -20,6 +20,11 @@ For example, if you have a production deployment, you might add the following fi
 return "production"
 ```
 
+```moon
+-- lapis_environment.moon
+return "production"
+```
+
 ### `lapis new`
 
 ```bash
