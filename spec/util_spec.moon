@@ -250,6 +250,11 @@ tests = {
   }
 
   {
+    -> util.trim "   hello#{" "\rep 20000}world "
+    "hello#{" "\rep 20000}world"
+  }
+
+  {
     -> util.trim_filter {
       "     ", " thing ",
       yes: "    "

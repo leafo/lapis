@@ -15,7 +15,7 @@ local validate = require("lapis.validate")
 
 local capture_errors = app_helpers.capture_errors
 
-local app = lapis.Aplication()
+local app = lapis.Application()
 
 app:match("/create-user", capture_errors(function(self)
   validate.assert_valid(self.params, {
@@ -98,7 +98,7 @@ end
 local app_helpers = require("lapis.application")
 local capture_errors = app_helpers.capture_errors
 
-local app = lapis.Aplication()
+local app = lapis.Application()
 
 app:match("/", capture_errors(function(self)
   validate.assert_valid(self.params, {

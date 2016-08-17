@@ -163,6 +163,14 @@ describe "lapis.request", ->
       assert.same [[{"items":[1,2,3,4]}]], body
       assert.same "application/json", h["Content-Type"]
 
+    it "writes json with custom content-type", ->
+      status, body, h = write ->
+        json: { item: "hi" }, content_type: "application/json; charset=utf-8"
+
+      assert.same "application/json; charset=utf-8", h["Content-Type"]
+      assert.same [[{"item":"hi"}]], body
+
+
   describe "cookies", ->
     class CookieApp extends lapis.Application
       layout: false

@@ -1,3 +1,25 @@
+local use_db_connection
+use_db_connection = function()
+  local setup, teardown
+  do
+    local _obj_0 = require("busted")
+    setup, teardown = _obj_0.setup, _obj_0.teardown
+  end
+  setup(function()
+    local connect
+    connect = require("lapis.db").connect
+    if connect then
+      return connect()
+    end
+  end)
+  return teardown(function()
+    local disconnect
+    disconnect = require("lapis.db").disconnect
+    if disconnect then
+      return disconnect()
+    end
+  end)
+end
 local use_test_env
 use_test_env = function(env_name)
   if env_name == nil then
@@ -12,9 +34,10 @@ use_test_env = function(env_name)
   setup(function()
     return env.push(env_name)
   end)
-  return teardown(function()
+  teardown(function()
     return env.pop()
   end)
+  return use_db_connection()
 end
 local use_test_server
 use_test_server = function()
@@ -31,9 +54,10 @@ use_test_server = function()
   setup(function()
     return load_test_server()
   end)
-  return teardown(function()
+  teardown(function()
     return close_test_server()
   end)
+  return use_db_connection()
 end
 local assert_no_queries
 assert_no_queries = function(fn)

@@ -167,7 +167,12 @@ uniquify = function(list)
   end)()
 end
 trim = function(str)
-  return tostring(str):match("^%s*(.-)%s*$")
+  str = tostring(str)
+  if #str > 200 then
+    return str:gsub("^%s+", ""):reverse():gsub("^%s+", ""):reverse()
+  else
+    return str:match("^%s*(.-)%s*$")
+  end
 end
 trim_all = function(tbl)
   for k, v in pairs(tbl) do

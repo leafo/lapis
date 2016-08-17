@@ -102,7 +102,13 @@ uniquify = (list) ->
     seen[item] = true
     item
 
-trim = (str) -> tostring(str)\match "^%s*(.-)%s*$"
+trim = (str) ->
+  str = tostring str
+
+  if #str > 200
+    str\gsub("^%s+", "")\reverse()\gsub("^%s+", "")\reverse()
+  else
+    str\match "^%s*(.-)%s*$"
 
 trim_all = (tbl) ->
   for k,v in pairs tbl
