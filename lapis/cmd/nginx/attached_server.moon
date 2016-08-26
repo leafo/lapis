@@ -36,6 +36,8 @@ class AttachedServer
     max_tries = 1000
     sleep_for = 0.001
 
+    start = socket.gettime!
+
     while true
       sock = socket.connect "127.0.0.1", @port
       switch server_status
@@ -53,7 +55,7 @@ class AttachedServer
 
       max_tries -= 1
       if max_tries == 0
-        error "Timed out waiting for server to #{server_status}"
+        error "Timed out waiting for server to #{server_status} (#{socket.gettime! - start})"
 
       socket.sleep sleep_for
       sleep_for = math.min 0.1, sleep_for*2
