@@ -80,6 +80,7 @@ build = {
 		["lapis.logging"] = "lapis/logging.lua",
 		["lapis.lua"] = "lapis/lua.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
+		["lapis.nginx.cache"] = "lapis/nginx/cache.lua",
 		["lapis.nginx.context"] = "lapis/nginx/context.lua",
 		["lapis.nginx.http"] = "lapis/nginx/http.lua",
 		["lapis.nginx.postgres"] = "lapis/nginx/postgres.lua",
