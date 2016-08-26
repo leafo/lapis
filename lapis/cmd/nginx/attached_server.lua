@@ -42,7 +42,7 @@ do
         server_status = "open"
       end
       local socket = require("socket")
-      local max_tries = 1000
+      local max_tries = 100
       local sleep_for = 0.001
       local start = socket.gettime()
       while true do

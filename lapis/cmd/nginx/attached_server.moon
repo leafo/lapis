@@ -33,7 +33,7 @@ class AttachedServer
 
   wait_until: (server_status="open") =>
     socket = require "socket"
-    max_tries = 1000
+    max_tries = 100
     sleep_for = 0.001
 
     start = socket.gettime!
