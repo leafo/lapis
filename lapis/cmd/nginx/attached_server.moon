@@ -34,6 +34,8 @@ class AttachedServer
   wait_until: (server_status="open") =>
     socket = require "socket"
     max_tries = 1000
+    sleep_for = 0.001
+
     while true
       sock = socket.connect "127.0.0.1", @port
       switch server_status
@@ -53,7 +55,9 @@ class AttachedServer
       if max_tries == 0
         error "Timed out waiting for server to #{server_status}"
 
-      socket.sleep 0.001
+      socket.sleep sleep_for
+      sleep_for = math.min 0.1, sleep_for*2
+
 
   wait_until_ready: => @wait_until "open"
   wait_until_closed: => @wait_until "close"

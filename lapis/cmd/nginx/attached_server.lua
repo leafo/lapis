@@ -43,6 +43,7 @@ do
       end
       local socket = require("socket")
       local max_tries = 1000
+      local sleep_for = 0.001
       while true do
         local sock = socket.connect("127.0.0.1", self.port)
         local _exp_0 = server_status
@@ -64,7 +65,8 @@ do
         if max_tries == 0 then
           error("Timed out waiting for server to " .. tostring(server_status))
         end
-        socket.sleep(0.001)
+        socket.sleep(sleep_for)
+        sleep_for = math.min(0.1, sleep_for * 2)
       end
     end,
     wait_until_ready = function(self)
