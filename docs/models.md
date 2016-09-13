@@ -471,6 +471,8 @@ This is a lower level interface to preloading models. In general we recommend
 * `many` -- set to true fetch many records for each input model instance instead of a single one
 * `value` -- a function that takes each row fetched. The return value is used in place of the row object when filling `model_instances`
 * `local_key` -- only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`
+* `order` -- the order of items when preloading a `many` preload
+* `group` -- group by clause
 
 ### `paginated(query, ...)`
 
