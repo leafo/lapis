@@ -459,6 +459,19 @@ instances of another model. This is used to preload relations in a single
 query. Returns the `model_instances` array table. Read more in [Preloading
 Associations](#preloading-associations)
 
+This is a lower level interface to preloading models. In general we recommend
+[using releations](#describing-relationships) if possible.
+
+`include_in` supports the following options, including `as` and `flip` from above:
+
+* `as` -- set the name of the property to store the associated model as
+* `flip` -- set to `true` if the named column is located on the included model
+* `where` -- a table of additional conditionals to limit the query by
+* `fields` -- set the fields returned by each included model. Taken as a fragment of SQL
+* `many` -- set to true fetch many records for each input model instance instead of a single one
+* `value` -- a function that takes each row fetched. The return value is used in place of the row object when filling `model_instances`
+* `local_key` -- only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`
+
 ### `paginated(query, ...)`
 
 Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagination).
@@ -874,14 +887,6 @@ SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
 Each `users` object will now have a `posts` field that is an array containing
 all the associated posts that were found.
 
-
-`include_in` supports the following options, including `as` and `flip` from above:
-
-* `as` -- set the name of the property to store the associated model as
-* `flip` -- set to `true` if the named column is located on the included model
-* `where` -- a table of additional conditionals to limit the query by
-* `fields` -- set the fields returned by each included model
-* `many` -- set to true fetch many records for each input model instance instead of a single one
 
 ## Constraints
 
