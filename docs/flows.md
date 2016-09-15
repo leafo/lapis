@@ -6,15 +6,15 @@
 
 The `Flow` class is a way of writing a module of methods that operates on some
 encapsulated object. You might call it a
-[mediator](https://en.wikipedia.org/wiki/Mediator_pattern).
+[mediator](https://en.wikipedia.org/wiki/Mediator_pattern). We'll call the
+encapsulated object the *contained object* in this guide.
 
-Typically we'll use flows to wrap the request object. The flow will proxy
-method calls and field reads and assignments back to the original object.
+Typically we'll use flows to wrap the request object within Lapis, but it's not
+a requirement and you can use any Lua object. The flow will proxy method calls
+and field reads and assignments back to the contained object.
 
-If this is confusing, don't worry. It's easier to understand a flow in
-example. In this example we'll use the `Flow` class standalone to demonstrate
-how it works.
-
+If this explanation is confusing, don't worry. It's easier to understand a flow
+in example. We'll use the `Flow` class standalone to demonstrate how it works.
 
 ```lua
 -- todo
@@ -70,6 +70,25 @@ handle assignments to self.
 
 ## Accessing The Contained Object
 
+The contained object is stored on `self` with the name `_` (an underscore). You
+should avoid writing to this field since the flow expects it to exist.
+
+For example, you can call `tostring` on the contained object like this:
+
+```lua
+-- todo
+```
+
+```moon
+import Flow from require "lapis.flows"
+
+class StringFlow extends Flow
+  address: =>
+    tostring @_
+
+print StringFlow({})\address!
+```
+
 ## Organizing Your Application With Flows
 
 ## Nested Flows
@@ -78,12 +97,21 @@ When you instantiate a flow from within a flow, the backing object is passed to
 the new flow to be wrapped. This means that the current flow's methods are not
 made available to the new flow.
 
-
-```moon
+```lua
+-- todo
 ```
 
 
+```moon
+my_object = { color: "blue" }
 
+class SubFlow extends Flow
+  check_object: =>
+    assert my_object == @_
 
+class OuterFlow extends Flow
+  get_sub: => SubFlow @
 
+OuterFlow(my_object)\get_sub!\check_object!
+```
 
