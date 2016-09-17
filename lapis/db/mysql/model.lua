@@ -62,7 +62,8 @@ do
         opts = last
       end
       if self.__class.timestamp and not (opts and opts.timestamp == false) then
-        values._timestamp = true
+        local time = self.__class.db.format_date()
+        values.updated_at = values.updated_at or time
       end
       return db.update(self.__class:table_name(), values, cond)
     end
@@ -126,7 +127,9 @@ do
       end
     end
     if self.timestamp then
-      values._timestamp = true
+      local time = self.db.format_date()
+      values.created_at = values.created_at or time
+      values.updated_at = values.updated_at or time
     end
     local res = db.insert(self:table_name(), values, self:primary_keys())
     if res then

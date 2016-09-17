@@ -20,7 +20,10 @@ class Model extends BaseModel
         if err = @_check_constraint key, values and values[key], values
           return nil, err
 
-    values._timestamp = true if @timestamp
+    if @timestamp
+      time = @db.format_date!
+      values.created_at or= time
+      values.updated_at or= time
 
     res = db.insert @table_name!, values, @primary_keys!
 
@@ -77,7 +80,8 @@ class Model extends BaseModel
     opts = if type(last) == "table" then last
 
     if @@timestamp and not (opts and opts.timestamp == false)
-      values._timestamp = true
+      time = @@db.format_date!
+      values.updated_at or= time
 
     db.update @@table_name!, values, cond
 
