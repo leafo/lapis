@@ -91,10 +91,44 @@ print StringFlow({})\address!
 
 ## Organizing Your Application With Flows
 
-## Nested Flows
+in lapis, an application class is where you define routes and your request
+logic. since there are so many responsibilities it easy for an applicatoin
+class to get too large to maintain. a good way of separating concerns is to use
+flows. In this case, the contained object will be the request instance. You'll
+call the flow from within your application. Because this is a common pattern,
+there's a `flow` method on the request object that makes instantiating flows
+easy.
 
-When you instantiate a flow from within a flow, the backing object is passed to
-the new flow to be wrapped. This means that the current flow's methods are not
+In this example we declare a flow class for handling logging in and registering
+on a website. From our applicaton we call the flow:
+
+```moon
+import Flow from require "lapis.flows"
+class AccountsFlow extends Flow
+  login: =>
+    -- check parameters
+    -- create the session
+    redirect_to: @url_for("homepage")
+
+  register: =>
+    -- check parameters
+    -- create the account, or return error
+    -- create a session
+    redirect_to: @url_for("homepage")
+```
+
+The structure of your application could then be:
+
+```moon
+class App extends lapis.Application
+  [login: "/login"]: capture_errors => @flow("accounts")\login!
+  [register: "/register"]: capture_errors => @flow("accounts")\register!
+```
+
+## nested flows
+
+when you instantiate a flow from within a flow, the backing object is passed to
+the new flow to be wrapped. this means that the current flow's methods are not
 made available to the new flow.
 
 ```lua
@@ -105,13 +139,13 @@ made available to the new flow.
 ```moon
 my_object = { color: "blue" }
 
-class SubFlow extends Flow
+class subflow extends flow
   check_object: =>
     assert my_object == @_
 
-class OuterFlow extends Flow
-  get_sub: => SubFlow @
+class outerflow extends flow
+  get_sub: => subflow @
 
-OuterFlow(my_object)\get_sub!\check_object!
+outerflow(my_object)\get_sub!\check_object!
 ```
 
