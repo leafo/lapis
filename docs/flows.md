@@ -125,11 +125,11 @@ class App extends lapis.Application
   [register: "/register"]: capture_errors => @flow("accounts")\register!
 ```
 
-## nested flows
+## Nested Flows
 
-when you instantiate a flow from within a flow, the backing object is passed to
-the new flow to be wrapped. this means that the current flow's methods are not
-made available to the new flow.
+When you instantiate a flow from within a flow, the backing object is wrapped
+directly by the the new flow. This means that the current flow's methods are
+not made available to the new flow.
 
 ```lua
 -- todo
@@ -139,13 +139,13 @@ made available to the new flow.
 ```moon
 my_object = { color: "blue" }
 
-class subflow extends flow
+class SubFlow extends flow
   check_object: =>
     assert my_object == @_
 
-class outerflow extends flow
+class OuterFlow extends flow
   get_sub: => subflow @
 
-outerflow(my_object)\get_sub!\check_object!
+OuterFlow(my_object)\get_sub!\check_object!
 ```
 
