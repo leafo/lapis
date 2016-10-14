@@ -26,10 +26,7 @@ serve = (app_cls) ->
 
 
   unless dispatcher
-    dispatcher = if __leda
-      require "lapis.leda"
-    else
-      require "lapis.nginx"
+    dispatcher = require "lapis.nginx"
 
   dispatcher.dispatch app
 

@@ -8,11 +8,6 @@ do
   local _obj_0 = require("lapis.cmd.nginx")
   find_nginx, start_nginx, write_config_for, get_pid = _obj_0.find_nginx, _obj_0.start_nginx, _obj_0.write_config_for, _obj_0.get_pid
 end
-local find_leda, start_leda
-do
-  local _obj_0 = require("lapis.cmd.leda")
-  find_leda, start_leda = _obj_0.find_leda, _obj_0.start_leda
-end
 local path = require("lapis.cmd.path")
 local colors = require("ansicolors")
 path = path:annotate()
@@ -102,16 +97,11 @@ actions = {
         environment = default_environment()
       end
       local nginx = find_nginx()
-      local leda = find_leda()
-      if not (nginx or leda) then
+      if not (nginx) then
         fail_with_message("can not find suitable server installation")
       end
-      if nginx then
-        write_config_for(environment)
-        return start_nginx()
-      else
-        return start_leda(environment)
-      end
+      write_config_for(environment)
+      return start_nginx()
     end
   },
   {
@@ -254,11 +244,8 @@ actions = {
       print(colors("Lapis " .. tostring(require("lapis.version"))))
       print("usage: lapis <action> [arguments]")
       local nginx = find_nginx()
-      local leda = find_leda()
       if nginx then
         print("using nginx: " .. tostring(nginx))
-      elseif leda then
-        print("using leda: " .. tostring(leda))
       else
         print("can not find suitable server installation")
       end

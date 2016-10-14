@@ -1,7 +1,6 @@
 
 import default_environment, columnize, parse_flags from require "lapis.cmd.util"
 import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
-import find_leda, start_leda from require "lapis.cmd.leda"
 
 path = require "lapis.cmd.path"
 colors = require "ansicolors"
@@ -78,17 +77,12 @@ actions = {
 
     (flags, environment=default_environment!) ->
       nginx = find_nginx!
-      leda = find_leda!
 
-      unless nginx or leda
+      unless nginx
         fail_with_message "can not find suitable server installation"
 
-      if nginx
-        write_config_for environment
-        start_nginx!
-      else
-        start_leda environment
-
+      write_config_for environment
+      start_nginx!
   }
 
   {
@@ -223,11 +217,9 @@ actions = {
       print "usage: lapis <action> [arguments]"
 
       nginx = find_nginx!
-      leda = find_leda!
+
       if nginx
         print "using nginx: #{nginx}"
-      elseif leda
-        print "using leda: #{leda}"
       else
         print "can not find suitable server installation"
 
