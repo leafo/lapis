@@ -46,7 +46,23 @@ class Actions
       return
 
     fn = assert(action[1], "action `#{action_name}' not implemented")
+    assert @check_context!
     fn @, flags, unpack rest
+
+  get_server_module: =>
+    config = require("lapis.config").get!
+    server_type = config.server or "nginx"
+    require("lapis.cmd.#{server_type}.server")
+
+  check_context: (contexts) =>
+    return true unless contexts
+
+    s = @get_server_module!
+
+    for c in *contexts
+      return true if c == s.type
+
+    nil, "command not available for selected server"
 
   execute_safe: (args) =>
     xpcall(
@@ -123,6 +139,7 @@ class Actions
       name: "build"
       usage: "build [environment]"
       help: "build config, send HUP if server running"
+      context: { "nginx" }
 
       (flags, environment=default_environment!) =>
         write_config_for environment
@@ -136,6 +153,7 @@ class Actions
       name: "hup"
       hidden: true
       help: "send HUP signal to running server"
+      context: { "nginx" }
 
       =>
         import send_hup from require "lapis.cmd.nginx"
@@ -149,6 +167,7 @@ class Actions
     {
       name: "term"
       help: "sends TERM signal to shut down a running server"
+      context: { "nginx" }
 
       =>
         import send_term from require "lapis.cmd.nginx"
@@ -164,6 +183,7 @@ class Actions
       name: "signal"
       hidden: true
       help: "send arbitrary signal to running server"
+      context: { "nginx" }
 
       (flags, signal) =>
         assert signal, "Missing signal"
@@ -180,6 +200,7 @@ class Actions
       name: "exec"
       usage: "exec <lua-string>"
       help: "execute Lua on the server"
+      context: { "nginx" }
 
       (flags, code, environment=default_environment!) =>
         @fail_with_message("missing lua-string: exec <lua-string>") unless code
