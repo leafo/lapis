@@ -151,6 +151,10 @@ describe "lapis.cmd.actions.execute", ->
         "app.moon", "mime.types", "models.moon", "nginx.conf"
       }
 
+    it "cqueues app", ->
+      cmd.execute { [0]: "lapis", "new", "--cqueues" }
+      assert_files { "app.moon", "models.moon" }
+
     it "etlua config", ->
       cmd.execute { [0]: "lapis", "new", "--etlua-config" }
 
