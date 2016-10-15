@@ -104,20 +104,25 @@ describe "lapis.cmd.actions", ->
 describe "lapis.cmd.actions.execute", ->
   import join, shell_escape from require "lapis.cmd.path"
   local cmd
-  local old_dir, new_dir
+  local old_dir, new_dir, old_package_path
   lfs = require "lfs"
 
   before_each ->
     cmd = require "lapis.cmd.actions"
     -- replace the annotated path with silent one
-    cmd.set_path require "lapis.cmd.path"
+    cmd.actions.path = require "lapis.cmd.path"
 
     old_dir = lfs.currentdir!
+
+    old_package_path = package.path
+    package.path ..= ";#{old_dir}/?.lua"
+
     new_dir = join old_dir, "spec_tmp_app"
     assert lfs.mkdir new_dir
     assert lfs.chdir new_dir
 
   after_each ->
+    package.path = old_package_path
     assert lfs.chdir old_dir
     os.execute "rm -r '#{shell_escape new_dir}'"
 
