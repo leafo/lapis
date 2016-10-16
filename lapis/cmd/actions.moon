@@ -2,7 +2,7 @@
 import default_environment, columnize,
   parse_flags, write_file_safe from require "lapis.cmd.util"
 
-import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
+import find_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 
 colors = require "ansicolors"
 
