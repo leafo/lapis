@@ -67,7 +67,26 @@ do
         return 
       end
       local fn = assert(action[1], "action `" .. tostring(action_name) .. "' not implemented")
+      assert(self:check_context())
       return fn(self, flags, unpack(rest))
+    end,
+    get_server_module = function(self)
+      local config = require("lapis.config").get()
+      local server_type = config.server or "nginx"
+      return require("lapis.cmd." .. tostring(server_type) .. ".server")
+    end,
+    check_context = function(self, contexts)
+      if not (contexts) then
+        return true
+      end
+      local s = self:get_server_module()
+      for _index_0 = 1, #contexts do
+        local c = contexts[_index_0]
+        if c == s.type then
+          return true
+        end
+      end
+      return nil, "command not available for selected server"
     end,
     execute_safe = function(self, args)
       return xpcall(function()
@@ -149,6 +168,9 @@ do
         name = "build",
         usage = "build [environment]",
         help = "build config, send HUP if server running",
+        context = {
+          "nginx"
+        },
         function(self, flags, environment)
           if environment == nil then
             environment = default_environment()
@@ -166,6 +188,9 @@ do
         name = "hup",
         hidden = true,
         help = "send HUP signal to running server",
+        context = {
+          "nginx"
+        },
         function(self)
           local send_hup
           send_hup = require("lapis.cmd.nginx").send_hup
@@ -180,6 +205,9 @@ do
       {
         name = "term",
         help = "sends TERM signal to shut down a running server",
+        context = {
+          "nginx"
+        },
         function(self)
           local send_term
           send_term = require("lapis.cmd.nginx").send_term
@@ -195,6 +223,9 @@ do
         name = "signal",
         hidden = true,
         help = "send arbitrary signal to running server",
+        context = {
+          "nginx"
+        },
         function(self, flags, signal)
           assert(signal, "Missing signal")
           local send_signal
@@ -211,6 +242,9 @@ do
         name = "exec",
         usage = "exec <lua-string>",
         help = "execute Lua on the server",
+        context = {
+          "nginx"
+        },
         function(self, flags, code, environment)
           if environment == nil then
             environment = default_environment()
