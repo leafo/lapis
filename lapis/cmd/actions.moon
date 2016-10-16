@@ -49,10 +49,36 @@ class Actions
     assert @check_context!
     fn @, flags, unpack rest
 
-  get_server_module: =>
+  execute_safe: (args) =>
+    trace = false
+
+    for v in *args
+      trace = true if v == "--trace"
+
+    if trace
+      return @execute args
+
+    xpcall(
+      -> @execute args
+      (err) ->
+        err = err\match("^.-:.-:.(.*)$") or err
+        msg = colors "%{bright red}Error:%{reset} #{err}"
+        print msg
+        print " * Run with --trace to see traceback"
+        print " * Report issues to https://github.com/leafo/lapis/issues"
+
+        os.exit 1
+    )
+
+  get_server_type: =>
     config = require("lapis.config").get!
-    server_type = config.server or "nginx"
-    require("lapis.cmd.#{server_type}.server")
+    config.server or "nginx"
+
+  get_server_module: =>
+    require "lapis.cmd.#{@get_server_type!}.server"
+
+  get_server_actions: =>
+    require "lapis.cmd.#{@get_server_type!}.actions"
 
   check_context: (contexts) =>
     return true unless contexts
@@ -63,22 +89,6 @@ class Actions
       return true if c == s.type
 
     nil, "command not available for selected server"
-
-  execute_safe: (args) =>
-    xpcall(
-      -> @execute args
-      (err) ->
-        err = err\match("^.-:.-:.(.*)$") or err unless flags.trace
-        msg = colors "%{bright red}Error:%{reset} #{err}"
-        if flags.trace
-          print debug.traceback msg, 2
-        else
-          print msg
-          print " * Run with --trace to see traceback"
-          print " * Report issues to https://github.com/leafo/lapis/issues"
-
-        os.exit 1
-    )
 
   get_action: (name) =>
     for k,v in ipairs @actions
@@ -126,13 +136,7 @@ class Actions
       help: "build config and start server"
 
       (flags, environment=default_environment!) =>
-        nginx = find_nginx!
-
-        unless nginx
-          @fail_with_message "can not find suitable server installation"
-
-        write_config_for environment
-        start_nginx!
+        @get_server_actions!.server @, flags, environment
     }
 
     {

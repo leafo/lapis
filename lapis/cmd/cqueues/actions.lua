@@ -1,3 +1,6 @@
 return {
-  new = function(flags) end
+  new = function(self, flags) end,
+  server = function(self, flags)
+    return error("not yet")
+  end
 }

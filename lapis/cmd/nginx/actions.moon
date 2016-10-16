@@ -1,3 +1,5 @@
+import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
+
 {
   new: (flags) =>
     import config_path, config_path_etlua from require("lapis.cmd.nginx").nginx_runner
@@ -11,4 +13,13 @@
       @write_file_safe config_path, require "lapis.cmd.templates.config"
 
     @write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
+
+  server: (flags, environment) =>
+    nginx = find_nginx!
+
+    unless nginx
+      @fail_with_message "can not find suitable server installation"
+
+    write_config_for environment
+    start_nginx!
 }

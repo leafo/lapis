@@ -70,10 +70,37 @@ do
       assert(self:check_context())
       return fn(self, flags, unpack(rest))
     end,
-    get_server_module = function(self)
+    execute_safe = function(self, args)
+      local trace = false
+      for _index_0 = 1, #args do
+        local v = args[_index_0]
+        if v == "--trace" then
+          trace = true
+        end
+      end
+      if trace then
+        return self:execute(args)
+      end
+      return xpcall(function()
+        return self:execute(args)
+      end, function(err)
+        err = err:match("^.-:.-:.(.*)$") or err
+        local msg = colors("%{bright red}Error:%{reset} " .. tostring(err))
+        print(msg)
+        print(" * Run with --trace to see traceback")
+        print(" * Report issues to https://github.com/leafo/lapis/issues")
+        return os.exit(1)
+      end)
+    end,
+    get_server_type = function(self)
       local config = require("lapis.config").get()
-      local server_type = config.server or "nginx"
-      return require("lapis.cmd." .. tostring(server_type) .. ".server")
+      return config.server or "nginx"
+    end,
+    get_server_module = function(self)
+      return require("lapis.cmd." .. tostring(self:get_server_type()) .. ".server")
+    end,
+    get_server_actions = function(self)
+      return require("lapis.cmd." .. tostring(self:get_server_type()) .. ".actions")
     end,
     check_context = function(self, contexts)
       if not (contexts) then
@@ -87,24 +114,6 @@ do
         end
       end
       return nil, "command not available for selected server"
-    end,
-    execute_safe = function(self, args)
-      return xpcall(function()
-        return self:execute(args)
-      end, function(err)
-        if not (flags.trace) then
-          err = err:match("^.-:.-:.(.*)$") or err
-        end
-        local msg = colors("%{bright red}Error:%{reset} " .. tostring(err))
-        if flags.trace then
-          print(debug.traceback(msg, 2))
-        else
-          print(msg)
-          print(" * Run with --trace to see traceback")
-          print(" * Report issues to https://github.com/leafo/lapis/issues")
-        end
-        return os.exit(1)
-      end)
     end,
     get_action = function(self, name)
       for k, v in ipairs(self.actions) do
@@ -156,12 +165,7 @@ do
           if environment == nil then
             environment = default_environment()
           end
-          local nginx = find_nginx()
-          if not (nginx) then
-            self:fail_with_message("can not find suitable server installation")
-          end
-          write_config_for(environment)
-          return start_nginx()
+          return self:get_server_actions().server(self, flags, environment)
         end
       },
       {
