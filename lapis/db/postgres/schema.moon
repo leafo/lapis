@@ -79,6 +79,9 @@ create_index = (tname, ...) ->
   if options.where
     append_all buffer, " WHERE ", options.where
 
+  if options.when
+    error "did you mean create_index `where`?"
+
   append_all buffer, ";"
   db.query concat buffer
 
