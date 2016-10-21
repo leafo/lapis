@@ -24,7 +24,6 @@ serve = (app_cls) ->
 
     app_cache[name] = app
 
-
   unless dispatcher
     dispatcher = require "lapis.nginx"
 
