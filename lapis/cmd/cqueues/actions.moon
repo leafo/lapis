@@ -9,17 +9,8 @@
     push environment
 
     config = require("lapis.config").get!
-    cls = config.app_class or "app"
-
-    app_cls = require(cls)
-
-    app = if app_cls.__base -- is a class
-      app_cls!
-    else
-      app_cls\build_router!
-      app_cls
-
-    start_server app
+    app_module = config.app_class or "app"
+    start_server app_module
 
     pop!
 }
