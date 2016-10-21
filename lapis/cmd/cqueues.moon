@@ -14,6 +14,8 @@ start_server =  (app_module) ->
   http_server = require "http.server"
   import dispatch from require "lapis.cqueues"
 
+  package.loaded["lapis.running_server"] = "cqueues"
+
   load_app = ->
     app_cls = if type(app_module) == "string"
       require(app_module)
@@ -52,6 +54,7 @@ start_server =  (app_module) ->
   bound_port = select 3, server\localname!
   print "Listening on #{bound_port}\n"
   assert server\loop!
+  package.loaded["lapis.running_server"] = nil
 
 {
   type: "cqueues"

@@ -95,6 +95,7 @@ build = {
 		["lapis.spec.server"] = "lapis/spec/server.lua",
 		["lapis.spec.shared"] = "lapis/spec/shared.lua",
 		["lapis.spec.stack"] = "lapis/spec/stack.lua",
+		["lapis.time"] = "lapis/time.lua",
 		["lapis.util"] = "lapis/util.lua",
 		["lapis.util.encoding"] = "lapis/util/encoding.lua",
 		["lapis.util.functions"] = "lapis/util/functions.lua",

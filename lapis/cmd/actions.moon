@@ -256,7 +256,6 @@ class Actions
           write: (_, ...) -> assert @write_file_safe ...
           mod_to_path: (mod) =>
             mod\gsub "%.", "/"
-
         }
 
         if tpl.check_args
