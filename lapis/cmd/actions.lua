@@ -3,11 +3,6 @@ do
   local _obj_0 = require("lapis.cmd.util")
   default_environment, columnize, parse_flags, write_file_safe = _obj_0.default_environment, _obj_0.columnize, _obj_0.parse_flags, _obj_0.write_file_safe
 end
-local find_nginx, start_nginx, write_config_for, get_pid
-do
-  local _obj_0 = require("lapis.cmd.nginx")
-  find_nginx, start_nginx, write_config_for, get_pid = _obj_0.find_nginx, _obj_0.start_nginx, _obj_0.write_config_for, _obj_0.get_pid
-end
 local colors = require("ansicolors")
 local Actions
 do
@@ -67,7 +62,7 @@ do
         return 
       end
       local fn = assert(action[1], "action `" .. tostring(action_name) .. "' not implemented")
-      assert(self:check_context())
+      assert(self:check_context(action.context))
       return fn(self, flags, unpack(rest))
     end,
     execute_safe = function(self, args)
@@ -179,6 +174,8 @@ do
           if environment == nil then
             environment = default_environment()
           end
+          local write_config_for
+          write_config_for = require("lapis.cmd.nginx").write_config_for
           write_config_for(environment)
           local send_hup
           send_hup = require("lapis.cmd.nginx").send_hup
@@ -256,8 +253,11 @@ do
           if not (code) then
             self:fail_with_message("missing lua-string: exec <lua-string>")
           end
-          local attach_server
-          attach_server = require("lapis.cmd.nginx").attach_server
+          local attach_server, get_pid
+          do
+            local _obj_0 = require("lapis.cmd.nginx")
+            attach_server, get_pid = _obj_0.attach_server, _obj_0.get_pid
+          end
           if not (get_pid()) then
             print(colors("%{green}Using temporary server..."))
           end
@@ -322,6 +322,8 @@ do
         function(self)
           print(colors("Lapis " .. tostring(require("lapis.version"))))
           print("usage: lapis <action> [arguments]")
+          local find_nginx
+          find_nginx = require("lapis.cmd.nginx").find_nginx
           local nginx = find_nginx()
           if nginx then
             print("using nginx: " .. tostring(nginx))

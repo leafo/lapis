@@ -2,7 +2,6 @@
 import default_environment, columnize,
   parse_flags, write_file_safe from require "lapis.cmd.util"
 
-import find_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 
 colors = require "ansicolors"
 
@@ -46,7 +45,7 @@ class Actions
       return
 
     fn = assert(action[1], "action `#{action_name}' not implemented")
-    assert @check_context!
+    assert @check_context action.context
     fn @, flags, unpack rest
 
   execute_safe: (args) =>
@@ -146,6 +145,7 @@ class Actions
       context: { "nginx" }
 
       (flags, environment=default_environment!) =>
+        import write_config_for from require "lapis.cmd.nginx"
         write_config_for environment
 
         import send_hup from require "lapis.cmd.nginx"
@@ -208,7 +208,8 @@ class Actions
 
       (flags, code, environment=default_environment!) =>
         @fail_with_message("missing lua-string: exec <lua-string>") unless code
-        import attach_server from require "lapis.cmd.nginx"
+
+        import attach_server, get_pid from require "lapis.cmd.nginx"
 
         unless get_pid!
           print colors "%{green}Using temporary server..."
@@ -274,6 +275,8 @@ class Actions
       =>
         print colors "Lapis #{require "lapis.version"}"
         print "usage: lapis <action> [arguments]"
+
+        import find_nginx from require "lapis.cmd.nginx"
 
         nginx = find_nginx!
 
