@@ -1,5 +1,3 @@
-local to_json
-to_json = require("lapis.util").to_json
 local module_reset
 module_reset = function()
   local keep
@@ -37,34 +35,16 @@ do
   local _class_0
   local _base_0 = {
     attach_server = function(self, env, overrides)
-      local thread = require("cqueues.thread")
-      assert(not self.current_thread, "there's already a server thread")
-      self.current_thread, self.thread_socket = assert(thread.start(function(sock, env, overrides)
-        local from_json
-        from_json = require("lapis.util").from_json
-        local push, pop
-        do
-          local _obj_0 = require("lapis.environment")
-          push, pop = _obj_0.push, _obj_0.pop
-        end
-        local start_server
-        start_server = require("lapis.cmd.cqueues").start_server
-        overrides = from_json(overrides)
-        if not (next(overrides)) then
-          overrides = nil
-        end
-        push(env, overrides)
-        local config = require("lapis.config").get()
-        local app_module = config.app_class or "app"
-        return start_server(app_module)
-      end, env, to_json(overrides or { })))
-      return {
-        thread = self.current_thread,
-        socket = self.thread_socket
-      }
+      assert(not self.current_server, "there's already a server thread")
+      local AttachedServer
+      AttachedServer = require("lapis.cmd.cqueues.attached_server").AttachedServer
+      local server = AttachedServer()
+      server:start(env, overrides)
+      self.current_server = server
+      return self.current_server
     end,
     detach_server = function(self)
-      return assert(self.current_thread, "no current thread")
+      return assert(self.current_server, "no current server")
     end
   }
   _base_0.__index = _base_0
