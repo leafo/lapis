@@ -9,12 +9,23 @@ module_reset = ->
 
     true, count
 
-start_server =  (app_module) ->
+class Server
+  new: (@server) =>
+
+  stop: =>
+    @server\close!
+
+  start: =>
+    port = select 3, @server\localname!
+    print "Listening on #{port}"
+    package.loaded["lapis.running_server"] = "cqueues"
+    assert @server\loop!
+    package.loaded["lapis.running_server"] = nil
+
+create_server = (app_module) ->
   config = require("lapis.config").get!
   http_server = require "http.server"
   import dispatch from require "lapis.cqueues"
-
-  package.loaded["lapis.running_server"] = "cqueues"
 
   load_app = ->
     app_cls = if type(app_module) == "string"
@@ -52,12 +63,14 @@ start_server =  (app_module) ->
       assert io.stderr\write msg, "\n"
   }
 
-  bound_port = select 3, server\localname!
-  print "Listening on #{bound_port}\n"
-  assert server\loop!
-  package.loaded["lapis.running_server"] = nil
+  Server server
+
+start_server =  (...) ->
+  server = create_server ...
+  server\start!
 
 {
   type: "cqueues"
+  :create_server
   :start_server
 }

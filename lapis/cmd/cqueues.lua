@@ -30,13 +30,45 @@ module_reset = function()
     return true, count
   end
 end
-local start_server
-start_server = function(app_module)
+local Server
+do
+  local _class_0
+  local _base_0 = {
+    stop = function(self)
+      return self.server:close()
+    end,
+    start = function(self)
+      local port = select(3, self.server:localname())
+      print("Listening on " .. tostring(port))
+      package.loaded["lapis.running_server"] = "cqueues"
+      assert(self.server:loop())
+      package.loaded["lapis.running_server"] = nil
+    end
+  }
+  _base_0.__index = _base_0
+  _class_0 = setmetatable({
+    __init = function(self, server)
+      self.server = server
+    end,
+    __base = _base_0,
+    __name = "Server"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  Server = _class_0
+end
+local create_server
+create_server = function(app_module)
   local config = require("lapis.config").get()
   local http_server = require("http.server")
   local dispatch
   dispatch = require("lapis.cqueues").dispatch
-  package.loaded["lapis.running_server"] = "cqueues"
   local load_app
   load_app = function()
     local app_cls
@@ -78,12 +110,15 @@ start_server = function(app_module)
       return assert(io.stderr:write(msg, "\n"))
     end
   })
-  local bound_port = select(3, server:localname())
-  print("Listening on " .. tostring(bound_port) .. "\n")
-  assert(server:loop())
-  package.loaded["lapis.running_server"] = nil
+  return Server(server)
+end
+local start_server
+start_server = function(...)
+  local server = create_server(...)
+  return server:start()
 end
 return {
   type = "cqueues",
+  create_server = create_server,
   start_server = start_server
 }
