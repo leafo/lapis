@@ -92,7 +92,7 @@ do
       return config.server or "nginx"
     end,
     get_server_module = function(self)
-      return require("lapis.cmd." .. tostring(self:get_server_type()) .. ".server")
+      return require("lapis.cmd." .. tostring(self:get_server_type()))
     end,
     get_server_actions = function(self)
       return require("lapis.cmd." .. tostring(self:get_server_type()) .. ".actions")
@@ -108,7 +108,7 @@ do
           return true
         end
       end
-      return nil, "command not available for selected server"
+      return nil, "command not available for selected server (using " .. tostring(s.type) .. ", needs " .. tostring(table.concat(contexts, ", ")) .. ")"
     end,
     get_action = function(self, name)
       for k, v in ipairs(self.actions) do

@@ -74,7 +74,7 @@ class Actions
     config.server or "nginx"
 
   get_server_module: =>
-    require "lapis.cmd.#{@get_server_type!}.server"
+    require "lapis.cmd.#{@get_server_type!}"
 
   get_server_actions: =>
     require "lapis.cmd.#{@get_server_type!}.actions"
@@ -87,7 +87,7 @@ class Actions
     for c in *contexts
       return true if c == s.type
 
-    nil, "command not available for selected server"
+    nil, "command not available for selected server (using #{s.type}, needs #{table.concat contexts, ", "})"
 
   get_action: (name) =>
     for k,v in ipairs @actions
