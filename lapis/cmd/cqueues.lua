@@ -35,6 +35,8 @@ do
   local _class_0
   local _base_0 = {
     attach_server = function(self, env, overrides)
+      overrides = overrides or { }
+      overrides.logging = false
       assert(not self.current_server, "there's already a server thread")
       local AttachedServer
       AttachedServer = require("lapis.cmd.cqueues.attached_server").AttachedServer
@@ -71,8 +73,9 @@ do
       return self.server:close()
     end,
     start = function(self)
+      local logger = require("lapis.logging")
       local port = select(3, self.server:localname())
-      print("Listening on " .. tostring(port))
+      logger.start_server(port)
       package.loaded["lapis.running_server"] = "cqueues"
       assert(self.server:loop())
       package.loaded["lapis.running_server"] = nil

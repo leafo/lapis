@@ -10,6 +10,9 @@ module_reset = ->
 
 class Runner
   attach_server: (env, overrides) =>
+    overrides or= {}
+    overrides.logging = false
+
     assert not @current_server, "there's already a server thread"
     import AttachedServer from require "lapis.cmd.cqueues.attached_server"
     server = AttachedServer!
@@ -27,8 +30,9 @@ class Server
     @server\close!
 
   start: =>
+    logger = require "lapis.logging"
     port = select 3, @server\localname!
-    print "Listening on #{port}"
+    logger.start_server port
     package.loaded["lapis.running_server"] = "cqueues"
     assert @server\loop!
     package.loaded["lapis.running_server"] = nil
