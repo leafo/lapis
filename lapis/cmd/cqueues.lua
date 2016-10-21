@@ -1,3 +1,5 @@
+local to_json
+to_json = require("lapis.util").to_json
 local module_reset
 module_reset = function()
   local keep
@@ -29,6 +31,57 @@ module_reset = function()
     end
     return true, count
   end
+end
+local Runner
+do
+  local _class_0
+  local _base_0 = {
+    attach_server = function(self, env, overrides)
+      local thread = require("cqueues.thread")
+      assert(not self.current_thread, "there's already a server thread")
+      self.current_thread, self.thread_socket = assert(thread.start(function(sock, env, overrides)
+        local from_json
+        from_json = require("lapis.util").from_json
+        local push, pop
+        do
+          local _obj_0 = require("lapis.environment")
+          push, pop = _obj_0.push, _obj_0.pop
+        end
+        local start_server
+        start_server = require("lapis.cmd.cqueues").start_server
+        overrides = from_json(overrides)
+        if not (next(overrides)) then
+          overrides = nil
+        end
+        push(env, overrides)
+        local config = require("lapis.config").get()
+        local app_module = config.app_class or "app"
+        return start_server(app_module)
+      end, env, to_json(overrides or { })))
+      return {
+        thread = self.current_thread,
+        socket = self.thread_socket
+      }
+    end,
+    detach_server = function(self)
+      return assert(self.current_thread, "no current thread")
+    end
+  }
+  _base_0.__index = _base_0
+  _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "Runner"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  Runner = _class_0
 end
 local Server
 do
@@ -120,5 +173,6 @@ end
 return {
   type = "cqueues",
   create_server = create_server,
-  start_server = start_server
+  start_server = start_server,
+  runner = Runner()
 }

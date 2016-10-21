@@ -129,7 +129,16 @@ do
   _class_0 = setmetatable({
     __init = function(self, runner)
       self.runner = runner
-      self.runner = self.runner or require("lapis.cmd.nginx").nginx_runner
+      if not (self.runner) then
+        local actions
+        actions = require("lapis.cmd.actions").actions
+        local _exp_0 = actions:get_server_type()
+        if "cqueues" == _exp_0 then
+          self.runner = require("lapis.cmd.cqueues").runner
+        else
+          self.runner = require("lapis.cmd.nginx").nginx_runner
+        end
+      end
     end,
     __base = _base_0,
     __name = "SpecServer"

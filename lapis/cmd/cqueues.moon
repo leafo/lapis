@@ -1,4 +1,6 @@
 
+import to_json from require "lapis.util"
+
 module_reset = ->
   keep = {k, true for k in pairs package.loaded}
   ->
@@ -8,6 +10,38 @@ module_reset = ->
       package.loaded[mod] = nil
 
     true, count
+
+class Runner
+  attach_server: (env, overrides) =>
+    thread = require "cqueues.thread"
+    assert not @current_thread, "there's already a server thread"
+    -- TODO: add message passing for server
+
+    @current_thread, @thread_socket = assert thread.start(
+      (sock, env, overrides using nil) ->
+        import from_json from require "lapis.util"
+        import push, pop from require "lapis.environment"
+        import start_server from require "lapis.cmd.cqueues"
+
+        overrides = from_json overrides
+        overrides = nil unless next overrides
+
+        push env, overrides
+
+        config = require("lapis.config").get!
+        app_module = config.app_class or "app"
+        start_server app_module
+
+      env, to_json overrides or {}
+    )
+
+    {
+      thread: @current_thread
+      socket: @thread_socket
+    }
+
+  detach_server: =>
+    assert @current_thread, "no current thread"
 
 class Server
   new: (@server) =>
@@ -73,4 +107,5 @@ start_server =  (...) ->
   type: "cqueues"
   :create_server
   :start_server
+  runner:  Runner!
 }
