@@ -7,8 +7,7 @@ get_sleep = function()
   if ngx then
     return ngx.sleep
   end
-  require("socket")
-  return socket.sleep
+  return require("socket").sleep
 end
 return {
   sleep = get_sleep()
