@@ -31,6 +31,7 @@ start_server =  (app_module) ->
   onstream = if config.code_cache == false or config.code_cache == "off"
     reset = module_reset!
     (stream) =>
+      reset!
       app = load_app!
       dispatch app, @, stream
   else

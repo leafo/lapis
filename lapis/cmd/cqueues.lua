@@ -56,6 +56,7 @@ start_server = function(app_module)
   if config.code_cache == false or config.code_cache == "off" then
     local reset = module_reset()
     onstream = function(self, stream)
+      reset()
       local app = load_app()
       return dispatch(app, self, stream)
     end
