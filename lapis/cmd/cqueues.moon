@@ -1,3 +1,14 @@
+
+module_reset = ->
+  keep = {k, true for k in pairs package.loaded}
+  ->
+    count = 0
+    for mod in *[k for k in pairs package.loaded when not keep[k]]
+      count += 1
+      package.loaded[mod] = nil
+
+    true, count
+
 start_server =  (app_module) ->
   config = require("lapis.config").get!
   http_server = require "http.server"
@@ -16,10 +27,10 @@ start_server =  (app_module) ->
       app_cls
 
   onstream = if config.code_cache == false or config.code_cache == "off"
-    error "not yet"
-    -- app = load_app!
-    -- (stream) =>
-    --   dispatch app, @, stream
+    reset = module_reset!
+    (stream) =>
+      app = load_app!
+      dispatch app, @, stream
   else
     app = load_app!
     (stream) => dispatch app, @, stream

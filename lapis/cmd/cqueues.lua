@@ -1,3 +1,35 @@
+local module_reset
+module_reset = function()
+  local keep
+  do
+    local _tbl_0 = { }
+    for k in pairs(package.loaded) do
+      _tbl_0[k] = true
+    end
+    keep = _tbl_0
+  end
+  return function()
+    local count = 0
+    local _list_0
+    do
+      local _accum_0 = { }
+      local _len_0 = 1
+      for k in pairs(package.loaded) do
+        if not keep[k] then
+          _accum_0[_len_0] = k
+          _len_0 = _len_0 + 1
+        end
+      end
+      _list_0 = _accum_0
+    end
+    for _index_0 = 1, #_list_0 do
+      local mod = _list_0[_index_0]
+      count = count + 1
+      package.loaded[mod] = nil
+    end
+    return true, count
+  end
+end
 local start_server
 start_server = function(app_module)
   local config = require("lapis.config").get()
@@ -21,7 +53,11 @@ start_server = function(app_module)
   end
   local onstream
   if config.code_cache == false or config.code_cache == "off" then
-    onstream = error("not yet")
+    local reset = module_reset()
+    onstream = function(self, stream)
+      local app = load_app()
+      return dispatch(app, self, stream)
+    end
   else
     local app = load_app()
     onstream = function(self, stream)
