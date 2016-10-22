@@ -9,6 +9,17 @@ normalize_headers = do
     setmetatable {normalize(k), v for k,v in pairs t}, __index: (name) =>
       rawget @, normalize name
 
+add_cookie = (headers, name, val) ->
+  import escape from require "lapis.util"
+  assign = "#{escape name}=#{escape val}"
+
+  if old = headers.Cookie
+    headers.Cookie = "#{old}; #{assign}"
+  else
+    headers.Cookie = assign
+
+  opts
+
 -- returns the result of request using app
 -- mock_request App, "/hello"
 -- mock_request App, "/hello", { host: "leafo.net" }
@@ -69,6 +80,11 @@ mock_request = (app_cls, url, opts={}) ->
 
   if opts.post
     headers["Content-type"] = "application/x-www-form-urlencoded"
+
+  if opts.session
+    config = require("lapis.config").get!
+    import encode_session from require "lapis.session"
+    add_cookie headers, config.session_name, encode_session opts.session
 
   if opts.headers
     for k,v in pairs opts.headers

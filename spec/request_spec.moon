@@ -29,6 +29,22 @@ describe "lapis.spec.request", ->
         }
       }
 
+    it "should mock request with session", ->
+      class SessionApp extends lapis.Application
+        "/test-session": =>
+          import flatten_session from require "lapis.session"
+          assert.same {
+            color: "hello"
+            height: {1,2,3,4}
+          }, flatten_session @session
+
+      mock_request SessionApp, "/test-session", {
+        session: {
+          color: "hello"
+          height: {1,2,3,4}
+        }
+      }
+
   describe "mock_action action", ->
     it "should mock action", ->
       assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
