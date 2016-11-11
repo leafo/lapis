@@ -164,26 +164,24 @@ do
         end
       end
     end
-    if not (return_all) then
-      for k, v in pairs(values) do
-        local _continue_0 = false
-        repeat
-          if v == db.NULL then
-            nil_fields = nil_fields or { }
-            nil_fields[k] = true
-            _continue_0 = true
-            break
-          elseif db.is_raw(v) then
-            returning = returning or {
-              self:primary_keys()
-            }
-            table.insert(returning, k)
-          end
+    for k, v in pairs(values) do
+      local _continue_0 = false
+      repeat
+        if v == db.NULL then
+          nil_fields = nil_fields or { }
+          nil_fields[k] = true
           _continue_0 = true
-        until true
-        if not _continue_0 then
           break
+        elseif db.is_raw(v) then
+          returning = returning or {
+            self:primary_keys()
+          }
+          table.insert(returning, k)
         end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
     local res
