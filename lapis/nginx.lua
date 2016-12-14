@@ -109,7 +109,8 @@ local ngx_req = {
   end,
   parsed_url = function(t)
     local uri = ngx.var.request_uri
-    uri = uri:match("(.-)%?") or uri
+    pos = uri:find("?")
+    uri = pos and uri.sub(1, pos-1) or uri
     local host_header = ngx.var.http_host
     return {
       scheme = ngx.var.scheme,
