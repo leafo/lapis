@@ -66,7 +66,8 @@ ngx_req = {
 
   parsed_url: (t) ->
     uri = ngx.var.request_uri
-    uri = uri\match("(.-)%?") or uri
+    pos = uri\find("?")
+    uri = pos and uri\sub(1, pos-1) or uri
     host_header = ngx.var.http_host
 
     {
