@@ -116,9 +116,11 @@ class Actions
         if flags.lua
           @write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
           @write_file_safe "models.lua", require "lapis.cmd.templates.models_lua"
+          @write_file_safe "config.lua", require "lapis.cmd.templates.app_config_lua"
         else
           @write_file_safe "app.moon", require "lapis.cmd.templates.app"
           @write_file_safe "models.moon", require "lapis.cmd.templates.models"
+          @write_file_safe "config.moon", require "lapis.cmd.templates.app_config"
 
         if flags.git
           @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") flags
