@@ -15,7 +15,10 @@ class Model extends BaseModel
         if err = @_check_constraint key, values and values[key], values
           return nil, err
 
-    values._timestamp = true if @timestamp
+    if @timestamp
+      time = @db.format_date!
+      values.created_at or= time
+      values.updated_at or= time
 
     local returning, return_all, nil_fields
 
@@ -28,15 +31,14 @@ class Model extends BaseModel
         for field in *opts.returning
           table.insert returning, field
 
-    unless return_all
-      for k, v in pairs values
-        if v == db.NULL
-          nil_fields or= {}
-          nil_fields[k] = true
-          continue
-        elseif db.is_raw v
-          returning or= {@primary_keys!}
-          table.insert returning, k
+    for k, v in pairs values
+      if v == db.NULL
+        nil_fields or= {}
+        nil_fields[k] = true
+        continue
+      elseif db.is_raw v
+        returning or= {@primary_keys!}
+        table.insert returning, k
 
     res = if returning
       db.insert @table_name!, values, unpack returning
@@ -93,7 +95,8 @@ class Model extends BaseModel
     opts = if type(last) == "table" then last
 
     if @@timestamp and not (opts and opts.timestamp == false)
-      values._timestamp = true
+      time = @@db.format_date!
+      values.updated_at or= time
 
     local returning
     for k, v in pairs values

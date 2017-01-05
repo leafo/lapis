@@ -2,6 +2,9 @@
 use_db_connection = ->
   import setup, teardown from require "busted"
 
+  config = require("lapis.config").get!
+  return unless config.postgres or config.mysql
+
   setup ->
     import connect from require "lapis.db"
     connect! if connect

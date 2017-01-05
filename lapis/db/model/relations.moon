@@ -45,6 +45,9 @@ clear_loaded_relation = (item, name) ->
     loaded[name] = nil
   true
 
+relation_is_loaded = (item, name) ->
+  item[name] or item[LOADED_KEY] and item[LOADED_KEY][name]
+
 get_relations_class = (model) ->
   parent = model.__parent
   unless parent
@@ -329,5 +332,5 @@ add_relations = (relations) =>
 
 {
   :relation_builders, :find_relation, :clear_loaded_relation, :LOADED_KEY
-  :add_relations, :get_relations_class, :mark_loaded_relations
+  :add_relations, :get_relations_class, :mark_loaded_relations, :relation_is_loaded
 }

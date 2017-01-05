@@ -5,6 +5,10 @@ use_db_connection = function()
     local _obj_0 = require("busted")
     setup, teardown = _obj_0.setup, _obj_0.teardown
   end
+  local config = require("lapis.config").get()
+  if not (config.postgres or config.mysql) then
+    return 
+  end
   setup(function()
     local connect
     connect = require("lapis.db").connect

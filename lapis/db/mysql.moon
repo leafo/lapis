@@ -224,13 +224,6 @@ _select = (str, ...) ->
 
 
 _insert = (tbl, values, ...) ->
-  if values._timestamp
-    values._timestamp = nil
-    time = format_date!
-
-    values.created_at or= time
-    values.updated_at or= time
-
   buff = {
     "INSERT INTO "
     escape_identifier(tbl)
@@ -241,10 +234,6 @@ _insert = (tbl, values, ...) ->
   raw_query concat buff
 
 _update = (table, values, cond, ...) ->
-  if values._timestamp
-    values._timestamp = nil
-    values.updated_at or= format_date!
-
   buff = {
     "UPDATE "
     escape_identifier(table)

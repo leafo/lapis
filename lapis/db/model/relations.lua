@@ -82,6 +82,10 @@ clear_loaded_relation = function(item, name)
   end
   return true
 end
+local relation_is_loaded
+relation_is_loaded = function(item, name)
+  return item[name] or item[LOADED_KEY] and item[LOADED_KEY][name]
+end
 local get_relations_class
 get_relations_class = function(model)
   local parent = model.__parent
@@ -481,5 +485,6 @@ return {
   LOADED_KEY = LOADED_KEY,
   add_relations = add_relations,
   get_relations_class = get_relations_class,
-  mark_loaded_relations = mark_loaded_relations
+  mark_loaded_relations = mark_loaded_relations,
+  relation_is_loaded = relation_is_loaded
 }

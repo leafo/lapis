@@ -20,7 +20,6 @@ encode_session = (tbl, secret=config.secret) ->
 
 get_session = (r, secret=config.secret) ->
   cookie = r.cookies[config.session_name]
-
   return nil, "no cookie" unless cookie
 
   real_cookie, sig = cookie\match "^(.*)\n%-%-(.*)$"

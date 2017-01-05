@@ -23,11 +23,7 @@ serve = function(app_cls)
     app_cache[name] = app
   end
   if not (dispatcher) then
-    if __leda then
-      dispatcher = require("lapis.leda")
-    else
-      dispatcher = require("lapis.nginx")
-    end
+    dispatcher = require("lapis.nginx")
   end
   return dispatcher.dispatch(app)
 end

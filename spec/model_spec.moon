@@ -351,14 +351,32 @@ describe "lapis.db.model", ->
     }
 
   it "should create model with returning *", ->
-    mock_query "INSERT", { { id: 101, color: "blue" } }
+    mock_query "INSERT", { { id: 101, color: "gotya" } }
 
     class Hi extends Model
-    Hi\create { color: "blue" }, returning: "*"
+    row = Hi\create { color: "blue" }, returning: "*"
 
     assert_queries {
       [[INSERT INTO "hi" ("color") VALUES ('blue') RETURNING *]]
     }
+
+    assert.same {
+      id: 101
+      color: "gotya"
+    }, row
+
+  it "strips db.NULL when creating with return *", ->
+    mock_query "INSERT", { { id: 101 } }
+    class Hi extends Model
+    row = Hi\create { color: db.NULL }, returning: "*"
+
+    assert_queries {
+      [[INSERT INTO "hi" ("color") VALUES (NULL) RETURNING *]]
+    }
+
+    assert.same {
+      id: 101
+    }, row
 
   it "should refresh model", ->
     class Things extends Model

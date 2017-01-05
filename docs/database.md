@@ -116,6 +116,8 @@ app:match("/", function()
   local res = db.query("select * from my_table where id = ?", 10)
   return "ok!"
 end)
+
+return app
 ```
 
 ```moon
@@ -142,6 +144,8 @@ app:match("/", function()
   local row = MyTable:find(10)
   return "ok!"
 end)
+
+return app
 ```
 
 ```moon

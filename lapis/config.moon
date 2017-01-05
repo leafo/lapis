@@ -41,6 +41,7 @@ default_config = {
   logging: {
     queries: true
     requests: true
+    server: true
   }
 }
 
