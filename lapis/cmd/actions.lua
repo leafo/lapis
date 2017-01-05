@@ -137,9 +137,11 @@ do
           if flags.lua then
             self:write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
             self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
+            self:write_file_safe("config.lua", require("lapis.cmd.templates.app_config_lua"))
           else
             self:write_file_safe("app.moon", require("lapis.cmd.templates.app"))
             self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
+            self:write_file_safe("config.moon", require("lapis.cmd.templates.app_config"))
           end
           if flags.git then
             self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(flags))
