@@ -68,7 +68,7 @@ do
         }
       })
       if not (status == 200) then
-        error("Failed to exec code on server, got: " .. tostring(status))
+        error("Failed to exec code on server, got: " .. tostring(status) .. "\n\n" .. tostring(table.concat(buffer)))
       end
       return table.concat(buffer)
     end,

@@ -65,7 +65,7 @@ class NginxAttachedServer extends AttachedServer
     }
 
     unless status == 200
-      error "Failed to exec code on server, got: #{status}"
+      error "Failed to exec code on server, got: #{status}\n\n#{table.concat buffer}"
 
     table.concat buffer
 
