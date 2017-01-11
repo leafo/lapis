@@ -884,7 +884,7 @@ back on running the default action. Lapis comes with a default action
 pre-defined that looks like this:
 
 ```lua
-app.default_route = function(self)
+function app:default_route()
   -- strip trailing /
   if self.req.parsed_url.path:match("./$") then
     local stripped = self.req.parsed_url:match("^(.+)/+$")
@@ -918,7 +918,7 @@ This method, `default_route`, is just a normal method of your application. You
 can override it to do whatever you like. For example, this adds logging:
 
 ```lua
-app.default_route = function(self)
+function app:default_route()
   ngx.log(ngx.NOTICE, "User hit unknown path " .. self.req.parsed_url.path)
 
   -- call the original implementaiton to preserve the functionality it provides
@@ -937,7 +937,7 @@ You'll notice in the pre-defined version of `default_route` another method,
 `handle_404`, is referenced. This is also pre-defined and looks like this:
 
 ```lua
-app.handle_404 = function(self)
+function app:handle_404()
   error("Failed to find route: " .. self.req.cmd_url)
 end
 ```
@@ -956,7 +956,7 @@ create a custom 404 page while still keeping the trailing slash removal code.
 Here's a simple 404 handler that just prints the text `"Not Found!"`
 
 ```lua
-app.handle_404 = function(self)
+function app:handle_404()
   return { status = 404, layout = false, "Not Found!" }
 end
 ```
@@ -986,7 +986,7 @@ If you want to have your own error handling logic you can override the method
 
 ```lua
 -- config.custom_error_page is made up for this example
-app.handle_error = function(self, err, trace)
+function app:handle_error(err, trace)
   if config.custom_error_page then
     return { render = "my_custom_error_page" }
   else
