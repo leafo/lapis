@@ -79,6 +79,19 @@ tests = {
       { "name", one_of: {"bcd", "abc" } }
     }
   }
+
+
+  {
+    {
+      { "name", matches_pattern: "bc$" }
+      { "age", matches_pattern: "." }
+    }
+
+    {
+      "age is not the right format"
+    }
+  }
+
 }
 
 

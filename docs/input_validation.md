@@ -73,6 +73,7 @@ validation functions as demonstrated in the example above.
 
 * `exists: true` -- check if the value exists and is not an empty string
 * `file_exists: true` -- check if the value is a file upload
+* `matches_pattern: pat` -- value is a string that matches the Lua pattern provided by `pat`
 * `min_length: Min_Length` -- value must be at least `Min_Length` chars
 * `max_length: Max_Length` -- value must be at most `Max_Length` chars
 * `is_integer: true` -- value matches integer pattern

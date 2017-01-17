@@ -33,6 +33,10 @@ validate_functions = {
     month = input and input\match "^%d+%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)$"
     month != nil, "%s is not a valid timestamp"
 
+  matches_pattern: (input, pattern) ->
+    match = type(input) == "string" and input\match(pattern) or nil
+    match != nil, "%s is not the right format"
+
   equals: (input, value) ->
     input == value, "%s must match"
 
