@@ -18,8 +18,6 @@ add_cookie = (headers, name, val) ->
   else
     headers.Cookie = assign
 
-  opts
-
 -- returns the result of request using app
 -- mock_request App, "/hello"
 -- mock_request App, "/hello", { host: "leafo.net" }

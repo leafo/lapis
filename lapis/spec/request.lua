@@ -32,7 +32,6 @@ add_cookie = function(headers, name, val)
       headers.Cookie = assign
     end
   end
-  return opts
 end
 local mock_request
 mock_request = function(app_cls, url, opts)
