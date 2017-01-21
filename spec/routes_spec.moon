@@ -389,8 +389,16 @@ describe "route precedence", ->
 
   sort_routes = (rs) ->
     router = build_router rs
-    router\build!
-    [r[1] for r in *router.routes]
+
+    tuples = for r in *router.routes
+      pattern, flags = router\build_route unpack r
+      p = router\route_precedence flags
+      {r[1], p}
+
+    table.sort tuples, (a,b) ->
+      a[2] < b[2]
+
+    [t[1] for t in *tuples]
 
   before_each ->
     r = build_router {
@@ -455,5 +463,4 @@ describe "route precedence", ->
       "/:slug1/two"
       "/hello"
     }
-
 
