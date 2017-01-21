@@ -4,6 +4,8 @@ return [[types {
     text/xml                              xml;
     image/gif                             gif;
     image/jpeg                            jpeg jpg;
+    application/x-lua                     lua;
+    application/x-moonscript              moon;
     application/x-javascript              js;
     application/atom+xml                  atom;
     application/rss+xml                   rss;
