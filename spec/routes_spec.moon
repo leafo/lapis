@@ -387,6 +387,11 @@ describe "optional parts", ->
 describe "route precedence", ->
   local r
 
+  sort_routes = (rs) ->
+    router = build_router rs
+    router\build!
+    [r[1] for r in *router.routes]
+
   before_each ->
     r = build_router {
       "/*"
@@ -440,5 +445,15 @@ describe "route precedence", ->
     out = r\resolve "/test/thing"
     assert.same { { game: "thing" }, "/test/:game" }, out
 
+  it "the number of params affects precedence #ddd", ->
+    assert.same {
+      "/hello"
+      "/:slug1/two"
+      "/*"
+    }, sort_routes {
+      "/*"
+      "/:slug1/two"
+      "/hello"
+    }
 
 
