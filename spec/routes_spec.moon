@@ -464,3 +464,19 @@ describe "sort routes", ->
       "/:slug1/two"
       "/hello"
     }
+
+  it "number of slugs affects match", ->
+    assert.same {
+      "/hello"
+      "/:slug1/two"
+      "/:slug1/:slug2"
+
+      "/*/hi/*"
+      "/*"
+    }, sort_routes {
+      "/*"
+      "/*/hi/*"
+      "/:slug1/:slug2"
+      "/:slug1/two"
+      "/hello"
+    }

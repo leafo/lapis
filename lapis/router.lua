@@ -80,7 +80,8 @@ do
         local chunk = chunks[i]
         local kind, value, val_params
         kind, value, val_params = chunk[1], chunk[2], chunk[3]
-        flags[kind] = true
+        flags[kind] = flags[kind] or 0
+        flags[kind] = flags[kind] + 1
         local chunk_pattern
         local _exp_0 = kind
         if "splat" == _exp_0 then
@@ -296,10 +297,10 @@ do
     route_precedence = function(self, flags)
       local p = 0
       if flags.var then
-        p = p + 1
+        p = p + flags.var
       end
       if flags.splat then
-        p = p + 2
+        p = p + (10 + (1 / flags.splat) * 10)
       end
       return p
     end,

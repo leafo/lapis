@@ -59,7 +59,8 @@ class RouteParser
     for i=#chunks,1,-1
       chunk = chunks[i]
       {kind, value, val_params} = chunk
-      flags[kind] = true
+      flags[kind] or= 0
+      flags[kind] += 1
 
       chunk_pattern = switch kind
         when "splat"
@@ -205,10 +206,10 @@ class Router
     p = 0
 
     if flags.var
-      p += 1
+      p += flags.var
 
     if flags.splat
-      p += 2
+      p += 10 + (1 / flags.splat) * 10
 
     p
 
