@@ -140,3 +140,4 @@ import validate from require "lapis.validate"
   `assert_valid`, but returns either errors or `nil` on failure instead of
   yielding the error.
 
+[0]: utilities.html#file-uploads
