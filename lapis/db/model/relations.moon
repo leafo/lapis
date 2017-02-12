@@ -32,6 +32,50 @@ preload_relations = (objects, name, ...) =>
   else
     true
 
+
+local preload
+
+preload_homogeneous = (model, objects, front, ...) ->
+  return unless front
+
+  if type(front) == "table"
+    for key,val in pairs front
+      relation = type(key) == "string" and key or val
+      preload_relation model, objects, relation
+
+      if type(key) == "string"
+        r = find_relation model, key
+        unless r
+          error "missing relation: #{key}"
+
+        loaded_objects = {}
+
+        if r.has_many
+          for obj in *objects
+            for fetched in *obj[key]
+              table.insert loaded_objects, fetched
+        else
+          for obj in *objects
+            table.insert loaded_objects, obj[key]
+
+        preload loaded_objects, val
+  else
+    preload_relation model, objects, front
+
+  if ...
+    preload_homogeneous model, objects, ...
+
+preload = (objects, ...) ->
+  -- group by type
+  by_type = {}
+
+  for object in *objects
+    by_type[object.__class] or= {}
+    table.insert by_type[object.__class], object
+
+  for model, model_objects in pairs by_type
+    preload_homogeneous model, model_objects, ...
+
 mark_loaded_relations = (items, name) ->
   for item in *items
     if loaded = item[LOADED_KEY]
@@ -338,4 +382,5 @@ add_relations = (relations) =>
 {
   :relation_builders, :find_relation, :clear_loaded_relation, :LOADED_KEY
   :add_relations, :get_relations_class, :mark_loaded_relations, :relation_is_loaded
+  :preload
 }

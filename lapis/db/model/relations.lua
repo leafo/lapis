@@ -55,6 +55,58 @@ preload_relations = function(self, objects, name, ...)
     return true
   end
 end
+local preload
+local preload_homogeneous
+preload_homogeneous = function(model, objects, front, ...)
+  if not (front) then
+    return 
+  end
+  if type(front) == "table" then
+    for key, val in pairs(front) do
+      local relation = type(key) == "string" and key or val
+      preload_relation(model, objects, relation)
+      if type(key) == "string" then
+        local r = find_relation(model, key)
+        if not (r) then
+          error("missing relation: " .. tostring(key))
+        end
+        local loaded_objects = { }
+        if r.has_many then
+          for _index_0 = 1, #objects do
+            local obj = objects[_index_0]
+            local _list_0 = obj[key]
+            for _index_1 = 1, #_list_0 do
+              local fetched = _list_0[_index_1]
+              table.insert(loaded_objects, fetched)
+            end
+          end
+        else
+          for _index_0 = 1, #objects do
+            local obj = objects[_index_0]
+            table.insert(loaded_objects, obj[key])
+          end
+        end
+        preload(loaded_objects, val)
+      end
+    end
+  else
+    preload_relation(model, objects, front)
+  end
+  if ... then
+    return preload_homogeneous(model, objects, ...)
+  end
+end
+preload = function(objects, ...)
+  local by_type = { }
+  for _index_0 = 1, #objects do
+    local object = objects[_index_0]
+    by_type[object.__class] = by_type[object.__class] or { }
+    table.insert(by_type[object.__class], object)
+  end
+  for model, model_objects in pairs(by_type) do
+    preload_homogeneous(model, model_objects, ...)
+  end
+end
 local mark_loaded_relations
 mark_loaded_relations = function(items, name)
   for _index_0 = 1, #items do
@@ -492,5 +544,6 @@ return {
   add_relations = add_relations,
   get_relations_class = get_relations_class,
   mark_loaded_relations = mark_loaded_relations,
-  relation_is_loaded = relation_is_loaded
+  relation_is_loaded = relation_is_loaded,
+  preload = preload
 }
