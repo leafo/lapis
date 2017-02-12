@@ -1,6 +1,7 @@
 db = require "lapis.db.mysql"
 
 import BaseModel, Enum, enum from require "lapis.db.base_model"
+import preload from require "lapis.db.model.relations"
 
 class Model extends BaseModel
   @db: db
@@ -85,4 +86,4 @@ class Model extends BaseModel
 
     db.update @@table_name!, values, cond
 
-{ :Model, :Enum, :enum }
+{ :Model, :Enum, :enum, :preload }

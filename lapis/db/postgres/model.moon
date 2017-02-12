@@ -4,6 +4,7 @@ import select, pairs, unpack, type, select from _G
 import insert from table
 
 import BaseModel, Enum, enum from require "lapis.db.base_model"
+import preload from require "lapis.db.model.relations"
 
 class Model extends BaseModel
   @db: db
@@ -114,4 +115,4 @@ class Model extends BaseModel
     else
       db.update @@table_name!, values, cond
 
-{ :Model, :Enum, :enum }
+{ :Model, :Enum, :enum, :preload }

@@ -4,6 +4,8 @@ do
   local _obj_0 = require("lapis.db.base_model")
   BaseModel, Enum, enum = _obj_0.BaseModel, _obj_0.Enum, _obj_0.enum
 end
+local preload
+preload = require("lapis.db.model.relations").preload
 local Model
 do
   local _class_0
@@ -165,5 +167,6 @@ end
 return {
   Model = Model,
   Enum = Enum,
-  enum = enum
+  enum = enum,
+  preload = preload
 }
