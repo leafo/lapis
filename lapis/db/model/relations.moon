@@ -32,10 +32,8 @@ preload_relations = (objects, name, ...) =>
   else
     true
 
-
-local preload
-
-preload_homogeneous = (model, objects, front, ...) ->
+preload_homogeneous = (sub_relations, model, objects, front, ...) ->
+  import to_json from require "lapis.util"
   return unless front
 
   if type(front) == "table"
@@ -48,7 +46,9 @@ preload_homogeneous = (model, objects, front, ...) ->
         unless r
           error "missing relation: #{key}"
 
-        loaded_objects = {}
+        sub_relations or= {}
+        sub_relations[val] or= {}
+        loaded_objects = sub_relations[val]
 
         if r.has_many
           for obj in *objects
@@ -57,13 +57,13 @@ preload_homogeneous = (model, objects, front, ...) ->
         else
           for obj in *objects
             table.insert loaded_objects, obj[key]
-
-        preload loaded_objects, val
   else
     preload_relation model, objects, front
 
   if ...
-    preload_homogeneous model, objects, ...
+    preload_homogeneous sub_relations, model, objects, ...
+  else
+    sub_relations
 
 preload = (objects, ...) ->
   -- group by type
@@ -73,8 +73,16 @@ preload = (objects, ...) ->
     by_type[object.__class] or= {}
     table.insert by_type[object.__class], object
 
+  local sub_relations
+
   for model, model_objects in pairs by_type
-    preload_homogeneous model, model_objects, ...
+    sub_relations = preload_homogeneous sub_relations, model, model_objects, ...
+
+  if sub_relations
+    for sub_load, sub_objects in pairs sub_relations
+      preload sub_objects, sub_load
+
+  true
 
 mark_loaded_relations = (items, name) ->
   for item in *items

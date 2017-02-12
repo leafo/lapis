@@ -55,9 +55,10 @@ preload_relations = function(self, objects, name, ...)
     return true
   end
 end
-local preload
 local preload_homogeneous
-preload_homogeneous = function(model, objects, front, ...)
+preload_homogeneous = function(sub_relations, model, objects, front, ...)
+  local to_json
+  to_json = require("lapis.util").to_json
   if not (front) then
     return 
   end
@@ -70,7 +71,9 @@ preload_homogeneous = function(model, objects, front, ...)
         if not (r) then
           error("missing relation: " .. tostring(key))
         end
-        local loaded_objects = { }
+        sub_relations = sub_relations or { }
+        sub_relations[val] = sub_relations[val] or { }
+        local loaded_objects = sub_relations[val]
         if r.has_many then
           for _index_0 = 1, #objects do
             local obj = objects[_index_0]
@@ -86,16 +89,18 @@ preload_homogeneous = function(model, objects, front, ...)
             table.insert(loaded_objects, obj[key])
           end
         end
-        preload(loaded_objects, val)
       end
     end
   else
     preload_relation(model, objects, front)
   end
   if ... then
-    return preload_homogeneous(model, objects, ...)
+    return preload_homogeneous(sub_relations, model, objects, ...)
+  else
+    return sub_relations
   end
 end
+local preload
 preload = function(objects, ...)
   local by_type = { }
   for _index_0 = 1, #objects do
@@ -103,9 +108,16 @@ preload = function(objects, ...)
     by_type[object.__class] = by_type[object.__class] or { }
     table.insert(by_type[object.__class], object)
   end
+  local sub_relations
   for model, model_objects in pairs(by_type) do
-    preload_homogeneous(model, model_objects, ...)
+    sub_relations = preload_homogeneous(sub_relations, model, model_objects, ...)
   end
+  if sub_relations then
+    for sub_load, sub_objects in pairs(sub_relations) do
+      preload(sub_objects, sub_load)
+    end
+  end
+  return true
 end
 local mark_loaded_relations
 mark_loaded_relations = function(items, name)
