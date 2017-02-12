@@ -178,6 +178,12 @@ fetch = function(self, name, opts)
       return obj
     end
   end
+  if opts.preload then
+    self.relation_preloaders[name] = function(self, objects, preload_opts)
+      mark_loaded_relations(objects, name)
+      return opts.preload(objects, preload_opts, self, name)
+    end
+  end
 end
 local belongs_to
 belongs_to = function(self, name, opts)

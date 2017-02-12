@@ -94,6 +94,11 @@ fetch = (name, opts) =>
     with obj = source @
       @[name] = obj
 
+  if opts.preload
+    @relation_preloaders[name] = (objects, preload_opts) =>
+      mark_loaded_relations objects, name
+      opts.preload objects, preload_opts, @, name
+
 belongs_to = (name, opts) =>
   source = opts.belongs_to
   assert type(source) == "string", "Expecting model name for `belongs_to` relation"
