@@ -34,6 +34,7 @@ _is_encodable = function(item)
   end
   return false
 end
+local gettime
 local BACKENDS = {
   raw = function(fn)
     return fn
@@ -66,17 +67,23 @@ local BACKENDS = {
       end
       local start_time
       if ngx and config.measure_performance then
-        ngx.update_time()
-        start_time = ngx.now()
-      end
-      if logger then
-        logger.query(str)
+        if not (gettime) then
+          gettime = require("socket").gettime
+        end
+        start_time = gettime()
       end
       local res, err = pgmoon:query(str)
       if start_time then
-        ngx.update_time()
-        increment_perf("db_time", ngx.now() - start_time)
+        local dt = gettime() - start_time
+        increment_perf("db_time", dt)
         increment_perf("db_count", 1)
+        if logger then
+          logger.query("(" .. tostring(("%.2f"):format(dt * 1000)) .. "ms) " .. tostring(str))
+        end
+      else
+        if logger then
+          logger.query(str)
+        end
       end
       if not res and err then
         error(tostring(str) .. "\n" .. tostring(err))

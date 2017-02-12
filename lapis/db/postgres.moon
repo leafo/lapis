@@ -30,6 +30,8 @@ _is_encodable = (item) ->
   return true if is_array item
   false
 
+local gettime
+
 BACKENDS = {
   -- the raw backend is a debug backend that lets you specify the function that
   -- handles the query
@@ -57,16 +59,20 @@ BACKENDS = {
           pgmoon_conn = pgmoon
 
       start_time = if ngx and config.measure_performance
-        ngx.update_time!
-        ngx.now!
+        unless gettime
+          gettime = require("socket").gettime
 
-      logger.query str if logger
+        gettime!
+
       res, err = pgmoon\query str
 
       if start_time
-        ngx.update_time!
-        increment_perf "db_time", ngx.now! - start_time
+        dt = gettime! - start_time
+        increment_perf "db_time", dt
         increment_perf "db_count", 1
+        logger.query "(#{"%.2f"\format dt * 1000}ms) #{str}" if logger
+      else
+        logger.query str if logger
 
       if not res and err
         error "#{str}\n#{err}"
