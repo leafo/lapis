@@ -1,6 +1,8 @@
 -- functions that interact with the request's context
 import insert from table
 
+DEFAULT_PERFORMANCE_KEY = "performance"
+
 make_callback = (name) ->
   add = (callback) ->
     current = ngx.ctx[name]
@@ -27,7 +29,7 @@ make_callback = (name) ->
 after_dispatch, run_after_dispatch = make_callback "after_dispatch"
 
 -- for performance tracking
-increment_perf = (key, amount, parent="performance") ->
+increment_perf = (key, amount, parent=DEFAULT_PERFORMANCE_KEY) ->
   return unless ngx and ngx.ctx
 
   p = ngx.ctx[parent]
@@ -40,6 +42,17 @@ increment_perf = (key, amount, parent="performance") ->
   else
     p[key] = amount
 
+set_perf = (key, value, parent=DEFAULT_PERFORMANCE_KEY) ->
+  return unless ngx and ngx.ctx
+
+  p = ngx.ctx[parent]
+  unless p
+    p = {}
+    ngx.ctx[parent] = p
+
+  p[key] = value
+
+
 {
-  :after_dispatch, :run_after_dispatch, :increment_perf
+  :after_dispatch, :run_after_dispatch, :increment_perf, :set_perf
 }

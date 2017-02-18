@@ -1,5 +1,6 @@
 local insert
 insert = table.insert
+local DEFAULT_PERFORMANCE_KEY = "performance"
 local make_callback
 make_callback = function(name)
   local add
@@ -37,7 +38,7 @@ local after_dispatch, run_after_dispatch = make_callback("after_dispatch")
 local increment_perf
 increment_perf = function(key, amount, parent)
   if parent == nil then
-    parent = "performance"
+    parent = DEFAULT_PERFORMANCE_KEY
   end
   if not (ngx and ngx.ctx) then
     return 
@@ -56,8 +57,24 @@ increment_perf = function(key, amount, parent)
     end
   end
 end
+local set_perf
+set_perf = function(key, value, parent)
+  if parent == nil then
+    parent = DEFAULT_PERFORMANCE_KEY
+  end
+  if not (ngx and ngx.ctx) then
+    return 
+  end
+  local p = ngx.ctx[parent]
+  if not (p) then
+    p = { }
+    ngx.ctx[parent] = p
+  end
+  p[key] = value
+end
 return {
   after_dispatch = after_dispatch,
   run_after_dispatch = run_after_dispatch,
-  increment_perf = increment_perf
+  increment_perf = increment_perf,
+  set_perf = set_perf
 }

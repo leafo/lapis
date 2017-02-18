@@ -38,7 +38,7 @@ BACKENDS = {
   raw: (fn) -> fn
 
   pgmoon: ->
-    import after_dispatch, increment_perf from require "lapis.nginx.context"
+    import after_dispatch, increment_perf, set_perf from require "lapis.nginx.context"
 
     config = require("lapis.config").get!
     pg_config = assert config.postgres, "missing postgres configuration"
@@ -59,6 +59,15 @@ BACKENDS = {
           pgmoon_conn = pgmoon
 
       start_time = if ngx and config.measure_performance
+        if reused = pgmoon.sock\getreusedtimes!
+          switch reused
+            when 0
+              set_perf "pgmoon_conn", "non_pool"
+            when 1
+              set_perf "pgmoon_conn", "new"
+            else
+              set_perf "pgmoon_conn", "reuse"
+
         unless gettime
           gettime = require("socket").gettime
 

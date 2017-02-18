@@ -40,10 +40,10 @@ local BACKENDS = {
     return fn
   end,
   pgmoon = function()
-    local after_dispatch, increment_perf
+    local after_dispatch, increment_perf, set_perf
     do
       local _obj_0 = require("lapis.nginx.context")
-      after_dispatch, increment_perf = _obj_0.after_dispatch, _obj_0.increment_perf
+      after_dispatch, increment_perf, set_perf = _obj_0.after_dispatch, _obj_0.increment_perf, _obj_0.set_perf
     end
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
@@ -67,6 +67,19 @@ local BACKENDS = {
       end
       local start_time
       if ngx and config.measure_performance then
+        do
+          local reused = pgmoon.sock:getreusedtimes()
+          if reused then
+            local _exp_0 = reused
+            if 0 == _exp_0 then
+              set_perf("pgmoon_conn", "non_pool")
+            elseif 1 == _exp_0 then
+              set_perf("pgmoon_conn", "new")
+            else
+              set_perf("pgmoon_conn", "reuse")
+            end
+          end
+        end
         if not (gettime) then
           gettime = require("socket").gettime
         end
