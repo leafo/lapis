@@ -60,13 +60,7 @@ BACKENDS = {
 
       start_time = if ngx and config.measure_performance
         if reused = pgmoon.sock\getreusedtimes!
-          switch reused
-            when 0
-              set_perf "pgmoon_conn", "non_pool"
-            when 1
-              set_perf "pgmoon_conn", "new"
-            else
-              set_perf "pgmoon_conn", "reuse"
+          set_perf "pgmoon_conn", reused > 0 and "reuse" or"new"
 
         unless gettime
           gettime = require("socket").gettime

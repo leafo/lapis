@@ -70,14 +70,7 @@ local BACKENDS = {
         do
           local reused = pgmoon.sock:getreusedtimes()
           if reused then
-            local _exp_0 = reused
-            if 0 == _exp_0 then
-              set_perf("pgmoon_conn", "non_pool")
-            elseif 1 == _exp_0 then
-              set_perf("pgmoon_conn", "new")
-            else
-              set_perf("pgmoon_conn", "reuse")
-            end
+            set_perf("pgmoon_conn", reused > 0 and "reuse" or "new")
           end
         end
         if not (gettime) then
