@@ -288,3 +288,43 @@ describe "lapis.html", ->
 
 
 
+  describe "widget.render_to_file", ->
+    class Inner extends Widget
+      content: =>
+        dt class: "cool", "hello"
+        p ->
+          strong "The world  #{@t}"
+          @m!
+
+        dt "world"
+
+      m: =>
+        raw "is &amp; here"
+
+    it "renders to string by filename", ->
+      time = os.time!
+
+      Inner({
+        t: time
+      })\render_to_file "widget_out.html"
+
+      written = assert(io.open("widget_out.html"))\read "*a"
+
+      assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], written
+
+
+    it "writes to file interface", ->
+      written = {}
+      fake_file = {
+        write: (content) =>
+          table.insert written, content
+      }
+
+      time = os.time!
+
+      Inner({
+        t: time
+      })\render_to_file fake_file
+
+
+      assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], table.concat(written)

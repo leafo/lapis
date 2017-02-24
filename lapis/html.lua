@@ -488,6 +488,24 @@ do
       self:render(buffer, ...)
       return concat(buffer)
     end,
+    render_to_file = function(self, file, ...)
+      local opened_file = false
+      if type(file) == "string" then
+        opened_file = true
+        file = assert(io.open(file, "w"))
+      end
+      local buffer = setmetatable({ }, {
+        __newindex = function(self, key, val)
+          file:write(val)
+          return true
+        end
+      })
+      self:render(buffer, ...)
+      if opened_file then
+        file:close()
+      end
+      return true
+    end,
     render = function(self, buffer, ...)
       if buffer.__class == Buffer then
         self._buffer = buffer

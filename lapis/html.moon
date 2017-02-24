@@ -326,6 +326,28 @@ class Widget
     @render buffer, ...
     concat buffer
 
+  render_to_file: (file, ...) =>
+    opened_file = false
+
+    file = if type(file) == "string"
+      opened_file = true
+      assert io.open file, "w"
+
+    buffer = setmetatable {}, {
+      __newindex: (key, val) =>
+        file\write val
+        true
+    }
+
+    @render buffer, ...
+
+    if opened_file
+      file\close!
+
+    true
+
+
+
   render: (buffer, ...) =>
     @_buffer = if buffer.__class == Buffer
       buffer
