@@ -731,10 +731,10 @@ user\update "name", "age", timestamp: false
 
 ## Preloading Associations
 
-A common pitfall when using active record type systems is triggering many
-queries inside of a loop. In order to avoid situations like this you should
-load data for as many objects as possible in a single query before looping over
-the data.
+A common pitfall when using object relational mapping systems is triggering
+many queries inside of a loop when fetching a related object on each iteration.
+A technique for avoiding the `n+1` query problem you should load the related
+objects before the loop in a single query.
 
 We'll need some models to demonstrate: (The columns are annotated in a comment
 above the model).
