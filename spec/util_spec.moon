@@ -48,6 +48,14 @@ tests = {
   }
 
   {
+    -> util.parse_query_string "null"
+    {
+      {"null"}
+      null: true
+    }
+  }
+
+  {
     -> util.underscore "ManifestRocks"
     "manifest_rocks"
   }
