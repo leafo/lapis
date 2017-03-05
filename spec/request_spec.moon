@@ -74,6 +74,18 @@ describe "lapis.request", ->
       status, res = assert_request SessionApp, "/get_session", prev: h
       assert.same "greetings", res
 
+  describe "query params", ->
+    local params
+
+    class QueryApp extends lapis.Application
+      layout: false
+
+      "/hello": =>
+        params = @params
+
+    it "mocks request with query params", ->
+      assert.same 200, (mock_request QueryApp, "/hello?hello=world")
+      assert.same {hello: "world"}, params
 
   describe "json request", ->
     import json_params from require "lapis.application"
