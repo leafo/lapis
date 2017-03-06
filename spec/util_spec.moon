@@ -100,6 +100,35 @@ tests = {
     "dad=day&hello%5bhole%5d=wor%3dld"
   }
 
+  {
+    ->
+      util.encode_query_string {
+        {"cold", "zone"}
+        "hello": true
+        "world": false
+      }
+
+    "cold=zone&hello"
+  }
+
+  {
+    ->
+      util.encode_query_string {
+        "world": false
+      }
+
+    ""
+  }
+
+  {
+    ->
+      util.encode_query_string {
+        "null": true
+      }
+
+    "null"
+  }
+
   { -- stripping invalid types
     ->
       json.decode util.to_json {
