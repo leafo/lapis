@@ -71,6 +71,9 @@ encode_query_string = function(t, sep)
     repeat
       if type(k) == "number" and type(v) == "table" then
         k, v = v[1], v[2]
+        if v == nil then
+          v = true
+        end
       end
       if v == false then
         _continue_0 = true

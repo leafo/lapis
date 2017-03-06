@@ -53,6 +53,7 @@ encode_query_string = (t, sep="&") ->
   for k,v in pairs t
     if type(k) == "number" and type(v) == "table"
       {k,v} = v
+      v = true if v == nil -- symmetrical with parse
 
     if v == false
       continue

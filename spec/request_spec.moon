@@ -87,6 +87,11 @@ describe "lapis.request", ->
       assert.same 200, (mock_request QueryApp, "/hello?hello=world")
       assert.same {hello: "world"}, params
 
+    it "mocks request with query params #bug", ->
+      assert.same 200, (mock_request QueryApp, "/hello?null")
+      -- todo: this is bug
+      assert.same {}, params
+
   describe "json request", ->
     import json_params from require "lapis.application"
 
