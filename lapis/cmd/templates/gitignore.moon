@@ -6,7 +6,7 @@ import insert, concat from table
     "nginx.conf.compiled"
   }
   
-  if flags.lua
+  if not flags.lua
     insert lines, "*.lua"
 
   if flags.tup
