@@ -155,6 +155,10 @@ mock_request = function(app_cls, url, opts)
       ngx.print(...)
       return ngx.print("\n")
     end,
+    md5 = function(str)
+      local crypto = require("crypto")
+      return crypto.digest("md5", str)
+    end,
     header = out_headers,
     now = function()
       return os.time()

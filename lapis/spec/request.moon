@@ -114,6 +114,10 @@ mock_request = (app_cls, url, opts={}) ->
       ngx.print ...
       ngx.print "\n"
 
+    md5: (str) ->
+      crypto = require "crypto"
+      crypto.digest "md5", str
+
     header: out_headers
 
     now: -> os.time!
