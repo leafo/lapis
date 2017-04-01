@@ -8,10 +8,12 @@ return function(flags)
     flags = { }
   end
   local lines = {
-    "*.lua",
     "logs/",
     "nginx.conf.compiled"
   }
+  if not flags.lua then
+    insert(lines, "*.lua")
+  end
   if flags.tup then
     insert(lines, ".tup")
   end
