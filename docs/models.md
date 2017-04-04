@@ -873,15 +873,6 @@ user.age = 123
 user\update "name", "age", timestamp: false
 ```
 
-## Preloading Associations
-
-A common pitfall when using object relational mapping systems is triggering
-many queries inside of a loop when fetching a related object on each iteration.
-A technique for avoiding the `n+1` query problem you should load the related
-objects before the loop in a single query.
-
-
-
 ## Constraints
 
 Often before we insert or update a row we want to check that some conditions
@@ -1614,9 +1605,24 @@ class Users extends Model
 ## Preloading relations
 
 In addtion to the method to fetch the associated rows on a single model
-instace, relations also provide a way to preload the rows for mmany instances
-of the model. For an explanation of why preloading rows is necessary, read
-the [Preloading associations](#preloading-associations) guide.
+instace, relations also provide a way to preload the rows for many instances
+of the model.
+
+A common pitfall when using object relational mapping systems is triggering
+many queries inside of a loop when fetching a related object on each iteration.
+In order to avoid the `n+1` query problem you can load all the related models
+ahead of time in a single query before iterating over them.
+
+### `preload(instances, relations...)`
+
+
+```lua
+local preload  = require("lapis.db.models").preload
+```
+
+```moon
+import preload from require "lapis.db.models"
+```
 
 ### `preload_relation(instances, name, ...)`
 
