@@ -1098,9 +1098,9 @@ for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
 ```
 
-> Be careful modifying rows when iterating over each page, as your
-> modifications might change the pagination order and you may process rows
-> multiple times or none at all.
+> Be careful modifying rows in the database when iterating over each page, as
+> your modifications might change the query result order and you may process
+> rows multiple times or none at all.
 
 ### `has_items()`
 
