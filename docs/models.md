@@ -455,14 +455,13 @@ relation.
 ### `include_in(model_instances, column_name, opts={})`
 
 Finds instances of the current model and loads them into an array containing
-instances of another model. This is used to preload relations in a single
-query. Returns the `model_instances` array table. Read more in [Preloading
-Associations](#preloading-associations)
+instances of another model. This is used to preload associations in a single
+query. Returns the `model_instances` array table.
 
 This is a lower level interface to preloading models. In general we recommend
 [using releations](#describing-relationships) if possible.
 
-`include_in` supports the following options, including `as` and `flip` from above:
+`include_in` supports the following options:
 
 * `as` -- set the name of the property to store the associated model as
 * `flip` -- set to `true` if the named column is located on the included model
@@ -473,6 +472,151 @@ This is a lower level interface to preloading models. In general we recommend
 * `local_key` -- only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`
 * `order` -- the order of items when preloading a `many` preload
 * `group` -- group by clause
+
+In order to demonstrate `include_in` we'll need some models: (The columns are
+annotated in a comment above the model).
+
+```lua
+local Model = require("lapis.db.model").Model
+
+-- table with columns: id, name
+local Users = Model:extend("users")
+
+-- table with columns: id, user_id, text_content
+local Posts = Model:extend("posts")
+```
+
+```moon
+import Model from require "lapis.db.model"
+
+-- table with columns: id, name
+class Users extends Model
+
+-- table with columns: id, user_id, text_content
+class Posts extends Model
+```
+
+Given all the posts, we want to find the user for each post. `include_in` can
+be called on the model we wish to load, `Users`, with the array of model
+instances we want to fill: `posts`. The second argument is the name of the
+foreign key on the array of model instances that points to the rows we are
+preloading. By default, the value of the foreign key is mapped to the primary
+key of the model that is being loaded.
+
+```lua
+local posts = Posts:select() -- this gets all the posts
+Users:include_in(posts, "user_id")
+
+print(posts[1].user.name) -- print the fetched data
+```
+
+```moon
+posts = Posts\select! -- this gets all the posts
+
+Users\include_in posts, "user_id"
+
+print posts[1].user.name -- print the fetched data
+```
+
+```sql
+SELECT * from "posts"
+SELECT * from "users" where "id" in (1,2,3,4,5,6)
+```
+
+The name of the inserted property is derived from the name of the foreign key.
+In this case, `user` was derived from the foreign key `user_id`. If we want to
+manually specify the name the `as` option can be used:
+
+
+```lua
+Users:include_in(posts, "user_id", { as = "author" })
+```
+
+```moon
+Users\include_in posts, "user_id", as: "author"
+```
+
+Now all the posts will contain a property named `author` with an instance of
+the `Users` model.
+
+The `flip` option can be used to preload associated data where the foreign key
+is located on the rows to be loaded. (This is what lapis calls as `has_one`
+relation, the default mode loads `belongs_to` relations.)
+
+Here's an example using flip:
+
+```lua
+local Model = require("lapis.db.model").Model
+
+-- table with columns: id, name
+local Users = Model:extend("users")
+
+-- table with columns: user_id, twitter_account, facebook_username
+local UserData = Model:extend("user_data")
+
+```
+
+```moon
+import Model from require "lapis.db.model"
+
+-- columns: id, name
+class Users extends Model
+
+-- columns: user_id, twitter_account, facebook_username
+class UserData extends Model
+```
+
+Now let's say we have a collection of users and we want to fetch the associated
+user data:
+
+```lua
+local users = Users:select()
+UserData:include_in(users, "user_id", { flip = true })
+
+print(users[1].user_data.twitter_account)
+```
+
+```moon
+users = Users\select!
+UserData\include_in users, "user_id", flip: true
+
+print users[1].user_data.twitter_account
+```
+
+```sql
+SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
+```
+
+In this example we set the `flip` option to true in the `include_in` method.
+This causes the search to happen against our foreign key, and the ids to be
+pulled from the `id` of the array of model instances.
+
+Additionally, the derived property name that is injected into the model
+instances is created from the name of the included table. In the example above
+the `user_data` property contains the included model instances. (Had it been
+plural the table name would have been made singular)
+
+One last common scenario is preloading a one-to-many relationship. You can use
+the `many` option to instruct `include_in` store many associated models for
+each input model. For example, we might load all the posts for each user:
+
+
+```lua
+local users = Users:select()
+Posts:include_in(users, "user_id", { flip = true, many = true })
+```
+
+```moon
+users = Users\select!
+Posts\include_in users, "user_id", flip: true, many: true
+```
+
+```sql
+SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
+```
+
+Each `users` object will now have a `posts` field that is an array containing
+all the associated posts that were found.
 
 ### `paginated(query, ...)`
 
@@ -736,158 +880,6 @@ many queries inside of a loop when fetching a related object on each iteration.
 A technique for avoiding the `n+1` query problem you should load the related
 objects before the loop in a single query.
 
-We'll need some models to demonstrate: (The columns are annotated in a comment
-above the model).
-
-```lua
-local Model = require("lapis.db.model").Model
-
--- table with columns: id, name
-local Users = Model:extend("users")
-
--- table with columns: id, user_id, text_content
-local Posts = Model:extend("posts")
-```
-
-```moon
-import Model from require "lapis.db.model"
-
--- table with columns: id, name
-class Users extends Model
-
--- table with columns: id, user_id, text_content
-class Posts extends Model
-```
-
-Given all the posts, we want to find the user for each post. We use the
-`include_in` class method to include instances of that model in the array of
-model instances passed to it.
-
-```lua
-local posts = Posts:select() -- this gets all the posts
-Users:include_in(posts, "user_id")
-
-print(posts[1].user.name) -- print the fetched data
-```
-
-```moon
-posts = Posts\select! -- this gets all the posts
-
-Users\include_in posts, "user_id"
-
-print posts[1].user.name -- print the fetched data
-```
-
-```sql
-SELECT * from "posts"
-SELECT * from "users" where "id" in (1,2,3,4,5,6)
-```
-
-Each post instance is mutated to have a `user` property assigned to it with an
-instance of the `Users` model. The first argument of `include_in` is the array
-table of model instances. The second argument is the column name of the foreign
-key found in the array of model instances that maps to the primary key of the
-class calling the `include_in`.
-
-`include_in` is a low level way of loading associated rows. Whenever possible
-you should opt to use relations and `preload_relation` instead, it will save
-you the trouble of remembering what arguments you need to pass to `include_in`.
-Read more about [preloading relations](#preloading-relations).
-
-The name of the inserted property is derived from the name of the foreign key.
-In this case, `user` was derived from the foreign key `user_id`. If we want to
-manually specify the name we can do something like this:
-
-
-```lua
-Users:include_in(posts, "user_id", { as = "author" })
-```
-
-```moon
-Users\include_in posts, "user_id", as: "author"
-```
-
-Now all the posts will contain a property named `author` with an instance of
-the `Users` model.
-
-Sometimes the relationship is flipped. Instead of the list of model instances
-having the foreign key column, the model we want to include might have it. This
-is common in one-to-one relationships.
-
-Here's another set of example models:
-
-```lua
-local Model = require("lapis.db.model").Model
-
--- table with columns: id, name
-local Users = Model:extend("users")
-
--- table with columns: user_id, twitter_account, facebook_username
-local UserData = Model:extend("user_data")
-
-```
-
-```moon
-import Model from require "lapis.db.model"
-
--- columns: id, name
-class Users extends Model
-
--- columns: user_id, twitter_account, facebook_username
-class UserData extends Model
-```
-
-Now let's say we have a collection of users and we want to fetch the associated
-user data:
-
-```lua
-local users = Users:select()
-UserData:include_in(users, "user_id", { flip = true })
-
-print(users[1].user_data.twitter_account)
-```
-
-```moon
-users = Users\select!
-UserData\include_in users, "user_id", flip: true
-
-print users[1].user_data.twitter_account
-```
-
-```sql
-SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
-```
-
-In this example we set the `flip` option to true in the `include_in` method.
-This causes the search to happen against our foreign key, and the ids to be
-pulled from the `id` of the array of model instances.
-
-Additionally, the derived property name that is injected into the model
-instances is created from the name of the included table. In the example above
-the `user_data` property contains the included model instances. (Had it been
-plural the table name would have been made singular)
-
-One last common scenario is preloading a one-to-many relationship. You can use
-the `many` option to instruct `include_in` store many associated models for
-each input model. For example, we might load all the posts for each user:
-
-
-```lua
-local users = Users:select()
-Posts:include_in(users, "user_id", { flip = true, many = true })
-```
-
-```moon
-users = Users\select!
-Posts\include_in users, "user_id", flip: true, many: true
-```
-
-```sql
-SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
-```
-
-Each `users` object will now have a `posts` field that is an array containing
-all the associated posts that were found.
 
 
 ## Constraints
@@ -1297,7 +1289,7 @@ SELECT * from "some_model" order by "some_model"."user_id" ASC, "some_model"."po
 SELECT * from "some_model" where ("some_model"."user_id", "some_model"."post_id") > (232, 582) order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
 ```
 
-## Describing Relationships
+## Relations
 
 Often your models are connected to other models by use of a *foreign_key*. You
 can describe the relationships between models using the `relations` class
