@@ -1624,6 +1624,23 @@ local preload  = require("lapis.db.models").preload
 import preload from require "lapis.db.models"
 ```
 
+The `preload` function is a general purpose preloading for loading relations on
+model instances. The first argument is an array of instances, and all other
+arguments are the names of the relations to load.
+
+You can also preload nested relations by using the hash table syntax:
+
+```lua
+preload(posts, {user = "twitter_account"})
+```
+
+```moon
+preload posts, user: "twitter_account"
+```
+
+The hash table syntax can be combined with regular relation names as strings,
+letting you preload complex sets of data in a single line.
+
 ### `preload_relation(instances, name, ...)`
 
 The class method `preload_relation` takes an array table of instances of the
