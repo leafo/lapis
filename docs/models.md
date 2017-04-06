@@ -1639,7 +1639,9 @@ preload posts, user: "twitter_account"
 ```
 
 The hash table syntax can be combined with regular relation names as strings,
-letting you preload complex sets of data in a single line.
+letting you preload complex sets of data in a single line. In the examples
+above, the `user` relation is loaded on the posts, then every user has the
+`twitter_account` relation loaded.
 
 ### `preload_relation(instances, name, ...)`
 
