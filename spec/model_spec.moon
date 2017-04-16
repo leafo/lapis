@@ -690,6 +690,27 @@ describe "lapis.db.model", ->
       assert.same "second_model", SecondModel\table_name!
       assert.same "first_model", FirstModel\table_name!
 
+    it "fetches relation", ->
+      class Firsts extends Model
+
+      class Seconds extends Firsts
+        @primary_key: "hello_id"
+
+      class OtherModel extends Model
+        @get_relation_model: (name) =>
+          ({ :Seconds })[name]
+
+        @relations: {
+          {"second", has_one: "Seconds"}
+        }
+
+      m = OtherModel\load {
+        id: 5
+      }
+
+      m\get_second!
+
+
   describe "enum", ->
     import enum from require "lapis.db.model"
 
