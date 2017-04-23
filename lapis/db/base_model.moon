@@ -307,6 +307,8 @@ class BaseModel
 
     if result = unpack @db.select "* from #{table_name} where #{cond} limit 1"
       @load result
+    else
+    	nil
 
   -- create from table of values, return loaded object
   @create: (values, opts) =>
