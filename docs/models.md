@@ -1643,17 +1643,19 @@ letting you preload complex sets of data in a single line. In the examples
 above, the `user` relation is loaded on the posts, then every user has the
 `twitter_account` relation loaded.
 
-### `preload_relation(instances, name, ...)`
+### `Model:preload_relation(instances, name, ...)`
+
+> This function should be avoided in favor of the `preload` function when
+> possible. If you need to pass parameters to a preload call then you need to
+> use `preload_relation`
 
 The class method `preload_relation` takes an array table of instances of the
 model, and the name of a relation. It fills all the instances with the
-associated models with a single query. It's equivalent to calling `include_in`
-with the options that match the relation definition.
+associated models with a single query.
 
-If any of the relations return `nil`, the loaded flag is set on the instace so
-calling the `get_` method does not trigger another query.
-
-Any additional arguments are merged in the options to the call to `include_in`.
+Internally this method called the `include_in` method. Any additional arguments
+passed to `preload_relation` are merged in the options to the call to
+`include_in`.
 
 
 ```lua
@@ -1693,11 +1695,15 @@ Posts\preload_relation posts, "user"
 SELECT * from "users" where "id" in (3,4,5,6,7);
 ```
 
-### `preload_relations(instances, names...)`
+### `Model:preload_relations(instances, names...)`
+
+> This call is deprecated, use the `preload` function to preload many relations
+> in a single call
 
 `preload_relations` is a helper method for calling `preload_relation` many
 times with different relations. This form does not support passing any options
-to the preloaders.
+to the preloaders. You should replace `Model` with the model that contains the
+relation definition.
 
 ```lua
 -- load three separate relations
