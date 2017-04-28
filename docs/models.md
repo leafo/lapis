@@ -1617,7 +1617,7 @@ ahead of time in a single query before iterating over them.
 
 
 ```lua
-local preload  = require("lapis.db.models").preload
+local preload = require("lapis.db.models").preload
 ```
 
 ```moon

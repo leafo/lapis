@@ -141,7 +141,9 @@ Route precedence from highest to lowest is:
 
 * Literal routes `/hello/world`
 * Variable routes `/hello/:variable`
+  * Each additional `:variable` will decrease the precedence of the route
 * Splat routes routes `/hello/*`
+  * Each additional splat will *increase* the precedence of the route. Given the routes `/hello/*spat` and `/hello/*splat/world/*rest`, the second one will be checked before the first.
 
 ## Named Routes
 
