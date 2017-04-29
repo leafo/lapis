@@ -3,13 +3,13 @@ set -e
 set -o pipefail
 set -o xtrace
 
-luarocks install busted
-luarocks install lpeg 0.10.2
-luarocks install moonscript
-luarocks install luaposix
-luarocks install date
-luarocks install luasql-mysql MYSQL_INCDIR=/usr/include/mysql
-luarocks make
+luarocks-5.1 install busted
+luarocks-5.1 install lpeg 0.10.2
+luarocks-5.1 install moonscript
+luarocks-5.1 install luaposix
+luarocks-5.1 install date
+luarocks-5.1 install luasql-mysql MYSQL_INCDIR=/usr/include/mysql
+luarocks-5.1 make
 
 
 ./busted -o utfTerminal
