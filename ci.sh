@@ -28,3 +28,4 @@ make test_db
 
 ./busted -o utfTerminal
 ./busted -o utfTerminal spec_postgres/
+./busted -o utfTerminal spec_openresty/
