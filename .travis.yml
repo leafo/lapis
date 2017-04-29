@@ -1,38 +1,13 @@
 language: c
-
-sudo: false
-
-addons:
-  postgresql: "9.3"
+sudo: required
 
 services:
-  - mysql
-
-env:
-  global:
-    - LUAROCKS=2.2.2
-  matrix:
-    - LUA=luajit2.1
-
-before_install:
-  - source .travis/setenv_lua.sh
+  - docker
 
 install:
-  - luarocks install busted
-  - luarocks install lpeg 0.10.2
-  - luarocks install moonscript
-  - luarocks install luaposix
-  - luarocks install date
-  - luarocks install luasql-mysql MYSQL_INCDIR=/usr/include/mysql
-  - luarocks make
+  - docker build -t lapis-test .
 
-before_script:
-  - createdb -U postgres lapis_test
-  - mysql -e 'create database lapis_test;'
-
-script: 
-  - busted
-  - busted spec_postgres/
-  - busted spec_mysql/
+script:
+  - docker run lapis-test
 
 
