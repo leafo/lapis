@@ -394,6 +394,7 @@ Additionally the request object has the following methods:
 * `url_for(route, params, ...)` -- get the URL for a named route, or object
 * `build_url(path, params)` -- build a fully qualified URL from a path and parameters
 * `html(fn)` -- generate a string using the HTML builder syntax
+* `add_headers(headers)` -- Adds response headers
 
 ### @req
 
