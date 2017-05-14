@@ -280,7 +280,7 @@ being rendered.
 
 ## Widget Methods
 
-### `@@include(other_class)`
+### `@include(other_class)`
 
 Class method that copies the methods from another class into this widget.
 Useful for mixin in shared functionality across multiple widgets.
