@@ -183,6 +183,7 @@ types = setmetatable {
   timestamp:    C "TIMESTAMP"
   datetime:     C "DATETIME"
   boolean:      C "TINYINT", length: 1
+  uuid:         C "BINARY", length: 16
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
 
@@ -201,4 +202,3 @@ types = setmetatable {
   :rename_column
   :rename_table
 }
-
