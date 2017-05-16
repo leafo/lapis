@@ -34,6 +34,17 @@ class EtluaWidget extends Widget
 
   _tpl_fn: nil -- set by superclass
 
+  include: (name) =>
+    if @has_content_for key
+        return @content_for key
+
+    views = @_find_helper("app").views_prefix
+    widget = require("#{views}.#{key}")
+    widget\include_helper @
+    @[key] = widget\render_to_string!
+
+    @content_for key
+
   content_for: (name, val) =>
     if val
       super name, val

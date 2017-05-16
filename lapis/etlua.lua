@@ -72,6 +72,16 @@ do
   local _parent_0 = Widget
   local _base_0 = {
     _tpl_fn = nil,
+    include = function(self, name)
+      if self:has_content_for(key) then
+        return self:content_for(key)
+      end
+      local views = self:_find_helper("app").views_prefix
+      local widget = require(tostring(views) .. "." .. tostring(key))
+      widget:include_helper(self)
+      self[key] = widget:render_to_string()
+      return self:content_for(key)
+    end,
     content_for = function(self, name, val)
       if val then
         return _class_0.__parent.__base.content_for(self, name, val)
