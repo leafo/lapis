@@ -562,6 +562,8 @@ do
       local result = unpack(self.db.select("* from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
       if result then
         return self:load(result)
+      else
+        return nil
       end
     end
   end
