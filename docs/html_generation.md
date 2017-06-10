@@ -8,6 +8,9 @@
 This guide is focused on using builder syntax in Lua/MoonScript to generate
 HTML. If you're interested in a more traditional templating system see the
 [etlua Templates guide]($root/reference/etlua_templates.html).
+This mechanism for generating HTML code is mainly intended to be used with
+Moonscript, but it can also be used in Lua code.
+
 
 ## HTML Builder Syntax
 

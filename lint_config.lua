@@ -120,8 +120,7 @@ local html_builer = {
 return {
   whitelist_globals = {
     ["."] = {
-      "ngx",
-      "__leda"
+      "ngx"
     },
     ["lapis/views"] = html_builer
   }

@@ -88,6 +88,7 @@ Here is the `nginx.conf` that has been generated:
 worker_processes ${{NUM_WORKERS}};
 error_log stderr notice;
 daemon off;
+pid logs/nginx.pid;
 
 events {
   worker_connections 1024;

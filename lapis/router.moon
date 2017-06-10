@@ -22,17 +22,6 @@ reduce = (items, fn) ->
     left = fn left, items[i]
   left
 
-route_precedence = (flags) ->
-  p = 0
-
-  if flags.var
-    p += 1
-
-  if flags.splat
-    p += 2
-
-  p
-
 class RouteParser
   new: =>
     @grammar = @build_grammar!
@@ -52,7 +41,7 @@ class RouteParser
             out = value
           break
         when "optional"
-          p = route_precedence val_params
+          p = @route_precedence val_params
           continue if current_p < p
           if out
             out += value
@@ -70,7 +59,8 @@ class RouteParser
     for i=#chunks,1,-1
       chunk = chunks[i]
       {kind, value, val_params} = chunk
-      flags[kind] = true
+      flags[kind] or= 0
+      flags[kind] += 1
 
       chunk_pattern = switch kind
         when "splat"
@@ -212,12 +202,23 @@ class Router
   default_route: (route) =>
     error "failed to find route: " .. route
 
+  route_precedence: (flags) =>
+    p = 0
+
+    if flags.var
+      p += flags.var
+
+    if flags.splat
+      p += 10 + (1 / flags.splat) * 10
+
+    p
+
   build: =>
     by_precedence = {}
 
     for r in *@routes
       pattern, flags = @build_route unpack r
-      p = route_precedence flags
+      p = @route_precedence flags
       by_precedence[p] or= {}
       table.insert by_precedence[p], pattern
 

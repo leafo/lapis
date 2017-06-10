@@ -111,6 +111,24 @@ describe "model", ->
       assert.same nil, post.user_id
       assert.same "okay!", post.body
 
+      assert.truthy post.created_at
+      assert.truthy post.updated_at
+      assert.same post.updated_at, post.created_at
+
+    it "creates a new post with custom dates", ->
+      post = Posts\create {
+        title: "yo"
+        body: "okay!"
+        user_id: db.NULL
+        updated_at: "2016-6-8 20:00"
+        created_at: "2016-6-8 20:00"
+      }
+
+      post\refresh!
+
+      assert.same "2016-06-08 20:00:00", post.created_at
+      assert.same "2016-06-08 20:00:00", post.updated_at
+
   describe "update", ->
     local post
     before_each ->
@@ -129,6 +147,22 @@ describe "model", ->
       assert.same "sure", post.title
       assert.same 234, post.user_id
       assert.same "okay!", post.body
+
+    it "updates timestamp", ->
+      post\update {
+        updated_at: "2016-6-8 20:00"
+        created_at: "2016-6-8 20:00"
+      }
+
+      post\refresh!
+
+      assert.same "2016-06-08 20:00:00", post.created_at
+      assert.same "2016-06-08 20:00:00", post.updated_at
+
+      post\update title: "yo"
+      post\refresh!
+
+      assert.not.same "2016-06-08 20:00:00", post.updated_at
 
     it "updates a field to null", ->
       post\update { user_id: 234 }

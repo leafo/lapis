@@ -141,7 +141,7 @@ html_builer = {
 
 {
   whitelist_globals: {
-    ["."]: {"ngx", "__leda"}
+    ["."]: {"ngx"}
     ["lapis/views"]: html_builer
   }
 }

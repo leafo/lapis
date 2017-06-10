@@ -1,7 +1,9 @@
 path = require "lapis.cmd.path"
 import get_free_port from require "lapis.cmd.util"
 
-class AttachedServer
+import AttachedServer from require "lapis.cmd.attached_server"
+
+class NginxAttachedServer extends AttachedServer
   new: (@runner) =>
 
   start: (environment, env_overrides) =>
@@ -30,33 +32,6 @@ class AttachedServer
       assert @runner\start_nginx true
 
     @wait_until_ready!
-
-  wait_until: (server_status="open") =>
-    socket = require "socket"
-    max_tries = 1000
-    while true
-      sock = socket.connect "127.0.0.1", @port
-      switch server_status
-        when "open"
-          if sock
-            sock\close!
-            break
-        when "close"
-          if sock
-            sock\close!
-          else
-            break
-        else
-          error "don't know how to wait for #{server_status}"
-
-      max_tries -= 1
-      if max_tries == 0
-        error "Timed out waiting for server to #{server_status}"
-
-      socket.sleep 0.001
-
-  wait_until_ready: => @wait_until "open"
-  wait_until_closed: => @wait_until "close"
 
   detach: =>
     if @existing_config
@@ -90,7 +65,7 @@ class AttachedServer
     }
 
     unless status == 200
-      error "Failed to exec code on server, got: #{status}"
+      error "Failed to exec code on server, got: #{status}\n\n#{table.concat buffer}"
 
     table.concat buffer
 
@@ -158,4 +133,4 @@ class AttachedServer
 
     cfg\gsub "%f[%a]http%s-{", "http {\n" .. test_server
 
-{ :AttachedServer }
+{ AttachedServer: NginxAttachedServer }

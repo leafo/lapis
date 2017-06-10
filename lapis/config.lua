@@ -11,7 +11,8 @@ default_config = {
   num_workers = "1",
   logging = {
     queries = true,
-    requests = true
+    requests = true,
+    server = true
   }
 }
 merge_set = function(t, k, v)

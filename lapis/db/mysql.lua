@@ -20,7 +20,18 @@ BACKENDS = {
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
     local luasql = require("luasql.mysql").mysql()
-    conn = assert(luasql:connect(mysql_config.database, mysql_config.user, mysql_config.password))
+    local conn_opts = {
+      mysql_config.database,
+      mysql_config.user,
+      mysql_config.password
+    }
+    if mysql_config.host then
+      table.insert(conn_opts, mysql_config.host)
+      if mysql_config.port then
+        table.insert(conn_opts, mysql_config.port)
+      end
+    end
+    conn = assert(luasql:connect(unpack(conn_opts)))
     return function(q)
       if logger then
         logger.query(q)
@@ -260,12 +271,6 @@ _select = function(str, ...)
   return query("SELECT " .. str, ...)
 end
 _insert = function(tbl, values, ...)
-  if values._timestamp then
-    values._timestamp = nil
-    local time = format_date()
-    values.created_at = values.created_at or time
-    values.updated_at = values.updated_at or time
-  end
   local buff = {
     "INSERT INTO ",
     escape_identifier(tbl),
@@ -275,10 +280,6 @@ _insert = function(tbl, values, ...)
   return raw_query(concat(buff))
 end
 _update = function(table, values, cond, ...)
-  if values._timestamp then
-    values._timestamp = nil
-    values.updated_at = values.updated_at or format_date()
-  end
   local buff = {
     "UPDATE ",
     escape_identifier(table),

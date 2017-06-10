@@ -455,9 +455,168 @@ relation.
 ### `include_in(model_instances, column_name, opts={})`
 
 Finds instances of the current model and loads them into an array containing
-instances of another model. This is used to preload relations in a single
-query. Returns the `model_instances` array table. Read more in [Preloading
-Associations](#preloading-associations)
+instances of another model. This is used to preload associations in a single
+query. Returns the `model_instances` array table.
+
+This is a lower level interface to preloading models. In general we recommend
+[using releations](#describing-relationships) if possible.
+
+`include_in` supports the following options:
+
+* `as` -- set the name of the property to store the associated model as
+* `flip` -- set to `true` if the named column is located on the included model
+* `where` -- a table of additional conditionals to limit the query by
+* `fields` -- set the fields returned by each included model. Taken as a fragment of SQL
+* `many` -- set to true fetch many records for each input model instance instead of a single one
+* `value` -- a function that takes each row fetched. The return value is used in place of the row object when filling `model_instances`
+* `local_key` -- only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`
+* `order` -- the order of items when preloading a `many` preload
+* `group` -- group by clause
+
+In order to demonstrate `include_in` we'll need some models: (The columns are
+annotated in a comment above the model).
+
+```lua
+local Model = require("lapis.db.model").Model
+
+-- table with columns: id, name
+local Users = Model:extend("users")
+
+-- table with columns: id, user_id, text_content
+local Posts = Model:extend("posts")
+```
+
+```moon
+import Model from require "lapis.db.model"
+
+-- table with columns: id, name
+class Users extends Model
+
+-- table with columns: id, user_id, text_content
+class Posts extends Model
+```
+
+Given all the posts, we want to find the user for each post. `include_in` can
+be called on the model we wish to load, `Users`, with the array of model
+instances we want to fill: `posts`. The second argument is the name of the
+foreign key on the array of model instances that points to the rows we are
+preloading. By default, the value of the foreign key is mapped to the primary
+key of the model that is being loaded.
+
+```lua
+local posts = Posts:select() -- this gets all the posts
+Users:include_in(posts, "user_id")
+
+print(posts[1].user.name) -- print the fetched data
+```
+
+```moon
+posts = Posts\select! -- this gets all the posts
+
+Users\include_in posts, "user_id"
+
+print posts[1].user.name -- print the fetched data
+```
+
+```sql
+SELECT * from "posts"
+SELECT * from "users" where "id" in (1,2,3,4,5,6)
+```
+
+The name of the inserted property is derived from the name of the foreign key.
+In this case, `user` was derived from the foreign key `user_id`. If we want to
+manually specify the name the `as` option can be used:
+
+
+```lua
+Users:include_in(posts, "user_id", { as = "author" })
+```
+
+```moon
+Users\include_in posts, "user_id", as: "author"
+```
+
+Now all the posts will contain a property named `author` with an instance of
+the `Users` model.
+
+The `flip` option can be used to preload associated data where the foreign key
+is located on the rows to be loaded. (This is what lapis calls as `has_one`
+relation, the default mode loads `belongs_to` relations.)
+
+Here's an example using flip:
+
+```lua
+local Model = require("lapis.db.model").Model
+
+-- table with columns: id, name
+local Users = Model:extend("users")
+
+-- table with columns: user_id, twitter_account, facebook_username
+local UserData = Model:extend("user_data")
+
+```
+
+```moon
+import Model from require "lapis.db.model"
+
+-- columns: id, name
+class Users extends Model
+
+-- columns: user_id, twitter_account, facebook_username
+class UserData extends Model
+```
+
+Now let's say we have a collection of users and we want to fetch the associated
+user data:
+
+```lua
+local users = Users:select()
+UserData:include_in(users, "user_id", { flip = true })
+
+print(users[1].user_data.twitter_account)
+```
+
+```moon
+users = Users\select!
+UserData\include_in users, "user_id", flip: true
+
+print users[1].user_data.twitter_account
+```
+
+```sql
+SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
+```
+
+In this example we set the `flip` option to true in the `include_in` method.
+This causes the search to happen against our foreign key, and the ids to be
+pulled from the `id` of the array of model instances.
+
+Additionally, the derived property name that is injected into the model
+instances is created from the name of the included table. In the example above
+the `user_data` property contains the included model instances. (Had it been
+plural the table name would have been made singular)
+
+One last common scenario is preloading a one-to-many relationship. You can use
+the `many` option to instruct `include_in` store many associated models for
+each input model. For example, we might load all the posts for each user:
+
+
+```lua
+local users = Users:select()
+Posts:include_in(users, "user_id", { flip = true, many = true })
+```
+
+```moon
+users = Users\select!
+Posts\include_in users, "user_id", flip: true, many: true
+```
+
+```sql
+SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
+```
+
+Each `users` object will now have a `posts` field that is an array containing
+all the associated posts that were found.
 
 ### `paginated(query, ...)`
 
@@ -714,175 +873,6 @@ user.age = 123
 user\update "name", "age", timestamp: false
 ```
 
-## Preloading Associations
-
-A common pitfall when using active record type systems is triggering many
-queries inside of a loop. In order to avoid situations like this you should
-load data for as many objects as possible in a single query before looping over
-the data.
-
-We'll need some models to demonstrate: (The columns are annotated in a comment
-above the model).
-
-```lua
-local Model = require("lapis.db.model").Model
-
--- table with columns: id, name
-local Users = Model:extend("users")
-
--- table with columns: id, user_id, text_content
-local Posts = Model:extend("posts")
-```
-
-```moon
-import Model from require "lapis.db.model"
-
--- table with columns: id, name
-class Users extends Model
-
--- table with columns: id, user_id, text_content
-class Posts extends Model
-```
-
-Given all the posts, we want to find the user for each post. We use the
-`include_in` class method to include instances of that model in the array of
-model instances passed to it.
-
-```lua
-local posts = Posts:select() -- this gets all the posts
-Users:include_in(posts, "user_id")
-
-print(posts[1].user.name) -- print the fetched data
-```
-
-```moon
-posts = Posts\select! -- this gets all the posts
-
-Users\include_in posts, "user_id"
-
-print posts[1].user.name -- print the fetched data
-```
-
-```sql
-SELECT * from "posts"
-SELECT * from "users" where "id" in (1,2,3,4,5,6)
-```
-
-Each post instance is mutated to have a `user` property assigned to it with an
-instance of the `Users` model. The first argument of `include_in` is the array
-table of model instances. The second argument is the column name of the foreign
-key found in the array of model instances that maps to the primary key of the
-class calling the `include_in`.
-
-`include_in` is a low level way of loading associated rows. Whenever possible
-you should opt to use relations and `preload_relation` instead, it will save
-you the trouble of remembering what arguments you need to pass to `include_in`.
-Read more about [preloading relations](#preloading-relations).
-
-The name of the inserted property is derived from the name of the foreign key.
-In this case, `user` was derived from the foreign key `user_id`. If we want to
-manually specify the name we can do something like this:
-
-
-```lua
-Users:include_in(posts, "user_id", { as = "author" })
-```
-
-```moon
-Users\include_in posts, "user_id", as: "author"
-```
-
-Now all the posts will contain a property named `author` with an instance of
-the `Users` model.
-
-Sometimes the relationship is flipped. Instead of the list of model instances
-having the foreign key column, the model we want to include might have it. This
-is common in one-to-one relationships.
-
-Here's another set of example models:
-
-```lua
-local Model = require("lapis.db.model").Model
-
--- table with columns: id, name
-local Users = Model:extend("users")
-
--- table with columns: user_id, twitter_account, facebook_username
-local UserData = Model:extend("user_data")
-
-```
-
-```moon
-import Model from require "lapis.db.model"
-
--- columns: id, name
-class Users extends Model
-
--- columns: user_id, twitter_account, facebook_username
-class UserData extends Model
-```
-
-Now let's say we have a collection of users and we want to fetch the associated
-user data:
-
-```lua
-local users = Users:select()
-UserData:include_in(users, "user_id", { flip = true })
-
-print(users[1].user_data.twitter_account)
-```
-
-```moon
-users = Users\select!
-UserData\include_in users, "user_id", flip: true
-
-print users[1].user_data.twitter_account
-```
-
-```sql
-SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
-```
-
-In this example we set the `flip` option to true in the `include_in` method.
-This causes the search to happen against our foreign key, and the ids to be
-pulled from the `id` of the array of model instances.
-
-Additionally, the derived property name that is injected into the model
-instances is created from the name of the included table. In the example above
-the `user_data` property contains the included model instances. (Had it been
-plural the table name would have been made singular)
-
-One last common scenario is preloading a one-to-many relationship. You can use
-the `many` option to instruct `include_in` store many associated models for
-each input model. For example, we might load all the posts for each user:
-
-
-```lua
-local users = Users:select()
-Posts:include_in(users, "user_id", { flip = true, many = true })
-```
-
-```moon
-users = Users\select!
-Posts\include_in users, "user_id", flip: true, many: true
-```
-
-```sql
-SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
-```
-
-Each `users` object will now have a `posts` field that is an array containing
-all the associated posts that were found.
-
-
-`include_in` supports the following options, including `as` and `flip` from above:
-
-* `as` -- set the name of the property to store the associated model as
-* `flip` -- set to `true` if the named column is located on the included model
-* `where` -- a table of additional conditionals to limit the query by
-* `fields` -- set the fields returned by each included model
-* `many` -- set to true fetch many records for each input model instance instead of a single one
-
 ## Constraints
 
 Often before we insert or update a row we want to check that some conditions
@@ -1108,9 +1098,9 @@ for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
 ```
 
-> Be careful modifying rows when iterating over each page, as your
-> modifications might change the pagination order and you may process rows
-> multiple times or none at all.
+> Be careful modifying rows in the database when iterating over each page, as
+> your modifications might change the query result order and you may process
+> rows multiple times or none at all.
 
 ### `has_items()`
 
@@ -1290,7 +1280,7 @@ SELECT * from "some_model" order by "some_model"."user_id" ASC, "some_model"."po
 SELECT * from "some_model" where ("some_model"."user_id", "some_model"."post_id") > (232, 582) order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
 ```
 
-## Describing Relationships
+## Relations
 
 Often your models are connected to other models by use of a *foreign_key*. You
 can describe the relationships between models using the `relations` class
@@ -1315,7 +1305,7 @@ class Posts extends Model
   }
 ```
 
-Lapis will automatically add a handful of methods for reach relation to the
+Lapis will automatically add a handful of methods for each relation to the
 model class to make fetching the associated row easy.  For example the
 `belongs_to` relation from the example above would make a `get_user` method:
 
@@ -1615,21 +1605,57 @@ class Users extends Model
 ## Preloading relations
 
 In addtion to the method to fetch the associated rows on a single model
-instace, relations also provide a way to preload the rows for mmany instances
-of the model. For an explanation of why preloading rows is necessary, read
-the [Preloading associations](#preloading-associations) guide.
+instace, relations also provide a way to preload the rows for many instances
+of the model.
 
-### `preload_relation(instances, name, ...)`
+A common pitfall when using object relational mapping systems is triggering
+many queries inside of a loop when fetching a related object on each iteration.
+In order to avoid the `n+1` query problem you can load all the related models
+ahead of time in a single query before iterating over them.
+
+### `preload(instances, relations...)`
+
+
+```lua
+local preload = require("lapis.db.models").preload
+```
+
+```moon
+import preload from require "lapis.db.models"
+```
+
+The `preload` function is a general purpose preloading for loading relations on
+model instances. The first argument is an array of instances, and all other
+arguments are the names of the relations to load.
+
+You can also preload nested relations by using the hash table syntax:
+
+```lua
+preload(posts, {user = "twitter_account"})
+```
+
+```moon
+preload posts, user: "twitter_account"
+```
+
+The hash table syntax can be combined with regular relation names as strings,
+letting you preload complex sets of data in a single line. In the examples
+above, the `user` relation is loaded on the posts, then every user has the
+`twitter_account` relation loaded.
+
+### `Model:preload_relation(instances, name, ...)`
+
+> This function should be avoided in favor of the `preload` function when
+> possible. If you need to pass parameters to a preload call then you need to
+> use `preload_relation`
 
 The class method `preload_relation` takes an array table of instances of the
 model, and the name of a relation. It fills all the instances with the
-associated models with a single query. It's equivalent to calling `include_in`
-with the options that match the relation definition.
+associated models with a single query.
 
-If any of the relations return `nil`, the loaded flag is set on the instace so
-calling the `get_` method does not trigger another query.
-
-Any additional arguments are merged in the options to the call to `include_in`.
+Internally this method called the `include_in` method. Any additional arguments
+passed to `preload_relation` are merged in the options to the call to
+`include_in`.
 
 
 ```lua
@@ -1669,11 +1695,15 @@ Posts\preload_relation posts, "user"
 SELECT * from "users" where "id" in (3,4,5,6,7);
 ```
 
-### `preload_relations(instances, names...)`
+### `Model:preload_relations(instances, names...)`
+
+> This call is deprecated, use the `preload` function to preload many relations
+> in a single call
 
 `preload_relations` is a helper method for calling `preload_relation` many
 times with different relations. This form does not support passing any options
-to the preloaders.
+to the preloaders. You should replace `Model` with the model that contains the
+relation definition.
 
 ```lua
 -- load three separate relations
@@ -1750,8 +1780,8 @@ assert Posts.statuses\to_name("pending") == "pending"
 
 -- using to_name or for_db with undefined enum value throws error
 
-Posts.statuses\to_name 232 -- erorr
-Posts.statuses\for_db "hello" -- erorr
+Posts.statuses\to_name 232 -- error
+Posts.statuses\for_db "hello" -- error
 
 ```
 

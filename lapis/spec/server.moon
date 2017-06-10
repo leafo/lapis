@@ -11,7 +11,13 @@ class SpecServer
   current_server: nil
 
   new: (@runner) =>
-    @runner or= require("lapis.cmd.nginx").nginx_runner
+    unless @runner
+      import actions from require("lapis.cmd.actions")
+      @runner = switch actions\get_server_type!
+        when "cqueues"
+          require("lapis.cmd.cqueues").runner
+        else
+          require("lapis.cmd.nginx").nginx_runner
 
   load_test_server: =>
     import get_free_port from require "lapis.cmd.util"

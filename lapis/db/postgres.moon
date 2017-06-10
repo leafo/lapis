@@ -1,7 +1,7 @@
 import concat from table
 import type, tostring, pairs, select from _G
 
-local raw_query
+local raw_query, raw_disconnect
 local logger
 
 import
@@ -30,19 +30,21 @@ _is_encodable = (item) ->
   return true if is_array item
   false
 
+local gettime
+
 BACKENDS = {
   -- the raw backend is a debug backend that lets you specify the function that
   -- handles the query
   raw: (fn) -> fn
 
   pgmoon: ->
-    import after_dispatch, increment_perf from require "lapis.nginx.context"
+    import after_dispatch, increment_perf, set_perf from require "lapis.nginx.context"
 
     config = require("lapis.config").get!
     pg_config = assert config.postgres, "missing postgres configuration"
     local pgmoon_conn
 
-    (str) ->
+    _query = (str) ->
       pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
 
       unless pgmoon
@@ -57,20 +59,36 @@ BACKENDS = {
           pgmoon_conn = pgmoon
 
       start_time = if ngx and config.measure_performance
-        ngx.update_time!
-        ngx.now!
+        if reused = pgmoon.sock\getreusedtimes!
+          set_perf "pgmoon_conn", reused > 0 and "reuse" or"new"
 
-      logger.query str if logger
+        unless gettime
+          gettime = require("socket").gettime
+
+        gettime!
+
       res, err = pgmoon\query str
 
       if start_time
-        ngx.update_time!
-        increment_perf "db_time", ngx.now! - start_time
+        dt = gettime! - start_time
+        increment_perf "db_time", dt
         increment_perf "db_count", 1
+        logger.query "(#{"%.2f"\format dt * 1000}ms) #{str}" if logger
+      else
+        logger.query str if logger
 
       if not res and err
         error "#{str}\n#{err}"
       res
+
+    _disconnect = ->
+      return unless pgmoon_conn
+
+      pgmoon_conn\disconnect!
+      pgmoon_conn = nil
+      true
+
+    _query, _disconnect
 }
 
 set_backend = (name, ...) ->
@@ -78,7 +96,7 @@ set_backend = (name, ...) ->
   unless backend
     error "Failed to find PostgreSQL backend: #{name}"
 
-  raw_query = backend ...
+  raw_query, raw_disconnect = backend ...
 
 set_raw_query = (fn) ->
   raw_query = fn
@@ -139,6 +157,11 @@ connect = ->
   init_logger!
   init_db! -- replaces raw_query to default backend
 
+disconnect = ->
+  assert raw_disconnect, "no active connection"
+  raw_disconnect!
+
+-- this default implementation is replaced when the connection is established
 raw_query = (...) ->
   connect!
   raw_query ...
@@ -164,13 +187,6 @@ add_returning = (buff, first, cur, following, ...) ->
     add_returning buff, false, following, ...
 
 _insert = (tbl, values, ...) ->
-  if values._timestamp
-    values._timestamp = nil
-    time = format_date!
-
-    values.created_at or= time
-    values.updated_at or= time
-
   buff = {
     "INSERT INTO "
     escape_identifier(tbl)
@@ -192,10 +208,6 @@ add_cond = (buffer, cond, ...) ->
       append_all buffer, interpolate_query cond, ...
 
 _update = (table, values, cond, ...) ->
-  if values._timestamp
-    values._timestamp = nil
-    values.updated_at or= format_date!
-
   buff = {
     "UPDATE "
     escape_identifier(table)
@@ -316,6 +328,7 @@ encode_case = (exp, t, on_else) ->
 
 {
   :connect
+  :disconnect
   :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
   :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
   :encode_clause, :interpolate_query, :parse_clause, :format_date,

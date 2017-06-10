@@ -87,34 +87,6 @@ columnize = function(rows, indent, padding, wrap)
   end
   return concat(formatted, "\n")
 end
-local random_string
-do
-  math.randomseed(os.time())
-  local random
-  random = math.random
-  local random_char
-  random_char = function()
-    local _exp_0 = random(1, 3)
-    if 1 == _exp_0 then
-      return random(65, 90)
-    elseif 2 == _exp_0 then
-      return random(97, 122)
-    elseif 3 == _exp_0 then
-      return random(48, 57)
-    end
-  end
-  random_string = function(length)
-    return string.char(unpack((function()
-      local _accum_0 = { }
-      local _len_0 = 1
-      for i = 1, length do
-        _accum_0[_len_0] = random_char()
-        _len_0 = _len_0 + 1
-      end
-      return _accum_0
-    end)()))
-  end
-end
 local get_free_port
 get_free_port = function()
   local socket = require("socket")
@@ -176,7 +148,6 @@ end
 return {
   columnize = columnize,
   split = split,
-  random_string = random_string,
   get_free_port = get_free_port,
   default_environment = default_environment,
   parse_flags = parse_flags

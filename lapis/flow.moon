@@ -12,12 +12,13 @@ is_flow = (cls) ->
 class Flow
   expose_assigns: false
 
-  new: (@_req, obj={}) =>
-    assert @_req, "flow missing request"
+  new: (@_, obj={}) =>
+    assert @_, "missing flow target"
+    @_req = @_ -- TODO: for legacy flows
 
     -- get the real request if the object passed is another flow
-    if is_flow @_req.__class
-      @_req = @_req._req
+    if is_flow @_.__class
+      @_ = @_._
 
     old_mt = getmetatable @
     proxy = setmetatable obj, old_mt
@@ -28,11 +29,11 @@ class Flow
         val = proxy[key]
         return val if val != nil
 
-        val = @_req[key]
+        val = @_[key]
 
         -- wrap the function to run in req context
         if type(val) == "function"
-          val = (_, ...) -> @_req[key] @_req, ...
+          val = (_, ...) -> @_[key] @_, ...
           rawset @, key, val
 
         val
@@ -46,11 +47,11 @@ class Flow
       mt.__newindex = (key, val) =>
         if allowed_assigns
           if allowed_assigns[key]
-            @_req[key] = val
+            @_[key] = val
           else
             rawset @, key, val
         else
-          @_req[key] = val
+          @_[key] = val
 
     setmetatable @, mt
 

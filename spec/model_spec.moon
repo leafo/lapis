@@ -351,14 +351,32 @@ describe "lapis.db.model", ->
     }
 
   it "should create model with returning *", ->
-    mock_query "INSERT", { { id: 101, color: "blue" } }
+    mock_query "INSERT", { { id: 101, color: "gotya" } }
 
     class Hi extends Model
-    Hi\create { color: "blue" }, returning: "*"
+    row = Hi\create { color: "blue" }, returning: "*"
 
     assert_queries {
       [[INSERT INTO "hi" ("color") VALUES ('blue') RETURNING *]]
     }
+
+    assert.same {
+      id: 101
+      color: "gotya"
+    }, row
+
+  it "strips db.NULL when creating with return *", ->
+    mock_query "INSERT", { { id: 101 } }
+    class Hi extends Model
+    row = Hi\create { color: db.NULL }, returning: "*"
+
+    assert_queries {
+      [[INSERT INTO "hi" ("color") VALUES (NULL) RETURNING *]]
+    }
+
+    assert.same {
+      id: 101
+    }, row
 
   it "should refresh model", ->
     class Things extends Model
@@ -671,6 +689,27 @@ describe "lapis.db.model", ->
       class SecondModel extends FirstModel
       assert.same "second_model", SecondModel\table_name!
       assert.same "first_model", FirstModel\table_name!
+
+    it "fetches relation", ->
+      class Firsts extends Model
+
+      class Seconds extends Firsts
+        @primary_key: "hello_id"
+
+      class OtherModel extends Model
+        @get_relation_model: (name) =>
+          ({ :Seconds })[name]
+
+        @relations: {
+          {"second", has_one: "Seconds"}
+        }
+
+      m = OtherModel\load {
+        id: 5
+      }
+
+      m\get_second!
+
 
   describe "enum", ->
     import enum from require "lapis.db.model"

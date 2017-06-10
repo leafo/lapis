@@ -28,8 +28,11 @@ BACKENDS = {
     mysql_config = assert config.mysql, "missing mysql configuration"
 
     luasql = require("luasql.mysql").mysql!
-    conn = assert luasql\connect mysql_config.database,
-      mysql_config.user, mysql_config.password
+    conn_opts = { mysql_config.database, mysql_config.user, mysql_config.password }
+    if mysql_config.host
+      table.insert conn_opts, mysql_config.host
+      if mysql_config.port then table.insert conn_opts, mysql_config.port
+    conn = assert luasql\connect unpack(conn_opts)
 
     (q) ->
       logger.query q if logger
@@ -221,13 +224,6 @@ _select = (str, ...) ->
 
 
 _insert = (tbl, values, ...) ->
-  if values._timestamp
-    values._timestamp = nil
-    time = format_date!
-
-    values.created_at or= time
-    values.updated_at or= time
-
   buff = {
     "INSERT INTO "
     escape_identifier(tbl)
@@ -238,10 +234,6 @@ _insert = (tbl, values, ...) ->
   raw_query concat buff
 
 _update = (table, values, cond, ...) ->
-  if values._timestamp
-    values._timestamp = nil
-    values.updated_at or= format_date!
-
   buff = {
     "UPDATE "
     escape_identifier(table)

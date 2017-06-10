@@ -14,6 +14,7 @@ class NginxRunner
 
   nginx_bin: "nginx"
   nginx_search_paths: {
+    "/opt/openresty/nginx/sbin/"
     "/usr/local/openresty/nginx/sbin/"
     "/usr/local/opt/openresty/bin/"
     "/usr/sbin/"
@@ -149,6 +150,7 @@ compiler = NginxRunner.ConfigCompiler!
 
 {
   :NginxRunner
+  type: "nginx"
   nginx_runner: runner
 
   get_pid: runner\get_pid

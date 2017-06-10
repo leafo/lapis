@@ -22,17 +22,6 @@ reduce = function(items, fn)
   end
   return left
 end
-local route_precedence
-route_precedence = function(flags)
-  local p = 0
-  if flags.var then
-    p = p + 1
-  end
-  if flags.splat then
-    p = p + 2
-  end
-  return p
-end
 local RouteParser
 do
   local _class_0
@@ -60,7 +49,7 @@ do
             end
             break
           elseif "optional" == _exp_0 then
-            local p = route_precedence(val_params)
+            local p = self:route_precedence(val_params)
             if current_p < p then
               _continue_0 = true
               break
@@ -91,7 +80,8 @@ do
         local chunk = chunks[i]
         local kind, value, val_params
         kind, value, val_params = chunk[1], chunk[2], chunk[3]
-        flags[kind] = true
+        flags[kind] = flags[kind] or 0
+        flags[kind] = flags[kind] + 1
         local chunk_pattern
         local _exp_0 = kind
         if "splat" == _exp_0 then
@@ -304,13 +294,23 @@ do
     default_route = function(self, route)
       return error("failed to find route: " .. route)
     end,
+    route_precedence = function(self, flags)
+      local p = 0
+      if flags.var then
+        p = p + flags.var
+      end
+      if flags.splat then
+        p = p + (10 + (1 / flags.splat) * 10)
+      end
+      return p
+    end,
     build = function(self)
       local by_precedence = { }
       local _list_0 = self.routes
       for _index_0 = 1, #_list_0 do
         local r = _list_0[_index_0]
         local pattern, flags = self:build_route(unpack(r))
-        local p = route_precedence(flags)
+        local p = self:route_precedence(flags)
         by_precedence[p] = by_precedence[p] or { }
         table.insert(by_precedence[p], pattern)
       end

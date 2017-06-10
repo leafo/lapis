@@ -121,6 +121,9 @@ create_index = function(tname, ...)
   if options.where then
     append_all(buffer, " WHERE ", options.where)
   end
+  if options.when then
+    error("did you mean create_index `where`?")
+  end
   append_all(buffer, ";")
   return db.query(concat(buffer))
 end

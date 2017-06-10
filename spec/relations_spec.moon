@@ -108,6 +108,43 @@ describe "lapis.db.model.relations", ->
 
     assert_queries {}
 
+  it "should make a fetch with preload", ->
+    called = 0
+
+    class Posts extends Model
+      @relations: {
+        { "thing"
+          fetch: => "yes"
+          preload: (objects, opts) ->
+            for object in *objects
+              continue if object.skip_me
+              object.thing = called
+              called += 1
+        }
+      }
+
+    one = Posts!
+
+    two = Posts!
+    two.skip_me = true
+
+    three = Posts!
+    four = Posts!
+
+    Posts\preload_relations {one, two, three}, "thing"
+
+    assert.same 0, one\get_thing!
+    assert.same nil, two\get_thing!
+    assert.same 1, three\get_thing!
+    assert.same "yes", four\get_thing!
+
+    import LOADED_KEY from require "lapis.db.model.relations"
+
+    for item in *{one, two, three}
+      assert.true item[LOADED_KEY].thing
+
+    assert.true four[LOADED_KEY].thing
+
   it "should make belongs_to getters for extend syntax", ->
     mock_query "SELECT", { { id: 101 } }
 

@@ -5,7 +5,7 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
-local raw_query
+local raw_query, raw_disconnect
 local logger
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
 do
@@ -34,20 +34,22 @@ _is_encodable = function(item)
   end
   return false
 end
+local gettime
 local BACKENDS = {
   raw = function(fn)
     return fn
   end,
   pgmoon = function()
-    local after_dispatch, increment_perf
+    local after_dispatch, increment_perf, set_perf
     do
       local _obj_0 = require("lapis.nginx.context")
-      after_dispatch, increment_perf = _obj_0.after_dispatch, _obj_0.increment_perf
+      after_dispatch, increment_perf, set_perf = _obj_0.after_dispatch, _obj_0.increment_perf, _obj_0.set_perf
     end
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
     local pgmoon_conn
-    return function(str)
+    local _query
+    _query = function(str)
       local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       if not (pgmoon) then
         local Postgres
@@ -65,23 +67,45 @@ local BACKENDS = {
       end
       local start_time
       if ngx and config.measure_performance then
-        ngx.update_time()
-        start_time = ngx.now()
-      end
-      if logger then
-        logger.query(str)
+        do
+          local reused = pgmoon.sock:getreusedtimes()
+          if reused then
+            set_perf("pgmoon_conn", reused > 0 and "reuse" or "new")
+          end
+        end
+        if not (gettime) then
+          gettime = require("socket").gettime
+        end
+        start_time = gettime()
       end
       local res, err = pgmoon:query(str)
       if start_time then
-        ngx.update_time()
-        increment_perf("db_time", ngx.now() - start_time)
+        local dt = gettime() - start_time
+        increment_perf("db_time", dt)
         increment_perf("db_count", 1)
+        if logger then
+          logger.query("(" .. tostring(("%.2f"):format(dt * 1000)) .. "ms) " .. tostring(str))
+        end
+      else
+        if logger then
+          logger.query(str)
+        end
       end
       if not res and err then
         error(tostring(str) .. "\n" .. tostring(err))
       end
       return res
     end
+    local _disconnect
+    _disconnect = function()
+      if not (pgmoon_conn) then
+        return 
+      end
+      pgmoon_conn:disconnect()
+      pgmoon_conn = nil
+      return true
+    end
+    return _query, _disconnect
   end
 }
 local set_backend
@@ -90,7 +114,7 @@ set_backend = function(name, ...)
   if not (backend) then
     error("Failed to find PostgreSQL backend: " .. tostring(name))
   end
-  raw_query = backend(...)
+  raw_query, raw_disconnect = backend(...)
 end
 local set_raw_query
 set_raw_query = function(fn)
@@ -177,6 +201,11 @@ connect = function()
   init_logger()
   return init_db()
 end
+local disconnect
+disconnect = function()
+  assert(raw_disconnect, "no active connection")
+  return raw_disconnect()
+end
 raw_query = function(...)
   connect()
   return raw_query(...)
@@ -208,12 +237,6 @@ add_returning = function(buff, first, cur, following, ...)
 end
 local _insert
 _insert = function(tbl, values, ...)
-  if values._timestamp then
-    values._timestamp = nil
-    local time = format_date()
-    values.created_at = values.created_at or time
-    values.updated_at = values.updated_at or time
-  end
   local buff = {
     "INSERT INTO ",
     escape_identifier(tbl),
@@ -237,10 +260,6 @@ add_cond = function(buffer, cond, ...)
 end
 local _update
 _update = function(table, values, cond, ...)
-  if values._timestamp then
-    values._timestamp = nil
-    values.updated_at = values.updated_at or format_date()
-  end
   local buff = {
     "UPDATE ",
     escape_identifier(table),
@@ -393,6 +412,7 @@ encode_case = function(exp, t, on_else)
 end
 return {
   connect = connect,
+  disconnect = disconnect,
   query = query,
   raw = raw,
   is_raw = is_raw,

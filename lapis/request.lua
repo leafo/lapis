@@ -37,15 +37,7 @@ do
       if path and (path:match("^%a+:") or path:match("^//")) then
         return path
       end
-      local parsed
-      do
-        local _tbl_0 = { }
-        for k, v in pairs(self.req.parsed_url) do
-          _tbl_0[k] = v
-        end
-        parsed = _tbl_0
-      end
-      parsed.query = nil
+      local parsed = self.__class.support.default_url_params(self)
       if path then
         local _path, query = path:match("^(.-)%?(.*)$")
         path = _path or path
@@ -133,6 +125,18 @@ do
     end
   end
   self.support = {
+    default_url_params = function(self)
+      local parsed
+      do
+        local _tbl_0 = { }
+        for k, v in pairs(self.req.parsed_url) do
+          _tbl_0[k] = v
+        end
+        parsed = _tbl_0
+      end
+      parsed.query = nil
+      return parsed
+    end,
     load_cookies = function(self)
       self.cookies = auto_table(function()
         return parse_cookie_string(self.req.headers.cookie)
@@ -155,7 +159,7 @@ do
       do
         local obj = self.options.json
         if obj then
-          self.res.headers["Content-Type"] = "application/json"
+          self.res.headers["Content-Type"] = self.options.content_type or "application/json"
           self.res.content = to_json(obj)
           return 
         end

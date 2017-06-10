@@ -17,6 +17,10 @@ find_relation = (model, name) ->
 
 preload_relation = (objects, name, ...) =>
   preloader = @relation_preloaders[name]
+
+  unless preloader
+    error "Model #{@__name} doesn't have preloader for #{name}"
+
   preloader @, objects, ...
   true
 
@@ -32,6 +36,58 @@ preload_relations = (objects, name, ...) =>
   else
     true
 
+preload_homogeneous = (sub_relations, model, objects, front, ...) ->
+  import to_json from require "lapis.util"
+  return unless front
+
+  if type(front) == "table"
+    for key,val in pairs front
+      relation = type(key) == "string" and key or val
+      preload_relation model, objects, relation
+
+      if type(key) == "string"
+        r = find_relation model, key
+        unless r
+          error "missing relation: #{key}"
+
+        sub_relations or= {}
+        sub_relations[val] or= {}
+        loaded_objects = sub_relations[val]
+
+        if r.has_many
+          for obj in *objects
+            for fetched in *obj[key]
+              table.insert loaded_objects, fetched
+        else
+          for obj in *objects
+            table.insert loaded_objects, obj[key]
+  else
+    preload_relation model, objects, front
+
+  if ...
+    preload_homogeneous sub_relations, model, objects, ...
+  else
+    sub_relations
+
+preload = (objects, ...) ->
+  -- group by type
+  by_type = {}
+
+  for object in *objects
+    by_type[object.__class] or= {}
+    table.insert by_type[object.__class], object
+
+  local sub_relations
+
+  for model, model_objects in pairs by_type
+    sub_relations = preload_homogeneous sub_relations, model, model_objects, ...
+
+  if sub_relations
+    for sub_load, sub_objects in pairs sub_relations
+      preload sub_objects, sub_load
+
+  true
+
 mark_loaded_relations = (items, name) ->
   for item in *items
     if loaded = item[LOADED_KEY]
@@ -44,6 +100,9 @@ clear_loaded_relation = (item, name) ->
   if loaded = item[LOADED_KEY]
     loaded[name] = nil
   true
+
+relation_is_loaded = (item, name) ->
+  item[name] or item[LOADED_KEY] and item[LOADED_KEY][name]
 
 get_relations_class = (model) ->
   parent = model.__parent
@@ -91,6 +150,11 @@ fetch = (name, opts) =>
     with obj = source @
       @[name] = obj
 
+  if opts.preload
+    @relation_preloaders[name] = (objects, preload_opts) =>
+      mark_loaded_relations objects, name
+      opts.preload objects, preload_opts, @, name
+
 belongs_to = (name, opts) =>
   source = opts.belongs_to
   assert type(source) == "string", "Expecting model name for `belongs_to` relation"
@@ -116,6 +180,7 @@ belongs_to = (name, opts) =>
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
     preload_opts or= {}
+    preload_opts.as = name
     preload_opts.for_relation = name
     model\include_in objects, column_name, preload_opts
 
@@ -328,5 +393,6 @@ add_relations = (relations) =>
 
 {
   :relation_builders, :find_relation, :clear_loaded_relation, :LOADED_KEY
-  :add_relations, :get_relations_class, :mark_loaded_relations
+  :add_relations, :get_relations_class, :mark_loaded_relations, :relation_is_loaded
+  :preload
 }

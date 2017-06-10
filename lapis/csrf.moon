@@ -18,12 +18,12 @@ validate_token = (req, key) ->
   msg, sig = token\match "^(.*)%.(.*)$"
   return nil, "malformed csrf token" unless msg
 
-  sig = ngx.decode_base64 sig
+  sig = decode_base64 sig
 
-  unless sig == ngx.hmac_sha1(config.secret, msg)
+  unless sig == hmac_sha1(config.secret, msg)
     return nil, "invalid csrf token (bad sig)"
 
-  msg = json.decode ngx.decode_base64 msg
+  msg = json.decode decode_base64 msg
 
   return nil, "invalid csrf token (bad key)" unless msg.key == key
   return nil, "csrf token expired" unless not msg.expires or msg.expires > os.time!

@@ -48,6 +48,14 @@ tests = {
   }
 
   {
+    -> util.parse_query_string "null"
+    {
+      {"null"}
+      null: true
+    }
+  }
+
+  {
     -> util.underscore "ManifestRocks"
     "manifest_rocks"
   }
@@ -90,6 +98,35 @@ tests = {
       }
 
     "dad=day&hello%5bhole%5d=wor%3dld"
+  }
+
+  {
+    ->
+      util.encode_query_string {
+        {"cold", "zone"}
+        "hello": true
+        "world": false
+      }
+
+    "cold=zone&hello"
+  }
+
+  {
+    ->
+      util.encode_query_string {
+        "world": false
+      }
+
+    ""
+  }
+
+  {
+    ->
+      util.encode_query_string {
+        "null": true
+      }
+
+    "null"
   }
 
   { -- stripping invalid types
@@ -247,6 +284,11 @@ tests = {
     -> util.trim "
       blah blah          "
     "blah blah"
+  }
+
+  {
+    -> util.trim "   hello#{" "\rep 20000}world "
+    "hello#{" "\rep 20000}world"
   }
 
   {

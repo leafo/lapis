@@ -22,6 +22,11 @@ class Request
   -- these are like methods but we don't put them on the request object so they
   -- don't take up names that someone might use
   @support: {
+    default_url_params: =>
+      parsed = { k,v for k,v in pairs @req.parsed_url }
+      parsed.query = nil
+      parsed
+
     load_cookies: =>
       @cookies = auto_table -> parse_cookie_string @req.headers.cookie
 
@@ -42,7 +47,7 @@ class Request
           @res\add_header k, v
 
       if obj = @options.json
-        @res.headers["Content-Type"] = "application/json"
+        @res.headers["Content-Type"] = @options.content_type or "application/json"
         @res.content = to_json obj
         return
 
@@ -183,8 +188,7 @@ class Request
   build_url: (path, options) =>
     return path if path and (path\match("^%a+:") or path\match "^//")
 
-    parsed = { k,v for k,v in pairs @req.parsed_url }
-    parsed.query = nil
+    parsed = @@support.default_url_params @
 
     if path
       _path, query = path\match("^(.-)%?(.*)$")

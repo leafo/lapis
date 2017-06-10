@@ -42,7 +42,7 @@ busted spec_mysql
 
 ## License (MIT)
 
-Copyright (C) 2016 by Leaf Corcoran
+Copyright (C) 2017 by Leaf Corcoran
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

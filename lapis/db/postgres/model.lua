@@ -11,6 +11,8 @@ do
   local _obj_0 = require("lapis.db.base_model")
   BaseModel, Enum, enum = _obj_0.BaseModel, _obj_0.Enum, _obj_0.enum
 end
+local preload
+preload = require("lapis.db.model.relations").preload
 local Model
 do
   local _class_0
@@ -69,7 +71,8 @@ do
         opts = last
       end
       if self.__class.timestamp and not (opts and opts.timestamp == false) then
-        values._timestamp = true
+        local time = self.__class.db.format_date()
+        values.updated_at = values.updated_at or time
       end
       local returning
       for k, v in pairs(values) do
@@ -141,7 +144,9 @@ do
       end
     end
     if self.timestamp then
-      values._timestamp = true
+      local time = self.db.format_date()
+      values.created_at = values.created_at or time
+      values.updated_at = values.updated_at or time
     end
     local returning, return_all, nil_fields
     if opts and opts.returning then
@@ -161,26 +166,24 @@ do
         end
       end
     end
-    if not (return_all) then
-      for k, v in pairs(values) do
-        local _continue_0 = false
-        repeat
-          if v == db.NULL then
-            nil_fields = nil_fields or { }
-            nil_fields[k] = true
-            _continue_0 = true
-            break
-          elseif db.is_raw(v) then
-            returning = returning or {
-              self:primary_keys()
-            }
-            table.insert(returning, k)
-          end
+    for k, v in pairs(values) do
+      local _continue_0 = false
+      repeat
+        if v == db.NULL then
+          nil_fields = nil_fields or { }
+          nil_fields[k] = true
           _continue_0 = true
-        until true
-        if not _continue_0 then
           break
+        elseif db.is_raw(v) then
+          returning = returning or {
+            self:primary_keys()
+          }
+          table.insert(returning, k)
         end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
     local res
@@ -217,5 +220,6 @@ end
 return {
   Model = Model,
   Enum = Enum,
-  enum = enum
+  enum = enum,
+  preload = preload
 }

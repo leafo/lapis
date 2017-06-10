@@ -32,6 +32,10 @@ local validate_functions = {
     local month = input and input:match("^%d+%-(%d+)%-(%d+)%s+(%d+):(%d+):(%d+)$")
     return month ~= nil, "%s is not a valid timestamp"
   end,
+  matches_pattern = function(input, pattern)
+    local match = type(input) == "string" and input:match(pattern) or nil
+    return match ~= nil, "%s is not the right format"
+  end,
   equals = function(input, value)
     return input == value, "%s must match"
   end,

@@ -8,7 +8,6 @@ build_router = (routes) ->
       r\add_route pattern, handler
     r.default_route = -> "failed to find route"
 
-
 describe "Router", ->
   it "matches a route", ->
     router = Router!
@@ -440,5 +439,44 @@ describe "route precedence", ->
     out = r\resolve "/test/thing"
     assert.same { { game: "thing" }, "/test/:game" }, out
 
+describe "sort routes", ->
+  sort_routes = (rs) ->
+    router = build_router rs
 
+    tuples = for r in *router.routes
+      pattern, flags = router\build_route unpack r
+      p = router\route_precedence flags
+      -- print r[1], p
+      {r[1], p}
 
+    table.sort tuples, (a,b) ->
+      a[2] < b[2]
+
+    [t[1] for t in *tuples]
+
+  it "basic set", ->
+    assert.same {
+      "/hello"
+      "/:slug1/two"
+      "/*"
+    }, sort_routes {
+      "/*"
+      "/:slug1/two"
+      "/hello"
+    }
+
+  it "number of slugs affects match", ->
+    assert.same {
+      "/hello"
+      "/:slug1/two"
+      "/:slug1/:slug2"
+
+      "/*/hi/*"
+      "/*"
+    }, sort_routes {
+      "/*"
+      "/*/hi/*"
+      "/:slug1/:slug2"
+      "/:slug1/two"
+      "/hello"
+    }

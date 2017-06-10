@@ -39,6 +39,9 @@ end
 local preload_relation
 preload_relation = function(self, objects, name, ...)
   local preloader = self.relation_preloaders[name]
+  if not (preloader) then
+    error("Model " .. tostring(self.__name) .. " doesn't have preloader for " .. tostring(name))
+  end
   preloader(self, objects, ...)
   return true
 end
@@ -54,6 +57,70 @@ preload_relations = function(self, objects, name, ...)
   else
     return true
   end
+end
+local preload_homogeneous
+preload_homogeneous = function(sub_relations, model, objects, front, ...)
+  local to_json
+  to_json = require("lapis.util").to_json
+  if not (front) then
+    return 
+  end
+  if type(front) == "table" then
+    for key, val in pairs(front) do
+      local relation = type(key) == "string" and key or val
+      preload_relation(model, objects, relation)
+      if type(key) == "string" then
+        local r = find_relation(model, key)
+        if not (r) then
+          error("missing relation: " .. tostring(key))
+        end
+        sub_relations = sub_relations or { }
+        sub_relations[val] = sub_relations[val] or { }
+        local loaded_objects = sub_relations[val]
+        if r.has_many then
+          for _index_0 = 1, #objects do
+            local obj = objects[_index_0]
+            local _list_0 = obj[key]
+            for _index_1 = 1, #_list_0 do
+              local fetched = _list_0[_index_1]
+              table.insert(loaded_objects, fetched)
+            end
+          end
+        else
+          for _index_0 = 1, #objects do
+            local obj = objects[_index_0]
+            table.insert(loaded_objects, obj[key])
+          end
+        end
+      end
+    end
+  else
+    preload_relation(model, objects, front)
+  end
+  if ... then
+    return preload_homogeneous(sub_relations, model, objects, ...)
+  else
+    return sub_relations
+  end
+end
+local preload
+preload = function(objects, ...)
+  local by_type = { }
+  for _index_0 = 1, #objects do
+    local object = objects[_index_0]
+    by_type[object.__class] = by_type[object.__class] or { }
+    table.insert(by_type[object.__class], object)
+  end
+  local sub_relations
+  for model, model_objects in pairs(by_type) do
+    sub_relations = preload_homogeneous(sub_relations, model, model_objects, ...)
+  end
+  if sub_relations then
+    for sub_load, sub_objects in pairs(sub_relations) do
+      preload(sub_objects, sub_load)
+    end
+  end
+  return true
 end
 local mark_loaded_relations
 mark_loaded_relations = function(items, name)
@@ -81,6 +148,10 @@ clear_loaded_relation = function(item, name)
     end
   end
   return true
+end
+local relation_is_loaded
+relation_is_loaded = function(item, name)
+  return item[name] or item[LOADED_KEY] and item[LOADED_KEY][name]
 end
 local get_relations_class
 get_relations_class = function(model)
@@ -174,6 +245,12 @@ fetch = function(self, name, opts)
       return obj
     end
   end
+  if opts.preload then
+    self.relation_preloaders[name] = function(self, objects, preload_opts)
+      mark_loaded_relations(objects, name)
+      return opts.preload(objects, preload_opts, self, name)
+    end
+  end
 end
 local belongs_to
 belongs_to = function(self, name, opts)
@@ -207,6 +284,7 @@ belongs_to = function(self, name, opts)
   self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
     preload_opts = preload_opts or { }
+    preload_opts.as = name
     preload_opts.for_relation = name
     return model:include_in(objects, column_name, preload_opts)
   end
@@ -480,5 +558,7 @@ return {
   LOADED_KEY = LOADED_KEY,
   add_relations = add_relations,
   get_relations_class = get_relations_class,
-  mark_loaded_relations = mark_loaded_relations
+  mark_loaded_relations = mark_loaded_relations,
+  relation_is_loaded = relation_is_loaded,
+  preload = preload
 }

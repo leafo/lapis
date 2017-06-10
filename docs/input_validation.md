@@ -15,7 +15,7 @@ local validate = require("lapis.validate")
 
 local capture_errors = app_helpers.capture_errors
 
-local app = lapis.Aplication()
+local app = lapis.Application()
 
 app:match("/create-user", capture_errors(function(self)
   validate.assert_valid(self.params, {
@@ -73,6 +73,7 @@ validation functions as demonstrated in the example above.
 
 * `exists: true` -- check if the value exists and is not an empty string
 * `file_exists: true` -- check if the value is a file upload
+* `matches_pattern: pat` -- value is a string that matches the Lua pattern provided by `pat`
 * `min_length: Min_Length` -- value must be at least `Min_Length` chars
 * `max_length: Max_Length` -- value must be at most `Max_Length` chars
 * `is_integer: true` -- value matches integer pattern
@@ -98,7 +99,7 @@ end
 local app_helpers = require("lapis.application")
 local capture_errors = app_helpers.capture_errors
 
-local app = lapis.Aplication()
+local app = lapis.Application()
 
 app:match("/", capture_errors(function(self)
   validate.assert_valid(self.params, {
@@ -139,3 +140,4 @@ import validate from require "lapis.validate"
   `assert_valid`, but returns either errors or `nil` on failure instead of
   yielding the error.
 
+[0]: utilities.html#file-uploads

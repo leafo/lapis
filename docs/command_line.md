@@ -116,6 +116,11 @@ Migrations](database.html#database-migrations/running-migrations).
 
 It executes on the server approximately this code:
 
+```lua
+local migrations = require("migrations")
+require("lapis.db.migrations").run_migrations(migrations)
+```
+
 ```moon
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"

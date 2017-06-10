@@ -39,6 +39,7 @@ file.
 
 ```lua
 -- config.lua
+local config = require("lapis.config")
 config("development", {
   postgres = {
     host = "127.0.0.1",
@@ -51,6 +52,7 @@ config("development", {
 
 ```moon
 -- config.moon
+import config from require "lapis.config"
 config "development", ->
   postgres ->
     host "127.0.0.1"
@@ -71,6 +73,7 @@ block:
 
 ```lua
 -- config.lua
+local config = require("lapis.config")
 config("development", {
   mysql = {
     host = "127.0.0.1",
@@ -83,6 +86,7 @@ config("development", {
 
 ```moon
 -- config.moon
+import config from require "lapis.config"
 config "development", ->
   mysql ->
     host "127.0.0.1"
@@ -116,6 +120,8 @@ app:match("/", function()
   local res = db.query("select * from my_table where id = ?", 10)
   return "ok!"
 end)
+
+return app
 ```
 
 ```moon
@@ -142,6 +148,8 @@ app:match("/", function()
   local row = MyTable:find(10)
   return "ok!"
 end)
+
+return app
 ```
 
 ```moon

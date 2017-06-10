@@ -67,14 +67,33 @@ encode_query_string = function(t, sep)
   local i = 0
   local buf = { }
   for k, v in pairs(t) do
-    if type(k) == "number" and type(v) == "table" then
-      k, v = v[1], v[2]
+    local _continue_0 = false
+    repeat
+      if type(k) == "number" and type(v) == "table" then
+        k, v = v[1], v[2]
+        if v == nil then
+          v = true
+        end
+      end
+      if v == false then
+        _continue_0 = true
+        break
+      end
+      buf[i + 1] = _escape(k)
+      if v == true then
+        buf[i + 2] = sep
+        i = i + 2
+      else
+        buf[i + 2] = "="
+        buf[i + 3] = _escape(v)
+        buf[i + 4] = sep
+        i = i + 4
+      end
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
-    buf[i + 1] = _escape(k)
-    buf[i + 2] = "="
-    buf[i + 3] = _escape(v)
-    buf[i + 4] = sep
-    i = i + 4
   end
   buf[i] = nil
   return concat(buf)
@@ -167,7 +186,12 @@ uniquify = function(list)
   end)()
 end
 trim = function(str)
-  return tostring(str):match("^%s*(.-)%s*$")
+  str = tostring(str)
+  if #str > 200 then
+    return str:gsub("^%s+", ""):reverse():gsub("^%s+", ""):reverse()
+  else
+    return str:match("^%s*(.-)%s*$")
+  end
 end
 trim_all = function(tbl)
   for k, v in pairs(tbl) do

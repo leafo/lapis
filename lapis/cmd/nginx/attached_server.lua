@@ -2,8 +2,11 @@ local path = require("lapis.cmd.path")
 local get_free_port
 get_free_port = require("lapis.cmd.util").get_free_port
 local AttachedServer
+AttachedServer = require("lapis.cmd.attached_server").AttachedServer
+local NginxAttachedServer
 do
   local _class_0
+  local _parent_0 = AttachedServer
   local _base_0 = {
     start = function(self, environment, env_overrides)
       if path.exists(self.runner.compiled_config_path) then
@@ -37,42 +40,6 @@ do
       end
       return self:wait_until_ready()
     end,
-    wait_until = function(self, server_status)
-      if server_status == nil then
-        server_status = "open"
-      end
-      local socket = require("socket")
-      local max_tries = 1000
-      while true do
-        local sock = socket.connect("127.0.0.1", self.port)
-        local _exp_0 = server_status
-        if "open" == _exp_0 then
-          if sock then
-            sock:close()
-            break
-          end
-        elseif "close" == _exp_0 then
-          if sock then
-            sock:close()
-          else
-            break
-          end
-        else
-          error("don't know how to wait for " .. tostring(server_status))
-        end
-        max_tries = max_tries - 1
-        if max_tries == 0 then
-          error("Timed out waiting for server to " .. tostring(server_status))
-        end
-        socket.sleep(0.001)
-      end
-    end,
-    wait_until_ready = function(self)
-      return self:wait_until("open")
-    end,
-    wait_until_closed = function(self)
-      return self:wait_until("close")
-    end,
     detach = function(self)
       if self.existing_config then
         path.write_file(self.runner.compiled_config_path, self.existing_config)
@@ -101,7 +68,7 @@ do
         }
       })
       if not (status == 200) then
-        error("Failed to exec code on server, got: " .. tostring(status))
+        error("Failed to exec code on server, got: " .. tostring(status) .. "\n\n" .. tostring(table.concat(buffer)))
       end
       return table.concat(buffer)
     end,
@@ -155,14 +122,26 @@ do
     end
   }
   _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
     __init = function(self, runner)
       self.runner = runner
     end,
     __base = _base_0,
-    __name = "AttachedServer"
+    __name = "NginxAttachedServer",
+    __parent = _parent_0
   }, {
-    __index = _base_0,
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
     __call = function(cls, ...)
       local _self_0 = setmetatable({}, _base_0)
       cls.__init(_self_0, ...)
@@ -170,8 +149,11 @@ do
     end
   })
   _base_0.__class = _class_0
-  AttachedServer = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  NginxAttachedServer = _class_0
 end
 return {
-  AttachedServer = AttachedServer
+  AttachedServer = NginxAttachedServer
 }

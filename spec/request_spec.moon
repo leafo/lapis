@@ -29,6 +29,22 @@ describe "lapis.spec.request", ->
         }
       }
 
+    it "should mock request with session", ->
+      class SessionApp extends lapis.Application
+        "/test-session": =>
+          import flatten_session from require "lapis.session"
+          assert.same {
+            color: "hello"
+            height: {1,2,3,4}
+          }, flatten_session @session
+
+      mock_request SessionApp, "/test-session", {
+        session: {
+          color: "hello"
+          height: {1,2,3,4}
+        }
+      }
+
   describe "mock_action action", ->
     it "should mock action", ->
       assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
@@ -58,6 +74,23 @@ describe "lapis.request", ->
       status, res = assert_request SessionApp, "/get_session", prev: h
       assert.same "greetings", res
 
+  describe "query params", ->
+    local params
+
+    class QueryApp extends lapis.Application
+      layout: false
+
+      "/hello": =>
+        params = @params
+
+    it "mocks request with query params", ->
+      assert.same 200, (mock_request QueryApp, "/hello?hello=world")
+      assert.same {hello: "world"}, params
+
+    it "mocks request with query params #bug", ->
+      assert.same 200, (mock_request QueryApp, "/hello?null")
+      -- todo: this is bug
+      assert.same {}, params
 
   describe "json request", ->
     import json_params from require "lapis.application"
@@ -162,6 +195,14 @@ describe "lapis.request", ->
       status, body, h = write -> json: { items: {1,2,3,4} }
       assert.same [[{"items":[1,2,3,4]}]], body
       assert.same "application/json", h["Content-Type"]
+
+    it "writes json with custom content-type", ->
+      status, body, h = write ->
+        json: { item: "hi" }, content_type: "application/json; charset=utf-8"
+
+      assert.same "application/json; charset=utf-8", h["Content-Type"]
+      assert.same [[{"item":"hi"}]], body
+
 
   describe "cookies", ->
     class CookieApp extends lapis.Application

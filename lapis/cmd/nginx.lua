@@ -14,6 +14,7 @@ do
     current_server = nil,
     nginx_bin = "nginx",
     nginx_search_paths = {
+      "/opt/openresty/nginx/sbin/",
       "/usr/local/openresty/nginx/sbin/",
       "/usr/local/opt/openresty/bin/",
       "/usr/sbin/",
@@ -206,6 +207,7 @@ local runner = NginxRunner()
 local compiler = NginxRunner.ConfigCompiler()
 return {
   NginxRunner = NginxRunner,
+  type = "nginx",
   nginx_runner = runner,
   get_pid = (function()
     local _base_0 = runner

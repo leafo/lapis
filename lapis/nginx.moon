@@ -46,20 +46,28 @@ parse_multipart = ->
   out
 
 ngx_req = {
-  headers: -> ngx.req.get_headers!
+  -- deprecated fields
+  referer: -> ngx.var.http_referer or ""
   cmd_mth: -> ngx.var.request_method
   cmd_url: ->  ngx.var.request_uri
-
   relpath: (t) -> t.parsed_url.path
+  srv: -> ngx.var.server_addr
+  built_url: (t) -> build_url t.parsed_url
+  --
+
+  headers: -> ngx.req.get_headers!
+  method: -> ngx.var.request_method
+
   scheme: -> ngx.var.scheme
   port: -> ngx.var.server_port
-  srv: -> ngx.var.server_addr
+  server_addr: -> ngx.var.server_addr
   remote_addr: -> ngx.var.remote_addr
-  referer: -> ngx.var.http_referer or ""
+  request_uri: ->  ngx.var.request_uri
 
   parsed_url: (t) ->
     uri = ngx.var.request_uri
-    uri = uri\match("(.-)%?") or uri
+    pos = uri\find("?")
+    uri = pos and uri\sub(1, pos-1) or uri
     host_header = ngx.var.http_host
 
     {
@@ -70,8 +78,6 @@ ngx_req = {
       query: ngx.var.args
     }
 
-  built_url: (t) ->
-    build_url t.parsed_url
 
   params_post: (t) ->
     content_type = t.headers["content-type"] or ""
