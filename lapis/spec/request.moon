@@ -103,6 +103,9 @@ mock_request = (app_cls, url, opts={}) ->
 
     accum
 
+  hex = (str)->
+    (str\gsub ".", (c) -> string.format "%02x", string.byte c)
+
   stack.push {
     print: (...) ->
       args = flatten { ... }
@@ -115,8 +118,8 @@ mock_request = (app_cls, url, opts={}) ->
       ngx.print "\n"
 
     md5: (str) ->
-      crypto = require "crypto"
-      crypto.digest "md5", str
+      digest = require "openssl.digest"
+      hex((digest.new "md5")\final str)
 
     header: out_headers
 
