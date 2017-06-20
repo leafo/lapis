@@ -22,7 +22,7 @@ parse_multipart = ->
         table.insert current.content, res
       when "header"
         name, value = unpack res
-        if name == "Content-Disposition"
+        if name\lower == "content-disposition"
           if params = parse_content_disposition value
             for tuple in *params
               current[tuple[1]] = tuple[2]
