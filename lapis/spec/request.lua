@@ -97,7 +97,7 @@ mock_request = function(app_cls, url, opts)
     Cookie = prev_request.set_cookie
   }
   if opts.cookies then
-    for k, v in pairs(opts.cookie) do
+    for k, v in pairs(opts.cookies) do
       add_cookie(headers, k, v)
     end
   end

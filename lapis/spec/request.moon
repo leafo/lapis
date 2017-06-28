@@ -77,7 +77,7 @@ mock_request = (app_cls, url, opts={}) ->
   }
 
   if opts.cookies
-    for k, v in pairs opts.cookie
+    for k, v in pairs opts.cookies
       add_cookie headers, k, v
 
   if opts.post
