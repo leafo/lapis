@@ -76,6 +76,10 @@ mock_request = (app_cls, url, opts={}) ->
     Cookie: prev_request.set_cookie
   }
 
+  if opts.cookies
+    for k, v in pairs opts.cookie
+      add_cookie headers, k, v
+
   if opts.post
     headers["Content-type"] = "application/x-www-form-urlencoded"
 
