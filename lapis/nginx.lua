@@ -34,7 +34,7 @@ parse_multipart = function()
       table.insert(current.content, res)
     elseif "header" == _exp_0 then
       local name, value = unpack(res)
-      if name == "Content-Disposition" then
+      if name:lower() == "Content-Disposition" then
         do
           local params = parse_content_disposition(value)
           if params then
