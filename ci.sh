@@ -3,6 +3,8 @@ set -e
 set -o pipefail
 set -o xtrace
 
+pacman -Sy mariadb libmariadbclient mariadb-clients --noconfirm
+
 luarocks-5.1 install busted
 luarocks-5.1 install lpeg 0.10.2
 luarocks-5.1 install moonscript
@@ -22,6 +24,9 @@ echo "fsync = off" >> /var/lib/postgres/data/postgresql.conf
 echo "synchronous_commit = off" >> /var/lib/postgres/data/postgresql.conf
 echo "full_page_writes = off" >> /var/lib/postgres/data/postgresql.conf
 su postgres -c '/usr/bin/pg_ctl -s -D /var/lib/postgres/data start -w -t 120'
+
+# start mariadb
+mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 
 make build
 make test_db
