@@ -21,7 +21,7 @@ dependencies = {
 	"loadkit",
 	"lpeg",
 	"lua-cjson",
-	"luacrypto",
+	"luaossl",
 	"luafilesystem",
 	"luasocket",
 	"mimetypes",
