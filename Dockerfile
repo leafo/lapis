@@ -1,4 +1,4 @@
-FROM leafo/lapis-archlinux-itchio:latest
+FROM leafo/lapis-archlinux:latest
 MAINTAINER leaf corcoran <leafot@gmail.com>
 
 WORKDIR /site/lapis
