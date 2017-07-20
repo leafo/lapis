@@ -8,6 +8,10 @@ Lapis is production ready, use it on your next huge project.
 
 ### <http://leafo.net/lapis/>
 
+* [Getting Started Tutorial](http://leafo.net/lapis/reference/getting_started.html)
+* [Documentation](http://leafo.net/lapis/reference.html)
+* [Changelog](http://leafo.net/lapis/changelog.html)
+
 ## Lapis Powered
 
   * <http://luarocks.org> - [source](https://github.com/leafo/moonrocks-site)
@@ -16,29 +20,28 @@ Lapis is production ready, use it on your next huge project.
   * <http://mundodescuento.com/>
   * [Ludum Dare game browser](http://ludumdare.itch.io) - [source](https://github.com/leafo/ludum-dare-browser)
   * <https://pasta.cf/> - [source](https://github.com/starius/pasta)
+  * <http://lapchan.moe/> - [source](https://github.com/karai17/lapis-chan/)
 
 ## Running Tests
 
-Requires [Busted][2] and [MoonScript][1].
+If you need to run tests outside of our CI. The test suites require
+[Busted][2] and [MoonScript][1]. There are three separate test suites:
+
+* `busted` -- test Lua implementations
+* `busted spec_postgres` -- integration tests with PostgreSQL. Requires a running PostgreSQL server
+* `busted spec_mysql` -- integration tests with MySQL. Requires a running MySQL server
+* `busted spec_openresty/` -- integration tests with OpenResty. Requires installation of OpenResty & Databases
+
+Test suties that require databases need to have the initial database created. A `lapis_test` database is created on each.
+You can run each command respectively.
 
 ```bash
-busted
+make test_db # postgres test db
+make mysql_test_db
 ```
 
-If you want to run the tests that query PostgreSQL, you'll need to have
-PostgreSQL installed and running. Create a database called `lapis_test`, ensure
-the `postgres` user can be logged in with no password.
-
-```bash
-busted spec_postgres
-```
-
-Likewise, for MySQL tests, create a database called `lapis_test`. Ensure the
-`root` user can be logged in with no password.
-
-```bash
-busted spec_mysql
-```
+* **PostgreSQL**: Ensure the `postgres` user can be logged in with no password.
+* **MySQL**: Ensure the `root` user can be logged in with no password.
 
 ## License (MIT)
 
