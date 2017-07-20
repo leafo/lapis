@@ -901,7 +901,7 @@ assert(Users:create({
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 
 class Users extends Model
   @constraints: {
@@ -1297,7 +1297,7 @@ local Posts = Model:extend("posts", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 class Posts extends Model
   @relations: {
     {"user", belongs_to: "Users"}
@@ -1357,7 +1357,7 @@ local Posts = Model:extend("posts", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 
 class Posts extends Model
   @relations: {
@@ -1403,7 +1403,7 @@ local Users = Model:extend("users", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 class Users extends Model
   @relations: {
     {"user_profile", has_one: "UserProfiles"}
@@ -1440,7 +1440,7 @@ local Users = Model:extend("users", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 
 class Users extends Model
   @relations: {
@@ -1480,7 +1480,7 @@ local Users = Model:extend("users", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 class Users extends Model
   @relations: {
     {"posts", has_many: "Posts"}
@@ -1552,7 +1552,7 @@ local Users = Model:extend("users", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 class Users extends Model
   @relations: {
     {"authored_posts"
@@ -1592,7 +1592,7 @@ local Users = Model:extend("users", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 class Users extends Model
   @relations: {
     {"recent_posts", fetch: =>
@@ -1617,11 +1617,11 @@ ahead of time in a single query before iterating over them.
 
 
 ```lua
-local preload = require("lapis.db.models").preload
+local preload = require("lapis.db.model").preload
 ```
 
 ```moon
-import preload from require "lapis.db.models"
+import preload from require "lapis.db.model"
 ```
 
 The `preload` function is a general purpose preloading for loading relations on
@@ -1669,7 +1669,7 @@ local Posts = Model:extend("posts", {
 ```
 
 ```moon
-import Model from require "lapis.db.models"
+import Model from require "lapis.db.model"
 
 class Posts extends Model
   @relations: {
