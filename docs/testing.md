@@ -94,9 +94,10 @@ options in a table:
 
 * `get` --  A table of GET parameters to add to the url
 * `post` -- A table of POST parameters (sets default method to `"POST"`)
-* `session` -- A session table to encode into the cookies
 * `method` -- The HTTP method to use (defaults to `"GET"`)
 * `headers` -- Additional HTTP request headers
+* `cookies` -- A table of cookies to insert into headers
+* `session` -- A session table to encode into the cookies
 * `host` -- The host the mocked server (defaults to `"localhost"`)
 * `port` -- The port of the mocked server (defaults to `80`)
 * `scheme` -- The scheme of the mocked server (defaults to `"http"`)
