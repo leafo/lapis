@@ -262,7 +262,10 @@ time_ago_in_words = do
       out ..= ", " if #out > 0
       out ..= val .. " " .. word
 
-    out .. " " .. suffix
+    if suffix and suffix != ""
+      out .. " " .. suffix
+    else
+      out
 
 title_case = (str) ->
   (str\gsub "%S+", (chunk) ->

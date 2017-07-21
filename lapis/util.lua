@@ -382,7 +382,11 @@ do
       end
       out = out .. (val .. " " .. word)
     end
-    return out .. " " .. suffix
+    if suffix and suffix ~= "" then
+      return out .. " " .. suffix
+    else
+      return out
+    end
   end
 end
 title_case = function(str)
