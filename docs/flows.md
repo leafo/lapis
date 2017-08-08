@@ -21,7 +21,7 @@ in example. We'll use the `Flow` class standalone to demonstrate how it works.
 ```
 
 ```moon
-import Flow from require "lapis.flows"
+import Flow from require "lapis.flow"
 
 class FormatterFlow extends Flow
   format_name: =>
@@ -80,7 +80,7 @@ For example, you can call `tostring` on the contained object like this:
 ```
 
 ```moon
-import Flow from require "lapis.flows"
+import Flow from require "lapis.flow"
 
 class StringFlow extends Flow
   address: =>
@@ -103,7 +103,7 @@ In this example we declare a flow class for handling logging in and registering
 on a website. From our applicaton we call the flow:
 
 ```moon
-import Flow from require "lapis.flows"
+import Flow from require "lapis.flow"
 class AccountsFlow extends Flow
   login: =>
     -- check parameters
