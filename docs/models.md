@@ -1606,6 +1606,49 @@ class Users extends Model
 ```
 
 
+`fetch` relations can also provide a preloader to allow for the data to be
+loaded over an array of objects. The preloader function recieves as arguments:
+the array table of objects to preload, the current mode, the name of the
+relation.
+
+The preloader is responsible for setting the loaded value on each object. The
+`name` argument is the name of the field that the value should be stored in on
+each instance.  All of the instances will be marked as having the relation
+loaded, regardless of if you set a value or not. This means that future calls
+to `get_` will return the cached value.
+
+
+```lua
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users", {
+  relations = {
+    {"recent_posts",
+      fetch = function(self)
+        -- fetch some data
+      end,
+      preload = function(objs)
+        -- preload the data on objs
+      end,
+    }
+  }
+})
+```
+
+```moon
+import Model from require "lapis.db.model"
+class Users extends Model
+  @relations: {
+    {"recent_posts"
+      fetch: =>
+        -- fetch some data
+      preload: (objs) ->
+        -- preload the data on all objs
+    }
+  }
+```
+
+
 ### `polymorphic_belongs_to`
 
 A relation that fetches a single related model that can be one of multiple
