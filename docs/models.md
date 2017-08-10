@@ -1276,8 +1276,12 @@ results_2 = pager\get_page last_user_id, last_post_id
 ```
 
 ```sql
-SELECT * from "some_model" order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
-SELECT * from "some_model" where ("some_model"."user_id", "some_model"."post_id") > (232, 582) order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
+SELECT * from "some_model"
+  order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
+
+SELECT * from "some_model" where
+  ("some_model"."user_id", "some_model"."post_id") > (232, 582)
+  order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
 ```
 
 ## Relations
@@ -1706,7 +1710,7 @@ Purchases.object_types = enum {
 
 ```moon
 Purchases.object_types = enum {
-  users: 1,
+  users: 1
   books: 2
 }
 ```
