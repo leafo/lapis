@@ -71,7 +71,7 @@ class Actions
 
   get_server_type: =>
     config = require("lapis.config").get!
-    config.server or "nginx"
+    config.server
 
   get_server_module: =>
     require "lapis.cmd.#{@get_server_type!}"
