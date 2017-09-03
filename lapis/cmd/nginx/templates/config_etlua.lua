@@ -1,4 +1,4 @@
-local config = require("lapis.cmd.templates.config")
+local config = require("lapis.cmd.nginx.templates.config")
 local compile_config
 compile_config = require("lapis.cmd.nginx").compile_config
 local env = setmetatable({ }, {
