@@ -1,11 +1,12 @@
 import insert, concat from table
 
 (flags={}) ->
-  lines = {
-    "logs/"
-    "nginx.conf.compiled"
-  }
-  
+  lines = {}
+
+  if flags.server ~= "cqueues"
+    insert lines, "logs/"
+    insert lines, "nginx.conf.compiled"
+
   if not flags.lua
     insert lines, "*.lua"
 

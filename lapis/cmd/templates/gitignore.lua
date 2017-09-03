@@ -7,10 +7,11 @@ return function(flags)
   if flags == nil then
     flags = { }
   end
-  local lines = {
-    "logs/",
-    "nginx.conf.compiled"
-  }
+  local lines = { }
+  if flags.server ~= "cqueues" then
+    insert(lines, "logs/")
+    insert(lines, "nginx.conf.compiled")
+  end
   if not flags.lua then
     insert(lines, "*.lua")
   end
