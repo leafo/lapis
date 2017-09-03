@@ -14,11 +14,11 @@ return {
       self:fail_with_message("nginx.conf already exists")
     end
     if flags["etlua-config"] then
-      self:write_file_safe(config_path_etlua, require("lapis.cmd.templates.config_etlua"))
+      self:write_file_safe(config_path_etlua, require("lapis.cmd.nginx.templates.config_etlua"))
     else
-      self:write_file_safe(config_path, require("lapis.cmd.templates.config"))
+      self:write_file_safe(config_path, require("lapis.cmd.nginx.templates.config"))
     end
-    return self:write_file_safe("mime.types", require("lapis.cmd.templates.mime_types"))
+    return self:write_file_safe("mime.types", require("lapis.cmd.nginx.templates.mime_types"))
   end,
   server = function(self, flags, environment)
     local nginx = find_nginx()

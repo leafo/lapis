@@ -1,4 +1,4 @@
-config = require "lapis.cmd.templates.config"
+config = require "lapis.cmd.nginx.templates.config"
 import compile_config from require "lapis.cmd.nginx"
 
 env = setmetatable {}, __index: (key) => "<%- #{key\lower!} %>"

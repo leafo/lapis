@@ -8,11 +8,11 @@ import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cm
       @fail_with_message "nginx.conf already exists"
 
     if flags["etlua-config"]
-      @write_file_safe config_path_etlua, require "lapis.cmd.templates.config_etlua"
+      @write_file_safe config_path_etlua, require "lapis.cmd.nginx.templates.config_etlua"
     else
-      @write_file_safe config_path, require "lapis.cmd.templates.config"
+      @write_file_safe config_path, require "lapis.cmd.nginx.templates.config"
 
-    @write_file_safe "mime.types", require "lapis.cmd.templates.mime_types"
+    @write_file_safe "mime.types", require "lapis.cmd.nginx.templates.mime_types"
 
   server: (flags, environment) =>
     nginx = find_nginx!
