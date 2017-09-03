@@ -4,6 +4,7 @@ local config_cache, configs, default_config, merge_set, set, scope_meta, config,
 config_cache = { }
 configs = { }
 default_config = {
+  server = "nginx",
   port = "8080",
   secret = "please-change-me",
   session_name = "lapis_session",

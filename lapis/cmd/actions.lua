@@ -89,7 +89,7 @@ do
     end,
     get_server_type = function(self)
       local config = require("lapis.config").get()
-      return config.server or "nginx"
+      return config.server
     end,
     get_server_module = function(self)
       return require("lapis.cmd." .. tostring(self:get_server_type()))
