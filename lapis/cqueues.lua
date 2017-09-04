@@ -67,7 +67,7 @@ dispatch = function(app, server, stream)
   local res = build_response(stream)
   app:dispatch(res.req, res)
   local res_headers = http_headers.new()
-  res_headers:append(":status", res.status and tostring(res.status) or "200")
+  res_headers:append(":status", res.status and string.format("%d", res.status) or "200")
   for k, v in pairs(res.headers) do
     res_headers:append(k, v)
   end
