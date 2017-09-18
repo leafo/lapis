@@ -378,7 +378,7 @@ get_fields = (obj, key, ...) ->
 
 singularize = (name) ->
   -- TODO: not very good
-  (name\gsub("ies$", "y")\gsub("oes$", "o")\gsub("s$", ""))
+  (name\gsub("ies$", "y")\gsub("oes$", "o")\gsub("s$", "")\gsub("ses$", "s"))
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
   :parse_content_disposition, :parse_cookie_string, :encode_query_string,

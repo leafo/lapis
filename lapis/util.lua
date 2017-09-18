@@ -543,7 +543,7 @@ get_fields = function(obj, key, ...)
   return obj[key], get_fields(obj, ...)
 end
 singularize = function(name)
-  return (name:gsub("ies$", "y"):gsub("oes$", "o"):gsub("s$", ""))
+  return (name:gsub("ies$", "y"):gsub("oes$", "o"):gsub("s$", ""):gsub("ses$", "s"))
 end
 return {
   unescape = unescape,
