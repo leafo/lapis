@@ -410,6 +410,9 @@ describe "lapis.util", ->
 
       {"heroes", "hero"}
       {"torpedoes", "torpedo"}
+      {"purchases", "purchase"}
+      {"addresses", "address"}
+      {"responses", "response"}
 
       -- these will never work
       -- {"halves", "half"}
