@@ -140,7 +140,9 @@ local ngx_req = {
           args = ngx.req.get_post_args()
         end
       end
-      params = flatten_params(args)
+      if args then
+        params = flatten_params(args)
+      end
     end
     return params or { }
   end,
@@ -154,7 +156,11 @@ local ngx_req = {
         args = ngx.req.get_uri_args()
       end
     end
-    return flatten_params(args)
+    if args then
+      return flatten_params(args)
+    else
+      return { }
+    end
   end
 }
 local lazy_tbl

@@ -94,7 +94,8 @@ ngx_req = {
       else
         ngx.req.get_post_args!
 
-      flatten_params args
+      if args
+        flatten_params args
 
     params or {}
 
@@ -104,7 +105,10 @@ ngx_req = {
     else
       ngx.req.get_uri_args!
 
-    flatten_params args
+    if args
+      flatten_params args
+    else
+      {}
 }
 
 lazy_tbl = (tbl, index) ->
