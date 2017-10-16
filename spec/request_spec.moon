@@ -205,45 +205,92 @@ describe "lapis.request", ->
 
 
   describe "cookies", ->
-    class CookieApp extends lapis.Application
-      layout: false
-      "/": => @cookies.world = 34
+    describe "read", ->
+      class PrintCookieApp extends lapis.Application
+        "/": =>
+          @cookies.hi
+          json: getmetatable(@cookies).__index
 
-      "/many": =>
-        @cookies.world = 454545
-        @cookies.cow = "one cool ;cookie"
+      it "should return empty with no cookie header", ->
+        _, res = mock_request PrintCookieApp, "/", {
+          expect: "json"
+          headers: { }
+        }
 
-    class CookieApp2 extends lapis.Application
-      layout: false
-      cookie_attributes: => "Path=/; Secure; Domain=.leafo.net;"
-      "/": => @cookies.world = 34
+        assert.same { }, res
 
-    it "should write a cookie", ->
-      _, _, h = mock_request CookieApp, "/"
-      assert.same "world=34; Path=/; HttpOnly", h["Set-Cookie"]
+      it "should read basic cookie", ->
+        _, res = mock_request PrintCookieApp, "/", {
+          expect: "json"
+          headers: {
+            cookie: "hello=world"
+          }
+        }
 
-    it "should write multiple cookies", ->
-      _, _, h = mock_request CookieApp, "/many"
+        assert.same {
+          hello: "world"
+        }, res
 
-      assert.same {
-        'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
-        'world=454545; Path=/; HttpOnly'
-      }, h["Set-Cookie"]
+      it "should merge cookies when there are multiple headers #ddd", ->
+        _, res = mock_request PrintCookieApp, "/", {
+          expect: "json"
+          headers: {
+            cookie: {
+              "hello=world; one=two"
+              "zone=man; one=five"
+              "a=b"
+            }
+          }
+        }
 
-    it "should write a cookie with cookie attributes", ->
-      _, _, h = mock_request CookieApp2, "/"
-      assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
+        assert.same {
+          a: "b"
+          one: "five"
+          hello: "world"
+          zone: "man"
+        }, res
 
-    it "should set cookie attributes with lua app", ->
-      app = lapis.Application!
-      app.cookie_attributes = =>
-        "Path=/; Secure; Domain=.leafo.net;"
+    describe "write", ->
+      class CookieApp extends lapis.Application
+        layout: false
+        "/": => @cookies.world = 34
 
-      app\get "/", =>
-        @cookies.world = 34
+        "/many": =>
+          @cookies.world = 454545
+          @cookies.cow = "one cool ;cookie"
 
-      _, _, h = mock_request app, "/"
-      assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
+      class CookieApp2 extends lapis.Application
+        layout: false
+        cookie_attributes: => "Path=/; Secure; Domain=.leafo.net;"
+        "/": => @cookies.world = 34
+
+
+      it "should write a cookie", ->
+        _, _, h = mock_request CookieApp, "/"
+        assert.same "world=34; Path=/; HttpOnly", h["Set-Cookie"]
+
+      it "should write multiple cookies", ->
+        _, _, h = mock_request CookieApp, "/many"
+
+        assert.same {
+          'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
+          'world=454545; Path=/; HttpOnly'
+        }, h["Set-Cookie"]
+
+      it "should write a cookie with cookie attributes", ->
+        _, _, h = mock_request CookieApp2, "/"
+        assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
+
+      it "should set cookie attributes with lua app", ->
+        app = lapis.Application!
+        app.cookie_attributes = =>
+          "Path=/; Secure; Domain=.leafo.net;"
+
+        app\get "/", =>
+          @cookies.world = 34
+
+        _, _, h = mock_request app, "/"
+        assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
 
   describe "layouts", ->
     after_each = ->

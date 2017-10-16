@@ -28,7 +28,17 @@ class Request
       parsed
 
     load_cookies: =>
-      @cookies = auto_table -> parse_cookie_string @req.headers.cookie
+      @cookies = auto_table ->
+        cookie = @req.headers.cookie
+
+        if type(cookie) == "table"
+          out = {}
+          for str in *cookie
+            for k,v in pairs parse_cookie_string str
+              out[k] = v
+          out
+        else
+          parse_cookie_string cookie
 
     load_session: =>
       @session = session.lazy_session @

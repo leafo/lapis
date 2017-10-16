@@ -139,7 +139,19 @@ do
     end,
     load_cookies = function(self)
       self.cookies = auto_table(function()
-        return parse_cookie_string(self.req.headers.cookie)
+        local cookie = self.req.headers.cookie
+        if type(cookie) == "table" then
+          local out = { }
+          for _index_0 = 1, #cookie do
+            local str = cookie[_index_0]
+            for k, v in pairs(parse_cookie_string(str)) do
+              out[k] = v
+            end
+          end
+          return out
+        else
+          return parse_cookie_string(cookie)
+        end
       end)
     end,
     load_session = function(self)
