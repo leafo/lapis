@@ -18,6 +18,7 @@ http {
 
     location / {
       default_type text/html;
+      set $_url '';
       content_by_lua '
         require("lapis").serve("app")
       ';
