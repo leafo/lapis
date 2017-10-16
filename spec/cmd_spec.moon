@@ -153,7 +153,7 @@ describe "lapis.cmd.actions.execute", ->
 
     it "cqueues app", ->
       cmd.execute { [0]: "lapis", "new", "--cqueues" }
-      assert_files { "app.moon", "models.moon" }
+      assert_files { "app.moon", "config.lua", "models.moon" }
 
     it "etlua config", ->
       cmd.execute { [0]: "lapis", "new", "--etlua-config" }
