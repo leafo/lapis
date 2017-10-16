@@ -1,4 +1,4 @@
 return [[require "lapis.config" ("development", {
-	server = "cqueues";
+  server = "cqueues";
 })
 ]]
