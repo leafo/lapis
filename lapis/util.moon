@@ -144,13 +144,20 @@ key_filter = (tbl, ...) ->
     tbl[k] = nil unless set[k]
   tbl
 
+encodable_userdata = {
+  [json.null]: true
+  [json.empty_array]: true
+}
+
 json_encodable = (obj, seen={}) ->
   switch type obj
     when "table"
       unless seen[obj]
         seen[obj] = true
         { k, json_encodable(v) for k,v in pairs(obj) when type(k) == "string" or type(k) == "number" }
-    when "function", "userdata", "thread"
+    when "userdata"
+      encodable_userdata[ obj ] and obj
+    when "function", "thread"
       nil
     else
       obj

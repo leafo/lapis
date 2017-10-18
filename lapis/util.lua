@@ -11,7 +11,7 @@ local date
 pcall(function()
   date = require("date")
 end)
-local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, json_encodable, to_json, from_json, build_url, date_diff, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields, singularize
+local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, encodable_userdata, json_encodable, to_json, from_json, build_url, date_diff, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields, singularize
 do
   local u = url.unescape
   unescape = function(str)
@@ -237,6 +237,10 @@ key_filter = function(tbl, ...)
   end
   return tbl
 end
+encodable_userdata = {
+  [json.null] = true,
+  [json.empty_array] = true
+}
 json_encodable = function(obj, seen)
   if seen == nil then
     seen = { }
@@ -253,7 +257,9 @@ json_encodable = function(obj, seen)
       end
       return _tbl_0
     end
-  elseif "function" == _exp_0 or "userdata" == _exp_0 or "thread" == _exp_0 then
+  elseif "userdata" == _exp_0 then
+    return encodable_userdata[obj] and obj
+  elseif "function" == _exp_0 or "thread" == _exp_0 then
     return nil
   else
     return obj
