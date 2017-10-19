@@ -144,6 +144,15 @@ tests = {
     }
   }
 
+  { -- encoding null values
+    ->
+      util.to_json {
+        nothing: json.null
+      }
+
+    '{"nothing":null}'
+  }
+
   {
     ->
       util.build_url {

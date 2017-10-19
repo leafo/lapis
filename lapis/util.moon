@@ -146,8 +146,10 @@ key_filter = (tbl, ...) ->
 
 encodable_userdata = {
   [json.null]: true
-  [json.empty_array]: true
 }
+
+if json.empty_array
+  encodable_userdata[json.empty_array] = true
 
 json_encodable = (obj, seen={}) ->
   switch type obj
@@ -156,7 +158,7 @@ json_encodable = (obj, seen={}) ->
         seen[obj] = true
         { k, json_encodable(v) for k,v in pairs(obj) when type(k) == "string" or type(k) == "number" }
     when "userdata"
-      encodable_userdata[ obj ] and obj
+      encodable_userdata[obj] and obj
     when "function", "thread"
       nil
     else
