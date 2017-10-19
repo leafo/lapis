@@ -238,9 +238,11 @@ key_filter = function(tbl, ...)
   return tbl
 end
 encodable_userdata = {
-  [json.null] = true,
-  [json.empty_array] = true
+  [json.null] = true
 }
+if json.empty_array then
+  encodable_userdata[json.empty_array] = true
+end
 json_encodable = function(obj, seen)
   if seen == nil then
     seen = { }
