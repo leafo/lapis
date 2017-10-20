@@ -46,3 +46,7 @@ describe "resty", ->
     request "/primary-key/delete"
     request "/primary-key/update"
 
+  it "runs migrations", ->
+    status, res = server\request "/migrations", expect: "json"
+    assert.same 200, status
+

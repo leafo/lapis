@@ -26,6 +26,19 @@ class extends lapis.Application
   "/": =>
     json: db.query "show tables like ?", "users"
 
+  "/migrations": =>
+    import create_table, types from require "lapis.db.mysql.schema"
+
+    require("lapis.db.migrations").run_migrations {
+      =>
+        create_table "migrated_table", {
+          {"id", types.id}
+          {"name", types.varchar}
+        }
+    }
+
+    json: { success: true }
+
   "/basic-model/create": =>
     first = Users\create { name: "first" }
     second = Users\create { name: "second" }

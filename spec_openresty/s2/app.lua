@@ -37,6 +37,32 @@ do
         json = db.query("show tables like ?", "users")
       }
     end,
+    ["/migrations"] = function(self)
+      local create_table, types
+      do
+        local _obj_0 = require("lapis.db.mysql.schema")
+        create_table, types = _obj_0.create_table, _obj_0.types
+      end
+      require("lapis.db.migrations").run_migrations({
+        function(self)
+          return create_table("migrated_table", {
+            {
+              "id",
+              types.id
+            },
+            {
+              "name",
+              types.varchar
+            }
+          })
+        end
+      })
+      return {
+        json = {
+          success = true
+        }
+      }
+    end,
     ["/basic-model/create"] = function(self)
       local first = Users:create({
         name = "first"
