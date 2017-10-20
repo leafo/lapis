@@ -26,7 +26,7 @@ entity_exists = (name) ->
   name = escape_literal name
   res = unpack db.select "COUNT(*) as c from information_schema.tables where
     table_schema = #{database} and table_name = #{name} LIMIT 1"
-  res.c > 0
+  tonumber(res.c) > 0
 
 create_table = (name, columns, opts={}) ->
   prefix = if opts.if_not_exists
