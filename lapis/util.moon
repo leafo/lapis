@@ -29,7 +29,7 @@ inject_tuples = (tbl) ->
     tbl[tuple[1]] = tuple[2] or true
 
 parse_query_string = do
-  import C, P, S, Ct from require "lpeg"
+  import C, P, S, Ct from require "lpeglabel"
 
   char = (P(1) - S("=&"))
 
@@ -72,7 +72,7 @@ encode_query_string = (t, sep="&") ->
   concat buf
 
 parse_content_disposition = do
-  import C, R, P, S, Ct, Cg from require "lpeg"
+  import C, R, P, S, Ct, Cg from require "lpeglabel"
 
   white = S" \t"^0
   token = C (R("az", "AZ", "09") + S"._-")^1

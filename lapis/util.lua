@@ -41,7 +41,7 @@ end
 do
   local C, P, S, Ct
   do
-    local _obj_0 = require("lpeg")
+    local _obj_0 = require("lpeglabel")
     C, P, S, Ct = _obj_0.C, _obj_0.P, _obj_0.S, _obj_0.Ct
   end
   local char = (P(1) - S("=&"))
@@ -101,7 +101,7 @@ end
 do
   local C, R, P, S, Ct, Cg
   do
-    local _obj_0 = require("lpeg")
+    local _obj_0 = require("lpeglabel")
     C, R, P, S, Ct, Cg = _obj_0.C, _obj_0.R, _obj_0.P, _obj_0.S, _obj_0.Ct, _obj_0.Cg
   end
   local white = S(" \t") ^ 0

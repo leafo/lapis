@@ -6,9 +6,9 @@
 
 import insert from table
 
-lpeg = require "lpeg"
+lpeg = require "lpeglabel"
 
-import R, S, V, P from lpeg
+import R, S, V, P, T from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
 
 import encode_query_string from require "lapis.util"
@@ -23,12 +23,28 @@ reduce = (items, fn) ->
   left
 
 class RouteParser
+  @labels = {
+    {"mis_name",           "missing a variable name after the ':'"},
+    {"mis_class",          "missing a character class after the '['"},
+    {"mis_close_bracket",  "missing the closing ']'"},
+    {"mis_route",          "missing an optional route after the '('"},
+    {"mis_close_paren",    "missing the closing ')'"}
+  }
+
   new: =>
     @grammar = @build_grammar!
 
   -- returns an lpeg patternt that matches route, along with table of flags
   parse: (route) =>
-    @grammar\match route
+    result, label, suffix = @grammar\match route
+    if result == nil
+      msg = "syntax error in route:"
+      msg ..= "\n" .. route
+      msg ..= "\n" .. " "\rep(route\len() - suffix\len()) .. "^"
+      msg ..= "\n" .. @@labels[label][2]
+      error(msg)
+
+    result, label
 
   compile_exclude: (current_p, chunks, k=1) =>
     local out
@@ -145,6 +161,13 @@ class RouteParser
     out or P -1
 
   build_grammar: =>
+    expect = (patt, label_name) ->
+      for i, {ln, msg} in ipairs @@labels
+        if ln == label_name
+          return patt + T(i)
+
+      error "label not found"
+
     alpha = R("az", "AZ", "__")
     alpha_num = alpha + R("09")
 
@@ -154,8 +177,8 @@ class RouteParser
     make_optional = (children) -> { "optional", children }
 
     splat = P"*"
-    var = P":" * alpha * alpha_num^0
-    var = C(var) * (P"[" * C((1 - P"]")^1) * P"]")^-1
+    var = P":" * expect(alpha * alpha_num^0, "mis_name")
+    var = C(var) * (P"[" * expect(C((1 - P"]")^1), "mis_class") * expect(P"]", "mis_close_bracket"))^-1
 
     @var = var
     @splat = splat
@@ -169,7 +192,7 @@ class RouteParser
       "route"
       optional_literal: (1 - P")" - V"chunk")^1 / make_lit
       optional_route: Ct((V"chunk" + V"optional_literal")^1)
-      optional: P"(" * V"optional_route" * P")" / make_optional
+      optional: P"(" * expect(V"optional_route", "mis_route") * expect(P")", "mis_close_paren") / make_optional
 
       literal: (1 - V"chunk")^1 / make_lit
       chunk: var / make_var + splat / make_splat + V"optional"
