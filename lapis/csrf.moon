@@ -9,7 +9,9 @@ config = require"lapis.config".get!
 generate_token = (req, key, expires=os.time! + 60*60*8) ->
   msg = encode_base64 json.encode { :key, :expires }
   signature = encode_base64 hmac_sha1 config.secret, msg
-  msg .. "." .. signature
+  token = msg .. "." .. signature
+  req.cookies.csrf_token = token
+  token
 
 validate_token = (req, key) ->
   token = req.params.csrf_token
@@ -27,6 +29,7 @@ validate_token = (req, key) ->
 
   return nil, "invalid csrf token (bad key)" unless msg.key == key
   return nil, "csrf token expired" unless not msg.expires or msg.expires > os.time!
+  return nil, "invalid csrf token (cookie verification failed)" unless req.cookies.csrf_token == token
   true
 
 assert_token = (...) ->
