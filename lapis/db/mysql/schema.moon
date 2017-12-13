@@ -183,6 +183,7 @@ types = setmetatable {
   timestamp:    C "TIMESTAMP"
   datetime:     C "DATETIME"
   boolean:      C "TINYINT", length: 1
+  enum:         C "TINYINT UNSIGNED"
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
 

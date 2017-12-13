@@ -264,7 +264,8 @@ local types = setmetatable({
   datetime = C("DATETIME"),
   boolean = C("TINYINT", {
     length = 1
-  })
+  }),
+  enum = C("TINYINT UNSIGNED")
 }, {
   __index = function(self, key)
     return error("Don't know column type `" .. tostring(key) .. "`")

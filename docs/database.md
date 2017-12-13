@@ -798,6 +798,7 @@ print(types.serial)        --> serial NOT NULL
 print(types.text)          --> text NOT NULL
 print(types.time)          --> timestamp without time zone NOT NULL
 print(types.varchar)       --> character varying(255) NOT NULL
+print(types.enum)          --> smallint NOT NULL
 ```
 
 ```moon
@@ -814,6 +815,7 @@ types.serial        --> serial NOT NULL
 types.text          --> text NOT NULL
 types.time          --> timestamp without time zone NOT NULL
 types.varchar       --> character varying(255) NOT NULL
+types.enum          --> smallint NOT NULL
 ```
 
 You'll notice everything is `NOT NULL` by default, and the numeric types have
