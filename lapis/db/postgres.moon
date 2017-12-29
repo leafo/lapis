@@ -50,7 +50,17 @@ BACKENDS = {
       unless pgmoon
         import Postgres from require "pgmoon"
         pgmoon = Postgres pg_config
+
+        pg_config.before_connect or= {}
+        pg_config.after_connect or= {}
+
+        for _, hook in ipairs pg_config.before_connect
+          hook pgmoon
+
         assert pgmoon\connect!
+
+        for _, hook in ipairs pg_config.after_connect
+          hook pgmoon
 
         if ngx
           ngx.ctx.pgmoon = pgmoon
