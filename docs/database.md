@@ -66,6 +66,18 @@ leave those fields out if they aren't different from the defaults. If a
 non-default port is required it can be appended to the `host` with colon
 syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
 
+Some before/after callbacks can be added for tweaking:
+
+```moon
+-- config.moon
+
+with_hstore = (pg) =>
+	pg\setup_hstore!
+
+config 'development', ->
+	after_connect { with_hstore }
+```
+
 ### MySQL
 
 If you're using MySQL the approach is similar, but you will define a `mysql`

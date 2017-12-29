@@ -55,7 +55,15 @@ local BACKENDS = {
         local Postgres
         Postgres = require("pgmoon").Postgres
         pgmoon = Postgres(pg_config)
+        pg_config.before_connect = pg_config.before_connect or { }
+        pg_config.after_connect = pg_config.after_connect or { }
+        for _, hook in ipairs(pg_config.before_connect) do
+          hook(pgmoon)
+        end
         assert(pgmoon:connect())
+        for _, hook in ipairs(pg_config.after_connect) do
+          hook(pgmoon)
+        end
         if ngx then
           ngx.ctx.pgmoon = pgmoon
           after_dispatch(function()
