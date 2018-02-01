@@ -293,7 +293,7 @@ do
           local curr = self.params
           for match in k:gmatch("%[(.-)%]") do
             local new = curr[front]
-            if new == nil then
+            if type(new) ~= "table" then
               new = { }
               curr[front] = new
             end

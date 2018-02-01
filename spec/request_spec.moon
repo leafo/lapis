@@ -92,6 +92,14 @@ describe "lapis.request", ->
       -- todo: this is bug
       assert.same {}, params
 
+    it "parses params with [] and overlapping name", ->
+      assert.same 200, (mock_request QueryApp, "/hello?p=a&p=b&p[1]=b")
+      assert.same {
+        p: {
+          "1": "b"
+        }
+      }, params
+
   describe "json request", ->
     import json_params from require "lapis.application"
 
@@ -231,7 +239,7 @@ describe "lapis.request", ->
           hello: "world"
         }, res
 
-      it "should merge cookies when there are multiple headers #ddd", ->
+      it "should merge cookies when there are multiple headers", ->
         _, res = mock_request PrintCookieApp, "/", {
           expect: "json"
           headers: {
@@ -263,7 +271,6 @@ describe "lapis.request", ->
         layout: false
         cookie_attributes: => "Path=/; Secure; Domain=.leafo.net;"
         "/": => @cookies.world = 34
-
 
       it "should write a cookie", ->
         _, _, h = mock_request CookieApp, "/"

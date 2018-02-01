@@ -156,9 +156,10 @@ class Request
           curr = @params
           for match in k\gmatch "%[(.-)%]"
             new = curr[front]
-            if new == nil
+            if type(new) != "table"
               new = {}
               curr[front] = new
+
             curr = new
             front = match
           curr[front] = v
