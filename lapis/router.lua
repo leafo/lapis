@@ -80,8 +80,10 @@ do
         local chunk = chunks[i]
         local kind, value, val_params
         kind, value, val_params = chunk[1], chunk[2], chunk[3]
-        flags[kind] = flags[kind] or 0
-        flags[kind] = flags[kind] + 1
+        local _update_0 = kind
+        flags[_update_0] = flags[_update_0] or 0
+        local _update_1 = kind
+        flags[_update_1] = flags[_update_1] + 1
         local chunk_pattern
         local _exp_0 = kind
         if "splat" == _exp_0 then
@@ -105,7 +107,8 @@ do
         elseif "optional" == _exp_0 then
           local inner, inner_flags, inner_exclude = self:compile_chunks(value, exclude)
           for k, v in pairs(inner_flags) do
-            flags[k] = flags[k] or v
+            local _update_2 = k
+            flags[_update_2] = flags[_update_2] or v
           end
           if inner_exclude then
             if exclude then
@@ -311,7 +314,8 @@ do
         local r = _list_0[_index_0]
         local pattern, flags = self:build_route(unpack(r))
         local p = self:route_precedence(flags)
-        by_precedence[p] = by_precedence[p] or { }
+        local _update_0 = p
+        by_precedence[_update_0] = by_precedence[_update_0] or { }
         table.insert(by_precedence[p], pattern)
       end
       local precedences

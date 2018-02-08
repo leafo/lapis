@@ -87,7 +87,8 @@ config = function(environment, fn)
     end
     return 
   end
-  configs[environment] = configs[environment] or { }
+  local _update_0 = environment
+  configs[_update_0] = configs[_update_0] or { }
   table.insert(configs[environment], fn)
   return nil
 end
