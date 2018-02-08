@@ -83,6 +83,7 @@ build = {
 		["lapis.http"] = "lapis/http.lua",
 		["lapis.logging"] = "lapis/logging.lua",
 		["lapis.lua"] = "lapis/lua.lua",
+		["lapis.moonscript.widget_optimizer"] = "lapis/moonscript/widget_optimizer.lua",
 		["lapis.nginx"] = "lapis/nginx.lua",
 		["lapis.nginx.cache"] = "lapis/nginx/cache.lua",
 		["lapis.nginx.context"] = "lapis/nginx/context.lua",
