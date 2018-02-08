@@ -605,5 +605,6 @@ return {
   escape = escape,
   unescape = unescape,
   classnames = classnames,
+  element = element,
   CONTENT_FOR_PREFIX = CONTENT_FOR_PREFIX
 }

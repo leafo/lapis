@@ -398,5 +398,5 @@ class Widget
     @_buffer.widget = old_widget
     nil
 
-{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :classnames, :CONTENT_FOR_PREFIX }
+{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :classnames, :element, :CONTENT_FOR_PREFIX }
 
