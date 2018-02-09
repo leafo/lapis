@@ -1,10 +1,178 @@
-local types
-types = require("tableshape").types
+local types, BaseType
+do
+  local _obj_0 = require("tableshape")
+  types, BaseType = _obj_0.types, _obj_0.BaseType
+end
 local TAGS = {
-  "span",
+  "applet",
+  "capture",
+  "element",
+  "html_5",
+  "nobr",
+  "quote",
+  "raw",
   "text",
-  "raw"
+  "widget",
+  'a',
+  'abbr',
+  'acronym',
+  'address',
+  'area',
+  'article',
+  'aside',
+  'audio',
+  'b',
+  'base',
+  'bdo',
+  'big',
+  'blockquote',
+  'body',
+  'br',
+  'button',
+  'canvas',
+  'caption',
+  'center',
+  'cite',
+  'code',
+  'col',
+  'colgroup',
+  'command',
+  'datalist',
+  'dd',
+  'del',
+  'details',
+  'dfn',
+  'dialog',
+  'div',
+  'dl',
+  'dt',
+  'em',
+  'embed',
+  'fieldset',
+  'figure',
+  'footer',
+  'form',
+  'frame',
+  'frameset',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'head',
+  'header',
+  'hgroup',
+  'hr',
+  'html',
+  'i',
+  'iframe',
+  'img',
+  'input',
+  'ins',
+  'kbd',
+  'keygen',
+  'label',
+  'legend',
+  'li',
+  'link',
+  'map',
+  'mark',
+  'meta',
+  'meter',
+  'nav',
+  'noframes',
+  'noscript',
+  'object',
+  'ol',
+  'optgroup',
+  'option',
+  'p',
+  'param',
+  'pre',
+  'progress',
+  'q',
+  'rp',
+  'rt',
+  'ruby',
+  's',
+  'samp',
+  'script',
+  'section',
+  'select',
+  'small',
+  'source',
+  'span',
+  'strike',
+  'strong',
+  'style',
+  'sub',
+  'sup',
+  'svg',
+  'table',
+  'tbody',
+  'td',
+  'textarea',
+  'tfoot',
+  'th',
+  'thead',
+  'time',
+  'title',
+  'tr',
+  'tt',
+  'u',
+  'ul',
+  'var',
+  'video'
 }
+local Proxy
+do
+  local _class_0
+  local _parent_0 = BaseType
+  local _base_0 = {
+    check_value = function(self, ...)
+      return self.fn():check_value(...)
+    end,
+    _transform = function(self, ...)
+      return self.fn():_transform(...)
+    end,
+    describe = function(self)
+      return self.fn():describe()
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, fn)
+      self.fn = fn
+    end,
+    __base = _base_0,
+    __name = "Proxy",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  Proxy = _class_0
+end
 local optimized = 0
 local s
 s = function(t)
@@ -76,7 +244,7 @@ class_methodt = function(opts)
     })
   })
 end
-local basic_type
+local basic_type, static_html_statement, optimized_statements
 local basic_table = s({
   "table",
   types.array_of(types.shape({
@@ -89,8 +257,17 @@ local basic_table = s({
     end)
   }))
 })
-basic_type = str(types.string) + basic_table
-local static_html = s({
+local basic_function = s({
+  "fndef",
+  types.shape({ }),
+  types.shape({ }),
+  "slim",
+  types.array_of(types.custom(function(n)
+    return static_html_statement(n)
+  end))
+})
+basic_type = str(types.string) + basic_table + basic_function
+static_html_statement = s({
   "chain",
   ref(types.one_of(TAGS)),
   s({
@@ -98,6 +275,70 @@ local static_html = s({
     types.array_of(basic_type)
   }),
   [-1] = types.number + types["nil"]
+})
+local nested_block_statement = types.one_of({
+  types.shape({
+    "chain",
+    ref(types.one_of(TAGS)),
+    s({
+      "call",
+      types.array_of(types.one_of({
+        s({
+          "fndef",
+          types.shape({ }),
+          types.shape({ }),
+          "slim",
+          Proxy(function()
+            return optimized_statements
+          end)
+        }),
+        types.any
+      }))
+    }),
+    [-1] = types.number + types["nil"]
+  }),
+  types.shape({
+    types.one_of({
+      "if",
+      "unless"
+    }),
+    types.any,
+    Proxy(function()
+      return optimized_statements
+    end),
+    [-1] = types.number + types["nil"]
+  }, {
+    extra_fields = types.map_of(types.number * types.custom(function(v)
+      return v > 3
+    end), types.one_of({
+      types.shape({
+        "elseif",
+        types.any,
+        Proxy(function()
+          return optimized_statements
+        end)
+      }),
+      types.shape({
+        "else",
+        Proxy(function()
+          return optimized_statements
+        end)
+      }),
+      types.any
+    }))
+  }),
+  types.shape({
+    types.one_of({
+      "for",
+      "foreach"
+    }),
+    types.any,
+    types.any,
+    Proxy(function()
+      return optimized_statements
+    end),
+    [-1] = types.number + types["nil"]
+  })
 })
 local write_to_buffer
 write_to_buffer = function(str, loc)
@@ -138,6 +379,11 @@ compile_static_code = function(tree)
   local fn = loadstring(code)
   return write_to_buffer(render_html(fn))
 end
+optimized_statements = types.array_of(types.one_of({
+  static_html_statement / compile_static_code,
+  nested_block_statement,
+  types.any
+}))
 local widget = classt({
   parent = requiret(str(types.one_of({
     "widgets.base",
@@ -145,16 +391,12 @@ local widget = classt({
   }))),
   body = types.array_of(types.one_of({
     class_methodt({
-      body = types.array_of(types.one_of({
-        static_html / compile_static_code,
-        types.any
-      }))
+      body = optimized_statements
     }),
     types.any
   }))
 })
 local statements = types.array_of(widget + types.any)
 return function(tree)
-  local out = assert(statements:transform(tree))
-  return out
+  return assert(statements:transform(tree))
 end
