@@ -3,6 +3,19 @@ do
   local _obj_0 = require("tableshape")
   types, BaseType = _obj_0.types, _obj_0.BaseType
 end
+local deep_copy
+deep_copy = function(a)
+  if not (type(a) == "table") then
+    return a
+  end
+  do
+    local out = { }
+    for k, v in pairs(a) do
+      out[k] = deep_copy(v)
+    end
+    return out
+  end
+end
 local TAGS = {
   "applet",
   "capture",
@@ -252,19 +265,20 @@ local basic_table = s({
       "key_literal",
       types.string
     }),
-    types.custom(function(v)
-      return basic_type(v)
+    Proxy(function()
+      return basic_type
     end)
   }))
 })
-local basic_function = s({
+local basic_function = types.shape({
   "fndef",
   types.shape({ }),
   types.shape({ }),
   "slim",
-  types.array_of(types.custom(function(n)
-    return static_html_statement(n)
-  end))
+  types.array_of(Proxy(function()
+    return static_html_statement
+  end)),
+  [-1] = types.number + types["nil"]
 })
 basic_type = str(types.string) + basic_table + basic_function
 static_html_statement = s({
@@ -372,7 +386,7 @@ compile_static_code = function(tree)
   optimized = optimized + 1
   local compile = require("moonscript.compile")
   local code = assert(compile.tree({
-    tree
+    deep_copy(tree)
   }))
   local render_html
   render_html = require("lapis.html").render_html
@@ -385,10 +399,16 @@ optimized_statements = types.array_of(types.one_of({
   types.any
 }))
 local widget = classt({
-  parent = requiret(str(types.one_of({
-    "widgets.base",
-    "widgets.page"
-  }))),
+  parent = types.one_of({
+    ref(types.one_of({
+      "Layout",
+      "Widget"
+    })),
+    requiret(str(types.one_of({
+      "widgets.base",
+      "widgets.page"
+    })))
+  }),
   body = types.array_of(types.one_of({
     class_methodt({
       body = optimized_statements

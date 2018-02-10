@@ -1,6 +1,12 @@
 
 import types, BaseType from require "tableshape"
 
+deep_copy = (a) ->
+  return a unless type(a) == "table"
+  with out = {}
+    for k,v in pairs a
+      out[k] = deep_copy v
+
 TAGS = {
   "applet", "capture", "element", "html_5", "nobr", "quote", "raw", "text", "widget", 'a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base', 'bdo', 'big', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'command', 'datalist', 'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form', 'frame', 'frameset', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'keygen', 'label', 'legend', 'li', 'link', 'map', 'mark', 'meta', 'meter', 'nav', 'noframes', 'noscript', 'object', 'ol', 'optgroup', 'option', 'p', 'param', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span', 'strike', 'strong', 'style', 'sub', 'sup', 'svg', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'tt', 'u', 'ul', 'var', 'video',
 }
@@ -73,17 +79,17 @@ basic_table = s {
   "table"
   types.array_of types.shape {
     types.shape {"key_literal", types.string}
-    types.custom (v) -> basic_type v
+    Proxy -> basic_type
   }
 }
 
-basic_function = s {
+basic_function = types.shape {
   "fndef"
   types.shape {}
   types.shape {}
   "slim"
-  types.array_of types.custom (n) ->
-    static_html_statement n
+  types.array_of Proxy -> static_html_statement
+  [-1]: types.number + types.nil
 }
 
 basic_type = str(types.string) + basic_table + basic_function
@@ -168,8 +174,9 @@ write_to_buffer = (str, loc) ->
 compile_static_code = (tree) ->
   optimized += 1
   compile = require("moonscript.compile")
+
   code = assert compile.tree {
-    tree
+    deep_copy tree
   }
 
   import render_html from require "lapis.html"
@@ -179,13 +186,17 @@ compile_static_code = (tree) ->
 optimized_statements = types.array_of types.one_of {
   static_html_statement / compile_static_code
   nested_block_statement
+
   types.any
 }
 
 widget = classt {
-  parent: requiret str types.one_of {
-    "widgets.base"
-    "widgets.page"
+  parent: types.one_of {
+    ref types.one_of { "Layout", "Widget" }
+    requiret str types.one_of {
+      "widgets.base"
+      "widgets.page"
+    }
   }
 
   body: types.array_of types.one_of {
@@ -200,4 +211,5 @@ statements = types.array_of widget + types.any
 
 (tree) ->
   assert statements\transform tree
+
 
