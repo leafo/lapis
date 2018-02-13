@@ -354,9 +354,20 @@ local nested_block_statement = types.one_of({
     [-1] = types.number + types["nil"]
   })
 })
+local escape_quotes
+do
+  local P, Cs
+  do
+    local _obj_0 = require("lpeg")
+    P, Cs = _obj_0.P, _obj_0.Cs
+  end
+  local pat = Cs((P([[\"]]) + P('"') / [[\"]] + 1) ^ 0)
+  escape_quotes = function(str)
+    return (assert(pat:match(str)))
+  end
+end
 local write_to_buffer
 write_to_buffer = function(str, loc)
-  local lua_str = ("%q"):format(str):sub(2, -2)
   return {
     "chain",
     {
@@ -373,7 +384,7 @@ write_to_buffer = function(str, loc)
         {
           "string",
           '"',
-          lua_str,
+          escape_quotes(str),
           [-1] = loc
         }
       }

@@ -157,16 +157,19 @@ nested_block_statement = types.one_of {
   }
 }
 
+escape_quotes = do
+  import P, Cs from require "lpeg"
+  pat = Cs (P[[\"]] + P'"' / [[\"]] + 1)^0
+  (str) -> (assert pat\match str)
+
 write_to_buffer = (str, loc) ->
   -- @_buffer\write str
-  lua_str = "%q"\format(str)\sub 2, -2
-
   {
     "chain"
     {"self", "_buffer"}
     {"colon", "write"}
     {"call", {
-      {"string", '"', lua_str, [-1]: loc}
+      {"string", '"', escape_quotes(str), [-1]: loc}
     }}
     [-1]: loc
   }
@@ -211,5 +214,4 @@ statements = types.array_of widget + types.any
 
 (tree) ->
   assert statements\transform tree
-
 
