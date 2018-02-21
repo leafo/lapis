@@ -15,7 +15,9 @@ generate_token = function(req, key, expires)
     expires = expires
   }))
   local signature = encode_base64(hmac_sha1(config.secret, msg))
-  return msg .. "." .. signature
+  local token = msg .. "." .. signature
+  req.cookies.csrf_token = token
+  return token
 end
 local validate_token
 validate_token = function(req, key)
@@ -37,6 +39,9 @@ validate_token = function(req, key)
   end
   if not (not msg.expires or msg.expires > os.time()) then
     return nil, "csrf token expired"
+  end
+  if not (req.cookies.csrf_token == token) then
+    return nil, "invalid csrf token (cookie verification failed)"
   end
   return true
 end
