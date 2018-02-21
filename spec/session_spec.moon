@@ -1,11 +1,4 @@
 
--- without nginx the library uses crypto
-unless (pcall require, "crypto") or (pcall require, "openssl")
-  describe "lapis.session", ->
-    it "should have luacrypto or luaossl", ->
-      pending "luacrypto or luaossl is required for session test"
-  return
-
 import auto_table from require "lapis.util"
 
 session = require "lapis.session"

@@ -1,10 +1,3 @@
-
-unless (pcall require, "crypto") or (pcall require, "openssl.hmac")
-  describe "lapis.util.encoding", ->
-    it "should have luacrypto or luaossl", ->
-      pending "either luacrypto or luaossl is required for util.encoding specs"
-  return
-
 encoding = require "lapis.util.encoding"
 
 describe "lapis.util.encoding", ->
