@@ -27,12 +27,12 @@ decode_with_secret = (msg_and_sig, secret=config.secret) ->
   json = require "cjson"
 
   msg, sig = msg_and_sig\match "^(.*)%.(.*)$"
-  return nil, "invalid message" unless msg
+  return nil, "invalid format" unless msg
 
   sig = decode_base64 sig
 
   unless sig == hmac_sha1(secret, msg)
-    return nil, "invalid message secret"
+    return nil, "invalid signature"
 
   json.decode decode_base64 msg
 

@@ -2,31 +2,45 @@
 -- csrf protection
 
 json = require "cjson"
-import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding"
+import encode_base64, decode_base64, hmac_sha1, encode_with_secret, decode_with_secret from require "lapis.util.encoding"
+openssl_rand = require "openssl.rand"
 
 config = require"lapis.config".get!
+cookie_name = "#{config.session_name}_token"
 
-generate_token = (req, key, expires=os.time! + 60*60*8) ->
-  msg = encode_base64 json.encode { :key, :expires }
-  signature = encode_base64 hmac_sha1 config.secret, msg
-  msg .. "." .. signature
+generate_token = (req, data) ->
+  key = req.cookies[cookie_name]
 
-validate_token = (req, key) ->
+  unless key
+    key = encode_base64 openssl_rand.bytes(32)
+    req.cookies[cookie_name] = key
+
+  token = {
+    k: key
+    d: data
+  }
+
+  encode_with_secret token
+
+validate_token = (req, callback) ->
   token = req.params.csrf_token
   return nil, "missing csrf token" unless token
 
-  msg, sig = token\match "^(.*)%.(.*)$"
-  return nil, "malformed csrf token" unless msg
+  expected_key = req.cookies[cookie_name]
+  return nil, "csrf: missing token cookie" unless expected_key
 
-  sig = decode_base64 sig
+  obj, err = decode_with_secret token
+  unless obj
+    return nil, "csrf: #{err}"
 
-  unless sig == hmac_sha1(config.secret, msg)
-    return nil, "invalid csrf token (bad sig)"
+  if obj.k != expected_key
+    return nil, "csrf: token mismatch"
 
-  msg = json.decode decode_base64 msg
+  if callback
+    pass, err = callback obj.d
+    unless pass
+      return nil, "csrf: #{err or "failed check"}"
 
-  return nil, "invalid csrf token (bad key)" unless msg.key == key
-  return nil, "csrf token expired" unless not msg.expires or msg.expires > os.time!
   true
 
 assert_token = (...) ->

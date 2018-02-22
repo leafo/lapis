@@ -42,11 +42,11 @@ decode_with_secret = function(msg_and_sig, secret)
   local json = require("cjson")
   local msg, sig = msg_and_sig:match("^(.*)%.(.*)$")
   if not (msg) then
-    return nil, "invalid message"
+    return nil, "invalid format"
   end
   sig = decode_base64(sig)
   if not (sig == hmac_sha1(secret, msg)) then
-    return nil, "invalid message secret"
+    return nil, "invalid signature"
   end
   return json.decode(decode_base64(msg))
 end
