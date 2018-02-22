@@ -35,12 +35,15 @@ end
 flatten_params = function(params)
   return table.concat(flatten_params_helper(params))
 end
-query = function(q)
-  local l = config.logging
-  if not (l and l.queries) then
-    return 
+do
+  local log_tpl = colors("%{bright}%{cyan}SQL: %{reset}%{magenta}%s%{reset}")
+  query = function(q)
+    local l = config.logging
+    if not (l and l.queries) then
+      return 
+    end
+    return print(log_tpl:format(q))
   end
-  return print(colors("%{bright}%{cyan}SQL: %{reset}%{magenta}" .. tostring(q) .. "%{reset}"))
 end
 request = function(r)
   local l = config.logging
@@ -68,11 +71,17 @@ request = function(r)
   local cmd = tostring(req.cmd_mth) .. " " .. tostring(req.cmd_url)
   return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end
-migration = function(name)
-  return print(colors("%{bright}%{yellow}Migrating: %{reset}%{green}" .. tostring(name) .. "%{reset}"))
+do
+  local log_tpl = colors("%{bright}%{yellow}Migrating: %{reset}%{green}%s%{reset}")
+  migration = function(name)
+    return print(log_tpl:format(name))
+  end
 end
-notice = function(msg)
-  return print(colors("%{bright}%{yellow}Notice: %{reset}" .. tostring(msg)))
+do
+  local log_tpl = colors("%{bright}%{yellow}Notice: %{reset}%s")
+  notice = function(msg)
+    return print(log_tpl:format(msg))
+  end
 end
 migration_summary = function(count)
   local noun
