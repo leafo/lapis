@@ -21,6 +21,22 @@ else
     return hmac:final(str)
   end
 end
+local hmac_sha256
+hmac_sha256 = function(secret, str)
+  local hmac = openssl_hmac.new(secret, "sha256")
+  return hmac:final(str)
+end
+local default_hmac
+local _exp_0 = config.hmac_digest
+if "sha256" == _exp_0 then
+  default_hmac = hmac_sha256
+else
+  default_hmac = hmac_sha1
+end
+local set_hmac
+set_hmac = function(fn)
+  default_hmac = fn
+end
 local encode_with_secret
 encode_with_secret = function(object, secret, sep)
   if secret == nil then
@@ -31,7 +47,7 @@ encode_with_secret = function(object, secret, sep)
   end
   local json = require("cjson")
   local msg = encode_base64(json.encode(object))
-  local signature = encode_base64(hmac_sha1(secret, msg))
+  local signature = encode_base64(default_hmac(secret, msg))
   return msg .. sep .. signature
 end
 local decode_with_secret
@@ -45,7 +61,7 @@ decode_with_secret = function(msg_and_sig, secret)
     return nil, "invalid format"
   end
   sig = decode_base64(sig)
-  if not (sig == hmac_sha1(secret, msg)) then
+  if not (sig == default_hmac(secret, msg)) then
     return nil, "invalid signature"
   end
   return json.decode(decode_base64(msg))
@@ -54,6 +70,8 @@ return {
   encode_base64 = encode_base64,
   decode_base64 = decode_base64,
   hmac_sha1 = hmac_sha1,
+  hmac_sha256 = hmac_sha256,
   encode_with_secret = encode_with_secret,
-  decode_with_secret = decode_with_secret
+  decode_with_secret = decode_with_secret,
+  set_hmac = set_hmac
 }

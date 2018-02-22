@@ -16,11 +16,23 @@ else
     hmac = openssl_hmac.new secret, "sha1"
     hmac\final str
 
+hmac_sha256 = (secret, str) ->
+  hmac = openssl_hmac.new secret, "sha256"
+  hmac\final str
+
+default_hmac = switch config.hmac_digest
+  when "sha256"
+    hmac_sha256
+  else
+    hmac_sha1
+
+set_hmac = (fn) -> default_hmac = fn
+
 encode_with_secret = (object, secret=config.secret, sep=".") ->
   json = require "cjson"
 
   msg = encode_base64 json.encode object
-  signature = encode_base64 hmac_sha1 secret, msg
+  signature = encode_base64 default_hmac secret, msg
   msg .. sep .. signature
 
 decode_with_secret = (msg_and_sig, secret=config.secret) ->
@@ -31,9 +43,9 @@ decode_with_secret = (msg_and_sig, secret=config.secret) ->
 
   sig = decode_base64 sig
 
-  unless sig == hmac_sha1(secret, msg)
+  unless sig == default_hmac(secret, msg)
     return nil, "invalid signature"
 
   json.decode decode_base64 msg
 
-{ :encode_base64, :decode_base64, :hmac_sha1, :encode_with_secret, :decode_with_secret }
+{ :encode_base64, :decode_base64, :hmac_sha1, :hmac_sha256, :encode_with_secret, :decode_with_secret, :set_hmac }

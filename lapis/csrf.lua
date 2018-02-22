@@ -1,8 +1,8 @@
 local json = require("cjson")
-local encode_base64, decode_base64, hmac_sha1, encode_with_secret, decode_with_secret
+local encode_base64, encode_with_secret, decode_with_secret
 do
   local _obj_0 = require("lapis.util.encoding")
-  encode_base64, decode_base64, hmac_sha1, encode_with_secret, decode_with_secret = _obj_0.encode_base64, _obj_0.decode_base64, _obj_0.hmac_sha1, _obj_0.encode_with_secret, _obj_0.decode_with_secret
+  encode_base64, encode_with_secret, decode_with_secret = _obj_0.encode_base64, _obj_0.encode_with_secret, _obj_0.decode_with_secret
 end
 local openssl_rand = require("openssl.rand")
 local config = require("lapis.config").get()
