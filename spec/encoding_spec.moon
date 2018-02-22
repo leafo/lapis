@@ -19,14 +19,14 @@ describe "lapis.util.encoding", ->
   it "should not decode with incorrect secret", ->
     encoded = encoding.encode_with_secret { color: "red" }
     config.secret = "not-the-secret"
-    assert.same { encoding.decode_with_secret encoded }, {nil, "invalid message secret"}
+    assert.same { encoding.decode_with_secret encoded }, {nil, "invalid signature"}
 
 
   it "should fail on invalid string", ->
     assert.same {encoding.decode_with_secret "hello"},
-      {nil, "invalid message"}
+      {nil, "invalid format"}
 
     assert.same {encoding.decode_with_secret "hello.world"},
-      {nil, "invalid message secret"}
+      {nil, "invalid signature"}
 
 
