@@ -211,7 +211,6 @@ describe "lapis.request", ->
       assert.same "application/json; charset=utf-8", h["Content-Type"]
       assert.same [[{"item":"hi"}]], body
 
-
   describe "cookies", ->
     describe "read", ->
       class PrintCookieApp extends lapis.Application
@@ -298,6 +297,69 @@ describe "lapis.request", ->
 
         _, _, h = mock_request app, "/"
         assert.same "world=34; Path=/; Secure; Domain=.leafo.net;", h["Set-Cookie"]
+
+
+  describe "csrf", ->
+    csrf = require "lapis.csrf"
+
+    it "verifies csrf token", ->
+      import capture_errors_json, respond_to from require "lapis.application"
+
+      class CsrfApp extends lapis.Application
+        "/form": capture_errors_json respond_to {
+          GET: =>
+            json: {
+              csrf_token: csrf.generate_token @
+            }
+
+          POST: =>
+            csrf.assert_token @
+            json: { success: true }
+        }
+
+      _, res, h = mock_request CsrfApp, "/form", {
+        expect: "json"
+      }
+
+      assert res.csrf_token, "missing csrf token"
+      assert h.set_cookie, "missing cookie"
+
+      _, post_res = mock_request CsrfApp, "/form", {
+        post: {
+          csrf_token: res.csrf_token
+        }
+        expect: "json"
+        prev: h
+      }
+
+      assert.same { success: true }, post_res
+
+      -- no cookie set, fails
+      _, post_res = mock_request CsrfApp, "/form", {
+        post: {
+          csrf_token: res.csrf_token
+        }
+        expect: "json"
+      }
+
+      assert.same {
+        errors: {
+          "csrf: missing token cookie"
+        }
+      }, post_res
+
+      -- no token, fails
+      _, post_res = mock_request CsrfApp, "/form", {
+        post: { }
+        expect: "json"
+      }
+
+      assert.same {
+        errors: {
+          "missing csrf token"
+        }
+      }, post_res
+
 
   describe "layouts", ->
     after_each = ->
