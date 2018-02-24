@@ -25,6 +25,20 @@ describe "lapis.session", ->
     assert.same expected_err, err
     assert.same expected, sess
 
+  -- this is to make sure the session format doesn't accidentally change and break all sessions
+  it "reads from the current session format", ->
+    res = assert session.get_session {
+      cookies: {
+        lapis_session: [[eyJjYXIiOiJlbmdpbmUiLCJoZWxsbyI6IndvcmxkIn0=
+--jXFBL3aIDxK/deWWpUeO92/ftEo=]]
+      }
+    }
+
+    assert.same {
+      car: "engine"
+      hello: "world"
+    }, res
+
   it "writes and reads unsigned session", ->
     config.secret = nil
     assert session.write_session req
