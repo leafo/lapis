@@ -1,8 +1,8 @@
 local json = require("cjson")
-local encode_base64, decode_base64, hmac_sha1
+local encode_base64, decode_base64, encode_with_secret, decode_with_secret
 do
   local _obj_0 = require("lapis.util.encoding")
-  encode_base64, decode_base64, hmac_sha1 = _obj_0.encode_base64, _obj_0.decode_base64, _obj_0.hmac_sha1
+  encode_base64, decode_base64, encode_with_secret, decode_with_secret = _obj_0.encode_base64, _obj_0.decode_base64, _obj_0.encode_with_secret, _obj_0.decode_with_secret
 end
 local config = require("lapis.config").get()
 local insert
@@ -12,20 +12,15 @@ do
   local _obj_0 = _G
   setmetatable, getmetatable, rawset, rawget = _obj_0.setmetatable, _obj_0.getmetatable, _obj_0.rawset, _obj_0.rawget
 end
-local hmac
-hmac = function(str, secret)
-  return encode_base64(hmac_sha1(secret, str))
-end
 local encode_session
 encode_session = function(tbl, secret)
   if secret == nil then
     secret = config.secret
   end
-  local s = encode_base64(json.encode(tbl))
   if secret then
-    s = s .. "\n--" .. tostring(hmac(s, secret))
+    return encode_with_secret(tbl, secret, "\n--")
   end
-  return s
+  return encode_base64(json.encode(tbl))
 end
 local get_session
 get_session = function(r, secret)
@@ -36,17 +31,17 @@ get_session = function(r, secret)
   if not (cookie) then
     return nil, "no cookie"
   end
-  local real_cookie, sig = cookie:match("^(.*)\n%-%-(.*)$")
-  if real_cookie then
-    if not (secret) then
-      return nil, "rejecting signed session"
+  if secret then
+    local success, out, err = pcall(function()
+      return decode_with_secret(cookie, secret, "\n%-%-")
+    end)
+    if out then
+      return out
     end
-    if not (sig == hmac(real_cookie, secret)) then
-      return nil, "invalid secret"
+    if not (success) then
+      return nil, "invalid session serialization"
     end
-    cookie = real_cookie
-  elseif secret then
-    return nil, "missing secret"
+    return nil, "session: " .. tostring(err)
   end
   local success, session = pcall(function()
     return json.decode((decode_base64(cookie)))

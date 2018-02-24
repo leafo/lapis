@@ -51,7 +51,7 @@ describe "lapis.session", ->
     config.secret = nil
     session.write_session req
     config.secret = "hello"
-    assert_session nil, "missing secret"
+    assert_session nil, "session: invalid format"
 
   it "writes and reads signed session", ->
     session.write_session req
@@ -65,16 +65,16 @@ describe "lapis.session", ->
   it "doesn't read signed session when there is no secret", ->
     session.write_session req
     config.secret = nil
-    assert_session nil, "rejecting signed session"
+    assert_session nil, "invalid session serialization"
 
   it "rejects incorrect secret", ->
     session.write_session req
     config.secret = "not-the-secret"
-    assert_session nil, "invalid secret"
+    assert_session nil, "session: invalid signature"
 
   it "rejects malformed signed session", ->
     req.cookies.lapis_session = "uhhhh"
-    assert_session nil, "missing secret"
+    assert_session nil, "session: invalid format"
 
   it "rejects malformed unsigned session", ->
     config.secret = nil

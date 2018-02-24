@@ -2,36 +2,34 @@
 -- signed sessions
 
 json = require "cjson"
-import encode_base64, decode_base64, hmac_sha1 from require "lapis.util.encoding"
+import encode_base64, decode_base64, encode_with_secret, decode_with_secret from require "lapis.util.encoding"
 
 config = require"lapis.config".get!
 
 import insert from table
 import setmetatable, getmetatable, rawset, rawget from _G
 
-hmac = (str, secret) ->
-  encode_base64 hmac_sha1 secret, str
-
 encode_session = (tbl, secret=config.secret) ->
-  s = encode_base64 json.encode tbl
   if secret
-    s ..= "\n--#{hmac s, secret}"
-  s
+    return encode_with_secret tbl, secret, "\n--"
+
+  encode_base64 json.encode tbl
 
 get_session = (r, secret=config.secret) ->
   cookie = r.cookies[config.session_name]
   return nil, "no cookie" unless cookie
 
-  real_cookie, sig = cookie\match "^(.*)\n%-%-(.*)$"
+  if secret
+    success, out, err = pcall ->
+      decode_with_secret cookie, secret, "\n%-%-"
 
-  if real_cookie
-    return nil, "rejecting signed session" unless secret
-    unless sig == hmac real_cookie, secret
-      return nil, "invalid secret"
+    if out
+      return out
 
-    cookie = real_cookie
-  elseif secret
-    return nil, "missing secret"
+    unless success
+      return nil, "invalid session serialization"
+
+    return nil, "session: #{err}"
 
   success, session = pcall ->
     json.decode (decode_base64 cookie)

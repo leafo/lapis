@@ -35,10 +35,10 @@ encode_with_secret = (object, secret=config.secret, sep=".") ->
   signature = encode_base64 default_hmac secret, msg
   msg .. sep .. signature
 
-decode_with_secret = (msg_and_sig, secret=config.secret) ->
+decode_with_secret = (msg_and_sig, secret=config.secret, sep="%.") ->
   json = require "cjson"
 
-  msg, sig = msg_and_sig\match "^(.*)%.(.*)$"
+  msg, sig = msg_and_sig\match "^(.*)#{sep}(.*)$"
   return nil, "invalid format" unless msg
 
   sig = decode_base64 sig

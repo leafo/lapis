@@ -51,12 +51,15 @@ encode_with_secret = function(object, secret, sep)
   return msg .. sep .. signature
 end
 local decode_with_secret
-decode_with_secret = function(msg_and_sig, secret)
+decode_with_secret = function(msg_and_sig, secret, sep)
   if secret == nil then
     secret = config.secret
   end
+  if sep == nil then
+    sep = "%."
+  end
   local json = require("cjson")
-  local msg, sig = msg_and_sig:match("^(.*)%.(.*)$")
+  local msg, sig = msg_and_sig:match("^(.*)" .. tostring(sep) .. "(.*)$")
   if not (msg) then
     return nil, "invalid format"
   end
