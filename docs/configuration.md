@@ -177,9 +177,10 @@ for configuring Lapis and supporting libraries. Here is a list of them:
 * `secret` (`string`) -- Secret key used by `encode_with_secret`, also used for signing session cookie
 * `measure_performance` (`bool`) -- Used to enable performance time and query tracking
 * `logging` (`table`) -- Configure which events to log to console or log files
+* `hmac_digest` (`string`) -- Configure which HMAC digest to use. Can be set to `"sha256"`, otherwise the default SHA1 is used.
 
 
-## Configuring Logging
+## Logging Configuration
 
 The `logging` configuration key can be used to disable the various logging that
 Lapis does by default. The default value of the logging configuration is:
