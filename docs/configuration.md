@@ -103,9 +103,19 @@ events {
 }
 ```
 
-When this is compiled, first the environment variable
-`LAPIS_WORKER_CONNECTIONS` is checked. If it doesn't have a value then the
-configuration of the current environment is checked for `worker_connections`.
+## Overriding With Environment Variables
+
+You can override any configuration value with an environment variable. Prefix
+the configuration name with `LAPIS_` and make the rest of the name all
+uppercase. For example, to override the `worker_connections` variable:
+
+```bash
+$ LAPIS_WORKER_CONNECTIONS=5 lapis server
+```
+
+This can be used with any configuration variable. Keep in mind that the value
+will always be a string type, so you may need to add additional type coercion
+to you code that reads it.
 
 ## Accessing Configuration From Application
 
