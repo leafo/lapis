@@ -97,7 +97,7 @@ validate.assert_valid(self.params, {
 
 ```moon
 assert_valid @params, {
-  { "color", exists:, min_length = 2, max_length = 25, optional: true },
+  { "color", exists: true, min_length: 2, max_length: 25, optional: true },
 }
 ```
 
