@@ -65,7 +65,7 @@ create_server = (app_module) ->
     (stream) => dispatch app, @, stream
 
   server = http_server.listen {
-    host: "127.0.0.1"
+    host: config.bind_host or "0.0.0.0"
     port: assert config.port, "missing server port"
 
     :onstream
