@@ -33,6 +33,9 @@ parse_multipart = function()
     if "body" == _exp_0 then
       table.insert(current.content, res)
     elseif "header" == _exp_0 then
+      if not (type(res) == "table") then
+        return nil, err or "failed to read upload header"
+      end
       local name, value = unpack(res)
       if name:lower() == "content-disposition" then
         do

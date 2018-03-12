@@ -21,6 +21,9 @@ parse_multipart = ->
       when "body"
         table.insert current.content, res
       when "header"
+        unless type(res) == "table"
+          return nil, err or "failed to read upload header"
+
         name, value = unpack res
         if name\lower! == "content-disposition"
           if params = parse_content_disposition value
