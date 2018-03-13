@@ -135,7 +135,7 @@ create_server = function(app_module)
     end
   end
   local server = http_server.listen({
-    host = "127.0.0.1",
+    host = config.host or "127.0.0.1",
     port = assert(config.port, "missing server port"),
     onstream = onstream,
     onerror = function(self, context, op, err, errno)
