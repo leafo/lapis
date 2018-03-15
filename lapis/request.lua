@@ -12,6 +12,15 @@ do
 end
 local insert
 insert = table.insert
+local get_time
+get_time = function(config)
+  if ngx then
+    ngx.update_time()
+    return ngx.now()
+  elseif config.server == "cqueues" then
+    return require("cqueues").monotime()
+  end
+end
 local Request
 do
   local _class_0
@@ -218,8 +227,7 @@ do
         end
         local start_time
         if config.measure_performance then
-          ngx.update_time()
-          start_time = ngx.now()
+          start_time = get_time(config)
         end
         local view = widget(self.options.locals)
         if self.layout_opts then
@@ -228,8 +236,8 @@ do
         view:include_helper(self)
         self:write(view)
         if start_time then
-          ngx.update_time()
-          increment_perf("view_time", ngx.now() - start_time)
+          local t = get_time(config)
+          increment_perf("view_time", t - start_time)
         end
       end
       if layout then
@@ -243,8 +251,7 @@ do
         end
         local start_time
         if config.measure_performance then
-          ngx.update_time()
-          start_time = ngx.now()
+          start_time = get_time(config)
         end
         self.layout_opts._content_for_inner = self.layout_opts._content_for_inner or function()
           return raw(inner)
@@ -253,8 +260,8 @@ do
         layout:include_helper(self)
         layout:render(self.buffer)
         if start_time then
-          ngx.update_time()
-          increment_perf("layout_time", ngx.now() - start_time)
+          local t = get_time(config)
+          increment_perf("layout_time", t - start_time)
         end
       end
       if next(self.buffer) then
