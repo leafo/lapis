@@ -3,7 +3,7 @@ import default_environment from require "lapis.cmd.util"
 
 local popper
 
--- force code to run in environment, sets up db to execute queries
+-- force code to run in environment
 push = (name_or_env, overrides) ->
   assert name_or_env, "missing name or env for push"
 
