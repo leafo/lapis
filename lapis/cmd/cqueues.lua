@@ -75,7 +75,8 @@ do
     start = function(self)
       local logger = require("lapis.logging")
       local port = select(3, self.server:localname())
-      logger.start_server(port)
+      local config = require("lapis.config").get()
+      logger.start_server(port, config._name)
       package.loaded["lapis.running_server"] = "cqueues"
       assert(self.server:loop())
       package.loaded["lapis.running_server"] = nil

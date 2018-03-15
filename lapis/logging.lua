@@ -92,12 +92,15 @@ migration_summary = function(count)
   end
   return print(colors("%{bright}%{yellow}Ran%{reset} " .. tostring(count) .. " %{bright}%{yellow}" .. tostring(noun)))
 end
-start_server = function(port)
+start_server = function(port, environment_name)
   local l = config.logging
   if not (l and l.server) then
     return 
   end
-  return print(colors("%{bright}%{yellow}Listening on port " .. tostring(port) .. "%{reset}"))
+  print(colors("%{bright}%{yellow}Listening on port " .. tostring(port) .. "%{reset}"))
+  if environment_name then
+    return print(colors("%{bright}%{yellow}Environment: " .. tostring(environment_name) .. "%{reset}"))
+  end
 end
 return {
   request = request,

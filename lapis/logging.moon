@@ -76,10 +76,12 @@ migration_summary = (count) ->
 
   print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
 
-start_server = (port) ->
+start_server = (port, environment_name) ->
   l = config.logging
   return unless l and l.server
   print colors("%{bright}%{yellow}Listening on port #{port}%{reset}")
+  if environment_name
+    print colors("%{bright}%{yellow}Environment: #{environment_name}%{reset}")
 
 { :request, :query, :migration, :migration_summary, :notice, :flatten_params,
   :start_server }

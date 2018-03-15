@@ -32,7 +32,8 @@ class Server
   start: =>
     logger = require "lapis.logging"
     port = select 3, @server\localname!
-    logger.start_server port
+    config = require("lapis.config").get!
+    logger.start_server port, config._name
     package.loaded["lapis.running_server"] = "cqueues"
     assert @server\loop!
     package.loaded["lapis.running_server"] = nil
