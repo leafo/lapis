@@ -15,7 +15,7 @@ class Model extends BaseModel
     columns
 
   -- create from table of values, return loaded object
-  @create: (values, opts) =>
+  @create: (values={}, opts) =>
     if @constraints
       for key in pairs @constraints
         if err = @_check_constraint key, values and values[key], values

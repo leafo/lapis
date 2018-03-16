@@ -118,6 +118,9 @@ do
     return columns
   end
   self.create = function(self, values, opts)
+    if values == nil then
+      values = { }
+    end
     if self.constraints then
       for key in pairs(self.constraints) do
         do
