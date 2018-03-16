@@ -70,13 +70,6 @@ create_server = (app_module) ->
     port: assert config.port, "missing server port"
 
     :onstream
-
-    onerror: (context, op, err, errno) =>
-      msg = op .. " on " .. tostring(context) .. " failed"
-      if err
-        msg = msg .. ": " .. tostring(err)
-
-      assert io.stderr\write msg, "\n"
   }
 
   Server server

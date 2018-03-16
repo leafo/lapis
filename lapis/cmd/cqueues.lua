@@ -138,14 +138,7 @@ create_server = function(app_module)
   local server = http_server.listen({
     host = config.bind_host or "0.0.0.0",
     port = assert(config.port, "missing server port"),
-    onstream = onstream,
-    onerror = function(self, context, op, err, errno)
-      local msg = op .. " on " .. tostring(context) .. " failed"
-      if err then
-        msg = msg .. ": " .. tostring(err)
-      end
-      return assert(io.stderr:write(msg, "\n"))
-    end
+    onstream = onstream
   })
   return Server(server)
 end
