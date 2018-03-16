@@ -30,6 +30,9 @@ class Server
     @server\close!
 
   start: =>
+    io.stdout\setvbuf "no"
+    io.stderr\setvbuf "no"
+
     logger = require "lapis.logging"
     port = select 3, @server\localname!
     config = require("lapis.config").get!

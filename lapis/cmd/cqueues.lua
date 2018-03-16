@@ -73,6 +73,8 @@ do
       return self.server:close()
     end,
     start = function(self)
+      io.stdout:setvbuf("no")
+      io.stderr:setvbuf("no")
       local logger = require("lapis.logging")
       local port = select(3, self.server:localname())
       local config = require("lapis.config").get()
