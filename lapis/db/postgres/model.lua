@@ -133,6 +133,9 @@ do
   local self = _class_0
   self.db = db
   self.create = function(self, values, opts)
+    if values == nil then
+      values = { }
+    end
     if self.constraints then
       for key in pairs(self.constraints) do
         do
