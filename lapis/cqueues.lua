@@ -11,12 +11,17 @@ filter_array = function(t)
   end
   return t
 end
-local headers_proxy = {
+local headers_proxy_mt = {
   __index = function(self, name)
     return self[1]:get(name:lower())
   end,
   __tostring = function(self)
     return "<HeadersProxy>"
+  end
+}
+local request_mt = {
+  __index = function(self, name)
+    return error("Request has no implementation for: " .. tostring(name))
   end
 }
 local build_request
@@ -45,7 +50,7 @@ build_request = function(stream)
     port = port,
     headers = setmetatable({
       req_headers
-    }, headers_proxy),
+    }, headers_proxy_mt),
     params_get = query,
     params_post = post,
     parsed_url = {
@@ -55,11 +60,7 @@ build_request = function(stream)
       host = host,
       port = port
     }
-  }, {
-    __index = function(self, name)
-      return error("Request has no implementation for: " .. tostring(name))
-    end
-  })
+  }, request_mt)
 end
 local build_response
 build_response = function(stream)

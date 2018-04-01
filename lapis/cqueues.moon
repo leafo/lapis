@@ -7,9 +7,14 @@ filter_array = (t) ->
     t[k] = nil
   t
 
-headers_proxy = {
+headers_proxy_mt = {
   __index: (name) => @[1]\get name\lower!
   __tostring: => "<HeadersProxy>"
+}
+
+request_mt = {
+  __index: (name) =>
+    error "Request has no implementation for: #{name}"
 }
 
 build_request = (stream) ->
@@ -22,6 +27,7 @@ build_request = (stream) ->
   query = query and filter_array(parse_query_string(query)) or {}
   method = req_headers\get ":method"
 
+  -- TODO: this assumes form urlencoded
   body = stream\get_body_as_string!\gsub "+", " "
   post = body and filter_array(parse_query_string(body)) or {}
 
@@ -46,7 +52,7 @@ build_request = (stream) ->
     :scheme
     :port
 
-    headers: setmetatable { req_headers }, headers_proxy
+    headers: setmetatable { req_headers }, headers_proxy_mt
 
     params_get: query
     params_post: post
@@ -56,10 +62,7 @@ build_request = (stream) ->
       :host
       :port
     }
-  }, {
-    __index: (name) =>
-      error "Request has no implementation for: #{name}"
-  }
+  }, request_mt
 
 build_response = (stream) ->
   {
