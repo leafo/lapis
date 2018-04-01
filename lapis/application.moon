@@ -173,18 +173,21 @@ class Application
   dispatch: (req, res) =>
     local err, trace, r
 
-    success = xpcall (->
-        r = @.Request @, req, res
+    capture_error = (_err) ->
+      err = _err
+      trace = debug.traceback "", 2
 
-        unless @router\resolve req.parsed_url.path, r
-          -- run default route if nothing matched
-          handler = @wrap_handler @default_route
-          handler {}, nil, "default_route", r
+    raw_request = ->
+      r = @.Request @, req, res
 
-        @render_request r),
-      (_err) ->
-        err = _err
-        trace = debug.traceback "", 2
+      unless @router\resolve req.parsed_url.path, r
+        -- run default route if nothing matched
+        handler = @wrap_handler @default_route
+        handler {}, nil, "default_route", r
+
+      @render_request r
+
+    success = xpcall raw_request, capture_error
 
     unless success
       -- create a new request to handle the rendering the error

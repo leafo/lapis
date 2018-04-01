@@ -70,15 +70,18 @@ do
   local _class_0
   local _base_0 = {
     stop = function(self)
-      return self.server:close()
+      assert(self.server, "No running server")
+      self.server:close()
+      self.server = nil
     end,
     start = function(self)
+      local http_server = require("http.server")
+      self.server = http_server.listen(self.server_opts)
       io.stdout:setvbuf("no")
       io.stderr:setvbuf("no")
       local logger = require("lapis.logging")
-      local port = select(3, self.server:localname())
-      local config = require("lapis.config").get()
-      logger.start_server(port, config._name)
+      local port = select(3, assert(self.server:localname()))
+      logger.start_server(port, self.config and self.config._name)
       package.loaded["lapis.running_server"] = "cqueues"
       assert(self.server:loop())
       package.loaded["lapis.running_server"] = nil
@@ -86,8 +89,8 @@ do
   }
   _base_0.__index = _base_0
   _class_0 = setmetatable({
-    __init = function(self, server)
-      self.server = server
+    __init = function(self, server_opts, config)
+      self.server_opts, self.config = server_opts, config
     end,
     __base = _base_0,
     __name = "Server"
@@ -103,9 +106,11 @@ do
   Server = _class_0
 end
 local create_server
-create_server = function(app_module)
+create_server = function(app_module, environment)
+  if environment then
+    require("lapis.environment").push(environment)
+  end
   local config = require("lapis.config").get()
-  local http_server = require("http.server")
   local dispatch
   dispatch = require("lapis.cqueues").dispatch
   local load_app
@@ -137,12 +142,20 @@ create_server = function(app_module)
       return dispatch(app, self, stream)
     end
   end
-  local server = http_server.listen({
+  local onerror
+  onerror = function(self, context, op, err, errno)
+    local msg = op .. " on " .. tostring(context) .. " failed"
+    if err then
+      msg = msg .. ": " .. tostring(err)
+    end
+    return assert(io.stderr:write(msg, "\n"))
+  end
+  return Server({
     host = config.bind_host or "0.0.0.0",
     port = assert(config.port, "missing server port"),
-    onstream = onstream
-  })
-  return Server(server)
+    onstream = onstream,
+    onerror = onerror
+  }, config)
 end
 local start_server
 start_server = function(...)

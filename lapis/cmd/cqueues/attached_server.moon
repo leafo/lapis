@@ -3,6 +3,8 @@
 import to_json from require "lapis.util"
 import AttachedServer from require "lapis.cmd.attached_server"
 
+-- An attached server is one that runs alongside the current process in a
+-- separate thread. This is primary used to run a server with out test suite
 class CqueuesAttachedServer extends AttachedServer
   start: (env, overrides) =>
     thread = require "cqueues.thread"

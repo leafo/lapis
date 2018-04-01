@@ -156,17 +156,21 @@ do
     end,
     dispatch = function(self, req, res)
       local err, trace, r
-      local success = xpcall((function()
+      local capture_error
+      capture_error = function(_err)
+        err = _err
+        trace = debug.traceback("", 2)
+      end
+      local raw_request
+      raw_request = function()
         r = self.Request(self, req, res)
         if not (self.router:resolve(req.parsed_url.path, r)) then
           local handler = self:wrap_handler(self.default_route)
           handler({ }, nil, "default_route", r)
         end
         return self:render_request(r)
-      end), function(_err)
-        err = _err
-        trace = debug.traceback("", 2)
-      end)
+      end
+      local success = xpcall(raw_request, capture_error)
       if not (success) then
         local error_request = self.Request(self, req, res)
         error_request.original_request = r

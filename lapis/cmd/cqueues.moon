@@ -24,26 +24,35 @@ class Runner
     assert @current_server, "no current server"
 
 class Server
-  new: (@server) =>
+  new: (@server_opts, @config) =>
 
   stop: =>
+    assert @server, "No running server"
     @server\close!
+    @server = nil
 
   start: =>
+    http_server = require "http.server"
+    @server = http_server.listen @server_opts
+
     io.stdout\setvbuf "no"
     io.stderr\setvbuf "no"
 
     logger = require "lapis.logging"
-    port = select 3, @server\localname!
-    config = require("lapis.config").get!
-    logger.start_server port, config._name
+    port = select 3, assert @server\localname!
+    logger.start_server port, @config and @config._name
+
     package.loaded["lapis.running_server"] = "cqueues"
     assert @server\loop!
     package.loaded["lapis.running_server"] = nil
 
-create_server = (app_module) ->
+-- creates a new Server instance from the current config and a specified app module
+create_server = (app_module, environment) ->
+  if environment
+    require("lapis.environment").push environment
+
   config = require("lapis.config").get!
-  http_server = require "http.server"
+
   import dispatch from require "lapis.cqueues"
 
   load_app = ->
@@ -68,14 +77,20 @@ create_server = (app_module) ->
     app = load_app!
     (stream) => dispatch app, @, stream
 
-  server = http_server.listen {
+  onerror = (context, op, err, errno) =>
+    msg = op .. " on " .. tostring(context) .. " failed"
+    if err
+      msg = msg .. ": " .. tostring(err)
+
+    assert io.stderr\write msg, "\n"
+
+  Server {
     host: config.bind_host or "0.0.0.0"
     port: assert config.port, "missing server port"
 
     :onstream
-  }
-
-  Server server
+    :onerror
+  }, config
 
 start_server =  (...) ->
   server = create_server ...
