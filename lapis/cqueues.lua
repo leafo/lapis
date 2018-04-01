@@ -11,28 +11,49 @@ filter_array = function(t)
   end
   return t
 end
+local headers_proxy = {
+  __index = function(self, name)
+    return self[1]:get(name:lower())
+  end,
+  __tostring = function(self)
+    return "<HeadersProxy>"
+  end
+}
 local build_request
 build_request = function(stream)
   local req_headers = assert(stream:get_headers())
-  local url = req_headers:get(":path")
-  local path, query = url:match("^([^?]+)%?(.*)$")
-  path = path or url
+  local uri = req_headers:get(":path")
+  local path, query = uri:match("^([^?]+)%?(.*)$")
+  path = path or uri
   query = query and filter_array(parse_query_string(query)) or { }
   local method = req_headers:get(":method")
   local body = stream:get_body_as_string():gsub("+", " ")
   local post = body and filter_array(parse_query_string(body)) or { }
+  local h = req_headers:get(":authority")
+  local host, port = h:match("^(.-):(%d+)$")
+  host = host or h
+  local scheme = stream:checktls() and "https" or "http"
+  local family, remote_addr = stream:peername()
   return setmetatable({
-    body = body,
     cmd_mth = method,
-    cmd_url = url,
+    cmd_url = uri,
+    method = method,
+    body = body,
+    request_uri = uri,
+    remote_addr = remote_addr,
+    scheme = scheme,
+    port = port,
+    headers = setmetatable({
+      req_headers
+    }, headers_proxy),
     params_get = query,
     params_post = post,
     parsed_url = {
-      scheme = "http",
+      scheme = scheme,
       path = path,
       query = query,
-      host = req_headers:get("host"),
-      port = "8080"
+      host = host,
+      port = port
     }
   }, {
     __index = function(self, name)

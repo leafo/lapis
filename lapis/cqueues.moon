@@ -7,31 +7,54 @@ filter_array = (t) ->
     t[k] = nil
   t
 
+headers_proxy = {
+  __index: (name) => @[1]\get name\lower!
+  __tostring: => "<HeadersProxy>"
+}
+
 build_request = (stream) ->
   req_headers = assert stream\get_headers!
-  url = req_headers\get ":path"
+  uri = req_headers\get ":path"
 
   -- TODO: limit max number of entries in get table
-  path, query = url\match "^([^?]+)%?(.*)$"
-  path or= url
+  path, query = uri\match "^([^?]+)%?(.*)$"
+  path or= uri
   query = query and filter_array(parse_query_string(query)) or {}
   method = req_headers\get ":method"
 
   body = stream\get_body_as_string!\gsub "+", " "
   post = body and filter_array(parse_query_string(body)) or {}
 
+  h = req_headers\get ":authority"
+  host, port = h\match "^(.-):(%d+)$"
+  host or= h
+
+  scheme = stream\checktls! and "https" or "http"
+
+  family, remote_addr = stream\peername()
 
   setmetatable {
-    body: body
+    -- deprecated fields
     cmd_mth: method
-    cmd_url: url
+    cmd_url: uri
+    --
+
+    method: method
+    body: body
+    request_uri: uri
+    :remote_addr
+    :scheme
+    :port
+
+    headers: setmetatable { req_headers }, headers_proxy
+
     params_get: query
     params_post: post
     parsed_url: {
-      scheme: "http"
+      :scheme
       :path, :query
-      host: req_headers\get "host"
-      port: "8080"
+      :host
+      :port
     }
   }, {
     __index: (name) =>
