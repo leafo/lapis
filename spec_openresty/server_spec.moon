@@ -23,6 +23,65 @@ describe "server", ->
     assert.same 200, status
     assert.same { success: true }, res
 
+  describe "params", ->
+    it "dumps query params", ->
+      status, res, headers = server\request "/dump-params?color=blue&color=green&height[oops]=9", {
+        expect: "json"
+      }
+
+      assert.same 200, status
+      assert.same {
+        color: "green"
+        height: {
+          oops: "9"
+        }
+      }, res
+
+    it "dumps post params", ->
+      status, res, headers = server\request "/dump-params", {
+        expect: "json"
+        post: {
+          color: "blue"
+          "height[oops]": "9"
+        }
+      }
+
+      assert.same 200, status
+      assert.same {
+        color: "blue"
+        height: {
+          oops: "9"
+        }
+      }, res
+
+    it "dumps json params", ->
+      status, res, headers = server\request "/dump-params", {
+        expect: "json"
+        method: "POST"
+        headers: {
+          "content-type": "application/json"
+        }
+        data: '{"thing": 1234}'
+      }
+
+      assert.same 200, status
+      -- this route isn't json aware
+      assert.same {}, res
+
+      status, res, headers = server\request "/dump-json-params", {
+        expect: "json"
+        method: "POST"
+        headers: {
+          "content-type": "application/json"
+        }
+        data: '{"thing": 1234}'
+      }
+
+      assert.same {
+        thing: 1234
+      }, res
+
+
   describe "csrf", ->
     import escape from require "lapis.util"
     import decode_with_secret from require "lapis.util.encoding"
