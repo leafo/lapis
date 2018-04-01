@@ -1,12 +1,12 @@
 # Lapis
 
-A web framework for Lua/[MoonScript][1].
+A web framework for Lua/[MoonScript][1] supporting [OpenResty](https://openresty.org/en/) or [http.server](https://github.com/daurnimator/lua-http)
 
 [![Build Status](https://travis-ci.org/leafo/lapis.svg?branch=master)](https://travis-ci.org/leafo/lapis)
 
 Lapis is production ready, use it on your next huge project.
 
-### <http://leafo.net/lapis/>
+Learn more on the homepage: <http://leafo.net/lapis/>
 
 * [Getting Started Tutorial](http://leafo.net/lapis/reference/getting_started.html)
 * [Documentation](http://leafo.net/lapis/reference.html)
