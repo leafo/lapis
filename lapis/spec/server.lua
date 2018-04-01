@@ -13,13 +13,19 @@ do
   local _class_0
   local _base_0 = {
     current_server = nil,
-    load_test_server = function(self)
+    load_test_server = function(self, overrides)
       local get_free_port
       get_free_port = require("lapis.cmd.util").get_free_port
       local app_port = get_free_port()
-      self.current_server = self.runner:attach_server(TEST_ENV, {
+      local more_config = {
         port = app_port
-      })
+      }
+      if overrides then
+        for k, v in pairs(overrides) do
+          more_config[k] = v
+        end
+      end
+      self.current_server = self.runner:attach_server(TEST_ENV, more_config)
       self.current_server.app_port = app_port
       return self.current_server
     end,

@@ -19,11 +19,16 @@ class SpecServer
         else
           require("lapis.cmd.nginx").nginx_runner
 
-  load_test_server: =>
+  load_test_server: (overrides) =>
     import get_free_port from require "lapis.cmd.util"
     app_port = get_free_port!
 
-    @current_server = @runner\attach_server TEST_ENV, { port: app_port }
+    more_config = { port: app_port }
+    if overrides
+      for k,v in pairs overrides
+        more_config[k] = v
+
+    @current_server = @runner\attach_server TEST_ENV, more_config
     @current_server.app_port = app_port
     @current_server
 
