@@ -27,9 +27,12 @@ build_request = (stream) ->
   query = query and filter_array(parse_query_string(query)) or {}
   method = req_headers\get ":method"
 
-  -- TODO: this assumes form urlencoded
-  body = stream\get_body_as_string!\gsub "+", " "
-  post = body and filter_array(parse_query_string(body)) or {}
+  content_type = req_headers\get "content-type"
+
+  params_post = if content_type == "application/x-www-form-urlencoded"
+    -- TODO: limits for body length
+    body = stream\get_body_as_string!\gsub "+", " "
+    body and filter_array(parse_query_string(body)) or {}
 
   h = req_headers\get ":authority"
   host, port = h\match "^(.-):(%d+)$"
@@ -46,7 +49,6 @@ build_request = (stream) ->
     --
 
     method: method
-    body: body
     request_uri: uri
     :remote_addr
     :scheme
@@ -54,8 +56,11 @@ build_request = (stream) ->
 
     headers: setmetatable { req_headers }, headers_proxy_mt
 
+    read_body_as_string: ->
+      stream\get_body_as_string!
+
     params_get: query
-    params_post: post
+    params_post: params_post or {}
     parsed_url: {
       :scheme
       :path, :query

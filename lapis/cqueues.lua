@@ -32,8 +32,12 @@ build_request = function(stream)
   path = path or uri
   query = query and filter_array(parse_query_string(query)) or { }
   local method = req_headers:get(":method")
-  local body = stream:get_body_as_string():gsub("+", " ")
-  local post = body and filter_array(parse_query_string(body)) or { }
+  local content_type = req_headers:get("content-type")
+  local params_post
+  if content_type == "application/x-www-form-urlencoded" then
+    local body = stream:get_body_as_string():gsub("+", " ")
+    params_post = body and filter_array(parse_query_string(body)) or { }
+  end
   local h = req_headers:get(":authority")
   local host, port = h:match("^(.-):(%d+)$")
   host = host or h
@@ -43,7 +47,6 @@ build_request = function(stream)
     cmd_mth = method,
     cmd_url = uri,
     method = method,
-    body = body,
     request_uri = uri,
     remote_addr = remote_addr,
     scheme = scheme,
@@ -51,8 +54,11 @@ build_request = function(stream)
     headers = setmetatable({
       req_headers
     }, headers_proxy_mt),
+    read_body_as_string = function()
+      return stream:get_body_as_string()
+    end,
     params_get = query,
-    params_post = post,
+    params_post = params_post or { },
     parsed_url = {
       scheme = scheme,
       path = path,

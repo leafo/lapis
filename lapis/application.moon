@@ -329,10 +329,10 @@ json_params = (fn) ->
     if content_type = @req.headers["content-type"]
       -- Header often ends with ;UTF-8
       if string.find content_type\lower!, "application/json", nil, true
-        ngx.req.read_body!
-        local obj
-        pcall -> obj, err = json.decode ngx.req.get_body_data!
-        @@support.add_params @, obj, "json" if obj
+        body = @req\read_body_as_string!
+        success, obj_or_err = pcall -> json.decode body
+        if success
+          @@support.add_params @, obj_or_err, "json"
 
     fn @, ...
 

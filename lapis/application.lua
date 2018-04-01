@@ -444,14 +444,12 @@ json_params = function(fn)
       local content_type = self.req.headers["content-type"]
       if content_type then
         if string.find(content_type:lower(), "application/json", nil, true) then
-          ngx.req.read_body()
-          local obj
-          pcall(function()
-            local err
-            obj, err = json.decode(ngx.req.get_body_data())
+          local body = self.req:read_body_as_string()
+          local success, obj_or_err = pcall(function()
+            return json.decode(body)
           end)
-          if obj then
-            self.__class.support.add_params(self, obj, "json")
+          if success then
+            self.__class.support.add_params(self, obj_or_err, "json")
           end
         end
       end

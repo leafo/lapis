@@ -110,6 +110,12 @@ local ngx_req = {
   request_uri = function()
     return ngx.var.request_uri
   end,
+  read_body_as_string = function()
+    return function(self)
+      ngx.req.read_body()
+      return ngx.req.get_body_data()
+    end
+  end,
   parsed_url = function(t)
     local uri = ngx.var.request_uri
     local pos = uri:find("?")

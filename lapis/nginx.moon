@@ -67,6 +67,11 @@ ngx_req = {
   remote_addr: -> ngx.var.remote_addr
   request_uri: ->  ngx.var.request_uri
 
+  read_body_as_string: ->
+    =>
+      ngx.req.read_body!
+      ngx.req.get_body_data!
+
   parsed_url: (t) ->
     uri = ngx.var.request_uri
     pos = uri\find("?")
@@ -80,7 +85,6 @@ ngx_req = {
       port: host_header and host_header\match ":(%d+)$"
       query: ngx.var.args
     }
-
 
   params_post: (t) ->
     content_type = t.headers["content-type"] or ""
