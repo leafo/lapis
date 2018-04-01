@@ -35,7 +35,7 @@ build_request = (stream) ->
     }
   }, {
     __index: (name) =>
-      print "Getting", name
+      error "Request has no implementation for: #{name}"
   }
 
 build_response = (stream) ->

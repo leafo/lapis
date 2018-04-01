@@ -36,7 +36,7 @@ build_request = function(stream)
     }
   }, {
     __index = function(self, name)
-      return print("Getting", name)
+      return error("Request has no implementation for: " .. tostring(name))
     end
   })
 end
