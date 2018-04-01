@@ -5,6 +5,8 @@ set -o xtrace
 
 eval $(luarocks-5.1 path)
 
+luarocks-5.1 install --local http
+
 # add openresty
 export LUA_PATH="$LUA_PATH;/usr/local/openresty/lualib/?.lua"
 
@@ -29,3 +31,4 @@ make mysql_test_db
 ./busted -o utfTerminal
 ./busted -o utfTerminal spec_postgres/
 ./busted -o utfTerminal spec_openresty/
+./busted -o utfTerminal spec_cqueues/
