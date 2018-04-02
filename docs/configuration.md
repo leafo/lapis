@@ -16,15 +16,14 @@ $ lapis server [environment]
 ```
 
 By default the environment is `development`. The environment name only affects
-what configuration is loaded. This has absolutely no effect if you don't have any
-configurations, so let's create some.
+what configuration is loaded. The environment name has no effect unless you
+create configurations.
 
 ## Creating Configurations
 
 Whenever Lapis executes code that depends on a configuration it attempts to
 load the module `"config"`.  The `"config"` module is where we define our
-environment specific variables. It's a standard Lua/MoonScript file, so let's
-create it.
+environment specific variables. It's a standard Lua/MoonScript file.
 
 > If the `config` module is not found no error is thrown, and only the default
 > configuration is available.
@@ -51,7 +50,6 @@ config = require "lapis.config"
 config "development", ->
   port 8080
 
-
 config "production", ->
   port 80
   num_workers 4
@@ -68,7 +66,7 @@ A configuration is just a plain table. Use the special builder syntax above to
 construct the configuration tables.
 
 We can configure multiple environments at once by passing in an array table for
-evironment names:
+environment names:
 
 ```lua
 config({"development", "production"}, {
@@ -87,6 +85,135 @@ about the syntax have a look at the respective guide.
 
 * [MoonScript configuration syntax][0]
 * [Lua configuration syntax][1]
+
+
+## Built-in configuration
+
+Although most configuration keys are free for any use, some names are reserved
+for controlling how Lapis and supporting libraries work. Keep in mind some
+configurations are only used depending on the server.
+
+> For your app's configuration, you can avoid future conflicts by scoping your
+> configuration values to your app's name.
+
+$config_table{
+  {
+    name = "server",
+    default = '`"nginx"`',
+    description = "The server your code will run in. Either `nginx` or `cqueues`"
+  },
+  {
+    name = "port",
+    default = "`8080`",
+    description = [[
+      The port your server will bind to
+    ]]
+  },
+  {
+    name = "bind_host",
+    default = '`"0.0.0.0"`',
+    description = "The interface the server will bind to",
+    servers = {"cqueues"}
+  },
+  {
+    name = "secret",
+    default = '`"please-change-me"`',
+    description = "The secret string used to sign sessions and tokens"
+  },
+  {
+    name = "hmac_digest",
+    default = '`"sha1"`',
+    description = [[Controls the hashing function used for HMAC sessions and signed strings. One of `"sha1"`, `"sha256"`.]]
+  },
+  {
+    name = "session_name",
+    default = '`"lapis_session"`',
+    description = "Name of cookie used to store the [session]($root/reference/actions.html#request-object-session)"
+  },
+  {
+    name = "code_cache",
+    default = '`"off"`',
+    description = [[
+      Controls if code is cached across requests, or is reloaded for each request.
+
+      One of `"on"` or `"off"`. Production servers should enable code caching for maximum performance.
+    ]]
+  },
+  {
+    name = "num_workers",
+    default = "`1`",
+    description = [[
+      How many worker processes to spawn to handle requests. See
+      [worker_processes](http://nginx.org/en/docs/ngx_core_module.html#worker_processes).
+    ]],
+    servers = {"nginx"}
+  },
+  {
+    name = "logging",
+    description = "A table of loggers to enable, or `false` to disable all logging", 
+    default = "See below"
+  },
+  {
+    name = "max_request_args",
+    description = [[
+      Controls the maximum number of query and post parameters parsed from request.
+      See `max_args` in [get_uri_args](https://github.com/openresty/lua-nginx-module#ngxreqget_uri_args).
+    ]],
+    servers = {"nginx"}
+  },
+  {
+    name = "measure_performance",
+    default = '`false`',
+    description = "Enables per-request performance metric collection, see [Performance Measurement](#performance-measurement)."
+  }, 
+  {
+    name = "postgres",
+    description = "PostgreSQL connection settings",
+    default = "[*See PostgreSQL docs*](database.html)"
+  },
+  {
+    name = "mysql",
+    description = "MySQL connection settings",
+    default = "[*See MySQL docs*](database.html)"
+  }
+}
+
+
+### Logging configuration
+
+Logging configuration is stored in a table under the name `logging` in the
+global configuration. If the value is set to `false` then all logging is
+disabled.
+
+> This only controls logging done by Lapis, server specific logging in
+> OpenResty is controlled with the nginx config file.
+
+$config_table{
+  {
+    name = "server", 
+    default = "`true`",
+    description = "Show server start message",
+    servers = {"cqueues"}
+  },
+  {
+    name = "queries", 
+    default = "`true`",
+    description = "Show queries sent to database"
+  },
+  {
+    name = "requests", 
+    default = "`true`",
+    description = "Show path and status for every request"
+  }
+}
+
+For OpenResty, all logging is done to Nginx's notice log using the `print`
+function provided by OpenResty. The default notice logging location is set to
+`stderr`, specified in the default Lapis Nginx configuration. It can configured
+using the [`error_log`
+directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
+
+Otherwise, logs are written to standard out using Lua's `print` function.
 
 ## Configurations and Nginx
 
@@ -142,79 +269,6 @@ print(config._name) -- development, production, etc...
 ```moon
 print config._name -- development, production, etc...
 ```
-
-## Default Configuration Values
-
-All configurations come with some default values, these are them in table
-syntax:
-
-
-```lua
-default_config = {
-  port = "8080",
-  secret = "please-change-me",
-  session_name = "lapis_session",
-  num_workers = "1",
-  logging = {
-    queries = true,
-    requests = true
-  }
-}
-```
-
-```moon
-default_config = {
-  port: "8080"
-  secret: "please-change-me"
-  session_name: "lapis_session"
-  num_workers: "1"
-  logging: {
-    queries: true
-    requests: true
-  }
-}
-```
-
-
-## Available Configuration Values
-
-Althought most coniguration keys are free for any use, some names are reserved
-for configuring Lapis and supporting libraries. Here is a list of them:
-
-* `port` (`number`) -- The port of Nginx, defined in default `nginx.conf`
-* `num_workers` (`number`) -- The number of workers to launch for Nginx, defined in default `nginx.conf`
-* `session_name` (`string`) -- The name of the cookie where the [session]($root/reference/actions.html#request-object-session) will be stored
-* `secret` (`string`) -- Secret key used by `encode_with_secret`, also used for signing session cookie
-* `measure_performance` (`bool`) -- Used to enable performance time and query tracking
-* `logging` (`table`) -- Configure which events to log to console or log files
-* `hmac_digest` (`string`) -- Configure which HMAC digest to use. Can be set to `"sha256"`, otherwise the default SHA1 is used.
-
-
-## Logging Configuration
-
-The `logging` configuration key can be used to disable the various logging that
-Lapis does by default. The default value of the logging configuration is:
-
-```lua
-{
-  queries = true,
-  requests = true
-}
-```
-
-```moon
-{
-  queries: true
-  requests: true
-}
-```
-
-All logging is done to Nginx's notice log using the `print` function provided
-by OpenResty. The default notice logging location is set to `stderr`, specified
-in the default Lapis Nginx configuration. It can configured using the
-[`error_log`
-directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
-
 ## Performance Measurement
 
 Lapis can collect timings and counts for various actions if the
