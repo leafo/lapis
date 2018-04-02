@@ -5,8 +5,6 @@ set -o xtrace
 
 eval $(luarocks-5.1 path)
 
-luarocks-5.1 install --local http
-
 # add openresty
 export LUA_PATH="$LUA_PATH;/usr/local/openresty/lualib/?.lua"
 
