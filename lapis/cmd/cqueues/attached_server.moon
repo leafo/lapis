@@ -31,6 +31,13 @@ class CqueuesAttachedServer extends AttachedServer
 
     @wait_until_ready!
 
+  status_tick: =>
+    -- try to join the thread to see if it failed
+    joined, err = @current_thread\join 0
+
+    if joined
+      error "Failed to start test server: #{err}"
+
   detach: =>
 
 

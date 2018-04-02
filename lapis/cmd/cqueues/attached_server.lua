@@ -31,6 +31,12 @@ do
       end, env, to_json(overrides or { })))
       return self:wait_until_ready()
     end,
+    status_tick = function(self)
+      local joined, err = self.current_thread:join(0)
+      if joined then
+        return error("Failed to start test server: " .. tostring(err))
+      end
+    end,
     detach = function(self) end
   }
   _base_0.__index = _base_0

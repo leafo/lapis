@@ -8,6 +8,7 @@ do
     detach = function(self)
       return error("override me")
     end,
+    status_tick = function(self) end,
     wait_until = function(self, server_status)
       if server_status == nil then
         server_status = "open"
@@ -17,6 +18,7 @@ do
       local sleep_for = 0.001
       local start = socket.gettime()
       while true do
+        self:status_tick()
         local sock = socket.connect("127.0.0.1", (assert(self.port, "missing port")))
         local _exp_0 = server_status
         if "open" == _exp_0 then

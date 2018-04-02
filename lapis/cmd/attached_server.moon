@@ -6,6 +6,10 @@ class AttachedServer
   detach: =>
     error "override me"
 
+  status_tick: =>
+    -- will be called on every tick to poll the server
+    -- override to cherck if the server has crashed
+
   wait_until: (server_status="open") =>
     socket = require "socket"
     max_tries = 100
@@ -14,6 +18,7 @@ class AttachedServer
     start = socket.gettime!
 
     while true
+      @status_tick!
       sock = socket.connect "127.0.0.1", (assert @port, "missing port")
       switch server_status
         when "open"
