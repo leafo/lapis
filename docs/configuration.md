@@ -87,7 +87,7 @@ about the syntax have a look at the respective guide.
 * [Lua configuration syntax][1]
 
 
-## Built-in configuration
+## Built-in Configuration
 
 Although most configuration keys are free for any use, some names are reserved
 for controlling how Lapis and supporting libraries work. Keep in mind some
