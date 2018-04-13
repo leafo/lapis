@@ -13,6 +13,4 @@ RUN luarocks-5.1 install busted && \
 
 ADD . .
 
-RUN luarocks-5.1 make
-
 ENTRYPOINT ./ci.sh
