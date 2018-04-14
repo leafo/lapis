@@ -8,6 +8,43 @@ cjson = require "cjson"
 import OffsetPaginator from require "lapis.db.pagination"
 import add_relations, mark_loaded_relations from require "lapis.db.model.relations"
 
+_all_same = (array, val) ->
+  for item in *array
+    return false if item != val
+
+  true
+
+-- multi-key table
+_get = (t, front, ...) ->
+  if ... == nil
+    t[front]
+  else
+    if obj = t[front]
+      _get obj, ...
+    else
+      nil
+
+_put = (t, value, front, ...) ->
+  if ... == nil
+    assert front != nil, "missing field to insert"
+    t[front] = value
+    t
+  else
+    obj = t[front]
+
+    if obj == nil
+      obj = {}
+      t[front] = obj
+
+    _put obj, value, ...
+
+-- _fields obj, {"a", "b", "c"} --> obj.a, obj.b, obj.c
+_fields = (t, names, k=1, len=#names) ->
+  if k == len
+    t[names[k]]
+  else
+    t[names[k]], _fields(t, names, k + 1, len)
+
 class Enum
   debug = =>
     "(contains: #{table.concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
@@ -180,34 +217,55 @@ class BaseModel
     many = opts and opts.many
     value_fn = opts and opts.value
 
+    composite_foreign_key = type(foreign_key) == "table"
+
     if not flip and type(@primary_key) == "table"
       error "#{@table_name!} must have singular primary key for include_in"
 
     -- the column named to look up values in list of our records
-    src_key = if flip
-      -- we use id as a default since we don't have accurat primary key for
-      -- model of other_records (might be mixed)
-      opts.local_key or "id"
-    else
-      foreign_key
+    src_key = if composite_foreign_key
+      if flip
+        error "flip can not be combined with table foreign key"
 
-    include_ids = for record in *other_records
-      with id = record[src_key]
-        continue unless id
+      -- normalize it
+      [{type(k) == "number" and v or k, v} for k,v in pairs foreign_key]
+    else
+      if flip
+        -- we use id as a default since we don't have accurat primary key for
+        -- model of other_records (might be mixed)
+        opts.local_key or "id"
+      else
+        foreign_key
+
+    include_ids = if composite_foreign_key
+      for record in *other_records
+        tuple = [record[v] or @db.NULL for {k,v} in *src_key]
+        continue if _all_same tuple, @db.NULL
+        @db.list tuple
+    else
+      for record in *other_records
+        with id = record[src_key]
+          continue unless id
 
     if next include_ids
-      include_ids = uniquify include_ids
-      flat_ids = concat [@db.escape_literal id for id in *include_ids], ", "
-
-      find_by = if flip
-        foreign_key
+      flat_ids = if composite_foreign_key
+        @db.escape_literal @db.list include_ids
       else
-        @primary_key
+        include_ids = uniquify include_ids
+        @db.escape_literal @db.list include_ids
+
+      local find_by_fields
+      find_by = if composite_foreign_key
+        find_by_fields = [t[1] for t in *src_key]
+        @db.raw @db.escape_literal @db.list find_by_fields
+      else
+        if flip
+          foreign_key
+        else
+          @primary_key
 
       tbl_name = @db.escape_identifier @table_name!
-      find_by_escaped = @db.escape_identifier find_by
-
-      query = "#{fields} from #{tbl_name} where #{find_by_escaped} in (#{flat_ids})"
+      query = "#{fields} from #{tbl_name} where #{@db.escape_identifier find_by} in #{flat_ids}"
 
       if opts and opts.where and next opts.where
         query ..= " and " .. @db.encode_clause opts.where
@@ -219,16 +277,18 @@ class BaseModel
         query ..= " group by #{group}"
 
       if res = @db.select query
+        -- holds all the fetched rows indexed by the identifying key
         records = {}
+
         if many
           for t in *res
+            row = @load t
+            row = value_fn row if value_fn
+
             t_key = t[find_by]
 
             if records[t_key] == nil
               records[t_key] = {}
-
-            row = @load t
-            row = value_fn row if value_fn
 
             insert records[t_key], row
         else
@@ -236,11 +296,14 @@ class BaseModel
             row = @load t
             row = value_fn row if value_fn
 
-            records[t[find_by]] = row
+            if composite_foreign_key
+              _put records, row, _fields t, find_by_fields
+            else
+              records[t[find_by]] = row
 
         field_name = if opts and opts.as
           opts.as
-        elseif flip
+        elseif flip or composite_foreign_key
           if many
             @table_name!
           else
@@ -250,11 +313,20 @@ class BaseModel
 
         assert field_name, "failed to infer field name, provide one with `as`"
 
-        for other in *other_records
-          other[field_name] = records[other[src_key]]
+        -- load the rows into we feteched into the models
+        if composite_foreign_key
+          dest_fields = [t[2] for t in *src_key]
+          for other in *other_records
+            other[field_name] = _get records, _fields other, dest_fields
 
-          if many and not other[field_name]
-            other[field_name] = {}
+            if many and not other[field_name]
+              other[field_name] = {}
+        else
+          for other in *other_records
+            other[field_name] = records[other[src_key]]
+
+            if many and not other[field_name]
+              other[field_name] = {}
 
         if for_relation = opts and opts.for_relation
           mark_loaded_relations other_records, for_relation

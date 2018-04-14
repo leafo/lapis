@@ -635,6 +635,77 @@ describe "lapis.db.model", ->
 
       assert.same {}, things[2].thing_items
 
+  describe "include_in with composite keys", ->
+    local Things, ThingItems, things
+
+    before_each ->
+      class Things extends Model
+      class ThingItems extends Model
+      things = for i=1,5
+        Things\load {
+          id: i
+          alpha_id: 100 + math.floor i / 2
+          beta_id: 200 + i
+        }
+
+    it "with no simple keys", ->
+      mock_query "SELECT", {
+        { id: 1, alpha_id: 101, beta_id: 202 }
+        { id: 2, alpha_id: 101, beta_id: 203 }
+        { id: 3, alpha_id: 102, beta_id: 204 }
+        { id: 4, alpha_id: 100, beta_id: 201 }
+      }
+
+      ThingItems\include_in things, {
+        "alpha_id", "beta_id"
+      }
+
+      assert_queries {
+        [[SELECT * from "thing_items" where ('alpha_id', 'beta_id') in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+      }
+
+      assert.same {
+        id: 1
+        alpha_id: 100
+        beta_id: 201
+        thing_item: {
+          id: 4, alpha_id: 100, beta_id: 201
+        }
+      }, things[1]
+
+      assert.same {
+        id: 2
+        alpha_id: 101
+        beta_id: 202
+        thing_item: {
+          id: 1, alpha_id: 101, beta_id: 202
+        }
+      }, things[2]
+
+      assert.same {
+        id: 3
+        alpha_id: 101
+        beta_id: 203
+        thing_item: {
+          id: 2, alpha_id: 101, beta_id: 203
+        }
+      }, things[3]
+
+      assert.same {
+        id: 4
+        alpha_id: 102
+        beta_id: 204
+        thing_item: {
+          id: 3, alpha_id: 102, beta_id: 204
+        }
+      }, things[4]
+
+      assert.same {
+        id: 5
+        alpha_id: 102
+        beta_id: 205
+      }, things[5]
+
 
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
