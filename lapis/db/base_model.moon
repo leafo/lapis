@@ -306,14 +306,22 @@ class BaseModel
 
           if many
             if composite_foreign_key
-              error "code me!"
+              array = _get records, _fields t, dest_key
 
-            t_key = t[dest_key]
+              if array
+                insert array, row
+              else
+                _put records, {
+                  row
+                }, _fields t, dest_key
 
-            if records[t_key] == nil
-              records[t_key] = {}
+            else
+              t_key = t[dest_key]
 
-            insert records[t_key], row
+              if records[t_key] == nil
+                records[t_key] = {}
+
+              insert records[t_key], row
 
           else
             if composite_foreign_key

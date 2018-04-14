@@ -746,6 +746,36 @@ describe "lapis.db.model", ->
       assert.same thing_items[3], things[4].thing_item
       assert.same nil, things[5].thing_item
 
+    it "with many", ->
+      thing_items = {
+        { id: 1, aid: 101, bid: 202 }
+        { id: 2, aid: 101, bid: 202 }
+        { id: 3, aid: 102, bid: 204 }
+      }
+
+      mock_query "SELECT", thing_items
+
+      ThingItems\include_in things, {
+        aid: "alpha_id"
+        bid: "beta_id"
+      }, many: true
+
+      assert_queries {
+        [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+      }
+
+      assert.same {}, things[1].thing_items
+      assert.same {
+        { id: 1, aid: 101, bid: 202 }
+        { id: 2, aid: 101, bid: 202 }
+      }, things[2].thing_items
+
+      assert.same {}, things[3].thing_items
+      assert.same {
+        { id: 3, aid: 102, bid: 204 }
+      }, things[4].thing_items
+      assert.same {}, things[5].thing_items
+
 
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->

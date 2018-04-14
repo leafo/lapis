@@ -580,13 +580,21 @@ do
             end
             if many then
               if composite_foreign_key then
-                error("code me!")
+                local array = _get(records, _fields(t, dest_key))
+                if array then
+                  insert(array, row)
+                else
+                  _put(records, {
+                    row
+                  }, _fields(t, dest_key))
+                end
+              else
+                local t_key = t[dest_key]
+                if records[t_key] == nil then
+                  records[t_key] = { }
+                end
+                insert(records[t_key], row)
               end
-              local t_key = t[dest_key]
-              if records[t_key] == nil then
-                records[t_key] = { }
-              end
-              insert(records[t_key], row)
             else
               if composite_foreign_key then
                 _put(records, row, _fields(t, dest_key))
