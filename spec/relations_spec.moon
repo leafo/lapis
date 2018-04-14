@@ -203,6 +203,42 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "user_data" where "owner_id" = 123 limit 1'
     }
 
+  it "makes has_one getter with compound key", ->
+    mock_query "SELECT", { { id: 101 } }
+
+    models.UserPageData = class extends Model
+
+    models.UserPage = class extends Model
+      @relations: {
+        {"data", has_one: "UserPageData", key: {
+          "user_id", "page_id"
+        }}
+      }
+
+    up = models.UserPage!
+    up.user_id = 99
+    up.page_id = 234
+
+    assert up\get_data!
+
+    up2 = models.UserPage!
+    up2.user_id = nil
+    up2.page_id = 'hello'
+
+    assert up2\get_data!
+
+    assert_queries {
+      {
+        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234 limit 1'
+        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 AND limit 1'
+      }
+      {
+        [[SELECT * from "user_page_data" where "user_id" IS NULL AND "page_id" = 'hello' limit 1]]
+        [[SELECT * from "user_page_data" where "page_id" = 'hello' AND "user_id" IS NULL limit 1]]
+      }
+    }
+
+
   it "should make has_one getter key and local key", ->
     mock_query "SELECT", { { id: 101, thing_email: "leafo@leafo" } }
 

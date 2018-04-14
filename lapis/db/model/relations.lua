@@ -311,9 +311,24 @@ has_one = function(self, name, opts)
     end
     local model = assert_model(self.__class, source)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
-    local clause = {
-      [foreign_key] = self[opts.local_key or self.__class:primary_keys()]
-    }
+    local clause
+    if type(foreign_key) == "table" then
+      local out = { }
+      for k, v in pairs(foreign_key) do
+        local key, local_key
+        if type(k) == "number" then
+          key, local_key = v, v
+        else
+          key, local_key = k, v
+        end
+        out[key] = self[local_key] or self.__class.db.NULL
+      end
+      clause = out
+    else
+      clause = {
+        [foreign_key] = self[opts.local_key or self.__class:primary_keys()]
+      }
+    end
     do
       local where = opts.where
       if where then

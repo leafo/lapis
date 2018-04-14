@@ -203,10 +203,21 @@ has_one = (name, opts) =>
     model = assert_model @@, source
 
     foreign_key = opts.key or "#{@@singular_name!}_id"
+    clause = if type(foreign_key) == "table"
+      out = {}
+      for k,v in pairs foreign_key
+        key, local_key = if type(k) == "number"
+          v, v
+        else
+          k,v
 
-    clause = {
-      [foreign_key]: @[opts.local_key or @@primary_keys!]
-    }
+        out[key] = @[local_key] or @@db.NULL
+
+      out
+    else
+      {
+        [foreign_key]: @[opts.local_key or @@primary_keys!]
+      }
 
     if where = opts.where
       for k,v in pairs where
