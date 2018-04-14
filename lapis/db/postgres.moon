@@ -120,6 +120,11 @@ init_db = ->
 
 escape_identifier = (ident) ->
   return ident[1] if is_raw ident
+  if is_list ident
+    escaped_items = [escape_identifier item for item in *ident[1]]
+    assert escaped_items[1], "can't flatten empty list"
+    return "(#{concat escaped_items, ", "})"
+
   ident = tostring ident
   '"' ..  (ident\gsub '"', '""') .. '"'
 

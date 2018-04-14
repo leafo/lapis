@@ -525,7 +525,22 @@ describe "lapis.db.model", ->
       things = [Things\load { id: i, other_id: (i + 7) * 2, thing_id: 100 + i } for i=1,5]
 
     it "with no options", ->
+      thing_items = {
+        { id: 101, name: "leaf" }
+        { id: 103, name: "loaf" }
+        { id: 104, name: "laugh" }
+      }
+
+      mock_query "SELECT", thing_items
+
       ThingItems\include_in things, "thing_id"
+
+      -- TODO: this naming isn't right, shouldn't it be called `thing_item`
+      assert.same thing_items[1], things[1].thing
+      assert.same nil, things[2].thing
+      assert.same thing_items[2], things[3].thing
+      assert.same thing_items[3], things[4].thing
+      assert.same nil, things[5].thing
 
       assert_queries {
         [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
@@ -661,7 +676,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT * from "thing_items" where ('alpha_id', 'beta_id') in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+        [[SELECT * from "thing_items" where ("alpha_id", "beta_id") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
       }
 
       assert.same {
@@ -722,7 +737,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT * from "thing_items" where ('aid', 'bid') in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+        [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
       }
 
       assert.same thing_items[4], things[1].thing_item

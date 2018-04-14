@@ -26,7 +26,7 @@ _get = (t, front, ...) ->
 
 _put = (t, value, front, ...) ->
   if ... == nil
-    assert front != nil, "missing field to insert"
+    return if front == nil
     t[front] = value
     t
   else
@@ -212,60 +212,80 @@ class BaseModel
   -- specify as: "name" to set the key of the included objects in each item
   -- from the source list
   @include_in: (other_records, foreign_key, opts) =>
+    return unless next other_records
+
     fields = opts and opts.fields or "*"
     flip = opts and opts.flip
     many = opts and opts.many
     value_fn = opts and opts.value
 
-    composite_foreign_key = type(foreign_key) == "table"
-
     if not flip and type(@primary_key) == "table"
       error "#{@table_name!} must have singular primary key for include_in"
 
-    -- the column named to look up values in list of our records
-    src_key = if composite_foreign_key
+    -- source_key fields on the model to fetch
+    -- dest_key fields on the records we have (other_records)
+    local source_key, dest_key
+
+    name_from_table = false
+
+    if type(foreign_key) == "table"
       if flip
         error "flip can not be combined with table foreign key"
 
-      -- normalize it
-      [{type(k) == "number" and v or k, v} for k,v in pairs foreign_key]
+      name_from_table = true
+
+      source_key = {}
+      dest_key = {}
+
+      for k,v in pairs foreign_key
+        insert source_key, v
+        insert dest_key, type(k) == "number" and v or k
     else
-      if flip
-        -- we use id as a default since we don't have accurat primary key for
+      source_key = if flip
+        -- we use id as a default since we don't have accurate primary key for
         -- model of other_records (might be mixed)
         opts.local_key or "id"
       else
         foreign_key
 
+      dest_key = if flip
+        foreign_key
+      else
+        @primary_key
+
+    composite_foreign_key = if type(source_key) == "table"
+      if #source_key == 1 and #dest_key == 1
+        source_key = source_key[1]
+        dest_key = dest_key[1]
+        false
+      else
+        true
+    else
+      false
+
     include_ids = if composite_foreign_key
       for record in *other_records
-        tuple = [record[v] or @db.NULL for {k,v} in *src_key]
+        tuple = [record[k] or @db.NULL for k in *source_key]
         continue if _all_same tuple, @db.NULL
         @db.list tuple
     else
       for record in *other_records
-        with id = record[src_key]
+        with id = record[source_key]
           continue unless id
 
     if next include_ids
-      flat_ids = if composite_foreign_key
-        @db.escape_literal @db.list include_ids
-      else
+      unless composite_foreign_key
         include_ids = uniquify include_ids
-        @db.escape_literal @db.list include_ids
 
-      local find_by_fields
-      find_by = if composite_foreign_key
-        find_by_fields = [t[1] for t in *src_key]
-        @db.raw @db.escape_literal @db.list find_by_fields
+      flat_ids = @db.escape_literal @db.list include_ids
+
+      find_by_fields = if composite_foreign_key
+        @db.escape_identifier @db.list dest_key
       else
-        if flip
-          foreign_key
-        else
-          @primary_key
+        @db.escape_identifier dest_key
 
       tbl_name = @db.escape_identifier @table_name!
-      query = "#{fields} from #{tbl_name} where #{@db.escape_identifier find_by} in #{flat_ids}"
+      query = "#{fields} from #{tbl_name} where #{find_by_fields} in #{flat_ids}"
 
       if opts and opts.where and next opts.where
         query ..= " and " .. @db.encode_clause opts.where
@@ -277,33 +297,33 @@ class BaseModel
         query ..= " group by #{group}"
 
       if res = @db.select query
-        -- holds all the fetched rows indexed by the identifying key
+        -- holds all the fetched rows indexed by the dest_key (what was searched by)
         records = {}
 
-        if many
-          for t in *res
-            row = @load t
-            row = value_fn row if value_fn
+        for t in *res
+          row = @load t
+          row = value_fn row if value_fn
 
-            t_key = t[find_by]
+          if many
+            if composite_foreign_key
+              error "code me!"
+
+            t_key = t[dest_key]
 
             if records[t_key] == nil
               records[t_key] = {}
 
             insert records[t_key], row
-        else
-          for t in *res
-            row = @load t
-            row = value_fn row if value_fn
 
+          else
             if composite_foreign_key
-              _put records, row, _fields t, find_by_fields
+              _put records, row, _fields t, dest_key
             else
-              records[t[find_by]] = row
+              records[t[dest_key]] = row
 
         field_name = if opts and opts.as
           opts.as
-        elseif flip or composite_foreign_key
+        elseif flip or name_from_table
           if many
             @table_name!
           else
@@ -315,15 +335,14 @@ class BaseModel
 
         -- load the rows into we feteched into the models
         if composite_foreign_key
-          dest_fields = [t[2] for t in *src_key]
           for other in *other_records
-            other[field_name] = _get records, _fields other, dest_fields
+            other[field_name] = _get records, _fields other, source_key
 
             if many and not other[field_name]
               other[field_name] = {}
         else
           for other in *other_records
-            other[field_name] = records[other[src_key]]
+            other[field_name] = records[other[source_key]]
 
             if many and not other[field_name]
               other[field_name] = {}
