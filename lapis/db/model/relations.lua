@@ -346,9 +346,15 @@ has_one = function(self, name, opts)
   self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
-    local local_key = opts.local_key or self.__class:primary_keys()
+    local composite_key = type(foreign_key) == "table"
+    local local_key
+    if not (composite_key) then
+      local_key = opts.local_key or self.__class:primary_keys()
+    end
     preload_opts = preload_opts or { }
-    preload_opts.flip = true
+    if not (composite_key) then
+      preload_opts.flip = true
+    end
     preload_opts.for_relation = name
     preload_opts.as = name
     preload_opts.where = preload_opts.where or opts.where

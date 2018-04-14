@@ -203,7 +203,7 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "user_data" where "owner_id" = 123 limit 1'
     }
 
-  it "makes has_one getter with compound key", ->
+  it "makes has_one getter with composite key", ->
     mock_query "SELECT", { { id: 101 } }
 
     models.UserPageData = class extends Model
@@ -279,7 +279,7 @@ describe "lapis.db.model.relations", ->
       }
     }
 
-  it "makes has_one getter with compound key with custom local names", ->
+  it "makes has_one getter with composite key with custom local names", ->
 
     mock_query "SELECT", { { id: 101 } }
 
@@ -712,6 +712,58 @@ describe "lapis.db.model.relations", ->
       assert_queries {
         [[SELECT * from "files" where "thing_id" in (123) and "deleted" = FALSE]]
       }
+
+    it "preloads has_one with composite key", ->
+      import LOADED_KEY from require "lapis.db.model.relations"
+
+      mock_query "SELECT", {
+        {id: 1, user_id: 11, page_id: 101}
+      }
+
+      models.UserPageData = class extends Model
+
+      models.UserPage = class UserPage extends Model
+        @relations: {
+          {"data", has_one: "UserPageData", key: {
+            "user_id", "page_id"
+          }}
+        }
+
+      user_pages = {
+        UserPage\load {
+          user_id: 10
+          page_id: 100
+        }
+
+        UserPage\load {
+          user_id: 11
+          page_id: 101
+        }
+      }
+
+      UserPage\preload_relation user_pages, "data"
+
+      assert_queries {
+        [[SELECT * from "user_page_data" where ("user_id", "page_id") in ((10, 100), (11, 101))]]
+      }
+
+      assert.same {
+        {
+          user_id: 10
+          page_id: 100
+          [LOADED_KEY]: { data: true }
+        }
+
+        {
+          user_id: 11
+          page_id: 101
+          data: {
+            id: 1, user_id: 11, page_id: 101
+          }
+          [LOADED_KEY]: { data: true }
+        }
+      }, user_pages
+
 
     it "preloads many relation with order and name", ->
       mock_query "SELECT", {
