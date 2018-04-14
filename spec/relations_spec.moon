@@ -279,6 +279,33 @@ describe "lapis.db.model.relations", ->
       }
     }
 
+  it "makes has_one getter with compound key with custom local names", ->
+
+    mock_query "SELECT", { { id: 101 } }
+
+    models.UserPageData = class extends Model
+
+    models.UserPage = class extends Model
+      @relations: {
+        {"data", has_one: "UserPageData", key: {
+          user_id: "alpha_id"
+          page_id: "beta_id"
+        }}
+      }
+
+    up = models.UserPage!
+    up.alpha_id = 99
+    up.beta_id = 234
+
+    assert up\get_data!
+
+    assert_queries {
+      {
+        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234 limit 1'
+        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 AND limit 1'
+      }
+    }
+
   it "should make has_many paginated getter", ->
     mock_query "SELECT", { { id: 101 } }
 
