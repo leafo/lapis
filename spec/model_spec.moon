@@ -648,7 +648,7 @@ describe "lapis.db.model", ->
           beta_id: 200 + i
         }
 
-    it "with no simple keys", ->
+    it "with simple keys", ->
       mock_query "SELECT", {
         { id: 1, alpha_id: 101, beta_id: 202 }
         { id: 2, alpha_id: 101, beta_id: 203 }
@@ -705,6 +705,31 @@ describe "lapis.db.model", ->
         alpha_id: 102
         beta_id: 205
       }, things[5]
+
+    it "with mapped keys", ->
+      thing_items = {
+        { id: 1, aid: 101, bid: 202 }
+        { id: 2, aid: 101, bid: 203 }
+        { id: 3, aid: 102, bid: 204 }
+        { id: 4, aid: 100, bid: 201 }
+      }
+
+      mock_query "SELECT", thing_items
+
+      ThingItems\include_in things, {
+        aid: "alpha_id"
+        bid: "beta_id"
+      }
+
+      assert_queries {
+        [[SELECT * from "thing_items" where ('aid', 'bid') in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+      }
+
+      assert.same thing_items[4], things[1].thing_item
+      assert.same thing_items[1], things[2].thing_item
+      assert.same thing_items[2], things[3].thing_item
+      assert.same thing_items[3], things[4].thing_item
+      assert.same nil, things[5].thing_item
 
 
   describe "constraints", ->
