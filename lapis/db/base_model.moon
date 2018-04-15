@@ -219,9 +219,6 @@ class BaseModel
     many = opts and opts.many
     value_fn = opts and opts.value
 
-    if not flip and type(@primary_key) == "table"
-      error "#{@table_name!} must have singular primary key for include_in"
-
     -- source_key fields on the model to fetch
     -- dest_key fields on the records we have (other_records)
     local source_key, dest_key
@@ -251,6 +248,9 @@ class BaseModel
       dest_key = if flip
         foreign_key
       else
+        if type(@primary_key) == "table"
+          error "#{@table_name!} must have singular primary key for include_in"
+
         @primary_key
 
     composite_foreign_key = if type(source_key) == "table"
@@ -336,7 +336,7 @@ class BaseModel
             @table_name!
           else
             @singular_name!
-        else
+        elseif type(@primary_key) == "string"
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
         assert field_name, "failed to infer field name, provide one with `as`"

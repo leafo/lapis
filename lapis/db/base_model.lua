@@ -439,9 +439,6 @@ do
     local flip = opts and opts.flip
     local many = opts and opts.many
     local value_fn = opts and opts.value
-    if not flip and type(self.primary_key) == "table" then
-      error(tostring(self:table_name()) .. " must have singular primary key for include_in")
-    end
     local source_key, dest_key
     local name_from_table = false
     if type(foreign_key) == "table" then
@@ -464,6 +461,9 @@ do
       if flip then
         dest_key = foreign_key
       else
+        if type(self.primary_key) == "table" then
+          error(tostring(self:table_name()) .. " must have singular primary key for include_in")
+        end
         dest_key = self.primary_key
       end
     end
@@ -612,7 +612,7 @@ do
             else
               field_name = self:singular_name()
             end
-          else
+          elseif type(self.primary_key) == "string" then
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end
           assert(field_name, "failed to infer field name, provide one with `as`")
