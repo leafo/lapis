@@ -32,9 +32,10 @@ If you need to run tests outside of our CI. The test suites require
 * `busted` -- test Lua implementations
 * `busted spec_postgres` -- integration tests with PostgreSQL. Requires a running PostgreSQL server
 * `busted spec_mysql` -- integration tests with MySQL. Requires a running MySQL server
-* `busted spec_openresty/` -- integration tests with OpenResty. Requires installation of OpenResty & Databases
+* `busted spec_openresty/` -- integration tests with OpenResty as a server. Requires installation of OpenResty & Databases
+* `busted spec_cqueues/` -- integration tests with [lua-http](https://github.com/daurnimator/lua-http) and cqueues as a server.
 
-Test suties that require databases need to have the initial database created. A `lapis_test` database is created on each.
+Test suites that require databases need to have the initial database created. A `lapis_test` database is created on each.
 You can run each command respectively.
 
 ```bash
@@ -44,6 +45,21 @@ make mysql_test_db
 
 * **PostgreSQL**: Ensure the `postgres` user can be logged in with no password.
 * **MySQL**: Ensure the `root` user can be logged in with no password.
+
+### Using the Docker image
+
+This repository contains a
+[Dockerfile](https://github.com/leafo/lapis/blob/master/Dockerfile) for running
+the entire test suite. You can it with the following commands:
+
+```bash
+docker build -t lapis-test .
+docker run lapis-test
+```
+
+`docker build` will pull in the files in the current directory, including any
+changes. To test modified code, build again before running the test suite. It
+should be a quick operation since dependency installation is cached.
 
 ## License (MIT)
 
