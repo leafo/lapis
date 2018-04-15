@@ -364,7 +364,7 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "posts" where "user_id" = 1234 order by id desc'
     }
 
-  it "should make has_many getter with composite key #ddd", ->
+  it "should make has_many getter with composite key", ->
     mock_query "SELECT", {
       { id: 101, user_id: 99, page_id: 234 }
       { id: 102, user_id: 99, page_id: 234 }
@@ -684,7 +684,7 @@ describe "lapis.db.model.relations", ->
 
       assert.same, before_count, #get_queries!
 
-    it "preloads single relation with opts", ->
+    it "preloads has_many with order and fields", ->
       models.Tags = class Tags extends Model
 
       class Posts extends Model
@@ -699,6 +699,60 @@ describe "lapis.db.model.relations", ->
       assert_queries {
         [[SELECT a,b from "tags" where "post_id" in (123) order by b asc]]
       }
+
+    it "preloads has_many with composite key", ->
+      mock_query "SELECT", {
+        { id: 101, user_id: 99, page_id: 234 }
+        { id: 102, user_id: 99, page_id: 234 }
+        { id: 103, user_id: 100, page_id: 234 }
+      }
+
+      models.UserPageData = class extends Model
+
+      models.UserPage = class UserPage extends Model
+        @relations: {
+          {"data", has_many: "UserPageData", key: {
+            "user_id", "page_id"
+          }}
+        }
+
+      user_pages = {
+        UserPage\load {
+          user_id: 99
+          page_id: 234
+        }
+
+        UserPage\load {
+          user_id: 100
+          page_id: 234
+        }
+
+        UserPage\load {
+          user_id: 100
+          page_id: 300
+        }
+      }
+
+      UserPage\preload_relation user_pages, "data"
+
+      assert_queries {
+        'SELECT * from "user_page_data" where ("user_id", "page_id") in ((99, 234), (100, 234), (100, 300))'
+      }
+
+      import LOADED_KEY from require "lapis.db.model.relations"
+      for user_page in *user_pages
+        assert.true user_page[LOADED_KEY].data
+
+      assert.same {
+        { id: 101, user_id: 99, page_id: 234 }
+        { id: 102, user_id: 99, page_id: 234 }
+      }, user_pages[1].data
+
+      assert.same {
+        { id: 103, user_id: 100, page_id: 234 }
+      }, user_pages[2].data
+
+      assert.same {}, user_pages[3].data
 
     it "preloads has_one with key and local_key", ->
       mock_query "SELECT", {
@@ -807,7 +861,7 @@ describe "lapis.db.model.relations", ->
       }, user_pages
 
 
-    it "preloads many relation with order and name", ->
+    it "preloads has_many with order and name", ->
       mock_query "SELECT", {
         { primary_thing_id: 123, name: "whaz" }
       }
