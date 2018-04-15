@@ -257,9 +257,22 @@ has_many = (name, opts) =>
   build_query = =>
     foreign_key = opts.key or "#{@@singular_name!}_id"
 
-    clause = {
-      [foreign_key]: @[opts.local_key or @@primary_keys!]
-    }
+    clause = if type(foreign_key) == "table"
+      out = {}
+      for k,v in pairs foreign_key
+        key, local_key = if type(k) == "number"
+          v, v
+        else
+          k,v
+
+        out[key] = @[local_key] or @@db.NULL
+
+      out
+    else
+      {
+        [foreign_key]: @[opts.local_key or @@primary_keys!]
+      }
+
 
     if where = opts.where
       for k,v in pairs where
@@ -296,14 +309,19 @@ has_many = (name, opts) =>
     model = assert_model @@, source
 
     foreign_key = opts.key or "#{@@singular_name!}_id"
-    local_key = opts.local_key or @@primary_keys!
+    composite_key = type(foreign_key) == "table"
+
+    local_key = unless composite_key
+      opts.local_key or @@primary_keys!
 
     preload_opts or= {}
-    preload_opts.flip = true
+
+    unless composite_key
+      preload_opts.flip = true
+
     preload_opts.many = true
     preload_opts.for_relation = name
     preload_opts.as = name
-
     preload_opts.local_key = local_key
 
     preload_opts.order or= opts.order

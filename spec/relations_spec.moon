@@ -230,7 +230,7 @@ describe "lapis.db.model.relations", ->
     assert_queries {
       {
         'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234 limit 1'
-        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 AND limit 1'
+        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
       }
       {
         [[SELECT * from "user_page_data" where "user_id" IS NULL AND "page_id" = 'hello' limit 1]]
@@ -302,7 +302,7 @@ describe "lapis.db.model.relations", ->
     assert_queries {
       {
         'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234 limit 1'
-        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 AND limit 1'
+        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
       }
     }
 
@@ -337,7 +337,7 @@ describe "lapis.db.model.relations", ->
     }
 
 
-  it "should make has_many getter ", ->
+  it "should make has_many getter", ->
     models.Posts = class extends Model
     models.Users = class extends Model
       @relations: {
@@ -363,6 +363,48 @@ describe "lapis.db.model.relations", ->
       }
       'SELECT * from "posts" where "user_id" = 1234 order by id desc'
     }
+
+  it "should make has_many getter with composite key #ddd", ->
+    mock_query "SELECT", {
+      { id: 101, user_id: 99, page_id: 234 }
+      { id: 102, user_id: 99, page_id: 234 }
+    }
+
+    models.UserPageData = class extends Model
+
+    models.UserPage = class extends Model
+      @relations: {
+        {"data", has_many: "UserPageData", key: {
+          "user_id", "page_id"
+        }}
+      }
+
+    up = models.UserPage!
+    up.user_id = 99
+    up.page_id = 234
+
+    assert.same {
+      { id: 101, user_id: 99, page_id: 234 }
+      { id: 102, user_id: 99, page_id: 234 }
+    }, up\get_data!
+
+    up2 = models.UserPage!
+    up2.user_id = 99
+    up2.page_id = nil
+    assert up2\get_data!
+
+    assert_queries {
+      {
+        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234'
+        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99'
+      }
+      {
+        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" IS NULL'
+        'SELECT * from "user_page_data" where "page_id" IS NULL AND "user_id" = 99'
+      }
+    }
+
+
 
   it "should create relations for inheritance", ->
     class Base extends Model
