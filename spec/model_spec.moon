@@ -240,55 +240,6 @@ describe "lapis.db.model", ->
       [[SELECT * from "things" where color = '?' LIMIT 10 OFFSET 20]]
     }
 
-  it "should ordered paginate", ->
-    import OrderedPaginator from require "lapis.db.pagination"
-    class Things extends Model
-
-    pager = OrderedPaginator Things, "id", "where color = blue"
-    res, np = pager\get_page!
-
-    res, np = pager\get_page 123
-
-    assert_queries {
-      'SELECT * from "things" where color = blue order by "things"."id" ASC limit 10'
-      'SELECT * from "things" where "things"."id" > 123 and (color = blue) order by "things"."id" ASC limit 10'
-    }
-
-  it "should ordered paginate with multiple keys", ->
-    import OrderedPaginator from require "lapis.db.pagination"
-    class Things extends Model
-
-    mock_query "SELECT", { { id: 101, updated_at: 300 }, { id: 102, updated_at: 301 } }
-
-    pager = OrderedPaginator Things, {"id", "updated_at"}, "where color = blue"
-
-    res, next_id, next_updated_at = pager\get_page!
-
-    assert.same 102, next_id
-    assert.same 301, next_updated_at
-
-    pager\after!
-    pager\before!
-
-    pager\after 100
-    pager\before 32
-
-    pager\after 100, 200
-    pager\before 32, 42
-
-    assert_queries {
-      'SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-
-      'SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-      'SELECT * from "things" where color = blue order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
-
-      'SELECT * from "things" where "things"."id" > 100 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-      'SELECT * from "things" where "things"."id" < 32 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
-
-      'SELECT * from "things" where ("things"."id", "things"."updated_at") > (100, 200) and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-      'SELECT * from "things" where ("things"."id", "things"."updated_at") < (32, 42) and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
-    }
-
 
   it "should create model", ->
     mock_query "INSERT", { { id: 101 } }
