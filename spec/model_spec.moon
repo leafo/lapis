@@ -184,45 +184,20 @@ describe "lapis.db.model", ->
       }
 
 
-  it "creates paginators", ->
+  it "creates paginator", ->
     mock_query "COUNT%(%*%)", {{ c: 127 }}
     mock_query "BLAH", {{ hello: "world"}}
 
     class Things extends Model
 
-    p2 = Things\paginated [[order by name asc]], 123, per_page: 25
 
-    p2\get_page 3
-
-    p3 = Things\paginated "", fields: "hello, world", per_page: 12
-    p3\get_page 2
-
-    p4 = Things\paginated fields: "hello, world", per_page: 12
-    p4\get_page 2
-
-    p5 = Things\paginated [[order by BLAH]]
-    iter = p5\each_page!
-    iter!
-    iter!
-
-    p6 = Things\paginated [[join whales on color = blue order by BLAH]]
-    p6\total_items!
-    p6\get_page 2
-
-    p7 = Things\paginated "where color = '?'"
-    p7\total_items!
-    p7\get_page 3
+    pager = Things\paginated "where color = ?", "blue", per_page: 99
+    pager\total_items!
+    pager\get_page 3
 
     assert_queries {
-      'SELECT * from "things" order by name asc LIMIT 25 OFFSET 50'
-     'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
-      'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
-      'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 0'
-      'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 10'
-      'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
-      'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
-      [[SELECT COUNT(*) AS c FROM "things" where color = '?']]
-      [[SELECT * from "things" where color = '?' LIMIT 10 OFFSET 20]]
+      [[SELECT COUNT(*) AS c FROM "things" where color = 'blue']]
+      [[SELECT * from "things" where color = 'blue' LIMIT 99 OFFSET 198]]
     }
 
 

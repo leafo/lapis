@@ -14,26 +14,26 @@ describe "lapis.db.pagination", ->
       old expected, get_queries!
 
   describe "offset paginator", ->
-    it "gets pages", ->
-      class Thing extends Model
+    local Things, OffsetPaginator
+
+    before_each ->
+      class Things extends Model
       import OffsetPaginator from require "lapis.db.pagination"
 
-      pager = OffsetPaginator(Thing)
+    it "gets pages", ->
+      pager = OffsetPaginator(Things)
       assert.same {}, pager\get_page 1
       assert.same {}, pager\get_page 2
       assert.same {}, pager\get_page 3
 
       assert_queries {
-        [[SELECT * from "thing" LIMIT 10 OFFSET 0]]
-        [[SELECT * from "thing" LIMIT 10 OFFSET 10]]
-        [[SELECT * from "thing" LIMIT 10 OFFSET 20]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 0]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 10]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 20]]
       }
 
     it "gets pages with per_page", ->
-      class Thing extends Model
-      import OffsetPaginator from require "lapis.db.pagination"
-
-      pager = OffsetPaginator Thing, {
+      pager = OffsetPaginator Things, {
         per_page: 25
       }
 
@@ -42,16 +42,13 @@ describe "lapis.db.pagination", ->
       assert.same {}, pager\get_page 3
 
       assert_queries {
-        [[SELECT * from "thing" LIMIT 25 OFFSET 0]]
-        [[SELECT * from "thing" LIMIT 25 OFFSET 25]]
-        [[SELECT * from "thing" LIMIT 25 OFFSET 50]]
+        [[SELECT * from "things" LIMIT 25 OFFSET 0]]
+        [[SELECT * from "things" LIMIT 25 OFFSET 25]]
+        [[SELECT * from "things" LIMIT 25 OFFSET 50]]
       }
 
     it "paginates with clause", ->
       mock_query "COUNT%(%*%)", {{ c: 127 }}
-
-      import OffsetPaginator from require "lapis.db.pagination"
-      class Things extends Model
 
       p = OffsetPaginator Things, [[where group_id = ? order by name asc]], 123
 
@@ -71,15 +68,73 @@ describe "lapis.db.pagination", ->
         'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
       }
 
+    it "ignores excess parameter", ->
+      pager = OffsetPaginator Things, [[order by name asc]], 123, per_page: 25
+      pager\get_page 3
+
+      assert_queries {
+        'SELECT * from "things" order by name asc LIMIT 25 OFFSET 50'
+      }
+
+    it "supports empty clause", ->
+      p3 = OffsetPaginator Things, "", fields: "hello, world", per_page: 12
+      p3\get_page 2
+
+      assert_queries {
+        'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+      }
+
+    it "supports options only", ->
+      pager = OffsetPaginator Things, fields: "hello, world", per_page: 12
+      pager\get_page 2
+
+      assert_queries {
+        'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+      }
+
+    it "supports ordered clause", ->
+      mock_query "COUNT%(%*%)", {{ c: 127 }}
+      pager = OffsetPaginator Things, [[order by BLAH]]
+      pager\get_page 3
+      pager\get_page 4
+      pager\total_items!
+
+      assert_queries {
+        'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 20'
+        'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 30'
+        'SELECT COUNT(*) AS c FROM "things" '
+      }
+
+    it "supports join clause", ->
+      mock_query "COUNT%(%*%)", {{ c: 127 }}
+
+      pager = OffsetPaginator Things, [[join whales on color = blue order by BLAH]]
+      pager\get_page 2
+      pager\total_items!
+
+      assert_queries {
+        'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
+        'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
+      }
+
+    it "builds clause with ? when no parameter is provided", ->
+      mock_query "COUNT%(%*%)", {{ c: 127 }}
+
+      pager = OffsetPaginator Things, "where color = '?'"
+      pager\get_page 3
+      pager\total_items!
+
+      assert_queries {
+        [[SELECT * from "things" where color = '?' LIMIT 10 OFFSET 20]]
+        [[SELECT COUNT(*) AS c FROM "things" where color = '?']]
+      }
+
     it "iterates through pages", ->
       mock_query "OFFSET 0", { { id: 101 }, { id: 202 } }
       mock_query "OFFSET 10", { { id: 102 } }
       mock_query "OFFSET 20", { }
 
-      class Thing extends Model
-      import OffsetPaginator from require "lapis.db.pagination"
-
-      pager = OffsetPaginator Thing
+      pager = OffsetPaginator Things
 
       assert.same {
         { { id: 101 }, { id: 202 } }
@@ -87,9 +142,9 @@ describe "lapis.db.pagination", ->
       }, [page for page in pager\each_page!]
 
       assert_queries {
-        [[SELECT * from "thing" LIMIT 10 OFFSET 0]]
-        [[SELECT * from "thing" LIMIT 10 OFFSET 10]]
-        [[SELECT * from "thing" LIMIT 10 OFFSET 20]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 0]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 10]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 20]]
       }
 
 
