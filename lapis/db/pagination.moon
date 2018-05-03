@@ -60,14 +60,12 @@ class Paginator
 class OffsetPaginator extends Paginator
   per_page: 10
 
-  each_page: (starting_page=1) =>
-    coroutine.wrap ->
-      page = starting_page
-      while true
-        results = @get_page page
-        break unless next results
-        coroutine.yield results, page
+  each_page: (page=1) =>
+    ->
+      results = @get_page page
+      if next results
         page += 1
+        results
 
   get_all: =>
     @prepare_results @select @_clause, @opts
@@ -123,14 +121,12 @@ class OrderedPaginator extends Paginator
       @opts.order = nil
 
   each_page: =>
-    coroutine.wrap ->
-      tuple = {}
-      while true
-        tuple = { @get_page unpack tuple, 2 }
-        if next tuple[1]
-          coroutine.yield tuple[1]
-        else
-          break
+    tuple = {}
+
+    ->
+      tuple = { @get_page unpack tuple, 2 }
+      if next tuple[1]
+        tuple[1]
 
   get_page: (...) =>
     @get_ordered @order, ...

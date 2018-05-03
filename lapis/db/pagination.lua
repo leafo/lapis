@@ -122,21 +122,17 @@ do
   local _parent_0 = Paginator
   local _base_0 = {
     per_page = 10,
-    each_page = function(self, starting_page)
-      if starting_page == nil then
-        starting_page = 1
+    each_page = function(self, page)
+      if page == nil then
+        page = 1
       end
-      return coroutine.wrap(function()
-        local page = starting_page
-        while true do
-          local results = self:get_page(page)
-          if not (next(results)) then
-            break
-          end
-          coroutine.yield(results, page)
+      return function()
+        local results = self:get_page(page)
+        if next(results) then
           page = page + 1
+          return results
         end
-      end)
+      end
     end,
     get_all = function(self)
       return self:prepare_results(self:select(self._clause, self.opts))
@@ -215,19 +211,15 @@ do
     order = "ASC",
     per_page = 10,
     each_page = function(self)
-      return coroutine.wrap(function()
-        local tuple = { }
-        while true do
-          tuple = {
-            self:get_page(unpack(tuple, 2))
-          }
-          if next(tuple[1]) then
-            coroutine.yield(tuple[1])
-          else
-            break
-          end
+      local tuple = { }
+      return function()
+        tuple = {
+          self:get_page(unpack(tuple, 2))
+        }
+        if next(tuple[1]) then
+          return tuple[1]
         end
-      end)
+      end
     end,
     get_page = function(self, ...)
       return self:get_ordered(self.order, ...)
