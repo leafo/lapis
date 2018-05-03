@@ -45,10 +45,15 @@ stub_queries = ->
   mock_query = (pattern, result) ->
     query_mock[pattern] = result
 
+  show_queries = os.getenv("LAPIS_SHOW_QUERIES")
+
   local restore
   setup ->
     _G.ngx = { null: nil }
     restore = with_query_fn (q) ->
+      if show_queries
+        require("lapis.logging").query q
+
       table.insert queries, (q\gsub("%s+", " ")\gsub("[\n\t]", " "))
 
       -- try to find a mock
