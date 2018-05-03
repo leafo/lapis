@@ -98,11 +98,13 @@ describe "lapis.db.pagination", ->
       pager\get_page 3
       pager\get_page 4
       pager\total_items!
+      pager\has_items!
 
       assert_queries {
         'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 20'
         'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 30'
         'SELECT COUNT(*) AS c FROM "things" '
+        'SELECT 1 FROM "things" limit 1'
       }
 
     it "supports join clause", ->
@@ -111,10 +113,12 @@ describe "lapis.db.pagination", ->
       pager = OffsetPaginator Things, [[join whales on color = blue order by BLAH]]
       pager\get_page 2
       pager\total_items!
+      pager\has_items!
 
       assert_queries {
         'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
         'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
+        'SELECT 1 FROM "things" join whales on color = blue limit 1'
       }
 
     it "builds clause with ? when no parameter is provided", ->
