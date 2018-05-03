@@ -184,21 +184,11 @@ describe "lapis.db.model", ->
       }
 
 
-  it "should paginate", ->
+  it "creates paginators", ->
     mock_query "COUNT%(%*%)", {{ c: 127 }}
     mock_query "BLAH", {{ hello: "world"}}
 
     class Things extends Model
-
-    p = Things\paginated [[where group_id = ? order by name asc]], 123
-
-    p\get_all!
-    assert.same 127, p\total_items!
-    assert.same 13, p\num_pages!
-    assert.falsy p\has_items!
-
-    p\get_page 1
-    p\get_page 4
 
     p2 = Things\paginated [[order by name asc]], 123, per_page: 25
 
@@ -224,13 +214,8 @@ describe "lapis.db.model", ->
     p7\get_page 3
 
     assert_queries {
-      'SELECT * from "things" where group_id = 123 order by name asc'
-      'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
-      'SELECT 1 FROM "things" where group_id = 123 limit 1'
-      'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
-      'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
       'SELECT * from "things" order by name asc LIMIT 25 OFFSET 50'
-      'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+     'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
       'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
       'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 0'
       'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 10'

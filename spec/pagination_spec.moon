@@ -47,6 +47,30 @@ describe "lapis.db.pagination", ->
         [[SELECT * from "thing" LIMIT 25 OFFSET 50]]
       }
 
+    it "paginates with clause", ->
+      mock_query "COUNT%(%*%)", {{ c: 127 }}
+
+      import OffsetPaginator from require "lapis.db.pagination"
+      class Things extends Model
+
+      p = OffsetPaginator Things, [[where group_id = ? order by name asc]], 123
+
+      p\get_all!
+      assert.same 127, p\total_items!
+      assert.same 13, p\num_pages!
+      assert.falsy p\has_items!
+
+      p\get_page 1
+      p\get_page 4
+
+      assert_queries {
+        'SELECT * from "things" where group_id = 123 order by name asc'
+        'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
+        'SELECT 1 FROM "things" where group_id = 123 limit 1'
+        'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
+        'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
+      }
+
     it "iterates through pages", ->
       mock_query "OFFSET 0", { { id: 101 }, { id: 202 } }
       mock_query "OFFSET 10", { { id: 102 } }
