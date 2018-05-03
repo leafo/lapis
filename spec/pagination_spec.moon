@@ -6,6 +6,8 @@ db = require "lapis.db.postgres"
 import Model from require "lapis.db.postgres.model"
 import stub_queries, assert_queries from require "spec.helpers"
 
+import escape_pattern from require "lapis.util"
+
 describe "lapis.db.pagination", ->
   get_queries, mock_query = stub_queries!
 
@@ -153,10 +155,13 @@ describe "lapis.db.pagination", ->
 
 
   describe "ordered paginator", ->
-    it "gets page with single key", ->
+    local OrderedPaginator, Things
+
+    before_each ->
       import OrderedPaginator from require "lapis.db.pagination"
       class Things extends Model
 
+    it "gets page with single key", ->
       pager = OrderedPaginator Things, "id", "where color = blue"
       res, np = pager\get_page!
 
@@ -168,9 +173,6 @@ describe "lapis.db.pagination", ->
       }
 
     it "gets pages for multiple keys", ->
-      import OrderedPaginator from require "lapis.db.pagination"
-      class Things extends Model
-
       mock_query "SELECT", { { id: 101, updated_at: 300 }, { id: 102, updated_at: 301 } }
 
       pager = OrderedPaginator Things, {"id", "updated_at"}, "where color = blue"
@@ -202,4 +204,55 @@ describe "lapis.db.pagination", ->
         'SELECT * from "things" where ("things"."id", "things"."updated_at") < (32, 42) and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
       }
 
+    it "iterates through pages", ->
+      -- base query
+      mock_query 'from "things" order by', { { id: 101 }, { id: 202 } }
+      mock_query '"things"."id" > 202', { { id: 302 } }
+      mock_query '"things"."id" > 302', { }
 
+      pager = OrderedPaginator Things, "id"
+
+      assert.same {
+        { { id: 101 }, { id: 202 } }
+        { { id: 302 } }
+      }, [page for page in pager\each_page!]
+
+      assert_queries {
+        [[SELECT * from "things" order by "things"."id" ASC limit 10]]
+        [[SELECT * from "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
+        [[SELECT * from "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
+      }
+
+    it "iterates through pages with multiple keys", ->
+      mock_query 'where color = blue order by', {
+        { id: 101, updated_at: 'a' }
+        { id: 101, updated_at: 'b' }
+        { id: 102, updated_at: 'a' }
+      }
+
+      mock_query escape_pattern([[> (102, 'a')]]), {
+        { id: 301, updated_at: 'd' }
+        { id: 301, updated_at: 'e' }
+      }
+
+      mock_query escape_pattern([[> (301, 'e')]]), { }
+
+      pager = OrderedPaginator Things, {"id", "updated_at"}, "where color = blue"
+
+      assert.same {
+        {
+          { id: 101, updated_at: 'a' }
+          { id: 101, updated_at: 'b' }
+          { id: 102, updated_at: 'a' }
+        }
+        {
+          { id: 301, updated_at: 'd' }
+          { id: 301, updated_at: 'e' }
+        }
+      }, [page for page in pager\each_page!]
+
+      assert_queries {
+        [[SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * from "things" where ("things"."id", "things"."updated_at") > (102, 'a') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * from "things" where ("things"."id", "things"."updated_at") > (301, 'e') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+      }
