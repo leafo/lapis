@@ -48,8 +48,8 @@ BACKENDS = {
       pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
 
       unless pgmoon
-        import Postgres from require "pgmoon"
-        pgmoon = Postgres pg_config
+        pg_class = pg_config.pg_class or require("pgmoon").Postgres
+        pgmoon = pg_class pg_config
         assert pgmoon\connect!
 
         if ngx

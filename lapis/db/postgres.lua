@@ -52,9 +52,8 @@ local BACKENDS = {
     _query = function(str)
       local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
       if not (pgmoon) then
-        local Postgres
-        Postgres = require("pgmoon").Postgres
-        pgmoon = Postgres(pg_config)
+        local pg_class = pg_config.pg_class or require("pgmoon").Postgres
+        pgmoon = pg_class(pg_config)
         assert(pgmoon:connect())
         if ngx then
           ngx.ctx.pgmoon = pgmoon
