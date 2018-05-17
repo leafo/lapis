@@ -78,7 +78,7 @@ class="for_lua">`self.errors`</span> is set before the custom handler)
 ```lua
 app:match("/do_something", capture_errors({
   on_error = function(self)
-    log_erorrs(self.errors) -- you would supply the log_errors function
+    log_errors(self.errors) -- you would supply the log_errors function
     return { render = "my_error_page", status = 500 }
   end,
   function(self)
