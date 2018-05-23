@@ -102,7 +102,7 @@ class Request
         start_time = if config.measure_performance
           get_time config
 
-        view = widget @options.locals
+        view = widget!
         @layout_opts.view_widget = view if @layout_opts
         view\include_helper @
         @write view

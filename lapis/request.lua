@@ -229,7 +229,7 @@ do
         if config.measure_performance then
           start_time = get_time(config)
         end
-        local view = widget(self.options.locals)
+        local view = widget()
         if self.layout_opts then
           self.layout_opts.view_widget = view
         end
