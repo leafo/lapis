@@ -53,6 +53,24 @@ rebuild_query_clause = function(parsed)
   end
   return concat(buffer, " ")
 end
+local flatten_iter
+flatten_iter = function(iter)
+  local current_page = iter()
+  local idx = 1
+  return function()
+    if current_page then
+      do
+        local _with_0 = current_page[idx]
+        idx = idx + 1
+        if not (current_page[idx]) then
+          current_page = iter()
+          idx = 1
+        end
+        return _with_0
+      end
+    end
+  end
+end
 local Paginator
 do
   local _class_0
@@ -69,6 +87,9 @@ do
           return items
         end
       end
+    end,
+    each_item = function(self)
+      return flatten_iter(self:each_page())
     end
   }
   _base_0.__index = _base_0

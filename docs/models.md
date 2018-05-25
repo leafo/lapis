@@ -1102,6 +1102,23 @@ for page_results, page_num in paginated\each_page!
 > your modifications might change the query result order and you may process
 > rows multiple times or none at all.
 
+### `each_item()`
+
+Returns an iterator for every item retuned by the pager. It uses `each_page` to
+fetch results in chunks of `per_page` items. Because data is pulled
+incrementally it's suitable for iterating over large data sets.
+
+```lua
+for item in pager:each_item() do
+  print(item.name)
+end
+```
+
+```moon
+for item in pager\each_item!
+  print item.name
+```
+
 ### `has_items()`
 
 Checks to see if the paginator returns at least 1 item. Returns a boolean. This is

@@ -23,6 +23,18 @@ rebuild_query_clause = (parsed) ->
 
   concat buffer, " "
 
+
+flatten_iter = (iter) ->
+  current_page = iter!
+  idx = 1
+  ->
+    if current_page
+      with current_page[idx]
+        idx += 1
+        unless current_page[idx]
+          current_page = iter!
+          idx = 1
+
 class Paginator
   new: (@model, clause="", ...) =>
     @db = @model.__class.db
@@ -56,6 +68,9 @@ class Paginator
       pr items
     else
       items
+
+  each_item: =>
+    flatten_iter @each_page!
 
 class OffsetPaginator extends Paginator
   per_page: 10
