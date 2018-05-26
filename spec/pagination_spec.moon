@@ -147,7 +147,17 @@ describe "lapis.db.pagination", ->
         { { id: 102 } }
       }, [page for page in pager\each_page!]
 
+      assert.same {
+        { id: 101 }
+        { id: 202 }
+        { id: 102 }
+      }, [item for item in pager\each_item!]
+
       assert_queries {
+        [[SELECT * from "things" LIMIT 10 OFFSET 0]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 10]]
+        [[SELECT * from "things" LIMIT 10 OFFSET 20]]
+
         [[SELECT * from "things" LIMIT 10 OFFSET 0]]
         [[SELECT * from "things" LIMIT 10 OFFSET 10]]
         [[SELECT * from "things" LIMIT 10 OFFSET 20]]
@@ -217,7 +227,19 @@ describe "lapis.db.pagination", ->
         { { id: 302 } }
       }, [page for page in pager\each_page!]
 
+
+      pager = OrderedPaginator Things, "id"
+      assert.same {
+        { id: 101 }
+        { id: 202 }
+        { id: 302 }
+      }, [item for item in pager\each_item!]
+
       assert_queries {
+        [[SELECT * from "things" order by "things"."id" ASC limit 10]]
+        [[SELECT * from "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
+        [[SELECT * from "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
+
         [[SELECT * from "things" order by "things"."id" ASC limit 10]]
         [[SELECT * from "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
         [[SELECT * from "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
