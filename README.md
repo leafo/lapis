@@ -12,6 +12,10 @@ Learn more on the homepage: <http://leafo.net/lapis/>
 * [Documentation](http://leafo.net/lapis/reference.html)
 * [Changelog](http://leafo.net/lapis/changelog.html)
 
+## Join Our Community
+
+We just created a Discord for Lapis users and those interested in it to communicate. You can join us here: <https://discord.gg/Y75ZXrD>
+
 ## Lapis Powered
 
   * <https://luarocks.org> - [source](https://github.com/leafo/moonrocks-site)
