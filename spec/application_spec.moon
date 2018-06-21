@@ -72,23 +72,6 @@ describe "@include", ->
     assert.same 200, status
     assert.same "world", result
 
-  it "should include another app", ->
-    class SubApp extends lapis.Application
-      "/hello": => result = "hello"
-
-    class App extends lapis.Application
-      @include SubApp
-
-      "/world": => result = "world"
-
-    status, buffer, headers = mock_request App, "/hello", {}
-    assert.same 200, status
-    assert.same "hello", result
-
-    status, buffer, headers = mock_request App, "/world", {}
-    assert.same 200, status
-    assert.same "world", result
-
   it "should merge url table", ->
     class SubApp extends lapis.Application
       [hello: "/hello"]: => result = "hello"
