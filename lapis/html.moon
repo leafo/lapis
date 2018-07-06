@@ -64,8 +64,12 @@ for tag in *void_tags
 ------------------
 
 classnames = (t) ->
+  if type(t) == "string"
+    return t
+
   ccs = for k,v in pairs t
     if type(k) == "number"
+      continue if v == ""
       v
     else
       continue unless v

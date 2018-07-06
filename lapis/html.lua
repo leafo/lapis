@@ -84,6 +84,9 @@ for _index_0 = 1, #void_tags do
 end
 local classnames
 classnames = function(t)
+  if type(t) == "string" then
+    return t
+  end
   local ccs
   do
     local _accum_0 = { }
@@ -92,6 +95,10 @@ classnames = function(t)
       local _continue_0 = false
       repeat
         if type(k) == "number" then
+          if v == "" then
+            _continue_0 = true
+            break
+          end
           _accum_0[_len_0] = v
         else
           if not (v) then
