@@ -427,6 +427,8 @@ describe "lapis.db.model.relations", ->
     before_each ->
       models.Foos = class Foos extends Model
       models.Bars = class Bars extends Model
+        @primary_key: "frog_index"
+
       models.Bazs = class Bazs extends Model
 
       Items = class Items extends Model
@@ -489,7 +491,7 @@ describe "lapis.db.model.relations", ->
 
       assert_queries {
         'SELECT * from "foos" where "id" = 33 limit 1'
-        'SELECT * from "bars" where "id" = 66 limit 1'
+        'SELECT * from "bars" where "frog_index" = 66 limit 1'
         'SELECT * from "bazs" where "id" = 99 limit 1'
       }
 
@@ -532,7 +534,7 @@ describe "lapis.db.model.relations", ->
 
       assert_queries {
         'SELECT * from "foos" where "id" in (1, 3, 4)'
-        'SELECT * from "bars" where "id" in (2)'
+        'SELECT * from "bars" where "frog_index" in (2)'
       }
 
     it "preloads with fields", ->
@@ -560,7 +562,7 @@ describe "lapis.db.model.relations", ->
 
       assert_queries {
         'SELECT * from "foos" where "id" in (111)'
-        'SELECT a, b from "bars" where "id" in (112)'
+        'SELECT a, b from "bars" where "frog_index" in (112)'
         'SELECT c, d from "bazs" where "id" in (113)'
       }
 
