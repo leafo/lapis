@@ -58,8 +58,8 @@ BACKENDS = {
         else
           pgmoon_conn = pgmoon
 
-      start_time = if ngx and config.measure_performance
-        if reused = pgmoon.sock\getreusedtimes!
+      start_time = if config.measure_performance
+        if reused = ngx and pgmoon.sock\getreusedtimes!
           set_perf "pgmoon_conn", reused > 0 and "reuse" or"new"
 
         unless gettime

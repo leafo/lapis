@@ -66,9 +66,9 @@ local BACKENDS = {
         end
       end
       local start_time
-      if ngx and config.measure_performance then
+      if config.measure_performance then
         do
-          local reused = pgmoon.sock:getreusedtimes()
+          local reused = ngx and pgmoon.sock:getreusedtimes()
           if reused then
             set_perf("pgmoon_conn", reused > 0 and "reuse" or "new")
           end
