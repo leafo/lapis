@@ -1008,4 +1008,33 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "item_applications" where "user_id" in (101)]]
       }
 
+  describe "generic preload", ->
+    it "preloads basic relations", ->
+      import preload from require "lapis.db.model"
+
+      models.Users = class Users extends Model
+        @relations: {
+          {"tags", has_many: "Tags"}
+          {"user_data", has_one: "UserData"}
+          {"account", belongs_to: "Accounts"}
+        }
+
+        new: (@id) =>
+          assert @id, "missing id"
+
+      models.Tags = class Tags extends Model
+      models.UserData = class UserData extends Model
+      models.Accounts = class Accounts extends Model
+
+      user = models.Users 10
+      user.account_id = 99
+
+      preload { user }, "tags", "user_data", "account"
+
+      assert_queries {
+        [[SELECT * from "tags" where "user_id" in (10)]]
+        [[SELECT * from "user_data" where "user_id" in (10)]]
+        [[SELECT * from "accounts" where "id" in (99)]]
+      }
+
 
