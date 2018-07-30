@@ -10,8 +10,8 @@ describe "lapis.db.model.relations", ->
   get_queries, mock_query = stub_queries!
 
   with old = assert_queries
-    assert_queries = (expected) ->
-      old expected, get_queries!
+    assert_queries = (expected, opts) ->
+      old expected, get_queries!, opts
 
   local models
 
@@ -1009,7 +1009,9 @@ describe "lapis.db.model.relations", ->
       }
 
   describe "generic preload", ->
-    it "preloads basic relations", ->
+    local preload
+
+    before_each ->
       import preload from require "lapis.db.model"
 
       models.Users = class Users extends Model
@@ -1023,9 +1025,19 @@ describe "lapis.db.model.relations", ->
           assert @id, "missing id"
 
       models.Tags = class Tags extends Model
-      models.UserData = class UserData extends Model
-      models.Accounts = class Accounts extends Model
+        @relations: {
+          {"owner", has_one: "Users"}
+        }
 
+      models.UserData = class UserData extends Model
+        @relations: {
+          {"images", has_many: "Images"}
+        }
+
+      models.Accounts = class Accounts extends Model
+      models.Images = class Images extends Model
+
+    it "preloads basic relations", ->
       user = models.Users 10
       user.account_id = 99
 
@@ -1037,4 +1049,38 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "accounts" where "id" in (99)]]
       }
 
+    it "preloads nested relations", ->
+      mock_query 'from "tags"', {
+        models.Tags\load {
+          id: 252
+          user_id: 10
+        }
+        models.Tags\load {
+          id: 311
+          user_id: 10
+        }
+      }
+
+      mock_query 'from "user_data"', {
+        models.UserData\load {
+          id: 32
+          user_id: 10
+        }
+      }
+
+      user = models.Users 10
+      user.account_id = 99
+
+      preload { user }, "account", {
+        tags: { "owner" }
+        user_data: {"images"}
+      }
+
+      assert_queries {
+        [[SELECT * from "accounts" where "id" in (99)]]
+        [[SELECT * from "images" where "user_data_id" in (32)]]
+        [[SELECT * from "tags" where "user_id" in (10)]]
+        [[SELECT * from "user_data" where "user_id" in (10)]]
+        [[SELECT * from "users" where "tag_id" in (252, 311)]]
+      }, sorted: true
 

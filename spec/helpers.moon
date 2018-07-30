@@ -28,9 +28,19 @@ with_query_fn = (q, run, db=require "lapis.db.postgres") ->
     with run!
       db.set_raw_query old_query
 
-assert_queries = (expected, result) ->
+assert_queries = (expected, result, opts) ->
   if #expected != #result
     error "number of expected queries (#{#expected}) does not match number received (#{#result})"
+
+  if opts and opts.sorted
+    e = [q for q in *expected]
+    r = [q for q in *result]
+
+    table.sort e
+    table.sort r
+
+    assert.same e, r
+    return
 
   for i, q in ipairs expected
     if type(q) == "table"
