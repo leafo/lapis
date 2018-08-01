@@ -74,7 +74,11 @@ preload = (objects, ...) ->
   by_type = {}
 
   for object in *objects
-    by_type[object.__class] or= {}
+    cls = object.__class
+    unless cls
+      error "attempting to preload an object that doesn't have a class, are you sure it's a model?"
+
+    by_type[cls] or= {}
     table.insert by_type[object.__class], object
 
   local sub_relations

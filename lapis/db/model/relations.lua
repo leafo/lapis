@@ -109,7 +109,11 @@ preload = function(objects, ...)
   local by_type = { }
   for _index_0 = 1, #objects do
     local object = objects[_index_0]
-    local _update_0 = object.__class
+    local cls = object.__class
+    if not (cls) then
+      error("attempting to preload an object that doesn't have a class, are you sure it's a model?")
+    end
+    local _update_0 = cls
     by_type[_update_0] = by_type[_update_0] or { }
     table.insert(by_type[object.__class], object)
   end
