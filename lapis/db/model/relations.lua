@@ -78,7 +78,7 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
         local _update_0 = val
         sub_relations[_update_0] = sub_relations[_update_0] or { }
         local loaded_objects = sub_relations[val]
-        if r.has_many then
+        if r.has_many or r.fetch and r.many then
           for _index_0 = 1, #objects do
             local obj = objects[_index_0]
             local _list_0 = obj[key]

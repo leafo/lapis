@@ -54,7 +54,7 @@ preload_homogeneous = (sub_relations, model, objects, front, ...) ->
         sub_relations[val] or= {}
         loaded_objects = sub_relations[val]
 
-        if r.has_many
+        if r.has_many or r.fetch and r.many
           for obj in *objects
             for fetched in *obj[key]
               table.insert loaded_objects, fetched

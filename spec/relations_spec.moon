@@ -1084,3 +1084,53 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "users" where "tag_id" in (252, 311)]]
       }, sorted: true
 
+
+    it "preloads nested fetch relations", ->
+      models.Collections = class Collection extends Model
+        @relations: {
+          {"user",
+            fetch: => {}
+            preload: (collections) ->
+              for c in *collections
+                c.user = models.Users\load {
+                  id: 10
+                }
+              true
+          }
+
+          {"things",
+            many: true
+            fetch: => {}
+            preload: (collections) ->
+              for c in *collections
+                c.things = {
+                  models.Users\load {
+                    id: 11
+                  }
+
+                  models.Users\load {
+                    id: 12
+                  }
+                }
+
+              true
+
+          }
+        }
+
+        new: (@id) =>
+          assert @id, "missing id"
+
+      collection = models.Collections 44
+      preload { collection }, {
+        user: "tags"
+        things: { "user_data", "tags" }
+      }
+
+      assert_queries {
+        -- TODO: homogeneous preload should be able to merge these queries
+        [[SELECT * from "tags" where "user_id" in (10)]]
+        [[SELECT * from "tags" where "user_id" in (11, 12)]]
+        [[SELECT * from "user_data" where "user_id" in (11, 12)]]
+      }, sorted: true
+
