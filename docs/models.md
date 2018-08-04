@@ -1172,7 +1172,7 @@ local Events = Model:extend("events")
 ```
 
 ```moon
-create_table "users", {
+create_table "events", {
   { "id", types.serial }
   { "user_id", types.foreign_key }
   { "data", types.text }
