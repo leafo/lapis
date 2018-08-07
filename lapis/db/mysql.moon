@@ -97,12 +97,19 @@ BACKENDS = {
         options = {
           :database, :user, :password, :ssl, :ssl_verify
         }
+
         if path
           options.path = path
         else
           options.host = host
           options.port = port
+
+        if mysql_config.resty_mysql
+          for k,v in pairs mysql_config.resty_mysql
+            options[k] = v
+
         assert db\connect options
+
         if ngx
           ngx.ctx.resty_mysql_db = db
           after_dispatch ->

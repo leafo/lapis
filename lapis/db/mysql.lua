@@ -121,6 +121,11 @@ BACKENDS = {
           options.host = host
           options.port = port
         end
+        if mysql_config.resty_mysql then
+          for k, v in pairs(mysql_config.resty_mysql) do
+            options[k] = v
+          end
+        end
         assert(db:connect(options))
         if ngx then
           ngx.ctx.resty_mysql_db = db
