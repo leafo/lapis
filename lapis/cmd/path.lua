@@ -1,7 +1,7 @@
 local io = io
 local shell_escape
 shell_escape = function(str)
-  return str:gsub("'", "''")
+  return str:gsub("'", "'\\''")
 end
 local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join, exec, mod
 up = function(path)

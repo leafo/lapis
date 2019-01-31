@@ -2,7 +2,7 @@
 io = io
 
 shell_escape = (str) ->
-  str\gsub "'", "''"
+  str\gsub "'", "'\\''"
 
 local *
 
