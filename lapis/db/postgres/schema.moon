@@ -62,6 +62,8 @@ create_index = (tname, ...) ->
     escape_identifier(index_name),
     " ON ", escape_identifier tname
 
+  append_all buffer, " CONCURRENTLY " if options.concurrently
+
   if options.method
     append_all buffer, " USING ", options.method
     
