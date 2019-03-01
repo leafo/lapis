@@ -52,6 +52,7 @@ describe "lapis.cache", ->
       layout: false
 
       "/hoi": cached {
+        use_host: true
         when: => false
         =>
           count += 1
