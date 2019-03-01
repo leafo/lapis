@@ -40,7 +40,7 @@ cached = function(fn_or_tbl)
   local cond = nil
   if type(fn) == "table" then
     exptime = fn.exptime or exptime
-    dict_name = fn.dict or dict_name
+    dict_name = fn.dict_name or dict_name
     cond = fn.when
     _cache_key = fn.cache_key or _cache_key
     fn = fn[1]
@@ -49,7 +49,7 @@ cached = function(fn_or_tbl)
     if (self.req.cmd_mth ~= "GET") or (cond and not cond(self)) then
       return fn(self)
     end
-    local key = _cache_key(self.req.parsed_url.path, self.GET, self)
+    local key = _cache_key(self.req.parsed_url.host .. self.req.parsed_url.path, self.GET, self)
     local dict = get_dict(dict_name, self)
     do
       local cache_value = dict:get(key)

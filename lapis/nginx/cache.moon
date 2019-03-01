@@ -33,7 +33,7 @@ cached = (fn_or_tbl) ->
 
   if type(fn) == "table"
     exptime = fn.exptime or exptime
-    dict_name = fn.dict or dict_name
+    dict_name = fn.dict_name or dict_name
     cond = fn.when
     _cache_key = fn.cache_key or _cache_key
 
@@ -43,7 +43,7 @@ cached = (fn_or_tbl) ->
     if (@req.cmd_mth != "GET") or (cond and not cond @)
       return fn @
 
-    key = _cache_key @req.parsed_url.path, @GET, @
+    key = _cache_key @req.parsed_url.host .. @req.parsed_url.path, @GET, @
     dict = get_dict dict_name, @
 
     if cache_value = dict\get key
