@@ -92,7 +92,7 @@ describe "lapis.cache", ->
 
     assert.same counters, { one: 1, two: 1, sure: 1}
 
-    cache.delete_path "/hello"
+    cache.delete_path "localhost/hello"
 
     assert_request App!, "/hello?counter_key=one&yes=dog"
     assert_request App!, "/hello?yes=dog&counter_key=two"
