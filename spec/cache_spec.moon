@@ -52,7 +52,6 @@ describe "lapis.cache", ->
       layout: false
 
       "/hoi": cached {
-        use_host: true
         when: => false
         =>
           count += 1
@@ -71,14 +70,19 @@ describe "lapis.cache", ->
     class App extends lapis.Application
       layout: false
 
-      "/sure": cached =>
-        counters.sure += 1
-        "howdy doody"
+      "/sure": cached {
+        use_host: true
+        =>
+          counters.sure += 1
+          "howdy doody"
+      }
 
-      "/hello": cached =>
-        counters[@params.counter_key] += 1
-        "hello #{counters[@params.counter_key]}"
-
+      "/hello": cached {
+        use_host: true
+        =>
+          counters[@params.counter_key] += 1
+          "hello #{counters[@params.counter_key]}"
+      }
 
     _, a_body = assert_request App!, "/hello?counter_key=one&yes=dog"
     _, b_body = assert_request App!, "/hello?yes=dog&counter_key=one"
