@@ -8,10 +8,10 @@ test:
 	busted spec_openresty
 
 local: build
-	luarocks make --force --local lapis-dev-1.rockspec
+	luarocks --lua-version=5.1 make --force --local lapis-dev-1.rockspec
 
 global: build
-	sudo luarocks make lapis-dev-1.rockspec
+	sudo luarocks --lua-version=5.1 make lapis-dev-1.rockspec
 
 build:
 	moonc lapis
