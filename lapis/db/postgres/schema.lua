@@ -104,6 +104,9 @@ create_index = function(tname, ...)
     append_all(buffer, " UNIQUE")
   end
   append_all(buffer, " INDEX ", escape_identifier(index_name), " ON ", escape_identifier(tname))
+  if options.concurrently then
+    append_all(buffer, " CONCURRENTLY ")
+  end
   if options.method then
     append_all(buffer, " USING ", options.method)
   end
