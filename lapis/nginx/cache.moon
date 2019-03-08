@@ -48,7 +48,7 @@ cached = (fn_or_tbl) ->
     path = @req.parsed_url.path
     path = @req.parsed_url.host .. @req.parsed_url.path if use_host
 
-    key = _cache_key @req.parsed_url.host .. @req.parsed_url.path, @GET, @
+    key = _cache_key path, @GET, @
     dict = get_dict dict_name, @
 
     if cache_value = dict\get key
