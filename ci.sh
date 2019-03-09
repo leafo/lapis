@@ -27,6 +27,8 @@ make build
 make test_db
 make mysql_test_db
 
+echo 'user root;' >> spec_openresty/s2/nginx.conf
+
 ./busted -o utfTerminal
 ./busted -o utfTerminal spec_postgres/
 ./busted -o utfTerminal spec_openresty/
