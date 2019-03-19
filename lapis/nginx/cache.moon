@@ -69,8 +69,9 @@ cached = (fn_or_tbl) ->
       @res.content
     }
 
-    dict\set key, json.encode(cache_response), exptime
-    ngx.header["x-memory-cache-save"] = "1"
+    if @res.status ~= 401
+      dict\set key, json.encode(cache_response), exptime
+      ngx.header["x-memory-cache-save"] = "1"
 
     -- reset the request
     @options = {}
