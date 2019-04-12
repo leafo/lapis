@@ -1602,7 +1602,10 @@ SELECT * from "posts" where "poster_id" = 123 and deleted = FALSE order by id de
 
 ### `fetch`
 
-A custom relation, provide a function to fetch the associated data. Result is cached.
+A manual relation where you provide a function that will fetch the associated
+data for an individual row. A preload implementation can also be provided.
+Lapis will automatically cache the result of the fetch like it does with the
+other relation types.
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -1627,10 +1630,15 @@ class Users extends Model
 ```
 
 
-`fetch` relations can also provide a preloader to allow for the data to be
-loaded over an array of objects. The preloader function recieves as arguments:
-the array table of objects to preload, the current mode, the name of the
-relation.
+`fetch` relations can use a preload function to handle loading data for many
+objects at once.
+
+The preloader function recieves four arguments:
+
+* an array table of model instances that should be preloaded
+* any options passed to the original call to `preload`
+* the class of the model
+* the name of the relation
 
 The preloader is responsible for setting the loaded value on each object. The
 `name` argument is the name of the field that the value should be stored in on
@@ -1649,7 +1657,10 @@ local Users = Model:extend("users", {
         -- fetch some data
       end,
       preload = function(objs)
-        -- preload the data on objs
+        for object in pairs(objs) do
+          -- provide your own preload code and store the result on the object
+          object.recent_posts = some_preloading_code(object)
+        end
       end,
     }
   }
@@ -1664,7 +1675,9 @@ class Users extends Model
       fetch: =>
         -- fetch some data
       preload: (objs) ->
-        -- preload the data on all objs
+        for object in *objs
+          -- provide your own preload code and store the result on the object
+          object.recent_posts = some_preloading_code object
     }
   }
 ```
