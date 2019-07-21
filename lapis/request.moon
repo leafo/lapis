@@ -53,6 +53,9 @@ class Request
     -- write what is in @options and @buffer into the output
     -- this is called once, and done last
     render: =>
+      if @options.skip_render
+        return
+
       @@support.write_session @
       @@support.write_cookies @
 

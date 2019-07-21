@@ -850,7 +850,7 @@ Here is the list of options that can be written
 * `json` -- causes the request to return the JSON encoded value of the property. The content type is set to `application/json` as well.
 * `layout` -- changes the layout from the default defined by the application
 * `redirect_to` -- sets status to 302 and sets `Location` header to value. Supports both relative and absolute URLs. (Combine with `status` to perform 301 redirect)
-
+* `skip_render` -- set to `true` to cause Lapis to skip all output writing (including content, headers, cookies, sessions, etc.). Use this if you manually write the request response in the action method (using low level `ngx.print`, `ngx.header` or equivalent). This can be used to implement streaming output, as opposed to Lapis' regular buffered output.
 
 When rendering JSON make sure to use the `json` render option. It will
 automatically set the correct content type and disable the layout:
