@@ -940,13 +940,13 @@ You'll notice in the pre-defined version of `default_route` another method,
 
 ```lua
 function app:handle_404()
-  error("Failed to find route: " .. self.req.cmd_url)
+  error("Failed to find route: " .. self.req.request_uri)
 end
 ```
 
 ```moon
 handle_404: =>
-  error "Failed to find route: #{@req.cmd_url}"
+  error "Failed to find route: #{@req.request_uri}"
 ```
 
 This will trigger a 500 error and a stack trace on every invalid request. If
