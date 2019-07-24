@@ -167,7 +167,7 @@ do
       self.session = session.lazy_session(self)
     end,
     render = function(self)
-      if self.options.do_nothing then
+      if self.options.skip_render then
         return 
       end
       self.__class.support.write_session(self)
