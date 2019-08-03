@@ -380,9 +380,11 @@ request object as `self` when in the context of an action.
 
 The request object has the following parameters:
 
-* <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all the `GET`, `POST`, and URL parameters together
-* <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table (generated from `ngx` state)
-* <span class="for_moon">`@res`</span><span class="for_lua">`self.res`</span> -- raw response table (used to update `ngx` state)
+* <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all request parameters merged together, including query parameters and form-encoded parameters from the body of the request
+  * <span class="for_moon">`@GET`</span><span class="for_lua">`self.GET`</span> -- a table containing only the query parameters from the URL (eg. `?hello=world`). Note that this is set for any request with URL query parameters, regardless of the HTTP verb
+  * <span class="for_moon">`@POST`</span><span class="for_lua">`self.POST`</span> -- a table containing only the form encoded parameters included in the body of the request. Note this is always set when there is a body with form data, regardless of the HTTP verb
+* <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table containing request information populated by the underlying server processing the request (default `ngx`)
+* <span class="for_moon">`@res`</span><span class="for_lua">`self.res`</span> -- raw response table, used to generate a response for the client at the end of the request
 * <span class="for_moon">`@app`</span><span class="for_lua">`self.app`</span> -- the instance of the application
 * <span class="for_moon">`@cookies`</span><span class="for_lua">`self.cookies`</span> -- the table of cookies, can be assigned to set new cookies. Only supports strings as values
 * <span class="for_moon">`@session`</span><span class="for_lua">`self.session`</span> -- signed session table. Can store values of any type that can be JSON encoded. Is backed by cookies
@@ -399,7 +401,9 @@ Additionally the request object has the following methods:
 
 ### @req
 
-The raw request table <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> wraps some of the data provided from `ngx`. Here is a list of the available properties.
+The raw request table <span class="for_moon">`@req`</span><span
+class="for_lua">`self.req`</span> wraps additional data provided by the server
+processing the request:
 
 * <span class="for_moon">`@req.headers`</span><span class="for_lua">`self.req.headers`</span> -- Request headers table
 * <span class="for_moon">`@req.parsed_url`</span><span class="for_lua">`self.req.parsed_url`</span> -- Request parsed url. A table containing `scheme`, `path`, `host`, `port`, and `query` properties.
