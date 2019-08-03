@@ -237,7 +237,7 @@ class App extends lapis.Application
 
 ## How do I restart a running server, or reload the code?
 
-Once the server is started, you can use the `laips term` command from your
+Once the server is started, you can use the `lapis term` command from your
 command line to stop the server.
 
 If you're deploying new code, then you can hot-reload the code without any
