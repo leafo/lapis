@@ -17,7 +17,7 @@ don't want to use the web framework you might find it useful if you're working
 with OpenResty.
 
 The web framework comes with a URL router, HTML templating, CSRF and session
-support, a PostgreSQL or MySQL backed active record system for working with
+support, a PostgreSQL or MySQL active record system for working with
 models and a handful of other useful functions needed for developing websites.
 
 This guide hopes to serve as a tutorial and a reference.

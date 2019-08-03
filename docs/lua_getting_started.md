@@ -97,7 +97,7 @@ return app
 ## Creating a View
 
 Now that we can create basic pages we'll likely want to render something a bit
-more complex. Lapis comes with support for [etlua][1], an Lua templating
+more complex. Lapis comes with support for [etlua][1], a Lua templating
 language that lets you insert Lua mixed in with text and HTML.
 
 A view is a file that is responsible for generating the HTML. Typically your

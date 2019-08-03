@@ -184,7 +184,7 @@ $ curl \
 The `respond_to` action decorator function gives a basic framework for running
 different code depending on the HTTP method.
 
-> `try_to_login` is a hypothetical functions, and not regularly globally
+> `try_to_login` is a hypothetical function, and not regularly globally
 > available
 
 ```lua

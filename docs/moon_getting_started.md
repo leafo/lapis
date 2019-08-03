@@ -50,7 +50,7 @@ from `lapis.Application`. The properties of the application make up the routes
 the application can serve and the actions it will perform.
 
 
-Here's a slightly more complicated exmaple to give you a feel of what they look
+Here's a slightly more complicated example to give you a feel of what they look
 like:
 
 ```moon
@@ -115,7 +115,7 @@ In this example, the route `"/hello"` is matched to a function that
 returns `"Hello World!"`
 
 The action is the function called in response to a route matching the path of a
-request. Actions are written with the fat arrow, `=>`, because they all recieve
+request. Actions are written with the fat arrow, `=>`, because they all receive
 a first argument from Lapis. You might think that `self` is an instance of
 application. It's actually an instance of `Request`, a class that's used to
 represent the current request.
@@ -130,7 +130,7 @@ otherwise they are treated as regular methods of the application class.
 
 As your application becomes more complex it helps to break it apart into
 multiple sub-applications. Lapis doesn't place any rules on how you divide your
-application, instead it facilities the combination of applications.
+application, instead it gives you tools to organize your own way.
 
 #### `@include(other_application, [opts])`
 

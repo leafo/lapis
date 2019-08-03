@@ -179,7 +179,7 @@ SELECT * from "tags" where tag = 'merchant'
 Instead of a single instance, an array table of instances is returned. If there
 are no matching rows an empty table is returned.
 
-If you want to restrict which columns are selected you can pass in a table as
+If you want to restrict which columns are selected, you can pass in a table as
 the last argument with the `fields` key set:
 
 ```lua
@@ -425,7 +425,7 @@ Model:extend("user_posts"):table_name() --> "user_posts"
 ```
 
 <p class="for_moon">
-This class method can be overidden to change what table a model uses:
+This class method can be overridden to change what table a model uses:
 </p>
 
 ```moon
@@ -459,7 +459,7 @@ instances of another model. This is used to preload associations in a single
 query. Returns the `model_instances` array table.
 
 This is a lower level interface to preloading models. In general we recommend
-[using releations](#describing-relationships) if possible.
+[using relations](#describing-relationships) if possible.
 
 `include_in` supports the following options:
 
@@ -1144,7 +1144,7 @@ SELECT 1 FROM "users" where group_id = 123 limit 1
 
 The default paginator uses `LIMIT` and `OFFSET` to handle fetching pages. For
 large data sets, this can become inefficient for viewing later pages since the
-database has to scan past all the proceeding rows when handling the offset.
+database has to scan past all the preceding rows when handling the offset.
 
 An alternative way to handling pagination is using a `WHERE` clause along with
 an `ORDER` and `LIMIT`. If the right index is on the table then the database
@@ -1200,7 +1200,7 @@ pager = OrderedPaginator Events, "id", "where user_id = ?", 123, {
 }
 ```
 
-The `OrderedPaginator` constructor function mathces the same interface as the
+The `OrderedPaginator` constructor function matches the same interface as the
 regular `Paginator` except it takes an additional argument after the model name:
 the name of the column(s) to order by.
 
@@ -1252,7 +1252,7 @@ This will affect any calls to `get_page` on the paginator.
 
 Additionally, the `after` and `before` methods on the paginator let you fetch
 results in a specific order. They both share the same interface as `get_page`,
-but `after` will always fetch ascneding, and `before` will always fetch
+but `after` will always fetch ascending, and `before` will always fetch
 descending.
 
 
@@ -1560,7 +1560,7 @@ The `has_many` relation supports a few more options:
 * `as` -- specify the prefix of the generated methods (defaults to `get_NAME`)
 
 
-Here's a more complex exmaple using some of the options:
+Here's a more complex example using some of the options:
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -1633,7 +1633,7 @@ class Users extends Model
 `fetch` relations can use a preload function to handle loading data for many
 objects at once.
 
-The preloader function recieves four arguments:
+The preloader function receives four arguments:
 
 * an array table of model instances that should be preloaded
 * any options passed to the original call to `preload`
@@ -1641,10 +1641,10 @@ The preloader function recieves four arguments:
 * the name of the relation
 
 The preloader is responsible for setting the loaded value on each object. The
-`name` argument is the name of the field that the value should be stored in on
-each instance.  All of the instances will be marked as having the relation
-loaded, regardless of if you set a value or not. This means that future calls
-to `get_` will return the cached value.
+`name` argument is the name of the field that should be filled for each
+instance.  All of the instances will be marked as having the relation loaded,
+regardless of if you set a value or not. This means that future calls to `get_`
+will return the cached value.
 
 
 ```lua
@@ -1794,8 +1794,8 @@ import add_column, create_index, types from require "lapis.db.schema"
 
 ## Preloading relations
 
-In addtion to the method to fetch the associated rows on a single model
-instace, relations also provide a way to preload the rows for many instances
+In addition to the method to fetch the associated rows on a single model
+instance, relations also provide a way to preload the rows for many instances
 of the model.
 
 A common pitfall when using object relational mapping systems is triggering
@@ -1877,7 +1877,7 @@ Posts:preload_relation(posts, "user")
 
 ```moon
 posts = Posts\select! -- select all the posts
--- load the user for all th posts
+-- load the user for all the posts
 Posts\preload_relation posts, "user"
 ```
 
@@ -1908,7 +1908,7 @@ Posts\preload_relations posts, "user", "tags", "category"
 ## Enum
 
 The `enum` function lets you create a special table that lets you convert
-between integer constants and names. This is useful for created enumerations in
+between integer constants and names. This is useful for creating enumerations in
 your database rows by using integers to represent a state.
 
 ```lua

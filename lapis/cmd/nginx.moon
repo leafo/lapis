@@ -87,7 +87,7 @@ class NginxRunner
   find_nginx: =>
     return @_nginx_path if @_nginx_path
 
-    -- check for overriden openresty path
+    -- check for overridden openresty path
     if to_check = os.getenv "LAPIS_OPENRESTY"
       if @check_binary_is_openresty to_check
         @_nginx_path = to_check
