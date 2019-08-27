@@ -34,7 +34,6 @@
 --
 
 lapis_config = require "lapis.config"
-ltn12 = require "ltn12"
 
 import increment_perf from require "lapis.nginx.context"
 
@@ -90,6 +89,8 @@ simple = (req, body) ->
   res.body, res.status, res.header
 
 request = (url, str_body) ->
+  ltn12 = require "ltn12"
+
   config = lapis_config.get!
   start_time = if config.measure_performance
     ngx.update_time!

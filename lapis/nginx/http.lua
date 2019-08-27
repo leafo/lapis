@@ -1,5 +1,4 @@
 local lapis_config = require("lapis.config")
-local ltn12 = require("ltn12")
 local increment_perf
 increment_perf = require("lapis.nginx.context").increment_perf
 local proxy_location = "/proxy"
@@ -60,6 +59,7 @@ simple = function(req, body)
 end
 local request
 request = function(url, str_body)
+  local ltn12 = require("ltn12")
   local config = lapis_config.get()
   local start_time
   if config.measure_performance then
