@@ -66,9 +66,9 @@ class Request
         for k,v in pairs @options.headers
           @res\add_header k, v
 
-      if obj = @options.json
+      if @options.json != nil
         @res.headers["Content-Type"] = @options.content_type or "application/json"
-        @res.content = to_json obj
+        @res.content = to_json @options.json
         return
 
       if ct = @options.content_type

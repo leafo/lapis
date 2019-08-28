@@ -180,13 +180,10 @@ do
           self.res:add_header(k, v)
         end
       end
-      do
-        local obj = self.options.json
-        if obj then
-          self.res.headers["Content-Type"] = self.options.content_type or "application/json"
-          self.res.content = to_json(obj)
-          return 
-        end
+      if self.options.json ~= nil then
+        self.res.headers["Content-Type"] = self.options.content_type or "application/json"
+        self.res.content = to_json(self.options.json)
+        return 
       end
       do
         local ct = self.options.content_type
