@@ -1,0 +1,30 @@
+name: test
+
+on: [push]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        luaVersion: ["5.1.5", "luajit-openresty"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: leafo/gh-actions-lua@v2
+      with:
+        luaVersion: ${{ matrix.luaVersion }}
+
+    - uses: leafo/gh-actions-luarocks@v2
+
+    - name: build
+      run: |
+        luarocks install busted
+        luarocks install moonscript
+        luarocks make
+
+    - name: test
+      run: |
+        busted -o utfTerminal
