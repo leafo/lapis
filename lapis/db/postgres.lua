@@ -55,6 +55,10 @@ local BACKENDS = {
         local Postgres
         Postgres = require("pgmoon").Postgres
         pgmoon = Postgres(pg_config)
+        if pg_config.timeout then
+          local pg_timeout = assert(tonumber(pg_config.timeout), "timeout must be a number (ms)")
+          pgmoon:settimeout(pg_timeout)
+        end
         assert(pgmoon:connect())
         if ngx then
           ngx.ctx.pgmoon = pgmoon
