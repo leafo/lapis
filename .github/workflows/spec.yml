@@ -5,6 +5,7 @@ on: [push]
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         luaVersion: ["5.1", "5.2", "5.3", "luajit", "luajit-openresty"]
 
