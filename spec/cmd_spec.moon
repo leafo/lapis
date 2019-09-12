@@ -81,6 +81,10 @@ describe "lapis.cmd.actions", ->
     action = get_action "help"
     assert.same "help", action.name
 
+  it "gets aliased action", ->
+    action = get_action "serve"
+    assert.same "server", action.name
+
   it "gets nil for invalid action", ->
     action = get_action "wazzupf2323"
     assert.same nil, action

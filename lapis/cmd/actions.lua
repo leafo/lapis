@@ -115,6 +115,15 @@ do
         if v.name == name then
           return v
         end
+        if v.aliases then
+          local _list_0 = v.aliases
+          for _index_0 = 1, #_list_0 do
+            local a = _list_0[_index_0]
+            if a == name then
+              return v
+            end
+          end
+        end
       end
       local action
       pcall(function()
@@ -154,6 +163,9 @@ do
       },
       {
         name = "server",
+        aliases = {
+          "serve"
+        },
         usage = "server [environment]",
         help = "build config and start server",
         function(self, flags, environment)

@@ -92,6 +92,9 @@ class Actions
   get_action: (name) =>
     for k,v in ipairs @actions
       return v if v.name == name
+      if v.aliases
+        for a in *v.aliases
+          return v if a == name
 
     -- no match, try package
     local action
@@ -131,6 +134,7 @@ class Actions
 
     {
       name: "server"
+      aliases: {"serve"}
       usage: "server [environment]"
       help: "build config and start server"
 
