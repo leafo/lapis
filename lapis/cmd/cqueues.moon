@@ -67,15 +67,20 @@ create_server = (app_module, environment) ->
       app_cls\build_router!
       app_cls
 
-  onstream = if config.code_cache == false or config.code_cache == "off"
-    reset = module_reset!
-    (stream) =>
-      reset!
+  onstream = switch config.code_cache
+    when false, "off"
+      reset = module_reset!
+      (stream) =>
+        reset!
+        app = load_app!
+        dispatch app, @, stream
+    when "app_only"
+      (stream) =>
+        app = load_app!
+        dispatch app, @, stream
+    else
       app = load_app!
-      dispatch app, @, stream
-  else
-    app = load_app!
-    (stream) => dispatch app, @, stream
+      (stream) => dispatch app, @, stream
 
   onerror = (context, op, err, errno) =>
     msg = op .. " on " .. tostring(context) .. " failed"

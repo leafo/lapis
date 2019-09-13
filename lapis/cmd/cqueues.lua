@@ -129,10 +129,16 @@ create_server = function(app_module, environment)
     end
   end
   local onstream
-  if config.code_cache == false or config.code_cache == "off" then
+  local _exp_0 = config.code_cache
+  if false == _exp_0 or "off" == _exp_0 then
     local reset = module_reset()
     onstream = function(self, stream)
       reset()
+      local app = load_app()
+      return dispatch(app, self, stream)
+    end
+  elseif "app_only" == _exp_0 then
+    onstream = function(self, stream)
       local app = load_app()
       return dispatch(app, self, stream)
     end
