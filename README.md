@@ -4,6 +4,8 @@ A web framework for Lua/[MoonScript][1] supporting [OpenResty](https://openresty
 
 [![Build Status](https://travis-ci.org/leafo/lapis.svg?branch=master)](https://travis-ci.org/leafo/lapis)
 
+[![Twitch Link](http://leafo.net/dump/twitch-banner.svg)](https://www.twitch.tv/moonscript)
+
 Lapis is production ready, use it on your next huge project.
 
 Learn more on the homepage: <http://leafo.net/lapis/>
