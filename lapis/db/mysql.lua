@@ -11,7 +11,7 @@ do
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_encodable
 end
 local conn, logger
-local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
+local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, set_logger, get_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
 BACKENDS = {
   raw = function(fn)
     return fn
@@ -226,10 +226,13 @@ escape_identifier = function(ident)
   return '`' .. (ident:gsub('`', '``')) .. '`'
 end
 init_logger = function()
-  local config = require("lapis.config").get()
-  if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries then
-    logger = require("lapis.logging")
-  end
+  logger = require("lapis.logging")
+end
+set_logger = function(_logger)
+  logger = _logger
+end
+get_logger = function()
+  return logger
 end
 init_db = function()
   local config = require("lapis.config").get()
@@ -331,6 +334,8 @@ return {
   set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
+  get_logger = get_logger,
+  set_logger = set_logger,
   select = _select,
   insert = _insert,
   update = _update,

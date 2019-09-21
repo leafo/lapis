@@ -130,10 +130,15 @@ get_raw_query = function()
 end
 local init_logger
 init_logger = function()
-  local config = require("lapis.config").get()
-  if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries then
-    logger = require("lapis.logging")
-  end
+  logger = require("lapis.logging")
+end
+local set_logger
+set_logger = function(_logger)
+  logger = _logger
+end
+local get_logger
+get_logger = function()
+  return logger
 end
 local init_db
 init_db = function()
@@ -456,6 +461,8 @@ return {
   set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
+  get_logger = get_logger,
+  set_logger = set_logger,
   select = _select,
   insert = _insert,
   update = _update,

@@ -184,9 +184,10 @@ escape_identifier = (ident) ->
   '`' ..  (ident\gsub '`', '``') .. '`'
 
 init_logger = ->
-  config = require("lapis.config").get!
-  logger = if ngx or os.getenv("LAPIS_SHOW_QUERIES") or config.show_queries
-    require "lapis.logging"
+  logger = require "lapis.logging"
+
+set_logger = (_logger) -> logger = _logger
+get_logger = -> logger
 
 init_db = ->
   config = require("lapis.config").get!
@@ -295,6 +296,9 @@ _truncate = (table) ->
   :set_backend
   :set_raw_query
   :get_raw_query
+
+  :get_logger
+  :set_logger
 
   select: _select
   insert: _insert
