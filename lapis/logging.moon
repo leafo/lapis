@@ -25,16 +25,20 @@ flatten_params_helper = (params, out = {}, sep= ", ")->
   insert out, " }"
   out
 
-
 flatten_params = (params) ->
   table.concat flatten_params_helper params
 
 query = do
-  log_tpl = colors("%{bright}%{cyan}SQL: %{reset}%{magenta}%s%{reset}")
-  (q) ->
+  log_tpl = colors "%{bright}%{cyan}%s:%{reset} %{magenta}%s"
+  log_tpl_time = colors "%{bright}%{cyan}%s:%{reset} %{yellow}(%s) %{magenta}%s"
+
+  (query, duration, prefix="SQL") ->
     l = config.logging
     return unless l and l.queries
-    print log_tpl\format q
+    if duration
+      print log_tpl_time\format prefix, "%.2fms"\format(duration * 1000), query
+    else
+      print log_tpl\format prefix, query
 
 request = (r) ->
   l = config.logging

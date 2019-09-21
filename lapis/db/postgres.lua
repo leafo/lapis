@@ -88,7 +88,7 @@ local BACKENDS = {
         increment_perf("db_time", dt)
         increment_perf("db_count", 1)
         if logger then
-          logger.query("(" .. tostring(("%.2f"):format(dt * 1000)) .. "ms) " .. tostring(str))
+          logger.query(str, dt)
         end
       else
         if logger then

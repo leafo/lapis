@@ -36,13 +36,21 @@ flatten_params = function(params)
   return table.concat(flatten_params_helper(params))
 end
 do
-  local log_tpl = colors("%{bright}%{cyan}SQL: %{reset}%{magenta}%s%{reset}")
-  query = function(q)
+  local log_tpl = colors("%{bright}%{cyan}%s:%{reset} %{magenta}%s")
+  local log_tpl_time = colors("%{bright}%{cyan}%s:%{reset} %{yellow}(%s) %{magenta}%s")
+  query = function(query, duration, prefix)
+    if prefix == nil then
+      prefix = "SQL"
+    end
     local l = config.logging
     if not (l and l.queries) then
       return 
     end
-    return print(log_tpl:format(q))
+    if duration then
+      return print(log_tpl_time:format(prefix, ("%.2fms"):format(duration * 1000), query))
+    else
+      return print(log_tpl:format(prefix, query))
+    end
   end
 end
 request = function(r)
