@@ -14,9 +14,10 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - uses: leafo/gh-actions-lua@v2
+    - uses: leafo/gh-actions-lua@master
       with:
         luaVersion: ${{ matrix.luaVersion }}
+        luaCompileFlags: "-DLUA_COMPAT_5_1"
 
     - uses: leafo/gh-actions-luarocks@v2
 
