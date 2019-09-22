@@ -229,11 +229,11 @@ describe "lapis.db.model", ->
       {
         [[INSERT INTO "timed_things" ("hello", "created_at", "updated_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
         [[INSERT INTO "timed_things" ("created_at", "hello", "updated_at") VALUES ('2013-08-13 06:56:40', 'world', '2013-08-13 06:56:40') RETURNING "id"]]
-        [[INSERT INTO "timed_things" ("created_at", "updated_at", "hello" ) VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'world') RETURNING "id"]]
+        [[INSERT INTO "timed_things" ("created_at", "updated_at", "hello") VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'world') RETURNING "id"]]
 
         [[INSERT INTO "timed_things" ("hello", "updated_at", "created_at") VALUES ('world', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id"]]
         [[INSERT INTO "timed_things" ("updated_at", "hello", "created_at") VALUES ('2013-08-13 06:56:40', 'world', '2013-08-13 06:56:40') RETURNING "id"]]
-        [[INSERT INTO "timed_things" ("updated_at", "created_at", "hello" ) VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'world') RETURNING "id"]]
+        [[INSERT INTO "timed_things" ("updated_at", "created_at", "hello") VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'world') RETURNING "id"]]
       }
       {
         [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
