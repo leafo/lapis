@@ -38,13 +38,16 @@ end
 do
   local log_tpl = colors("%{bright}%{cyan}%s:%{reset} %{magenta}%s")
   local log_tpl_time = colors("%{bright}%{cyan}%s:%{reset} %{yellow}(%s) %{magenta}%s")
+  local force_logging = os.getenv("LAPIS_SHOW_QUERIES")
   query = function(query, duration, prefix)
     if prefix == nil then
       prefix = "SQL"
     end
-    local l = config.logging
-    if not (l and l.queries) then
-      return 
+    if not (force_logging) then
+      local l = config.logging
+      if not (l and l.queries) then
+        return 
+      end
     end
     if duration then
       return print(log_tpl_time:format(prefix, ("%.2fms"):format(duration * 1000), query))

@@ -32,9 +32,13 @@ query = do
   log_tpl = colors "%{bright}%{cyan}%s:%{reset} %{magenta}%s"
   log_tpl_time = colors "%{bright}%{cyan}%s:%{reset} %{yellow}(%s) %{magenta}%s"
 
+  force_logging = os.getenv "LAPIS_SHOW_QUERIES"
+
   (query, duration, prefix="SQL") ->
-    l = config.logging
-    return unless l and l.queries
+    unless force_logging
+      l = config.logging
+      return unless l and l.queries
+
     if duration
       print log_tpl_time\format prefix, "%.2fms"\format(duration * 1000), query
     else
