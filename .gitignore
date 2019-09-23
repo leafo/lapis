@@ -11,3 +11,6 @@ scgi_temp/
 uwsgi_temp/
 *.rockspec
 *.rock
+luarocks51/
+luarocks52/
+luarocks53/
