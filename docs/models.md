@@ -1022,22 +1022,6 @@ as the database might returned unexpected results for each page.
 
 The paginator has the following methods:
 
-### `get_all()`
-
-Gets all the items that the query can return, is the same as calling the
-`select` method directly. Returns an array table of model instances.
-
-```lua
-local users = paginated:get_all()
-```
-
-```moon
-users = paginated\get_all!
-```
-
-```sql
-SELECT * from "users" where group_id = 123 order by name asc
-```
 
 ### `get_page(page_num)`
 
@@ -1087,6 +1071,8 @@ Returns an iterator function that can be used to iterate through each page of
 the results. Useful for processing a large query without having the entire
 result set loaded in memory at once.
 
+Each item is preloaded with the `prepare_results` function if provided.
+
 ```lua
 for page_results, page_num in paginated:each_page() do
   print(page_results, page_num)
@@ -1100,13 +1086,19 @@ for page_results, page_num in paginated\each_page!
 
 > Be careful modifying rows in the database when iterating over each page, as
 > your modifications might change the query result order and you may process
-> rows multiple times or none at all.
+> rows multiple times or none at all. Consider using a stable sorting
+> direction like the primary key ascending.
 
 ### `each_item()`
 
 Returns an iterator for every item retuned by the pager. It uses `each_page` to
 fetch results in chunks of `per_page` items. Because data is pulled
 incrementally it's suitable for iterating over large data sets.
+
+Each item is preloaded with the `prepare_results` function if provided.
+
+> Iteration order can change if the table is modified during iteration, see the
+> warning on `each_page`.
 
 ```lua
 for item in pager:each_item() do
@@ -1138,6 +1130,27 @@ if pager\has_items!
 
 ```sql
 SELECT 1 FROM "users" where group_id = 123 limit 1
+```
+
+### `get_all()`
+
+Gets every item from the paginator by issuing a single query, ignoring any pagination options.
+If you have a large dataset you want to iterate over, consider using
+`each_item` as it will query in chunks to reduce peak memory usage.
+
+Each item is preloaded with the `prepare_results` function if provided.
+
+
+```lua
+local users = paginated:get_all()
+```
+
+```moon
+users = paginated\get_all!
+```
+
+```sql
+SELECT * from "users" where group_id = 123 order by name asc
 ```
 
 ## Ordered paginator
