@@ -624,7 +624,7 @@ Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagina
 
 ## Instance Methods
 
-### `update(...)`
+### `update(..., opts={})`
 
 Instances of models have the `update` method for updating the row. The values
 of the primary keys are used to uniquely identify the row for updating.
@@ -683,6 +683,16 @@ If any of the updated values are generated from raw SQL via `db.raw`, then
 those values will be replaced with values returning by the database using the
 `RETURNING` clause similar to the [`create` class
 method](#class-methods-createopts).
+
+**Options**
+
+$config_table{
+  {
+    name = "timestamp",
+    default = 'true',
+    description = "The `updated_at` field will be updated if the model has timestamps"
+  },
+}
 
 ### `delete()`
 
