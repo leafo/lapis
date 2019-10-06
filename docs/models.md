@@ -689,9 +689,9 @@ method](#class-methods-createopts).
 $config_table{
   {
     name = "timestamp",
-    default = 'true',
+    default = "true",
     description = "The `updated_at` field will be updated if the model has timestamps"
-  },
+  }
 }
 
 ### `delete()`
