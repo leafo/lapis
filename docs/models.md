@@ -459,19 +459,84 @@ instances of another model. This is used to preload associations in a single
 query. Returns the `model_instances` array table.
 
 This is a lower level interface to preloading models. In general we recommend
-[using relations](#describing-relationships) if possible.
+[using relations](#describing-relationships) if possible. A relation will
+internally generate a call to `include_in` based on how you have configured the
+relation.
 
-`include_in` supports the following options:
+`include_in` supports the following options (via the optional `opts` argument):
 
-* `as` -- set the name of the property to store the associated model as
-* `flip` -- set to `true` if the named column is located on the included model
-* `where` -- a table of additional conditionals to limit the query by
-* `fields` -- set the fields returned by each included model. Taken as a fragment of SQL
-* `many` -- set to true fetch many records for each input model instance instead of a single one
-* `value` -- a function that takes each row fetched. The return value is used in place of the row object when filling `model_instances`
-* `local_key` -- only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`
-* `order` -- the order of items when preloading a `many` preload
-* `group` -- group by clause
+$options_table{
+  {
+    name = "as",
+    description = "set the name of the property to store the associated model as",
+    default = "generated from table name (eg. `Posts` → `post`)"
+  },
+  {
+    name = "flip",
+    description = "set to `true` if the named column is located on the included model"
+  },
+  {
+    name = "where",
+    description = [[
+      a table of additional conditionals to limit the query by
+
+      ```lua
+      Posts:include_in(users, "user_id", {
+        where = {
+          deleted = false
+        }
+      })
+      ```
+
+      ```moon
+      Posts\include_in users, "user_id", {
+        where: {
+          deleted: false
+        }
+      }
+      ```
+    ]]
+  },
+  {
+    name = "fields",
+    description = [[
+      the fields returned by each included model. Taken as a fragment of raw
+      SQL. `db.escape_identifier` can be used to sanitize column names
+
+      ```lua
+      Posts:include_in(users, "user_id", {
+        fields = "id, name as display_name, created_at"
+      })
+      ```
+
+      ```moon
+      Posts\include_in users, "user_id", {
+        fields: "id, name as display_name, created_at"
+      }
+      ```
+     ]]
+  },
+  {
+    name = "many",
+    description = "set to `true` to fetch many records for each input model instance. The fetched models will be stored as an array on each preloaded object. An empty array is assigned when no rows are found"
+  },
+  {
+    name = "value",
+    description = "a function called for each fetched row where the return value is used in place of the row object when filling `model_instances`"
+  },
+  {
+    name = "local_key",
+    description = "only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`"
+  },
+  {
+    name = "order",
+    description = "the order of items when preloading a `many` preload. Taken as a raw SQL clause"
+  },
+  {
+    name = "group",
+    description = "group by clause. Taken as a raw SQL clause"
+  }
+}
 
 In order to demonstrate `include_in` we'll need some models: (The columns are
 annotated in a comment above the model).
@@ -686,11 +751,11 @@ method](#class-methods-createopts).
 
 **Options**
 
-$config_table{
+$options_table{
   {
     name = "timestamp",
-    default = "true",
-    description = "The `updated_at` field will be updated if the model has timestamps"
+    default = "`true`",
+    description = "The `updated_at` field will be updated to the current time if the model has timestamps. Note that if the update itself contains `updated_at` then that will take precedence over the auto-update."
   }
 }
 
@@ -1791,7 +1856,7 @@ the type column. The type column can use the built-in schema type `enum`.
 
 The column names are named after the relation. For example, if your relation is
 called `primary_item`, columns should be created with the names
-`primary_item_id` and `primary_item_type`. 
+`primary_item_id` and `primary_item_type`.
 
 
 ```lua
