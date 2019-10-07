@@ -478,40 +478,22 @@ $options_table{
   {
     name = "where",
     description = "a table of additional conditionals to limit the query by",
-    example = [[
-      ```lua
-      Posts:include_in(users, "user_id", {
-        where = {
-          deleted = false
-        }
-      })
-      ```
-
-      ```moon
-      Posts\include_in users, "user_id", {
+    example = dual_code{[[
+      Users\include_in posts, "user_id", {
         where: {
           deleted: false
         }
       }
-      ```
-    ]]
+    ]]}
   },
   {
     name = "fields",
     description = "the fields returned by each included model. Taken as a fragment of raw SQL. `db.escape_identifier` can be used to sanitize column names",
-    example = [[
-      ```lua
-      Posts:include_in(users, "user_id", {
-        fields = "id, name as display_name, created_at"
-      })
-      ```
-
-      ```moon
-      Posts\include_in users, "user_id", {
+    example = dual_code{[[
+      Users\include_in posts, "user_id", {
         fields: "id, name as display_name, created_at"
       }
-      ```
-     ]]
+    ]]}
   },
   {
     name = "many",
@@ -589,14 +571,9 @@ The name of the inserted property is derived from the name of the foreign key.
 In this case, `user` was derived from the foreign key `user_id`. If we want to
 manually specify the name the `as` option can be used:
 
-
-```lua
-Users:include_in(posts, "user_id", { as = "author" })
-```
-
-```moon
+$dual_code{[[
 Users\include_in posts, "user_id", as: "author"
-```
+]]}
 
 Now all the posts will contain a property named `author` with an instance of
 the `Users` model.
@@ -631,19 +608,12 @@ class UserData extends Model
 Now let's say we have a collection of users and we want to fetch the associated
 user data:
 
-```lua
-local users = Users:select()
-UserData:include_in(users, "user_id", { flip = true })
-
-print(users[1].user_data.twitter_account)
-```
-
-```moon
+$dual_code{[[
 users = Users\select!
 UserData\include_in users, "user_id", flip: true
 
 print users[1].user_data.twitter_account
-```
+]]}
 
 ```sql
 SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
@@ -662,16 +632,10 @@ One last common scenario is preloading a one-to-many relationship. You can use
 the `many` option to instruct `include_in` store many associated models for
 each input model. For example, we might load all the posts for each user:
 
-
-```lua
-local users = Users:select()
-Posts:include_in(users, "user_id", { flip = true, many = true })
-```
-
-```moon
+$dual_code{[[
 users = Users\select!
 Posts\include_in users, "user_id", flip: true, many: true
-```
+]]}
 
 ```sql
 SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
