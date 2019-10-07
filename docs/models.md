@@ -477,9 +477,8 @@ $options_table{
   },
   {
     name = "where",
-    description = [[
-      a table of additional conditionals to limit the query by
-
+    description = "a table of additional conditionals to limit the query by",
+    example = [[
       ```lua
       Posts:include_in(users, "user_id", {
         where = {
@@ -499,10 +498,8 @@ $options_table{
   },
   {
     name = "fields",
-    description = [[
-      the fields returned by each included model. Taken as a fragment of raw
-      SQL. `db.escape_identifier` can be used to sanitize column names
-
+    description = "the fields returned by each included model. Taken as a fragment of raw SQL. `db.escape_identifier` can be used to sanitize column names",
+    example = [[
       ```lua
       Posts:include_in(users, "user_id", {
         fields = "id, name as display_name, created_at"
