@@ -56,6 +56,9 @@ local validate_functions = {
       return true
     end
     return false, "%s must be a " .. kind
+  end,
+  test = function(input, fn)
+    return fn(input)
   end
 }
 local test_input

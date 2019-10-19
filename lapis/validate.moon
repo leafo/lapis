@@ -49,6 +49,9 @@ validate_functions = {
   type: (input, kind) ->
     return true if type(input) == kind
     false, "%s must be a " .. kind
+
+  test: (input, fn) ->
+    fn input
 }
 
 test_input = (input, func, args) ->
@@ -69,6 +72,7 @@ validate = (object, validations, opts = {}) ->
 
     v.optional = nil
 
+    -- TODO: this processes validations in no particular order, which can be bad for tests
     for fn, args in pairs v
       continue unless type(fn) == "string"
       success, msg = test_input input, fn, args
