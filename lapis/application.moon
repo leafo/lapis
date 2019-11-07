@@ -322,7 +322,8 @@ yield_error = (msg) ->
 
 assert_error = (thing, msg, ...) ->
   yield_error msg unless thing
-  thing, msg, ...
+  -- assert in case the enclosing function can't capture yeilded error, so we trigger hard failure
+  assert thing, msg, ...
 
 json_params = (fn) ->
   (...) =>
