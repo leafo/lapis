@@ -716,7 +716,7 @@ application = require "lapis.application"
 `verbs_to_fn` is a table of functions that maps a HTTP verb to a corresponding
 function. Returns a new function that dispatches to the correct function in the
 table based on the verb of the request. See
-[Handling HTTP verbs](#lapis-applications-handling-http-verbs)
+[Handling HTTP verbs][1]
 
 If an action for `HEAD` does not exist Lapis inserts the following function to
 render nothing:
@@ -818,3 +818,4 @@ class="for_moon">`@json`</span><span class="for_lua">`self.json`</span> will be
 
 
 [0]: exception_handling.html
+[1]: actions.html#handling-http-verbs
