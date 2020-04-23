@@ -570,7 +570,7 @@ $options_table{
 ----
 
 Flip is confusing, and is deprecated and will be removed. These examples show
-replacment calls to `include_in` that do not use flip.
+replacement calls to `include_in` that do not use flip.
 
 The following are equivalent:
 
@@ -655,11 +655,9 @@ Users\include_in posts, "user_id", as: "author"
 Now all the posts will contain a property named `author` with an instance of
 the `Users` model.
 
-The `flip` option can be used to preload associated data where the foreign key
-is located on the rows to be loaded. (This is what lapis calls as `has_one`
-relation, the default mode loads `belongs_to` relations.)
-
-Here's an example using flip:
+In this next example a column mapping table is used to explicitly specify what
+fields in our object array match to the columns in our query. Here are the
+relevant models:
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -682,12 +680,12 @@ class Users extends Model
 class UserData extends Model
 ```
 
-Now let's say we have a collection of users and we want to fetch the associated
-user data:
+Now let's say we have an array of users and we want to fetch the associated
+user data.
 
 $dual_code{[[
 users = Users\select!
-UserData\include_in users, "user_id", flip: true
+UserData\include_in users, user_id: "id"
 
 print users[1].user_data.twitter_account
 ]]}
@@ -696,22 +694,27 @@ print users[1].user_data.twitter_account
 SELECT * from "user_data" where "user_id" in (1,2,3,4,5,6)
 ```
 
-In this example we set the `flip` option to true in the `include_in` method.
-This causes the search to happen against our foreign key, and the ids to be
-pulled from the `id` of the array of model instances.
+The second argument of `include_in`, called `key`, is a table with the value `{
+"user_id" = "id"}`. This instructs `include_in` to take all the values stored
+in the `id` field from the users array to use as values to look up rows in
+`user_data` table by the `user_id` column.
 
-Additionally, the derived property name that is injected into the model
-instances is created from the name of the included table. In the example above
-the `user_data` property contains the included model instances. (Had it been
-plural the table name would have been made singular)
+The field name that is used to store each result in the users array is derived
+from the name of the included table. In this case, `UserData` →  `user_data`.
+This can be overridden by using the `as` option.
+
+> The table name is converted to English singular form. Since user_data is both
+> singular and plural, it's used as is.
 
 One last common scenario is preloading a one-to-many relationship. You can use
-the `many` option to instruct `include_in` store many associated models for
-each input model. For example, we might load all the posts for each user:
+the `many` option to instruct `include_in` to collect all associated results
+for each input object into an array. (The derived field name will be plural)
+
+For example, we might load all the posts for each user:
 
 $dual_code{[[
 users = Users\select!
-Posts\include_in users, "user_id", flip: true, many: true
+Posts\include_in users, { user_id: "id" }, many: true
 ]]}
 
 ```sql
@@ -719,7 +722,8 @@ SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
 ```
 
 Each `users` object will now have a `posts` field that is an array containing
-all the associated posts that were found.
+all the associated posts that were found. (Note that `posts` is a plural
+derived field name when `many` is true.)
 
 ### `paginated(query, ...)`
 
