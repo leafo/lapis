@@ -559,8 +559,40 @@ $options_table{
   }
 }
 
-> `flip` will be deprecated in a future version of Lapis. You should opt to use
-> the column mapping table instead of `flip` or `local_key` options.
+> `flip` & `local_key` are deprecated and will be removed in a future version of Lapis. You
+> should opt to use the column mapping table instead of `flip` or `local_key`
+> options.
+
+<details>
+
+<summary>How to migrate away from `flip` and `local_key`</summary>
+
+----
+
+Flip is confusing, and is deprecated and will be removed. These examples show
+replacment calls to `include_in` that do not use flip.
+
+The following are equivalent:
+
+$dual_code{[[
+UserData\include_in users, "user_id", flip: true
+UserData\include_in users, user_id: "id"
+]]}
+
+The following use `local_key` and are equivalent:
+
+$dual_code{[[
+UserData\include_in users, "user_id", flip: true, local_key: "internal_id"
+UserData\include_in users, user_id: "internal_id"
+]]}
+
+An easy way to think about the column mapping table is as a `where` clause
+table but instead of having literal values you specify the name of the field
+that is pulled from the array of objects.
+
+----
+
+</details>
 
 In order to demonstrate `include_in` we'll need some models: (The columns are
 annotated in a comment above the model).
@@ -688,18 +720,6 @@ SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
 
 Each `users` object will now have a `posts` field that is an array containing
 all the associated posts that were found.
-
-**Deprecating `flip`**
-
-Flip is confusing, and will be deprecated and removed. The following are
-equivalent and will help you migrate away from using flip:
-
-
-$dual_code{[[
-UserData\include_in users, "user_id", flip: true
-UserData\include_in users, user_id: "id"
-]]}
-
 
 ### `paginated(query, ...)`
 
