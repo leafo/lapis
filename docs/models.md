@@ -479,7 +479,9 @@ associations in a single query in order to avoid the [n+1 queries
 problem](https://leafo.net/guides/postgresql-preloading.html).
 
 It works my mutating the objects in the array by inserting a new field into
-each item where the query returned a result.
+each item where the query returned a result. The name of this new field is
+either derived from the model's table name, or manually specified via an
+option.
 
 Returns the `objects` array table.
 
@@ -488,20 +490,18 @@ recommend [using relations](#describing-relationships) if possible. A relation
 will internally generate a call to `include_in` based on how you have
 configured the relation.
 
-The `key` argument controls the mapping from the fields in each object in the
+The `key` argument controls the mapping from the fields in each object of the
 objects array to the column name used in the query. It can be a string, an
-array of strings, or a string → string table mapping. When using a string or
-array of strings then the corresponding associated key is automatically
-generated.
+array of strings, or a string*(column)* → string*(field)* table mapping. When
+using a string or array of strings then the corresponding associated key is
+automatically chosen.
 
 Possible values for `key` argument:
 
-* **string** -- for each object, `object[key]`, is used to search for instances of the model by the model's primary key. The model is assumed to have a singular primary key
+* **string** -- for each object, the value `object[key]` is used to lookup instances of the model by the model's primary key. The model is assumed to have a singular primary key, and will error otherwise
   * with `flip` enabled: `key` is used as the foreign key column name, and `object[opts.local_key or "id"]` is used to pull the values
 * **array of string** -- for each object, a composite key is created by individually mapping each field of the key array via `object[key]` to the composite primary key of the model
-  * `flip` can not be used
 * **column mapping table** -- explicitly specify the mapping of fields to columns. The *key* of the table will be used as the column name, and the value in the table will be used as the field name referenced from the `objects` argument
-  * `flip` can not be used
 
 `include_in` supports the following options (via the optional `opts` argument):
 
@@ -513,7 +513,7 @@ $options_table{
   },
   {
     name = "flip",
-    description = "*(boolean)* Flips the use of the `key` argument (when a string), to be the column name instead of the field name",
+    description = "***(deprecated)*** Flips the use of the `key` argument (when a string), to be the column name instead of the field name. `flip` can not be used with an array or table `key` argument",
     default = "`false`"
   },
   {
@@ -542,11 +542,11 @@ $options_table{
   },
   {
     name = "value",
-    description = "a function called for each fetched row where the return value is used in place of the row object when filling `model_instances`"
+    description = "a function called for each fetched row where the return value is used in place of the row object when filling `objects`"
   },
   {
     name = "local_key",
-    description = "only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`",
+    description = "***(deprecated)*** only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `objects`",
     default = [[`"id"`]]
   },
   {
