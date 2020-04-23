@@ -471,32 +471,54 @@ the field is when loading rows with `include_in`. It's also used when
 determining the foreign key column name with a `has_one` or `has_many`
 relation.
 
-### `include_in(model_instances, column_name, opts={})`
+### `include_in(objects, key, opts={})`
 
-Finds instances of the current model and loads them into an array containing
-instances of another model. This is used to preload associations in a single
-query. Returns the `model_instances` array table.
+Bulk load rows of the model into an array of objects (often the array of
+objects is an array of instances of another model). This is used to preload
+associations in a single query in order to avoid the [n+1 queries
+problem](https://leafo.net/guides/postgresql-preloading.html).
 
-This is a lower level interface to preloading models. In general we recommend
-[using relations](#describing-relationships) if possible. A relation will
-internally generate a call to `include_in` based on how you have configured the
-relation.
+It works my mutating the objects in the array by inserting a new field into
+each item where the query returned a result.
+
+Returns the `objects` array table.
+
+This is a lower level interface for preloading data on models. In general we
+recommend [using relations](#describing-relationships) if possible. A relation
+will internally generate a call to `include_in` based on how you have
+configured the relation.
+
+The `key` argument controls the mapping from the fields in each object in the
+objects array to the column name used in the query. It can be a string, an
+array of strings, or a string → string table mapping. When using a string or
+array of strings then the corresponding associated key is automatically
+generated.
+
+Possible values for `key` argument:
+
+* **string** -- for each object, `object[key]`, is used to search for instances of the model by the model's primary key. The model is assumed to have a singular primary key
+  * with `flip` enabled: `key` is used as the foreign key column name, and `object[opts.local_key or "id"]` is used to pull the values
+* **array of string** -- for each object, a composite key is created by individually mapping each field of the key array via `object[key]` to the composite primary key of the model
+  * `flip` can not be used
+* **column mapping table** -- explicitly specify the mapping of fields to columns. The *key* of the table will be used as the column name, and the value in the table will be used as the field name referenced from the `objects` argument
+  * `flip` can not be used
 
 `include_in` supports the following options (via the optional `opts` argument):
 
 $options_table{
   {
     name = "as",
-    description = "set the name of the property to store the associated model as",
+    description = "The name of the field the loaded associated model is stored into",
     default = "generated from table name (eg. `Posts` → `post`)"
   },
   {
     name = "flip",
-    description = "set to `true` if the named column is located on the included model"
+    description = "*(boolean)* Flips the use of the `key` argument (when a string), to be the column name instead of the field name",
+    default = "`false`"
   },
   {
     name = "where",
-    description = "a table of additional conditionals to limit the query by",
+    description = "A table of additional conditionals to limit the query by",
     example = dual_code{[[
       Users\include_in posts, "user_id", {
         where: {
@@ -507,7 +529,7 @@ $options_table{
   },
   {
     name = "fields",
-    description = "the fields returned by each included model. Taken as a fragment of raw SQL. `db.escape_identifier` can be used to sanitize column names",
+    description = "Raw SQL fragment to control which columns are returned by the query. `db.escape_identifier` can be used to sanitize column names",
     example = dual_code{[[
       Users\include_in posts, "user_id", {
         fields: "id, name as display_name, created_at"
@@ -524,7 +546,8 @@ $options_table{
   },
   {
     name = "local_key",
-    description = "only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`"
+    description = "only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `model_instances`",
+    default = [[`"id"`]]
   },
   {
     name = "order",
@@ -535,6 +558,9 @@ $options_table{
     description = "group by clause. Taken as a raw SQL clause"
   }
 }
+
+> `flip` will be deprecated in a future version of Lapis. You should opt to use
+> the column mapping table instead of `flip` or `local_key` options.
 
 In order to demonstrate `include_in` we'll need some models: (The columns are
 annotated in a comment above the model).
@@ -662,6 +688,18 @@ SELECT * from "posts" where "user_id" in (1,2,3,4,5,6)
 
 Each `users` object will now have a `posts` field that is an array containing
 all the associated posts that were found.
+
+**Deprecating `flip`**
+
+Flip is confusing, and will be deprecated and removed. The following are
+equivalent and will help you migrate away from using flip:
+
+
+$dual_code{[[
+UserData\include_in users, "user_id", flip: true
+UserData\include_in users, user_id: "id"
+]]}
+
 
 ### `paginated(query, ...)`
 
