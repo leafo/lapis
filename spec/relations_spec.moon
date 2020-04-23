@@ -319,12 +319,19 @@ describe "lapis.db.model.relations", ->
     user = models.Users!
     user.id = 1234
 
+    -- offset paginator
     user\get_posts_paginated!\get_page 1
     user\get_posts_paginated!\get_page 2
 
     user\get_more_posts_paginated!\get_page 2
 
     user\get_posts_paginated(per_page: 44)\get_page 3
+
+    -- offset ordered paginator
+    user\get_posts_paginated(ordered: {"id"})\get_page!
+    user\get_posts_paginated(ordered: {"id"})\get_page 1023
+
+    user\get_posts_paginated(order: "desc", ordered: {"created_at", "id"})\get_page "2020-1-1", 238
 
     assert_queries {
       'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 0'
@@ -334,6 +341,10 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
       }
       'SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 88'
+      'SELECT * from "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
+      'SELECT * from "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
+
+      [[SELECT * from "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
     }
 
 
