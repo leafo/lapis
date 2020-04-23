@@ -433,7 +433,23 @@ has_many = function(self, name, opts)
   if not (opts.pager == false) then
     self.__base[get_paginated_method] = function(self, fetch_opts)
       local model = assert_model(self.__class, source)
-      return model:paginated(build_query(self), fetch_opts)
+      if fetch_opts and fetch_opts.ordered then
+        local OrderedPaginator
+        OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+        local filtered_opts
+        do
+          local _tbl_0 = { }
+          for k, v in pairs(fetch_opts) do
+            if k ~= "ordered" then
+              _tbl_0[k] = v
+            end
+          end
+          filtered_opts = _tbl_0
+        end
+        return OrderedPaginator(model, fetch_opts.ordered, build_query(self), filtered_opts)
+      else
+        return model:paginated(build_query(self), fetch_opts)
+      end
     end
   end
   self.relation_preloaders[name] = function(self, objects, preload_opts)
