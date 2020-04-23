@@ -182,7 +182,7 @@ do
         parsed.offset = nil
         parsed.order = nil
         if parsed.group then
-          error("Paginator can't calculate total items in a query with group by")
+          error("OffsetPaginator: can't calculate total items in a query with group by")
         end
         local tbl_name = self.db.escape_identifier(self.model:table_name())
         local query = "COUNT(*) AS c FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
@@ -227,6 +227,7 @@ end
 local OrderedPaginator
 do
   local _class_0
+  local valid_orders
   local _parent_0 = Paginator
   local _base_0 = {
     order = "ASC",
@@ -254,6 +255,10 @@ do
     get_ordered = function(self, order, ...)
       local parsed = assert(self.db.parse_clause(self._clause))
       local has_multi_fields = type(self.field) == "table" and not self.db.is_raw(self.field)
+      local order_lower = order:lower()
+      if not (valid_orders[order_lower]) then
+        error("OrderedPaginator: invalid query order: " .. tostring(order))
+      end
       local table_name = self.model:table_name()
       local prefix = self.db.escape_identifier(table_name) .. "."
       local escaped_fields
@@ -275,10 +280,10 @@ do
         }
       end
       if parsed.order then
-        error("order should not be provided for " .. tostring(self.__class.__name))
+        error("OrderedPaginator: order should not be provided for " .. tostring(self.__class.__name))
       end
       if parsed.offset or parsed.limit then
-        error("offset and limit should not be provided for " .. tostring(self.__class.__name))
+        error("OrderedPaginator: offset and limit should not be provided for " .. tostring(self.__class.__name))
       end
       parsed.order = table.concat((function()
         local _accum_0 = { }
@@ -300,7 +305,7 @@ do
         end
         local pos_count = select("#", ...)
         if pos_count > #escaped_fields then
-          error("passed in too many values for paginated query (expected " .. tostring(#escaped_fields) .. ", got " .. tostring(pos_count) .. ")")
+          error("OrderedPaginator: passed in too many values for paginated query (expected " .. tostring(#escaped_fields) .. ", got " .. tostring(pos_count) .. ")")
         end
         local order_clause
         if 1 == pos_count then
@@ -383,6 +388,11 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  valid_orders = {
+    asc = true,
+    desc = true
+  }
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end

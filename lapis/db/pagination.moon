@@ -116,7 +116,7 @@ class OffsetPaginator extends Paginator
       parsed.order = nil
 
       if parsed.group
-        error "Paginator can't calculate total items in a query with group by"
+        error "OffsetPaginator: can't calculate total items in a query with group by"
 
       tbl_name = @db.escape_identifier @model\table_name!
       query = "COUNT(*) AS c FROM #{tbl_name} #{rebuild_query_clause parsed}"
@@ -127,6 +127,11 @@ class OffsetPaginator extends Paginator
 class OrderedPaginator extends Paginator
   order: "ASC" -- default sort order
   per_page: 10
+
+  valid_orders = {
+    asc: true
+    desc: true
+  }
 
   new: (model, @field, ...) =>
     super model, ...
@@ -156,6 +161,10 @@ class OrderedPaginator extends Paginator
     parsed = assert @db.parse_clause @_clause
     has_multi_fields = type(@field) == "table" and not @db.is_raw @field
 
+    order_lower = order\lower!
+    unless valid_orders[order_lower]
+      error "OrderedPaginator: invalid query order: #{order}"
+
     table_name = @model\table_name!
     prefix = @db.escape_identifier(table_name) .. "."
 
@@ -165,10 +174,10 @@ class OrderedPaginator extends Paginator
       { prefix .. @db.escape_identifier @field }
 
     if parsed.order
-      error "order should not be provided for #{@@__name}"
+      error "OrderedPaginator: order should not be provided for #{@@__name}"
 
     if parsed.offset or parsed.limit
-      error "offset and limit should not be provided for #{@@__name}"
+      error "OrderedPaginator: offset and limit should not be provided for #{@@__name}"
 
     parsed.order = table.concat ["#{f} #{order}" for f in *escaped_fields], ", "
 
@@ -181,7 +190,7 @@ class OrderedPaginator extends Paginator
 
       pos_count = select "#", ...
       if pos_count > #escaped_fields
-        error "passed in too many values for paginated query (expected #{#escaped_fields}, got #{pos_count})"
+        error "OrderedPaginator: passed in too many values for paginated query (expected #{#escaped_fields}, got #{pos_count})"
 
       order_clause = if 1 == pos_count
         order_clause = "#{escaped_fields[1]} #{op} #{@db.escape_literal (...)}"
