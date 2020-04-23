@@ -1543,6 +1543,8 @@ You can call the `refresh` method to clear the relation caches.
 A one to many relation. It defines two methods, one that returns a [`Paginator`
 object](#pagination), and one that fetches all of the objects.
 
+
+
 ```lua
 local Model = require("lapis.db.model").Model
 
@@ -1561,6 +1563,11 @@ class Users extends Model
   }
 ```
 
+The following methods are added to the model for the `posts` relation shown above:
+
+* `get_posts()` (`get_X`) -- fetch all the objects for that relation
+* `get_posts_paginated(opts)` (`get_X_paginated`) -- return a pagination object for iterating through all the posts
+
 We can use the `get_` method to fetch all the associated records. If the
 relation has already been fetched then it will return the cached value. The
 cached value is stored in a field on the model that matches the name of the
@@ -1578,14 +1585,19 @@ posts = user\get_posts!
 SELECT * from "posts" where "user_id" = 123
 ```
 
-The `has_many` relation also creates a `get_X_paginated` method for getting a
-paginator that points to the related objects. This is useful if you know the
-relation could include a large number of things and it does not make sense to
-fetch them all at once.
+The `get_X_paginated` method will return a [paginator](#pagination) for
+iterating through the related objects. This is useful if you know the relation
+could include a large number of things and it does not make sense to fetch them
+all at once.
 
-Any arguments passed to the paginated getter are passed to the paginator's
-constructor, so you can specify things like `fields`, `prepare_results`, and
-`per_page`:
+> It is highly recommended that you either specify and order in the relation,
+> or use the ordered paginator otherwise the database may return items out of
+> order when iterating over the pages of results. This could cause you see
+> duplicate items or skip items entirely.
+
+Any arguments passed to the `get_X_paginated` method are passed to the
+paginator's constructor, so you can specify things like `fields`,
+`prepare_results`, and `per_page`:
 
 
 ```lua
@@ -1600,6 +1612,22 @@ posts = user\get_posts_paginated(per_page: 20)\get_page 3
 SELECT * from "posts" where "user_id" = 123 LIMIT 20 OFFSET 40
 ```
 
+By default, an `OrderedPaginator` (paginated with `LIMIT` and `OFFSET`) is
+created. If you want to use the [OrderedPaginator](#ordered-paginator) you can
+specify an `ordered` option to the method with a list:
+
+
+$dual_code{[[
+pager = user\get_posts_paginated per_page: 20, ordered: {"id"}
+
+posts, next_page = pager\get_page!
+posts2 = pager\get_page next_page
+]]}
+
+```sql
+SELECT * from "posts" where "user_id" = 123 ORDER BY "posts"."id" ASC LIMIT 20
+SELECT * from "posts" where "posts".id > 23892 and ("user_id" = 123) ORDER BY "posts"."id" ASC LIMIT 20
+```
 
 The `has_many` relation supports a few more options:
 
