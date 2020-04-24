@@ -50,11 +50,11 @@ BACKENDS = {
       unless pgmoon
         import Postgres from require "pgmoon"
         pgmoon = Postgres pg_config
-        
+
         if pg_config.timeout
           pg_timeout = assert tonumber(pg_config.timeout), "timeout must be a number (ms)"
           pgmoon\settimeout pg_timeout
-        
+
         assert pgmoon\connect!
 
         if ngx
