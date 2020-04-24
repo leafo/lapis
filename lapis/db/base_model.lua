@@ -14,8 +14,6 @@ do
   require, type, setmetatable, rawget, assert, pairs, unpack, error, next = _obj_0.require, _obj_0.type, _obj_0.setmetatable, _obj_0.rawget, _obj_0.assert, _obj_0.pairs, _obj_0.unpack, _obj_0.error, _obj_0.next
 end
 local cjson = require("cjson")
-local OffsetPaginator
-OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
 local add_relations, mark_loaded_relations
 do
   local _obj_0 = require("lapis.db.model.relations")
@@ -733,8 +731,26 @@ do
       end
     end
   end
-  self.paginated = function(self, ...)
-    return OffsetPaginator(self, ...)
+  self.paginated = function(self, q, fetch_opts, ...)
+    if fetch_opts and fetch_opts.ordered then
+      local OrderedPaginator
+      OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+      local filtered_opts
+      do
+        local _tbl_0 = { }
+        for k, v in pairs(fetch_opts) do
+          if k ~= "ordered" then
+            _tbl_0[k] = v
+          end
+        end
+        filtered_opts = _tbl_0
+      end
+      return OrderedPaginator(self, fetch_opts.ordered, q, filtered_opts, ...)
+    else
+      local OffsetPaginator
+      OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
+      return OffsetPaginator(self, q, fetch_opts, ...)
+    end
   end
   self.extend = function(self, table_name, tbl)
     if tbl == nil then

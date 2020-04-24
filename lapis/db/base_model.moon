@@ -5,7 +5,6 @@ import require, type, setmetatable, rawget, assert, pairs, unpack, error, next f
 
 cjson = require "cjson"
 
-import OffsetPaginator from require "lapis.db.pagination"
 import add_relations, mark_loaded_relations from require "lapis.db.model.relations"
 
 _all_same = (array, val) ->
@@ -431,8 +430,14 @@ class BaseModel
     if fn = @constraints[key]
       fn @, value, key, obj
 
-  @paginated: (...) =>
-    OffsetPaginator @, ...
+  @paginated: (q, fetch_opts, ...) =>
+    if fetch_opts and fetch_opts.ordered
+      import OrderedPaginator from require "lapis.db.pagination"
+      filtered_opts = {k,v for k,v in pairs fetch_opts when k != "ordered"}
+      OrderedPaginator @, fetch_opts.ordered, q, filtered_opts, ...
+    else
+      import OffsetPaginator from require "lapis.db.pagination"
+      OffsetPaginator @, q, fetch_opts, ...
 
   -- alternative to MoonScript inheritance
   @extend: (table_name, tbl={}) =>

@@ -307,12 +307,7 @@ has_many = (name, opts) =>
   unless opts.pager == false
     @__base[get_paginated_method] = (fetch_opts) =>
       model = assert_model @@, source
-      if fetch_opts and fetch_opts.ordered
-        import OrderedPaginator from require "lapis.db.pagination"
-        filtered_opts = {k,v for k,v in pairs fetch_opts when k != "ordered"}
-        OrderedPaginator model, fetch_opts.ordered, build_query(@), filtered_opts
-      else
-        model\paginated build_query(@), fetch_opts
+      model\paginated build_query(@), fetch_opts
 
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
