@@ -466,7 +466,7 @@ Model:extend("user_posts"):singular_name() --> "user_post"
 (class UserPosts extends Model)\singular_name! --> "user_post"
 ```
 
-The singular name is used internally by lapis when calculating what the name of
+The singular name is used internally by Lapis when calculating what the name of
 the field is when loading rows with `include_in`. It's also used when
 determining the foreign key column name with a `has_one` or `has_many`
 relation.
@@ -797,7 +797,12 @@ $options_table{
   {
     name = "timestamp",
     default = "`true`",
-    description = "The `updated_at` field will be updated to the current time if the model has timestamps. Note that if the update itself contains `updated_at` then that will take precedence over the auto-update."
+    description = "The `updated_at` field will be updated to the current time if the model has timestamps. Note that if the update itself contains `updated_at` then that will take precedence over the auto-update.",
+    example = dual_code{[[
+      user\update {
+        views_count: db.raw "views_count + 1"
+      }, timestamp: false
+    ]]}
   }
 }
 
@@ -828,17 +833,33 @@ Consider the following code:
 
 ```lua
 local user = Users:find()
+
+-- Wrong:
 if user then
   user:delete()
   decrement_total_user_count()
+end
+
+-- Correct:
+if user then
+  if user:delete() then
+    decrement_total_user_count()
+  end
 end
 ```
 
 ```moon
 user = Users\find 1
+
+-- Wrong:
 if user
   user\delete!
   decrement_total_user_count!
+
+-- Correct:
+if user
+  if user\delete!
+    decrement_total_user_count!
 ```
 
 Due to the asynchronous nature of OpenResty, it's possible that if two requests
@@ -852,6 +873,9 @@ Updates the values of the fields on the instance from the database.
 
 If your model instance becomes out of date from an external change, use the
 `refresh` method to re-fetch and re-populate its data.
+
+If the row now longer exists in the database, then `refresh` will throw an
+error.
 
 ```moon
 class Posts extends Model
@@ -1818,22 +1842,39 @@ class Users extends Model
   }
 ```
 
+The following options control how the `fetch` relation works:
 
-`fetch` relations can use a preload function to handle loading data for many
-objects at once.
+$options_table{
+  {
+    name = "fetch",
+    description = "Callback function to fetch a result for a single model instance",
+    default = "***required***"
+  },
+  {
+    name = "preload",
+    description = "Callback function to load data for many model instances at once. Receives an argument of an array of model instances, and more. See below"
+  },
+  {
+    name = "many",
+    description = "Set this to true if your fetch relation returns a collection of models instead of a single model. This will allow the preloader to traverse arrays of objects loaded with fetch",
+    default = "`false`"
+  }
+}
 
-The preloader function receives four arguments:
+A preload function can be provided to bulk load data for many objects at once.
+It is automatically called when using any of Lapis' preload functions. The
+`preload` function receives four arguments:
 
 * an array table of model instances that should be preloaded
 * any options passed to the original call to `preload`
 * the class of the model
 * the name of the relation
 
-The preloader is responsible for setting the loaded value on each object. The
-`name` argument is the name of the field that should be filled for each
-instance.  All of the instances will be marked as having the relation loaded,
-regardless of if you set a value or not. This means that future calls to `get_`
-will return the cached value.
+The `preload` function is responsible for setting the loaded value on each
+object. The `name` argument is the name of the field that should be filled for
+each instance.  All of the instances will be marked as having the relation
+loaded, regardless of if you set a value or not. This means that future calls
+to `get_` will return the cached value.
 
 
 ```lua
