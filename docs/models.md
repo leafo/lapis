@@ -199,7 +199,7 @@ SELECT created_at as c from "tags" where tag = 'merchant'
 
 The `fields` option is inserted into the SQL statement as is, so do not use
 untrusted strings otherwise you may be vulnerable to SQL injection. Use
-[`db.escape_identifier`](database.html#query-interface-escape_identifierstr) to
+[`db.escape_identifier`](database.html#query-interface/escape_identifier) to
 escape column names.
 
 You can use the `load` option to change what model each result of the query is
