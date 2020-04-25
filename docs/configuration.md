@@ -209,7 +209,7 @@ $config_table{
 
 For OpenResty, all logging is done to Nginx's notice log using the `print`
 function provided by OpenResty. The default notice logging location is set to
-`stderr`, specified in the default Lapis Nginx configuration. It can configured
+`stderr`, specified in the default Lapis Nginx configuration. It can be configured
 using the [`error_log`
 directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
 
