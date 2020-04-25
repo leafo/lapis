@@ -4,6 +4,8 @@ import runner from require "lapis.cmd.cqueues"
 import SpecServer from require "lapis.spec.server"
 server = SpecServer runner
 
+version = require "lapis.version"
+
 describe "server", ->
   setup ->
     server\load_test_server {
@@ -16,7 +18,7 @@ describe "server", ->
   it "should request basic page", ->
     status, res, headers = server\request "/"
     assert.same 200, status
-    assert.same [[<!DOCTYPE HTML><html lang="en"><head><title>Lapis Page</title></head><body>Welcome to Lapis 1.7.0</body></html>]], res
+    assert.same [[<!DOCTYPE HTML><html lang="en"><head><title>Lapis Page</title></head><body>Welcome to Lapis ]] .. version .. [[</body></html>]], res
 
     assert.same {
       content_type: "text/html"
