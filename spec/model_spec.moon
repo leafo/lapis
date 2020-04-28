@@ -190,14 +190,47 @@ describe "lapis.db.model", ->
 
     class Things extends Model
 
-
     pager = Things\paginated "where color = ?", "blue", per_page: 99
     pager\total_items!
     pager\get_page 3
 
+    -- without opts
+    pager2 = Things\paginated "where number = ?", 100
+    pager2\get_page 2
+
     assert_queries {
       [[SELECT COUNT(*) AS c FROM "things" where color = 'blue']]
       [[SELECT * from "things" where color = 'blue' LIMIT 99 OFFSET 198]]
+      [[SELECT * from "things" where number = 100 LIMIT 10 OFFSET 10]]
+    }
+
+
+  it "creates ordered paginator", ->
+    class Things extends Model
+
+    pager = Things\paginated "where color = ?", "blue", {
+      per_page: 99
+      ordered: "id"
+    }
+
+    import OrderedPaginator from require "lapis.db.pagination"
+
+    assert.same OrderedPaginator, pager.__class
+
+    -- without opts
+    pager2 = Things\paginated "where not deleted", {
+      ordered: {"created_at", "id"}
+      per_page: 55
+    }
+
+    assert.same OrderedPaginator, pager2.__class
+
+    pager\get_page 100
+    pager2\get_page "2020-6-8", 202
+
+    assert_queries {
+      [[SELECT * from "things" where "things"."id" > 100 and (color = 'blue') order by "things"."id" ASC limit 99]]
+      [[SELECT * from "things" where ("things"."created_at", "things"."id") > ('2020-6-8', 202) and (not deleted) order by "things"."created_at" ASC, "things"."id" ASC limit 55]]
     }
 
 

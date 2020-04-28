@@ -430,14 +430,24 @@ class BaseModel
     if fn = @constraints[key]
       fn @, value, key, obj
 
-  @paginated: (q, fetch_opts, ...) =>
+  @paginated: (...) =>
+    nargs = select "#", ...
+
+    local fetch_opts
+
+    fetch_opts = if nargs > 1
+      last_arg = select nargs, ...
+      if last_arg and type(last_arg) == "table"
+        last_arg
+
     if fetch_opts and fetch_opts.ordered
       import OrderedPaginator from require "lapis.db.pagination"
-      filtered_opts = {k,v for k,v in pairs fetch_opts when k != "ordered"}
-      OrderedPaginator @, fetch_opts.ordered, q, filtered_opts, ...
+      args = {...}
+      args[nargs] = {k,v for k,v in pairs fetch_opts when k != "ordered"}
+      OrderedPaginator @, fetch_opts.ordered, unpack args
     else
       import OffsetPaginator from require "lapis.db.pagination"
-      OffsetPaginator @, q, fetch_opts, ...
+      OffsetPaginator @, ...
 
   -- alternative to MoonScript inheritance
   @extend: (table_name, tbl={}) =>

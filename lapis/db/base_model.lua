@@ -731,11 +731,21 @@ do
       end
     end
   end
-  self.paginated = function(self, q, fetch_opts, ...)
+  self.paginated = function(self, ...)
+    local nargs = select("#", ...)
+    local fetch_opts
+    if nargs > 1 then
+      local last_arg = select(nargs, ...)
+      if last_arg and type(last_arg) == "table" then
+        fetch_opts = last_arg
+      end
+    end
     if fetch_opts and fetch_opts.ordered then
       local OrderedPaginator
       OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
-      local filtered_opts
+      local args = {
+        ...
+      }
       do
         local _tbl_0 = { }
         for k, v in pairs(fetch_opts) do
@@ -743,13 +753,13 @@ do
             _tbl_0[k] = v
           end
         end
-        filtered_opts = _tbl_0
+        args[nargs] = _tbl_0
       end
-      return OrderedPaginator(self, fetch_opts.ordered, q, filtered_opts, ...)
+      return OrderedPaginator(self, fetch_opts.ordered, unpack(args))
     else
       local OffsetPaginator
       OffsetPaginator = require("lapis.db.pagination").OffsetPaginator
-      return OffsetPaginator(self, q, fetch_opts, ...)
+      return OffsetPaginator(self, ...)
     end
   end
   self.extend = function(self, table_name, tbl)
