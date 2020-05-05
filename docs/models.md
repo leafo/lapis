@@ -512,11 +512,6 @@ $options_table{
     default = "generated from table name (eg. `Posts` → `post`)"
   },
   {
-    name = "flip",
-    description = "***(deprecated)*** Flips the use of the `key` argument (when a string), to be the column name instead of the field name. `flip` can not be used with an array or table `key` argument",
-    default = "`false`"
-  },
-  {
     name = "where",
     description = "A table of additional conditionals to limit the query by",
     example = dual_code{[[
@@ -545,17 +540,22 @@ $options_table{
     description = "a function called for each fetched row where the return value is used in place of the row object when filling `objects`"
   },
   {
-    name = "local_key",
-    description = "***(deprecated)*** only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `objects`",
-    default = [[`"id"`]]
-  },
-  {
     name = "order",
     description = "the order of items when preloading a `many` preload. Taken as a raw SQL clause"
   },
   {
     name = "group",
     description = "group by clause. Taken as a raw SQL clause"
+  },
+  {
+    name = "flip",
+    description = "***(deprecated)*** Flips the use of the `key` argument (when a string), to be the column name instead of the field name. `flip` can not be used with an array or table `key` argument",
+    default = "`false`"
+  },
+  {
+    name = "local_key",
+    description = "***(deprecated)*** only appropriate when `flip` is true. The name of the field to use when pulling primary keys from `objects`",
+    default = [[`"id"`]]
   }
 }
 
