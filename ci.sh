@@ -31,5 +31,6 @@ echo 'user root;' >> spec_openresty/s2/nginx.conf
 
 ./busted -o utfTerminal
 ./busted -o utfTerminal spec_postgres/
+./busted -o utfTerminal spec_mysql/
 ./busted -o utfTerminal spec_openresty/
 ./busted -o utfTerminal spec_cqueues/

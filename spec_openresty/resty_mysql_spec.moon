@@ -5,7 +5,7 @@ runner = NginxRunner base_path: "spec_openresty/s2/"
 import SpecServer from require "lapis.spec.server"
 server = SpecServer runner
 
-import Users, Posts, Likes from require "spec_mysql.models"
+import Users, Posts, Images, Likes from require "spec_mysql.models"
 
 import setup_db, teardown_db from require "spec_mysql.helpers"
 
@@ -15,6 +15,7 @@ describe "resty", ->
 
     Users\create_table!
     Posts\create_table!
+    Images\create_table!
     Likes\create_table!
 
     server\load_test_server!
