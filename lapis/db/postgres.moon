@@ -244,6 +244,9 @@ _delete = (table, cond, ...) ->
   if cond
     add_cond buff, cond, ...
 
+  if type(cond) == "table"
+    add_returning buff, true, ...
+
   raw_query concat buff
 
 -- truncate many tables

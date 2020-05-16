@@ -182,9 +182,9 @@ do
         return _accum_0
       end)(), "-")
     end,
-    delete = function(self)
-      local res = self.__class.db.delete(self.__class:table_name(), self:_primary_cond())
-      return res.affected_rows and res.affected_rows > 0, res
+    delete = function(self, ...)
+      local res = self.__class.db.delete(self.__class:table_name(), self:_primary_cond(), ...)
+      return (res.affected_rows or 0) > 0, res
     end,
     update = function(self, first, ...)
       return error("subclass responsibility")

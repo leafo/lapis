@@ -137,6 +137,11 @@ tests = {
   }
 
   {
+    -> db.update "cats", { age: db.NULL }, { name: db.NULL }, db.raw "*"
+    [[UPDATE "cats" SET "age" = NULL WHERE "name" IS NULL RETURNING *]]
+  }
+
+  {
     -> db.delete "cats"
     [[DELETE FROM "cats"]]
   }
@@ -155,6 +160,16 @@ tests = {
     -> db.delete "cats", name: "rump", dad: "duck"
     [[DELETE FROM "cats" WHERE "name" = 'rump' AND "dad" = 'duck']]
     [[DELETE FROM "cats" WHERE "dad" = 'duck' AND "name" = 'rump']]
+  }
+
+  {
+    -> db.delete "cats", { color: "red" }, "name", "color"
+    [[DELETE FROM "cats" WHERE "color" = 'red' RETURNING "name", "color"]]
+  }
+
+  {
+    -> db.delete "cats", { color: "red" }, db.raw "*"
+    [[DELETE FROM "cats" WHERE "color" = 'red' RETURNING *]]
   }
 
   {

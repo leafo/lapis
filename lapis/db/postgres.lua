@@ -308,6 +308,9 @@ _delete = function(table, cond, ...)
   if cond then
     add_cond(buff, cond, ...)
   end
+  if type(cond) == "table" then
+    add_returning(buff, true, ...)
+  end
   return raw_query(concat(buff))
 end
 local _truncate
