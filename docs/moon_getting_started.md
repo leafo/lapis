@@ -32,7 +32,7 @@ return value.)
 
 > Don't forget to compile the `.moon` files when changing and creating them.
 > You can watch the current directory and compile automatically with `moonc
-> -w`.
+> -w` but be aware new files aren’t picked up, you have to restart `moonc`.
 
 Try it out by starting the server:
 
