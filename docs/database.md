@@ -105,7 +105,7 @@ There are two ways to make queries:
 1. The [`Model` class](models.html) is a wrapper around a Lua table that helps you synchronize it with a row in a database table.
 
 The `Model` class is the preferred way to interact with the database. The raw
-query interface is for achieving things the `Model` class in unable to do
+query interface is for achieving things the `Model` class is unable to do
 easily.
 
 Here's an example of the raw query interface:
