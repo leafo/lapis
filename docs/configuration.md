@@ -179,7 +179,7 @@ $config_table{
 }
 
 
-### Logging configuration
+### Configuring logging
 
 Logging configuration is stored in a table under the name `logging` in the
 global configuration. If the value is set to `false` then all logging is
@@ -214,6 +214,19 @@ using the [`error_log`
 directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
 
 Otherwise, logs are written to standard out using Lua's `print` function.
+
+## Logging configuration
+
+To log the configuration that the application is running with on start, you can install
+the [inspect](https://luarocks.org/modules/kikito/inspect) LuaRock and do the following:
+
+```lua
+local inspect = require("inspect")
+
+config({'development' -- add your configuration as usual
+
+print(inspect(config.get()))
+```
 
 ## Configurations and Nginx
 
