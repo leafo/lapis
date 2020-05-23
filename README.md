@@ -56,7 +56,7 @@ make mysql_test_db
 
 This repository contains a
 [Dockerfile](https://github.com/leafo/lapis/blob/master/Dockerfile) for running
-the entire test suite. You can it with the following commands:
+the entire test suite. You can run it with the following commands:
 
 ```bash
 docker build -t lapis-test .
