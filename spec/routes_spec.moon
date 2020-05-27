@@ -125,6 +125,7 @@ describe "RouteParser.parse", ->
 
     {"/:ben[a-f]", {
       {"/what", nil}
+      {"/-", nil}
       {"/abf", {ben: "abf"}}
     }}
 

@@ -103,15 +103,17 @@ class RouteParser
 
   -- convert character class, like %d to an lpeg pattern
   compile_character_class: (chars) =>
-    @character_class_pattern or= Ct C("^")^-1 * C(
-      P"%" * S"adw" +
+    @character_class_pattern or= Ct C("^")^-1 * (
+      C(P"%" * S"adw") +
       (C(1) * P"-" * C(1) / (a, b) -> "#{a}#{b}") +
-      1
+      C(1)
     )^1
 
     negate = false
     plain_chars = {}
-    patterns = for item in *@character_class_pattern\match chars
+    items = @character_class_pattern\match chars
+
+    patterns = for item in *items
       switch item
         when "^"
           negate = true

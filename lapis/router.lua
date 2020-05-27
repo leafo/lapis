@@ -130,20 +130,20 @@ do
       return patt, flags, exclude
     end,
     compile_character_class = function(self, chars)
-      self.character_class_pattern = self.character_class_pattern or Ct(C("^") ^ -1 * C(P("%") * S("adw") + (C(1) * P("-") * C(1) / function(a, b)
+      self.character_class_pattern = self.character_class_pattern or Ct(C("^") ^ -1 * (C(P("%") * S("adw")) + (C(1) * P("-") * C(1) / function(a, b)
         return tostring(a) .. tostring(b)
-      end) + 1) ^ 1)
+      end) + C(1)) ^ 1)
       local negate = false
       local plain_chars = { }
+      local items = self.character_class_pattern:match(chars)
       local patterns
       do
         local _accum_0 = { }
         local _len_0 = 1
-        local _list_0 = self.character_class_pattern:match(chars)
-        for _index_0 = 1, #_list_0 do
+        for _index_0 = 1, #items do
           local _continue_0 = false
           repeat
-            local item = _list_0[_index_0]
+            local item = items[_index_0]
             local _exp_0 = item
             if "^" == _exp_0 then
               negate = true
