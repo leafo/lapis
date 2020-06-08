@@ -258,7 +258,7 @@ has_many = (name, opts) =>
   get_method = opts.as or "get_#{name}"
   get_paginated_method = "#{get_method}_paginated"
 
-  build_query = =>
+  build_query = (additional_opts) =>
     foreign_key = opts.key or "#{@@singular_name!}_id"
 
     clause = if type(foreign_key) == "table"
@@ -277,14 +277,17 @@ has_many = (name, opts) =>
         [foreign_key]: @[opts.local_key or @@primary_keys!]
       }
 
-
     if where = opts.where
       for k,v in pairs where
         clause[k] = v
 
+    if additional_opts and additional_opts.where
+      for k,v in pairs additional_opts.where
+        clause[k] = v
+
     clause = "where #{@@db.encode_clause clause}"
 
-    if order = opts.order
+    if order = additional_opts and additional_opts.order or opts.order
       clause ..= " order by #{order}"
 
     clause
@@ -307,7 +310,14 @@ has_many = (name, opts) =>
   unless opts.pager == false
     @__base[get_paginated_method] = (fetch_opts) =>
       model = assert_model @@, source
-      model\paginated build_query(@), fetch_opts
+
+      query_opts = if fetch_opts and (fetch_opts.where or fetch_opts.order)
+        {
+          where: fetch_opts.where
+          order: fetch_opts.order
+        }
+
+      model\paginated build_query(@, query_opts), fetch_opts
 
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source

@@ -373,7 +373,7 @@ has_many = function(self, name, opts)
   local get_method = opts.as or "get_" .. tostring(name)
   local get_paginated_method = tostring(get_method) .. "_paginated"
   local build_query
-  build_query = function(self)
+  build_query = function(self, additional_opts)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
     local clause
     if type(foreign_key) == "table" then
@@ -401,9 +401,14 @@ has_many = function(self, name, opts)
         end
       end
     end
+    if additional_opts and additional_opts.where then
+      for k, v in pairs(additional_opts.where) do
+        clause[k] = v
+      end
+    end
     clause = "where " .. tostring(self.__class.db.encode_clause(clause))
     do
-      local order = opts.order
+      local order = additional_opts and additional_opts.order or opts.order
       if order then
         clause = clause .. " order by " .. tostring(order)
       end
@@ -433,7 +438,14 @@ has_many = function(self, name, opts)
   if not (opts.pager == false) then
     self.__base[get_paginated_method] = function(self, fetch_opts)
       local model = assert_model(self.__class, source)
-      return model:paginated(build_query(self), fetch_opts)
+      local query_opts
+      if fetch_opts and (fetch_opts.where or fetch_opts.order) then
+        query_opts = {
+          where = fetch_opts.where,
+          order = fetch_opts.order
+        }
+      end
+      return model:paginated(build_query(self, query_opts), fetch_opts)
     end
   end
   self.relation_preloaders[name] = function(self, objects, preload_opts)
