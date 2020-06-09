@@ -440,9 +440,13 @@ has_many = function(self, name, opts)
       local model = assert_model(self.__class, source)
       local query_opts
       if fetch_opts and (fetch_opts.where or fetch_opts.order) then
+        local order
+        if not (fetch_opts.ordered) then
+          order = fetch_opts.order
+        end
         query_opts = {
           where = fetch_opts.where,
-          order = fetch_opts.order
+          order = order
         }
       end
       return model:paginated(build_query(self, query_opts), fetch_opts)

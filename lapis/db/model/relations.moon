@@ -312,9 +312,13 @@ has_many = (name, opts) =>
       model = assert_model @@, source
 
       query_opts = if fetch_opts and (fetch_opts.where or fetch_opts.order)
+        -- ordered paginator can take order
+        order = unless fetch_opts.ordered
+          fetch_opts.order
+
         {
           where: fetch_opts.where
-          order: fetch_opts.order
+          :order
         }
 
       model\paginated build_query(@, query_opts), fetch_opts
