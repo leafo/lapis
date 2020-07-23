@@ -209,10 +209,9 @@ has_one = (name, opts) =>
 
     model = assert_model @@, source
 
-    foreign_key = opts.key or "#{@@singular_name!}_id"
-    clause = if type(foreign_key) == "table"
+    clause = if type(opts.key) == "table"
       out = {}
-      for k,v in pairs foreign_key
+      for k,v in pairs opts.key
         key, local_key = if type(k) == "number"
           v, v
         else
@@ -223,7 +222,7 @@ has_one = (name, opts) =>
       out
     else
       {
-        [foreign_key]: @[opts.local_key or @@primary_keys!]
+        [opts.key or "#{@@singular_name!}_id"]: @[opts.local_key or @@primary_keys!]
       }
 
     if where = opts.where
@@ -236,23 +235,22 @@ has_one = (name, opts) =>
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
 
-    foreign_key = opts.key or "#{@@singular_name!}_id"
-    composite_key = type(foreign_key) == "table"
+    -- assert opts.local_key, "`has_one` `local_key` deprecated for composite `key`"
 
-    local_key = unless composite_key
-      opts.local_key or @@primary_keys!
+    key = if type(opts.key) == "table"
+      opts.key
+    else
+      {
+        [opts.key or "#{@@singular_name!}_id"]: opts.local_key or @@primary_keys!
+      }
 
     preload_opts or= {}
-
-    unless composite_key
-      preload_opts.flip = true
 
     preload_opts.for_relation = name
     preload_opts.as = name
     preload_opts.where or= opts.where
-    preload_opts.local_key = local_key
 
-    model\include_in objects, foreign_key, preload_opts
+    model\include_in objects, key, preload_opts
 
 has_many = (name, opts) =>
   source = opts.has_many

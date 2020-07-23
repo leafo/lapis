@@ -315,11 +315,10 @@ has_one = function(self, name, opts)
       }
     end
     local model = assert_model(self.__class, source)
-    local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
     local clause
-    if type(foreign_key) == "table" then
+    if type(opts.key) == "table" then
       local out = { }
-      for k, v in pairs(foreign_key) do
+      for k, v in pairs(opts.key) do
         local key, local_key
         if type(k) == "number" then
           key, local_key = v, v
@@ -331,7 +330,7 @@ has_one = function(self, name, opts)
       clause = out
     else
       clause = {
-        [foreign_key] = self[opts.local_key or self.__class:primary_keys()]
+        [opts.key or tostring(self.__class:singular_name()) .. "_id"] = self[opts.local_key or self.__class:primary_keys()]
       }
     end
     do
@@ -350,21 +349,19 @@ has_one = function(self, name, opts)
   end
   self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
-    local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
-    local composite_key = type(foreign_key) == "table"
-    local local_key
-    if not (composite_key) then
-      local_key = opts.local_key or self.__class:primary_keys()
+    local key
+    if type(opts.key) == "table" then
+      key = opts.key
+    else
+      key = {
+        [opts.key or tostring(self.__class:singular_name()) .. "_id"] = opts.local_key or self.__class:primary_keys()
+      }
     end
     preload_opts = preload_opts or { }
-    if not (composite_key) then
-      preload_opts.flip = true
-    end
     preload_opts.for_relation = name
     preload_opts.as = name
     preload_opts.where = preload_opts.where or opts.where
-    preload_opts.local_key = local_key
-    return model:include_in(objects, foreign_key, preload_opts)
+    return model:include_in(objects, key, preload_opts)
   end
 end
 local has_many
