@@ -264,6 +264,7 @@ belongs_to = function(self, name, opts)
   assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
   local get_method = opts.as or "get_" .. tostring(name)
   local column_name = opts.key or tostring(name) .. "_id"
+  assert(type(column_name) == "string", "`belongs_to` relation doesn't support composite key, use `has_one` instead")
   self.__base[get_method] = function(self)
     if not (self[column_name]) then
       return nil

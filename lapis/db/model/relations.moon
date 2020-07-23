@@ -166,6 +166,9 @@ belongs_to = (name, opts) =>
   get_method = opts.as or "get_#{name}"
   column_name = opts.key or "#{name}_id"
 
+  assert type(column_name) == "string",
+    "`belongs_to` relation doesn't support composite key, use `has_one` instead"
+
   @__base[get_method] = =>
     return nil unless @[column_name]
     existing = @[name]
