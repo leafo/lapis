@@ -193,9 +193,12 @@ belongs_to = (name, opts) =>
 
 has_one = (name, opts) =>
   source = opts.has_one
+  model_name = @__name
   assert type(source) == "string", "Expecting model name for `has_one` relation"
 
   get_method = opts.as or "get_#{name}"
+
+  -- assert opts.local_key, "`has_one` relation `local_key` option deprecated for composite `key`"
 
   @__base[get_method] = =>
     existing = @[name]
@@ -221,8 +224,13 @@ has_one = (name, opts) =>
 
       out
     else
+      local_key = opts.local_key
+      unless local_key
+        local_key, extra_key = @@primary_keys!
+        assert extra_key == nil, "Model #{model_name} has composite primary keys, you must specify column mapping directly with `key`"
+
       {
-        [opts.key or "#{@@singular_name!}_id"]: @[opts.local_key or @@primary_keys!]
+        [opts.key or "#{@@singular_name!}_id"]: @[local_key]
       }
 
     if where = opts.where
@@ -235,13 +243,17 @@ has_one = (name, opts) =>
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
 
-    -- assert opts.local_key, "`has_one` `local_key` deprecated for composite `key`"
 
     key = if type(opts.key) == "table"
       opts.key
     else
+      local_key = opts.local_key
+      unless local_key
+        local_key, extra_key = @@primary_keys!
+        assert extra_key == nil, "Model #{model_name} has composite primary keys, you must specify column mapping directly with `key`"
+
       {
-        [opts.key or "#{@@singular_name!}_id"]: opts.local_key or @@primary_keys!
+        [opts.key or "#{@@singular_name!}_id"]: local_key
       }
 
     preload_opts or= {}

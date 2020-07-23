@@ -299,6 +299,7 @@ end
 local has_one
 has_one = function(self, name, opts)
   local source = opts.has_one
+  local model_name = self.__name
   assert(type(source) == "string", "Expecting model name for `has_one` relation")
   local get_method = opts.as or "get_" .. tostring(name)
   self.__base[get_method] = function(self)
@@ -329,8 +330,14 @@ has_one = function(self, name, opts)
       end
       clause = out
     else
+      local local_key = opts.local_key
+      if not (local_key) then
+        local extra_key
+        local_key, extra_key = self.__class:primary_keys()
+        assert(extra_key == nil, "Model " .. tostring(model_name) .. " has composite primary keys, you must specify column mapping directly with `key`")
+      end
       clause = {
-        [opts.key or tostring(self.__class:singular_name()) .. "_id"] = self[opts.local_key or self.__class:primary_keys()]
+        [opts.key or tostring(self.__class:singular_name()) .. "_id"] = self[local_key]
       }
     end
     do
@@ -353,8 +360,14 @@ has_one = function(self, name, opts)
     if type(opts.key) == "table" then
       key = opts.key
     else
+      local local_key = opts.local_key
+      if not (local_key) then
+        local extra_key
+        local_key, extra_key = self.__class:primary_keys()
+        assert(extra_key == nil, "Model " .. tostring(model_name) .. " has composite primary keys, you must specify column mapping directly with `key`")
+      end
       key = {
-        [opts.key or tostring(self.__class:singular_name()) .. "_id"] = opts.local_key or self.__class:primary_keys()
+        [opts.key or tostring(self.__class:singular_name()) .. "_id"] = local_key
       }
     end
     preload_opts = preload_opts or { }

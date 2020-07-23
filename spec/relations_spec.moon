@@ -185,6 +185,50 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "user_profiles" where "user_id" = 123 limit 1'
     }
 
+  it "fails with composite primary key on has_one", ->
+    mock_query "SELECT", { { id: 111, id2: 222 } }
+
+    models.Users = class Users extends Model
+      @primary_key: {"a_id", "b_id"}
+      @relations: {
+        {"user_profile", has_one: "UserProfiles"}
+        {"user_profile_with_key", has_one: "UserProfiles", key: {
+          id: "a_id"
+          id2: "b_id"
+        }}
+      }
+
+    models.UserProfiles = class UserProfiles extends Model
+
+    user = Users!
+    user.a_id = 111
+    user.b_id = 222
+
+    assert.has_error(
+      -> user\get_user_profile!
+      "Model UsersRelations has composite primary keys, you must specify column mapping directly with `key`"
+    )
+
+    assert.has_error(
+      -> Users\preload_relations { user }, "user_profile"
+      "Model UsersRelations has composite primary keys, you must specify column mapping directly with `key`"
+    )
+
+    user\get_user_profile_with_key!
+
+    Users\preload_relations { user }, "user_profile_with_key"
+
+    assert_queries {
+      {
+        'SELECT * from "user_profiles" where "id2" = 222 AND "id" = 111 limit 1'
+        'SELECT * from "user_profiles" where "id" = 111 AND "id2" = 222 limit 1'
+      }
+      {
+        'SELECT * from "user_profiles" where ("id2", "id") in ((222, 111))'
+        'SELECT * from "user_profiles" where ("id", "id1") in ((111, 222))'
+      }
+    }
+
   it "should make has_one getter with custom key", ->
     mock_query "SELECT", { { id: 101 } }
 
