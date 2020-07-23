@@ -100,10 +100,16 @@ do
   local _env = nil
   default_environment = function()
     if _env == nil then
-      _env = "development"
-      pcall(function()
-        _env = require("lapis_environment")
-      end)
+      local running_in_test
+      running_in_test = require("lapis.spec").running_in_test
+      if running_in_test() then
+        _env = "test"
+      else
+        _env = "development"
+        pcall(function()
+          _env = require("lapis_environment")
+        end)
+      end
     end
     return _env
   end

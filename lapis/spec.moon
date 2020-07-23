@@ -47,4 +47,14 @@ assert_no_queries = (fn=error"missing function") ->
   assert res, err
   assert.same {}, query_log
 
-{:use_test_env, :use_test_server, :assert_no_queries}
+
+-- used to determine if default environment should be test intead of development
+-- should return the name of the test harness being used, otherwise false
+running_in_test = ->
+  busted = package.loaded.busted
+  if busted and busted.publish
+    return "busted"
+
+  false
+
+{:use_test_env, :use_test_server, :assert_no_queries, :running_in_test}

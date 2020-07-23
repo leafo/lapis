@@ -81,8 +81,17 @@ assert_no_queries = function(fn)
   assert(res, err)
   return assert.same({ }, query_log)
 end
+local running_in_test
+running_in_test = function()
+  local busted = package.loaded.busted
+  if busted and busted.publish then
+    return "busted"
+  end
+  return false
+end
 return {
   use_test_env = use_test_env,
   use_test_server = use_test_server,
-  assert_no_queries = assert_no_queries
+  assert_no_queries = assert_no_queries,
+  running_in_test = running_in_test
 }

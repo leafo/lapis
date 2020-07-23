@@ -59,8 +59,12 @@ default_environment = do
   _env = nil
   ->
     if _env == nil
-      _env = "development"
-      pcall -> _env = require "lapis_environment"
+      import running_in_test from require "lapis.spec"
+      if running_in_test!
+        _env = "test"
+      else
+        _env = "development"
+        pcall -> _env = require "lapis_environment"
 
     _env
 
