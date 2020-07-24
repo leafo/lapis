@@ -1,23 +1,25 @@
+_env = nil
 
-default_environment = do
-  _env = nil
-  ->
-    unless _env == nil
-      return _env
+set_default_environment = (name) ->
+  _env = name
 
-    _env = os.getenv "LAPIS_ENVIRONMENT"
+default_environment = ->
+  unless _env == nil
+    return _env
 
-    import running_in_test from require "lapis.spec"
-    if running_in_test!
-      if _env == "production"
-        error "You attempt to set the `production` environment name while running in a test suite"
+  _env = os.getenv "LAPIS_ENVIRONMENT"
 
-      _env or= "test"
-    elseif not _env
-      _env = "development"
-      pcall -> _env = require "lapis_environment"
+  import running_in_test from require "lapis.spec"
+  if running_in_test!
+    if _env == "production"
+      error "You attempt to set the `production` environment name while running in a test suite"
 
-    _env
+    _env or= "test"
+  elseif not _env
+    _env = "development"
+    pcall -> _env = require "lapis_environment"
+
+  _env
 
 local popper
 
@@ -70,4 +72,4 @@ assert_env = (env, opts={}) ->
 
   true
 
-{ :push, :pop, :assert_env, :default_environment }
+{ :push, :pop, :assert_env, :default_environment, :set_default_environment }
