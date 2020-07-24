@@ -8,8 +8,11 @@
 The Lapis command line interface gives you a couple of handful tools for
 working with Lapis projects.
 
-For any commands that require an environment as an argument, if no environment
-is specified then the default environment is used. If the file
+Some commands can take an `environment` argument to specify which configuration
+to use. If the environment is not provided then the [default environment]($root/reference/configuration.html#default-environment) is
+used.
+
+If the file
 `lapis_environment.lua` exists in the directory, then the return value of that
 file will be used, otherwise it is `development`.
 

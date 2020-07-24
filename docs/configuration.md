@@ -15,9 +15,30 @@ The `lapis` command line tool takes a second argument when starting the server:
 $ lapis server [environment]
 ```
 
-By default the environment is `development`. The environment name only affects
-what configuration is loaded. The environment name has no effect unless you
-create configurations.
+## Default Environment
+
+The default environment is used when you don't explicitly specify an
+environment. The following conditions are checked in order to determine the
+default environment:
+
+1. When inside a of a test suite (supported environments: [Busted](http://olivinelabs.com/busted/)), the default environment is set to `test`
+2. When a module named `lapis_environment` exists, the return value of that module is used as the default environment
+3. Otherwise, default environment is set to `development`
+
+The default environment affects what configuration is loaded by default. The
+environment name has no effect unless you are working with configurations.
+
+> Database connections use the configurations to determine how to connect to
+> the database, so you'll often use different environments to connect to
+> different databases.
+
+### Overriding The Default Environment
+
+You can override the default environment by setting a `LAPIS_ENVIRONMENT`
+environment variable on your system before executing any Lapis code.
+
+Some `lapis` commands also let you explicitly set the environment to override
+the default.
 
 ## Creating Configurations
 
