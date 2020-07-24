@@ -97,15 +97,15 @@ do
         return os.exit(1)
       end)
     end,
-    get_server_type = function(self)
-      local config = require("lapis.config").get()
+    get_server_type = function(self, environment)
+      local config = require("lapis.config").get(environment)
       return config.server
     end,
-    get_server_module = function(self)
-      return require("lapis.cmd." .. tostring(self:get_server_type()))
+    get_server_module = function(self, environment)
+      return require("lapis.cmd." .. tostring(self:get_server_type(environment)))
     end,
-    get_server_actions = function(self)
-      return require("lapis.cmd." .. tostring(self:get_server_type()) .. ".actions")
+    get_server_actions = function(self, environment)
+      return require("lapis.cmd." .. tostring(self:get_server_type(environment)) .. ".actions")
     end,
     check_context = function(self, contexts)
       if not (contexts) then
@@ -182,7 +182,7 @@ do
           if environment == nil then
             environment = default_environment()
           end
-          return self:get_server_actions().server(self, flags, environment)
+          return self:get_server_actions(environment).server(self, flags, environment)
         end
       },
       {

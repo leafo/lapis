@@ -74,15 +74,15 @@ class Actions
         os.exit 1
     )
 
-  get_server_type: =>
-    config = require("lapis.config").get!
+  get_server_type: (environment) =>
+    config = require("lapis.config").get environment
     config.server
 
-  get_server_module: =>
-    require "lapis.cmd.#{@get_server_type!}"
+  get_server_module: (environment) =>
+    require "lapis.cmd.#{@get_server_type environment}"
 
-  get_server_actions: =>
-    require "lapis.cmd.#{@get_server_type!}.actions"
+  get_server_actions: (environment) =>
+    require "lapis.cmd.#{@get_server_type environment}.actions"
 
   check_context: (contexts) =>
     return true unless contexts
@@ -144,7 +144,7 @@ class Actions
       help: "build config and start server"
 
       (flags, environment=default_environment!) =>
-        @get_server_actions!.server @, flags, environment
+        @get_server_actions(environment).server @, flags, environment
     }
 
     {
