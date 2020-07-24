@@ -18,11 +18,11 @@ local parse_multipart
 parse_multipart = function()
   local out = { }
   local upload = require("resty.upload")
-  local input, err = upload:new(8192)
+  local input, err = upload:new(1024 * 4)
   if not (input) then
     return nil, err
   end
-  input:set_timeout(1000)
+  input:set_timeout(5000)
   local current = {
     content = { }
   }

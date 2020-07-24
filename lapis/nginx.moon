@@ -9,10 +9,10 @@ parse_multipart = ->
   out = {}
   upload = require "resty.upload"
 
-  input, err = upload\new 8192
+  input, err = upload\new 1024*4
   return nil, err unless input
 
-  input\set_timeout 1000 -- 1 sec
+  input\set_timeout 5000
 
   current = { content: {} }
   while true
