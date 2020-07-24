@@ -28,7 +28,7 @@ describe "lapis.env", ->
   it "should push and pop env by name", ->
     env = require "lapis.environment"
     -- default env
-    assert.same "development", require("lapis.config").get!._name
+    assert.same "test", require("lapis.config").get!._name
     env.push "first"
     assert.same "first", require("lapis.config").get!._name
     env.push "second"
@@ -37,7 +37,7 @@ describe "lapis.env", ->
     env.pop!
     assert.same "first", require("lapis.config").get!._name
     env.pop!
-    assert.same "development", require("lapis.config").get!._name
+    assert.same "test", require("lapis.config").get!._name
 
     assert.has_error ->
       env.pop!
