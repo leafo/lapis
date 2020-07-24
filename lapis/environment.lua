@@ -1,5 +1,27 @@
 local default_environment
-default_environment = require("lapis.cmd.util").default_environment
+do
+  local _env = nil
+  default_environment = function()
+    if not (_env == nil) then
+      return _env
+    end
+    _env = os.getenv("LAPIS_ENVIRONMENT")
+    local running_in_test
+    running_in_test = require("lapis.spec").running_in_test
+    if running_in_test() then
+      if _env == "production" then
+        error("You attempt to set the `production` environment name while running in a test suite")
+      end
+      _env = _env or "test"
+    elseif not _env then
+      _env = "development"
+      pcall(function()
+        _env = require("lapis_environment")
+      end)
+    end
+    return _env
+  end
+end
 local popper
 local push
 push = function(name_or_env, overrides)
@@ -64,5 +86,6 @@ end
 return {
   push = push,
   pop = pop,
-  assert_env = assert_env
+  assert_env = assert_env,
+  default_environment = default_environment
 }

@@ -116,7 +116,7 @@ run_with_scope = function(fn, conf)
   return conf
 end
 get_env = function()
-  return os.getenv("LAPIS_ENVIRONMENT") or require("lapis.cmd.util").default_environment()
+  return require("lapis.environment").default_environment()
 end
 do
   local loaded_config = false

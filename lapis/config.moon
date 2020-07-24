@@ -117,7 +117,7 @@ run_with_scope = (fn, conf) ->
   conf
 
 get_env = ->
-  os.getenv"LAPIS_ENVIRONMENT" or require("lapis.cmd.util").default_environment!
+  require("lapis.environment").default_environment!
 
 get = do
   loaded_config = false

@@ -1,8 +1,10 @@
-local default_environment, columnize, parse_flags, write_file_safe
+local columnize, parse_flags, write_file_safe
 do
   local _obj_0 = require("lapis.cmd.util")
-  default_environment, columnize, parse_flags, write_file_safe = _obj_0.default_environment, _obj_0.columnize, _obj_0.parse_flags, _obj_0.write_file_safe
+  columnize, parse_flags, write_file_safe = _obj_0.columnize, _obj_0.parse_flags, _obj_0.write_file_safe
 end
+local default_environment
+default_environment = require("lapis.environment").default_environment
 local colors = require("ansicolors")
 local Actions
 do

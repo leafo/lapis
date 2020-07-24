@@ -1,7 +1,6 @@
 
-import default_environment, columnize,
-  parse_flags, write_file_safe from require "lapis.cmd.util"
-
+import columnize, parse_flags, write_file_safe from require "lapis.cmd.util"
+import default_environment from require "lapis.environment"
 
 colors = require "ansicolors"
 

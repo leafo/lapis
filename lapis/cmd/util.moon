@@ -56,17 +56,12 @@ get_free_port = ->
   port
 
 default_environment = do
-  _env = nil
-  ->
-    if _env == nil
-      import running_in_test from require "lapis.spec"
-      if running_in_test!
-        _env = "test"
-      else
-        _env = "development"
-        pcall -> _env = require "lapis_environment"
+  _inner = ->
+    io.stderr\write "WARNING: You called `default_environment` from the module `lapis.cmd.util`. This function has been moved to `lapis.environment`\n\n"
+    _inner = require("lapis.environment").default_environment
+    _inner!
 
-    _env
+  -> _inner!
 
 parse_flags = (input) ->
   flags = {}
