@@ -29,7 +29,7 @@ end
 write_file = function(path, content)
   assert(content, "trying to write file with no content")
   do
-    local _with_0 = io.open(path, "w")
+    local _with_0 = assert(io.open(path, "w"))
     _with_0:write(content)
     _with_0:close()
     return _with_0
