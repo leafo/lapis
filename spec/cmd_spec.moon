@@ -155,6 +155,11 @@ describe "lapis.cmd.actions.execute", ->
         "app.moon", "mime.types", "models.moon", "nginx.conf"
       }
 
+    it "fails if files already exist", ->
+      cmd.execute { [0]: "lapis", "new" }
+      assert.has_error ->
+        cmd.execute { [0]: "lapis", "new" }
+
     it "cqueues app", ->
       cmd.execute { [0]: "lapis", "new", "--cqueues" }
       assert_files { "app.moon", "config.lua", "models.moon" }
