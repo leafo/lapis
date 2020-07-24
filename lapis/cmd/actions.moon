@@ -15,8 +15,13 @@ class Actions
     colors "%{bright red}Error:%{reset} #{msg}"
 
   fail_with_message: (msg) =>
-    print colors "%{bright}%{red}Aborting:%{reset} " .. msg
-    os.exit 1
+    import running_in_test from require "lapis.spec"
+
+    if running_in_test!
+      error "Aborting: #{msg}"
+    else
+      print colors "%{bright}%{red}Aborting:%{reset} " .. msg
+      os.exit 1
 
   write_file_safe: (file, content) =>
     colors = require "ansicolors"
@@ -53,7 +58,9 @@ class Actions
     for v in *args
       trace = true if v == "--trace"
 
-    if trace
+    import running_in_test from require "lapis.spec"
+
+    if trace or running_in_test!
       return @execute args
 
     xpcall(
@@ -64,7 +71,6 @@ class Actions
         print msg
         print " * Run with --trace to see traceback"
         print " * Report issues to https://github.com/leafo/lapis/issues"
-
         os.exit 1
     )
 

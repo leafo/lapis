@@ -15,8 +15,14 @@ do
       return colors("%{bright red}Error:%{reset} " .. tostring(msg))
     end,
     fail_with_message = function(self, msg)
-      print(colors("%{bright}%{red}Aborting:%{reset} " .. msg))
-      return os.exit(1)
+      local running_in_test
+      running_in_test = require("lapis.spec").running_in_test
+      if running_in_test() then
+        return error("Aborting: " .. tostring(msg))
+      else
+        print(colors("%{bright}%{red}Aborting:%{reset} " .. msg))
+        return os.exit(1)
+      end
     end,
     write_file_safe = function(self, file, content)
       colors = require("ansicolors")
@@ -75,7 +81,9 @@ do
           trace = true
         end
       end
-      if trace then
+      local running_in_test
+      running_in_test = require("lapis.spec").running_in_test
+      if trace or running_in_test() then
         return self:execute(args)
       end
       return xpcall(function()
