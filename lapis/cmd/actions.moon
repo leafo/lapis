@@ -49,6 +49,8 @@ class Actions
       return
 
     fn = assert(action[1], "action `#{action_name}' not implemented")
+    -- TODO: this should be aware of the environment from the args otherwise it
+    -- will use default environemnt and could read incorrect server
     assert @check_context action.context
     fn @, flags, unpack rest
 
@@ -76,7 +78,7 @@ class Actions
 
   get_server_type: (environment) =>
     config = require("lapis.config").get environment
-    config.server
+    (assert config.server, "failed to get server type from config (did you set `server`?)")
 
   get_server_module: (environment) =>
     require "lapis.cmd.#{@get_server_type environment}"
@@ -211,7 +213,7 @@ class Actions
 
     {
       name: "exec"
-      usage: "exec <lua-string>"
+      usage: "exec <lua-string> [environment]"
       help: "execute Lua on the server"
       context: { "nginx" }
 

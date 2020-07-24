@@ -99,7 +99,7 @@ do
     end,
     get_server_type = function(self, environment)
       local config = require("lapis.config").get(environment)
-      return config.server
+      return (assert(config.server, "failed to get server type from config (did you set `server`?)"))
     end,
     get_server_module = function(self, environment)
       return require("lapis.cmd." .. tostring(self:get_server_type(environment)))
@@ -263,7 +263,7 @@ do
       },
       {
         name = "exec",
-        usage = "exec <lua-string>",
+        usage = "exec <lua-string> [environment]",
         help = "execute Lua on the server",
         context = {
           "nginx"
