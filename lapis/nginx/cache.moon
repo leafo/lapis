@@ -9,11 +9,25 @@ import sort, concat from table
 
 default_dict_name = "page_cache"
 
-cache_key = (path, params, r) ->
-  params = [k.. ":" .. v for k,v in pairs params]
+serialize_table_value = (params) ->
+  params = for k,v in pairs params
+    value = switch type v
+      when "table"
+        serialize_table_value v
+      when "string"
+        v
+      when "nil", "boolean"
+        tostring v
+      else
+        error "unknown param type: #{type v}"
+
+    tostring(k) .. ":" .. value
+
   sort params
-  params = concat params, "-"
-  path .. "#" .. params
+  concat params, "-"
+
+cache_key = (path, params, r) ->
+  path .. "#" .. serialize_table_value params
 
 get_dict = (dict_name, ...) ->
   switch type(dict_name)

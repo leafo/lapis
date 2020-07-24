@@ -5,20 +5,35 @@ do
   sort, concat = _obj_0.sort, _obj_0.concat
 end
 local default_dict_name = "page_cache"
-local cache_key
-cache_key = function(path, params, r)
+local serialize_table_value
+serialize_table_value = function(params)
   do
     local _accum_0 = { }
     local _len_0 = 1
     for k, v in pairs(params) do
-      _accum_0[_len_0] = k .. ":" .. v
+      local value
+      local _exp_0 = type(v)
+      if "table" == _exp_0 then
+        value = serialize_table_value(v)
+      elseif "string" == _exp_0 then
+        value = v
+      elseif "nil" == _exp_0 or "boolean" == _exp_0 then
+        value = tostring(v)
+      else
+        value = error("unknown param type: " .. tostring(type(v)))
+      end
+      local _value_0 = tostring(k) .. ":" .. value
+      _accum_0[_len_0] = _value_0
       _len_0 = _len_0 + 1
     end
     params = _accum_0
   end
   sort(params)
-  params = concat(params, "-")
-  return path .. "#" .. params
+  return concat(params, "-")
+end
+local cache_key
+cache_key = function(path, params, r)
+  return path .. "#" .. serialize_table_value(params)
 end
 local get_dict
 get_dict = function(dict_name, ...)

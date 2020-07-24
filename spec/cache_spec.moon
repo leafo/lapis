@@ -10,7 +10,38 @@ describe "lapis.cache", ->
   before_each -> mock_shared.setup!
   after_each -> mock_shared.teardown!
 
-  it "should cache a page #ddd", ->
+  describe "cache_key", ->
+    it "hadles empty params", ->
+      import cache_key from require "lapis.cache"
+      assert.same "/#", cache_key "/", {}
+
+    it "hadles params", ->
+      import cache_key from require "lapis.cache"
+      assert.same "/site#hello:world-one:two-three:four", cache_key "/site", {
+        one: "two"
+        three: "four"
+        "hello": "world"
+      }
+
+    it "hadles boolean params", ->
+      import cache_key from require "lapis.cache"
+      assert.same "/site#good:cat-other:false-thing:true", cache_key "/site", {
+        thing: true
+        other: false
+        "good": "cat"
+      }
+
+    it "hadles nested params", ->
+      import cache_key from require "lapis.cache"
+      assert.same "/site#age:1:one-2:two-thing:true", cache_key "/site", {
+        age: {
+          "one"
+          "two"
+        }
+        thing: true
+      }
+
+  it "caches a page", ->
     counter = 0
 
     class App extends lapis.Application
@@ -28,7 +59,7 @@ describe "lapis.cache", ->
 
     assert.same 1, counter
 
-  it "should skip cache with when", ->
+  it "skips cache with when", ->
     count = 0
 
     class App extends lapis.Application
@@ -45,7 +76,7 @@ describe "lapis.cache", ->
       _, body = assert_request App!, "/hoi"
       assert.same "hello #{i}", body
 
-  it "should skip cache non non-get", ->
+  it "skips cache non non-get", ->
     count = 0
 
     class App extends lapis.Application
@@ -64,7 +95,7 @@ describe "lapis.cache", ->
       }
       assert.same "hello #{i}", body
 
-  it "should cache a page based on params", ->
+  it "caches a page based on params", ->
     counters = setmetatable {}, __index: => 0
 
     class App extends lapis.Application
