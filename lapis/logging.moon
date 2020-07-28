@@ -1,4 +1,12 @@
 
+_print = if ngx
+  print
+else
+  (...) -> io.stderr\write table.concat({...}, "\t") .. "\n"
+
+set_print = (p) ->
+  _print = p
+
 colors = require "ansicolors"
 import insert from table
 
@@ -40,9 +48,9 @@ query = do
       return unless l and l.queries
 
     if duration
-      print log_tpl_time\format prefix, "%.2fms"\format(duration * 1000), query
+      _print log_tpl_time\format prefix, "%.2fms"\format(duration * 1000), query
     else
-      print log_tpl\format prefix, query
+      _print log_tpl\format prefix, query
 
 request = (r) ->
   l = config.logging
@@ -66,15 +74,15 @@ request = (r) ->
   t = "[%{#{status_color}}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
 
   cmd = "#{req.cmd_mth} #{req.cmd_url}"
-  print colors(t)\format status, cmd, flatten_params r.url_params
+  _print colors(t)\format status, cmd, flatten_params r.url_params
 
 migration = do
   log_tpl = colors("%{bright}%{yellow}Migrating: %{reset}%{green}%s%{reset}")
-  (name) -> print log_tpl\format name
+  (name) -> _print log_tpl\format name
 
 notice = do
   log_tpl = colors("%{bright}%{yellow}Notice: %{reset}%s")
-  (msg) -> print log_tpl\format msg
+  (msg) -> _print log_tpl\format msg
 
 migration_summary = (count) ->
   noun = if count == 1
@@ -82,7 +90,7 @@ migration_summary = (count) ->
   else
     "migrations"
 
-  print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
+  _print colors("%{bright}%{yellow}Ran%{reset} #{count} %{bright}%{yellow}#{noun}")
 
 start_server = (port, environment_name) ->
   l = config.logging
@@ -92,5 +100,5 @@ start_server = (port, environment_name) ->
     print colors("%{bright}%{yellow}Environment: #{environment_name}%{reset}")
 
 { :request, :query, :migration, :migration_summary, :notice, :flatten_params,
-  :start_server }
+  :start_server, :set_print }
 

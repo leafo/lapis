@@ -1,3 +1,17 @@
+local _print
+if ngx then
+  _print = print
+else
+  _print = function(...)
+    return io.stderr:write(table.concat({
+      ...
+    }, "\t") .. "\n")
+  end
+end
+local set_print
+set_print = function(p)
+  _print = p
+end
 local colors = require("ansicolors")
 local insert
 insert = table.insert
@@ -50,9 +64,9 @@ do
       end
     end
     if duration then
-      return print(log_tpl_time:format(prefix, ("%.2fms"):format(duration * 1000), query))
+      return _print(log_tpl_time:format(prefix, ("%.2fms"):format(duration * 1000), query))
     else
-      return print(log_tpl:format(prefix, query))
+      return _print(log_tpl:format(prefix, query))
     end
   end
 end
@@ -80,18 +94,18 @@ request = function(r)
   end
   local t = "[%{" .. tostring(status_color) .. "}%s%{reset}] %{bright}%{cyan}%s%{reset} - %s"
   local cmd = tostring(req.cmd_mth) .. " " .. tostring(req.cmd_url)
-  return print(colors(t):format(status, cmd, flatten_params(r.url_params)))
+  return _print(colors(t):format(status, cmd, flatten_params(r.url_params)))
 end
 do
   local log_tpl = colors("%{bright}%{yellow}Migrating: %{reset}%{green}%s%{reset}")
   migration = function(name)
-    return print(log_tpl:format(name))
+    return _print(log_tpl:format(name))
   end
 end
 do
   local log_tpl = colors("%{bright}%{yellow}Notice: %{reset}%s")
   notice = function(msg)
-    return print(log_tpl:format(msg))
+    return _print(log_tpl:format(msg))
   end
 end
 migration_summary = function(count)
@@ -101,7 +115,7 @@ migration_summary = function(count)
   else
     noun = "migrations"
   end
-  return print(colors("%{bright}%{yellow}Ran%{reset} " .. tostring(count) .. " %{bright}%{yellow}" .. tostring(noun)))
+  return _print(colors("%{bright}%{yellow}Ran%{reset} " .. tostring(count) .. " %{bright}%{yellow}" .. tostring(noun)))
 end
 start_server = function(port, environment_name)
   local l = config.logging
@@ -120,5 +134,6 @@ return {
   migration_summary = migration_summary,
   notice = notice,
   flatten_params = flatten_params,
-  start_server = start_server
+  start_server = start_server,
+  set_print = set_print
 }
