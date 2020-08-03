@@ -17,7 +17,7 @@ assert_same_rows = (a, b) ->
 
 (models) ->
   import it, describe, before_each, after_each from require "busted"
-  import Users, Posts, Likes from models
+  import Users, Posts, Images, Likes from models
 
   describe "basic model", ->
     before_each ->
@@ -182,10 +182,11 @@ assert_same_rows = (a, b) ->
     before_each ->
       Users\create_table!
       Posts\create_table!
+      Images\create_table!
       Likes\create_table!
 
       package.loaded.models = {
-        :Users, :Posts, :Likes
+        :Users, :Posts, :Images, :Likes
       }
 
       query_log = {}
@@ -272,6 +273,7 @@ assert_same_rows = (a, b) ->
     before_each ->
       Users\create_table!
       Posts\create_table!
+      Images\create_table!
       Likes\create_table!
 
     before_each ->

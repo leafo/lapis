@@ -33,8 +33,12 @@ class Model extends BaseModel
       -- either luasql (field res.last_auto_id) or
       -- lua-resty-mysql (field res.insert_id) and
       new_id = res.last_auto_id or res.insert_id
-      if not values[@primary_key] and new_id and new_id != 0
-        values[@primary_key] = new_id
+      pk = @primary_key
+      -- In a compound primary key, the auto_increment field must be last.
+      if type(pk) == "table"
+        pk = pk[#pk]
+      if not values[pk] and new_id and new_id != 0
+        values[pk] = new_id
       @load values
     else
       nil, "Failed to create #{@__name}"

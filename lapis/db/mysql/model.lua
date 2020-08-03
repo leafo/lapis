@@ -136,8 +136,12 @@ do
     local res = db.insert(self:table_name(), values, self:primary_keys())
     if res then
       local new_id = res.last_auto_id or res.insert_id
-      if not values[self.primary_key] and new_id and new_id ~= 0 then
-        values[self.primary_key] = new_id
+      local pk = self.primary_key
+      if type(pk) == "table" then
+        pk = pk[#pk]
+      end
+      if not values[pk] and new_id and new_id ~= 0 then
+        values[pk] = new_id
       end
       return self:load(values)
     else

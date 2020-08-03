@@ -22,6 +22,10 @@ class Users extends Model
 class Posts extends Model
   @timestamp: true
 
+  @relations: {
+    {"images", has_many: "Images"}
+  }
+
   @create_table: =>
     drop_tables @
     create_table @table_name!, {
@@ -32,6 +36,28 @@ class Posts extends Model
       {"created_at", types.time}
       {"updated_at", types.time}
       "PRIMARY KEY (id)"
+    }
+
+  @truncate: =>
+    truncate_tables @
+
+class Images extends Model
+  @timestamp: true
+
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"post_id", types.integer}
+      -- TODO Can't use types.id for "id" because it specifies primary_key.
+      -- We could pre-process the fields and collect primary keys first, then
+      -- create a "PRIMARY KEY" string internally.
+      {"id", types.integer auto_increment: true}
+      {"user_id", types.integer null: true}
+      {"url", types.text null: false}
+      {"created_at", types.time}
+      {"updated_at", types.time}
+
+      "PRIMARY KEY (post_id, id)"
     }
 
   @truncate: =>
@@ -79,7 +105,7 @@ describe "model", ->
 
   describe "core model", ->
     build = require "spec.core_model_specs"
-    build { :Users, :Posts, :Likes }
+    build { :Users, :Posts, :Images, :Likes }
 
   it "should get columns of model", ->
     Users\create_table!

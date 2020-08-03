@@ -16,15 +16,47 @@ class Users extends Model
 class Posts extends Model
   @timestamp: true
 
+  @relations: {
+    {"images", has_many: "Images"}
+  }
+
   @create_table: =>
     drop_tables @
     create_table @table_name!, {
       {"id", types.id}
       {"user_id", types.integer null: true}
-      {"title", types.text null: false}
-      {"body", types.text null: false}
+      {"title", types.text null: true}
+      {"body", types.text null: true}
       {"created_at", types.datetime}
       {"updated_at", types.datetime}
+    }
+
+  @truncate: =>
+    truncate_tables @
+
+class Images extends Model
+  @primary_key: {"user_id", "id"}
+  @timestamp: true
+
+  @relations: {
+    {"user", belongs_to: "Users"}
+    {"post", belongs_to: "Posts"}
+  }
+
+  @create_table: =>
+    drop_tables @
+    create_table @table_name!, {
+      {"post_id", types.integer}
+      -- Can't use types.id for "id" because it specifies primary_key
+      {"id", types.integer auto_increment: true}
+      {"user_id", types.integer null: true}
+      {"url", types.text null: false}
+      {"created_at", types.datetime}
+      {"updated_at", types.datetime}
+
+      "PRIMARY KEY (post_id, id)"
+      -- auto_increment must be a key of its own (PK or otherwise)
+      "KEY id (id)"
     }
 
   @truncate: =>
@@ -44,7 +76,7 @@ class Likes extends Model
     create_table @table_name!, {
       {"user_id", types.integer}
       {"post_id", types.integer}
-      {"count", types.integer}
+      {"count", types.integer default: 0}
       {"created_at", types.datetime}
       {"updated_at", types.datetime}
 
@@ -54,4 +86,4 @@ class Likes extends Model
   @truncate: =>
     truncate_tables @
 
-{:Users, :Posts, :Likes}
+{:Users, :Posts, :Images, :Likes}

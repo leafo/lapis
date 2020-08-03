@@ -1,7 +1,7 @@
 lapis = require "lapis"
 db = require "lapis.db"
 
-import Users, Posts, Likes from require "spec_mysql.models"
+import Users, Posts, Images, Likes from require "spec_mysql.models"
 
 assert = require "luassert"
 
@@ -21,6 +21,7 @@ class extends lapis.Application
   @before_filter ->
     Users\truncate!
     Posts\truncate!
+    Images\truncate!
     Likes\truncate!
 
   "/": =>
