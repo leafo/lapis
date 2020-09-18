@@ -557,7 +557,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT yeah, count(*) from "thing_items" where "thing_id" in (16, 18, 20, 22, 24) and "deleted" = FALSE order by color desc group by yeah]]
+        [[SELECT yeah, count(*) from "thing_items" where "thing_id" in (16, 18, 20, 22, 24) and "deleted" = FALSE group by yeah order by color desc]]
       }
 
     it "applies value function", ->

@@ -289,11 +289,11 @@ class BaseModel
       if opts and opts.where and next opts.where
         query ..= " and " .. @db.encode_clause opts.where
 
-      if order = many and opts.order
-        query ..= " order by #{order}"
-
       if group = opts and opts.group
         query ..= " group by #{group}"
+
+      if order = many and opts.order
+        query ..= " order by #{order}"
 
       if res = @db.select query
         -- holds all the fetched rows indexed by the dest_key (what was searched by)

@@ -555,15 +555,15 @@ do
         query = query .. (" and " .. self.db.encode_clause(opts.where))
       end
       do
-        local order = many and opts.order
-        if order then
-          query = query .. " order by " .. tostring(order)
-        end
-      end
-      do
         local group = opts and opts.group
         if group then
           query = query .. " group by " .. tostring(group)
+        end
+      end
+      do
+        local order = many and opts.order
+        if order then
+          query = query .. " order by " .. tostring(order)
         end
       end
       do
