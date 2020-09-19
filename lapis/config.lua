@@ -106,6 +106,11 @@ reset = function(env)
   end
 end
 run_with_scope = function(fn, conf)
+  local getfenv, setfenv
+  do
+    local _obj_0 = require("lapis.util.fenv")
+    getfenv, setfenv = _obj_0.getfenv, _obj_0.setfenv
+  end
   local old_env = getfenv(fn)
   local env = setmetatable({
     _conf = conf

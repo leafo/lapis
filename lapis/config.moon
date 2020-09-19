@@ -109,6 +109,8 @@ reset = (env) ->
     config_cache[env] = nil
 
 run_with_scope = (fn, conf) ->
+  import getfenv, setfenv from require "lapis.util.fenv"
+
   old_env = getfenv fn
   env = setmetatable { _conf: conf }, scope_meta
   setfenv fn, env
