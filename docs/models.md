@@ -563,11 +563,8 @@ $options_table{
 > should opt to use the column mapping table instead of `flip` or `local_key`
 > options.
 
-<details>
-
+<details class="aside">
 <summary>How to migrate away from `flip` and `local_key`</summary>
-
-----
 
 Flip is confusing, and is deprecated and will be removed. These examples show
 replacement calls to `include_in` that do not use flip.
@@ -589,9 +586,6 @@ UserData\include_in users, user_id: "internal_id"
 An easy way to think about the column mapping table is as a `where` clause
 table but instead of having literal values you specify the name of the field
 that is pulled from the array of objects.
-
-----
-
 </details>
 
 In order to demonstrate `include_in` we'll need some models: (The columns are
