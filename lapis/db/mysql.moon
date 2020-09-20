@@ -2,6 +2,8 @@
 import type, tostring, pairs, select from _G
 import concat from table
 
+unpack = unpack or table.unpack
+
 import
   FALSE
   NULL

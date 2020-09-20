@@ -3,6 +3,8 @@
 
 assert = require "luassert"
 
+unpack = unpack or table.unpack
+
 assert_same_rows = (a, b) ->
   a = {k,v for k,v in pairs a}
   b = {k,v for k,v in pairs b}

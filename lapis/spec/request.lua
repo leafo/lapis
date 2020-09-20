@@ -1,4 +1,5 @@
 local env = require("lapis.environment")
+local unpack = unpack or table.unpack
 local normalize_headers
 do
   local normalize

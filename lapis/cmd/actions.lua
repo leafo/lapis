@@ -6,6 +6,7 @@ end
 local default_environment
 default_environment = require("lapis.environment").default_environment
 local colors = require("ansicolors")
+local unpack = unpack or table.unpack
 local Actions
 do
   local _class_0

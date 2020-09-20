@@ -1,6 +1,7 @@
 db = require "lapis.db.postgres"
 
-import select, pairs, unpack, type, select from _G
+import select, pairs, type, select from _G
+unpack = unpack or table.unpack
 import insert from table
 
 import BaseModel, Enum, enum from require "lapis.db.base_model"

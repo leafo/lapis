@@ -5,6 +5,7 @@ do
   local _obj_0 = _G
   type, tostring, pairs, select = _obj_0.type, _obj_0.tostring, _obj_0.pairs, _obj_0.select
 end
+local unpack = unpack or table.unpack
 local raw_query, raw_disconnect
 local logger
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable

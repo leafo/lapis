@@ -1,6 +1,8 @@
 
 import assert_env from require "lapis.environment"
 
+unpack = unpack or table.unpack
+
 truncate_tables = (...) ->
   db = require "lapis.db"
 

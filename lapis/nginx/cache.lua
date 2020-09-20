@@ -1,4 +1,5 @@
 local json = require("cjson")
+local unpack = unpack or table.unpack
 local sort, concat
 do
   local _obj_0 = table

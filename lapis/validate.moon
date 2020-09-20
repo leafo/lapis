@@ -1,6 +1,8 @@
 
 import insert from table
 
+unpack = unpack or table.unpack
+
 validate_functions = {
   exists: (input) ->
     input and input != "", "%s must be provided"

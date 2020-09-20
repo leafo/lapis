@@ -5,6 +5,7 @@ local escape_literal, escape_identifier, is_raw
 escape_literal, escape_identifier, is_raw = db.escape_literal, db.escape_identifier, db.is_raw
 local concat
 concat = table.concat
+local unpack = unpack or table.unpack
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do

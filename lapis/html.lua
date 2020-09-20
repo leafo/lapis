@@ -3,9 +3,12 @@ do
   local _obj_0 = table
   concat, insert = _obj_0.concat, _obj_0.insert
 end
-local _G = _G
 local type, pairs, ipairs, tostring, getmetatable, setmetatable, table
-type, pairs, ipairs, tostring, getmetatable, setmetatable, table = _G.type, _G.pairs, _G.ipairs, _G.tostring, _G.getmetatable, _G.setmetatable, _G.table
+do
+  local _obj_0 = _G
+  type, pairs, ipairs, tostring, getmetatable, setmetatable, table = _obj_0.type, _obj_0.pairs, _obj_0.ipairs, _obj_0.tostring, _obj_0.getmetatable, _obj_0.setmetatable, _obj_0.table
+end
+local unpack = unpack or table.unpack
 local getfenv, setfenv
 do
   local _obj_0 = require("lapis.util.fenv")

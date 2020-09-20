@@ -5,6 +5,7 @@
 --    :something[num] *[slug]
 
 import insert from table
+unpack = unpack or table.unpack
 
 lpeg = require "lpeg"
 

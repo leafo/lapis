@@ -3,6 +3,7 @@ url = require "socket.url"
 json = require "cjson"
 
 import concat, insert from table
+unpack = unpack or table.unpack
 import floor from math
 
 -- TODO: make this a dependency

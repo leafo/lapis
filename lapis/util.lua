@@ -5,6 +5,7 @@ do
   local _obj_0 = table
   concat, insert = _obj_0.concat, _obj_0.insert
 end
+local unpack = unpack or table.unpack
 local floor
 floor = math.floor
 local date

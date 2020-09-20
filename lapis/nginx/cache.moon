@@ -5,6 +5,8 @@
 
 json = require "cjson"
 
+unpack = unpack or table.unpack
+
 import sort, concat from table
 
 default_dict_name = "page_cache"

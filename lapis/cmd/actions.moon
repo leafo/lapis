@@ -4,6 +4,8 @@ import default_environment from require "lapis.environment"
 
 colors = require "ansicolors"
 
+unpack = unpack or table.unpack
+
 class Actions
   defalt_action: "help"
 

@@ -1,5 +1,6 @@
 local assert_env
 assert_env = require("lapis.environment").assert_env
+local unpack = unpack or table.unpack
 local truncate_tables
 truncate_tables = function(...)
   local db = require("lapis.db")

@@ -1,5 +1,6 @@
 import concat from table
 import type, tostring, pairs, select from _G
+unpack = unpack or table.unpack
 
 local raw_query, raw_disconnect
 local logger

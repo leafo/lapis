@@ -5,6 +5,7 @@ local concat
 concat = table.concat
 local gen_index_name
 gen_index_name = require("lapis.db.base").gen_index_name
+local unpack = unpack or table.unpack
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do

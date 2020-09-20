@@ -8,6 +8,8 @@ import insert from table
 
 json = require "cjson"
 
+unpack = unpack or table.unpack
+
 local capture_errors, capture_errors_json, respond_to
 
 run_before_filter = (filter, r) ->

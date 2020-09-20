@@ -1,5 +1,6 @@
 local insert
 insert = table.insert
+local unpack = unpack or table.unpack
 local validate_functions = {
   exists = function(input)
     return input and input ~= "", "%s must be provided"

@@ -1,6 +1,8 @@
 
 import Router, RouteParser from require "lapis.router"
 
+unpack = unpack or table.unpack
+
 build_router = (routes) ->
   handler = (...) -> { ... }
   with r = Router!

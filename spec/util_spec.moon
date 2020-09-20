@@ -2,6 +2,8 @@
 util = require "lapis.util"
 json = require "cjson"
 
+unpack = unpack or table.unpack
+
 tests = {
   {
     -> util.parse_query_string "field1=value1&field2=value2&field3=value3"

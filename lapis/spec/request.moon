@@ -1,6 +1,8 @@
 
 env = require "lapis.environment"
 
+unpack = unpack or table.unpack
+
 normalize_headers = do
   normalize = (header) ->
     header\lower!\gsub "-", "_"

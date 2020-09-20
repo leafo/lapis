@@ -3,6 +3,8 @@ require "spec.helpers" -- for one_of
 db = require "lapis.db.postgres"
 schema = require "lapis.db.postgres.schema"
 
+unpack = unpack or table.unpack
+
 value_table = { hello: "world", age: 34 }
 
 tests = {

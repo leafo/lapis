@@ -2,6 +2,8 @@
 import insert, concat from table
 import get_fields from require "lapis.util"
 
+unpack = unpack or table.unpack
+
 query_parts = {"where", "group", "having", "order", "limit", "offset"}
 rebuild_query_clause = (parsed) ->
   buffer = {}

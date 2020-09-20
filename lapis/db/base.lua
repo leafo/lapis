@@ -63,6 +63,7 @@ local is_list
 is_list = function(val)
   return getmetatable(val) == DBList.__base
 end
+local unpack = unpack or table.unpack
 local is_encodable
 is_encodable = function(item)
   local _exp_0 = type(item)

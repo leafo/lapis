@@ -5,6 +5,7 @@ do
 end
 local concat
 concat = table.concat
+local unpack = unpack or table.unpack
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
 do
   local _obj_0 = require("lapis.db.base")

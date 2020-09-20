@@ -4,6 +4,8 @@ import escape_literal, escape_identifier from db
 import concat from table
 import gen_index_name from require "lapis.db.base"
 
+unpack = unpack or table.unpack
+
 append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...

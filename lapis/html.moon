@@ -1,9 +1,10 @@
 
 import concat, insert from table
 
-_G = _G
 import type, pairs, ipairs, tostring, getmetatable,
   setmetatable, table from _G
+
+unpack = unpack or table.unpack
 
 import getfenv, setfenv from require "lapis.util.fenv"
 

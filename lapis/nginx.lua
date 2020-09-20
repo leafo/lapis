@@ -6,6 +6,7 @@ end
 local run_after_dispatch
 run_after_dispatch = require("lapis.nginx.context").run_after_dispatch
 local lapis_config = require("lapis.config")
+local unpack = unpack or table.unpack
 local flatten_params
 flatten_params = function(t)
   local _tbl_0 = { }

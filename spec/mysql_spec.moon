@@ -3,6 +3,8 @@ require "spec.helpers" -- for one_of
 db = require "lapis.db.mysql"
 schema = require "lapis.db.mysql.schema"
 
+unpack = unpack or table.unpack
+
 -- TODO: we can't test escape_literal with strings here because we need a
 -- connection for escape function
 

@@ -2,6 +2,8 @@ import escape_pattern, parse_content_disposition, build_url from require "lapis.
 import run_after_dispatch from require "lapis.nginx.context"
 lapis_config = require "lapis.config"
 
+unpack = unpack or table.unpack
+
 flatten_params = (t) ->
   {k, type(v) == "table" and v[#v] or v for k,v in pairs t}
 

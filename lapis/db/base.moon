@@ -9,6 +9,8 @@ class DBList
 list = (items) -> setmetatable {items}, DBList.__base
 is_list = (val) -> getmetatable(val) == DBList.__base
 
+unpack = unpack or table.unpack
+
 -- is item a value we can insert into a query
 is_encodable = (item) ->
   switch type(item)

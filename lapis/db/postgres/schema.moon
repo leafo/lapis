@@ -3,6 +3,7 @@ db = require "lapis.db.postgres"
 import gen_index_name from require "lapis.db.base"
 import escape_literal, escape_identifier, is_raw from db
 import concat from table
+unpack = unpack or table.unpack
 
 append_all = (t, ...) ->
   for i=1, select "#", ...

@@ -1,5 +1,6 @@
 local insert
 insert = table.insert
+local unpack = unpack or table.unpack
 local lpeg = require("lpeg")
 local R, S, V, P
 R, S, V, P = lpeg.R, lpeg.S, lpeg.V, lpeg.P

@@ -5,6 +5,7 @@ do
 end
 local get_fields
 get_fields = require("lapis.util").get_fields
+local unpack = unpack or table.unpack
 local query_parts = {
   "where",
   "group",
