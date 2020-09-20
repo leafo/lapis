@@ -465,7 +465,12 @@ END]]
   }
 
   {
-    -> db.is_encodable newproxy!
+    ->
+      if _G.newproxy
+        db.is_encodable newproxy!
+      else
+        -- cjson.empty_array is a userdata
+        db.is_encodable require("cjson").empty_array
     false
   }
 
