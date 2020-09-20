@@ -225,7 +225,7 @@ describe "lapis.db.model.relations", ->
       }
       {
         'SELECT * from "user_profiles" where ("id2", "id") in ((222, 111))'
-        'SELECT * from "user_profiles" where ("id", "id1") in ((111, 222))'
+        'SELECT * from "user_profiles" where ("id", "id2") in ((111, 222))'
       }
     }
 

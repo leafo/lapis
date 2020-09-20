@@ -681,7 +681,10 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+        {
+          [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+          [[SELECT * from "thing_items" where ("bid", "aid") in ((201, 100), (202, 101), (203, 101), (204, 102), (205, 102))]]
+        }
       }
 
       assert.same thing_items[4], things[1].thing_item
@@ -705,7 +708,10 @@ describe "lapis.db.model", ->
       }, many: true
 
       assert_queries {
-        [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+        {
+          [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+          [[SELECT * from "thing_items" where ("bid", "aid") in ((201, 100), (202, 101), (203, 101), (204, 102), (205, 102))]]
+        }
       }
 
       assert.same {}, things[1].thing_items
