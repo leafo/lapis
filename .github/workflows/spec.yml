@@ -24,7 +24,7 @@ jobs:
       run: |
         curl -O https://raw.githubusercontent.com/leafo/pgmoon/master/pgmoon-dev-1.rockspec
         [[ -z $(comm -12  <(echo "5.1";echo "5.2") <(echo "${{ matrix.luaVersion }}")) ]] && sed -i '/luabitop/d' pgmoon-dev-1.rockspec
-        luarocks make pgmoon-dev-1.rockspec
+        luarocks install pgmoon-dev-1.rockspec
         luarocks install busted
         luarocks install moonscript
         luarocks install https://raw.githubusercontent.com/leafo/lua-cjson/master/lua-cjson-dev-1.rockspec
