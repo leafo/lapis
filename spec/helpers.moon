@@ -1,9 +1,18 @@
 
+
+util = require 'luassert.util'
+
 one_of = (state, arguments) ->
   { input, expected } = arguments
 
+  input_is_table = type(input) == "table"
+
   for e in *expected
-    return true if input == e
+    if input_is_table and type(e) == "table"
+      if util.deepcompare input, e, true
+        return true
+    else
+      return true if input == e
 
   false
 
