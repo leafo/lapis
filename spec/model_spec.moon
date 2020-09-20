@@ -362,7 +362,7 @@ describe "lapis.db.model", ->
       }
       {
         [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
-        [[SELECT "hello" from "things" where ""b" = FALSE AND a" = 'hello']]
+        [[SELECT "hello" from "things" where "b" = FALSE AND "a" = 'hello']]
       }
     }
 
