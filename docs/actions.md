@@ -380,7 +380,7 @@ request object as `self` when in the context of an action.
 
 The request object has the following parameters:
 
-* <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all request parameters merged together, including query parameters and form-encoded parameters from the body of the request
+* <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> -- a table containing all request parameters merged together, including query parameters and form-encoded parameters from the body of the request. See [Request Parameters](#request_parameters)
   * <span class="for_moon">`@GET`</span><span class="for_lua">`self.GET`</span> -- a table containing only the query parameters from the URL (eg. `?hello=world`). Note that this is set for any request with URL query parameters, regardless of the HTTP verb
   * <span class="for_moon">`@POST`</span><span class="for_lua">`self.POST`</span> -- a table containing only the form encoded parameters included in the body of the request. Note this is always set when there is a body with form data, regardless of the HTTP verb
 * <span class="for_moon">`@req`</span><span class="for_lua">`self.req`</span> -- raw request table containing request information populated by the underlying server processing the request (default `ngx`)
@@ -533,6 +533,86 @@ config "development", ->
   session_name "my_app_session"
   secret "this is my secret string 123456"
 ```
+
+## Request Parameters
+
+The request object contains a few fields to help you access the user-supplies
+parameters sent with the request. Parameters are loaded by default from the
+following sources:
+
+* URL parameters -- When using a route that has a named variable. A route `/users/:id` will create a parameters named `id`
+* Body parameters -- For request methods that support a body, like `POST` and `PUT`, the body will automatically be parsed if the content type is `application/x-www-form-urlencoded` or `multipart/form-data`
+* Query parameters -- Parameters included at the end of a request URL following the `?`. `/users?filter=blue` will create a parameter called filter with the value `"blue"`
+
+The `@params` object is a concatenation of all the default loaded parameters
+listed above. URL parameters have the highest precedence, followed by body
+parameters, then query parameters. This means that an `:id` URL parameters will
+not be overwritten by an `?id=` query parameter.
+
+> Headers and cookies are also accessible on the request object but they are
+> not included in the parameters object.
+
+The body of the request is only parsed if the content type is
+`application/x-www-form-urlencoded` or `multipart/form-data`. For requests that
+use another content type, like `json`, you can use the `json_params` helper
+function to parse the body.
+
+See [How can I read JSON HTTP body?]($root/reference/quick_reference.html#how-can-i-read-json-http-body).
+
+### Boolean parameters
+
+A query parameter without a value is treated as a boolean parameter and will
+have the value `true`.
+
+`/hello?hide_description&color=blue` → `{ hide_description = true, color = "blue"}`
+
+### Nested Parameters
+
+It is common to use the `[]` syntax within a parameter name to represent nested
+data within parameters. Lapis supports expanding this syntax for simple
+key, value objects:
+
+
+```
+/hello?upload[1][name]=test.txt&upload[2][name]=file.png →
+
+{
+  upload = {
+    ["1"] = { name = "test.txt" } -- note that strings are not converted to numbers!
+    ["2"] = { name = "file.png"}
+  }
+}
+```
+
+> Lapis does not support the empty `[]` syntax that you may have seen in other
+> frameworks for creating arrays. Only simple object expansion is supported.
+> Generally we encourage the application developer to do the parsing since
+> advanced parameter can unknowingly introduce bugs.
+
+### Parameters Types & Limits
+
+The value of a parameter can either be a string, `true`, or a simple table. No complex
+parsing or validation is done on parameters, it's the responsibility of the
+application creator to verify and sanitize any parameters. For example, if you're
+expecting a number, you will need to convert the value to a number using
+something like the Lua builtin `tonumber`.
+
+Lapis provides a [validation module]($root/reference/input_validation.html) to
+help with verifying that user supplied data matches a set of constraints that
+you provide.
+
+Duplicate parameter names are overwritten by subsequent values. Note that due
+to hash table ordering, the final value may not be consistent so we recommend
+avoid setting the same parameters multiple times.
+
+When using Nginx, a default limit of 100 parameters are parsed by default from
+the body and query. This is to prevent malicious users from overloading your
+server with a large amount of data.
+
+> Storing or processing user input as a string? We highly recommend adding
+> limits on the max length of the string and trimming whitespace from the
+> sides. Additionally, verifying that the data is a valid Unicode string can
+> prevent any processing errors by your database.
 
 ## Request Object Methods
 
