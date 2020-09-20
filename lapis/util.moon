@@ -6,9 +6,7 @@ import concat, insert from table
 unpack = unpack or table.unpack
 import floor from math
 
--- TODO: make this a dependency
-local date
-pcall -> date = require "date"
+date = require "date"
 
 local *
 

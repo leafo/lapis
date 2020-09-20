@@ -8,10 +8,7 @@ end
 local unpack = unpack or table.unpack
 local floor
 floor = math.floor
-local date
-pcall(function()
-  date = require("date")
-end)
+local date = require("date")
 local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encode_query_string, parse_content_disposition, parse_cookie_string, slugify, underscore, camelize, uniquify, trim, trim_all, trim_filter, key_filter, encodable_userdata, json_encodable, to_json, from_json, build_url, date_diff, time_ago, time_ago_in_words, title_case, autoload, auto_table, mixin_class, mixin, get_fields, singularize
 do
   local u = url.unescape
