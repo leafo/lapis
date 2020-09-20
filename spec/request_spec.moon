@@ -1,6 +1,8 @@
 
 lapis = require "lapis"
 
+require "spec.helpers" -- defines assert.one_of
+
 import
   mock_request
   mock_action
@@ -92,12 +94,66 @@ describe "lapis.request", ->
       -- todo: this is bug
       assert.same {}, params
 
-    it "parses params with [] and overlapping name", ->
-      assert.same 200, (mock_request QueryApp, "/hello?p=a&p=b&p[1]=b")
+    it "parses nested params", ->
+      assert.same 200, (mock_request QueryApp, "/hello?upload[1][color]=red&upload[1][height]=12m&upload[2]=hmm&upload[3][3][3]=yeah")
       assert.same {
-        p: {
-          "1": "b"
+        upload: {
+          "1": {
+            color: "red"
+            height: "12m"
+          }
+          "2": "hmm"
+          "3": {
+            "3": {
+              "3": "yeah"
+            }
+          }
         }
+      }, params
+
+    it "parses params with [1] and overlapping name", ->
+      assert.same 200, (mock_request QueryApp, "/hello?p=a&p=x&p[1]=y")
+
+      -- due to hash table ordering this can be one or the other
+      assert.one_of params, {
+        { p: "x" }
+        { p: { ["1"]: "y" } }
+      }
+
+    it "parses duplicate with empty []", ->
+      assert.same 200, (mock_request QueryApp, "/hello?test=100&other[1]=world&thing[]=1&thing[]=2")
+      -- ambiguous hash table ordering means we don't know which one is written on top
+      assert.one_of params, {
+        {
+          test: "100"
+          other: { "1": "world" }
+          "thing[]": "1"
+        }
+        {
+          test: "100"
+          other: { "1": "world" }
+          "thing[]": "2"
+        }
+      }
+
+    it "parses undefined behavior", ->
+      assert.same 200, (mock_request QueryApp, "/hello?one[a][][]=y&two[][f][b]=x&three[q][][e]=n&four[][][]=2")
+
+      assert.same {
+        one: {
+          a: "y"
+        }
+        two: {
+          f: {
+            b: "x"
+          }
+        }
+        three: {
+          q: {
+            e: "n"
+          }
+        }
+        "four[][][]": "2"
       }, params
 
   describe "json request", ->
