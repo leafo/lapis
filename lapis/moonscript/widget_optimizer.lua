@@ -3,6 +3,7 @@ do
   local _obj_0 = require("tableshape")
   types, BaseType = _obj_0.types, _obj_0.BaseType
 end
+local loadstring = loadstring or load
 local deep_copy
 deep_copy = function(a)
   if not (type(a) == "table") then

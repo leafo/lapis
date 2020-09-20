@@ -1,8 +1,9 @@
-local next, loadstring, debug, string, setmetatable, rawget
+local next, debug, string, setmetatable, rawget
 do
   local _obj_0 = _G
-  next, loadstring, debug, string, setmetatable, rawget = _obj_0.next, _obj_0.loadstring, _obj_0.debug, _obj_0.string, _obj_0.setmetatable, _obj_0.rawget
+  next, debug, string, setmetatable, rawget = _obj_0.next, _obj_0.debug, _obj_0.string, _obj_0.setmetatable, _obj_0.rawget
 end
+local loadstring = loadstring or load
 local clone_function
 if debug.upvaluejoin then
   clone_function = function(fn)

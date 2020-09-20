@@ -1,5 +1,7 @@
 
-import next, loadstring, debug, string, setmetatable, rawget from _G
+import next, debug, string, setmetatable, rawget from _G
+
+loadstring = loadstring or load
 
 clone_function = if debug.upvaluejoin
   (fn) ->

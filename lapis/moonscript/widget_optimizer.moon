@@ -1,6 +1,8 @@
 
 import types, BaseType from require "tableshape"
 
+loadstring = loadstring or load
+
 deep_copy = (a) ->
   return a unless type(a) == "table"
   with out = {}

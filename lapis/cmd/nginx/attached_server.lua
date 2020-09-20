@@ -1,6 +1,7 @@
 local path = require("lapis.cmd.path")
 local get_free_port
 get_free_port = require("lapis.cmd.util").get_free_port
+local loadstring = loadstring or load
 local AttachedServer
 AttachedServer = require("lapis.cmd.attached_server").AttachedServer
 local NginxAttachedServer

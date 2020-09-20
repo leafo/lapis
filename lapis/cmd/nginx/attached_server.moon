@@ -1,6 +1,8 @@
 path = require "lapis.cmd.path"
 import get_free_port from require "lapis.cmd.util"
 
+loadstring = loadstring or load
+
 import AttachedServer from require "lapis.cmd.attached_server"
 
 class NginxAttachedServer extends AttachedServer
