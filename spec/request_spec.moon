@@ -334,10 +334,16 @@ describe "lapis.request", ->
       it "should write multiple cookies", ->
         _, _, h = mock_request CookieApp, "/many"
 
-        assert.same {
-          'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
-          'world=454545; Path=/; HttpOnly'
-        }, h["Set-Cookie"]
+        assert.one_of h["Set-Cookie"], {
+          {
+            'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
+            'world=454545; Path=/; HttpOnly'
+          }
+          {
+            'world=454545; Path=/; HttpOnly'
+            'cow=one%20cool%20%3bcookie; Path=/; HttpOnly'
+          }
+        }
 
       it "should write a cookie with cookie attributes", ->
         _, _, h = mock_request CookieApp2, "/"

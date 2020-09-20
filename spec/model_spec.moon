@@ -356,8 +356,14 @@ describe "lapis.db.model", ->
     assert.same { a: "hello", b: false }, instance
 
     assert_queries {
-      [[SELECT * from "things" where "a" = 'hello' AND "b" = FALSE]]
-      [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
+      {
+        [[SELECT * from "things" where "a" = 'hello' AND "b" = FALSE]]
+        [[SELECT * from "things" where "b" = FALSE AND "a" = 'hello']]
+      }
+      {
+        [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
+        [[SELECT "hello" from "things" where ""b" = FALSE AND a" = 'hello']]
+      }
     }
 
   it "should update model", ->
@@ -398,8 +404,15 @@ describe "lapis.db.model", ->
         [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "great" = TRUE WHERE "b" = 3 AND "a" = 2]]
         [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "b" = 3 AND "a" = 2]]
       }
-      [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
-      [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
+      {
+        [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
+        [[UPDATE "timed_things" SET "hello" = 'world' WHERE "b" = 3 AND "a" = 2]]
+      }
+      }
+      {
+        [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
+        [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "b" = 3 AND "a" = 2]]
+      }
     }
 
   it "should delete model", ->
