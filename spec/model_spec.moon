@@ -408,7 +408,6 @@ describe "lapis.db.model", ->
         [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
         [[UPDATE "timed_things" SET "hello" = 'world' WHERE "b" = 3 AND "a" = 2]]
       }
-      }
       {
         [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
         [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "b" = 3 AND "a" = 2]]
