@@ -286,7 +286,7 @@ describe "lapis.db.model", ->
       {
         [[INSERT INTO "timed_things" ("color", "created_at", "updated_at") VALUES ('blue', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id", "height"]]
         [[INSERT INTO "timed_things" ("created_at", "color", "updated_at") VALUES ('2013-08-13 06:56:40', 'blue', '2013-08-13 06:56:40') RETURNING "id", "height"]]
-        [[INSERT INTO "timed_things" ("created_at", "updated_at", "color" ) VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'blue') RETURNING "id", "height"]]
+        [[INSERT INTO "timed_things" ("created_at", "updated_at", "color") VALUES ('2013-08-13 06:56:40', '2013-08-13 06:56:40', 'blue') RETURNING "id", "height"]]
 
         [[INSERT INTO "timed_things" ("color", "updated_at", "created_at") VALUES ('blue', '2013-08-13 06:56:40', '2013-08-13 06:56:40') RETURNING "id", "height"]]
         [[INSERT INTO "timed_things" ("updated_at", "color", "created_at") VALUES ('2013-08-13 06:56:40', 'blue', '2013-08-13 06:56:40') RETURNING "id", "height"]]
