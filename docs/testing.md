@@ -49,7 +49,6 @@ For example, to test a basic application with
 ```lua
 local lapis = require("lapis.application")
 local mock_request = require("lapis.spec.request").mock_request
-local use_test_env = require("lapis.spec").use_test_env
 
 local app = lapis.Application()
 
@@ -72,14 +71,11 @@ end)
 lapis = require "lapis"
 
 import mock_request from require "lapis.spec.request"
-import use_test_env from require "lapis.spec"
 
 class App extends lapis.Application
   "/hello": => "welcome to my page"
 
 describe "my application", ->
-  use_test_env!
-
   it "should make a request", ->
     status, body = mock_request App, "/hello"
 
@@ -168,6 +164,8 @@ When executing your tests we can use the `use_test_env` function to ensure the
 test block runs in the `test` environment. It is equivalent to adding a setup
 and teardown function that sets and restores the environment.
 
+If there is a database connection configured then this function will also
+connect to the database once before any tests are run.
 
 ```lua
 local use_test_env = require("lapis.spec").use_test_env
@@ -178,7 +176,6 @@ describe("my site", function()
   -- write some tests that use the test environment
 end)
 ```
-
 
 ```moon
 import use_test_env from require "lapis.spec"
