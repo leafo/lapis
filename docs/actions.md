@@ -573,16 +573,14 @@ data within parameters. Lapis supports expanding this syntax for simple
 key, value objects:
 
 
-```
-/hello?upload[1][name]=test.txt&upload[2][name]=file.png →
+    /hello?upload[1][name]=test.txt&upload[2][name]=file.png →
 
-{
-  upload = {
-    ["1"] = { name = "test.txt" } -- note that strings are not converted to numbers!
-    ["2"] = { name = "file.png"}
-  }
-}
-```
+    {
+      upload = {
+        ["1"] = { name = "test.txt" }, -- note that strings are not converted to numbers!
+        ["2"] = { name = "file.png"}
+      }
+    }
 
 > Lapis does not support the empty `[]` syntax that you may have seen in other
 > frameworks for creating arrays. Only simple object expansion is supported.
