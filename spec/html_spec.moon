@@ -62,15 +62,36 @@ describe "lapis.html", ->
     assert.same [[<span required></span><div></div>]], output
 
   it "should capture", ->
-    local capture_out
+    -- we have to do it this way because in plain Lua 5.1, upvalues can't be
+    -- joined, we only have a copy of the value.
+    capture_result = {}
+
     output = render_html ->
       text "hello"
-      capture_out = capture ->
+      capture_result.value = capture ->
         div "This is the capture"
       text "world"
 
     assert.same "helloworld", output
-    assert.same "<div>This is the capture</div>", capture_out
+    assert.same "<div>This is the capture</div>", capture_result.value
+
+  it "should capture into joined upvalue", ->
+    -- skip on lua 5.1
+    if _VERSION == "Lua 5.1" and not _G.jit
+      pending "joined upvalues not available in Lua 5.1, skipping test"
+      return
+
+    capture_result = {}
+
+    output = render_html ->
+      text "hello"
+      capture_result.value = capture ->
+        div "This is the capture"
+      text "world"
+
+    assert.same "helloworld", output
+    assert.same "<div>This is the capture</div>", capture_result.value
+
 
   it "should render the widget", ->
     class TestWidget extends Widget
@@ -262,7 +283,7 @@ describe "lapis.html", ->
     assert.same nil, SomeWidget.color
 
   it "should render widget inside of capture", ->
-    local captured
+    capture_result = {}
 
     class InnerInner extends Widget
       content: =>
@@ -278,15 +299,13 @@ describe "lapis.html", ->
 
     class Outer extends Widget
       content: =>
-        captured = capture ->
+        capture_result.value = capture ->
           div "before"
           widget Inner!
           div "after"
 
     assert.same [[]], render_widget Outer!
-    assert.same [[<div>before</div><dt>hello</dt><span>yeah</span><dt>world</dt><div>after</div>]], captured
-
-
+    assert.same [[<div>before</div><dt>hello</dt><span>yeah</span><dt>world</dt><div>after</div>]], capture_result.value
 
   describe "widget.render_to_file", ->
     class Inner extends Widget
