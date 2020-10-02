@@ -126,7 +126,8 @@ local assert_valid
 assert_valid = function(object, validations)
   local errors = validate(object, validations)
   if errors then
-    return coroutine.yield("error", errors)
+    coroutine.yield("error", errors)
+    return error("assert_valid was not captured: " .. tostring(table.concat(errors, ", ")))
   end
 end
 return {

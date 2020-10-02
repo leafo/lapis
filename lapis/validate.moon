@@ -89,6 +89,8 @@ validate = (object, validations, opts = {}) ->
 
 assert_valid = (object, validations) ->
   errors = validate object, validations
-  coroutine.yield "error", errors if errors
+  if errors
+    coroutine.yield "error", errors
+    error "assert_valid was not captured: #{table.concat errors, ", "}"
 
 { :validate, :assert_valid, :test_input, :validate_functions }
