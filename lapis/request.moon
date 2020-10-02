@@ -1,4 +1,3 @@
-
 url = require "socket.url"
 
 lapis_config = require "lapis.config"
@@ -156,7 +155,9 @@ class Request
         @res\add_header "Set-Cookie", cookie
 
     add_params: (params, name) =>
-      @[name] = params
+      if name
+        @[name] = params
+
       for k,v in pairs params
         -- expand nested[param][keys]
         front = k\match "^([^%[]+)%[" if type(k) == "string"

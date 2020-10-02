@@ -290,7 +290,9 @@ do
       end
     end,
     add_params = function(self, params, name)
-      self[name] = params
+      if name then
+        self[name] = params
+      end
       for k, v in pairs(params) do
         local front
         if type(k) == "string" then
