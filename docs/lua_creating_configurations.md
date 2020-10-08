@@ -14,7 +14,7 @@ the more specific configuration declarations:
 
 
 ```lua
--- config.moon
+-- config.lua
 local config = require("lapis.config")
 
 config({"development", "production"}, {
