@@ -23,7 +23,6 @@ We just created a Discord for Lapis users and those interested in it to communic
   * <https://streak.club> - [source](https://github.com/leafo/streak.club)
   * <https://sightreading.training> - [source](https://github.com/leafo/sightreading.training)
   * [Ludum Dare game browser](http://ludumdare.itch.io) - [source](https://github.com/leafo/ludum-dare-browser)
-  * <https://pasta.cf/> - [source](https://github.com/starius/pasta)
   * <http://lapchan.moe/> - [source](https://github.com/karai17/lapis-chan/)
 
 Made a website in Lapis? [Tell us](https://github.com/leafo/lapis/issues)
