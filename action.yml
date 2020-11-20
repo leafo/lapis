@@ -1,6 +1,0 @@
-# action.yml
-name: 'lapis spec archlinux'
-
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
