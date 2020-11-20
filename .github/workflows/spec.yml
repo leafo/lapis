@@ -18,7 +18,7 @@ jobs:
       with:
         luaVersion: ${{ matrix.luaVersion }}
 
-    - uses: leafo/gh-actions-luarocks@v2
+    - uses: leafo/gh-actions-luarocks@master
 
     - name: build
       run: |
