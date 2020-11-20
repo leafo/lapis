@@ -24,7 +24,6 @@ dependencies = {
 	"luaossl",
 	"luafilesystem",
 	"luasocket",
-	"mimetypes",
 	"pgmoon",
 }
 
