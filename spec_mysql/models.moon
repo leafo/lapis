@@ -44,7 +44,7 @@ class Likes extends Model
     create_table @table_name!, {
       {"user_id", types.integer}
       {"post_id", types.integer}
-      {"count", types.integer}
+      {"count", types.integer default: 0}
       {"created_at", types.datetime}
       {"updated_at", types.datetime}
 
