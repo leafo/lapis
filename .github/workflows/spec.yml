@@ -1,4 +1,4 @@
-name: "spec/"
+name: "spec"
 
 on: [push]
 

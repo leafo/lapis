@@ -1,0 +1,11 @@
+name: "spec_docker"
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - uses: leafo/lapis@master
