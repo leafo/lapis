@@ -3,6 +3,25 @@ name: "spec"
 on: [push]
 
 jobs:
+  # this runs the tests in the docker image against live postgres & mysql
+  # and openresty
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    # - uses: leafo/lapis@master
+
+    - name: build
+      run: |
+        docker build -t lapis-test .
+
+    - name: test
+      run: |
+        docker run lapis-test
+
+
+  # this runs all generic lua tests
   test:
     strategy:
       fail-fast: false
