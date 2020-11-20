@@ -33,9 +33,3 @@ describe "model", ->
       }
     }, Users\columns!
 
-
-  it "should create empty row", ->
-    Posts\create_table!
-    -- this fails in postgres, but mysql gives default values
-    Posts\create {}
-
