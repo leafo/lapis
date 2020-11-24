@@ -208,7 +208,9 @@ do
       },
       {
         "count",
-        types.integer
+        types.integer({
+          default = 0
+        })
       },
       {
         "created_at",
