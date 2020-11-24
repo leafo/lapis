@@ -42,7 +42,7 @@ pg-connect: example.com:1234 dbname=hello user=leafo password=thepass]], compile
 
   it "should read environment variable", ->
     unless pcall -> require "posix"
-      pending "lposix is required for cmd.nginx specs"
+      pending "luaposix is required for cmd.nginx specs"
       return
 
     posix = require "posix"
@@ -64,7 +64,7 @@ hello: what's up]], compiled
 
   it "should read environment variable in etlua config", ->
     unless pcall -> require "posix"
-      pending "lposix is required for cmd.nginx specs"
+      pending "luaposix is required for cmd.nginx specs"
       return
 
     posix = require "posix"
