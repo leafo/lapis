@@ -1,6 +1,6 @@
 name: "spec"
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   # this runs the tests in the docker image against live postgres & mysql
