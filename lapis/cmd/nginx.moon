@@ -12,7 +12,10 @@ class NginxRunner
   base_path: ""
   current_server: nil
 
-  nginx_bin: "nginx"
+  nginx_bins: {
+    "nginx"
+    "openresty"
+  }
   nginx_search_paths: {
     "/opt/openresty/nginx/sbin/"
     "/usr/local/openresty/nginx/sbin/"
@@ -93,12 +96,13 @@ class NginxRunner
         @_nginx_path = to_check
         return @_nginx_path
 
-    for prefix in *@nginx_search_paths
-      to_check = "#{prefix}#{@nginx_bin}"
+    for nginx_bin in *@nginx_bins
+      for prefix in *@nginx_search_paths
+        to_check = "#{prefix}#{nginx_bin}"
 
-      if @check_binary_is_openresty to_check
-        @_nginx_path = to_check
-        return @_nginx_path
+        if @check_binary_is_openresty to_check
+          @_nginx_path = to_check
+          return @_nginx_path
 
   -- test if bath to binary is an openresty binary (instead of nginx one)
   check_binary_is_openresty: (path) =>
