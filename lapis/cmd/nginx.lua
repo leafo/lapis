@@ -12,7 +12,10 @@ do
     compiled_config_path = "nginx.conf.compiled",
     base_path = "",
     current_server = nil,
-    nginx_bin = "nginx",
+    nginx_bins = {
+      "nginx",
+      "openresty"
+    },
     nginx_search_paths = {
       "/opt/openresty/nginx/sbin/",
       "/usr/local/openresty/nginx/sbin/",
@@ -110,13 +113,17 @@ do
           end
         end
       end
-      local _list_0 = self.nginx_search_paths
+      local _list_0 = self.nginx_bins
       for _index_0 = 1, #_list_0 do
-        local prefix = _list_0[_index_0]
-        local to_check = tostring(prefix) .. tostring(self.nginx_bin)
-        if self:check_binary_is_openresty(to_check) then
-          self._nginx_path = to_check
-          return self._nginx_path
+        local nginx_bin = _list_0[_index_0]
+        local _list_1 = self.nginx_search_paths
+        for _index_1 = 1, #_list_1 do
+          local prefix = _list_1[_index_1]
+          local to_check = tostring(prefix) .. tostring(nginx_bin)
+          if self:check_binary_is_openresty(to_check) then
+            self._nginx_path = to_check
+            return self._nginx_path
+          end
         end
       end
     end,
