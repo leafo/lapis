@@ -10,14 +10,63 @@ describe "find_action", ->
   action1 = ->
   action2 = ->
 
-  class SomeApp extends lapis.Application
-    [hello: "/cool-dad"]: action1
-    [world: "/another-dad"]: action2
-
   it "finds action", ->
+    class SomeApp extends lapis.Application
+      [hello: "/cool-dad"]: action1
+      [world: "/another-dad"]: action2
+
     assert.same action1, (SomeApp\find_action "hello")
     assert.same action2, (SomeApp\find_action "world")
     assert.same nil, (SomeApp\find_action "nothing")
+
+  it "finds require'd action", ->
+    package.loaded["actions.hello"] = action1
+    package.loaded["actions.admin.cool"] = action2
+
+    class SomeApp extends lapis.Application
+      [hello: "/cool-dad"]: true
+      [world: "/uncool-dad"]: "admin.cool"
+
+    assert.same action1, (SomeApp\find_action "hello")
+    assert.same action2, (SomeApp\find_action "world")
+
+
+describe "dispatch", ->
+  describe "lazy loaded actions", ->
+    import mock_request from require "lapis.spec.request"
+
+    class BaseApp extends lapis.Application
+      [test_route: "/hello/:var"]: true
+      [another: "/good-stuff"]: "hello_world"
+      [regular: "/hmm"]: ->
+      "/yo": true
+
+    before_each ->
+      package.loaded["actions.test_route"] = spy.new ->
+      package.loaded["actions.hello_world"] = spy.new ->
+
+    it "dispatches action by route name", ->
+      mock_request BaseApp, "/hello/5"
+      assert.spy(package.loaded["actions.test_route"]).was.called!
+      assert.spy(package.loaded["actions.hello_world"]).was_not.called!
+
+    it "dispatches action by string name", ->
+      mock_request BaseApp, "/good-stuff"
+
+      assert.spy(package.loaded["actions.test_route"]).was_not.called!
+      assert.spy(package.loaded["actions.hello_world"]).was.called!
+
+    it "doesn't call other actions for unrelated route", ->
+      mock_request BaseApp, "/hmm"
+
+      assert.spy(package.loaded["actions.test_route"]).was_not.called!
+      assert.spy(package.loaded["actions.hello_world"]).was_not.called!
+
+      mock_request BaseApp, "/hmm"
+
+    it "failes to load `true` action with no route name", ->
+      assert.has_error ->
+        mock_request BaseApp, "/yo"
 
 describe "inheritance", ->
   local result

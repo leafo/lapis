@@ -23,16 +23,28 @@ run_before_filter = (filter, r) ->
   r.write = nil
   written
 
+load_action = (prefix, action, route_name) ->
+  if action == true
+    assert route_name,
+      "Attempted to load action `true` for route with no name, a name must be provided to require the action"
+
+    require "#{prefix}.#{route_name}"
+  elseif type(action) == "string"
+    require "#{prefix}.#{action}"
+  else
+    action
+
 class Application
   Request: require "lapis.request"
   layout: require "lapis.views.layout"
   error_page: require "lapis.views.error"
 
   views_prefix: "views"
+  actions_prefix: "actions"
   flows_prefix: "flows"
 
   -- find action for named route in this application
-  @find_action: (name) =>
+  @find_action: (name, resolve=true) =>
     @_named_route_cache or= {}
     route = @_named_route_cache[name]
 
@@ -44,7 +56,12 @@ class Application
           @_named_route_cache[app_route_name] = app_route
           route = app_route if app_route_name == name
 
-    route and @[route], route
+    action = route and @[route]
+
+    if resolve
+      action = load_action @actions_prefix, action, name
+
+    action, route
 
   new: =>
     @build_router!
@@ -129,6 +146,10 @@ class Application
 
     add_routes @@
 
+  -- this performs the initialization of an action (called handler in this
+  -- file)
+  -- the wrapped action is stored in the router so it can be returned directly
+  -- when the router is matched
   wrap_handler: (handler) =>
     (params, path, name, r) ->
       support = r.__class.support
@@ -144,8 +165,10 @@ class Application
           for filter in *@before_filters
             return r if run_before_filter filter, r
 
-        \write handler r
+        if type(handler) != "function"
+          handler = load_action @actions_prefix, handler, name
 
+        \write handler r
 
   render_request: (r) =>
     r.__class.support.render r
@@ -250,6 +273,8 @@ class Application
     -- strip trailing /
     if @req.parsed_url.path\match "./$"
       stripped = @req.parsed_url.path\match "^(.+)/+$"
+      -- TODO: if the path starts with // here then build URL will treat it as
+      -- an absolute URL and redirect off domain
       redirect_to: @build_url(stripped, query: @req.parsed_url.query), status: 301
     else
       @app.handle_404 @

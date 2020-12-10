@@ -19,6 +19,17 @@ run_before_filter = function(filter, r)
   r.write = nil
   return written
 end
+local load_action
+load_action = function(prefix, action, route_name)
+  if action == true then
+    assert(route_name, "Attempted to load action `true` for route with no name, a name must be provided to require the action")
+    return require(tostring(prefix) .. "." .. tostring(route_name))
+  elseif type(action) == "string" then
+    return require(tostring(prefix) .. "." .. tostring(action))
+  else
+    return action
+  end
+end
 local Application
 do
   local _class_0
@@ -27,6 +38,7 @@ do
     layout = require("lapis.views.layout"),
     error_page = require("lapis.views.error"),
     views_prefix = "views",
+    actions_prefix = "actions",
     flows_prefix = "flows",
     enable = function(self, feature)
       local fn = require("lapis.features." .. tostring(feature))
@@ -127,6 +139,9 @@ do
                 return r
               end
             end
+          end
+          if type(handler) ~= "function" then
+            handler = load_action(self.actions_prefix, handler, name)
           end
           _with_0:write(handler(r))
           return _with_0
@@ -232,7 +247,10 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
-  self.find_action = function(self, name)
+  self.find_action = function(self, name, resolve)
+    if resolve == nil then
+      resolve = true
+    end
     self._named_route_cache = self._named_route_cache or { }
     local route = self._named_route_cache[name]
     if not (route) then
@@ -246,7 +264,11 @@ do
         end
       end
     end
-    return route and self[route], route
+    local action = route and self[route]
+    if resolve then
+      action = load_action(self.actions_prefix, action, name)
+    end
+    return action, route
   end
   local _list_0 = {
     "get",
