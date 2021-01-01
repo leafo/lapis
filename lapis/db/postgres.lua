@@ -60,7 +60,10 @@ local BACKENDS = {
           local pg_timeout = assert(tonumber(pg_config.timeout), "timeout must be a number (ms)")
           pgmoon:settimeout(pg_timeout)
         end
-        assert(pgmoon:connect())
+        local success, connect_err = pgmoon:connect()
+        if not (success) then
+          error("postgres failed to connect: " .. tostring(connect_err))
+        end
         if ngx then
           ngx.ctx.pgmoon = pgmoon
           after_dispatch(function()

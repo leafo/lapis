@@ -43,6 +43,7 @@ BACKENDS = {
 
     config = require("lapis.config").get!
     pg_config = assert config.postgres, "missing postgres configuration"
+
     local pgmoon_conn
 
     _query = (str) ->
@@ -56,7 +57,9 @@ BACKENDS = {
           pg_timeout = assert tonumber(pg_config.timeout), "timeout must be a number (ms)"
           pgmoon\settimeout pg_timeout
 
-        assert pgmoon\connect!
+        success, connect_err = pgmoon\connect!
+        unless success
+          error "postgres failed to connect: #{connect_err}"
 
         if ngx
           ngx.ctx.pgmoon = pgmoon
