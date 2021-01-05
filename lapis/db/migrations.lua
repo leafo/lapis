@@ -111,18 +111,18 @@ run_migrations = function(migrations, prefix)
     end
     if not (exists[tostring(name)]) then
       if config.postgres then
-        self.__class.db:query("BEGIN")
+        Model.db.query("BEGIN")
       elseif config.mysql then
-        self.__class.db:query("START TRANSACTION")
+        Model.db.query("START TRANSACTION")
       end
       xpcall(function()
         logger.migration(name)
         fn(name)
         LapisMigrations:create(name)
         count = count + 1
-        return self.__class.db:query("COMMIT")
+        return Model.db.query("COMMIT")
       end, function(err)
-        self.__class.db:query("ROLLBACK")
+        Model.db.query("ROLLBACK")
         return error(err)
       end)
     end

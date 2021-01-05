@@ -41,18 +41,18 @@ run_migrations = (migrations, prefix) ->
 
     unless exists[tostring name]
       if config.postgres
-        @@db\query "BEGIN"
+        Model.db.query "BEGIN"
       elseif config.mysql
-        @@db\query "START TRANSACTION"
+        Model.db.query "START TRANSACTION"
       xpcall(
         ->
         logger.migration name
         fn name
         LapisMigrations\create name
         count += 1
-        @@db\query "COMMIT"
+        Model.db.query "COMMIT"
       (err) ->
-        @@db\query "ROLLBACK"
+        Model.db.query "ROLLBACK"
         error(err)
       )
   logger.migration_summary count
