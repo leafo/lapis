@@ -1,5 +1,6 @@
 
 logger = require "lapis.logging"
+config = require("lapis.config").get!
 import Model from require "lapis.db.model"
 
 class LapisMigrations extends Model
@@ -39,11 +40,21 @@ run_migrations = (migrations, prefix) ->
       name = "#{prefix}_#{name}"
 
     unless exists[tostring name]
-      logger.migration name
-      fn name
-      LapisMigrations\create name
-      count += 1
-
+      if config.postgres
+        @@db\query "BEGIN"
+      elseif config.mysql
+        @@db\query "START TRANSACTION"
+      xpcall(
+        ->
+        logger.migration name
+        fn name
+        LapisMigrations\create name
+        count += 1
+        @@db\query "COMMIT"
+      (err) ->
+        @@db\query "ROLLBACK"
+        error(err)
+      )
   logger.migration_summary count
 
 { :create_migrations_table, :run_migrations, :LapisMigrations }

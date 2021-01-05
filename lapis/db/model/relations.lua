@@ -75,8 +75,7 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
           error("missing relation: " .. tostring(key))
         end
         sub_relations = sub_relations or { }
-        local _update_0 = val
-        sub_relations[_update_0] = sub_relations[_update_0] or { }
+        sub_relations[val] = sub_relations[val] or { }
         local loaded_objects = sub_relations[val]
         if r.has_many or r.fetch and r.many then
           for _index_0 = 1, #objects do
@@ -113,8 +112,7 @@ preload = function(objects, ...)
     if not (cls) then
       error("attempting to preload an object that doesn't have a class, are you sure it's a model?")
     end
-    local _update_0 = cls
-    by_type[_update_0] = by_type[_update_0] or { }
+    by_type[cls] = by_type[cls] or { }
     table.insert(by_type[object.__class], object)
   end
   local sub_relations

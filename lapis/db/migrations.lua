@@ -1,4 +1,5 @@
 local logger = require("lapis.logging")
+local config = require("lapis.config").get()
 local Model
 Model = require("lapis.db.model").Model
 local LapisMigrations
@@ -109,10 +110,21 @@ run_migrations = function(migrations, prefix)
       name = tostring(prefix) .. "_" .. tostring(name)
     end
     if not (exists[tostring(name)]) then
-      logger.migration(name)
-      fn(name)
-      LapisMigrations:create(name)
-      count = count + 1
+      if config.postgres then
+        self.__class.db:query("BEGIN")
+      elseif config.mysql then
+        self.__class.db:query("START TRANSACTION")
+      end
+      xpcall(function()
+        logger.migration(name)
+        fn(name)
+        LapisMigrations:create(name)
+        count = count + 1
+        return self.__class.db:query("COMMIT")
+      end, function(err)
+        self.__class.db:query("ROLLBACK")
+        return error(err)
+      end)
     end
   end
   return logger.migration_summary(count)
