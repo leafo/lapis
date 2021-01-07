@@ -9,8 +9,8 @@ luarocks --lua-version=5.1 make lapis-dev-1.rockspec
 # add openresty
 export LUA_PATH="$LUA_PATH;/usr/local/openresty/lualib/?.lua"
 
-# setup busted
-cat $(which busted) | sed 's/\/usr\/bin\/lua5\.1/\/usr\/bin\/luajit/' > busted
+# setup busted to run with luajit provided by openresty
+cat $(which busted) | sed 's/\/usr\/bin\/lua5\.1/\/usr\/local\/openresty\/luajit\/bin/luajit/' > busted
 chmod +x busted
 
 # start postgres
