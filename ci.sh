@@ -22,7 +22,7 @@ su postgres -c '/usr/bin/pg_ctl -s -D /var/lib/postgres/data start -w -t 120'
 # start mysql
 mkdir -p /run/mysqld
 /usr/bin/mysqld --user=root --basedir=/usr --datadir=/var/lib/mysql &
-echo 'ALTER USER root@localhost IDENTIFIED VIA mysql_native_password USING PASSWORD("")' | mysql -u root
+echo 'ALTER USER root@localhost IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD("")' | mysql -u root
 
 make build
 make test_db
