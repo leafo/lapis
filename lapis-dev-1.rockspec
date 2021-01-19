@@ -103,6 +103,7 @@ build = {
 		["lapis.util.encoding"] = "lapis/util/encoding.lua",
 		["lapis.util.fenv"] = "lapis/util/fenv.lua",
 		["lapis.util.functions"] = "lapis/util/functions.lua",
+		["lapis.util.utf8"] = "lapis/util/utf8.lua",
 		["lapis.validate"] = "lapis/validate.lua",
 		["lapis.version"] = "lapis/version.lua",
 		["lapis.views.error"] = "lapis/views/error.lua",
