@@ -53,17 +53,18 @@ create_index = (tname, ...) ->
   index_name = gen_index_name tname, ...
   columns, options = extract_options {...}
 
-  if options.if_not_exists
-    return if entity_exists index_name
+  prefix = if options.unique
+    "CREATE UNIQUE INDEX "
+  else
+    "CREATE INDEX "
 
-  buffer = {"CREATE"}
-  append_all buffer, " UNIQUE" if options.unique
+  buffer = {prefix}
 
-  append_all buffer, " INDEX ",
-    escape_identifier(index_name),
+  append_all buffer, "CONCURRENTLY " if options.concurrently
+  append_all buffer, "IF NOT EXISTS " if options.if_not_exists
+
+  append_all buffer, escape_identifier(index_name),
     " ON ", escape_identifier tname
-
-  append_all buffer, " CONCURRENTLY " if options.concurrently
 
   if options.method
     append_all buffer, " USING ", options.method
@@ -71,13 +72,13 @@ create_index = (tname, ...) ->
   append_all buffer, " ("
 
   for i, col in ipairs columns
-    append_all buffer, escape_identifier(col)
+    append_all buffer, escape_identifier col
     append_all buffer, ", " unless i == #columns
 
   append_all buffer, ")"
 
   if options.tablespace
-    append_all buffer, " TABLESPACE ", options.tablespace
+    append_all buffer, " TABLESPACE ", escape_identifier options.tablespace
     
   if options.where
     append_all buffer, " WHERE ", options.where
