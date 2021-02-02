@@ -91,7 +91,14 @@ create_index = (tname, ...) ->
 
 drop_index = (...) ->
   index_name = gen_index_name ...
-  db.query "DROP INDEX IF EXISTS #{escape_identifier index_name}"
+  _, options = extract_options {...}
+
+  buffer = { "DROP INDEX IF EXISTS #{escape_identifier index_name}" }
+
+  if options.cascade
+    append_all buffer, " CASCADE"
+
+  db.query concat buffer
 
 drop_table = (tname) ->
   db.query "DROP TABLE IF EXISTS #{escape_identifier tname};"

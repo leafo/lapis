@@ -359,6 +359,10 @@ tests = {
     -> schema.drop_index index_name: "hello_world_idx"
     [[DROP INDEX IF EXISTS "hello_world_idx"]]
   }
+  {
+    -> schema.drop_index "user_data", "one", "two", "three", cascade: true
+    [[DROP INDEX IF EXISTS "user_data_one_two_three_idx" CASCADE]]
+  }
 
   {
     -> schema.drop_index "users", "height", { index_name: "user_tallness_idx", unique: true }

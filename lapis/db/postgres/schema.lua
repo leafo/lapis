@@ -135,7 +135,16 @@ end
 local drop_index
 drop_index = function(...)
   local index_name = gen_index_name(...)
-  return db.query("DROP INDEX IF EXISTS " .. tostring(escape_identifier(index_name)))
+  local _, options = extract_options({
+    ...
+  })
+  local buffer = {
+    "DROP INDEX IF EXISTS " .. tostring(escape_identifier(index_name))
+  }
+  if options.cascade then
+    append_all(buffer, " CASCADE")
+  end
+  return db.query(concat(buffer))
 end
 local drop_table
 drop_table = function(tname)
