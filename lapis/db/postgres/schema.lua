@@ -84,7 +84,7 @@ create_table = function(name, columns, opts)
   if #columns > 0 then
     add("\n")
   end
-  add(");")
+  add(")")
   return db.query(concat(buffer))
 end
 local create_index
@@ -129,7 +129,6 @@ create_index = function(tname, ...)
   if options.when then
     error("did you mean create_index `where`?")
   end
-  append_all(buffer, ";")
   return db.query(concat(buffer))
 end
 local drop_index
@@ -148,7 +147,7 @@ drop_index = function(...)
 end
 local drop_table
 drop_table = function(tname)
-  return db.query("DROP TABLE IF EXISTS " .. tostring(escape_identifier(tname)) .. ";")
+  return db.query("DROP TABLE IF EXISTS " .. tostring(escape_identifier(tname)))
 end
 local add_column
 add_column = function(tname, col_name, col_type)

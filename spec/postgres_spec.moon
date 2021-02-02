@@ -287,7 +287,7 @@ tests = {
   "password_reset_token" character varying(255),
   "data" text NOT NULL,
   PRIMARY KEY (user_id)
-);]]
+)]]
   }
 
   {
@@ -301,53 +301,53 @@ tests = {
     [[CREATE TABLE IF NOT EXISTS "join_stuff" (
   "hello_id" integer NOT NULL,
   "world_id" integer NOT NULL
-);]]
+)]]
   }
 
 
   {
     -> schema.drop_table "user_data"
-    [[DROP TABLE IF EXISTS "user_data";]]
+    [[DROP TABLE IF EXISTS "user_data"]]
   }
 
   {
     -> schema.create_index "user_data", "thing"
-    [[CREATE INDEX "user_data_thing_idx" ON "user_data" ("thing");]]
+    [[CREATE INDEX "user_data_thing_idx" ON "user_data" ("thing")]]
   }
 
   {
     -> schema.create_index "user_data", "thing", unique: true
-    [[CREATE UNIQUE INDEX "user_data_thing_idx" ON "user_data" ("thing");]]
+    [[CREATE UNIQUE INDEX "user_data_thing_idx" ON "user_data" ("thing")]]
   }
 
   {
     -> schema.create_index "user_data", "thing", unique: true, index_name: "good_idx"
-    [[CREATE UNIQUE INDEX "good_idx" ON "user_data" ("thing");]]
+    [[CREATE UNIQUE INDEX "good_idx" ON "user_data" ("thing")]]
   }
 
   {
     -> schema.create_index "user_data", "thing", if_not_exists: true
-    [[CREATE INDEX IF NOT EXISTS "user_data_thing_idx" ON "user_data" ("thing");]]
+    [[CREATE INDEX IF NOT EXISTS "user_data_thing_idx" ON "user_data" ("thing")]]
   }
 
   {
     -> schema.create_index "user_data", "thing", unique: true, where: "age > 100"
-    [[CREATE UNIQUE INDEX "user_data_thing_idx" ON "user_data" ("thing") WHERE age > 100;]]
+    [[CREATE UNIQUE INDEX "user_data_thing_idx" ON "user_data" ("thing") WHERE age > 100]]
   }
 
   {
     -> schema.create_index "users", "friend_id", tablespace: "farket"
-    [[CREATE INDEX "users_friend_id_idx" ON "users" ("friend_id") TABLESPACE "farket";]]
+    [[CREATE INDEX "users_friend_id_idx" ON "users" ("friend_id") TABLESPACE "farket"]]
   }
 
   {
     -> schema.create_index "user_data", "one", "two"
-    [[CREATE INDEX "user_data_one_two_idx" ON "user_data" ("one", "two");]]
+    [[CREATE INDEX "user_data_one_two_idx" ON "user_data" ("one", "two")]]
   }
 
   {
     -> schema.create_index "user_data", db.raw("lower(name)"), "height"
-    [[CREATE INDEX "user_data_lower_name_height_idx" ON "user_data" (lower(name), "height");]]
+    [[CREATE INDEX "user_data_lower_name_height_idx" ON "user_data" (lower(name), "height")]]
   }
 
   {

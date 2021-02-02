@@ -46,7 +46,7 @@ create_table = (name, columns, opts={}) ->
 
   add "\n" if #columns > 0
 
-  add ");"
+  add ")"
   db.query concat buffer
 
 create_index = (tname, ...) ->
@@ -86,7 +86,6 @@ create_index = (tname, ...) ->
   if options.when
     error "did you mean create_index `where`?"
 
-  append_all buffer, ";"
   db.query concat buffer
 
 drop_index = (...) ->
@@ -101,7 +100,7 @@ drop_index = (...) ->
   db.query concat buffer
 
 drop_table = (tname) ->
-  db.query "DROP TABLE IF EXISTS #{escape_identifier tname};"
+  db.query "DROP TABLE IF EXISTS #{escape_identifier tname}"
 
 add_column = (tname, col_name, col_type) ->
   tname = escape_identifier tname
