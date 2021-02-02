@@ -337,7 +337,7 @@ tests = {
 
   {
     -> schema.create_index "users", "friend_id", tablespace: "farket"
-    [['CREATE INDEX "users_friend_id_idx" ON "users" ("friend_id") TABLESPACE "farket";]]
+    [[CREATE INDEX "users_friend_id_idx" ON "users" ("friend_id") TABLESPACE "farket";]]
   }
 
   {
