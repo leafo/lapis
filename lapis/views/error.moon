@@ -37,6 +37,7 @@ class ErrorPage extends html.Widget
   content: =>
     html_5 ->
       head ->
+        meta charset: "UTF-8"
         title "Error"
         @style!
       body ->
