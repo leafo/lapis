@@ -43,6 +43,9 @@ do
     content = function(self)
       return html_5(function()
         head(function()
+          meta({
+            charset = "UTF-8"
+          })
           title("Error")
           return self:style()
         end)

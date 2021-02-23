@@ -67,6 +67,9 @@ cached = function(fn_or_tbl)
     end
     local key = _cache_key(self.req.parsed_url.path, self.GET, self)
     local dict = get_dict(dict_name, self)
+    if not (dict) then
+      error("failed to load dictionary for cache: `" .. tostring(dict_name) .. "`")
+    end
     do
       local cache_value = dict:get(key)
       if cache_value then

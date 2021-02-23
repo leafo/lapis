@@ -62,6 +62,9 @@ cached = (fn_or_tbl) ->
     key = _cache_key @req.parsed_url.path, @GET, @
     dict = get_dict dict_name, @
 
+    unless dict
+      error "failed to load dictionary for cache: `#{dict_name}`"
+
     if cache_value = dict\get key
       ngx.header["x-memory-cache-hit"] = "1"
       cache_value = json.decode(cache_value)
