@@ -62,7 +62,8 @@ table with a list of validations to perform. Each validation is the following fo
 `Validation_Key` is the key to fetch from the table being validated.
 
 Any number of validation functions can be provided. If a validation function
-takes multiple arguments, an array table can be passed
+takes multiple arguments, pass an array table. (Note: A single table argument
+cannot be used, it will be unpacked into arguments.)
 
 `Error_Message` is an optional second positional value. If provided it will be
 used as the validation failure error message instead of the default generated
