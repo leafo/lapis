@@ -183,6 +183,7 @@ types = setmetatable {
   double:       C "double precision", null: false, default: 0
   boolean:      C "boolean", null: false, default: false
   foreign_key:  C "integer"
+  uuid:         C "UUID", default: "uuid_generate_v4()"
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
 
