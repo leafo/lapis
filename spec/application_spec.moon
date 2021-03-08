@@ -178,6 +178,68 @@ describe "@include", ->
     assert.same "/sub/hello", req\url_for "sub_hello"
     assert.same "/world", req\url_for "world"
 
+  it "included application supports require'd action", ->
+    s = {} -- use table address for unique identifier for action result
+
+    package.loaded["actions.hello"] = -> "action1 #{s}"
+    package.loaded["actions.admin.cool"] = -> "action2 #{s}"
+
+    class SubApp extends lapis.Application
+      [hello: "/cool-dad"]: true
+      [world: "/uncool-dad"]: "admin.cool"
+
+    class SomeApp extends lapis.Application
+      layout: false
+      @include SubApp
+
+      "/some-dad": => "hi"
+
+    status, buffer, headers = mock_request SomeApp, "/cool-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "action1 #{tostring s}"
+    }, { :status, :buffer }
+
+    status, buffer, headers = mock_request SomeApp, "/uncool-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "action2 #{tostring s}"
+    }, { :status, :buffer }
+
+  it "included application supports require'd action and include name", ->
+    s = {}
+
+    package.loaded["actions.subapp.hello"] = -> "subapp action1 #{s}"
+    package.loaded["actions.subapp.admin.cool"] = -> "subapp action2 #{s}"
+
+    class SubApp extends lapis.Application
+      name: "subapp."
+
+      [hello: "/cool-dad"]: true
+      [world: "/uncool-dad"]: "admin.cool"
+
+    class SomeApp extends lapis.Application
+      layout: false
+      @include SubApp
+
+      "/some-dad": => "hi"
+
+    status, buffer, headers = mock_request SomeApp, "/cool-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "subapp action1 #{tostring s}"
+    }, { :status, :buffer }
+
+    status, buffer, headers = mock_request SomeApp, "/uncool-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "subapp action2 #{tostring s}"
+    }, { :status, :buffer }
+
 describe "default route", ->
   it "hits default route", ->
     local res
