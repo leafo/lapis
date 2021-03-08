@@ -275,7 +275,8 @@ class Application
         action = (r) ->
           for filter in *before_filters
             return if run_before_filter filter, r
-          fn r
+
+          load_action(r.app.actions_prefix, fn, r.route_name) r
 
       into[path] = action
 

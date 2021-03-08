@@ -7,6 +7,7 @@ insert = table.insert
 local json = require("cjson")
 local unpack = unpack or table.unpack
 local capture_errors, capture_errors_json, respond_to
+local MISSING_ROUTE_NAME_ERORR = "Attempted to load action `true` for route with no name, a name must be provided to require the action"
 local run_before_filter
 run_before_filter = function(filter, r)
   local _write = r.write
@@ -22,7 +23,7 @@ end
 local load_action
 load_action = function(prefix, action, route_name)
   if action == true then
-    assert(route_name, "Attempted to load action `true` for route with no name, a name must be provided to require the action")
+    assert(route_name, MISSING_ROUTE_NAME_ERORR)
     return require(tostring(prefix) .. "." .. tostring(route_name))
   elseif type(action) == "string" then
     return require(tostring(prefix) .. "." .. tostring(action))
@@ -338,6 +339,14 @@ do
           _continue_0 = true
           break
         end
+        if name_prefix then
+          if type(action) == "string" then
+            action = name_prefix .. action
+          elseif action == true then
+            assert(type(path) == "table", "include: " .. tostring(MISSING_ROUTE_NAME_ERORR))
+            action = next(path)
+          end
+        end
         do
           local before_filters = other_app.before_filters
           if before_filters then
@@ -349,7 +358,7 @@ do
                   return 
                 end
               end
-              return fn(r)
+              return load_action(r.app.actions_prefix, fn, r.route_name)(r)
             end
           end
         end

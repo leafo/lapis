@@ -240,6 +240,46 @@ describe "@include", ->
       buffer: "subapp action2 #{tostring s}"
     }, { :status, :buffer }
 
+
+  it "included application supports require'd action with before filter", ->
+    s = {}
+    package.loaded["actions.one"] = => "action1 #{s} #{@something}"
+    package.loaded["actions.admin.two"] = => "action2 #{s} #{@something}"
+
+    class SubApp extends lapis.Application
+      @before_filter (r) =>
+        @something = "Before filter has run!"
+
+      [one: "/cool-dad"]: true
+      [two: "/uncool-dad"]: "admin.two"
+
+    class SomeApp extends lapis.Application
+      layout: false
+      @include SubApp
+
+      "/some-dad": => "hi"
+
+    status, buffer, headers = mock_request SomeApp, "/cool-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "action1 #{s} Before filter has run!"
+    }, { :status, :buffer }
+
+    status, buffer, headers = mock_request SomeApp, "/uncool-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "action2 #{s} Before filter has run!"
+    }, { :status, :buffer }
+
+    status, buffer, headers = mock_request SomeApp, "/some-dad", {}
+
+    assert.same {
+      status: 200
+      buffer: "hi"
+    }, { :status, :buffer }
+
 describe "default route", ->
   it "hits default route", ->
     local res
