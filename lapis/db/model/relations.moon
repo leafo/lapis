@@ -16,7 +16,7 @@ find_relation = (model, name) ->
     find_relation p, name
 
 preload_relation = (objects, name, ...) =>
-  preloader = @relation_preloaders[name]
+  preloader = @relation_preloaders and @relation_preloaders[name]
 
   unless preloader
     error "Model #{@__name} doesn't have preloader for #{name}"
@@ -25,7 +25,7 @@ preload_relation = (objects, name, ...) =>
   true
 
 preload_relations = (objects, name, ...) =>
-  preloader = @relation_preloaders[name]
+  preloader = @relation_preloaders and @relation_preloaders[name]
   unless preloader
     error "Model #{@__name} doesn't have preloader for #{name}"
 

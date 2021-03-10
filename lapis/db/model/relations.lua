@@ -38,7 +38,7 @@ find_relation = function(model, name)
 end
 local preload_relation
 preload_relation = function(self, objects, name, ...)
-  local preloader = self.relation_preloaders[name]
+  local preloader = self.relation_preloaders and self.relation_preloaders[name]
   if not (preloader) then
     error("Model " .. tostring(self.__name) .. " doesn't have preloader for " .. tostring(name))
   end
@@ -47,7 +47,7 @@ preload_relation = function(self, objects, name, ...)
 end
 local preload_relations
 preload_relations = function(self, objects, name, ...)
-  local preloader = self.relation_preloaders[name]
+  local preloader = self.relation_preloaders and self.relation_preloaders[name]
   if not (preloader) then
     error("Model " .. tostring(self.__name) .. " doesn't have preloader for " .. tostring(name))
   end
