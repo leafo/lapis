@@ -24,18 +24,22 @@ preload_relation = (objects, name, ...) =>
   preloader @, objects, ...
   true
 
+-- this function is deprecated, replaced by 'preload', which has support for
+-- nested relations of different types
 preload_relations = (objects, name, ...) =>
-  preloader = @relation_preloaders and @relation_preloaders[name]
-  unless preloader
-    error "Model #{@__name} doesn't have preloader for #{name}"
-
-  preloader @, objects
+  preload_relation @, objects, name
 
   if ...
-    @preload_relations objects, ...
+    preload_relations @, objects, ...
   else
     true
 
+-- this is used to preload a list of model instances, `objects`, that are all
+-- the same type, `model`.
+-- * `front` -- name of the relation to preload, it can either be a table
+--   description or a single relation name
+-- * `sub_relations` will hold the outlist list of models that have been loaded
+--   indexed by any subsequent relations to load
 preload_homogeneous = (sub_relations, model, objects, front, ...) ->
   import to_json from require "lapis.util"
   return unless front
