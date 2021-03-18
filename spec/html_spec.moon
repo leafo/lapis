@@ -102,7 +102,7 @@ describe "lapis.html", ->
       input = render_widget TestWidget message: "Hello World!", inner: -> b "Stay Safe"
       assert.same input, [[<div class="hello">Hello World!</div><b>Stay Safe</b>]]
 
-    it "should render widget with inheritance", ->
+    it "renders widget with inheritance", ->
       class BaseWidget extends Widget
         value: 100
         another_value: => 200
@@ -120,6 +120,26 @@ describe "lapis.html", ->
       input = render_widget TestWidget!
       assert.same input, [[<div class="base_widget">Widget speaking, value: 100, another_value: 200</div>]]
 
+    it "renders widget with inheritance and super", ->
+      class BaseWidget extends Widget
+        value: 100
+        another_value: => 200
+
+        content: =>
+          div class: "base_widget", ->
+            @inner!
+
+        inner: => div "Hello #{@value} #{@another_value!}"
+
+      class TestWidget extends BaseWidget
+        inner: =>
+          pre ->
+            -- we can't use super directly since the rendering scope is unable to set the function environment
+            -- this is the current 'recommended' approach to calling super
+            @_buffer\call super.inner, @
+
+      input = render_widget TestWidget!
+      assert.same input, [[<div class="base_widget"><pre><div>Hello 100 200</div></pre></div>]]
 
     it "should include widget helper", ->
       class Test extends Widget
