@@ -321,64 +321,6 @@ auto_table = (fn) ->
     getmetatable(@).__index = result
     result[name]
 
-
-mixin_class = do
-  empty_func = string.dump ->
-
-  is_filled_function = (fn) ->
-    fn and string.dump(fn) != empty_func
-
-  combine_before = (existing, new) ->
-    (...) ->
-      new ...
-      existing ...
-
-  -- target: a class, to_mix: another class
-  (target, to_mix, combine_methods=combine_before) ->
-    base = target.__base
-
-    -- copy members
-    for member_name, member_val in pairs to_mix.__base
-      continue if member_name\match "^__"
-
-      if existing = base[member_name]
-        if type(existing) == "function" and type(member_val) == "function"
-          base[member_name] = combine_methods existing, member_val
-          continue
-
-      base[member_name] = member_val
-
-    -- constructor
-    new_ctor = to_mix.__init
-    if is_filled_function new_ctor
-      old_ctor = target.__init
-
-      if is_filled_function old_ctor
-        -- combine constructors
-        target.__init = (...) ->
-          old_ctor ...
-          new_ctor ...
-      else
-        -- replace
-        target.__init = new_ctor
-
--- helper for mixin_class that gets parent scope's self as target
-mixin = do
-  get_local = (search_name, level=1) ->
-    level += 1
-    i = 1
-    while true
-      name, val = debug.getlocal level, i
-      break unless name
-      if name == search_name
-        return val
-      i += 1
-
-  (...) ->
-    target = get_local "self", 2
-    for to_mix in *{...}
-      mixin_class target, to_mix
-
 get_fields = (obj, key, ...) ->
   return unless obj
   return unless key
@@ -402,4 +344,4 @@ singularize = (name) ->
   :underscore, :slugify, :uniquify, :trim, :trim_all, :trim_filter,
   :key_filter, :to_json, :from_json, :json_encodable, :build_url, :time_ago,
   :time_ago_in_words, :camelize, :title_case, :autoload, :auto_table,
-  :mixin_class, :mixin, :get_fields, :singularize, :date_diff }
+  :get_fields, :singularize, :date_diff }
