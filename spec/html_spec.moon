@@ -345,5 +345,4 @@ describe "lapis.html", ->
           t: time
         })\render_to_file fake_file
 
-
-      assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], table.concat(written)
+        assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], table.concat(written)
