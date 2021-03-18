@@ -400,8 +400,16 @@ describe "lapis.html", ->
             div class: "the_thing", ->
               text "hello world"
 
+          hose: ->
+            text "test hose"
+
+        class OtherMixin
+          hose: ->
+            text "other hose"
+
         class SomeWidget extends Widget
           @include TestMixin
+          @include OtherMixin
 
           thing: ->
             code class: "coder", "here's the code"
@@ -409,8 +417,9 @@ describe "lapis.html", ->
           content: =>
             div class: "outer", ->
               @thing!
+              @hose!
 
-        assert.same [[<div class="outer"><code class="coder">here&#039;s the code</code></div>]],
+        assert.same [[<div class="outer"><code class="coder">here&#039;s the code</code>other hose</div>]],
           render_widget SomeWidget!
 
       it "calls super method", ->
@@ -428,3 +437,16 @@ describe "lapis.html", ->
 
         assert.same [[<span data-height="22"></span>]],
           render_widget SomeWidget!
+
+      it "does not re-mixin Widget", ->
+        class MistakeMixin extends Widget
+          height: => 10
+
+        assert.has_error(
+          ->
+            class SomeWidget extends Widget
+              @include MistakeMixin
+          "Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget"
+        )
+
+

@@ -280,6 +280,9 @@ class Widget
     mixins_class, true
 
   @include: (other_cls) =>
+    if other_cls == Widget
+      error "Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget"
+
     mixins_class = @get_mixins_class!
 
     -- if there is a parent, do it first

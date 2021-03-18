@@ -656,6 +656,9 @@ do
     return mixins_class, true
   end
   self.include = function(self, other_cls)
+    if other_cls == Widget then
+      error("Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget")
+    end
     local mixins_class = self:get_mixins_class()
     if other_cls.__parent then
       self:include(other_cls.__parent)
