@@ -92,258 +92,258 @@ describe "lapis.html", ->
     assert.same "helloworld", output
     assert.same "<div>This is the capture</div>", capture_result.value
 
+  describe "Widget", ->
+    it "should render the widget", ->
+      class TestWidget extends Widget
+        content: =>
+          div class: "hello", @message
+          raw @inner
 
-  it "should render the widget", ->
-    class TestWidget extends Widget
-      content: =>
-        div class: "hello", @message
-        raw @inner
+      input = render_widget TestWidget message: "Hello World!", inner: -> b "Stay Safe"
+      assert.same input, [[<div class="hello">Hello World!</div><b>Stay Safe</b>]]
 
-    input = render_widget TestWidget message: "Hello World!", inner: -> b "Stay Safe"
-    assert.same input, [[<div class="hello">Hello World!</div><b>Stay Safe</b>]]
+    it "should render widget with inheritance", ->
+      class BaseWidget extends Widget
+        value: 100
+        another_value: => 200
 
-  it "should render widget with inheritance", ->
-    class BaseWidget extends Widget
-      value: 100
-      another_value: => 200
+        content: =>
+          div class: "base_widget", ->
+            @inner!
 
-      content: =>
-        div class: "base_widget", ->
-          @inner!
+        inner: => error "implement me"
 
-      inner: => error "implement me"
+      class TestWidget extends BaseWidget
+        inner: =>
+          text "Widget speaking, value: #{@value}, another_value: #{@another_value!}"
 
-    class TestWidget extends BaseWidget
-      inner: =>
-        text "Widget speaking, value: #{@value}, another_value: #{@another_value!}"
-
-    input = render_widget TestWidget!
-    assert.same input, [[<div class="base_widget">Widget speaking, value: 100, another_value: 200</div>]]
-
-
-  it "should include widget helper", ->
-    class Test extends Widget
-      content: =>
-        div "What's up! #{@hello!}"
-
-    w = Test!
-    w\include_helper {
-      id: 10
-      hello: => "id: #{@id}"
-    }
-
-    input = render_widget w
-    assert.same input, [[<div>What&#039;s up! id: 10</div>]]
-
-  it "helper should pass to sub widget", ->
-    class Fancy extends Widget
-      content: =>
-        text @cool_message!
-        text @thing
-
-    class Test extends Widget
-      content: =>
-        first ->
-          widget Fancy @
-
-        second ->
-          widget Fancy!
-
-    w = Test thing: "THING"
-    w\include_helper {
-      cool_message: =>
-        "so-cool"
-    }
-    assert.same [[<first>so-coolTHING</first><second>so-cool</second>]],
-      render_widget w
-
-  it "helpers should resolve correctly ", ->
-    class Base extends Widget
-      one: 1
-      two: 2
-      three: 3
-
-    class Sub extends Base
-      two: 20
-      three: 30
-      four: 40
-
-      content: =>
-        text @one
-        text @two
-        text @three
-        text @four
-        text @five
-
-    w = Sub!
-    w\include_helper {
-      one: 100
-      two: 200
-      four: 400
-      five: 500
-    }
-
-    buff = {}
-    w\render buff
-
-    assert.same {"1", "20", "30", "40", "500"}, buff
+      input = render_widget TestWidget!
+      assert.same input, [[<div class="base_widget">Widget speaking, value: 100, another_value: 200</div>]]
 
 
-  it "should include methods from mixin", ->
-    class TestMixin
-      thing: ->
-        div class: "the_thing", ->
-          text "hello world"
+    it "should include widget helper", ->
+      class Test extends Widget
+        content: =>
+          div "What's up! #{@hello!}"
 
-    class SomeWidget extends Widget
-      @include TestMixin
-
-      content: =>
-        div class: "outer", ->
-          @thing!
-
-    assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
-      render_widget SomeWidget!
-
-  it "should set layout opt", ->
-    class TheWidget extends Widget
-      content: =>
-        @content_for "title", -> div "hello world"
-        @content_for "another", "yeah"
-
-    widget = TheWidget!
-    helper = { layout_opts: {} }
-    widget\include_helper helper
-    out = render_widget widget
-
-    assert.same { _content_for_another: "yeah", _content_for_title: "<div>hello world</div>" }, helper.layout_opts
-
-  it "should render content for", ->
-    class TheLayout extends Widget
-      content: =>
-        assert @has_content_for("title"), "should have title content_for"
-        assert @has_content_for("inner"), "should have inner content_for"
-        assert @has_content_for("footer"), "should have footer content_for"
-        assert not @has_content_for("hello"), "should not have hello content for"
-
-        div class: "title", ->
-          @content_for "title"
-
-        @content_for "inner"
-        @content_for "footer"
-
-    class TheWidget extends Widget
-      content: =>
-        @content_for "title", -> div "hello world"
-        @content_for "footer", "The's footer"
-        div "what the heck?"
-
-
-    layout_opts = {}
-
-    inner = {}
-    view = TheWidget!
-    view\include_helper { :layout_opts }
-    view inner
-
-    layout_opts._content_for_inner = -> raw inner
-
-    assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
-
-  it "should append multiple content for", ->
-    class TheLayout extends Widget
-      content: =>
-        element "content-for", ->
-          @content_for "things"
-
-    class TheWidget extends Widget
-      content: =>
-        @content_for "things", -> div "hello world"
-        @content_for "things", "dual world"
-
-    layout_opts = {}
-
-    inner = {}
-    view = TheWidget!
-    view\include_helper { :layout_opts }
-    view inner
-
-    assert.same [[<content-for><div>hello world</div>dual world</content-for>]], render_widget TheLayout layout_opts
-
-  it "should instantiate widget class when passed to widget helper", ->
-    class SomeWidget extends Widget
-      content: =>
-        @color = "blue"
-        -- assert.Not.same @, SomeWidget
-        text "hello!"
-
-    render_html ->
-      widget SomeWidget
-
-    assert.same nil, SomeWidget.color
-
-  it "should render widget inside of capture", ->
-    capture_result = {}
-
-    class InnerInner extends Widget
-      content: =>
-        out = capture ->
-          span "yeah"
-        raw out
-
-    class Inner extends Widget
-      content: =>
-        dt "hello"
-        widget InnerInner
-        dt "world"
-
-    class Outer extends Widget
-      content: =>
-        capture_result.value = capture ->
-          div "before"
-          widget Inner!
-          div "after"
-
-    assert.same [[]], render_widget Outer!
-    assert.same [[<div>before</div><dt>hello</dt><span>yeah</span><dt>world</dt><div>after</div>]], capture_result.value
-
-  describe "widget.render_to_file", ->
-    class Inner extends Widget
-      content: =>
-        dt class: "cool", "hello"
-        p ->
-          strong "The world  #{@t}"
-          @m!
-
-        dt "world"
-
-      m: =>
-        raw "is &amp; here"
-
-    it "renders to string by filename", ->
-      time = os.time!
-
-      Inner({
-        t: time
-      })\render_to_file "widget_out.html"
-
-      written = assert(io.open("widget_out.html"))\read "*a"
-
-      assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], written
-
-
-    it "writes to file interface", ->
-      written = {}
-      fake_file = {
-        write: (content) =>
-          table.insert written, content
+      w = Test!
+      w\include_helper {
+        id: 10
+        hello: => "id: #{@id}"
       }
 
-      time = os.time!
+      input = render_widget w
+      assert.same input, [[<div>What&#039;s up! id: 10</div>]]
 
-      Inner({
-        t: time
-      })\render_to_file fake_file
+    it "helper should pass to sub widget", ->
+      class Fancy extends Widget
+        content: =>
+          text @cool_message!
+          text @thing
+
+      class Test extends Widget
+        content: =>
+          first ->
+            widget Fancy @
+
+          second ->
+            widget Fancy!
+
+      w = Test thing: "THING"
+      w\include_helper {
+        cool_message: =>
+          "so-cool"
+      }
+      assert.same [[<first>so-coolTHING</first><second>so-cool</second>]],
+        render_widget w
+
+    it "helpers should resolve correctly ", ->
+      class Base extends Widget
+        one: 1
+        two: 2
+        three: 3
+
+      class Sub extends Base
+        two: 20
+        three: 30
+        four: 40
+
+        content: =>
+          text @one
+          text @two
+          text @three
+          text @four
+          text @five
+
+      w = Sub!
+      w\include_helper {
+        one: 100
+        two: 200
+        four: 400
+        five: 500
+      }
+
+      buff = {}
+      w\render buff
+
+      assert.same {"1", "20", "30", "40", "500"}, buff
+
+
+    it "should include methods from mixin", ->
+      class TestMixin
+        thing: ->
+          div class: "the_thing", ->
+            text "hello world"
+
+      class SomeWidget extends Widget
+        @include TestMixin
+
+        content: =>
+          div class: "outer", ->
+            @thing!
+
+      assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
+        render_widget SomeWidget!
+
+    it "should set layout opt", ->
+      class TheWidget extends Widget
+        content: =>
+          @content_for "title", -> div "hello world"
+          @content_for "another", "yeah"
+
+      widget = TheWidget!
+      helper = { layout_opts: {} }
+      widget\include_helper helper
+      out = render_widget widget
+
+      assert.same { _content_for_another: "yeah", _content_for_title: "<div>hello world</div>" }, helper.layout_opts
+
+    it "should render content for", ->
+      class TheLayout extends Widget
+        content: =>
+          assert @has_content_for("title"), "should have title content_for"
+          assert @has_content_for("inner"), "should have inner content_for"
+          assert @has_content_for("footer"), "should have footer content_for"
+          assert not @has_content_for("hello"), "should not have hello content for"
+
+          div class: "title", ->
+            @content_for "title"
+
+          @content_for "inner"
+          @content_for "footer"
+
+      class TheWidget extends Widget
+        content: =>
+          @content_for "title", -> div "hello world"
+          @content_for "footer", "The's footer"
+          div "what the heck?"
+
+
+      layout_opts = {}
+
+      inner = {}
+      view = TheWidget!
+      view\include_helper { :layout_opts }
+      view inner
+
+      layout_opts._content_for_inner = -> raw inner
+
+      assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
+
+    it "should append multiple content for", ->
+      class TheLayout extends Widget
+        content: =>
+          element "content-for", ->
+            @content_for "things"
+
+      class TheWidget extends Widget
+        content: =>
+          @content_for "things", -> div "hello world"
+          @content_for "things", "dual world"
+
+      layout_opts = {}
+
+      inner = {}
+      view = TheWidget!
+      view\include_helper { :layout_opts }
+      view inner
+
+      assert.same [[<content-for><div>hello world</div>dual world</content-for>]], render_widget TheLayout layout_opts
+
+    it "should instantiate widget class when passed to widget helper", ->
+      class SomeWidget extends Widget
+        content: =>
+          @color = "blue"
+          -- assert.Not.same @, SomeWidget
+          text "hello!"
+
+      render_html ->
+        widget SomeWidget
+
+      assert.same nil, SomeWidget.color
+
+    it "should render widget inside of capture", ->
+      capture_result = {}
+
+      class InnerInner extends Widget
+        content: =>
+          out = capture ->
+            span "yeah"
+          raw out
+
+      class Inner extends Widget
+        content: =>
+          dt "hello"
+          widget InnerInner
+          dt "world"
+
+      class Outer extends Widget
+        content: =>
+          capture_result.value = capture ->
+            div "before"
+            widget Inner!
+            div "after"
+
+      assert.same [[]], render_widget Outer!
+      assert.same [[<div>before</div><dt>hello</dt><span>yeah</span><dt>world</dt><div>after</div>]], capture_result.value
+
+    describe "widget.render_to_file", ->
+      class Inner extends Widget
+        content: =>
+          dt class: "cool", "hello"
+          p ->
+            strong "The world  #{@t}"
+            @m!
+
+          dt "world"
+
+        m: =>
+          raw "is &amp; here"
+
+      it "renders to string by filename", ->
+        time = os.time!
+
+        Inner({
+          t: time
+        })\render_to_file "widget_out.html"
+
+        written = assert(io.open("widget_out.html"))\read "*a"
+
+        assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], written
+
+
+      it "writes to file interface", ->
+        written = {}
+        fake_file = {
+          write: (content) =>
+            table.insert written, content
+        }
+
+        time = os.time!
+
+        Inner({
+          t: time
+        })\render_to_file fake_file
 
 
       assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], table.concat(written)
