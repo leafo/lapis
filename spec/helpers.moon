@@ -115,6 +115,6 @@ sorted_pairs = (sort=table.sort) ->
           key, object[key]
 
   after_each ->
-    _G.pairs = pairs
+    _G.pairs = _pairs
 
 { :with_query_fn, :assert_queries, :stub_queries, :sorted_pairs }

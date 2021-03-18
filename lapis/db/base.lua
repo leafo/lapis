@@ -130,8 +130,10 @@ build_helpers = function(escape_literal, escape_identifier)
   end
   local encode_values
   encode_values = function(t, buffer)
+    assert(next(t) ~= nil, "encode_values passed an empty table")
     local have_buffer = buffer
     buffer = buffer or { }
+    append_all(buffer, "(")
     local tuples
     do
       local _accum_0 = { }
@@ -145,37 +147,26 @@ build_helpers = function(escape_literal, escape_identifier)
       end
       tuples = _accum_0
     end
-    local cols = concat((function()
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = 1, #tuples do
-        local pair = tuples[_index_0]
-        _accum_0[_len_0] = escape_identifier(pair[1])
-        _len_0 = _len_0 + 1
-      end
-      return _accum_0
-    end)(), ", ")
-    local vals = concat((function()
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = 1, #tuples do
-        local pair = tuples[_index_0]
-        _accum_0[_len_0] = escape_literal(pair[2])
-        _len_0 = _len_0 + 1
-      end
-      return _accum_0
-    end)(), ", ")
-    append_all(buffer, "(", cols, ") VALUES (", vals, ")")
+    for _index_0 = 1, #tuples do
+      local pair = tuples[_index_0]
+      append_all(buffer, escape_identifier(pair[1]), ", ")
+    end
+    buffer[#buffer] = ") VALUES ("
+    for _index_0 = 1, #tuples do
+      local pair = tuples[_index_0]
+      append_all(buffer, escape_literal(pair[2]), ", ")
+    end
+    buffer[#buffer] = ")"
     if not (have_buffer) then
       return concat(buffer)
     end
   end
   local encode_assigns
   encode_assigns = function(t, buffer)
+    assert(next(t) ~= nil, "encode_assigns passed an empty table")
     local join = ", "
     local have_buffer = buffer
     buffer = buffer or { }
-    assert(next(t) ~= nil, "encode_assigns passed an empty table")
     for k, v in pairs(t) do
       append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
     end
@@ -186,6 +177,7 @@ build_helpers = function(escape_literal, escape_identifier)
   end
   local encode_clause
   encode_clause = function(t, buffer)
+    assert(next(t) ~= nil, "encode_clause passed an empty table")
     local join = " AND "
     local have_buffer = buffer
     buffer = buffer or { }

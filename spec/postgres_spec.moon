@@ -7,6 +7,8 @@ unpack = unpack or table.unpack
 
 value_table = { hello: "world", age: 34 }
 
+import sorted_pairs from require "spec.helpers"
+
 tests = {
   -- lapis.db.postgres
   {
@@ -592,10 +594,96 @@ describe "lapis.db.postgres", ->
       else
         assert.same group[2], output
 
-  -- it "should create not create duplicate index", ->
-  --   old_select = db.select
-  --   db.select = -> { { c: 1 } }
-  --   input = schema.create_index "user_data", "one", "two", if_not_exists: true
-  --   assert.same input, nil
-  --   db.select = old_select
 
+  describe "encode_assigns", ->
+    sorted_pairs!
+
+    it "writes output to buffer", ->
+      buffer = {"hello"}
+
+      -- nothing is returned when using buffer
+      assert.same nil, (db.encode_assigns {
+        one: "two"
+        zone: 55
+        age: db.NULL
+      }, buffer)
+
+
+      assert.same {
+        "hello"
+        '"age"', " = ", "NULL"
+        ", "
+        '"one"', " = ", "'two'"
+        ", "
+        '"zone"', " = ", "55"
+      }, buffer
+
+    it "fails when t is empty, buffer unchanged", ->
+      buffer = {"hello"}
+
+      assert.has_error(
+        -> db.encode_assigns {}, buffer
+        "encode_assigns passed an empty table"
+      )
+
+      assert.same { "hello" }, buffer
+
+  describe "encode_clause", ->
+    sorted_pairs!
+
+    it "writes output to buffer", ->
+      buffer = {"hello"}
+
+      -- nothing is returned when using buffer
+      assert.same nil, (db.encode_clause {
+        hello: "world"
+        lion: db.NULL
+      }, buffer)
+
+      assert.same {
+        "hello"
+        '"hello"', " = ", "'world'"
+        " AND "
+        '"lion"', " IS NULL"
+      }, buffer
+
+    it "fails when t is empty, buffer unchanged", ->
+      buffer = {"hello"}
+
+      assert.has_error(
+        -> db.encode_clause {}, buffer
+        "encode_clause passed an empty table"
+      )
+
+      assert.same { "hello" }, buffer
+
+  describe "encode_values", ->
+    sorted_pairs!
+
+    it "writes output to buffer", ->
+      buffer = {"hello"}
+
+      -- nothing is returned when using buffer
+      assert.same nil, (db.encode_values {
+        hello: "world"
+        lion: db.NULL
+      }, buffer)
+
+      assert.same {
+        "hello"
+        '(',
+        '"hello"', ', ', '"lion"'
+        ') VALUES ('
+        "'world'", ', ', 'NULL'
+        ')'
+      }, buffer
+
+    it "fails when t is empty, buffer unchanged", ->
+      buffer = {"hello"}
+
+      assert.has_error(
+        -> db.encode_values {}, buffer
+        "encode_values passed an empty table"
+      )
+
+      assert.same { "hello" }, buffer

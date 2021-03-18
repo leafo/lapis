@@ -59,23 +59,33 @@ build_helpers = (escape_literal, escape_identifier) ->
 
   -- (col1, col2, col3) VALUES (val1, val2, val3)
   encode_values = (t, buffer) ->
+    assert next(t) != nil, "encode_values passed an empty table"
+
     have_buffer = buffer
     buffer or= {}
 
-    tuples = [{k,v} for k,v in pairs t]
-    cols = concat [escape_identifier pair[1] for pair in *tuples], ", "
-    vals = concat [escape_literal pair[2] for pair in *tuples], ", "
+    append_all buffer, "("
 
-    append_all buffer, "(", cols, ") VALUES (", vals, ")"
+    tuples = [{k,v} for k,v in pairs t]
+    for pair in *tuples
+      append_all buffer, escape_identifier(pair[1]), ", "
+
+    buffer[#buffer] = ") VALUES ("
+
+    for pair in *tuples
+      append_all buffer, escape_literal(pair[2]), ", "
+
+    buffer[#buffer] = ")"
+
     concat buffer unless have_buffer
 
   -- col1 = val1, col2 = val2, col3 = val3
   encode_assigns = (t, buffer) ->
+    assert next(t) != nil, "encode_assigns passed an empty table"
+
     join = ", "
     have_buffer = buffer
     buffer or= {}
-
-    assert next(t) != nil, "encode_assigns passed an empty table"
 
     for k,v in pairs t
       append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
@@ -86,6 +96,8 @@ build_helpers = (escape_literal, escape_identifier) ->
 
   -- { hello: "world", cat: db.NULL" } -> "hello" = 'world' AND "cat" IS NULL
   encode_clause = (t, buffer) ->
+    assert next(t) != nil, "encode_clause passed an empty table"
+
     join = " AND "
     have_buffer = buffer
     buffer or= {}
