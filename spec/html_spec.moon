@@ -188,23 +188,6 @@ describe "lapis.html", ->
 
       assert.same {"1", "20", "30", "40", "500"}, buff
 
-
-    it "should include methods from mixin", ->
-      class TestMixin
-        thing: ->
-          div class: "the_thing", ->
-            text "hello world"
-
-      class SomeWidget extends Widget
-        @include TestMixin
-
-        content: =>
-          div class: "outer", ->
-            @thing!
-
-      assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
-        render_widget SomeWidget!
-
     it "should set layout opt", ->
       class TheWidget extends Widget
         content: =>
@@ -346,3 +329,82 @@ describe "lapis.html", ->
         })\render_to_file fake_file
 
         assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], table.concat(written)
+
+    describe "@include", ->
+      it "copies method from mixin", ->
+        class TestMixin
+          thing: ->
+            div class: "the_thing", ->
+              text "hello world"
+
+        class SomeWidget extends Widget
+          @include TestMixin
+
+          content: =>
+            div class: "outer", ->
+              @thing!
+
+        assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
+          render_widget SomeWidget!
+
+      it "supports including class with inheritance", ->
+        class Alpha
+          thing: =>
+            li class: "the_thing", "hello"
+
+          thong: =>
+            li class: "the_thong", "world"
+
+        class Beta extends Alpha
+          thong: =>
+            li class: "fake_thong", "whoa"
+
+          render_list: =>
+            ul ->
+              @thing!
+              @thong!
+
+        class SomeWidget extends Widget
+          @include Beta
+
+          content: =>
+            div class: "outer", ->
+              @render_list!
+
+        assert.same [[<div class="outer"><ul><li class="the_thing">hello</li><li class="fake_thong">whoa</li></ul></div>]],
+          render_widget SomeWidget!
+
+      it "handles method collision", ->
+        class TestMixin
+          thing: ->
+            div class: "the_thing", ->
+              text "hello world"
+
+        class SomeWidget extends Widget
+          @include TestMixin
+
+          thing: ->
+            code class: "coder", "here's the code"
+
+          content: =>
+            div class: "outer", ->
+              @thing!
+
+        assert.same [[<div class="outer"><code class="coder">here&#039;s the code</code></div>]],
+          render_widget SomeWidget!
+
+      it "calls super method", ->
+        class TestMixin
+          height: => 10
+
+        class SomeWidget extends Widget
+          @include TestMixin
+
+          height: =>
+            super! + 12
+
+          content: =>
+            span "data-height": @height!
+
+        assert.same [[<span data-height="22"></span>]],
+          render_widget SomeWidget!

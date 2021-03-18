@@ -258,10 +258,41 @@ class Widget
   @__inherited: (cls) =>
     cls.__base.__call = (...) => @render ...
 
+  -- get the class where mixins can be inserted
+  -- will inject a class one above the current class in the inheritance
+  -- hierarchy. If a mixins class has already been injected then it will be returned
+  -- returns MixinClass, created(boolean)
+  @get_mixins_class: (model) ->
+    parent = model.__parent
+    unless parent
+      error "model does not have parent class"
+
+    -- if class has already been injected, return it
+    if rawget parent, "_mixins_class"
+      return parent, false
+
+    mixins_class = class extends model.__parent
+      @__name: "#{model.__name}Mixins"
+      @_mixins_class: true
+
+    model.__parent = mixins_class
+    setmetatable model.__base, mixins_class.__base
+    mixins_class, true
+
   @include: (other_cls) =>
-    import mixin_class from require "lapis.util"
-    other_cls = require other_cls if type(other_cls) == "string"
-    mixin_class @, other_cls
+    mixins_class = @get_mixins_class!
+
+    -- if there is a parent, do it first
+    -- note: this will flatten the inheritance chain, so super semantics are lost for mixed in methods!
+    if other_cls.__parent
+      @include other_cls.__parent
+
+    -- copy over all instance methods
+    for k,v in pairs other_cls.__base
+      continue if k\match("^__")
+      mixins_class.__base[k] = v
+
+    true
 
   new: (opts) =>
     -- copy in options
