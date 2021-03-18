@@ -175,6 +175,7 @@ build_helpers = function(escape_literal, escape_identifier)
     local join = ", "
     local have_buffer = buffer
     buffer = buffer or { }
+    assert(next(t) ~= nil, "encode_assigns passed an empty table")
     for k, v in pairs(t) do
       append_all(buffer, escape_identifier(k), " = ", escape_literal(v), join)
     end

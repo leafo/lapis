@@ -75,6 +75,8 @@ build_helpers = (escape_literal, escape_identifier) ->
     have_buffer = buffer
     buffer or= {}
 
+    assert next(t) != nil, "encode_assigns passed an empty table"
+
     for k,v in pairs t
       append_all buffer, escape_identifier(k), " = ", escape_literal(v), join
 
