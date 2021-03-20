@@ -312,6 +312,7 @@ class Application
 
 respond_to = do
   default_head = -> layout: false -- render nothing
+  invalid_method = => error "don't know how to respond to #{@req.cmd_mth}"
 
   (tbl) ->
     tbl.HEAD = default_head unless tbl.HEAD
@@ -323,7 +324,7 @@ respond_to = do
           return if run_before_filter before, @
         fn @
       else
-        error "don't know how to respond to #{@req.cmd_mth}"
+        (tbl.on_invalid_method or invalid_method) @
 
     if error_response = tbl.on_error
       out = capture_errors out, error_response

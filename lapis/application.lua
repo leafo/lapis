@@ -379,6 +379,10 @@ do
       layout = false
     }
   end
+  local invalid_method
+  invalid_method = function(self)
+    return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
+  end
   respond_to = function(tbl)
     if not (tbl.HEAD) then
       tbl.HEAD = default_head
@@ -397,7 +401,7 @@ do
         end
         return fn(self)
       else
-        return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
+        return (tbl.on_invalid_method or invalid_method)(self)
       end
     end
     do
