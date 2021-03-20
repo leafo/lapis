@@ -1,4 +1,3 @@
-local env = require("lapis.environment")
 local unpack = unpack or table.unpack
 local normalize_headers
 do
@@ -246,9 +245,7 @@ mock_request = function(app_cls, url, opts)
   if not (app.router) then
     app:build_router()
   end
-  env.push("test")
   local response = nginx.dispatch(app)
-  env.pop()
   stack.pop()
   logger.request = old_logger
   out_headers = normalize_headers(out_headers)
