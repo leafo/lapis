@@ -364,6 +364,141 @@ describe "error capturing", ->
     assert.same [[{"errors":["something bad happened!"]}]], body
     assert.same "application/json", headers["Content-Type"]
 
+describe "respond to", ->
+  import respond_to from require "lapis.application"
+
+  it "responds to basic verbs", ->
+    class RespondToApp extends lapis.Application
+      layout: false
+      "/test": respond_to {
+        GET: => "GET world"
+        DELETE: => "DELETE world"
+        PUT: => "PUT world"
+      }
+
+    request_method = (m) ->
+      (select 2, assert_request RespondToApp, "/test", method: m)
+
+    assert.same "GET world", request_method!
+    assert.same "DELETE world", request_method "DELETE"
+    assert.same "PUT world", request_method "PUT"
+
+  -- spec for default HEAD
+  it "responds to HEAD by default", ->
+    fn = respond_to {
+      GET: => "hello world"
+    }
+
+    assert.same {
+      layout: false
+    }, fn {
+      req: { method: "HEAD" }
+    }
+
+  it "default missing method handler", ->
+    fn = respond_to {
+      HEAD: false -- this disables the default head responder
+      GET: => "hello world"
+    }
+
+    assert.has_error(
+      ->
+        fn {
+          req: { method: "PUT" }
+        }
+      "don't know how to respond to PUT"
+    )
+
+    assert.has_error(
+      ->
+        fn {
+          req: { method: "HEAD" }
+        }
+      "don't know how to respond to HEAD"
+    )
+
+  it "on_error", ->
+    import yield_error, capture_errors from require "lapis.application"
+
+    -- we do an extra capture errors to ensure the right error handler is capturing
+    fn = capture_errors respond_to {
+      on_error: =>
+        json: { captured: "hello", errors: @errors }
+
+      POST: =>
+        yield_error "something bad happened!"
+    }
+
+    assert.same {
+      json: {
+        errors: {"something bad happened!"}
+        captured: "hello"
+      }
+    }, fn {
+      req: { method: "POST" }
+    }
+
+    -- no error handler, the outer should capture
+    fn = capture_errors respond_to {
+      POST: => yield_error "something bad happened!"
+    }
+
+    assert.same {
+      render: true
+    }, fn {
+      req: { method: "POST" }
+    }
+
+  it "on_invalid_method", ->
+    fn = respond_to {
+      on_invalid_method: =>
+        "got invalid method...: #{@req.method}"
+
+      HEAD: false
+
+      POST: =>
+        "hello"
+    }
+
+    assert.same "hello", fn {
+      req: { method: "POST" }
+    }
+
+    assert.same "got invalid method...: GET", fn {
+      req: { method: "GET" }
+    }
+
+    assert.same "got invalid method...: HEAD", fn {
+      req: { method: "HEAD" }
+    }
+
+  it "on_invalid_method & capture_errors", ->
+    import yield_error from require "lapis.application"
+
+    fn = respond_to {
+      on_error: =>
+        "<<#{table.concat @errors, ", "}>>"
+
+      on_invalid_method: =>
+        yield_error "bad method: #{@req.method}"
+
+      HEAD: false
+
+      POST: => "cool"
+    }
+
+    assert.same "<<bad method: HEAD>>", fn {
+      req: { method: "HEAD" }
+    }
+
+    assert.same "<<bad method: DELETE>>", fn {
+      req: { method: "DELETE" }
+    }
+
+    assert.same "cool", fn {
+      req: { method: "POST" }
+    }
+
 describe "instancing", ->
   it "should match a route", ->
     local res

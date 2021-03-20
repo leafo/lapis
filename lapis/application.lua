@@ -160,7 +160,7 @@ do
         r.options.headers = r.options.headers or { }
         local param_dump = logger.flatten_params(r.original_request.url_params)
         local error_payload = {
-          summary = "[" .. tostring(r.original_request.req.cmd_mth) .. "] " .. tostring(r.original_request.req.cmd_url) .. " " .. tostring(param_dump),
+          summary = "[" .. tostring(r.original_request.req.method) .. "] " .. tostring(r.original_request.req.request_uri) .. " " .. tostring(param_dump),
           err = err,
           trace = trace
         }
@@ -379,17 +379,17 @@ do
       layout = false
     }
   end
-  local invalid_method
-  invalid_method = function(self)
-    return error("don't know how to respond to " .. tostring(self.req.cmd_mth))
+  local on_invalid_method
+  on_invalid_method = function(self)
+    return error("don't know how to respond to " .. tostring(self.req.method))
   end
   respond_to = function(tbl)
-    if not (tbl.HEAD) then
+    if tbl.HEAD == nil then
       tbl.HEAD = default_head
     end
     local out
     out = function(self)
-      local fn = tbl[self.req.cmd_mth]
+      local fn = tbl[self.req.method]
       if fn then
         do
           local before = tbl.before
@@ -401,7 +401,7 @@ do
         end
         return fn(self)
       else
-        return (tbl.on_invalid_method or invalid_method)(self)
+        return (tbl.on_invalid_method or on_invalid_method)(self)
       end
     end
     do

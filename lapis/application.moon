@@ -185,7 +185,7 @@ class Application
       param_dump = logger.flatten_params r.original_request.url_params
 
       error_payload = {
-        summary: "[#{r.original_request.req.cmd_mth}] #{r.original_request.req.cmd_url} #{param_dump}"
+        summary: "[#{r.original_request.req.method}] #{r.original_request.req.request_uri} #{param_dump}"
         :err, :trace
       }
 
@@ -312,19 +312,19 @@ class Application
 
 respond_to = do
   default_head = -> layout: false -- render nothing
-  invalid_method = => error "don't know how to respond to #{@req.cmd_mth}"
+  on_invalid_method = => error "don't know how to respond to #{@req.method}"
 
   (tbl) ->
-    tbl.HEAD = default_head unless tbl.HEAD
+    tbl.HEAD = default_head if tbl.HEAD == nil
 
     out = =>
-      fn = tbl[@req.cmd_mth]
+      fn = tbl[@req.method]
       if fn
         if before = tbl.before
           return if run_before_filter before, @
         fn @
       else
-        (tbl.on_invalid_method or invalid_method) @
+        (tbl.on_invalid_method or on_invalid_method) @
 
     if error_response = tbl.on_error
       out = capture_errors out, error_response
