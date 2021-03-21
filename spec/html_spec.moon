@@ -351,6 +351,9 @@ describe "lapis.html", ->
         assert.same [[<dt class="cool">hello</dt><p><strong>The world  ]] .. time .. [[</strong>is &amp; here</p><dt>world</dt>]], table.concat(written)
 
     describe "@include", ->
+      after_each ->
+        package.loaded["widgets.mymixin"] = nil
+
       it "copies method from mixin", ->
         class TestMixin
           thing: ->
@@ -365,6 +368,21 @@ describe "lapis.html", ->
               @thing!
 
         assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
+          render_widget SomeWidget!
+
+      it "includes by module name", ->
+        package.loaded["widgets.mymixin"] = class MyMixin
+          render_list: =>
+            div "I am a list"
+
+        class SomeWidget extends Widget
+          @include "widgets.mymixin"
+
+          content: =>
+            div class: "outer", ->
+              @render_list!
+
+        assert.same [[<div class="outer"><div>I am a list</div></div>]],
           render_widget SomeWidget!
 
       it "supports including class with inheritance", ->
