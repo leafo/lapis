@@ -280,6 +280,9 @@ class Widget
     mixins_class, true
 
   @include: (other_cls) =>
+    other_cls, other_cls_name = if type(other_cls) == "string"
+      require(other_cls), other_cls
+
     if other_cls == Widget
       error "Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget"
 
@@ -289,6 +292,9 @@ class Widget
     -- note: this will flatten the inheritance chain, so super semantics are lost for mixed in methods!
     if other_cls.__parent
       @include other_cls.__parent
+
+    unless other_cls.__base
+      error "Expecting a class when trying to include #{other_cls_name or other_cls} into #{@__name}"
 
     -- copy over all instance methods
     for k,v in pairs other_cls.__base

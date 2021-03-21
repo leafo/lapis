@@ -656,12 +656,19 @@ do
     return mixins_class, true
   end
   self.include = function(self, other_cls)
+    local other_cls_name
+    if type(other_cls) == "string" then
+      other_cls, other_cls_name = require(other_cls), other_cls
+    end
     if other_cls == Widget then
       error("Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget")
     end
     local mixins_class = self:get_mixins_class()
     if other_cls.__parent then
       self:include(other_cls.__parent)
+    end
+    if not (other_cls.__base) then
+      error("Expecting a class when trying to include " .. tostring(other_cls_name or other_cls) .. " into " .. tostring(self.__name))
     end
     for k, v in pairs(other_cls.__base) do
       local _continue_0 = false
