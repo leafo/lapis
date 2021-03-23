@@ -8,6 +8,12 @@ mock_app = (...) ->
 
 
 describe "lapis.application", ->
+  before_each ->
+    -- unload any dynamically loaded modules for views & actions
+    for k,v in pairs package.loaded
+      if k\match("^actions%.") or k\match("^vies%.")
+        package.loaded[k] = nil
+
   describe "find_action", ->
     action1 = ->
     action2 = ->
@@ -296,9 +302,6 @@ describe "lapis.application", ->
       assert.same "bingo!", res
 
   describe "default layout", ->
-    after_each ->
-      package.loaded["views.test_layout"] = nil
-
     it "uses widget as layout", ->
       import Widget from require "lapis.html"
       class TestApp extends lapis.Application
