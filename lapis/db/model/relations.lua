@@ -263,6 +263,15 @@ end
 local fetch
 fetch = function(self, name, opts)
   local source = opts.fetch
+  if source == true then
+    assert(type(opts.preload) == "function", "You set fetch to `true` but did not provide a `preload` function")
+    source = function(self)
+      self.__class:preload_relation({
+        self
+      }, name)
+      return self[name]
+    end
+  end
   assert(type(source) == "function", "Expecting function for `fetch` relation")
   local get_method = opts.as or "get_" .. tostring(name)
   self.__base[get_method] = function(self)

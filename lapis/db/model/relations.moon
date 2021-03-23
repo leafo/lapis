@@ -167,6 +167,12 @@ get_relations_class = (model) ->
 
 fetch = (name, opts) =>
   source = opts.fetch
+  if source == true
+    assert type(opts.preload) == "function", "You set fetch to `true` but did not provide a `preload` function"
+    source = =>
+      @@preload_relation { @ }, name
+      @[name]
+
   assert type(source) == "function", "Expecting function for `fetch` relation"
 
   get_method = opts.as or "get_#{name}"
