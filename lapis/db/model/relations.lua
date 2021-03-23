@@ -36,6 +36,7 @@ find_relation = function(model, name)
     end
   end
 end
+local preload
 local preload_relation
 preload_relation = function(self, objects, name, ...)
   local optional
@@ -74,7 +75,8 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
       local _continue_0 = false
       repeat
         local relation = type(key) == "string" and key or val
-        preload_relation(model, objects, relation)
+        local preload_opts = type(val) == "table" and val[preload] or nil
+        preload_relation(model, objects, relation, preload_opts)
         if type(key) == "string" then
           local optional, relation_name
           if key:sub(1, 1) == "?" then
@@ -96,11 +98,22 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
           local loaded_objects = sub_relations[val]
           if r.has_many or r.fetch and r.many then
             for _index_0 = 1, #objects do
-              local obj = objects[_index_0]
-              local _list_0 = obj[relation_name]
-              for _index_1 = 1, #_list_0 do
-                local fetched = _list_0[_index_1]
-                table.insert(loaded_objects, fetched)
+              local _continue_1 = false
+              repeat
+                local obj = objects[_index_0]
+                if not (obj[relation_name]) then
+                  _continue_1 = true
+                  break
+                end
+                local _list_0 = obj[relation_name]
+                for _index_1 = 1, #_list_0 do
+                  local fetched = _list_0[_index_1]
+                  table.insert(loaded_objects, fetched)
+                end
+                _continue_1 = true
+              until true
+              if not _continue_1 then
+                break
               end
             end
           else
@@ -125,7 +138,6 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
     return sub_relations
   end
 end
-local preload
 preload = function(objects, ...)
   local by_type = { }
   for _index_0 = 1, #objects do

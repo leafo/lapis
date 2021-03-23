@@ -15,6 +15,8 @@ find_relation = (model, name) ->
   if p = model.__parent
     find_relation p, name
 
+local preload
+
 -- preload_relation is inserted into the relation class as a method
 -- self: model class
 -- objects: array of instances of model
@@ -58,7 +60,12 @@ preload_homogeneous = (sub_relations, model, objects, front, ...) ->
   if type(front) == "table"
     for key, val in pairs front
       relation = type(key) == "string" and key or val
-      preload_relation model, objects, relation
+
+      -- this lets you set pass preload opts by using the reference to the
+      -- preload function as a special key
+      preload_opts = type(val) == "table" and val[preload] or nil
+
+      preload_relation model, objects, relation, preload_opts
 
       if type(key) == "string"
         optional, relation_name = if key\sub(1,1) == "?"
@@ -78,6 +85,7 @@ preload_homogeneous = (sub_relations, model, objects, front, ...) ->
 
         if r.has_many or r.fetch and r.many
           for obj in *objects
+            continue unless obj[relation_name] -- if the preloader didn't insert array then just skip
             for fetched in *obj[relation_name]
               table.insert loaded_objects, fetched
         else
@@ -264,7 +272,6 @@ has_one = (name, opts) =>
 
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
-
 
     key = if type(opts.key) == "table"
       opts.key

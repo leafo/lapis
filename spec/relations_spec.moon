@@ -1189,6 +1189,34 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "user_data" where "user_id" in (11, 12)]]
       }, sorted: true
 
+    it "passes preload opts", ->
+      local preload_objects, preload_opts
+
+      class Item extends Model
+        @relations: {
+          {"things",
+            many: true
+            fetch: => error "no fetch me"
+            preload: (...) ->
+              preload_objects, preload_opts = ...
+          }
+        }
+
+
+      items = {Item!}
+      preload items, things: {
+        [preload]: {
+          fields: "blue"
+        }
+      }
+
+      assert.equal items[1], preload_objects[1]
+      assert.nil preload_objects[2]
+
+      assert.same {
+        fields: "blue"
+      }, preload_opts
+
     describe "optional relations", ->
       it "single optional relation", ->
         class OtherThing extends Model
@@ -1372,7 +1400,4 @@ describe "lapis.db.model.relations", ->
           for the_thing in *things[3].the_things
             assert.truthy the_thing.friend
             assert.equal the_thing, the_thing.friend.parent
-
-
-
 
