@@ -288,6 +288,9 @@ do
       end
       self.responders = self.responders or { }
       local existing = self.responders[route_name or path]
+      if type(handler) ~= "function" then
+        handler = load_action(self.actions_prefix, handler, route_name)
+      end
       local tbl = {
         [upper_meth] = handler
       }

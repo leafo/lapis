@@ -112,6 +112,13 @@ class Application
 
       @responders or= {}
       existing = @responders[route_name or path]
+
+      if type(handler) != "function"
+        -- NOTE: this works slightly differently, as it loads the action
+        -- immediately instead of lazily, how it happens in wrap_handler. This
+        -- is okay for now as we'll likely be overhauling this interface
+        handler = load_action @actions_prefix, handler, route_name
+
       tbl = { [upper_meth]: handler }
 
       if existing

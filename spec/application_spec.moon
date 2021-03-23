@@ -538,17 +538,38 @@ describe "lapis.application", ->
 
     it "finds actions by name for verb", ->
       local res
+
+      package.loaded["actions.one"] = -> res = "one"
+      package.loaded["actions.two"] = -> res = "two"
+      package.loaded["actions.three"] = -> res = "three"
+      package.loaded["actions.four.get"] = -> res = "four GET"
+      package.loaded["actions.four.post"] = -> res = "four POST"
+
       app = lapis.Application!
       app\match "one", "/one", true
+      app\match "/two", "two"
+
+      app\post "/three", "three"
+
+      app\get "/four", "four.get"
+      app\post "/four", "four.post"
 
       app\build_router!
 
-      print assert_request app, "/one"
+      assert_request app, "/one"
+      assert.same "one", res
 
-      -- app\get "/hello", => res = "get"
-      -- app\post "/hello", => res = "post"
-      -- app\match "two", ->
+      assert_request app, "/two"
+      assert.same "two", res
 
+      assert_request app, "/three", method: "POST"
+      assert.same "three", res
+
+      assert_request app, "/four"
+      assert.same "four GET", res
+
+      assert_request app, "/four",method: "POST"
+      assert.same "four POST", res
 
     it "should hit default route", ->
       local res
