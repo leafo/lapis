@@ -38,8 +38,16 @@ find_relation = function(model, name)
 end
 local preload_relation
 preload_relation = function(self, objects, name, ...)
+  local optional
+  if name:sub(1, 1) == "?" then
+    name = name:sub(2)
+    optional = true
+  end
   local preloader = self.relation_preloaders and self.relation_preloaders[name]
   if not (preloader) then
+    if optional then
+      return false
+    end
     error("Model " .. tostring(self.__name) .. " doesn't have preloader for " .. tostring(name))
   end
   preloader(self, objects, ...)
@@ -63,32 +71,49 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
   end
   if type(front) == "table" then
     for key, val in pairs(front) do
-      local relation = type(key) == "string" and key or val
-      preload_relation(model, objects, relation)
-      if type(key) == "string" then
-        local r = find_relation(model, key)
-        if not (r) then
-          error("missing relation: " .. tostring(key))
-        end
-        sub_relations = sub_relations or { }
-        local _update_0 = val
-        sub_relations[_update_0] = sub_relations[_update_0] or { }
-        local loaded_objects = sub_relations[val]
-        if r.has_many or r.fetch and r.many then
-          for _index_0 = 1, #objects do
-            local obj = objects[_index_0]
-            local _list_0 = obj[key]
-            for _index_1 = 1, #_list_0 do
-              local fetched = _list_0[_index_1]
-              table.insert(loaded_objects, fetched)
+      local _continue_0 = false
+      repeat
+        local relation = type(key) == "string" and key or val
+        preload_relation(model, objects, relation)
+        if type(key) == "string" then
+          local optional, relation_name
+          if key:sub(1, 1) == "?" then
+            optional, relation_name = true, key:sub(2)
+          else
+            optional, relation_name = false, key
+          end
+          local r = find_relation(model, relation_name)
+          if not (r) then
+            if optional then
+              _continue_0 = true
+              break
+            end
+            error("Model " .. tostring(model.__name) .. " doesn't have preloader for " .. tostring(relation_name))
+          end
+          sub_relations = sub_relations or { }
+          local _update_0 = val
+          sub_relations[_update_0] = sub_relations[_update_0] or { }
+          local loaded_objects = sub_relations[val]
+          if r.has_many or r.fetch and r.many then
+            for _index_0 = 1, #objects do
+              local obj = objects[_index_0]
+              local _list_0 = obj[relation_name]
+              for _index_1 = 1, #_list_0 do
+                local fetched = _list_0[_index_1]
+                table.insert(loaded_objects, fetched)
+              end
+            end
+          else
+            for _index_0 = 1, #objects do
+              local obj = objects[_index_0]
+              table.insert(loaded_objects, obj[relation_name])
             end
           end
-        else
-          for _index_0 = 1, #objects do
-            local obj = objects[_index_0]
-            table.insert(loaded_objects, obj[key])
-          end
         end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
     end
   else

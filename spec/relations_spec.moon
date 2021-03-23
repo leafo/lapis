@@ -1189,3 +1189,190 @@ describe "lapis.db.model.relations", ->
         [[SELECT * from "user_data" where "user_id" in (11, 12)]]
       }, sorted: true
 
+    describe "optional relations", ->
+      it "single optional relation", ->
+        class OtherThing extends Model
+          new: (opts) =>
+            for k,v in pairs opts
+              @[k] = v
+
+        class Thing extends Model
+          @relations: {
+            {"other_thing"
+              fetch: => error "preload should not fetch"
+
+              preload: (list) ->
+                for item in *list
+                  item.other_thing = OtherThing {
+                    thing: item
+                  }
+            }
+          }
+
+        class EmptyThing extends Model
+
+        assert.has_error(
+          ->
+            preload {EmptyThing!, EmptyThing!}, "other_thing"
+          "Model EmptyThing doesn't have preloader for other_thing"
+        )
+
+        assert.has_error(
+          ->
+            preload {Thing!, Thing!}, "missing_thing"
+          "Model Thing doesn't have preloader for missing_thing"
+        )
+
+
+        empty_things = {EmptyThing!, EmptyThing!}
+        preload empty_things, "?other_thing"
+
+        things = {Thing!, Thing!}
+        preload things, "?missing_thing"
+
+
+        preload things, other_thing: "?unknown_thing"
+
+        assert.truthy things[1].other_thing
+        assert.equal things[1], things[1].other_thing.thing
+
+        assert.truthy things[2].other_thing
+        assert.equal things[2], things[2].other_thing.thing
+
+      it "many optional relation", ->
+        class OtherThing extends Model
+          new: (opts) =>
+            for k,v in pairs opts
+              @[k] = v
+
+        class ThingConnector extends Model
+          @relations: {
+            {"the_thing"
+              fetch: => error "preload should not fetch"
+
+              preload: (list) ->
+                for item in *list
+                  item.the_thing = OtherThing {
+                    parent: item
+                  }
+            }
+          }
+
+          new: (opts) =>
+            for k,v in pairs opts
+              @[k] = v
+
+        class Thing extends Model
+          @relations: {
+            {"other_things"
+              many: true
+              fetch: => error "preload should not fetch"
+
+              preload: (list) ->
+                for item in *list
+                  item.other_things = {
+                    OtherThing {
+                      idx: 1
+                      parent: item
+                    }
+                    ThingConnector {
+                      idx: 2
+                      parent: item
+                    }
+                  }
+            }
+          }
+
+        things = {Thing!, Thing!}
+        preload things, other_things: "?the_thing"
+
+        for thing_idx=1,2
+          assert.truthy things[thing_idx].other_things
+
+          for other_things_idx=1,2
+            assert.equal things[thing_idx], things[thing_idx].other_things[other_things_idx].parent
+
+          assert.nil things[thing_idx].other_things[1].the_thing
+
+          -- the thing connector instance
+          assert.truthy things[thing_idx].other_things[2].the_thing
+
+
+      it "optional into more relations", ->
+        class Friend extends Model
+          new: (opts) =>
+            for k,v in pairs opts
+              @[k] = v
+
+        class TheThing extends Model
+          @relations: {
+            {"friend"
+              fetch: => error "preload should not fetch"
+              preload: (items) ->
+                for item in *items
+                  item.friend = Friend {
+                    parent: item
+                  }
+            }
+          }
+
+        class Thing extends Model
+          @relations: {
+            {"friend"
+              fetch: => error "preload should not fetch"
+              preload: (items) ->
+                for item in *items
+                  item.friend = Friend {
+                    parent: item
+                  }
+
+            }
+          }
+
+        class Thong extends Model
+          @relations: {
+            {"the_things"
+              fetch: => error "preload should not fetch"
+              many: true
+              preload: (items) ->
+                for item in *items
+                  item.the_things = {
+                    TheThing parent: item
+                    TheThing parent: item
+                  }
+            }
+          }
+
+
+        things = {Thing!, Thong!, Thong!}
+        preload things, {
+          "?friend"
+          "?the_things": "friend"
+        }
+
+        do -- thing
+          assert.truthy things[1].friend
+          assert.nil things[1].the_things
+
+          assert.equal things[1], things[1].friend.parent
+
+
+        do -- thong 1
+          assert.nil things[2].friend
+          assert.truthy things[2].the_things
+
+          for the_thing in *things[2].the_things
+            assert.truthy the_thing.friend
+            assert.equal the_thing, the_thing.friend.parent
+
+        do -- thong 2
+          assert.nil things[3].friend
+          assert.truthy things[3].the_things
+
+          for the_thing in *things[3].the_things
+            assert.truthy the_thing.friend
+            assert.equal the_thing, the_thing.friend.parent
+
+
+
+
