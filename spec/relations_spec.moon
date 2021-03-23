@@ -1179,7 +1179,7 @@ describe "lapis.db.model.relations", ->
       collection = models.Collections 44
       preload { collection }, {
         user: "tags"
-        things: { "user_data", "tags" }
+        things: { "user_data", tags: {} }
       }
 
       assert_queries {
