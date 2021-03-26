@@ -51,7 +51,7 @@ Lapis APIs as possible.
 
 ## Specifying a Server
 
-You can specify which server to use in your [configuration file]($root/reference/configuration.html):
+You can specify which server to use in your [configuration file](configuration.md):
 
 
 ```lua
