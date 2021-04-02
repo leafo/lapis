@@ -846,7 +846,7 @@ types.integer primary_key: true       --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text null: true                 --> text
 types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMARY KEY
 types.real array: true                --> real[]
-types.text array: 2                   --> real[][]
+types.text array: 2                   --> text[][]
 ```
 
 > MySQL has a complete different type set than PostgreSQL, see [MySQL
