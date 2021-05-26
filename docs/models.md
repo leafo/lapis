@@ -1841,12 +1841,12 @@ The following options control how the `fetch` relation works:
 $options_table{
   {
     name = "fetch",
-    description = "Callback function to fetch a result for a single model instance",
+    description = "Callback function to fetch a result for a single model instance, or the value `true` to use the `preload` function to load a single result",
     default = "***required***"
   },
   {
     name = "preload",
-    description = "Callback function to load data for many model instances at once. Receives an argument of an array of model instances, and more. See below"
+    description = "Callback function to load data for many model instances at once. Receives an argument of an array of model instances, and more. This is only required if trying to preload multiple objects at once, or when using fetch set to `true`. See below"
   },
   {
     name = "many",
@@ -1870,6 +1870,9 @@ each instance.  All of the instances will be marked as having the relation
 loaded, regardless of if you set a value or not. This means that future calls
 to `get_` will return the cached value.
 
+To simplify writting getters, `fetch` can be set to `true` to autogenerate a
+function based on the `preload` function when getting the associated value from
+a single instance of the model.
 
 ```lua
 local Model = require("lapis.db.model").Model
@@ -1877,9 +1880,9 @@ local Model = require("lapis.db.model").Model
 local Users = Model:extend("users", {
   relations = {
     {"recent_posts",
-      fetch = function(self)
-        -- fetch some data
-      end,
+      -- we can use true here to have the singular getter automatically
+      -- generated based on the preload function
+      fetch = true,
       preload = function(objs)
         for object in pairs(objs) do
           -- provide your own preload code and store the result on the object
@@ -1896,8 +1899,9 @@ import Model from require "lapis.db.model"
 class Users extends Model
   @relations: {
     {"recent_posts"
-      fetch: =>
-        -- fetch some data
+      -- we can use true here to have the singular getter automatically
+      -- generated based on the preload function
+      fetch: true
       preload: (objs) ->
         for object in *objs
           -- provide your own preload code and store the result on the object
