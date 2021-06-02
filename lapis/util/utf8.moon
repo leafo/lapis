@@ -1,5 +1,5 @@
 
-import P, R, S from require "lpeg"
+import P, R, S, C from require "lpeg"
 
 cont = R("\128\191")
 multibyte_character =  R("\194\223") * cont +
@@ -15,6 +15,15 @@ whitespace = S("\13\32\10\11\12\9") +
   P("\226") * (P("\128") * S("\131\135\139\128\132\136\140\175\129\133\168\141\130\134\169\138\137") + P("\129") * S("\159\160")) +
   P("\227\128\128")
 
+-- direction marks by themselves are unprintable, we must see if something follows
+direction_mark = P("\226\128") * S("\142\143\170\171\172\173\174") + P("\216\156")
+
+unused_direction_mark = direction_mark * #((whitespace + direction_mark)^-1 * -1)
+whitespace += unused_direction_mark
+
 printable_character = S("\r\n\t") + R("\032\126") + multibyte_character
 
-{:multibyte_character, :printable_character, :whitespace}
+trim = whitespace^0 * C (whitespace^0 * (1-whitespace)^1)^0
+
+
+{:multibyte_character, :printable_character, :whitespace, :direction_mark, :trim}
