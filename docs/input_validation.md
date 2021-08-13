@@ -154,8 +154,12 @@ local validate = require("lapis.validate").validate
 import validate from require "lapis.validate"
 ```
 
-* `validate(object, validation)` -- takes the same exact arguments as
-  `assert_valid`, but returns either errors or `nil` on failure instead of
-  yielding the error.
+* `validate(object, validation, opts = {})` -- takes an object, a 
+  validation table and an opt table as arguments and returns 
+  a table with errors instead of yielding any of them, if all
+  the validations pass, then the function returns `nil`, if
+  the opt table contains `keys = true`, then the errors are
+  returned as a table matching object fields and errors.
+  
 
 [0]: utilities.html#file-uploads
