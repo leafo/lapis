@@ -40,7 +40,7 @@ class name of <code>HelloWorlds</code> would result in the table name
 Model instances will have a field for each column that has been fetched from
 the database. You do not need to manually specify the names of the columns.  If
 you have any relationships, though, you can specify them using the
-[`relations` property](#describing-relationships).
+[`relations` property](#relations).
 
 ## Primary Keys
 
