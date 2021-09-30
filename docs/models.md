@@ -486,7 +486,7 @@ option.
 Returns the `objects` array table.
 
 This is a lower level interface for preloading data on models. In general we
-recommend [using relations](#describing-relationships) if possible. A relation
+recommend [using relations](#relations) if possible. A relation
 will internally generate a call to `include_in` based on how you have
 configured the relation.
 
