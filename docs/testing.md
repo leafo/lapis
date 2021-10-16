@@ -22,7 +22,7 @@ environment for writing tests for your models.
 You are free to use any testing framework you like, but in these examples we'll
 be using [Busted][].
 
-> **Note:** Lapis will detect when it is running in Busted and enable the test
+> Lapis will detect when it is running in Busted and enable the test
 > environment accordingly. If you are using any other test library it is your
 > responsibility to ensure you have enabled the test environment or you may
 > risk data loss in you development database.
@@ -294,7 +294,7 @@ The typical strategy is:
 Because truncating tables is a common operation, Lapis provides a
 `truncate_tables` function:
 
-> **Note:** Truncate tables will **delete** all the data in the respective
+> Truncate tables will **delete** all the data in the respective
 > table, with no way to get it back. Because this is a dangerous operation it
 > will only run when the current environment is named `test`
 
