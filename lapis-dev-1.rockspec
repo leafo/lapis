@@ -2,7 +2,7 @@ package = "lapis"
 version = "dev-1"
 
 source = {
-	url = "git://github.com/leafo/lapis.git"
+	url = "git+https://github.com/leafo/lapis.git"
 }
 
 description = {
