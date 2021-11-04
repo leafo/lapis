@@ -105,7 +105,12 @@ sorted_pairs = (sort=table.sort) ->
     _pairs = _G.pairs
     _G.pairs = (object, ...) ->
       keys = [k for k in _pairs object]
-      sort keys
+      sort keys, (a,b) ->
+        if type(a) == type(b)
+          a < b
+        else
+          type(a) < type(b)
+
       idx = 0
 
       ->
