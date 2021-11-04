@@ -75,6 +75,19 @@ do
         local time = self.__class.db.format_date()
         values.updated_at = values.updated_at or time
       end
+      if opts and opts.where then
+        assert(type(opts.where) == "table", "Model.update: where condition must be a table")
+        do
+          local _tbl_0 = { }
+          for k, v in pairs(cond) do
+            _tbl_0[k] = v
+          end
+          cond = _tbl_0
+        end
+        for k, v in pairs(opts.where) do
+          cond[k] = v
+        end
+      end
       local returning
       for k, v in pairs(values) do
         if v == db.NULL then

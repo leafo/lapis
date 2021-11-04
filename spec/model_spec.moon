@@ -325,7 +325,7 @@ describe "lapis.db.model", ->
       [[SELECT "hello" from "things" where "a" = 'hello' AND "b" = FALSE]]
     }
 
-  it "should update model", ->
+  it "updates model", ->
     class Things extends Model
 
     thing = Things\load { id: 12 }
@@ -359,7 +359,82 @@ describe "lapis.db.model", ->
       [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
     }
 
-  it "should delete model", ->
+  it "updates model with conditional", ->
+    class Things extends Model
+
+    class TimedThings extends Model
+      @primary_key: {"a", "b"}
+      @timestamp: true
+
+    thing = Things\load { id: 12 }
+    thing\update { color: "green", height: 100}, where: { color: "blue"}
+
+    assert.same {id: 12 }, thing\_primary_cond!
+    assert.same {
+      color: "green"
+      height: 100
+      id: 12
+    }, thing
+
+    thing2 = TimedThings\load { a: 2, b: 3 }
+    thing2\update {
+      b: 4
+      actor: "good"
+    }, where: {
+      [db.raw "true"]: db.raw "update_count < 100"
+      update_id: db.NULL
+    }
+
+    assert.same {
+      a: 2
+      b: 4
+      actor: "good"
+    }, thing2
+
+    mock_query "count %+ 1", {
+      {
+        count: 200
+        height: 44
+        duplex: "cat"
+      }
+    }
+
+    thing\update {
+      count: db.raw "count + 1"
+    }, where: {
+      count: 0
+    }
+
+    assert.same 200, thing.count
+    assert.same 100, thing.height -- doesn't pull random field
+    assert.same nil, thing.duplex -- doesn't pull random field
+
+    thing2.b = nil
+    thing2\update {
+      color: "green"
+    }, {
+      timestamp: false
+      where: { age: "10" }
+    }
+
+    assert.has_error(
+      ->
+        thing2\update {
+          color: "green"
+        }, {
+          where: "oopsie"
+        }
+      "Model.update: where condition must be a table"
+    )
+
+    assert_queries {
+      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "color" = 'blue' AND "id" = 12]]
+      [[UPDATE "timed_things" SET "actor" = 'good', "b" = 4, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3 AND "update_id" IS NULL AND true = update_count < 100]]
+      [[UPDATE "things" SET "count" = count + 1 WHERE "count" = 0 AND "id" = 12 RETURNING "count"]]
+      [[UPDATE "timed_things" SET "color" = 'green' WHERE "a" = 2 AND "age" = '10' AND "b" IS NULL]]
+    }
+
+  it "deletes model", ->
     class Things extends Model
 
     thing = Things\load { id: 2 }
@@ -367,7 +442,6 @@ describe "lapis.db.model", ->
 
     thing = Things\load { }
     thing\delete!
-
 
     class Things2 extends Model
       @primary_key: {"key1", "key2"}
