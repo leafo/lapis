@@ -8,10 +8,10 @@ do
   local _obj_0 = table
   insert, concat = _obj_0.insert, _obj_0.concat
 end
-local require, type, setmetatable, rawget, assert, pairs, error, next
+local require, type, setmetatable, rawget, assert, error, next
 do
   local _obj_0 = _G
-  require, type, setmetatable, rawget, assert, pairs, error, next = _obj_0.require, _obj_0.type, _obj_0.setmetatable, _obj_0.rawget, _obj_0.assert, _obj_0.pairs, _obj_0.error, _obj_0.next
+  require, type, setmetatable, rawget, assert, error, next = _obj_0.require, _obj_0.type, _obj_0.setmetatable, _obj_0.rawget, _obj_0.assert, _obj_0.error, _obj_0.next
 end
 local unpack = unpack or table.unpack
 local cjson = require("cjson")

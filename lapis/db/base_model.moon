@@ -1,7 +1,7 @@
 import underscore, escape_pattern, uniquify, singularize from require "lapis.util"
 import insert, concat from table
 
-import require, type, setmetatable, rawget, assert, pairs, error, next from _G
+import require, type, setmetatable, rawget, assert, error, next from _G
 
 unpack = unpack or table.unpack
 
