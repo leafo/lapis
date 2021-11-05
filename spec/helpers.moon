@@ -37,7 +37,23 @@ with_query_fn = (q, run, db=require "lapis.db.postgres") ->
     with run!
       db.set_raw_query old_query
 
+is_string_array = (list) ->
+  return false unless type(list) == "table"
+
+  for k,v in pairs list
+    if type(k) != "number"
+      return false
+
+    if type(v) != "string"
+      return false
+
+  return true
+
 assert_queries = (expected, result, opts) ->
+  -- short circuit for better error messsage
+  if not opts and is_string_array expected
+    return assert.same expected, result
+
   if #expected != #result
     error "number of expected queries (#{#expected}) does not match number received (#{#result})"
 
