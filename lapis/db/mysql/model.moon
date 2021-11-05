@@ -84,6 +84,7 @@ class Model extends BaseModel
       time = @@db.format_date!
       values.updated_at or= time
 
-    db.update @@table_name!, values, cond
+    res = db.update @@table_name!, values, cond
+    (res.affected_rows or 0) > 0, res
 
 { :Model, :Enum, :enum, :preload }

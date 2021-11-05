@@ -67,7 +67,8 @@ do
         local time = self.__class.db.format_date()
         values.updated_at = values.updated_at or time
       end
-      return db.update(self.__class:table_name(), values, cond)
+      local res = db.update(self.__class:table_name(), values, cond)
+      return (res.affected_rows or 0) > 0, res
     end
   }
   _base_0.__index = _base_0
