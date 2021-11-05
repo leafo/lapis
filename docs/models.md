@@ -801,7 +801,7 @@ user = Users\crate {
 }
 
 user\update {
-  views : db.raw "views + 12"
+  views: db.raw "views + 12"
 }
 
 -- the result of the query is assigned to the model:
