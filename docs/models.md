@@ -734,6 +734,8 @@ The first form of update takes variable arguments. A list of strings that
 represent column names to be updated. The values of the columns are taken from
 the current values in the instance.
 
+The return value is the same as the `update` function from `lapis.db`.
+
 ```lua
 local user = Users:find(1)
 user.login = "uberuser"
@@ -796,6 +798,16 @@ $options_table{
       user\update {
         views_count: db.raw "views_count + 1"
       }, timestamp: false
+    ]]}
+  },
+  {
+    name = "where",
+    default = "`nil`",
+    description = "A table of additional conditions to add to the `WHERE` clause of the updated query. This can be used to have an atomic conditional update. The return value should be checked to see if the update succeeeded or not.",
+    example = dual_code{[[
+      user\update {
+        views_count: db.raw "views_count + 1"
+      }, where: { public: true }
     ]]}
   }
 }
