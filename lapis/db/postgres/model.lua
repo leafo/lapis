@@ -97,23 +97,22 @@ do
           table.insert(returning, k)
         end
       end
+      local res
       if returning then
+        res = db.update(self.__class:table_name(), values, cond, unpack(returning))
         do
-          local res = db.update(self.__class:table_name(), values, cond, unpack(returning))
-          do
-            local update = unpack(res)
-            if update then
-              for _index_0 = 1, #returning do
-                local k = returning[_index_0]
-                self[k] = update[k]
-              end
+          local update = unpack(res)
+          if update then
+            for _index_0 = 1, #returning do
+              local k = returning[_index_0]
+              self[k] = update[k]
             end
           end
-          return res
         end
       else
-        return db.update(self.__class:table_name(), values, cond)
+        res = db.update(self.__class:table_name(), values, cond)
       end
+      return (res.affected_rows or 0) > 0, res
     end
   }
   _base_0.__index = _base_0

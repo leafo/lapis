@@ -80,7 +80,8 @@ stub_queries = ->
   get_queries = -> queries
 
   mock_query = (pattern, result) ->
-    query_mock[pattern] = result
+    -- insert on the front to take precedence
+    table.insert query_mock, 1, {pattern, result}
 
   show_queries = os.getenv("LAPIS_SHOW_QUERIES")
 
@@ -93,13 +94,13 @@ stub_queries = ->
 
       table.insert queries, (q\gsub("%s+", " ")\gsub("[\n\t]", " "))
 
-      -- try to find a mock
-      for k,v in pairs query_mock
-        if q\match k
-          return if type(v) == "function"
-            v!
+      -- try to find a mock with pattern that matches query
+      for {pattern, result} in *query_mock
+        if q\match pattern
+          return if type(result) == "function"
+            result q
           else
-            v
+            result
 
       {}
 

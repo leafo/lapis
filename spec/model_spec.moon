@@ -329,13 +329,24 @@ describe "lapis.db.model", ->
     class Things extends Model
 
     thing = Things\load { id: 12 }
-    thing\update color: "green", height: 100
+
+    -- no query is mocked
+    assert.same {
+      false, {}
+    }, {
+      thing\update color: "green", height: 100
+    }
 
     assert.same { height: 100, color: "green", id: 12 }, thing
 
-    thing2 = Things\load { age: 2000, sprit: true }
-    thing2\update "age"
+    mock_query ".", { affected_rows: 1 }
 
+    thing2 = Things\load { age: 2000, sprit: true }
+    assert.same {
+      true, {affected_rows: 1}
+    }, {
+      thing2\update "age"
+    }
 
     class TimedThings extends Model
       @primary_key: {"a", "b"}
@@ -348,7 +359,14 @@ describe "lapis.db.model", ->
 
     thing3.hello = "world"
     thing3\update "hello", timestamp: false
-    thing3\update { cat: "dog" }, timestamp: false
+
+    mock_query ".", { affected_rows: 0 }
+
+    assert.same {
+      false, { affected_rows: 0 }
+    }, {
+      thing3\update { cat: "dog" }, timestamp: false
+    }
 
     assert_queries {
       [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12]]
@@ -360,6 +378,8 @@ describe "lapis.db.model", ->
     }
 
   it "updates model with conditional", ->
+    mock_query ".", { affected_rows: 1 }
+
     class Things extends Model
 
     class TimedThings extends Model
@@ -367,7 +387,12 @@ describe "lapis.db.model", ->
       @timestamp: true
 
     thing = Things\load { id: 12 }
-    thing\update { color: "green", height: 100}, where: { color: "blue"}
+
+    assert.same {
+      true, { affected_rows: 1 }
+    }, {
+      thing\update { color: "green", height: 100}, where: { color: "blue"}
+    }
 
     assert.same {id: 12 }, thing\_primary_cond!
     assert.same {
@@ -392,6 +417,7 @@ describe "lapis.db.model", ->
     }, thing2
 
     mock_query "count %+ 1", {
+      affected_rows: 1
       {
         count: 200
         height: 44

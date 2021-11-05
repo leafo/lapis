@@ -114,12 +114,16 @@ class Model extends BaseModel
         returning or= {}
         table.insert returning, k
 
+    local res
+
     if returning
-      with res = db.update @@table_name!, values, cond, unpack returning
-        if update = unpack res
-          for k in *returning
-            @[k] = update[k]
+      res = db.update @@table_name!, values, cond, unpack returning
+      if update = unpack res
+        for k in *returning
+          @[k] = update[k]
     else
-      db.update @@table_name!, values, cond
+      res = db.update @@table_name!, values, cond
+
+    (res.affected_rows or 0) > 0, res
 
 { :Model, :Enum, :enum, :preload }
