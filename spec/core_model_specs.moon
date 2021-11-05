@@ -106,9 +106,11 @@ assert_same_rows = (a, b) ->
         }
 
       it "should update post", ->
-        res = post\update {
+        status, res = post\update {
           title: "Another world"
         }
+
+        assert.true status
 
         -- this is undocumented
         assert.same 1, res.affected_rows
