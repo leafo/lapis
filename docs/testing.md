@@ -178,19 +178,29 @@ While mocking a request is useful, it doesn't give you access to the entire
 stack that your application uses. For that reason you can spawn up a *test*
 server which you can issue real HTTP requests to.
 
-The test server runs inside of the `test` environment (compared to
-`development` and `production`). This enables you to have a separate database
-connection for tests so you are free to delete and create rows in the database
-without messing up your development state.
+It's important to realize that when using the test server there are actually
+*at least two* Lua runtimes executing your code:
 
-Additionally, when starting the test server, the local running Lapis
-environment is also overridden to be `test`. Likewise, if you've set up a test
-database for your test environment, you're free to run any queries without
-interfering with development state.
+1. The foreground process running the test suite
+2. The `nginx` server's Lua runtime -- If you have multiple workers enabled, then there can be multiple concurrent Lua runtimes. It's recommended to set `worker_processes` to `1` in the test environment.
 
-Instead of using the `use_test_env` function from above, we'll call the
-`use_test_server` function.
+This is an important distinction to pay attention to because any changes you
+make to in-memory data in one runtime will not be seen in the other. Changes
+you make to the database would be accessible to both though, as they would both
+use the same configuration to connect to the same database.
 
+Any `stub` or similar functions provided by your test suite will be unable to
+change any code running in the server.
+
+> Both runtimes have their Lapis environment set to`test`  to ensure that they
+> each load the same configuration.
+
+> There can only be one test server running at any time, meaning you can not
+> parallelize your tests if you attempt to spawn multiple processes.
+
+
+The `use_test_server` function will ensure that the test server is running for
+the duration of the specs within the block:
 
 ```lua
 local use_test_server = require("lapis.spec").use_test_server
@@ -272,6 +282,44 @@ supports the following options in the table:
 The function has three return values: the status code as a number, the body of
 the response and any response headers in a table.
 
+
+### `get_current_server()`
+
+Returns the currently attached test server. This will provide a handle to the
+server that enables you to execute code within that process.
+
+The `exec` method will execute Lua code on the server.
+
+
+```lua
+local get_current_server = require("lapis.spec.server").get_current_server
+local use_test_server = require("lapis.spec").use_test_server
+
+describe("my site", function()
+  use_test_server()
+
+  it("runs code on server", function()
+    local server = assert(get_current_server())
+    server:exec([[
+      require("myapp").some_variable = 100
+    ]])
+  end)
+end)
+```
+
+```moon
+import use_test_server from require "lapis.spec"
+import get_current_server from require "lapis.spec.server"
+
+describe "my_site", ->
+  use_test_server!
+
+  it "runs code on server", ->
+    server = assert get_current_server!
+    server\exec [[
+      require("myapp").some_variable = 100
+    ]]
+```
 
 ## Test Strategies
 
