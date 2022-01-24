@@ -429,7 +429,10 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
 
       [[SELECT * from "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
-      [[SELECT * from "posts" where "deleted" = FALSE AND "user_id" = 1234 order by "posts"."id" ASC limit 10]]
+      {
+        [[SELECT * from "posts" where "deleted" = FALSE AND "user_id" = 1234 order by "posts"."id" ASC limit 10]]
+        [[SELECT * from "posts" where "user_id" = 1234 AND "deleted" = FALSE order by "posts"."id" ASC limit 10]]
+      }
     }
 
 
