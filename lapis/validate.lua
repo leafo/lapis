@@ -91,10 +91,13 @@ validate = function(object, validations, opts)
           break
         end
       end
-      v.optional = nil
       for fn, args in pairs(v) do
         local _continue_1 = false
         repeat
+          if fn == "optional" then
+            _continue_1 = true
+            break
+          end
           if not (type(fn) == "string") then
             _continue_1 = true
             break
