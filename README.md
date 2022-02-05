@@ -25,7 +25,7 @@ We just created a Discord for Lapis users and those interested in it to communic
   * [Ludum Dare game browser](http://ludumdare.itch.io) - [source](https://github.com/leafo/ludum-dare-browser)
   * <http://lapchan.moe/> - [source](https://github.com/karai17/lapis-chan/)
 
-Made a website in Lapis? [Tell us](https://github.com/leafo/lapis/issues)
+Made a website in Lapis? [Tell us](https://github.com/leafo/lapis/discussions/749)
 
 ## Running Tests
 
