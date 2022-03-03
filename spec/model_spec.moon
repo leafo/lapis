@@ -277,15 +277,17 @@ describe "lapis.db.model", ->
   it "strips db.NULL when creating with return *", ->
     mock_query "INSERT", { { id: 101 } }
     class Hi extends Model
-    row = Hi\create { color: db.NULL }, returning: "*"
+    row1 = Hi\create { color: db.NULL }, returning: "*"
+    row2 = Hi\create { color: db.raw "x+y" }, returning: "*"
 
     assert_queries {
       [[INSERT INTO "hi" ("color") VALUES (NULL) RETURNING *]]
+      [[INSERT INTO "hi" ("color") VALUES (x+y) RETURNING *]]
     }
 
     assert.same {
       id: 101
-    }, row
+    }, row1
 
   it "should refresh model", ->
     class Things extends Model

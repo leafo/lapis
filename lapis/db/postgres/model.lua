@@ -187,7 +187,7 @@ do
           nil_fields[k] = true
           _continue_0 = true
           break
-        elseif db.is_raw(v) then
+        elseif not return_all and db.is_raw(v) then
           returning = returning or {
             self:primary_keys()
           }

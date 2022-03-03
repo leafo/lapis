@@ -38,7 +38,7 @@ class Model extends BaseModel
         nil_fields or= {}
         nil_fields[k] = true
         continue
-      elseif db.is_raw v
+      elseif not return_all and db.is_raw v
         returning or= {@primary_keys!}
         table.insert returning, k
 

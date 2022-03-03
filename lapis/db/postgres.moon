@@ -189,6 +189,14 @@ query = (str, ...) ->
 _select = (str, ...) ->
   query "SELECT " .. str, ...
 
+-- Appends a list of column names as past of a returning clause via
+-- tail recursion
+-- buff: string fragment buffer to append to
+-- first: is the the first call in series of recursive calls (initial caller should always set this to true
+-- The calling varargs are split into the remaining arguments:
+-- cur: the current value in varags
+-- following: the next value in varargs
+-- ...: remaining arguments
 add_returning = (buff, first, cur, following, ...) ->
   return unless cur
 
