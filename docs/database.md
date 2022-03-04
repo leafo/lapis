@@ -229,7 +229,7 @@ res = db.select "* from hello where active = ?", db.FALSE
 SELECT * from hello where active = FALSE
 ```
 
-### `insert(table, values, returning...)`
+### `insert(table, values, opts_or_returning...)`
 
 Inserts a row into `table`. `values` is a Lua table of column names and values.
 
@@ -270,7 +270,35 @@ res = db.insert "some_other_table", {
 INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
 ```
 
-> `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
+> `RETURNING` and `ON CONFLICT` are PostgreSQL feature, and not available when using MySQL
+
+Alternatively, a options table can be provided as third argument with support
+for the following fields: (When providing an options table, all other arguments
+are ignored)
+
+$options_table{
+  {
+    name = "returning",
+    description = "An array table of column names or the string `"*"` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object. `db.raw` can be used for more advanced expressions",
+    example = dual_code{[[
+      res = db.insert("my_table", { color: "blue" }, returning: "*")
+      res = db.insert "my_table", {
+        created_at: "2021-4-11 6:6:20"
+      }, {
+        returning: { db.raw "date_trunc('year', created_at) as create_year"})
+      }
+    ]]}
+  },
+  {
+    name = "on_conflict",
+    description = "Control the `ON CONFLICT` clause for the insertion query. Currently only supports the string value `"do_nothing"` to do nothing when the query has a conflict",
+    example = dual_code{[[
+      res = db.insert("my_table", { color: "blue" }, on_conflict: "do_nothing")
+    ]]}
+  }
+}
+
+
 
 ### `update(table, values, conditions, params...)`
 
