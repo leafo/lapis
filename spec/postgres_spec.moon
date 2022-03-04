@@ -194,6 +194,36 @@ tests = {
     [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter') RETURNING "age", "name"]]
   }
 
+  {
+    -> db.insert "cats", { profile: "blue" }, db.raw "*"
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING *]]
+  }
+
+  {
+    -> db.insert "cats", { profile: "blue" }, "hello", db.raw "id + 3 as three_id"
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING "hello", id + 3 as three_id]]
+  }
+
+  {
+    -> db.insert "cats", { profile: "blue" }, returning: { }
+    [[INSERT INTO "cats" ("profile") VALUES ('blue')]]
+  }
+
+  {
+    -> db.insert "cats", { profile: "blue" }, returning: "*"
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING *]]
+  }
+
+  {
+    -> db.insert "cats", { profile: "blue" }, returning: { "one" }
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING "one"]]
+  }
+
+  {
+    -> db.insert "cats", { profile: "blue" }, returning: { "one", db.raw "a+c as thing" }
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING "one", a+c as thing]]
+  }
+
 
   -- lapis.db.postgres.schema
 

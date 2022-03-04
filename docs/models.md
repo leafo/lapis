@@ -374,11 +374,20 @@ If your model has any [constraints](#constraints) they will be checked before tr
 a new row. If a constraint fails then `nil` and the error message are returned
 from the `create` function.
 
-`create` can take an options table as a second argument. It supports the
-following options:
+`create_opts` is an optional table supporting the following fields:
 
-* `returning` -- A string containing a list of columns to fetch along with the create statement using the `RETURNING` statement
-
+$options_table{
+  {
+    name = "returning",
+    description = "An array table of column names or the string `"*"` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object",
+    default = "Automatically calculated to include any columns that have `db.raw` values, and the primary keys",
+    example = dual_code{[[
+      Users\create {
+        profile_color: "blue"
+      }, returning: "*"
+    ]]}
+  }
+}
 
 ### `columns()`
 

@@ -209,7 +209,7 @@ add_returning = (buff, first, cur, following, ...) ->
     append_all buff, ", "
     add_returning buff, false, following, ...
 
-_insert = (tbl, values, ...) ->
+_insert = (tbl, values, opts, ...) ->
   buff = {
     "INSERT INTO "
     escape_identifier(tbl)
@@ -217,8 +217,17 @@ _insert = (tbl, values, ...) ->
   }
   encode_values values, buff
 
-  if ...
-    add_returning buff, true, ...
+  opts_type = type(opts)
+
+  if opts_type == "string" or opts_type == "table" and is_raw(opts)
+    add_returning buff, true, opts, ...
+  elseif opts_type == "table"
+    if r = opts.returning
+      if r == "*"
+        add_returning buff, true, raw "*"
+      else
+        assert type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array"
+        add_returning buff, true, unpack r
 
   raw_query concat buff
 

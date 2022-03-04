@@ -265,15 +265,28 @@ add_returning = function(buff, first, cur, following, ...)
   end
 end
 local _insert
-_insert = function(tbl, values, ...)
+_insert = function(tbl, values, opts, ...)
   local buff = {
     "INSERT INTO ",
     escape_identifier(tbl),
     " "
   }
   encode_values(values, buff)
-  if ... then
-    add_returning(buff, true, ...)
+  local opts_type = type(opts)
+  if opts_type == "string" or opts_type == "table" and is_raw(opts) then
+    add_returning(buff, true, opts, ...)
+  elseif opts_type == "table" then
+    do
+      local r = opts.returning
+      if r then
+        if r == "*" then
+          add_returning(buff, true, raw("*"))
+        else
+          assert(type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array")
+          add_returning(buff, true, unpack(r))
+        end
+      end
+    end
   end
   return raw_query(concat(buff))
 end
