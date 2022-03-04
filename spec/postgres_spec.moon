@@ -200,6 +200,11 @@ tests = {
   }
 
   {
+    -> db.insert "cats", { profile: "blue" }, db.raw "date_trunc('year', created_at) as create_year"
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING date_trunc('year', created_at) as create_year]]
+  }
+
+  {
     -> db.insert "cats", { profile: "blue" }, "hello", db.raw "id + 3 as three_id"
     [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING "hello", id + 3 as three_id]]
   }
