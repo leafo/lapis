@@ -279,19 +279,19 @@ are ignored)
 $options_table{
   {
     name = "returning",
-    description = "An array table of column names or the string `"*"` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object. `db.raw` can be used for more advanced expressions",
+    description = "An array table of column names or the string `'*'` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object. `db.raw` can be used for more advanced expressions",
     example = dual_code{[[
-      res = db.insert("my_table", { color: "blue" }, returning: "*")
+      res = db.insert "my_table", { color: "blue" }, returning: "*"
       res = db.insert "my_table", {
         created_at: "2021-4-11 6:6:20"
       }, {
-        returning: { db.raw "date_trunc('year', created_at) as create_year"})
+        returning: { db.raw "date_trunc('year', created_at) as create_year" }
       }
     ]]}
   },
   {
     name = "on_conflict",
-    description = "Control the `ON CONFLICT` clause for the insertion query. Currently only supports the string value `"do_nothing"` to do nothing when the query has a conflict",
+    description = 'Control the `ON CONFLICT` clause for the insertion query. Currently only supports the string value `"do_nothing"` to do nothing when the query has a conflict',
     example = dual_code{[[
       res = db.insert("my_table", { color: "blue" }, on_conflict: "do_nothing")
     ]]}

@@ -379,7 +379,7 @@ from the `create` function.
 $options_table{
   {
     name = "returning",
-    description = "An array table of column names or the string `"*"` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object",
+    description = 'An array table of column names or the string `"*"` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object',
     default = "Automatically calculated to include any columns that have `db.raw` values, and the primary keys",
     example = dual_code{[[
       Users\create {
