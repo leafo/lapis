@@ -229,6 +229,16 @@ tests = {
     [[INSERT INTO "cats" ("profile") VALUES ('blue') RETURNING "one", a+c as thing]]
   }
 
+  {
+    -> db.insert "cats", { profile: "blue" }, on_conflict: "do_nothing"
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') ON CONFLICT DO NOTHING]]
+  }
+
+  {
+    -> db.insert "cats", { profile: "blue" }, on_conflict: "do_nothing", returning: "*"
+    [[INSERT INTO "cats" ("profile") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING *]]
+  }
+
 
   -- lapis.db.postgres.schema
 

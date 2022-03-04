@@ -276,6 +276,13 @@ _insert = function(tbl, values, opts, ...)
   if opts_type == "string" or opts_type == "table" and is_raw(opts) then
     add_returning(buff, true, opts, ...)
   elseif opts_type == "table" then
+    if opts.on_conflict then
+      if opts.on_conflict == "do_nothing" then
+        append_all(buff, " ON CONFLICT DO NOTHING")
+      else
+        error("db.insert: unsupported value for on_conflict option: " .. tostring(tostring(opts.on_conflict)))
+      end
+    end
     do
       local r = opts.returning
       if r then

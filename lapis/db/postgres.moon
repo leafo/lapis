@@ -222,6 +222,12 @@ _insert = (tbl, values, opts, ...) ->
   if opts_type == "string" or opts_type == "table" and is_raw(opts)
     add_returning buff, true, opts, ...
   elseif opts_type == "table"
+    if opts.on_conflict
+      if opts.on_conflict == "do_nothing"
+        append_all buff, " ON CONFLICT DO NOTHING"
+      else
+        error "db.insert: unsupported value for on_conflict option: #{tostring opts.on_conflict}"
+
     if r = opts.returning
       if r == "*"
         add_returning buff, true, raw "*"
