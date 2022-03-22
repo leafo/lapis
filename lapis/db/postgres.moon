@@ -47,7 +47,14 @@ BACKENDS = {
     local pgmoon_conn
 
     _query = (str) ->
-      pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
+      -- cache the connection in the nginx context if true, otherwise it there
+      -- is one global connection cached for the instantiated backend
+      use_nginx = ngx and ngx.ctx and ngx.socket
+
+      pgmoon = if use_nginx
+        ngx.ctx.pgmoon
+      else
+        pgmoon_conn
 
       unless pgmoon
         import Postgres from require "pgmoon"
@@ -61,14 +68,14 @@ BACKENDS = {
         unless success
           error "postgres failed to connect: #{connect_err}"
 
-        if ngx
+        if use_nginx
           ngx.ctx.pgmoon = pgmoon
           after_dispatch -> pgmoon\keepalive!
         else
           pgmoon_conn = pgmoon
 
       start_time = if config.measure_performance
-        if reused = ngx and pgmoon.sock\getreusedtimes!
+        if reused = use_nginx and pgmoon.sock\getreusedtimes!
           set_perf "pgmoon_conn", reused > 0 and "reuse" or"new"
 
         unless gettime

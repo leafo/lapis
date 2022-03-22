@@ -51,7 +51,13 @@ local BACKENDS = {
     local pgmoon_conn
     local _query
     _query = function(str)
-      local pgmoon = ngx and ngx.ctx.pgmoon or pgmoon_conn
+      local use_nginx = ngx and ngx.ctx and ngx.socket
+      local pgmoon
+      if use_nginx then
+        pgmoon = ngx.ctx.pgmoon
+      else
+        pgmoon = pgmoon_conn
+      end
       if not (pgmoon) then
         local Postgres
         Postgres = require("pgmoon").Postgres
@@ -64,7 +70,7 @@ local BACKENDS = {
         if not (success) then
           error("postgres failed to connect: " .. tostring(connect_err))
         end
-        if ngx then
+        if use_nginx then
           ngx.ctx.pgmoon = pgmoon
           after_dispatch(function()
             return pgmoon:keepalive()
@@ -76,7 +82,7 @@ local BACKENDS = {
       local start_time
       if config.measure_performance then
         do
-          local reused = ngx and pgmoon.sock:getreusedtimes()
+          local reused = use_nginx and pgmoon.sock:getreusedtimes()
           if reused then
             set_perf("pgmoon_conn", reused > 0 and "reuse" or "new")
           end
