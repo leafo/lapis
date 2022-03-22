@@ -9,6 +9,10 @@ use_db_connection = ->
     import connect from require "lapis.db"
     connect! if connect
 
+  teardown ->
+    import disconnect from require "lapis.db"
+    disconnect! if disconnect
+
 use_test_env = (env_name="test") ->
   import setup, teardown from require "busted"
   env = require "lapis.environment"

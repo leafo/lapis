@@ -9,11 +9,18 @@ use_db_connection = function()
   if not (config.postgres or config.mysql) then
     return 
   end
-  return setup(function()
+  setup(function()
     local connect
     connect = require("lapis.db").connect
     if connect then
       return connect()
+    end
+  end)
+  return teardown(function()
+    local disconnect
+    disconnect = require("lapis.db").disconnect
+    if disconnect then
+      return disconnect()
     end
   end)
 end
