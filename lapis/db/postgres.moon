@@ -68,6 +68,13 @@ BACKENDS = {
         unless success
           error "postgres failed to connect: #{connect_err}"
 
+        if config.measure_performance
+          switch pgmoon.sock_type
+            when "nginx"
+              set_perf "pgmoon_conn", "nginx.#{pgmoon.sock\getreusedtimes! > 0 and "reuse" or "new"}"
+            else
+              set_perf "pgmoon_conn", "#{pgmoon.sock_type}.new"
+
         if use_nginx
           ngx.ctx.pgmoon = pgmoon
           after_dispatch -> pgmoon\keepalive!
@@ -75,10 +82,6 @@ BACKENDS = {
           pgmoon_conn = pgmoon
 
       start_time = if config.measure_performance
-        switch pgmoon.sock_type
-          when "nginx"
-            set_perf "pgmoon_conn", pgmoon.sock\getreusedtimes! > 0 and "reuse" or "new"
-
         unless gettime
           gettime = require("socket").gettime
 
@@ -176,6 +179,8 @@ append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
 
+-- NOTE: this doesn't actually connect, it just configures the backend. This
+-- should be renamed and the interface changed
 connect = ->
   init_logger!
   init_db! -- replaces raw_query to default backend

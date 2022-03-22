@@ -70,6 +70,14 @@ local BACKENDS = {
         if not (success) then
           error("postgres failed to connect: " .. tostring(connect_err))
         end
+        if config.measure_performance then
+          local _exp_0 = pgmoon.sock_type
+          if "nginx" == _exp_0 then
+            set_perf("pgmoon_conn", "nginx." .. tostring(pgmoon.sock:getreusedtimes() > 0 and "reuse" or "new"))
+          else
+            set_perf("pgmoon_conn", tostring(pgmoon.sock_type) .. ".new")
+          end
+        end
         if use_nginx then
           ngx.ctx.pgmoon = pgmoon
           after_dispatch(function()
@@ -81,10 +89,6 @@ local BACKENDS = {
       end
       local start_time
       if config.measure_performance then
-        local _exp_0 = pgmoon.sock_type
-        if "nginx" == _exp_0 then
-          set_perf("pgmoon_conn", pgmoon.sock:getreusedtimes() > 0 and "reuse" or "new")
-        end
         if not (gettime) then
           gettime = require("socket").gettime
         end
