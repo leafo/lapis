@@ -2,7 +2,7 @@ import concat from table
 import type, tostring, pairs, select from _G
 unpack = unpack or table.unpack
 
-local raw_query, raw_disconnect
+local raw_query
 local logger
 
 import
@@ -46,7 +46,7 @@ BACKENDS = {
 
     local pgmoon_conn
 
-    _query = (str) ->
+    (str) ->
       -- cache the connection in the nginx context if true, otherwise it there
       -- is one global connection cached for the instantiated backend
       use_nginx = ngx and ngx.ctx and ngx.socket
@@ -100,15 +100,6 @@ BACKENDS = {
       if not res and err
         error "#{str}\n#{err}"
       res
-
-    _disconnect = ->
-      return unless pgmoon_conn
-
-      pgmoon_conn\disconnect!
-      pgmoon_conn = nil
-      true
-
-    _query, _disconnect
 }
 
 set_backend = (name, ...) ->
@@ -116,7 +107,7 @@ set_backend = (name, ...) ->
   unless backend
     error "Failed to find PostgreSQL backend: #{name}"
 
-  raw_query, raw_disconnect = backend ...
+  raw_query = backend ...
 
 set_raw_query = (fn) ->
   raw_query = fn
@@ -184,10 +175,6 @@ append_all = (t, ...) ->
 connect = ->
   init_logger!
   init_db! -- replaces raw_query to default backend
-
-disconnect = ->
-  assert raw_disconnect, "no active connection"
-  raw_disconnect!
 
 -- this default implementation is replaced when the connection is established
 raw_query = (...) ->
@@ -382,7 +369,6 @@ encode_case = (exp, t, on_else) ->
 
 {
   :connect
-  :disconnect
   :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
   :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
   :encode_clause, :interpolate_query, :parse_clause, :format_date,
