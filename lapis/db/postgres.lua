@@ -81,11 +81,9 @@ local BACKENDS = {
       end
       local start_time
       if config.measure_performance then
-        do
-          local reused = use_nginx and pgmoon.sock:getreusedtimes()
-          if reused then
-            set_perf("pgmoon_conn", reused > 0 and "reuse" or "new")
-          end
+        local _exp_0 = pgmoon.sock_type
+        if "nginx" == _exp_0 then
+          set_perf("pgmoon_conn", pgmoon.sock:getreusedtimes() > 0 and "reuse" or "new")
         end
         if not (gettime) then
           gettime = require("socket").gettime
