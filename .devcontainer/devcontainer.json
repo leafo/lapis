@@ -19,7 +19,7 @@
 	"forwardPorts": [8080],
 
 	// Uncomment the next line to run commands after the container is created - for example installing curl.
-	"postCreateCommand": "eval $(luarocks --lua-version=5.1 path); luarocks --lua-version=5.1 build --local --only-deps lapis-dev-1.rockspec",
+	"postCreateCommand": "eval $(luarocks --lua-version=5.1 path); luarocks --lua-version=5.1 build --local --only-deps lapis-dev-1.rockspec"
 
 	// Uncomment when using a ptrace-based debugger like C++, Go, and Rust
 	// "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
