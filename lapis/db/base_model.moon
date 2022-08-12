@@ -219,6 +219,7 @@ class BaseModel
     flip = opts and opts.flip
     many = opts and opts.many
     value_fn = opts and opts.value
+    load_rows = if opts and opts.load == false then false else true
 
     -- source_key fields on the model to fetch
     -- dest_key fields on the records we have (other_records)
@@ -302,7 +303,11 @@ class BaseModel
         records = {}
 
         for t in *res
-          row = @load t
+          row = if load_rows
+            @load t
+          else
+            t
+
           row = value_fn row if value_fn
 
           if many

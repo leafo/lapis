@@ -438,6 +438,12 @@ do
     local flip = opts and opts.flip
     local many = opts and opts.many
     local value_fn = opts and opts.value
+    local load_rows
+    if opts and opts.load == false then
+      load_rows = false
+    else
+      load_rows = true
+    end
     local source_key, dest_key
     local name_from_table = false
     if type(foreign_key) == "table" then
@@ -573,7 +579,12 @@ do
           local records = { }
           for _index_0 = 1, #res do
             local t = res[_index_0]
-            local row = self:load(t)
+            local row
+            if load_rows then
+              row = self:load(t)
+            else
+              row = t
+            end
             if value_fn then
               row = value_fn(row)
             end
