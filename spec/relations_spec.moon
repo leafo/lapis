@@ -254,14 +254,8 @@ describe "lapis.db.model.relations", ->
     Users\preload_relations { user }, "user_profile_with_key"
 
     assert_queries {
-      {
-        'SELECT * from "user_profiles" where "id2" = 222 AND "id" = 111 limit 1'
-        'SELECT * from "user_profiles" where "id" = 111 AND "id2" = 222 limit 1'
-      }
-      {
-        'SELECT * from "user_profiles" where ("id2", "id") in ((222, 111))'
-        'SELECT * from "user_profiles" where ("id", "id2") in ((111, 222))'
-      }
+      'SELECT * from "user_profiles" where "id" = 111 AND "id2" = 222 limit 1'
+      'SELECT * from "user_profiles" where ("id", "id2") in ((111, 222))'
     }
 
   it "should make has_one getter with custom key", ->
@@ -307,16 +301,9 @@ describe "lapis.db.model.relations", ->
     assert up2\get_data!
 
     assert_queries {
-      {
-        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234 limit 1'
-        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
-      }
-      {
-        [[SELECT * from "user_page_data" where "user_id" IS NULL AND "page_id" = 'hello' limit 1]]
-        [[SELECT * from "user_page_data" where "page_id" = 'hello' AND "user_id" IS NULL limit 1]]
-      }
+      'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
+      [[SELECT * from "user_page_data" where "page_id" = 'hello' AND "user_id" IS NULL limit 1]]
     }
-
 
   it "should make has_one getter key and local key", ->
     mock_query "SELECT", { { id: 101, thing_email: "leafo@leafo" } }
@@ -352,10 +339,7 @@ describe "lapis.db.model.relations", ->
     assert user\get_data!
 
     assert_queries {
-      {
-        [[SELECT * from "user_data" where "owner_id" = 123 AND "state" = 'good' limit 1]]
-        [[SELECT * from "user_data" where "state" = 'good' AND "owner_id" = 123 limit 1]]
-      }
+      [[SELECT * from "user_data" where "owner_id" = 123 AND "state" = 'good' limit 1]]
     }
 
   it "makes has_one getter with composite key with custom local names", ->
@@ -379,10 +363,7 @@ describe "lapis.db.model.relations", ->
     assert up\get_data!
 
     assert_queries {
-      {
-        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234 limit 1'
-        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
-      }
+      'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
     }
 
   it "should make has_many paginated getter", ->
@@ -496,10 +477,7 @@ describe "lapis.db.model.relations", ->
 
     assert_queries {
       'SELECT * from "posts" where "user_id" = 1234'
-      {
-        [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue']]
-        [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234]]
-      }
+      [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234]]
       'SELECT * from "posts" where "user_id" = 1234 order by id desc'
     }
 
@@ -533,16 +511,9 @@ describe "lapis.db.model.relations", ->
     assert up2\get_data!
 
     assert_queries {
-      {
-        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" = 234'
-        'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99'
-      }
-      {
-        'SELECT * from "user_page_data" where "user_id" = 99 AND "page_id" IS NULL'
-        'SELECT * from "user_page_data" where "page_id" IS NULL AND "user_id" = 99'
-      }
+      'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99'
+      'SELECT * from "user_page_data" where "page_id" IS NULL AND "user_id" = 99'
     }
-
 
 
   it "should create relations for inheritance", ->
