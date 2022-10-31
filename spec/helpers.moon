@@ -78,6 +78,7 @@ stub_queries = ->
   local queries, query_mock
 
   get_queries = -> queries
+  set_queries = (q) -> queries = q
 
   mock_query = (pattern, result) ->
     -- insert on the front to take precedence
@@ -112,7 +113,7 @@ stub_queries = ->
     queries = {}
     query_mock = {}
 
-  get_queries, mock_query
+  get_queries, mock_query, set_queries
 
 -- note: we can't do stub(_G, "pairs") because of a limitation of busted
 sorted_pairs = (sort=table.sort) ->

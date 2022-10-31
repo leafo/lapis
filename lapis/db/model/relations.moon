@@ -335,7 +335,11 @@ has_many = (name, opts) =>
 
     clause = "where #{@@db.encode_clause clause}"
 
-    if order = additional_opts and additional_opts.order or opts.order
+    order = opts.order
+    if additional_opts and additional_opts.order != nil
+      order = additional_opts.order
+
+    if order
       clause ..= " order by #{order}"
 
     clause

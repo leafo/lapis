@@ -460,11 +460,12 @@ has_many = function(self, name, opts)
       end
     end
     clause = "where " .. tostring(self.__class.db.encode_clause(clause))
-    do
-      local order = additional_opts and additional_opts.order or opts.order
-      if order then
-        clause = clause .. " order by " .. tostring(order)
-      end
+    local order = opts.order
+    if additional_opts and additional_opts.order ~= nil then
+      order = additional_opts.order
+    end
+    if order then
+      clause = clause .. " order by " .. tostring(order)
     end
     return clause
   end

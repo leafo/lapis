@@ -4,14 +4,27 @@ config.reset true
 
 db = require "lapis.db.postgres"
 import Model from require "lapis.db.postgres.model"
-import stub_queries, assert_queries from require "spec.helpers"
+import stub_queries, assert_queries, sorted_pairs from require "spec.helpers"
 
 describe "lapis.db.model.relations", ->
-  get_queries, mock_query = stub_queries!
+  -- sorted_pairs! -- TODO: investigate why this doesn't work for this set of tests
+  get_queries, mock_query, set_queries = stub_queries!
 
   with old = assert_queries
     assert_queries = (expected, opts) ->
-      old expected, get_queries!, opts
+      collected_queries = if type(opts) == "function"
+        callback = opts
+        opts = nil
+        old_q = get_queries!
+        query_buffer = {}
+        set_queries query_buffer
+        callback!
+        with query_buffer
+          set_queries old_q
+      else
+        get_queries!
+
+      old expected, collected_queries, opts
 
   local models
 
@@ -380,6 +393,7 @@ describe "lapis.db.model.relations", ->
       @relations: {
         {"posts", has_many: "Posts"}
         {"more_posts", has_many: "Posts", where: {color: "blue"}}
+        {"ordered_posts", has_many: "Posts", order: "created_at desc"}
       }
 
     user = models.Users!
@@ -408,6 +422,32 @@ describe "lapis.db.model.relations", ->
 
     user\get_posts_paginated(ordered: {"id"}, where: { deleted: false })\get_page!
 
+    -- relation with order
+    assert_queries {
+      'SELECT * from "posts" where "user_id" = 1234 order by created_at desc LIMIT 10 OFFSET 0'
+      'SELECT * from "posts" where "user_id" = 1234 order by created_at desc LIMIT 10 OFFSET 23410'
+      'SELECT COUNT(*) AS c FROM "posts" where "user_id" = 1234 '
+    }, ->
+      pager = user\get_ordered_posts_paginated!
+      pager\get_page!
+      pager\get_page 2342
+      pager\total_items!
+
+    -- relation with order, order overwritten by pager
+    assert_queries {
+      'SELECT * from "posts" where "user_id" = 1234 order by id asc LIMIT 10 OFFSET 0'
+      'SELECT * from "posts" where "user_id" = 1234 order by id asc LIMIT 10 OFFSET 10'
+      'SELECT * from "posts" where "user_id" = 1234 order by created_at desc LIMIT 10 OFFSET 0'
+    }, ->
+      pager = user\get_ordered_posts_paginated order: "id asc"
+      pager\get_page!
+      pager\get_page 2
+
+      -- this should disable the order
+      pager2 = user\get_ordered_posts_paginated order: false
+      pager2\get_page!
+
+    -- TODO: switch over to callback syntax for assert queries
     assert_queries {
       'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 0'
       'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 10'
