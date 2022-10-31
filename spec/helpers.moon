@@ -125,7 +125,7 @@ sorted_pairs = (sort=table.sort) ->
       keys = [k for k in _pairs object]
       sort keys, (a,b) ->
         if type(a) == type(b)
-          a < b
+          tostring(a) < tostring(b)
         else
           type(a) < type(b)
 

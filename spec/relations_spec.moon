@@ -7,7 +7,7 @@ import Model from require "lapis.db.postgres.model"
 import stub_queries, assert_queries, sorted_pairs from require "spec.helpers"
 
 describe "lapis.db.model.relations", ->
-  -- sorted_pairs! -- TODO: investigate why this doesn't work for this set of tests
+  sorted_pairs!
   get_queries, mock_query, set_queries = stub_queries!
 
   with old = assert_queries
@@ -399,11 +399,20 @@ describe "lapis.db.model.relations", ->
     user = models.Users!
     user.id = 1234
 
-    -- offset paginator
-    user\get_posts_paginated!\get_page 1
-    user\get_posts_paginated!\get_page 2
+    -- empty relation
+    assert_queries {
+      'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 0'
+      'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 10'
+    }, ->
+      user\get_posts_paginated!\get_page 1
+      user\get_posts_paginated!\get_page 2
 
-    user\get_more_posts_paginated!\get_page 2
+
+    -- relation with where clause
+    assert_queries {
+      [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
+    }, ->
+      user\get_more_posts_paginated!\get_page 2
 
     pager = user\get_posts_paginated(where: {
       age: "10 days"
@@ -449,30 +458,15 @@ describe "lapis.db.model.relations", ->
 
     -- TODO: switch over to callback syntax for assert queries
     assert_queries {
-      'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 0'
-      'SELECT * from "posts" where "user_id" = 1234 LIMIT 10 OFFSET 10'
-      {
-        [[SELECT * from "posts" where "user_id" = 1234 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
-        [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
-      }
-      {
-        [[SELECT COUNT(*) AS c FROM "posts" where "age" = '10 days' AND "user_id" = 1234]]
-        [[SELECT COUNT(*) AS c FROM "posts" where "user_id" = 1234 AND "age" = '10 days']]
-      }
-      {
-        [[SELECT * from "posts" where "age" = '10 days' AND "user_id" = 1234 LIMIT 10 OFFSET 0]]
-        [[SELECT * from "posts" where "user_id" = 1234 AND "age" = '10 days' LIMIT 10 OFFSET 0]]
-      }
+      [[SELECT COUNT(*) AS c FROM "posts" where "age" = '10 days' AND "user_id" = 1234]]
+      [[SELECT * from "posts" where "age" = '10 days' AND "user_id" = 1234 LIMIT 10 OFFSET 0]]
 
       'SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 88'
       'SELECT * from "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
       'SELECT * from "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
 
       [[SELECT * from "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
-      {
-        [[SELECT * from "posts" where "deleted" = FALSE AND "user_id" = 1234 order by "posts"."id" ASC limit 10]]
-        [[SELECT * from "posts" where "user_id" = 1234 AND "deleted" = FALSE order by "posts"."id" ASC limit 10]]
-      }
+      [[SELECT * from "posts" where "deleted" = FALSE AND "user_id" = 1234 order by "posts"."id" ASC limit 10]]
     }
 
 
