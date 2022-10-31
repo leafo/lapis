@@ -164,8 +164,7 @@ end
 local element
 element = function(buffer, name, attrs, ...)
   do
-    local _with_0 = buffer
-    _with_0:write("<", name)
+    buffer:write("<", name)
     element_attributes(buffer, attrs)
     if void_tags[name] then
       local has_content = false
@@ -188,14 +187,13 @@ element = function(buffer, name, attrs, ...)
         end
       end
       if not (has_content) then
-        _with_0:write("/>")
-        return buffer
+        buffer:write("/>")
+        return 
       end
     end
-    _with_0:write(">")
-    _with_0:write_escaped(attrs, ...)
-    _with_0:write("</", name, ">")
-    return _with_0
+    buffer:write(">")
+    buffer:write_escaped(attrs, ...)
+    buffer:write("</", name, ">")
   end
 end
 local Buffer

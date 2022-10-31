@@ -119,11 +119,13 @@ element = (buffer, name, attrs, ...) ->
 
       unless has_content
         \write "/>"
-        return buffer
+        return
 
     \write ">"
     \write_escaped attrs, ...
     \write "</", name, ">"
+
+  return -- return nothing
 
 class Buffer
   builders: {
