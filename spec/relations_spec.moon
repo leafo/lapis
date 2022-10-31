@@ -407,29 +407,48 @@ describe "lapis.db.model.relations", ->
       user\get_posts_paginated!\get_page 1
       user\get_posts_paginated!\get_page 2
 
-
     -- relation with where clause
     assert_queries {
       [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
     }, ->
       user\get_more_posts_paginated!\get_page 2
 
-    pager = user\get_posts_paginated(where: {
-      age: "10 days"
-    })
+    -- pager with customized where clause
+    assert_queries {
+      [[SELECT COUNT(*) AS c FROM "posts" where "age" = '10 days' AND "user_id" = 1234]]
+      [[SELECT * from "posts" where "age" = '10 days' AND "user_id" = 1234 LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "age" = '10 days' AND "user_id" = 1234 LIMIT 10 OFFSET 10]]
+    }, ->
+      pager = user\get_posts_paginated(where: {
+        age: "10 days"
+      })
 
-    pager\total_items!
-    pager\get_page 1
+      pager\total_items!
+      pager\get_page 1
+      pager\get_page 2
 
-    user\get_posts_paginated(per_page: 44)\get_page 3
+    -- pager with customized per_page
+    assert_queries {
+      [[SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 88]]
+      [[SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 0]]
+    }, ->
+      pager = user\get_posts_paginated per_page: 44
+      pager\get_page 3
+      pager\get_page!
 
     -- offset ordered paginator
-    user\get_posts_paginated(ordered: {"id"})\get_page!
-    user\get_posts_paginated(ordered: {"id"})\get_page 1023
+    assert_queries {
+      'SELECT * from "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
+      'SELECT * from "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
+      [[SELECT * from "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
+      'SELECT * from "posts" where "deleted" = FALSE AND "user_id" = 1234 order by "posts"."id" ASC limit 10'
+    }, ->
+      user\get_posts_paginated(ordered: {"id"})\get_page!
+      user\get_posts_paginated(ordered: {"id"})\get_page 1023
 
-    user\get_posts_paginated(order: "desc", ordered: {"created_at", "id"})\get_page "2020-1-1", 238
+      user\get_posts_paginated(order: "desc", ordered: {"created_at", "id"})\get_page "2020-1-1", 238
 
-    user\get_posts_paginated(ordered: {"id"}, where: { deleted: false })\get_page!
+      user\get_posts_paginated(ordered: {"id"}, where: { deleted: false })\get_page!
 
     -- relation with order
     assert_queries {
@@ -455,19 +474,6 @@ describe "lapis.db.model.relations", ->
       -- this should disable the order
       pager2 = user\get_ordered_posts_paginated order: false
       pager2\get_page!
-
-    -- TODO: switch over to callback syntax for assert queries
-    assert_queries {
-      [[SELECT COUNT(*) AS c FROM "posts" where "age" = '10 days' AND "user_id" = 1234]]
-      [[SELECT * from "posts" where "age" = '10 days' AND "user_id" = 1234 LIMIT 10 OFFSET 0]]
-
-      'SELECT * from "posts" where "user_id" = 1234 LIMIT 44 OFFSET 88'
-      'SELECT * from "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
-      'SELECT * from "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
-
-      [[SELECT * from "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
-      [[SELECT * from "posts" where "deleted" = FALSE AND "user_id" = 1234 order by "posts"."id" ASC limit 10]]
-    }
 
 
   it "should make has_many getter", ->
