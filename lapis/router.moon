@@ -202,6 +202,7 @@ class Router
 
     insert @routes, { route, responder, name }
 
+  -- default_route represents a responder that is used when a route can not be matched
   default_route: (route) =>
     error "failed to find route: " .. route
 
