@@ -105,6 +105,11 @@ do
       self.buffer = { }
       self.params = { }
       self.options = { }
+      self.add_headers = function(self, headers)
+        for k, v in pairs(headers) do
+          self.res:add_header(k, v)
+        end
+      end
       self.__class.support.load_cookies(self)
       return self.__class.support.load_session(self)
     end,

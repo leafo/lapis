@@ -188,6 +188,9 @@ class Request
     @buffer = {} -- output buffer
     @params = {}
     @options = {}
+    @add_headers = (headers) =>
+    	for k,v in pairs headers
+    		@res\add_header k,v
 
     @@support.load_cookies @
     @@support.load_session @
