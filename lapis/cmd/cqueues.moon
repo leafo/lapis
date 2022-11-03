@@ -53,7 +53,7 @@ create_server = (app_module, environment) ->
 
   config = require("lapis.config").get!
 
-  import dispatch from require "lapis.cqueues"
+  import dispatch, protected_call from require "lapis.cqueues"
 
   load_app = ->
     app_cls = if type(app_module) == "string"
@@ -67,21 +67,34 @@ create_server = (app_module, environment) ->
       app_cls\build_router!
       app_cls
 
+  -- WARNING: https://github.com/daurnimator/lua-http/issues/204
+  -- There is a bug in lua-http where if an error is thrown before the stream
+  -- is read (eg. get_headers), the server gets stuck in an infinite loop
+  -- attempting to process the stream. We use protected_call to ensure any user
+  -- provided app code has it's errors captured and displayed to developer
+
   onstream = switch config.code_cache
     when false, "off"
       reset = module_reset!
       (stream) =>
         reset!
-        app = load_app!
-        dispatch app, @, stream
+        local app
+        if protected_call stream, -> app = load_app!
+          dispatch app, @, stream
     when "app_only"
       (stream) =>
-        app = load_app!
+        stream\get_headers!
+        local app
+        if protected_call stream, -> app = load_app!
+          app = load_app!
         dispatch app, @, stream
     else
       app = load_app!
       (stream) => dispatch app, @, stream
 
+  -- If this is called then we let an error escape, likely a bug in Lapis. This
+  -- error handler doesn't terminate the server, it will keep trying to process
+  -- requests
   onerror = (context, op, err, errno) =>
     msg = op .. " on " .. tostring(context) .. " failed"
     if err

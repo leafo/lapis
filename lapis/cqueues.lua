@@ -90,6 +90,47 @@ build_response = function(stream)
     headers = { }
   }
 end
+local protected_call
+protected_call = function(stream, fn)
+  local err, trace, r
+  local capture_error
+  capture_error = function(_err) end
+  local success = xpcall(fn, function(_err)
+    err = _err
+    trace = debug.traceback("", 2)
+  end)
+  if success then
+    return true
+  end
+  local req_headers = stream:get_headers()
+  local logger = require("lapis.logging")
+  logger.request({
+    req = {
+      method = req_headers:get(":method"),
+      request_uri = req_headers:get(":path")
+    },
+    res = {
+      status = "503"
+    }
+  })
+  local full_error = table.concat({
+    "App failed to boot:\n",
+    err,
+    trace
+  }, "\n")
+  io.stderr:write(full_error, "\n")
+  local res_headers = http_headers.new()
+  res_headers:append(":status", "503")
+  local config = require("lapis.config").get()
+  if config._name == "development" then
+    res_headers:append("content-type", "text/plain")
+    stream:write_headers(res_headers, false)
+    stream:write_chunk(full_error, true)
+  else
+    stream:write_headers(res_headers, true)
+  end
+  return false
+end
 local dispatch
 dispatch = function(app, server, stream)
   local res = build_response(stream)
@@ -106,5 +147,6 @@ dispatch = function(app, server, stream)
   return res
 end
 return {
-  dispatch = dispatch
+  dispatch = dispatch,
+  protected_call = protected_call
 }

@@ -87,6 +87,62 @@ build_response = (stream) ->
   }
 
 
+-- this is designed to run a block of code that might fail within the stream
+-- handler but before we have instantiated app to capture and display error
+protected_call = (stream, fn)->
+  local err, trace, r
+
+  capture_error = (_err) ->
+
+  success = xpcall(
+    fn
+    (_err) ->
+      err = _err
+      trace = debug.traceback "", 2
+  )
+
+  if success
+    return true
+
+  -- headers must always be read in order to write a response, even if we don't
+  -- need them
+  req_headers = stream\get_headers!
+
+  logger = require "lapis.logging"
+  logger.request {
+    req: {
+      method: req_headers\get ":method"
+      request_uri: req_headers\get ":path"
+    }
+    res: {
+      status: "503"
+    }
+  }
+
+  full_error = table.concat {
+    "App failed to boot:\n"
+    err
+    trace
+  }, "\n"
+
+  io.stderr\write full_error, "\n"
+
+  -- write an empty 503 error
+  res_headers = http_headers.new!
+  res_headers\append ":status", "503"
+
+  config = require("lapis.config").get!
+
+  -- we don't want to leak errors in other environments
+  if config._name == "development"
+    res_headers\append "content-type", "text/plain"
+    stream\write_headers res_headers, false
+    stream\write_chunk full_error, true
+  else
+    stream\write_headers res_headers, true
+
+  false
+
 dispatch = (app, server, stream) ->
   res = build_response stream
   app\dispatch res.req, res
@@ -102,8 +158,9 @@ dispatch = (app, server, stream) ->
   if res.content
     stream\write_chunk res.content, true
 
+
   res
 
-{ :dispatch }
+{ :dispatch, :protected_call }
 
 
