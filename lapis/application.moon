@@ -301,7 +301,7 @@ class Application
       @app.handle_404 @
 
   handle_404: =>
-    error "Failed to find route: #{@req.cmd_url}"
+    error "Failed to find route: #{@req.request_uri}"
 
   handle_error: (err, trace) =>
     @status = 500

@@ -62,7 +62,7 @@ cached = function(fn_or_tbl)
     fn = fn[1]
   end
   return function(self)
-    if (self.req.cmd_mth ~= "GET") or (cond and not cond(self)) then
+    if (self.req.method ~= "GET") or (cond and not cond(self)) then
       return fn(self)
     end
     local key = _cache_key(self.req.parsed_url.path, self.GET, self)

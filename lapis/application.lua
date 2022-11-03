@@ -215,7 +215,7 @@ do
       end
     end,
     handle_404 = function(self)
-      return error("Failed to find route: " .. tostring(self.req.cmd_url))
+      return error("Failed to find route: " .. tostring(self.req.request_uri))
     end,
     handle_error = function(self, err, trace)
       self.status = 500
