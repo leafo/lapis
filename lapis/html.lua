@@ -107,7 +107,11 @@ classnames = function(t)
             _continue_0 = true
             break
           end
-          _accum_0[_len_0] = v
+          if type(v) == "table" then
+            _accum_0[_len_0] = classnames(v)
+          else
+            _accum_0[_len_0] = tostring(v)
+          end
         else
           if not (v) then
             _continue_0 = true

@@ -73,7 +73,10 @@ classnames = (t) ->
   ccs = for k,v in pairs t
     if type(k) == "number"
       continue if v == ""
-      v
+      if type(v) == "table"
+        classnames v
+      else
+        tostring v
     else
       continue unless v
       k
