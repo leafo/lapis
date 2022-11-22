@@ -47,6 +47,9 @@ query = do
       l = config.logging
       return unless l and l.queries
 
+    if force_logging == "0"
+      return
+
     if duration
       _print log_tpl_time\format prefix, "%.2fms"\format(duration * 1000), query
     else

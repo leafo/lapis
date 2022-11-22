@@ -63,6 +63,9 @@ do
         return 
       end
     end
+    if force_logging == "0" then
+      return 
+    end
     if duration then
       return _print(log_tpl_time:format(prefix, ("%.2fms"):format(duration * 1000), query))
     else
