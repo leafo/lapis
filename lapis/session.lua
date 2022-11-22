@@ -23,11 +23,19 @@ encode_session = function(tbl, secret)
   return encode_base64(json.encode(tbl))
 end
 local get_session
-get_session = function(r, secret)
+get_session = function(req_or_cookie, secret)
   if secret == nil then
     secret = config.secret
   end
-  local cookie = r.cookies[config.session_name]
+  local cookie
+  local _exp_0 = type(req_or_cookie)
+  if "string" == _exp_0 or "nil" == _exp_0 then
+    cookie = req_or_cookie
+  elseif "table" == _exp_0 then
+    cookie = req_or_cookie.cookies[config.session_name]
+  else
+    cookie = error("Unknown object passed to session.get_session")
+  end
   if not (cookie) then
     return nil, "no cookie"
   end

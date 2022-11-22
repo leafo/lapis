@@ -15,8 +15,15 @@ encode_session = (tbl, secret=config.secret) ->
 
   encode_base64 json.encode tbl
 
-get_session = (r, secret=config.secret) ->
-  cookie = r.cookies[config.session_name]
+get_session = (req_or_cookie, secret=config.secret) ->
+  cookie = switch type req_or_cookie
+    when "string", "nil"
+      req_or_cookie
+    when "table" -- request object
+      req_or_cookie.cookies[config.session_name]
+    else
+      error "Unknown object passed to session.get_session"
+
   return nil, "no cookie" unless cookie
 
   if secret
