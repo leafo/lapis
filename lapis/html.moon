@@ -448,7 +448,7 @@ class Widget
     setmetatable @, meta
 
     @_buffer.widget = old_widget
-    nil
+    return -- return nothing
 
 { :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :classnames, :element, :CONTENT_FOR_PREFIX }
 

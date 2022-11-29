@@ -573,7 +573,6 @@ do
       self:content(...)
       setmetatable(self, meta)
       self._buffer.widget = old_widget
-      return nil
     end
   }
   _base_0.__index = _base_0
