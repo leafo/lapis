@@ -257,7 +257,9 @@ render_html = (fn) ->
   html_writer(fn) buffer
   concat buffer
 
-helper_key = setmetatable {}, __tostring: -> "::helper_key::"
+-- this is a unique identifier to store the helper chain on a widget
+HELPER_KEY = setmetatable {}, __tostring: -> "::helper_key::"
+
 -- ensures that all methods are called in the buffer's scope
 class Widget
   @__inherited: (cls) =>
@@ -315,8 +317,8 @@ class Widget
         if type(k) == "string"
           @[k] = v
 
-  _set_helper_chain: (chain) => rawset @, helper_key, chain
-  _get_helper_chain: => rawget @, helper_key
+  _set_helper_chain: (chain) => rawset @, HELPER_KEY, chain
+  _get_helper_chain: => rawget @, HELPER_KEY
 
   _find_helper: (name) =>
     if chain = @_get_helper_chain!
@@ -340,7 +342,7 @@ class Widget
 
   -- insert table onto end of helper_chain
   include_helper: (helper) =>
-    if helper_chain = @[helper_key]
+    if helper_chain = @[HELPER_KEY]
       insert helper_chain, helper
     else
       @_set_helper_chain { helper }

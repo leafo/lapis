@@ -404,7 +404,7 @@ render_html = function(fn)
   html_writer(fn)(buffer)
   return concat(buffer)
 end
-local helper_key = setmetatable({ }, {
+local HELPER_KEY = setmetatable({ }, {
   __tostring = function()
     return "::helper_key::"
   end
@@ -414,10 +414,10 @@ do
   local _class_0
   local _base_0 = {
     _set_helper_chain = function(self, chain)
-      return rawset(self, helper_key, chain)
+      return rawset(self, HELPER_KEY, chain)
     end,
     _get_helper_chain = function(self)
-      return rawget(self, helper_key)
+      return rawget(self, HELPER_KEY)
     end,
     _find_helper = function(self, name)
       do
@@ -455,7 +455,7 @@ do
     end,
     include_helper = function(self, helper)
       do
-        local helper_chain = self[helper_key]
+        local helper_chain = self[HELPER_KEY]
         if helper_chain then
           insert(helper_chain, helper)
         else
