@@ -54,6 +54,12 @@ tests = {
   }
 
   {
+    -> db.interpolate_query "select from dogs where ?", db.clause { color: "blue" }
+    [[select from dogs where "color" = 'blue']]
+  }
+
+
+  {
     -> db.escape_literal db.array {1,2,3,4,5}
     "ARRAY[1,2,3,4,5]"
   }

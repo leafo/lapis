@@ -315,13 +315,15 @@ _truncate = function(table)
 end
 return {
   connect = connect,
-  raw = raw,
-  is_raw = is_raw,
   NULL = NULL,
   TRUE = TRUE,
   FALSE = FALSE,
+  raw = raw,
+  is_raw = is_raw,
   list = list,
   is_list = is_list,
+  clause = clause,
+  is_clause = is_clause,
   is_encodable = is_encodable,
   encode_values = encode_values,
   encode_assigns = encode_assigns,

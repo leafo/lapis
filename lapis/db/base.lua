@@ -63,13 +63,44 @@ local is_list
 is_list = function(val)
   return getmetatable(val) == DBList.__base
 end
+local DBClause
+do
+  local _class_0
+  local _base_0 = { }
+  _base_0.__index = _base_0
+  _class_0 = setmetatable({
+    __init = function() end,
+    __base = _base_0,
+    __name = "DBClause"
+  }, {
+    __index = _base_0,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  DBClause = _class_0
+end
+local clause
+clause = function(clause, opts)
+  return setmetatable({
+    clause,
+    opts
+  }, DBClause.__base)
+end
+local is_clause
+is_clause = function(val)
+  return getmetatable(val) == DBClause.__base
+end
 local unpack = unpack or table.unpack
 local is_encodable
 is_encodable = function(item)
   local _exp_0 = type(item)
   if "table" == _exp_0 then
     local _exp_1 = getmetatable(item)
-    if DBList.__base == _exp_1 or DBRaw.__base == _exp_1 then
+    if DBList.__base == _exp_1 or DBRaw.__base == _exp_1 or DBClause.__base == _exp_1 then
       return true
     else
       return false
@@ -93,6 +124,7 @@ format_date = function(time)
 end
 local build_helpers
 build_helpers = function(escape_literal, escape_identifier)
+  local encode_clause
   local append_all
   append_all = function(t, ...)
     for i = 1, select("#", ...) do
@@ -125,7 +157,11 @@ build_helpers = function(escape_literal, escape_identifier)
       if values[i] == nil then
         error("missing replacement " .. tostring(i) .. " for interpolated query")
       end
-      return escape_literal(values[i])
+      if is_clause(values[i]) then
+        return encode_clause(values[i])
+      else
+        return escape_literal(values[i])
+      end
     end))
   end
   local encode_values
@@ -175,9 +211,11 @@ build_helpers = function(escape_literal, escape_identifier)
       return concat(buffer)
     end
   end
-  local encode_clause
   encode_clause = function(t, buffer)
     assert(next(t) ~= nil, "encode_clause passed an empty table")
+    if is_clause(t) then
+      t = t[1]
+    end
     local join = " AND "
     local have_buffer = buffer
     buffer = buffer or { }
@@ -243,6 +281,8 @@ return {
   is_raw = is_raw,
   list = list,
   is_list = is_list,
+  clause = clause,
+  is_clause = is_clause,
   is_encodable = is_encodable,
   format_date = format_date,
   build_helpers = build_helpers,

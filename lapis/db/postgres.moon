@@ -15,6 +15,8 @@ import
   raw
   is_list
   list
+  is_clause
+  clause
   is_encodable
   from require "lapis.db.base"
 
@@ -311,9 +313,17 @@ encode_case = (exp, t, on_else) ->
 {
   :connect
   :disconnect
-  :query, :raw, :is_raw, :list, :is_list, :array, :is_array, :NULL, :TRUE,
-  :FALSE, :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
-  :encode_clause, :interpolate_query, :parse_clause, :format_date,
+  :query
+
+  :raw, :is_raw
+  :list, :is_list
+  :array, :is_array
+  :clause, :is_clause
+
+  :NULL, :TRUE, :FALSE
+
+  :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
+  :encode_clause, :interpolate_query, :format_date,
   :encode_case
 
   :init_logger

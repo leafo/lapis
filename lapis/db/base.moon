@@ -9,6 +9,10 @@ class DBList
 list = (items) -> setmetatable {items}, DBList.__base
 is_list = (val) -> getmetatable(val) == DBList.__base
 
+class DBClause
+clause = (clause, opts) -> setmetatable {clause, opts}, DBClause.__base
+is_clause = (val) -> getmetatable(val) == DBClause.__base
+
 unpack = unpack or table.unpack
 
 -- is item a value we can insert into a query
@@ -16,7 +20,7 @@ is_encodable = (item) ->
   switch type(item)
     when "table"
       switch getmetatable(item)
-        when DBList.__base, DBRaw.__base
+        when DBList.__base, DBRaw.__base, DBClause.__base
           true
         else
           false
@@ -36,6 +40,8 @@ format_date = (time) ->
   os.date "!%Y-%m-%d %H:%M:%S", time
 
 build_helpers = (escape_literal, escape_identifier) ->
+  local encode_clause
+
   append_all = (t, ...) ->
     for i=1, select "#", ...
       t[#t + 1] = select i, ...
@@ -55,7 +61,10 @@ build_helpers = (escape_literal, escape_identifier) ->
       if values[i] == nil
         error "missing replacement #{i} for interpolated query"
 
-      escape_literal values[i])
+      if is_clause values[i]
+        encode_clause values[i]
+      else
+        escape_literal values[i])
 
   -- (col1, col2, col3) VALUES (val1, val2, val3)
   encode_values = (t, buffer) ->
@@ -98,6 +107,9 @@ build_helpers = (escape_literal, escape_identifier) ->
   encode_clause = (t, buffer) ->
     assert next(t) != nil, "encode_clause passed an empty table"
 
+    if is_clause t
+      t = t[1]
+
     join = " AND "
     have_buffer = buffer
     buffer or= {}
@@ -133,5 +145,10 @@ gen_index_name = (...) ->
   concat(parts, "_") .. "_idx"
 
 {
-  :NULL, :TRUE, :FALSE, :raw, :is_raw, :list, :is_list, :is_encodable, :format_date, :build_helpers, :gen_index_name
+  :NULL, :TRUE, :FALSE
+  :raw, :is_raw
+  :list, :is_list
+  :clause, :is_clause
+  :is_encodable,
+  :format_date, :build_helpers, :gen_index_name
 }

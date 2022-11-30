@@ -279,8 +279,12 @@ _truncate = (table) ->
 
 {
   :connect
-  :raw, :is_raw, :NULL, :TRUE, :FALSE
+  :NULL, :TRUE, :FALSE
+
+  :raw, :is_raw
   :list, :is_list
+  :clause, :is_clause
+
   :is_encodable
 
   :encode_values
