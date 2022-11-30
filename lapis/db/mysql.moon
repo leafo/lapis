@@ -302,6 +302,8 @@ _truncate = (table) ->
   :get_logger
   :set_logger
 
+  parse_clause: -> error "MySQL does not support a clause parser"
+
   select: _select
   insert: _insert
   update: _update

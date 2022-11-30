@@ -337,6 +337,9 @@ return {
   get_raw_query = get_raw_query,
   get_logger = get_logger,
   set_logger = set_logger,
+  parse_clause = function()
+    return error("MySQL does not support a clause parser")
+  end,
   select = _select,
   insert = _insert,
   update = _update,
