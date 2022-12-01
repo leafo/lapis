@@ -144,19 +144,19 @@ tests = {
   {
     ->
       db.encode_clause db.clause {
-        {"WHERE ?", db.clause eggs: "ham"}
-
         {"INNER JOIN things ON ?", db.clause {
           "things.user_id = id"
           deleted: false
           status: db.list {1,2,3}
         }, table_name: "things"}
 
+        {"WHERE ?", db.clause eggs: "ham"}
+
         "LIMIT 100"
         "OFFSET 99"
       }, operator: false
 
-    [[WHERE "eggs" = 'ham' INNER JOIN things ON (things.user_id = id) AND not "things"."deleted" AND "things"."status" IN (1, 2, 3) LIMIT 100 OFFSET 99]]
+    [[INNER JOIN things ON (things.user_id = id) AND not "things"."deleted" AND "things"."status" IN (1, 2, 3) WHERE "eggs" = 'ham' LIMIT 100 OFFSET 99]]
   }
 
   {
