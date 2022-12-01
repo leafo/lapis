@@ -58,7 +58,6 @@ tests = {
     [[select from dogs where "color" = 'blue']]
   }
 
-
   {
     -> db.escape_literal db.array {1,2,3,4,5}
     "ARRAY[1,2,3,4,5]"
@@ -71,14 +70,14 @@ tests = {
 
   {
     -> db.encode_values(value_table)
-    [[("hello", "age") VALUES ('world', 34)]]
     [[("age", "hello") VALUES (34, 'world')]]
+    [[("hello", "age") VALUES ('world', 34)]]
   }
 
   {
     -> db.encode_assigns(value_table)
-    [["hello" = 'world', "age" = 34]]
     [["age" = 34, "hello" = 'world']]
+    [["hello" = 'world', "age" = 34]]
   }
 
   {
@@ -93,8 +92,8 @@ tests = {
 
   {
     -> db.encode_clause cool: true, id: db.list {1,2,3,5}
-    [["id" IN (1, 2, 3, 5) AND "cool" = TRUE]]
     [["cool" = TRUE AND "id" IN (1, 2, 3, 5)]]
+    [["id" IN (1, 2, 3, 5) AND "cool" = TRUE]]
   }
 
   {
@@ -115,8 +114,8 @@ tests = {
 
   {
     -> db.insert "cats", age: 123, name: "catter"
-    [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123)]]
     [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter')]]
+    [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123)]]
   }
 
   {
@@ -136,14 +135,14 @@ tests = {
 
   {
     -> db.update "cats", { color: "red" }, { weight: 1200, length: 392 }
-    [[UPDATE "cats" SET "color" = 'red' WHERE "weight" = 1200 AND "length" = 392]]
     [[UPDATE "cats" SET "color" = 'red' WHERE "length" = 392 AND "weight" = 1200]]
+    [[UPDATE "cats" SET "color" = 'red' WHERE "weight" = 1200 AND "length" = 392]]
   }
 
   {
     -> db.update "cats", { color: "red" }, { weight: 1200, length: 392 }, "weight", "color"
-    [[UPDATE "cats" SET "color" = 'red' WHERE "weight" = 1200 AND "length" = 392 RETURNING "weight", "color"]]
     [[UPDATE "cats" SET "color" = 'red' WHERE "length" = 392 AND "weight" = 1200 RETURNING "weight", "color"]]
+    [[UPDATE "cats" SET "color" = 'red' WHERE "weight" = 1200 AND "length" = 392 RETURNING "weight", "color"]]
   }
 
   {
@@ -168,8 +167,8 @@ tests = {
 
   {
     -> db.delete "cats", name: "rump", dad: "duck"
-    [[DELETE FROM "cats" WHERE "name" = 'rump' AND "dad" = 'duck']]
     [[DELETE FROM "cats" WHERE "dad" = 'duck' AND "name" = 'rump']]
+    [[DELETE FROM "cats" WHERE "name" = 'rump' AND "dad" = 'duck']]
   }
 
   {
@@ -190,14 +189,14 @@ tests = {
 
   {
     -> db.insert "cats", { age: 123, name: "catter" }, "age"
-    [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123) RETURNING "age"]]
     [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter') RETURNING "age"]]
+    [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123) RETURNING "age"]]
   }
 
   {
     -> db.insert "cats", { age: 123, name: "catter" }, "age", "name"
-    [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123) RETURNING "age", "name"]]
     [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter') RETURNING "age", "name"]]
+    [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123) RETURNING "age", "name"]]
   }
 
   {
@@ -631,6 +630,8 @@ END]]
 
 local old_query_fn
 describe "lapis.db.postgres", ->
+  sorted_pairs!
+
   setup ->
     old_query_fn = db.set_backend "raw", (q) -> q
 
