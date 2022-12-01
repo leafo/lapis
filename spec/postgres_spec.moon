@@ -97,6 +97,69 @@ tests = {
   }
 
   {
+    -> db.encode_clause db.clause {
+      "5 < 2"
+      {"height > ?", 443}
+    }
+    "(5 < 2) AND (height > 443)"
+  }
+
+  {
+    -> db.encode_clause db.clause { }, allow_empty: true
+    ""
+  }
+
+  {
+    -> db.encode_clause db.clause {
+      a: "two"
+      b: true
+      c: false
+      d: db.NULL
+      [db.raw "something.zone"]: db.list {1,2,3}
+    }, table_name: "blimp"
+    [["blimp"."a" = 'two' AND "blimp"."b" AND not "blimp"."c" AND "blimp"."d" IS NULL AND something.zone IN (1, 2, 3)]]
+  }
+
+  {
+    ->
+      db.encode_clause db.clause {
+        skipped: true
+        db.clause {
+          one: "two"
+          zone: true
+        }
+
+        if false
+          "this won't make it in"
+
+        db.clause {
+          a: "men"
+          {"age > ?", 0.230}
+        }
+      }, operator: "OR", table_name: "users"
+
+    [[("one" = 'two' AND "zone") OR ((age > 0.23) AND "a" = 'men') OR "users"."skipped"]]
+  }
+
+  {
+    ->
+      db.encode_clause db.clause {
+        {"WHERE ?", db.clause eggs: "ham"}
+
+        {"INNER JOIN things ON ?", db.clause {
+          "things.user_id = id"
+          deleted: false
+          status: db.list {1,2,3}
+        }, table_name: "things"}
+
+        "LIMIT 100"
+        "OFFSET 99"
+      }, operator: false
+
+    [[WHERE "eggs" = 'ham' INNER JOIN things ON (things.user_id = id) AND not "things"."deleted" AND "things"."status" IN (1, 2, 3) LIMIT 100 OFFSET 99]]
+  }
+
+  {
     -> db.interpolate_query "update items set x = ?", db.raw"y + 1"
     "update items set x = y + 1"
   }
@@ -675,7 +738,7 @@ describe "lapis.db.postgres", ->
 
       assert.has_error(
         -> db.encode_assigns {}, buffer
-        "encode_assigns passed an empty table"
+        "db.encode_assigns: passed an empty table"
       )
 
       assert.same { "hello" }, buffer
@@ -704,7 +767,7 @@ describe "lapis.db.postgres", ->
 
       assert.has_error(
         -> db.encode_clause {}, buffer
-        "encode_clause passed an empty table"
+        "db.encode_clause: passed an empty table"
       )
 
       assert.same { "hello" }, buffer
@@ -735,7 +798,7 @@ describe "lapis.db.postgres", ->
 
       assert.has_error(
         -> db.encode_values {}, buffer
-        "encode_values passed an empty table"
+        "db.encode_values: passed an empty table"
       )
 
       assert.same { "hello" }, buffer

@@ -85,6 +85,7 @@ do
 end
 local clause
 clause = function(clause, opts)
+  assert(not getmetatable(clause), "db.clause: attempted to create clause from object that already has metatable")
   return setmetatable({
     clause,
     opts
@@ -127,8 +128,10 @@ build_helpers = function(escape_literal, escape_identifier)
   local encode_clause
   local append_all
   append_all = function(t, ...)
+    local sz = #t
     for i = 1, select("#", ...) do
-      t[#t + 1] = select(i, ...)
+      sz = sz + 1
+      t[sz] = select(i, ...)
     end
   end
   local flatten_set
@@ -155,7 +158,7 @@ build_helpers = function(escape_literal, escape_identifier)
     return (query:gsub("%?", function()
       i = i + 1
       if values[i] == nil then
-        error("missing replacement " .. tostring(i) .. " for interpolated query")
+        error("db.interpolate_query: missing replacement " .. tostring(i))
       end
       if is_clause(values[i]) then
         return encode_clause(values[i])
@@ -166,7 +169,7 @@ build_helpers = function(escape_literal, escape_identifier)
   end
   local encode_values
   encode_values = function(t, buffer)
-    assert(next(t) ~= nil, "encode_values passed an empty table")
+    assert(next(t) ~= nil, "db.encode_values: passed an empty table")
     local have_buffer = buffer
     buffer = buffer or { }
     append_all(buffer, "(")
@@ -199,7 +202,7 @@ build_helpers = function(escape_literal, escape_identifier)
   end
   local encode_assigns
   encode_assigns = function(t, buffer)
-    assert(next(t) ~= nil, "encode_assigns passed an empty table")
+    assert(next(t) ~= nil, "db.encode_assigns: passed an empty table")
     local join = ", "
     local have_buffer = buffer
     buffer = buffer or { }
@@ -211,23 +214,103 @@ build_helpers = function(escape_literal, escape_identifier)
       return concat(buffer)
     end
   end
-  encode_clause = function(t, buffer)
-    assert(next(t) ~= nil, "encode_clause passed an empty table")
-    if is_clause(t) then
-      t = t[1]
+  local append_tuple
+  append_tuple = function(buffer, k, v, ...)
+    if v == NULL then
+      return append_all(buffer, escape_identifier(k), " IS NULL", ...)
+    else
+      local op = is_list(v) and " IN " or " = "
+      return append_all(buffer, escape_identifier(k), op, escape_literal(v), ...)
     end
-    local join = " AND "
+  end
+  encode_clause = function(t, buffer)
     local have_buffer = buffer
     buffer = buffer or { }
-    for k, v in pairs(t) do
-      if v == NULL then
-        append_all(buffer, escape_identifier(k), " IS NULL", join)
-      else
-        local op = is_list(v) and " IN " or " = "
-        append_all(buffer, escape_identifier(k), op, escape_literal(v), join)
+    if is_clause(t) then
+      local obj, opts
+      obj, opts = t[1], t[2]
+      local default_operator = "AND"
+      if not (opts and opts.allow_empty) then
+        assert(next(obj) ~= nil, "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)")
       end
+      local operator = default_operator
+      if opts and opts.operator ~= nil then
+        operator = opts.operator
+      end
+      local idx = 0
+      for k, v in pairs(obj) do
+        local _continue_0 = false
+        repeat
+          local k_type = type(k)
+          idx = idx + 1
+          if idx > 1 then
+            if operator then
+              append_all(buffer, " ", operator, " ")
+            else
+              append_all(buffer, " ")
+            end
+          end
+          local _exp_0 = k_type
+          if "string" == _exp_0 or "table" == _exp_0 then
+            local field
+            if type(k) == "table" then
+              assert(is_raw(k), "db.encode_clause: got unknown table as key")
+              field = k
+            elseif opts and opts.table_name then
+              field = raw(tostring(escape_identifier(opts.table_name)) .. "." .. tostring(escape_identifier(k)))
+            else
+              field = k
+            end
+            if v == true then
+              append_all(buffer, escape_identifier(field))
+            elseif v == false then
+              append_all(buffer, "not " .. tostring(escape_identifier(field)))
+            else
+              append_tuple(buffer, field, v)
+            end
+          elseif "number" == _exp_0 then
+            if not (v) then
+              _continue_0 = true
+              break
+            end
+            if operator then
+              append_all(buffer, "(")
+            end
+            local _exp_1 = type(v)
+            if "table" == _exp_1 then
+              if is_clause(v) then
+                encode_clause(v, buffer)
+              else
+                if type(v[1]) == "string" then
+                  append_all(buffer, interpolate_query(unpack(v)))
+                else
+                  error("db.encode_clause: received an unknown table at clause index " .. tostring(v))
+                end
+              end
+            elseif "string" == _exp_1 then
+              append_all(buffer, v)
+            else
+              error("db.encode_clause: received an unknown value at clause index " .. tostring(v))
+            end
+            if operator then
+              append_all(buffer, ")")
+            end
+          else
+            error("db.encode_clause: invalid key type in clause")
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+    else
+      assert(next(t) ~= nil, "db.encode_clause: passed an empty table")
+      for k, v in pairs(t) do
+        append_tuple(buffer, k, v, " AND ")
+      end
+      buffer[#buffer] = nil
     end
-    buffer[#buffer] = nil
     if not (have_buffer) then
       return concat(buffer)
     end

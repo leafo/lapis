@@ -6,10 +6,10 @@ end
 local concat
 concat = table.concat
 local unpack = unpack or table.unpack
-local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable
+local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable, clause, is_clause
 do
   local _obj_0 = require("lapis.db.base")
-  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_encodable
+  FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable, clause, is_clause = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_encodable, _obj_0.clause, _obj_0.is_clause
 end
 local conn, logger
 local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, set_logger, get_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate

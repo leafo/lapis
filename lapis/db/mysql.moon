@@ -15,6 +15,8 @@ import
   is_list
   list
   is_encodable
+  clause
+  is_clause
   from require "lapis.db.base"
 
 local conn, logger
