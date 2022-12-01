@@ -1,3 +1,5 @@
+unpack = unpack or table.unpack
+
 local grammar
 
 -- this parses a query fragment to extract the where, having, limit, and offset

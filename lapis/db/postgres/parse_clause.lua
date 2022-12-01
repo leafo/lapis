@@ -1,3 +1,4 @@
+local unpack = unpack or table.unpack
 local grammar
 local make_grammar
 make_grammar = function()
