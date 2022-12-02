@@ -27,6 +27,16 @@ We just created a Discord for Lapis users and those interested in it to communic
 
 Made a website in Lapis? [Tell us](https://github.com/leafo/lapis/discussions/749)
 
+## Supplemental Libraries
+
+
+* [lapis-eswidget](https://github.com/leafo/lapis-eswidget) - A widget base class designed for organizing front-end code bundling
+* [lapis-annotate](https://github.com/leafo/lapis-annotate) - Autogenerate comments on models with their database schema
+* [lapis-console](https://github.com/leafo/lapis-console) - Interactive MoonScript console for Lapis that runs inside of your browser
+* [lapis-exceptions](https://github.com/leafo/lapis-exceptions) - Exception tracking and reporting
+* [lapis-bayes](https://github.com/leafo/lapis-bayes) - General purpose Bayes classification for Spam, Fraud, etc.
+
+
 ## Running Tests
 
 If you need to run tests outside of our CI. The test suites require
@@ -66,7 +76,7 @@ should be a quick operation since dependency installation is cached.
 
 ## License (MIT)
 
-Copyright (C) 2020 by Leaf Corcoran
+Copyright (C) 2022 by Leaf Corcoran
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
