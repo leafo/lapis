@@ -47,12 +47,24 @@ describe "lapis.db.model", ->
     -- doesn't try to interpolate with no params
     Things\select "where color = '?'"
 
+    Things\select db.clause {
+      id: 1289
+    }
+
+    Things\select(
+      "inner join dogs on ? where ?"
+      db.clause { id: db.raw "thing_id "}, table_name: "things"
+      db.clause { height: 10 }, table_name: "dogs"
+    )
+
     assert_queries {
       'SELECT * from "things" '
       'SELECT * from "things" where id = 1234'
       'SELECT hello from "things" '
       'SELECT hello, world from "things" where id = 1234'
       [[SELECT * from "things" where color = '?']]
+      [[SELECT * from "things" WHERE "id" = 1289]]
+      [[SELECT * from "things" inner join dogs on "things"."id" = thing_id where "dogs"."height" = 10]]
     }
 
   describe "find", ->
@@ -61,10 +73,14 @@ describe "lapis.db.model", ->
 
       Things\find "hello"
       Things\find cat: true, weight: 120
+      Things\find db.clause {
+        age: 11
+      }
 
       assert_queries {
         [[SELECT * from "things" where "id" = 'hello' limit 1]]
         [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
+        [[SELECT * from "things" where "age" = 11 limit 1]]
       }
 
     it "composite primary key", ->
@@ -119,6 +135,15 @@ describe "lapis.db.model", ->
       Things\find_all { 1,2,4 }, where: {}
       assert_queries {
         [[SELECT * from "things" WHERE "id" IN (1, 2, 4)]]
+      }
+
+    it "with db.clause", ->
+      Things\find_all { 1,2,4 }, where: db.clause {
+        name: "thing"
+      }
+
+      assert_queries {
+        [[SELECT * from "things" WHERE ("name" = 'thing') AND "id" IN (1, 2, 4)]]
       }
 
     it "with complex options", ->

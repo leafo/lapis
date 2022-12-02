@@ -398,7 +398,9 @@ do
         param_count = param_count - 1
       end
     end
-    if type(query) == "table" then
+    if self.db.is_clause(query) then
+      query = "WHERE " .. tostring(self.db.encode_clause(query))
+    elseif type(query) == "table" then
       opts = query
       query = ""
     end
@@ -676,8 +678,13 @@ do
       [by_key] = self.db.list(ids)
     }
     if extra_where then
-      for k, v in pairs(extra_where) do
-        where[k] = v
+      if self.db.is_clause(extra_where) then
+        table.insert(where, extra_where)
+        where = self.db.clause(where)
+      else
+        for k, v in pairs(extra_where) do
+          where[k] = v
+        end
       end
     end
     local query = "WHERE " .. self.db.encode_clause(where)

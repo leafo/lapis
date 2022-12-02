@@ -176,6 +176,11 @@ tests = {
   }
 
   {
+    -> db.select "* from things where ?", db.clause { deleted: false, "height < 5"}
+    [[SELECT * from things where (height < 5) AND not "deleted"]]
+  }
+
+  {
     -> db.insert "cats", age: 123, name: "catter"
     [[INSERT INTO "cats" ("age", "name") VALUES (123, 'catter')]]
     [[INSERT INTO "cats" ("name", "age") VALUES ('catter', 123)]]
@@ -214,6 +219,11 @@ tests = {
   }
 
   {
+    -> db.update "cats", { age: db.NULL }, db.clause { "not deleted" }
+    [[UPDATE "cats" SET "age" = NULL WHERE (not deleted)]]
+  }
+
+  {
     -> db.delete "cats"
     [[DELETE FROM "cats"]]
   }
@@ -226,6 +236,11 @@ tests = {
   {
     -> db.delete "cats", name: "rump"
     [[DELETE FROM "cats" WHERE "name" = 'rump']]
+  }
+
+  {
+    -> db.delete "cats", db.clause { name: "dump" }
+    [[DELETE FROM "cats" WHERE "name" = 'dump']]
   }
 
   {

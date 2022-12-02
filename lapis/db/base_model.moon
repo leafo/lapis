@@ -163,8 +163,9 @@ class BaseModel
         opts = last
         param_count -= 1
 
-
-    if type(query) == "table"
+    if @db.is_clause query
+      query = "WHERE #{@db.encode_clause query}"
+    elseif type(query) == "table"
       opts = query
       query = ""
 
@@ -384,8 +385,12 @@ class BaseModel
     @db.list ids
     where = { [by_key]: @db.list ids }
     if extra_where
-      for k,v in pairs extra_where
-        where[k] = v
+      if @db.is_clause extra_where
+        table.insert where, extra_where
+        where = @db.clause where
+      else
+        for k,v in pairs extra_where
+          where[k] = v
 
     query = "WHERE " .. @db.encode_clause where
 
