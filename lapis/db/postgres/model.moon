@@ -101,10 +101,12 @@ class Model extends BaseModel
       values.updated_at or= time
 
     if opts and opts.where
-      assert type(opts.where) == "table", "Model.update: where condition must be a table"
-      cond = {k,v for k,v in pairs cond}
-      for k,v in pairs opts.where
-        cond[k] = v
+      assert type(opts.where) == "table", "Model.update: where condition must be a table or db.clause"
+
+      cond = @@db.clause {
+        @@db.clause cond
+        @@db.encode_clause opts.where
+      }
 
     local returning
     for k, v in pairs values

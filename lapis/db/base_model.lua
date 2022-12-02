@@ -184,7 +184,16 @@ do
       end)(), "-")
     end,
     delete = function(self, ...)
-      local res = self.__class.db.delete(self.__class:table_name(), self:_primary_cond(), ...)
+      local cond = self:_primary_cond()
+      local rest_idx = 1
+      if self.__class.db.is_clause((...)) then
+        rest_idx = 2
+        cond = self.__class.db.clause({
+          self.__class.db.encode_clause(cond),
+          (...)
+        })
+      end
+      local res = self.__class.db.delete(self.__class:table_name(), cond, select(rest_idx, ...))
       return (res.affected_rows or 0) > 0, res
     end,
     update = function(self, first, ...)
@@ -428,7 +437,14 @@ do
     local tbl_name = self.db.escape_identifier(self:table_name())
     local query = "COUNT(*) as c from " .. tostring(tbl_name)
     if clause then
-      query = query .. (" where " .. self.db.interpolate_query(clause, ...))
+      local _exp_0 = type(clause)
+      if "string" == _exp_0 then
+        query = query .. (" WHERE " .. self.db.interpolate_query(clause, ...))
+      elseif "table" == _exp_0 then
+        query = query .. " WHERE " .. tostring(self.db.encode_clause(clause))
+      else
+        error("Model.count: Got unknown type for filter clause (" .. tostring(type(clause)) .. ")")
+      end
     end
     return unpack(self.db.select(query)).c
   end

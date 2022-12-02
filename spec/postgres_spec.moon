@@ -254,6 +254,11 @@ tests = {
   }
 
   {
+    -> db.delete "cats", db.clause({doddy: db.NULL}), "a", "b"
+    [[DELETE FROM "cats" WHERE "doddy" IS NULL RETURNING "a", "b"]]
+  }
+
+  {
     -> db.delete "cats", name: "rump", dad: "duck"
     [[DELETE FROM "cats" WHERE "dad" = 'duck' AND "name" = 'rump']]
     [[DELETE FROM "cats" WHERE "name" = 'rump' AND "dad" = 'duck']]

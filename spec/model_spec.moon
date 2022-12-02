@@ -47,6 +47,26 @@ describe "lapis.db.model", ->
     -- doesn't try to interpolate with no params
     Things\select "where color = '?'"
 
+
+    assert_queries {
+      'SELECT * from "things" '
+      'SELECT * from "things" where id = 1234'
+      'SELECT hello from "things" '
+      'SELECT hello, world from "things" where id = 1234'
+      [[SELECT * from "things" where color = '?']]
+    }
+
+  it "selects with db.clause", ->
+    class Things extends Model
+
+    Things\select db.clause {
+      id: 999
+    }
+
+    Things\select db.clause({
+      id: 999
+    }), fields: "one, two"
+
     Things\select db.clause {
       id: 1289
     }
@@ -58,14 +78,33 @@ describe "lapis.db.model", ->
     )
 
     assert_queries {
-      'SELECT * from "things" '
-      'SELECT * from "things" where id = 1234'
-      'SELECT hello from "things" '
-      'SELECT hello, world from "things" where id = 1234'
-      [[SELECT * from "things" where color = '?']]
+      [[SELECT * from "things" WHERE "id" = 999]]
+      [[SELECT one, two from "things" WHERE "id" = 999]]
       [[SELECT * from "things" WHERE "id" = 1289]]
       [[SELECT * from "things" inner join dogs on "things"."id" = thing_id where "dogs"."height" = 10]]
     }
+
+  it "should count", ->
+    mock_query "COUNT%(%*%)", {{ c: 127 }}
+
+    class Things extends Model
+
+    -- meh, this can't do things like inner join, it should have been designed to work like select where you must write "where" yourself
+    Things\count!
+    Things\count "not deleted"
+    Things\count "views > ?", 100
+
+    Things\count db.clause {
+      status: "promoted"
+    }
+
+    assert_queries {
+      [[SELECT COUNT(*) as c from "things"]]
+      [[SELECT COUNT(*) as c from "things" WHERE not deleted]]
+      [[SELECT COUNT(*) as c from "things" WHERE views > 100]]
+      [[SELECT COUNT(*) as c from "things" WHERE "status" = 'promoted']]
+    }
+
 
   describe "find", ->
     it "basic", ->
@@ -432,8 +471,8 @@ describe "lapis.db.model", ->
     thing2\update {
       b: 4
       actor: "good"
-    }, where: {
-      [db.raw "true"]: db.raw "update_count < 100"
+    }, where: db.clause {
+      "update_count < 100"
       update_id: db.NULL
     }
 
@@ -477,24 +516,27 @@ describe "lapis.db.model", ->
         }, {
           where: "oopsie"
         }
-      "Model.update: where condition must be a table"
+      "Model.update: where condition must be a table or db.clause"
     )
 
     assert_queries {
-      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "color" = 'blue' AND "id" = 12]]
-      [[UPDATE "timed_things" SET "actor" = 'good', "b" = 4, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3 AND "update_id" IS NULL AND true = update_count < 100]]
-      [[UPDATE "things" SET "count" = count + 1 WHERE "count" = 0 AND "id" = 12 RETURNING "count"]]
-      [[UPDATE "timed_things" SET "color" = 'green' WHERE "a" = 2 AND "age" = '10' AND "b" IS NULL]]
+      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE ("id" = 12) AND ("color" = 'blue')]]
+      [[UPDATE "timed_things" SET "actor" = 'good', "b" = 4, "updated_at" = '2013-08-13 06:56:40' WHERE ("a" = 2 AND "b" = 3) AND ((update_count < 100) AND "update_id" IS NULL)]]
+      [[UPDATE "things" SET "count" = count + 1 WHERE ("id" = 12) AND ("count" = 0) RETURNING "count"]]
+      [[UPDATE "timed_things" SET "color" = 'green' WHERE ("a" = 2 AND "b" IS NULL) AND ("age" = '10')]]
     }
 
   it "deletes model", ->
+    mock_query [["id" = 2]], { affected_rows: 1 }
+
+
     class Things extends Model
 
     thing = Things\load { id: 2 }
-    thing\delete!
+    assert.same true, (thing\delete!)
 
     thing = Things\load { }
-    thing\delete!
+    assert.same false, (thing\delete!)
 
     class Things2 extends Model
       @primary_key: {"key1", "key2"}
@@ -502,10 +544,19 @@ describe "lapis.db.model", ->
     thing = Things2\load { key1: "blah blag", key2: 4821 }
     thing\delete!
 
+    thing\delete "one", "two"
+    thing\delete db.clause(status: "spam")
+
+    thing.key2 = nil
+    thing\delete db.clause(status: "spam"), "cool"
+
     assert_queries {
       [[DELETE FROM "things" WHERE "id" = 2]]
       [[DELETE FROM "things" WHERE "id" IS NULL]]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
+      [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821 RETURNING "one", "two"]]
+      [[DELETE FROM "things" WHERE ("key1" = 'blah blag' AND "key2" = 4821) AND ("status" = 'spam')]]
+      [[DELETE FROM "things" WHERE ("key1" = 'blah blag' AND "key2" IS NULL) AND ("status" = 'spam') RETURNING "cool"]]
     }
 
   it "should check unique constraint", ->
@@ -587,6 +638,19 @@ describe "lapis.db.model", ->
 
       assert_queries {
         [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
+      }
+
+    it "with db.clause", ->
+      ThingItems\include_in things, "thing_id", where: db.clause {
+        {"counter > ?", 10}
+        db.clause {
+          "alpha"
+          beta: "dog"
+        }, operator: "OR"
+      }
+
+      assert_queries {
+        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) and (counter > 10) AND ((alpha) OR "beta" = 'dog')]]
       }
 
     it "with fields", ->

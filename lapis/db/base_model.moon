@@ -189,7 +189,13 @@ class BaseModel
     query = "COUNT(*) as c from #{tbl_name}"
 
     if clause
-      query ..= " where " .. @db.interpolate_query clause, ...
+      switch type clause
+        when "string"
+          query ..= " WHERE " .. @db.interpolate_query clause, ...
+        when "table"
+          query ..= " WHERE #{@db.encode_clause clause}"
+        else
+          error "Model.count: Got unknown type for filter clause (#{type clause})"
 
     unpack(@db.select query).c
 
@@ -488,7 +494,19 @@ class BaseModel
   url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"
 
   delete: (...) =>
-    res = @@db.delete @@table_name!, @_primary_cond!, ...
+    cond = @_primary_cond!
+
+    rest_idx = 1
+
+    if @@db.is_clause (...)
+      rest_idx = 2
+      cond = @@db.clause {
+        @@db.encode_clause cond
+        (...)
+      }
+
+    res = @@db.delete @@table_name!, cond, select rest_idx, ...
+
     (res.affected_rows or 0) > 0, res
 
   -- thing\update "col1", "col2", "col3"
