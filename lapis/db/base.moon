@@ -133,6 +133,8 @@ build_helpers = (escape_literal, escape_identifier) ->
       if opts and opts.operator != nil
         operator = opts.operator
 
+      isolate_precedence = operator and operator != ","
+
       idx = 0
       for k,v in pairs obj
         k_type = type k
@@ -140,7 +142,10 @@ build_helpers = (escape_literal, escape_identifier) ->
 
         if idx > 1
           if operator
-            append_all buffer, " ", operator, " "
+            if operator == ","
+              append_all buffer, operator, " "
+            else
+              append_all buffer, " ", operator, " "
           else
             append_all buffer, " "
 
@@ -163,7 +168,7 @@ build_helpers = (escape_literal, escape_identifier) ->
           when "number" -- array elements
             continue unless v -- skip over false and nil numeric items
 
-            if operator
+            if isolate_precedence
               append_all buffer, "("
 
             switch type v
@@ -179,7 +184,7 @@ build_helpers = (escape_literal, escape_identifier) ->
               else
                 error "db.encode_clause: received an unknown value at clause index #{v}"
 
-            if operator
+            if isolate_precedence
               append_all buffer, ")"
           else
             error "db.encode_clause: invalid key type in clause"

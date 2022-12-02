@@ -160,6 +160,16 @@ tests = {
   }
 
   {
+    ->
+      db.encode_clause db.clause {
+        "one"
+        "two"
+        "three"
+      }, operator: ","
+    "one, two, three"
+  }
+
+  {
     -> db.interpolate_query "update items set x = ?", db.raw"y + 1"
     "update items set x = y + 1"
   }

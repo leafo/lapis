@@ -237,6 +237,7 @@ build_helpers = function(escape_literal, escape_identifier)
       if opts and opts.operator ~= nil then
         operator = opts.operator
       end
+      local isolate_precedence = operator and operator ~= ","
       local idx = 0
       for k, v in pairs(obj) do
         local _continue_0 = false
@@ -245,7 +246,11 @@ build_helpers = function(escape_literal, escape_identifier)
           idx = idx + 1
           if idx > 1 then
             if operator then
-              append_all(buffer, " ", operator, " ")
+              if operator == "," then
+                append_all(buffer, operator, " ")
+              else
+                append_all(buffer, " ", operator, " ")
+              end
             else
               append_all(buffer, " ")
             end
@@ -273,7 +278,7 @@ build_helpers = function(escape_literal, escape_identifier)
               _continue_0 = true
               break
             end
-            if operator then
+            if isolate_precedence then
               append_all(buffer, "(")
             end
             local _exp_1 = type(v)
@@ -292,7 +297,7 @@ build_helpers = function(escape_literal, escape_identifier)
             else
               error("db.encode_clause: received an unknown value at clause index " .. tostring(v))
             end
-            if operator then
+            if isolate_precedence then
               append_all(buffer, ")")
             end
           else
