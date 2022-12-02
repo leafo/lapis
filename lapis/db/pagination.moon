@@ -42,6 +42,9 @@ class Paginator
     @db = @model.__class.db
     param_count = select "#", ...
 
+    if @db.is_clause clause
+      clause = @db.interpolate_query "WHERE ?", clause
+
     opts = if param_count > 0
       last = select param_count, ...
       if type(last) == "table" and not @db.is_encodable last

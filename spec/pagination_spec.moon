@@ -16,10 +16,14 @@ describe "lapis.db.pagination", ->
       old expected, get_queries!
 
   describe "offset paginator", ->
-    local Things, OffsetPaginator
+    local Things, Thongs, OffsetPaginator
 
     before_each ->
       class Things extends Model
+
+      class Thongs extends Model
+        @primary_key: {"alpha", "beta"}
+
       import OffsetPaginator from require "lapis.db.pagination"
 
     it "gets pages", ->
@@ -68,6 +72,25 @@ describe "lapis.db.pagination", ->
         'SELECT 1 FROM "things" where group_id = 123 limit 1'
         'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
         'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
+      }
+
+    it "paginates with db.clause", ->
+      things = OffsetPaginator Things, db.clause {
+        group_id: 23
+        "not deleted"
+      }
+
+      thongs = OffsetPaginator Thongs, db.clause({
+        group_id: 23
+        "not deleted"
+      }), per_page: 77
+
+      things\get_page 1
+      thongs\get_page 4
+
+      assert_queries {
+        [[SELECT * from "things" WHERE (not deleted) AND "group_id" = 23 LIMIT 10 OFFSET 0]]
+        [[SELECT * from "thongs" WHERE (not deleted) AND "group_id" = 23 LIMIT 77 OFFSET 231]]
       }
 
     it "ignores excess parameter", ->
@@ -180,6 +203,20 @@ describe "lapis.db.pagination", ->
       assert_queries {
         'SELECT * from "things" where color = blue order by "things"."id" ASC limit 10'
         'SELECT * from "things" where "things"."id" > 123 and (color = blue) order by "things"."id" ASC limit 10'
+      }
+
+    it "filters with db.clause", ->
+      pager = OrderedPaginator Things, "id", db.clause {
+        color: "green"
+      }
+
+      res, np = pager\get_page!
+
+      res, np = pager\get_page 123
+
+      assert_queries {
+        [[SELECT * from "things" where "color" = 'green' order by "things"."id" ASC limit 10]]
+        [[SELECT * from "things" where "things"."id" > 123 and ("color" = 'green') order by "things"."id" ASC limit 10]]
       }
 
     it "gets pages for multiple keys", ->

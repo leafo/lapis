@@ -102,6 +102,9 @@ do
       self.model = model
       self.db = self.model.__class.db
       local param_count = select("#", ...)
+      if self.db.is_clause(clause) then
+        clause = self.db.interpolate_query("WHERE ?", clause)
+      end
       local opts
       if param_count > 0 then
         local last = select(param_count, ...)
