@@ -270,8 +270,8 @@ has_one = (name, opts) =>
       }
 
     if where = opts.where
-      for k,v in pairs where
-        clause[k] = v
+      table.insert clause, @@db.encode_clause where
+      clause = @@db.clause clause
 
     with obj = model\find clause
       @[name] = obj
@@ -325,13 +325,34 @@ has_many = (name, opts) =>
         [foreign_key]: @[opts.local_key or @@primary_keys!]
       }
 
-    if where = opts.where
-      for k,v in pairs where
-        clause[k] = v
+    wrap_clause = false
 
-    if additional_opts and additional_opts.where
-      for k,v in pairs additional_opts.where
-        clause[k] = v
+
+    -- NOTE: this is written kinda funky because we introduced legacy behavior
+    -- that would allow where and additional where to overwrite fields in the
+    -- clause.  It's unclear if this is a good or bad thing. With the
+    -- introduction of db.clause, that is no longer possible. In the future we
+    -- may want to throw an error on overwrite instead of silently changing
+    -- behavior
+
+    if where = opts.where
+      if @@db.is_clause where
+        wrap_clause = true
+        table.insert clause, where
+      else
+        for k,v in pairs where
+          clause[k] = v
+
+    if additional_where = additional_opts and additional_opts.where
+      if @@db.is_clause additional_where
+        wrap_clause = true
+        table.insert clause, additional_where
+      else
+        for k,v in pairs additional_where
+          clause[k] = v
+
+    if wrap_clause
+      clause = @@db.clause clause
 
     clause = "where #{@@db.encode_clause clause}"
 

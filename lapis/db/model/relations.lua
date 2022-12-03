@@ -385,9 +385,8 @@ has_one = function(self, name, opts)
     do
       local where = opts.where
       if where then
-        for k, v in pairs(where) do
-          clause[k] = v
-        end
+        table.insert(clause, self.__class.db.encode_clause(where))
+        clause = self.__class.db.clause(clause)
       end
     end
     do
@@ -446,18 +445,35 @@ has_many = function(self, name, opts)
         [foreign_key] = self[opts.local_key or self.__class:primary_keys()]
       }
     end
+    local wrap_clause = false
     do
       local where = opts.where
       if where then
-        for k, v in pairs(where) do
-          clause[k] = v
+        if self.__class.db.is_clause(where) then
+          wrap_clause = true
+          table.insert(clause, where)
+        else
+          for k, v in pairs(where) do
+            clause[k] = v
+          end
         end
       end
     end
-    if additional_opts and additional_opts.where then
-      for k, v in pairs(additional_opts.where) do
-        clause[k] = v
+    do
+      local additional_where = additional_opts and additional_opts.where
+      if additional_where then
+        if self.__class.db.is_clause(additional_where) then
+          wrap_clause = true
+          table.insert(clause, additional_where)
+        else
+          for k, v in pairs(additional_where) do
+            clause[k] = v
+          end
+        end
       end
+    end
+    if wrap_clause then
+      clause = self.__class.db.clause(clause)
     end
     clause = "where " .. tostring(self.__class.db.encode_clause(clause))
     local order = opts.order

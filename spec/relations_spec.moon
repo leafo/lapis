@@ -324,8 +324,8 @@ describe "lapis.db.model.relations", ->
       [[SELECT * from "things" where "thing_email" = 'leafo@leafo' limit 1]]
     }
 
-  it "should make has_one getter with where clause", ->
-    mock_query "SELECT", { { id: 101 } }
+  it "makes has_one getter with where clause", ->
+    mock_query "SELECT", { { id: 101, owner_id: 123 } }
 
     models.UserData = class extends Model
 
@@ -338,12 +338,35 @@ describe "lapis.db.model.relations", ->
     user.id = 123
     assert user\get_data!
 
+    Users\preload_relations { user }, "data"
+
     assert_queries {
-      [[SELECT * from "user_data" where "owner_id" = 123 AND "state" = 'good' limit 1]]
+      [[SELECT * from "user_data" where ("state" = 'good') AND "owner_id" = 123 limit 1]]
+      [[SELECT * from "user_data" where "owner_id" in (123) and "state" = 'good']]
+    }
+
+  it "makes has_one getter with where db.clause", ->
+    mock_query "SELECT", { { id: 101, owner_id: 123 } }
+
+    models.UserData = class extends Model
+
+    models.Users = class Users extends Model
+      @relations: {
+        {"data", has_one: "UserData", key: "owner_id", where: db.clause { owner_id: "oops", "deleted"} }
+      }
+
+    user = Users!
+    user.id = 123
+    assert user\get_data!
+
+    Users\preload_relations { user }, "data"
+
+    assert_queries {
+      [[SELECT * from "user_data" where ((deleted) AND "owner_id" = 'oops') AND "owner_id" = 123 limit 1]]
+      [[SELECT * from "user_data" where "owner_id" in (123) and (deleted) AND "owner_id" = 'oops']]
     }
 
   it "makes has_one getter with composite key with custom local names", ->
-
     mock_query "SELECT", { { id: 101 } }
 
     models.UserPageData = class extends Model
@@ -366,8 +389,9 @@ describe "lapis.db.model.relations", ->
       'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
     }
 
-  it "should make has_many paginated getter", ->
-    mock_query "SELECT", { { id: 101 } }
+  it "make has_many paginated getter", ->
+    mock_query [[COUNT]], { { c: 10} }
+    mock_query [["posts"]], { { id: 99, user_id: 1234 } }
 
     models.Posts = class extends Model
     models.Users = class extends Model
@@ -407,6 +431,14 @@ describe "lapis.db.model.relations", ->
       pager\total_items!
       pager\get_page 1
       pager\get_page 2
+
+    -- preloading relation with specified where: it overwrites the where clause is this the desired behavior?
+    assert_queries {
+      [[SELECT * from "posts" where "user_id" in (1234) and "limit" = 'suspend']]
+    }, ->
+      pager = models.Users\preload_relation {user}, "more_posts", where: {
+        limit: "suspend"
+      }
 
     -- pager with customized per_page
     assert_queries {
@@ -457,7 +489,7 @@ describe "lapis.db.model.relations", ->
       pager2\get_page!
 
 
-  it "should make has_many getter", ->
+  it "make has_many getter", ->
     models.Posts = class extends Model
     models.Users = class extends Model
       @relations: {
@@ -466,22 +498,192 @@ describe "lapis.db.model.relations", ->
         {"fresh_posts", has_many: "Posts", order: "id desc"}
       }
 
-    user = models.Users!
-    user.id = 1234
-
-    user\get_posts!
-    user\get_posts!
-
-    user\get_more_posts!
-    user\get_fresh_posts!
 
     assert_queries {
-      'SELECT * from "posts" where "user_id" = 1234'
+      [[SELECT * from "posts" where "user_id" = 1234]]
       [[SELECT * from "posts" where "color" = 'blue' AND "user_id" = 1234]]
-      'SELECT * from "posts" where "user_id" = 1234 order by id desc'
-    }
+      [[SELECT * from "posts" where "user_id" = 1234 order by id desc]]
+    }, ->
+      user = models.Users\load id: 1234
 
-  it "should make has_many getter with composite key", ->
+      user\get_posts!
+      user\get_posts!
+
+      user\get_more_posts!
+      user\get_fresh_posts!
+
+  it "makes has many with db.clause", ->
+    models.Posts = class extends Model
+    models.Users = class extends Model
+      @relations: {
+        {"posts", has_many: "Posts"}
+
+        {"blue_posts", has_many: "Posts", where: db.clause {color: "blue"} }
+        {"purple_posts", has_many: "Posts", where: { color: "purple" } }
+      }
+
+    assert_queries {
+      [[SELECT * from "posts" where ("color" = 'blue') AND "user_id" = 1]]
+      [[SELECT * from "posts" where ("color" = 'blue') AND "user_id" = 1 LIMIT 10 OFFSET 10]]
+      [[SELECT * from "posts" where "user_id" in (1) and "color" = 'blue']]
+    }, ->
+      user = models.Users\load id: 1
+      user\get_blue_posts!
+      user\get_blue_posts_paginated!\get_page 2
+
+      models.Users\preload_relations { user }, "blue_posts"
+
+    -- preload with custom where overwrites the default where. This is undocumented behavior, and may not actually be desired
+    assert_queries {
+      [[SELECT a,b from "posts" where "user_id" in (1) and "color" = 'green']]
+      [[SELECT a,b from "posts" where "user_id" in (1) and (random() > 0.5)]]
+    }, ->
+      user = models.Users\load id: 1
+      models.Users\preload_relation { user }, "blue_posts", {
+        fields: "a,b"
+        where: {
+          color: "green"
+        }
+      }
+
+      models.Users\preload_relation { user }, "blue_posts", {
+        fields: "a,b"
+        where: db.clause { "random() > 0.5" }
+      }
+
+
+    -- where merging for when relation has no where
+    assert_queries {
+      [[SELECT * from "posts" where ("color" = 'green') AND "user_id" = 1 LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "color" = 'green' AND "user_id" = 1 LIMIT 10 OFFSET 0]]
+    }, ->
+      user = models.Users\load id: 1
+      user\get_posts_paginated({
+        where: db.clause {
+          color: "green"
+        }
+      })\get_page!
+
+      -- produces slightly different syntax due to how the clause is merged
+      user\get_posts_paginated({
+        where: {
+          color: "green"
+        }
+      })\get_page!
+
+
+    -- where merging for when relation clause is db.clause
+    assert_queries {
+      [[SELECT * from "posts" where ("color" = 'blue') AND ("color" = 'green') AND "user_id" = 1 LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where ("color" = 'blue') AND "color" = 'green' AND "user_id" = 1 LIMIT 10 OFFSET 0]]
+    }, ->
+      user = models.Users\load id: 1
+      user\get_blue_posts_paginated({
+        where: db.clause {
+          color: "green"
+        }
+      })\get_page!
+
+      -- produces slightly different syntax due to how the clause is merged
+      user\get_blue_posts_paginated({
+        where: {
+          color: "green"
+        }
+      })\get_page!
+
+    -- where merging for when relation clause is plain table
+    assert_queries {
+      [[SELECT * from "posts" where ("color" = 'green') AND "color" = 'purple' AND "user_id" = 1 LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "color" = 'green' AND "user_id" = 1 LIMIT 10 OFFSET 0]]
+    }, ->
+      user = models.Users\load id: 1
+      user\get_purple_posts_paginated({
+        where: db.clause {
+          color: "green"
+        }
+      })\get_page!
+
+      -- produces slightly different syntax due to how the clause is merged
+      user\get_purple_posts_paginated({
+        where: {
+          color: "green"
+        }
+      })\get_page!
+
+  -- This test is for cases for when added where clauses overwrites a field on
+  -- the joining clause. This is undefined/undocumented behavior, and this test
+  -- serves track if the generated queries change.
+  it "overwriting relation conditions", ->
+    models.Posts = class extends Model
+    models.Users = class extends Model
+      @relations: {
+        {"theta_post", has_one: "Posts", where: db.clause { user_id: "theta" } }
+        {"mu_post", has_one: "Posts", where: { user_id: "mu" } }
+
+
+        {"alpha_posts", has_many: "Posts", where: db.clause { user_id: "alpha" } }
+        {"beta_posts", has_many: "Posts", where: { user_id: "beta" } }
+      }
+
+    assert_queries {
+      [[SELECT * from "posts" where ("user_id" = 'theta') AND "user_id" = 1 limit 1]]
+      [[SELECT * from "posts" where ("user_id" = 'mu') AND "user_id" = 2 limit 1]]
+
+      [[SELECT * from "posts" where "user_id" in (3) and "user_id" = 'theta']]
+      [[SELECT * from "posts" where "user_id" in (3) and "user_id" = 'mu']]
+
+      [[SELECT * from "posts" where "user_id" in (4) and "user_id" = 'alpha']]
+      [[SELECT * from "posts" where "user_id" in (5) and "user_id" = 'beta']]
+    }, ->
+      models.Users\load(id: 1)\get_theta_post!
+      models.Users\load(id: 2)\get_mu_post!
+
+      models.Users\preload_relations {models.Users\load(id: 3)}, "theta_post", "mu_post"
+
+
+      models.Users\preload_relation {models.Users\load(id: 4)}, "theta_post", {
+        where: { user_id: "alpha" }
+      }
+
+      models.Users\preload_relation {models.Users\load(id: 5)}, "mu_post", {
+        where: { user_id: "beta" }
+      }
+
+    assert_queries {
+      [[SELECT * from "posts" where ("user_id" = 'alpha') AND "user_id" = 1]]
+      [[SELECT * from "posts" where "user_id" = 'beta']]
+      [[SELECT * from "posts" where ("user_id" = 'alpha') AND "user_id" = 'zeta' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 'omega' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where ("user_id" = 'alpha') AND ("user_id" = 'delta') AND "user_id" = 5 LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where ("user_id" = 'epsilon') AND "user_id" = 'beta' LIMIT 10 OFFSET 0]]
+
+      [[SELECT * from "posts" where "user_id" in (7) and "user_id" = 'alpha']]
+      [[SELECT * from "posts" where "user_id" in (7) and "user_id" = 'beta']]
+
+      [[SELECT * from "posts" where "user_id" in (8) and "user_id" = 'mu']]
+      [[SELECT * from "posts" where "user_id" in (9) and "user_id" = 'theta']]
+    }, ->
+      models.Users\load(id: 1)\get_alpha_posts!
+      models.Users\load(id: 2)\get_beta_posts!
+
+      models.Users\load(id: 3)\get_alpha_posts_paginated(where: {user_id: "zeta"})\get_page!
+      models.Users\load(id: 4)\get_beta_posts_paginated(where: {user_id: "omega"})\get_page!
+
+      models.Users\load(id: 5)\get_alpha_posts_paginated(where: db.clause {user_id: "delta"})\get_page!
+      models.Users\load(id: 6)\get_beta_posts_paginated(where: db.clause  {user_id: "epsilon"})\get_page!
+
+      models.Users\preload_relations {models.Users\load(id: 7)}, "alpha_posts", "beta_posts"
+
+
+      models.Users\preload_relation {models.Users\load(id: 8)}, "alpha_posts", {
+        where: { user_id: "mu" }
+      }
+
+      models.Users\preload_relation {models.Users\load(id: 9)}, "beta_posts", {
+        where: { user_id: "theta" }
+      }
+
+  it "makes has_many getter with composite key", ->
     mock_query "SELECT", {
       { id: 101, user_id: 99, page_id: 234 }
       { id: 102, user_id: 99, page_id: 234 }
