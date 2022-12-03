@@ -306,16 +306,16 @@ has_many = (name, opts) =>
   get_method = opts.as or "get_#{name}"
   get_paginated_method = "#{get_method}_paginated"
 
-  build_query = (additional_opts) =>
+  build_query = (calling_opts) =>
     foreign_key = opts.key or "#{@@singular_name!}_id"
 
-    clause = if type(foreign_key) == "table"
+    join_clause = if type(foreign_key) == "table"
       out = {}
-      for k,v in pairs foreign_key
+      for k, v in pairs foreign_key
         key, local_key = if type(k) == "number"
           v, v
         else
-          k,v
+          k, v
 
         out[key] = @[local_key] or @@db.NULL
 
@@ -325,40 +325,40 @@ has_many = (name, opts) =>
         [foreign_key]: @[opts.local_key or @@primary_keys!]
       }
 
-    wrap_clause = false
-
+    clause = "where #{@@db.encode_clause join_clause}"
 
     -- NOTE: this is written kinda funky because we introduced legacy behavior
-    -- that would allow where and additional where to overwrite fields in the
-    -- clause.  It's unclear if this is a good or bad thing. With the
-    -- introduction of db.clause, that is no longer possible. In the future we
-    -- may want to throw an error on overwrite instead of silently changing
-    -- behavior
+    -- that would allow where: to overwrite fields It's unclear if this is a
+    -- good or bad thing. With the introduction of db.clause, that is no longer
+    -- possible. In the future we may want to throw an error on overwrite
+    -- instead of silently changing behavior
+
+    local additional_clause
 
     if where = opts.where
+      additional_clause = {} unless additional_clause
+
       if @@db.is_clause where
-        wrap_clause = true
-        table.insert clause, where
+        table.insert additional_clause, where
       else
         for k,v in pairs where
-          clause[k] = v
+          additional_clause[k] = v
 
-    if additional_where = additional_opts and additional_opts.where
-      if @@db.is_clause additional_where
-        wrap_clause = true
-        table.insert clause, additional_where
+    if more_where = calling_opts and calling_opts.where
+      additional_clause = {} unless additional_clause
+
+      if @@db.is_clause more_where
+        table.insert additional_clause, more_where
       else
-        for k,v in pairs additional_where
-          clause[k] = v
+        for k,v in pairs more_where
+          additional_clause[k] = v
 
-    if wrap_clause
-      clause = @@db.clause clause
-
-    clause = "where #{@@db.encode_clause clause}"
+    if additional_clause and next additional_clause
+      clause ..= " AND #{@@db.encode_clause @@db.clause additional_clause}"
 
     order = opts.order
-    if additional_opts and additional_opts.order != nil
-      order = additional_opts.order
+    if calling_opts and calling_opts.order != nil
+      order = calling_opts.order
 
     if order
       clause ..= " order by #{order}"
@@ -416,7 +416,7 @@ has_many = (name, opts) =>
     preload_opts.local_key = local_key
 
     preload_opts.order or= opts.order
-    preload_opts.where or= opts.where
+    preload_opts.where or= opts.where -- NOTE: this allows preload_opts to replace relation's where
 
     model\include_in objects, foreign_key, preload_opts
 

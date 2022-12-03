@@ -425,9 +425,9 @@ has_many = function(self, name, opts)
   local get_method = opts.as or "get_" .. tostring(name)
   local get_paginated_method = tostring(get_method) .. "_paginated"
   local build_query
-  build_query = function(self, additional_opts)
+  build_query = function(self, calling_opts)
     local foreign_key = opts.key or tostring(self.__class:singular_name()) .. "_id"
-    local clause
+    local join_clause
     if type(foreign_key) == "table" then
       local out = { }
       for k, v in pairs(foreign_key) do
@@ -439,46 +439,50 @@ has_many = function(self, name, opts)
         end
         out[key] = self[local_key] or self.__class.db.NULL
       end
-      clause = out
+      join_clause = out
     else
-      clause = {
+      join_clause = {
         [foreign_key] = self[opts.local_key or self.__class:primary_keys()]
       }
     end
-    local wrap_clause = false
+    local clause = "where " .. tostring(self.__class.db.encode_clause(join_clause))
+    local additional_clause
     do
       local where = opts.where
       if where then
+        if not (additional_clause) then
+          additional_clause = { }
+        end
         if self.__class.db.is_clause(where) then
-          wrap_clause = true
-          table.insert(clause, where)
+          table.insert(additional_clause, where)
         else
           for k, v in pairs(where) do
-            clause[k] = v
+            additional_clause[k] = v
           end
         end
       end
     end
     do
-      local additional_where = additional_opts and additional_opts.where
-      if additional_where then
-        if self.__class.db.is_clause(additional_where) then
-          wrap_clause = true
-          table.insert(clause, additional_where)
+      local more_where = calling_opts and calling_opts.where
+      if more_where then
+        if not (additional_clause) then
+          additional_clause = { }
+        end
+        if self.__class.db.is_clause(more_where) then
+          table.insert(additional_clause, more_where)
         else
-          for k, v in pairs(additional_where) do
-            clause[k] = v
+          for k, v in pairs(more_where) do
+            additional_clause[k] = v
           end
         end
       end
     end
-    if wrap_clause then
-      clause = self.__class.db.clause(clause)
+    if additional_clause and next(additional_clause) then
+      clause = clause .. " AND " .. tostring(self.__class.db.encode_clause(self.__class.db.clause(additional_clause)))
     end
-    clause = "where " .. tostring(self.__class.db.encode_clause(clause))
     local order = opts.order
-    if additional_opts and additional_opts.order ~= nil then
-      order = additional_opts.order
+    if calling_opts and calling_opts.order ~= nil then
+      order = calling_opts.order
     end
     if order then
       clause = clause .. " order by " .. tostring(order)

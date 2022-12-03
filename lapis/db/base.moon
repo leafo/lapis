@@ -11,7 +11,7 @@ is_list = (val) -> getmetatable(val) == DBList.__base
 
 class DBClause
 clause = (clause, opts) ->
-  assert not getmetatable(clause), "db.clause: attempted to create clause from object that already has metatable"
+  assert not getmetatable(clause), "db.clause: attempted to create clause from object that has metatable"
   setmetatable {clause, opts}, DBClause.__base
 is_clause = (val) -> getmetatable(val) == DBClause.__base
 

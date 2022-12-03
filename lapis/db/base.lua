@@ -85,7 +85,7 @@ do
 end
 local clause
 clause = function(clause, opts)
-  assert(not getmetatable(clause), "db.clause: attempted to create clause from object that already has metatable")
+  assert(not getmetatable(clause), "db.clause: attempted to create clause from object that has metatable")
   return setmetatable({
     clause,
     opts
