@@ -330,6 +330,8 @@ class BaseModel
 
             else
               t_key = t[dest_key]
+              unless t_key
+                error "Model.include_in: query returnd a row that is missing the joining field (#{tbl_name}: #{dest_key})"
 
               if records[t_key] == nil
                 records[t_key] = {}

@@ -618,6 +618,9 @@ do
                 end
               else
                 local t_key = t[dest_key]
+                if not (t_key) then
+                  error("Model.include_in: query returnd a row that is missing the joining field (" .. tostring(tbl_name) .. ": " .. tostring(dest_key) .. ")")
+                end
                 if records[t_key] == nil then
                   records[t_key] = { }
                 end
