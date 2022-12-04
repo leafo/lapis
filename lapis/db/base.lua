@@ -282,27 +282,34 @@ build_helpers = function(escape_literal, escape_identifier)
               _continue_0 = true
               break
             end
-            if isolate_precedence then
-              append_all(buffer, "(")
-            end
-            local _exp_1 = type(v)
-            if "table" == _exp_1 then
-              if is_clause(v) then
-                encode_clause(v, buffer)
-              else
+            if is_clause(v) then
+              local matching_operator = operator == v:get_operator()
+              if isolate_precedence and not matching_operator then
+                append_all(buffer, "(")
+              end
+              encode_clause(v, buffer)
+              if isolate_precedence and not matching_operator then
+                append_all(buffer, ")")
+              end
+            else
+              if isolate_precedence then
+                append_all(buffer, "(")
+              end
+              local _exp_1 = type(v)
+              if "table" == _exp_1 then
                 if type(v[1]) == "string" then
                   append_all(buffer, interpolate_query(unpack(v)))
                 else
                   error("db.encode_clause: received an unknown table at clause index " .. tostring(v))
                 end
+              elseif "string" == _exp_1 then
+                append_all(buffer, v)
+              else
+                error("db.encode_clause: received an unknown value at clause index " .. tostring(v))
               end
-            elseif "string" == _exp_1 then
-              append_all(buffer, v)
-            else
-              error("db.encode_clause: received an unknown value at clause index " .. tostring(v))
-            end
-            if isolate_precedence then
-              append_all(buffer, ")")
+              if isolate_precedence then
+                append_all(buffer, ")")
+              end
             end
           else
             error("db.encode_clause: invalid key type in clause")

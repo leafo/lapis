@@ -21,6 +21,7 @@ class DBClause
 clause = (clause, opts) ->
   assert not getmetatable(clause), "db.clause: attempted to create clause from object that has metatable"
   setmetatable {clause, opts}, DBClause.__base
+
 is_clause = (val) -> getmetatable(val) == DBClause.__base
 
 unpack = unpack or table.unpack
@@ -171,24 +172,33 @@ build_helpers = (escape_literal, escape_identifier) ->
           when "number" -- array elements
             continue unless v -- skip over false and nil numeric items
 
-            if isolate_precedence
-              append_all buffer, "("
+            if is_clause v
+              matching_operator = operator == v\get_operator!
 
-            switch type v
-              when "table"
-                if is_clause v
-                  encode_clause v, buffer
-                else if type(v[1]) == "string"
-                  append_all buffer, interpolate_query unpack v
+              if isolate_precedence and not matching_operator
+                append_all buffer, "("
+
+              encode_clause v, buffer
+
+              if isolate_precedence and not matching_operator
+                append_all buffer, ")"
+            else
+              if isolate_precedence
+                append_all buffer, "("
+
+              switch type v
+                when "table"
+                  if type(v[1]) == "string"
+                    append_all buffer, interpolate_query unpack v
+                  else
+                    error "db.encode_clause: received an unknown table at clause index #{v}"
+                when "string" -- raw query fragment
+                  append_all buffer, v
                 else
-                  error "db.encode_clause: received an unknown table at clause index #{v}"
-              when "string" -- raw query fragment
-                append_all buffer, v
-              else
-                error "db.encode_clause: received an unknown value at clause index #{v}"
+                  error "db.encode_clause: received an unknown value at clause index #{v}"
 
-            if isolate_precedence
-              append_all buffer, ")"
+              if isolate_precedence
+                append_all buffer, ")"
           else
             error "db.encode_clause: invalid key type in clause"
 
