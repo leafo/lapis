@@ -10,6 +10,14 @@ list = (items) -> setmetatable {items}, DBList.__base
 is_list = (val) -> getmetatable(val) == DBList.__base
 
 class DBClause
+  get_operator: =>
+    opts = @[2]
+
+    if opts and opts.operator != nil
+      return opts.operator
+
+    "AND"
+
 clause = (clause, opts) ->
   assert not getmetatable(clause), "db.clause: attempted to create clause from object that has metatable"
   setmetatable {clause, opts}, DBClause.__base
@@ -123,15 +131,10 @@ build_helpers = (escape_literal, escape_identifier) ->
     if is_clause t
       {obj, opts} = t
 
-      default_operator = "AND"
-
       unless opts and opts.allow_empty
         assert next(obj) != nil, "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)"
 
-      operator = default_operator
-
-      if opts and opts.operator != nil
-        operator = opts.operator
+      operator = t\get_operator!
 
       isolate_precedence = operator and operator != ","
 

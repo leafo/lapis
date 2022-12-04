@@ -66,7 +66,15 @@ end
 local DBClause
 do
   local _class_0
-  local _base_0 = { }
+  local _base_0 = {
+    get_operator = function(self)
+      local opts = self[2]
+      if opts and opts.operator ~= nil then
+        return opts.operator
+      end
+      return "AND"
+    end
+  }
   _base_0.__index = _base_0
   _class_0 = setmetatable({
     __init = function() end,
@@ -229,14 +237,10 @@ build_helpers = function(escape_literal, escape_identifier)
     if is_clause(t) then
       local obj, opts
       obj, opts = t[1], t[2]
-      local default_operator = "AND"
       if not (opts and opts.allow_empty) then
         assert(next(obj) ~= nil, "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)")
       end
-      local operator = default_operator
-      if opts and opts.operator ~= nil then
-        operator = opts.operator
-      end
+      local operator = t:get_operator()
       local isolate_precedence = operator and operator ~= ","
       local idx = 0
       for k, v in pairs(obj) do
