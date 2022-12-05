@@ -409,6 +409,10 @@ local HELPER_KEY = setmetatable({ }, {
     return "::helper_key::"
   end
 })
+local is_mixins_class
+is_mixins_class = function(cls)
+  return rawget(cls, "_mixins_class") == true
+end
 local Widget
 do
   local _class_0
@@ -608,7 +612,7 @@ do
     if not (parent) then
       error("model does not have parent class")
     end
-    if rawget(parent, "_mixins_class") then
+    if is_mixins_class(parent) then
       return parent, false
     end
     local mixins_class
@@ -698,5 +702,6 @@ return {
   unescape = unescape,
   classnames = classnames,
   element = element,
+  is_mixins_class = is_mixins_class,
   CONTENT_FOR_PREFIX = CONTENT_FOR_PREFIX
 }

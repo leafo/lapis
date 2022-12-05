@@ -260,6 +260,9 @@ render_html = (fn) ->
 -- this is a unique identifier to store the helper chain on a widget
 HELPER_KEY = setmetatable {}, __tostring: -> "::helper_key::"
 
+is_mixins_class = (cls) ->
+  rawget(cls, "_mixins_class") == true
+
 -- ensures that all methods are called in the buffer's scope
 class Widget
   @__inherited: (cls) =>
@@ -275,7 +278,7 @@ class Widget
       error "model does not have parent class"
 
     -- if class has already been injected, return it
-    if rawget parent, "_mixins_class"
+    if is_mixins_class parent
       return parent, false
 
     mixins_class = class extends model.__parent
@@ -452,5 +455,5 @@ class Widget
     @_buffer.widget = old_widget
     return -- return nothing
 
-{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :classnames, :element, :CONTENT_FOR_PREFIX }
+{ :Widget, :Buffer, :html_writer, :render_html, :escape, :unescape, :classnames, :element, :is_mixins_class, :CONTENT_FOR_PREFIX }
 
