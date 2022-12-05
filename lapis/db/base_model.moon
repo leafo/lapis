@@ -503,7 +503,7 @@ class BaseModel
     if @@db.is_clause (...)
       rest_idx = 2
       cond = @@db.clause {
-        @@db.encode_clause cond
+        @@db.clause cond
         (...)
       }
 

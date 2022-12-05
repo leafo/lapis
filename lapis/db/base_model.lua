@@ -189,7 +189,7 @@ do
       if self.__class.db.is_clause((...)) then
         rest_idx = 2
         cond = self.__class.db.clause({
-          self.__class.db.encode_clause(cond),
+          self.__class.db.clause(cond),
           (...)
         })
       end

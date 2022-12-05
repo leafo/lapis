@@ -182,7 +182,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT * from "things" WHERE ("name" = 'thing') AND "id" IN (1, 2, 4)]]
+        [[SELECT * from "things" WHERE "name" = 'thing' AND "id" IN (1, 2, 4)]]
       }
 
     it "with complex options", ->
@@ -520,15 +520,14 @@ describe "lapis.db.model", ->
     )
 
     assert_queries {
-      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE ("id" = 12) AND ("color" = 'blue')]]
-      [[UPDATE "timed_things" SET "actor" = 'good', "b" = 4, "updated_at" = '2013-08-13 06:56:40' WHERE ("a" = 2 AND "b" = 3) AND ((update_count < 100) AND "update_id" IS NULL)]]
-      [[UPDATE "things" SET "count" = count + 1 WHERE ("id" = 12) AND ("count" = 0) RETURNING "count"]]
-      [[UPDATE "timed_things" SET "color" = 'green' WHERE ("a" = 2 AND "b" IS NULL) AND ("age" = '10')]]
+      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12 AND ("color" = 'blue')]]
+      [[UPDATE "timed_things" SET "actor" = 'good', "b" = 4, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3 AND (update_count < 100) AND "update_id" IS NULL]]
+      [[UPDATE "things" SET "count" = count + 1 WHERE "id" = 12 AND ("count" = 0) RETURNING "count"]]
+      [[UPDATE "timed_things" SET "color" = 'green' WHERE "a" = 2 AND "b" IS NULL AND ("age" = '10')]]
     }
 
   it "deletes model", ->
     mock_query [["id" = 2]], { affected_rows: 1 }
-
 
     class Things extends Model
 
@@ -555,8 +554,8 @@ describe "lapis.db.model", ->
       [[DELETE FROM "things" WHERE "id" IS NULL]]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821]]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821 RETURNING "one", "two"]]
-      [[DELETE FROM "things" WHERE ("key1" = 'blah blag' AND "key2" = 4821) AND ("status" = 'spam')]]
-      [[DELETE FROM "things" WHERE ("key1" = 'blah blag' AND "key2" IS NULL) AND ("status" = 'spam') RETURNING "cool"]]
+      [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821 AND "status" = 'spam']]
+      [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" IS NULL AND "status" = 'spam' RETURNING "cool"]]
     }
 
   it "should check unique constraint", ->

@@ -77,9 +77,15 @@ do
       end
       if opts and opts.where then
         assert(type(opts.where) == "table", "Model.update: where condition must be a table or db.clause")
+        local where
+        if self.__class.db.is_clause(opts.where) then
+          where = opts.where
+        else
+          where = self.__class.db.encode_clause(opts.where)
+        end
         cond = self.__class.db.clause({
           self.__class.db.clause(cond),
-          self.__class.db.encode_clause(opts.where)
+          where
         })
       end
       local returning

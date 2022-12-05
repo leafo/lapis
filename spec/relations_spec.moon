@@ -523,8 +523,8 @@ describe "lapis.db.model.relations", ->
       }
 
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'blue')]]
-      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'blue') LIMIT 10 OFFSET 10]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'blue']]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
       [[SELECT * from "posts" where "user_id" in (1) and "color" = 'blue']]
     }, ->
       user = models.Users\load id: 1
@@ -554,7 +554,7 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation has no where
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'green') LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
       [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
@@ -574,8 +574,8 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation clause is db.clause
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'blue') AND ("color" = 'green') LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'blue') AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'blue' AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'blue' AND "color" = 'green' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
       user\get_blue_posts_paginated({
@@ -593,7 +593,7 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation clause is plain table
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'green') AND "color" = 'purple' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'green' AND "color" = 'purple' LIMIT 10 OFFSET 0]]
       [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
@@ -650,12 +650,12 @@ describe "lapis.db.model.relations", ->
       }
 
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND ("user_id" = 'alpha')]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "user_id" = 'alpha']]
       [[SELECT * from "posts" where "user_id" = 2 AND "user_id" = 'beta']]
-      [[SELECT * from "posts" where "user_id" = 3 AND ("user_id" = 'alpha') AND "user_id" = 'zeta' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 3 AND "user_id" = 'alpha' AND "user_id" = 'zeta' LIMIT 10 OFFSET 0]]
       [[SELECT * from "posts" where "user_id" = 4 AND "user_id" = 'omega' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" where "user_id" = 5 AND ("user_id" = 'alpha') AND ("user_id" = 'delta') LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" where "user_id" = 6 AND ("user_id" = 'epsilon') AND "user_id" = 'beta' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 5 AND "user_id" = 'alpha' AND "user_id" = 'delta' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 6 AND "user_id" = 'epsilon' AND "user_id" = 'beta' LIMIT 10 OFFSET 0]]
       [[SELECT * from "posts" where "user_id" in (7) and "user_id" = 'alpha']]
       [[SELECT * from "posts" where "user_id" in (7) and "user_id" = 'beta']]
       [[SELECT * from "posts" where "user_id" in (8) and "user_id" = 'mu']]

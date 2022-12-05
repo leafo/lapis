@@ -103,9 +103,14 @@ class Model extends BaseModel
     if opts and opts.where
       assert type(opts.where) == "table", "Model.update: where condition must be a table or db.clause"
 
+      where = if @@db.is_clause opts.where
+        opts.where
+      else
+        @@db.encode_clause opts.where
+
       cond = @@db.clause {
         @@db.clause cond
-        @@db.encode_clause opts.where
+        where
       }
 
     local returning
