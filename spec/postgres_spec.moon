@@ -170,6 +170,75 @@ tests = {
   }
 
   {
+    ->
+      db.encode_clause db.clause {
+        db.clause {
+          color: "blue"
+          age: 99
+        }
+        db.clause {
+          sigma: true
+          gold: db.NULL
+        }, operator: "OR"
+        db.clause {
+          status: "spam"
+          delta: false
+          db.clause {
+            used_count: 0
+            prefix: "zup_"
+          }, operator: "OR"
+        }
+      }
+    [["age" = 99 AND "color" = 'blue' AND ("gold" IS NULL OR "sigma") AND ("prefix" = 'zup_' OR "used_count" = 0) AND not "delta" AND "status" = 'spam']]
+  }
+
+  {
+    ->
+      db.encode_clause db.clause {
+        db.clause {
+          color: "blue"
+          age: 99
+        }, operator: "OR"
+        db.clause {
+          sigma: true
+          gold: db.NULL
+        }, operator: "AND"
+        db.clause {
+          status: "spam"
+          delta: false
+          db.clause {
+            used_count: 0
+            prefix: "zup_"
+          }, operator: "AND"
+        }, operator: "OR"
+      }, operator: "OR"
+    [["age" = 99 OR "color" = 'blue' OR ("gold" IS NULL AND "sigma") OR ("prefix" = 'zup_' AND "used_count" = 0) OR not "delta" OR "status" = 'spam']]
+  }
+
+  {
+    ->
+      db.encode_clause db.clause {
+        db.clause {
+          color: "blue"
+          age: 99
+        }, operator: "OR"
+        db.clause {
+          sigma: true
+          gold: db.NULL
+        }, operator: "AND"
+        db.clause {
+          status: "spam"
+          delta: false
+          db.clause {
+            used_count: 0
+            prefix: "zup_"
+          }, operator: "AND"
+        }, operator: "OR"
+      }, operator: "AND"
+    [[("age" = 99 OR "color" = 'blue') AND "gold" IS NULL AND "sigma" AND (("prefix" = 'zup_' AND "used_count" = 0) OR not "delta" OR "status" = 'spam')]]
+  }
+
+  {
     -> db.interpolate_query "update items set x = ?", db.raw"y + 1"
     "update items set x = y + 1"
   }
