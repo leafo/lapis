@@ -435,71 +435,6 @@ UPDATE "the_table" SET "count" = count + 1
 SELECT * from another_table where x = now()
 ```
 
-### `list({values...})`
-
-Returns a special value that will be inserted into the query using SQL's list
-syntax. It takes a single argument of an array table.
-
-The return value of this function can be used in place of any regular value
-passed to a SQL query function. Each item in the list will be escaped with
-`escape_literal` before being inserted into the query.
-
-Note we can use it both in interpolation and in the clause to a `db.update`
-call:
-
-```lua
-local ids = db.list({3,2,1,5})
-local res = db.select("* from another table where id in ?", ids)
-
-db.update("the_table", {
-  height = 55
-}, {
-  id = ids
-})
-```
-
-```moon
-ids = db.list {3,2,1,5}
-res = db.select "* from another table where id in ?", ids
-
-db.update "the_table", {
-  height: 55
-}, { :ids }
-```
-
-```sql
-SELECT * from another table where id in (3, 2, 1, 5)
-UPDATE "the_table" SET "height" = 55 WHERE "ids" IN (3, 2, 1, 5)
-```
-
-### `array({values...})`
-
-Converts the argument passed to an array type that will be inserted/updated
-using PostgreSQL's array syntax. This function does not exist for MySQL.
-
-The return value of this function can be used in place of any regular value
-passed to a SQL query function. Each item in the list will be escaped with
-`escape_literal` before being inserted into the query.
-
-The argument is converted, not copied. If you need to avoid modifying the
-argument then create a copy before passing it to this function.
-
-
-```lua
-db.insert("some_table", {
-  tags = db.array({"hello", "world"})
-})
-```
-
-```moon
-db.insert "some_table", {
-  tags: db.array {"hello", "world"}
-}
-```
-
-```sql
-INSERT INTO "some_table" ("tags") VALUES (ARRAY['hello','world'])
-```
 
 ### `escape_literal(value)`
 
@@ -574,6 +509,75 @@ db.update "the_table", {
   name: db.NULL
 }
 ```
+
+## Database Primitives
+
+To make writing queries easier and safer, Lapis provides a set of basic
+primitive types that can be used within your queries for constructing more
+complicated values. Generally speaking, you should avoid interpolating data
+directly into queries whenever possible as it creates the opportunity for SQL
+injection attacks when values aren't properly encoded.
+
+All database primitives constructors and values can be found on the `db`
+module:
+
+$dual_code{[[
+db = require "lapis.db"
+]]}
+
+### `db.list({values...})`
+
+Returns a special value that will be inserted into the query using SQL's list
+syntax. It takes a single argument of an array table. A new object is returned
+that wraps the original table. The original table is not modified.
+
+The resulting object can be used in place of a value used within SQL query
+generation with functions like `interpolate_query` and `encode_clause`. Each
+item in the list will be escaped with `escape_literal` before being inserted
+into the query.
+
+Note how when it is used as a value for an SQL clause object, the `IN` syntax
+is used.
+
+
+$dual_code{[[
+ids = db.list {3,2,1,5}
+res = db.select "* from another table where id in ?", ids
+
+db.update "the_table", {
+  height: 55
+}, { :ids }
+]]}
+
+### `db.array({values...})`
+
+Converts the argument passed to an array type that will be inserted/updated
+using PostgreSQL's array syntax. This function does not exist for MySQL.
+
+The return value of this function can be used in place of any regular value
+passed to a SQL query function. Each item in the list will be escaped with
+`escape_literal` before being inserted into the query.
+
+The argument is converted, not copied. If you need to avoid modifying the
+argument then create a copy before passing it to this function.
+
+
+```lua
+db.insert("some_table", {
+  tags = db.array({"hello", "world"})
+})
+```
+
+```moon
+db.insert "some_table", {
+  tags: db.array {"hello", "world"}
+}
+```
+
+```sql
+INSERT INTO "some_table" ("tags") VALUES (ARRAY['hello','world'])
+```
+
 
 
 ## Database Schemas
