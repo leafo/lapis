@@ -385,8 +385,13 @@ has_one = function(self, name, opts)
     do
       local where = opts.where
       if where then
-        table.insert(clause, self.__class.db.encode_clause(where))
-        clause = self.__class.db.clause(clause)
+        if not (self.__class.db.is_clause(where)) then
+          where = self.__class.db.clause(where)
+        end
+        clause = self.__class.db.clause({
+          self.__class.db.clause(clause),
+          where
+        })
       end
     end
     do

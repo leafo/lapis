@@ -341,7 +341,7 @@ describe "lapis.db.model.relations", ->
     Users\preload_relations { user }, "data"
 
     assert_queries {
-      [[SELECT * from "user_data" where ("state" = 'good') AND "owner_id" = 123 limit 1]]
+      [[SELECT * from "user_data" where "owner_id" = 123 AND "state" = 'good' limit 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND "state" = 'good']]
     }
 
@@ -373,9 +373,9 @@ describe "lapis.db.model.relations", ->
     Users\preload_relations { user }, "living_data"
 
     assert_queries {
-      [[SELECT * from "user_data" where ((deleted) AND "owner_id" = 'oops') AND "owner_id" = 123 limit 1]]
+      [[SELECT * from "user_data" where "owner_id" = 123 AND (deleted) AND "owner_id" = 'oops' limit 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (deleted) AND "owner_id" = 'oops']]
-      [[SELECT * from "user_data" where (not "deleted" OR "deleted_at" IS NULL) AND "owner_id" = 123 limit 1]]
+      [[SELECT * from "user_data" where "owner_id" = 123 AND (not "deleted" OR "deleted_at" IS NULL) limit 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (not "deleted" OR "deleted_at" IS NULL)]]
     }
 
@@ -653,8 +653,8 @@ describe "lapis.db.model.relations", ->
       }
 
     assert_queries {
-      [[SELECT * from "posts" where ("user_id" = 'theta') AND "user_id" = 1 limit 1]]
-      [[SELECT * from "posts" where ("user_id" = 'mu') AND "user_id" = 2 limit 1]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "user_id" = 'theta' limit 1]]
+      [[SELECT * from "posts" where "user_id" = 2 AND "user_id" = 'mu' limit 1]]
 
       [[SELECT * FROM "posts" WHERE "user_id" IN (3) AND "user_id" = 'theta']]
       [[SELECT * FROM "posts" WHERE "user_id" IN (3) AND "user_id" = 'mu']]

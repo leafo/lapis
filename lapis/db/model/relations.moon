@@ -270,8 +270,13 @@ has_one = (name, opts) =>
       }
 
     if where = opts.where
-      table.insert clause, @@db.encode_clause where
-      clause = @@db.clause clause
+      unless @@db.is_clause where
+        where = @@db.clause where
+
+      clause = @@db.clause {
+        @@db.clause clause
+        where
+      }
 
     with obj = model\find clause
       @[name] = obj
