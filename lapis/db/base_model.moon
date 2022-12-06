@@ -236,7 +236,7 @@ class BaseModel
 
     if type(foreign_key) == "table"
       if flip
-        error "flip can not be combined with table foreign key"
+        error "Model.include_in: flip can not be combined with table foreign key"
 
       name_from_table = true
 
@@ -258,7 +258,7 @@ class BaseModel
         foreign_key
       else
         if type(@primary_key) == "table"
-          error "#{@table_name!} must have singular primary key for include_in"
+          error "Model.include_in: #{@table_name!} must have singular primary key for include_in"
 
         @primary_key
 
@@ -376,7 +376,7 @@ class BaseModel
         elseif type(@primary_key) == "string"
           foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
 
-        assert field_name, "failed to infer field name, provide one with `as`"
+        assert field_name, "Model.include_in: failed to infer field name, provide one with `as`"
 
         -- load the rows into we feteched into the models
         if composite_foreign_key
@@ -401,14 +401,14 @@ class BaseModel
     local extra_where, clause, fields
 
     -- parse opts
-    if type(by_key) == "table"
+    if type(by_key) == "table" and not @@db.is_encodable by_key
       fields = by_key.fields or fields
       extra_where = by_key.where
       clause = by_key.clause
       by_key = by_key.key or @primary_key
 
     -- TODO: we can support composite keys here
-    if type(by_key) == "table" and by_key[1] != "raw"
+    if type(by_key) == "table" and not @@db.is_raw by_key
       error "Model.find_all: (#{@table_name!}) Must have a singular key to search"
 
     return {} if #ids == 0

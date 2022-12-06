@@ -466,7 +466,7 @@ do
     local name_from_table = false
     if type(foreign_key) == "table" then
       if flip then
-        error("flip can not be combined with table foreign key")
+        error("Model.include_in: flip can not be combined with table foreign key")
       end
       name_from_table = true
       source_key = { }
@@ -485,7 +485,7 @@ do
         dest_key = foreign_key
       else
         if type(self.primary_key) == "table" then
-          error(tostring(self:table_name()) .. " must have singular primary key for include_in")
+          error("Model.include_in: " .. tostring(self:table_name()) .. " must have singular primary key for include_in")
         end
         dest_key = self.primary_key
       end
@@ -664,7 +664,7 @@ do
           elseif type(self.primary_key) == "string" then
             field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
           end
-          assert(field_name, "failed to infer field name, provide one with `as`")
+          assert(field_name, "Model.include_in: failed to infer field name, provide one with `as`")
           if composite_foreign_key then
             for _index_0 = 1, #other_records do
               local other = other_records[_index_0]
@@ -698,13 +698,13 @@ do
       by_key = self.primary_key
     end
     local extra_where, clause, fields
-    if type(by_key) == "table" then
+    if type(by_key) == "table" and not self.__class.db.is_encodable(by_key) then
       fields = by_key.fields or fields
       extra_where = by_key.where
       clause = by_key.clause
       by_key = by_key.key or self.primary_key
     end
-    if type(by_key) == "table" and by_key[1] ~= "raw" then
+    if type(by_key) == "table" and not self.__class.db.is_raw(by_key) then
       error("Model.find_all: (" .. tostring(self:table_name()) .. ") Must have a singular key to search")
     end
     if #ids == 0 then

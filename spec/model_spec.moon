@@ -166,6 +166,34 @@ describe "lapis.db.model", ->
         [[SELECT * FROM "things" WHERE "id" IN ('yeah')]]
       }
 
+    it "raw key", ->
+      Things\find_all { "a", "b" }, db.raw "derived(id)"
+
+      Things\find_all { "one", "two" }, {
+        key: db.raw "lookup(name)"
+      }
+
+      assert_queries {
+        [[SELECT * FROM "things" WHERE derived(id) IN ('a', 'b')]]
+        [[SELECT * FROM "things" WHERE lookup(name) IN ('one', 'two')]]
+      }
+
+    it "fails with invalid key", ->
+      assert.has_error(
+        -> Things\find_all { "a", "b" }, { key: {"one", "two"} }
+        "Model.find_all: (things) Must have a singular key to search"
+      )
+
+      assert.has_error(
+        -> Things\find_all { "a", "b" }, db.list {"umm"}
+        "Model.find_all: (things) Must have a singular key to search"
+      )
+
+      assert.has_error(
+        -> Things\find_all { "a", "b" }, key: db.list {"yeah"}
+        "Model.find_all: (things) Must have a singular key to search"
+      )
+
     it "empty ids", ->
       assert.same {}, Things\find_all {}
       assert_queries {}
