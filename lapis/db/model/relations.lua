@@ -3,6 +3,11 @@ local LOADED_KEY = setmetatable({ }, {
     return "::loaded_relations::"
   end
 })
+local concat, insert
+do
+  local _obj_0 = table
+  concat, insert = _obj_0.concat, _obj_0.insert
+end
 local assert_model
 assert_model = function(primary_model, model_name)
   do
@@ -450,13 +455,18 @@ has_many = function(self, name, opts)
         [foreign_key] = self[opts.local_key or self.__class:primary_keys()]
       }
     end
-    local clause = "where " .. tostring(self.__class.db.encode_clause(join_clause))
+    local buffer = {
+      "WHERE "
+    }
+    local clause = join_clause
     local additional_clause
     do
       local where = opts.where
       if where then
         if not (additional_clause) then
-          additional_clause = { }
+          additional_clause = {
+            self.__class.db.clause(clause)
+          }
         end
         if self.__class.db.is_clause(where) then
           table.insert(additional_clause, where)
@@ -471,7 +481,9 @@ has_many = function(self, name, opts)
       local more_where = calling_opts and calling_opts.where
       if more_where then
         if not (additional_clause) then
-          additional_clause = { }
+          additional_clause = {
+            self.__class.db.clause(clause)
+          }
         end
         if self.__class.db.is_clause(more_where) then
           table.insert(additional_clause, more_where)
@@ -483,16 +495,17 @@ has_many = function(self, name, opts)
       end
     end
     if additional_clause and next(additional_clause) then
-      clause = clause .. " AND " .. tostring(self.__class.db.encode_clause(self.__class.db.clause(additional_clause)))
+      clause = self.__class.db.clause(additional_clause)
     end
+    self.__class.db.encode_clause(clause, buffer)
     local order = opts.order
     if calling_opts and calling_opts.order ~= nil then
       order = calling_opts.order
     end
     if order then
-      clause = clause .. " order by " .. tostring(order)
+      insert(buffer, " ORDER BY " .. tostring(order))
     end
-    return clause
+    return concat(buffer)
   end
   self.__base[get_method] = function(self)
     local existing = self[name]

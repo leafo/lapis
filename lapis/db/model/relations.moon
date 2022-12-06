@@ -1,5 +1,7 @@
 LOADED_KEY = setmetatable {}, __tostring: => "::loaded_relations::"
 
+import concat, insert from table
+
 assert_model = (primary_model, model_name) ->
   with m = primary_model\get_relation_model model_name
     error "failed to find model `#{model_name}` for relation" unless m
@@ -330,18 +332,20 @@ has_many = (name, opts) =>
         [foreign_key]: @[opts.local_key or @@primary_keys!]
       }
 
-    clause = "where #{@@db.encode_clause join_clause}"
+    buffer = { "WHERE " }
 
-    -- NOTE: this is written kinda funky because we introduced legacy behavior
-    -- that would allow where: to overwrite fields It's unclear if this is a
-    -- good or bad thing. With the introduction of db.clause, that is no longer
-    -- possible. In the future we may want to throw an error on overwrite
-    -- instead of silently changing behavior
+    clause = join_clause
+
+    -- NOTE: this is written kinda funky because we introduced a side effect of
+    -- allowing overwriting where fields It's unclear if this is a good or bad
+    -- thing. With the introduction of db.clause, that is no longer possible.
+    -- In the future we may want to throw an error on overwrite instead of
+    -- silently changing behavior
 
     local additional_clause
 
     if where = opts.where
-      additional_clause = {} unless additional_clause
+      additional_clause = { @@db.clause clause } unless additional_clause
 
       if @@db.is_clause where
         table.insert additional_clause, where
@@ -350,7 +354,7 @@ has_many = (name, opts) =>
           additional_clause[k] = v
 
     if more_where = calling_opts and calling_opts.where
-      additional_clause = {} unless additional_clause
+      additional_clause = { @@db.clause clause } unless additional_clause
 
       if @@db.is_clause more_where
         table.insert additional_clause, more_where
@@ -359,16 +363,18 @@ has_many = (name, opts) =>
           additional_clause[k] = v
 
     if additional_clause and next additional_clause
-      clause ..= " AND #{@@db.encode_clause @@db.clause additional_clause}"
+      clause = @@db.clause additional_clause
+
+    @@db.encode_clause clause, buffer
 
     order = opts.order
     if calling_opts and calling_opts.order != nil
       order = calling_opts.order
 
     if order
-      clause ..= " order by #{order}"
+      insert buffer, " ORDER BY #{order}"
 
-    clause
+    concat buffer
 
   @__base[get_method] = =>
     existing = @[name]
