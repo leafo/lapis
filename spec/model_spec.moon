@@ -615,28 +615,28 @@ describe "lapis.db.model", ->
       assert.same nil, things[5].thing
 
       assert_queries {
-        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105)]]
       }
 
     it "with flip", ->
       ThingItems\include_in things, "thing_id", flip: true
 
       assert_queries {
-        [[SELECT * from "thing_items" where "thing_id" in (1, 2, 3, 4, 5)]]
+        [[SELECT * FROM "thing_items" WHERE "thing_id" IN (1, 2, 3, 4, 5)]]
       }
 
     it "with where", ->
       ThingItems\include_in things, "thing_id", where: { dad: true }
 
       assert_queries {
-        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) and "dad" = TRUE]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) AND "dad"]]
       }
 
     it "with empty where", ->
       ThingItems\include_in things, "thing_id", where: { }
 
       assert_queries {
-        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105)]]
       }
 
     it "with db.clause", ->
@@ -648,36 +648,46 @@ describe "lapis.db.model", ->
         }, operator: "OR"
       }
 
+      ThingItems\include_in things, "thing_id", where: db.clause {
+        alpha: db.NULL
+        beta: db.list {"dog", "cat", "snot"}
+        db.clause {
+          thing: true
+          thong: false
+        }, operator: "and"
+      }, operator: "OR"
+
       assert_queries {
-        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) and (counter > 10) AND ((alpha) OR "beta" = 'dog')]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) AND (counter > 10) AND ((alpha) OR "beta" = 'dog')]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) AND (("thing" and not "thong") OR "alpha" IS NULL OR "beta" IN ('dog', 'cat', 'snot'))]]
       }
 
     it "with fields", ->
       ThingItems\include_in things, "thing_id", fields: "one, two, three"
 
       assert_queries {
-        [[SELECT one, two, three from "thing_items" where "id" in (101, 102, 103, 104, 105)]]
+        [[SELECT one, two, three FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105)]]
       }
 
     it "with order", ->
       ThingItems\include_in things, "thing_id", order: "title desc", many: true
 
       assert_queries {
-        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) order by title desc]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) ORDER BY title desc]]
       }
 
     it "with group", ->
       ThingItems\include_in things, "thing_id", group: "yeah"
 
       assert_queries {
-        [[SELECT * from "thing_items" where "id" in (101, 102, 103, 104, 105) group by yeah]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) GROUP BY yeah]]
       }
 
     it "with local key", ->
       ThingItems\include_in things, "thing_id", local_key: "other_id", flip: true
 
       assert_queries {
-        [[SELECT * from "thing_items" where "thing_id" in (16, 18, 20, 22, 24)]]
+        [[SELECT * FROM "thing_items" WHERE "thing_id" IN (16, 18, 20, 22, 24)]]
       }
 
     it "with for relation", ->
@@ -698,7 +708,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT yeah, count(*) from "thing_items" where "thing_id" in (16, 18, 20, 22, 24) and "deleted" = FALSE group by yeah order by color desc]]
+        [[SELECT yeah, count(*) FROM "thing_items" WHERE "thing_id" IN (16, 18, 20, 22, 24) AND not "deleted" GROUP BY yeah ORDER BY color desc]]
       }
 
     it "applies value function", ->
@@ -761,7 +771,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT * from "thing_items" where ("alpha_id", "beta_id") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+        [[SELECT * FROM "thing_items" WHERE ("alpha_id", "beta_id") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
       }
 
       assert.same {
@@ -823,8 +833,8 @@ describe "lapis.db.model", ->
 
       assert_queries {
         {
-          [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
-          [[SELECT * from "thing_items" where ("bid", "aid") in ((201, 100), (202, 101), (203, 101), (204, 102), (205, 102))]]
+          [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+          [[SELECT * FROM "thing_items" WHERE ("bid", "aid") IN ((201, 100), (202, 101), (203, 101), (204, 102), (205, 102))]]
         }
       }
 
@@ -849,7 +859,7 @@ describe "lapis.db.model", ->
       }, many: true
 
       assert_queries {
-        [[SELECT * from "thing_items" where ("aid", "bid") in ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+        [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
       }
 
       assert.same {}, things[1].thing_items

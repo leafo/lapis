@@ -8,10 +8,10 @@ do
   local _obj_0 = table
   insert, concat = _obj_0.insert, _obj_0.concat
 end
-local require, type, setmetatable, rawget, assert, error, next
+local require, type, setmetatable, rawget, assert, error, next, select
 do
   local _obj_0 = _G
-  require, type, setmetatable, rawget, assert, error, next = _obj_0.require, _obj_0.type, _obj_0.setmetatable, _obj_0.rawget, _obj_0.assert, _obj_0.error, _obj_0.next
+  require, type, setmetatable, rawget, assert, error, next, select = _obj_0.require, _obj_0.type, _obj_0.setmetatable, _obj_0.rawget, _obj_0.assert, _obj_0.error, _obj_0.next, _obj_0.select
 end
 local unpack = unpack or table.unpack
 local cjson = require("cjson")
@@ -119,7 +119,7 @@ do
   _base_0.__class = _class_0
   local self = _class_0
   debug = function(self)
-    return "(contains: " .. tostring(table.concat((function()
+    return "(contains: " .. tostring(concat((function()
       local _accum_0 = { }
       local _len_0 = 1
       for i, v in ipairs(self) do
@@ -209,7 +209,7 @@ do
           fields,
           ...
         }
-        fields = table.concat((function()
+        fields = concat((function()
           local _accum_0 = { }
           local _len_0 = 1
           for _index_0 = 1, #field_names do
@@ -567,30 +567,48 @@ do
       if not (composite_foreign_key) then
         include_ids = uniquify(include_ids)
       end
-      local flat_ids = self.db.escape_literal(self.db.list(include_ids))
       local find_by_fields
       if composite_foreign_key then
-        find_by_fields = self.db.escape_identifier(self.db.list(dest_key))
+        find_by_fields = self.db.list(dest_key)
       else
-        find_by_fields = self.db.escape_identifier(dest_key)
+        find_by_fields = dest_key
       end
       local tbl_name = self.db.escape_identifier(self:table_name())
-      local query = tostring(fields) .. " from " .. tostring(tbl_name) .. " where " .. tostring(find_by_fields) .. " in " .. tostring(flat_ids)
+      local clause = {
+        [find_by_fields] = self.db.list(include_ids)
+      }
+      local buffer = {
+        fields,
+        " FROM ",
+        tbl_name,
+        " WHERE "
+      }
       if opts and opts.where and next(opts.where) then
-        query = query .. (" and " .. self.db.encode_clause(opts.where))
+        local where = opts.where
+        if not (self.db.is_clause(opts.where)) then
+          where = self.db.clause(where)
+        end
+        clause = self.db.clause({
+          self.db.clause(clause),
+          where
+        })
       end
+      self.db.encode_clause(clause, buffer)
       do
         local group = opts and opts.group
         if group then
-          query = query .. " group by " .. tostring(group)
+          insert(buffer, " GROUP BY ")
+          insert(buffer, group)
         end
       end
       do
         local order = many and opts.order
         if order then
-          query = query .. " order by " .. tostring(order)
+          insert(buffer, " ORDER BY ")
+          insert(buffer, order)
         end
       end
+      local query = concat(buffer)
       do
         local res = self.db.select(query)
         if res then

@@ -255,7 +255,7 @@ describe "lapis.db.model.relations", ->
 
     assert_queries {
       'SELECT * from "user_profiles" where "id" = 111 AND "id2" = 222 limit 1'
-      'SELECT * from "user_profiles" where ("id", "id2") in ((111, 222))'
+      'SELECT * FROM "user_profiles" WHERE ("id", "id2") IN ((111, 222))'
     }
 
   it "should make has_one getter with custom key", ->
@@ -342,7 +342,7 @@ describe "lapis.db.model.relations", ->
 
     assert_queries {
       [[SELECT * from "user_data" where ("state" = 'good') AND "owner_id" = 123 limit 1]]
-      [[SELECT * from "user_data" where "owner_id" in (123) and "state" = 'good']]
+      [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND "state" = 'good']]
     }
 
   it "makes has_one getter with where db.clause", ->
@@ -353,6 +353,14 @@ describe "lapis.db.model.relations", ->
     models.Users = class Users extends Model
       @relations: {
         {"data", has_one: "UserData", key: "owner_id", where: db.clause { owner_id: "oops", "deleted"} }
+        {"living_data",
+          has_one: "UserData"
+          key: "owner_id"
+          where: db.clause {
+            deleted: false
+            deleted_at: db.NULL
+          }, operator: "OR"
+        }
       }
 
     user = Users!
@@ -361,9 +369,14 @@ describe "lapis.db.model.relations", ->
 
     Users\preload_relations { user }, "data"
 
+    assert user\get_living_data!
+    Users\preload_relations { user }, "living_data"
+
     assert_queries {
       [[SELECT * from "user_data" where ((deleted) AND "owner_id" = 'oops') AND "owner_id" = 123 limit 1]]
-      [[SELECT * from "user_data" where "owner_id" in (123) and (deleted) AND "owner_id" = 'oops']]
+      [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (deleted) AND "owner_id" = 'oops']]
+      [[SELECT * from "user_data" where (not "deleted" OR "deleted_at" IS NULL) AND "owner_id" = 123 limit 1]]
+      [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (not "deleted" OR "deleted_at" IS NULL)]]
     }
 
   it "makes has_one getter with composite key with custom local names", ->
@@ -434,7 +447,7 @@ describe "lapis.db.model.relations", ->
 
     -- preloading relation with specified where: it overwrites the where clause is this the desired behavior?
     assert_queries {
-      [[SELECT * from "posts" where "user_id" in (1234) and "limit" = 'suspend']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (1234) AND "limit" = 'suspend']]
     }, ->
       pager = models.Users\preload_relation {user}, "more_posts", where: {
         limit: "suspend"
@@ -518,25 +531,37 @@ describe "lapis.db.model.relations", ->
       @relations: {
         {"posts", has_many: "Posts"}
 
-        {"blue_posts", has_many: "Posts", where: db.clause {color: "blue"} }
-        {"purple_posts", has_many: "Posts", where: { color: "purple" } }
+        {"green_posts", has_many: "Posts", where: { color: "green"} }
+        {"blue_posts", has_many: "Posts", where: db.clause { color: "blue"} }
+        {"purple_posts", has_many: "Posts", where: db.clause  { color: "purple", hue: "purple" }, operator: "OR" }
       }
+
+    user = models.Users\load id: 1
 
     assert_queries {
       [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'blue']]
       [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
-      [[SELECT * from "posts" where "user_id" in (1) and "color" = 'blue']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (1) AND "color" = 'blue']]
     }, ->
-      user = models.Users\load id: 1
       user\get_blue_posts!
       user\get_blue_posts_paginated!\get_page 2
 
       models.Users\preload_relations { user }, "blue_posts"
 
+    assert_queries {
+      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'purple' OR "hue" = 'purple')]]
+      [[SELECT * from "posts" where "user_id" = 1 AND ("color" = 'purple' OR "hue" = 'purple') LIMIT 10 OFFSET 20]]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (1) AND ("color" = 'purple' OR "hue" = 'purple')]]
+    }, ->
+      user\get_purple_posts!
+      user\get_purple_posts_paginated!\get_page 3
+
+      models.Users\preload_relations { user }, "purple_posts"
+
     -- preload with custom where overwrites the default where. This is undocumented behavior, and may not actually be desired
     assert_queries {
-      [[SELECT a,b from "posts" where "user_id" in (1) and "color" = 'green']]
-      [[SELECT a,b from "posts" where "user_id" in (1) and (random() > 0.5)]]
+      [[SELECT a,b FROM "posts" WHERE "user_id" IN (1) AND "color" = 'green']]
+      [[SELECT a,b FROM "posts" WHERE "user_id" IN (1) AND (random() > 0.5)]]
     }, ->
       user = models.Users\load id: 1
       models.Users\preload_relation { user }, "blue_posts", {
@@ -584,7 +609,7 @@ describe "lapis.db.model.relations", ->
         }
       })\get_page!
 
-      -- produces slightly different syntax due to how the clause is merged
+      -- merging into db.clause is impossible, so it produces separate clauses
       user\get_blue_posts_paginated({
         where: {
           color: "green"
@@ -593,20 +618,22 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation clause is plain table
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'green' AND "color" = 'purple' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'yellow' AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * from "posts" where "user_id" = 1 AND "color" = 'yellow' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
-      user\get_purple_posts_paginated({
+      user\get_green_posts_paginated({
         where: db.clause {
-          color: "green"
+          color: "yellow"
         }
       })\get_page!
 
-      -- produces slightly different syntax due to how the clause is merged
-      user\get_purple_posts_paginated({
+      -- produces slightly different syntax because a table is allowed to merge
+      -- into a table this is to keep legacy behavior around since before
+      -- clauses were introduced. In the future this should throw an error,
+      user\get_green_posts_paginated({
         where: {
-          color: "green"
+          color: "yellow"
         }
       })\get_page!
 
@@ -629,11 +656,11 @@ describe "lapis.db.model.relations", ->
       [[SELECT * from "posts" where ("user_id" = 'theta') AND "user_id" = 1 limit 1]]
       [[SELECT * from "posts" where ("user_id" = 'mu') AND "user_id" = 2 limit 1]]
 
-      [[SELECT * from "posts" where "user_id" in (3) and "user_id" = 'theta']]
-      [[SELECT * from "posts" where "user_id" in (3) and "user_id" = 'mu']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (3) AND "user_id" = 'theta']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (3) AND "user_id" = 'mu']]
 
-      [[SELECT * from "posts" where "user_id" in (4) and "user_id" = 'alpha']]
-      [[SELECT * from "posts" where "user_id" in (5) and "user_id" = 'beta']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (4) AND "user_id" = 'alpha']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (5) AND "user_id" = 'beta']]
     }, ->
       models.Users\load(id: 1)\get_theta_post!
       models.Users\load(id: 2)\get_mu_post!
@@ -656,10 +683,10 @@ describe "lapis.db.model.relations", ->
       [[SELECT * from "posts" where "user_id" = 4 AND "user_id" = 'omega' LIMIT 10 OFFSET 0]]
       [[SELECT * from "posts" where "user_id" = 5 AND "user_id" = 'alpha' AND "user_id" = 'delta' LIMIT 10 OFFSET 0]]
       [[SELECT * from "posts" where "user_id" = 6 AND "user_id" = 'epsilon' AND "user_id" = 'beta' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" where "user_id" in (7) and "user_id" = 'alpha']]
-      [[SELECT * from "posts" where "user_id" in (7) and "user_id" = 'beta']]
-      [[SELECT * from "posts" where "user_id" in (8) and "user_id" = 'mu']]
-      [[SELECT * from "posts" where "user_id" in (9) and "user_id" = 'theta']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (7) AND "user_id" = 'alpha']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (7) AND "user_id" = 'beta']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (8) AND "user_id" = 'mu']]
+      [[SELECT * FROM "posts" WHERE "user_id" IN (9) AND "user_id" = 'theta']]
     }, ->
       models.Users\load(id: 1)\get_alpha_posts!
       models.Users\load(id: 2)\get_beta_posts!
@@ -843,8 +870,8 @@ describe "lapis.db.model.relations", ->
       Items\preload_objects items
 
       assert_queries {
-        'SELECT * from "foos" where "id" in (1, 3, 4)'
-        'SELECT * from "bars" where "frog_index" in (2)'
+        'SELECT * FROM "foos" WHERE "id" IN (1, 3, 4)'
+        'SELECT * FROM "bars" WHERE "frog_index" IN (2)'
       }
 
     it "preloads with fields", ->
@@ -871,9 +898,9 @@ describe "lapis.db.model.relations", ->
       }
 
       assert_queries {
-        'SELECT * from "foos" where "id" in (111)'
-        'SELECT a, b from "bars" where "frog_index" in (112)'
-        'SELECT c, d from "bazs" where "id" in (113)'
+        'SELECT * FROM "foos" WHERE "id" IN (111)'
+        'SELECT a, b FROM "bars" WHERE "frog_index" IN (112)'
+        'SELECT c, d FROM "bazs" WHERE "id" IN (113)'
       }
 
   it "finds relation", ->
@@ -975,9 +1002,9 @@ describe "lapis.db.model.relations", ->
       Posts\preload_relations {post}, "user", "date", "tags"
 
       assert_queries {
-        [[SELECT * from "users" where "id" in (234)]]
-        [[SELECT * from "dates" where "post_id" in (888)]]
-        [[SELECT * from "tags" where "post_id" in (888)]]
+        [[SELECT * FROM "users" WHERE "id" IN (234)]]
+        [[SELECT * FROM "dates" WHERE "post_id" IN (888)]]
+        [[SELECT * FROM "tags" WHERE "post_id" IN (888)]]
       }
 
       import LOADED_KEY from require "lapis.db.model.relations"
@@ -1009,7 +1036,7 @@ describe "lapis.db.model.relations", ->
         order: "b asc"
       }
       assert_queries {
-        [[SELECT a,b from "tags" where "post_id" in (123) order by b asc]]
+        [[SELECT a,b FROM "tags" WHERE "post_id" IN (123) ORDER BY b asc]]
       }
 
     it "preloads has_many with composite key", ->
@@ -1048,7 +1075,7 @@ describe "lapis.db.model.relations", ->
       UserPage\preload_relation user_pages, "data"
 
       assert_queries {
-        'SELECT * from "user_page_data" where ("user_id", "page_id") in ((99, 234), (100, 234), (100, 300))'
+        'SELECT * FROM "user_page_data" WHERE ("user_id", "page_id") IN ((99, 234), (100, 234), (100, 300))'
       }
 
       import LOADED_KEY from require "lapis.db.model.relations"
@@ -1086,7 +1113,7 @@ describe "lapis.db.model.relations", ->
       Users\preload_relations {user}, "thing"
 
       assert_queries {
-        [[SELECT * from "things" where "thing_email" in ('leafo@leafo')]]
+        [[SELECT * FROM "things" WHERE "thing_email" IN ('leafo@leafo')]]
       }
 
       assert.same {
@@ -1105,7 +1132,7 @@ describe "lapis.db.model.relations", ->
         @relations: {
           {"beta_file"
             has_one: "Files"
-            where: { deleted: false }
+            where: { deleted: false, whoa: db.NULL }
           }
         }
 
@@ -1118,7 +1145,7 @@ describe "lapis.db.model.relations", ->
       }, thing.beta_file
 
       assert_queries {
-        [[SELECT * from "files" where "thing_id" in (123) and "deleted" = FALSE]]
+        [[SELECT * FROM "files" WHERE "thing_id" IN (123) AND not "deleted" AND "whoa" IS NULL]]
       }
 
     it "preloads has_one with composite key", ->
@@ -1152,7 +1179,7 @@ describe "lapis.db.model.relations", ->
       UserPage\preload_relation user_pages, "data"
 
       assert_queries {
-        [[SELECT * from "user_page_data" where ("user_id", "page_id") in ((10, 100), (11, 101))]]
+        [[SELECT * FROM "user_page_data" WHERE ("user_id", "page_id") IN ((10, 100), (11, 101))]]
       }
 
       assert.same {
@@ -1197,7 +1224,7 @@ describe "lapis.db.model.relations", ->
       }, thing.cool_tags
 
       assert_queries {
-        [[SELECT * from "tags" where "primary_thing_id" in (123) and "deleted" = FALSE order by name asc]]
+        [[SELECT * FROM "tags" WHERE "primary_thing_id" IN (123) AND not "deleted" ORDER BY name asc]]
       }
 
     it "preloads belongs_to with correct name", ->
@@ -1315,7 +1342,7 @@ describe "lapis.db.model.relations", ->
 
       assert_queries {
         [[SELECT * from "item_applications" where "user_id" = 100 limit 1]]
-        [[SELECT * from "item_applications" where "user_id" in (101)]]
+        [[SELECT * FROM "item_applications" WHERE "user_id" IN (101)]]
       }
 
   describe "generic preload", ->
@@ -1354,13 +1381,13 @@ describe "lapis.db.model.relations", ->
       preload { user }, "tags", "user_data", "account"
 
       assert_queries {
-        [[SELECT * from "tags" where "user_id" in (10)]]
-        [[SELECT * from "user_data" where "user_id" in (10)]]
-        [[SELECT * from "accounts" where "id" in (99)]]
+        [[SELECT * FROM "tags" WHERE "user_id" IN (10)]]
+        [[SELECT * FROM "user_data" WHERE "user_id" IN (10)]]
+        [[SELECT * FROM "accounts" WHERE "id" IN (99)]]
       }
 
     it "preloads nested relations", ->
-      mock_query 'from "tags"', {
+      mock_query 'FROM "tags"', {
         models.Tags\load {
           id: 252
           user_id: 10
@@ -1371,7 +1398,7 @@ describe "lapis.db.model.relations", ->
         }
       }
 
-      mock_query 'from "user_data"', {
+      mock_query 'FROM "user_data"', {
         models.UserData\load {
           id: 32
           user_id: 10
@@ -1387,11 +1414,11 @@ describe "lapis.db.model.relations", ->
       }
 
       assert_queries {
-        [[SELECT * from "accounts" where "id" in (99)]]
-        [[SELECT * from "images" where "user_data_id" in (32)]]
-        [[SELECT * from "tags" where "user_id" in (10)]]
-        [[SELECT * from "user_data" where "user_id" in (10)]]
-        [[SELECT * from "users" where "tag_id" in (252, 311)]]
+        [[SELECT * FROM "accounts" WHERE "id" IN (99)]]
+        [[SELECT * FROM "images" WHERE "user_data_id" IN (32)]]
+        [[SELECT * FROM "tags" WHERE "user_id" IN (10)]]
+        [[SELECT * FROM "user_data" WHERE "user_id" IN (10)]]
+        [[SELECT * FROM "users" WHERE "tag_id" IN (252, 311)]]
       }, sorted: true
 
 
@@ -1439,9 +1466,9 @@ describe "lapis.db.model.relations", ->
 
       assert_queries {
         -- TODO: homogeneous preload should be able to merge these queries
-        [[SELECT * from "tags" where "user_id" in (10)]]
-        [[SELECT * from "tags" where "user_id" in (11, 12)]]
-        [[SELECT * from "user_data" where "user_id" in (11, 12)]]
+        [[SELECT * FROM "tags" WHERE "user_id" IN (10)]]
+        [[SELECT * FROM "tags" WHERE "user_id" IN (11, 12)]]
+        [[SELECT * FROM "user_data" WHERE "user_id" IN (11, 12)]]
       }, sorted: true
 
     it "passes preload opts", ->

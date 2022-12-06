@@ -1,7 +1,7 @@
 import underscore, escape_pattern, uniquify, singularize from require "lapis.util"
 import insert, concat from table
 
-import require, type, setmetatable, rawget, assert, error, next from _G
+import require, type, setmetatable, rawget, assert, error, next, select from _G
 
 unpack = unpack or table.unpack
 
@@ -48,7 +48,7 @@ _fields = (t, names, k=1, len=#names) ->
 
 class Enum
   debug = =>
-    "(contains: #{table.concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
+    "(contains: #{concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
 
   -- convert string to number, or let number pass through
   for_db: (key) =>
@@ -286,24 +286,46 @@ class BaseModel
       unless composite_foreign_key
         include_ids = uniquify include_ids
 
-      flat_ids = @db.escape_literal @db.list include_ids
-
       find_by_fields = if composite_foreign_key
-        @db.escape_identifier @db.list dest_key
+        @db.list dest_key
       else
-        @db.escape_identifier dest_key
+        dest_key
 
       tbl_name = @db.escape_identifier @table_name!
-      query = "#{fields} from #{tbl_name} where #{find_by_fields} in #{flat_ids}"
+
+      clause = {
+        [find_by_fields]: @db.list include_ids
+      }
+
+      buffer = {
+        fields
+        " FROM "
+        tbl_name
+        " WHERE "
+      }
 
       if opts and opts.where and next opts.where
-        query ..= " and " .. @db.encode_clause opts.where
+        where = opts.where
+
+        unless @db.is_clause opts.where
+          where = @db.clause where
+
+        clause = @db.clause {
+          @db.clause clause
+          where
+        }
+
+      @db.encode_clause clause, buffer
 
       if group = opts and opts.group
-        query ..= " group by #{group}"
+        insert buffer, " GROUP BY "
+        insert buffer, group
 
       if order = many and opts.order
-        query ..= " order by #{order}"
+        insert buffer, " ORDER BY "
+        insert buffer, order
+
+      query = concat buffer
 
       if res = @db.select query
         -- holds all the fetched rows indexed by the dest_key (what was searched by)
@@ -525,7 +547,7 @@ class BaseModel
 
     if fields != "*"
       field_names = {fields, ...}
-      fields = table.concat [@@db.escape_identifier f for f in *field_names], ", "
+      fields = concat [@@db.escape_identifier f for f in *field_names], ", "
 
     cond = @@db.encode_clause @_primary_cond!
     tbl_name = @@db.escape_identifier @@table_name!
