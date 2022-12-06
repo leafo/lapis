@@ -88,17 +88,33 @@ describe "lapis.db.pagination", ->
       things\get_page 1
       thongs\get_page 4
 
+      some_things = OffsetPaginator Things, db.clause {
+        group_id: db.NULL
+        deleted: true
+      }, operator: "OR"
+
+      some_things\get_page 2
+
       assert_queries {
         [[SELECT * from "things" WHERE (not deleted) AND "group_id" = 23 LIMIT 10 OFFSET 0]]
         [[SELECT * from "thongs" WHERE (not deleted) AND "group_id" = 23 LIMIT 77 OFFSET 231]]
+        [[SELECT * from "things" WHERE "deleted" OR "group_id" IS NULL LIMIT 10 OFFSET 10]]
       }
 
     it "ignores excess parameter", ->
       pager = OffsetPaginator Things, [[order by name asc]], 123, per_page: 25
       pager\get_page 3
 
+      pager2 = OffsetPaginator Things, db.clause(one: "two"), 123, per_page: 25
+      pager2\get_page 1
+
+      pager3 = OffsetPaginator Things, [[where ? group by cool]], db.clause(a: "b"), 123, per_page: 25
+      pager3\get_page 2
+
       assert_queries {
-        'SELECT * from "things" order by name asc LIMIT 25 OFFSET 50'
+        [[SELECT * from "things" order by name asc LIMIT 25 OFFSET 50]]
+        [[SELECT * from "things" WHERE "one" = 'two' LIMIT 25 OFFSET 0]]
+        [[SELECT * from "things" where "a" = 'b' group by cool LIMIT 25 OFFSET 25]]
       }
 
     it "supports empty clause", ->
@@ -210,13 +226,23 @@ describe "lapis.db.pagination", ->
         color: "green"
       }
 
-      res, np = pager\get_page!
+      pager\get_page!
+      pager\get_page 123
 
-      res, np = pager\get_page 123
+      pager2 = OrderedPaginator Things, "id", db.clause {
+        color: "green"
+        hue: "green"
+      }, operator: "OR"
+
+      pager2\get_page!
+      pager2\get_page 123
 
       assert_queries {
         [[SELECT * from "things" where "color" = 'green' order by "things"."id" ASC limit 10]]
         [[SELECT * from "things" where "things"."id" > 123 and ("color" = 'green') order by "things"."id" ASC limit 10]]
+
+        [[SELECT * from "things" where "color" = 'green' OR "hue" = 'green' order by "things"."id" ASC limit 10]]
+        [[SELECT * from "things" where "things"."id" > 123 and ("color" = 'green' OR "hue" = 'green') order by "things"."id" ASC limit 10]]
       }
 
     it "gets pages for multiple keys", ->
