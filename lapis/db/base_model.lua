@@ -420,7 +420,7 @@ do
     local load_as = opts and opts.load
     local fields = opts and opts.fields or "*"
     do
-      local res = self.db.select(tostring(fields) .. " from " .. tostring(tbl_name) .. " " .. tostring(query))
+      local res = self.db.select(tostring(fields) .. " FROM " .. tostring(tbl_name) .. " " .. tostring(query))
       if res then
         if load_as == false then
           return res
@@ -435,7 +435,7 @@ do
   end
   self.count = function(self, clause, ...)
     local tbl_name = self.db.escape_identifier(self:table_name())
-    local query = "COUNT(*) as c from " .. tostring(tbl_name)
+    local query = "COUNT(*) AS c FROM " .. tostring(tbl_name)
     if clause then
       local _exp_0 = type(clause)
       if "string" == _exp_0 then

@@ -419,23 +419,23 @@ describe "lapis.db.model.relations", ->
 
     -- empty relation
     assert_queries {
-      'SELECT * from "posts" WHERE "user_id" = 1234 LIMIT 10 OFFSET 0'
-      'SELECT * from "posts" WHERE "user_id" = 1234 LIMIT 10 OFFSET 10'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 LIMIT 10 OFFSET 0'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 LIMIT 10 OFFSET 10'
     }, ->
       user\get_posts_paginated!\get_page 1
       user\get_posts_paginated!\get_page 2
 
     -- relation with where clause
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1234 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
     }, ->
       user\get_more_posts_paginated!\get_page 2
 
     -- pager with customized where clause
     assert_queries {
       [[SELECT COUNT(*) AS c FROM "posts" where "user_id" = 1234 AND "age" = '10 days']]
-      [[SELECT * from "posts" WHERE "user_id" = 1234 AND "age" = '10 days' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 1234 AND "age" = '10 days' LIMIT 10 OFFSET 10]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 AND "age" = '10 days' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 AND "age" = '10 days' LIMIT 10 OFFSET 10]]
     }, ->
       pager = user\get_posts_paginated(where: {
         age: "10 days"
@@ -455,8 +455,8 @@ describe "lapis.db.model.relations", ->
 
     -- pager with customized per_page
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1234 LIMIT 44 OFFSET 88]]
-      [[SELECT * from "posts" WHERE "user_id" = 1234 LIMIT 44 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 LIMIT 44 OFFSET 88]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 LIMIT 44 OFFSET 0]]
     }, ->
       pager = user\get_posts_paginated per_page: 44
       pager\get_page 3
@@ -464,10 +464,10 @@ describe "lapis.db.model.relations", ->
 
     -- offset ordered paginator
     assert_queries {
-      'SELECT * from "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
-      'SELECT * from "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
-      [[SELECT * from "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
-      [[SELECT * from "posts" where "user_id" = 1234 AND not "deleted" order by "posts"."id" ASC limit 10]]
+      'SELECT * FROM "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
+      'SELECT * FROM "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
+      [[SELECT * FROM "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
+      [[SELECT * FROM "posts" where "user_id" = 1234 AND not "deleted" order by "posts"."id" ASC limit 10]]
     }, ->
       user\get_posts_paginated(ordered: {"id"})\get_page!
       user\get_posts_paginated(ordered: {"id"})\get_page 1023
@@ -478,8 +478,8 @@ describe "lapis.db.model.relations", ->
 
     -- relation with order
     assert_queries {
-      'SELECT * from "posts" WHERE "user_id" = 1234 ORDER BY created_at desc LIMIT 10 OFFSET 0'
-      'SELECT * from "posts" WHERE "user_id" = 1234 ORDER BY created_at desc LIMIT 10 OFFSET 23410'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY created_at desc LIMIT 10 OFFSET 0'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY created_at desc LIMIT 10 OFFSET 23410'
       'SELECT COUNT(*) AS c FROM "posts" where "user_id" = 1234 '
     }, ->
       pager = user\get_ordered_posts_paginated!
@@ -489,9 +489,9 @@ describe "lapis.db.model.relations", ->
 
     -- relation with order, order overwritten by pager
     assert_queries {
-      'SELECT * from "posts" WHERE "user_id" = 1234 ORDER BY id asc LIMIT 10 OFFSET 0'
-      'SELECT * from "posts" WHERE "user_id" = 1234 ORDER BY id asc LIMIT 10 OFFSET 10'
-      'SELECT * from "posts" WHERE "user_id" = 1234 ORDER BY created_at desc LIMIT 10 OFFSET 0'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY id asc LIMIT 10 OFFSET 0'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY id asc LIMIT 10 OFFSET 10'
+      'SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY created_at desc LIMIT 10 OFFSET 0'
     }, ->
       pager = user\get_ordered_posts_paginated order: "id asc"
       pager\get_page!
@@ -513,9 +513,9 @@ describe "lapis.db.model.relations", ->
 
 
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1234]]
-      [[SELECT * from "posts" WHERE "user_id" = 1234 AND "color" = 'blue']]
-      [[SELECT * from "posts" WHERE "user_id" = 1234 ORDER BY id desc]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 AND "color" = 'blue']]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY id desc]]
     }, ->
       user = models.Users\load id: 1234
 
@@ -539,8 +539,8 @@ describe "lapis.db.model.relations", ->
     user = models.Users\load id: 1
 
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'blue']]
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'blue']]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'blue' LIMIT 10 OFFSET 10]]
       [[SELECT * FROM "posts" WHERE "user_id" IN (1) AND "color" = 'blue']]
     }, ->
       user\get_blue_posts!
@@ -549,8 +549,8 @@ describe "lapis.db.model.relations", ->
       models.Users\preload_relations { user }, "blue_posts"
 
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND ("color" = 'purple' OR "hue" = 'purple')]]
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND ("color" = 'purple' OR "hue" = 'purple') LIMIT 10 OFFSET 20]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND ("color" = 'purple' OR "hue" = 'purple')]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND ("color" = 'purple' OR "hue" = 'purple') LIMIT 10 OFFSET 20]]
       [[SELECT * FROM "posts" WHERE "user_id" IN (1) AND ("color" = 'purple' OR "hue" = 'purple')]]
     }, ->
       user\get_purple_posts!
@@ -579,8 +579,8 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation has no where
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'green' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
       user\get_posts_paginated({
@@ -599,8 +599,8 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation clause is db.clause
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'blue' AND "color" = 'green' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'blue' AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'blue' AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'blue' AND "color" = 'green' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
       user\get_blue_posts_paginated({
@@ -618,8 +618,8 @@ describe "lapis.db.model.relations", ->
 
     -- where merging for when relation clause is plain table
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'yellow' AND "color" = 'green' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "color" = 'yellow' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'yellow' AND "color" = 'green' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "color" = 'yellow' LIMIT 10 OFFSET 0]]
     }, ->
       user = models.Users\load id: 1
       user\get_green_posts_paginated({
@@ -677,12 +677,12 @@ describe "lapis.db.model.relations", ->
       }
 
     assert_queries {
-      [[SELECT * from "posts" WHERE "user_id" = 1 AND "user_id" = 'alpha']]
-      [[SELECT * from "posts" WHERE "user_id" = 2 AND "user_id" = 'beta']]
-      [[SELECT * from "posts" WHERE "user_id" = 3 AND "user_id" = 'alpha' AND "user_id" = 'zeta' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 4 AND "user_id" = 'omega' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 5 AND "user_id" = 'alpha' AND "user_id" = 'delta' LIMIT 10 OFFSET 0]]
-      [[SELECT * from "posts" WHERE "user_id" = 6 AND "user_id" = 'epsilon' AND "user_id" = 'beta' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "user_id" = 'alpha']]
+      [[SELECT * FROM "posts" WHERE "user_id" = 2 AND "user_id" = 'beta']]
+      [[SELECT * FROM "posts" WHERE "user_id" = 3 AND "user_id" = 'alpha' AND "user_id" = 'zeta' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 4 AND "user_id" = 'omega' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 5 AND "user_id" = 'alpha' AND "user_id" = 'delta' LIMIT 10 OFFSET 0]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 6 AND "user_id" = 'epsilon' AND "user_id" = 'beta' LIMIT 10 OFFSET 0]]
       [[SELECT * FROM "posts" WHERE "user_id" IN (7) AND "user_id" = 'alpha']]
       [[SELECT * FROM "posts" WHERE "user_id" IN (7) AND "user_id" = 'beta']]
       [[SELECT * FROM "posts" WHERE "user_id" IN (8) AND "user_id" = 'mu']]
@@ -738,8 +738,8 @@ describe "lapis.db.model.relations", ->
     assert up2\get_data!
 
     assert_queries {
-      'SELECT * from "user_page_data" WHERE "page_id" = 234 AND "user_id" = 99'
-      'SELECT * from "user_page_data" WHERE "page_id" IS NULL AND "user_id" = 99'
+      'SELECT * FROM "user_page_data" WHERE "page_id" = 234 AND "user_id" = 99'
+      'SELECT * FROM "user_page_data" WHERE "page_id" IS NULL AND "user_id" = 99'
     }
 
 

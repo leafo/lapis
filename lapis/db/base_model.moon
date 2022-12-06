@@ -177,7 +177,7 @@ class BaseModel
     load_as = opts and opts.load
     fields = opts and opts.fields or "*"
 
-    if res = @db.select "#{fields} from #{tbl_name} #{query}"
+    if res = @db.select "#{fields} FROM #{tbl_name} #{query}"
       return res if load_as == false
       if load_as
         load_as\load_all res
@@ -186,7 +186,7 @@ class BaseModel
 
   @count: (clause, ...) =>
     tbl_name = @db.escape_identifier @table_name!
-    query = "COUNT(*) as c from #{tbl_name}"
+    query = "COUNT(*) AS c FROM #{tbl_name}"
 
     if clause
       switch type clause

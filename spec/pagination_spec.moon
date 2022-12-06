@@ -33,9 +33,9 @@ describe "lapis.db.pagination", ->
       assert.same {}, pager\get_page 3
 
       assert_queries {
-        [[SELECT * from "things" LIMIT 10 OFFSET 0]]
-        [[SELECT * from "things" LIMIT 10 OFFSET 10]]
-        [[SELECT * from "things" LIMIT 10 OFFSET 20]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 0]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 10]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 20]]
       }
 
     it "gets pages with per_page", ->
@@ -48,9 +48,9 @@ describe "lapis.db.pagination", ->
       assert.same {}, pager\get_page 3
 
       assert_queries {
-        [[SELECT * from "things" LIMIT 25 OFFSET 0]]
-        [[SELECT * from "things" LIMIT 25 OFFSET 25]]
-        [[SELECT * from "things" LIMIT 25 OFFSET 50]]
+        [[SELECT * FROM "things" LIMIT 25 OFFSET 0]]
+        [[SELECT * FROM "things" LIMIT 25 OFFSET 25]]
+        [[SELECT * FROM "things" LIMIT 25 OFFSET 50]]
       }
 
     it "paginates with clause", ->
@@ -67,11 +67,11 @@ describe "lapis.db.pagination", ->
       p\get_page 4
 
       assert_queries {
-        'SELECT * from "things" where group_id = 123 order by name asc'
+        'SELECT * FROM "things" where group_id = 123 order by name asc'
         'SELECT COUNT(*) AS c FROM "things" where group_id = 123 '
         'SELECT 1 FROM "things" where group_id = 123 limit 1'
-        'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
-        'SELECT * from "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
+        'SELECT * FROM "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 0'
+        'SELECT * FROM "things" where group_id = 123 order by name asc LIMIT 10 OFFSET 30'
       }
 
     it "paginates with db.clause", ->
@@ -96,9 +96,9 @@ describe "lapis.db.pagination", ->
       some_things\get_page 2
 
       assert_queries {
-        [[SELECT * from "things" WHERE (not deleted) AND "group_id" = 23 LIMIT 10 OFFSET 0]]
-        [[SELECT * from "thongs" WHERE (not deleted) AND "group_id" = 23 LIMIT 77 OFFSET 231]]
-        [[SELECT * from "things" WHERE "deleted" OR "group_id" IS NULL LIMIT 10 OFFSET 10]]
+        [[SELECT * FROM "things" WHERE (not deleted) AND "group_id" = 23 LIMIT 10 OFFSET 0]]
+        [[SELECT * FROM "thongs" WHERE (not deleted) AND "group_id" = 23 LIMIT 77 OFFSET 231]]
+        [[SELECT * FROM "things" WHERE "deleted" OR "group_id" IS NULL LIMIT 10 OFFSET 10]]
       }
 
     it "ignores excess parameter", ->
@@ -112,9 +112,9 @@ describe "lapis.db.pagination", ->
       pager3\get_page 2
 
       assert_queries {
-        [[SELECT * from "things" order by name asc LIMIT 25 OFFSET 50]]
-        [[SELECT * from "things" WHERE "one" = 'two' LIMIT 25 OFFSET 0]]
-        [[SELECT * from "things" where "a" = 'b' group by cool LIMIT 25 OFFSET 25]]
+        [[SELECT * FROM "things" order by name asc LIMIT 25 OFFSET 50]]
+        [[SELECT * FROM "things" WHERE "one" = 'two' LIMIT 25 OFFSET 0]]
+        [[SELECT * FROM "things" where "a" = 'b' group by cool LIMIT 25 OFFSET 25]]
       }
 
     it "supports empty clause", ->
@@ -122,7 +122,7 @@ describe "lapis.db.pagination", ->
       p3\get_page 2
 
       assert_queries {
-        'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+        'SELECT hello, world FROM "things" LIMIT 12 OFFSET 12'
       }
 
     it "supports options only", ->
@@ -130,7 +130,7 @@ describe "lapis.db.pagination", ->
       pager\get_page 2
 
       assert_queries {
-        'SELECT hello, world from "things" LIMIT 12 OFFSET 12'
+        'SELECT hello, world FROM "things" LIMIT 12 OFFSET 12'
       }
 
     it "supports ordered clause", ->
@@ -142,8 +142,8 @@ describe "lapis.db.pagination", ->
       pager\has_items!
 
       assert_queries {
-        'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 20'
-        'SELECT * from "things" order by BLAH LIMIT 10 OFFSET 30'
+        'SELECT * FROM "things" order by BLAH LIMIT 10 OFFSET 20'
+        'SELECT * FROM "things" order by BLAH LIMIT 10 OFFSET 30'
         'SELECT COUNT(*) AS c FROM "things" '
         'SELECT 1 FROM "things" limit 1'
       }
@@ -157,7 +157,7 @@ describe "lapis.db.pagination", ->
       pager\has_items!
 
       assert_queries {
-        'SELECT * from "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
+        'SELECT * FROM "things" join whales on color = blue order by BLAH LIMIT 10 OFFSET 10'
         'SELECT COUNT(*) AS c FROM "things" join whales on color = blue '
         'SELECT 1 FROM "things" join whales on color = blue limit 1'
       }
@@ -170,7 +170,7 @@ describe "lapis.db.pagination", ->
       pager\total_items!
 
       assert_queries {
-        [[SELECT * from "things" where color = '?' LIMIT 10 OFFSET 20]]
+        [[SELECT * FROM "things" where color = '?' LIMIT 10 OFFSET 20]]
         [[SELECT COUNT(*) AS c FROM "things" where color = '?']]
       }
 
@@ -193,13 +193,13 @@ describe "lapis.db.pagination", ->
       }, [item for item in pager\each_item!]
 
       assert_queries {
-        [[SELECT * from "things" LIMIT 10 OFFSET 0]]
-        [[SELECT * from "things" LIMIT 10 OFFSET 10]]
-        [[SELECT * from "things" LIMIT 10 OFFSET 20]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 0]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 10]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 20]]
 
-        [[SELECT * from "things" LIMIT 10 OFFSET 0]]
-        [[SELECT * from "things" LIMIT 10 OFFSET 10]]
-        [[SELECT * from "things" LIMIT 10 OFFSET 20]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 0]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 10]]
+        [[SELECT * FROM "things" LIMIT 10 OFFSET 20]]
       }
 
 
@@ -217,8 +217,8 @@ describe "lapis.db.pagination", ->
       res, np = pager\get_page 123
 
       assert_queries {
-        'SELECT * from "things" where color = blue order by "things"."id" ASC limit 10'
-        'SELECT * from "things" where "things"."id" > 123 and (color = blue) order by "things"."id" ASC limit 10'
+        'SELECT * FROM "things" where color = blue order by "things"."id" ASC limit 10'
+        'SELECT * FROM "things" where "things"."id" > 123 and (color = blue) order by "things"."id" ASC limit 10'
       }
 
     it "filters with db.clause", ->
@@ -238,11 +238,11 @@ describe "lapis.db.pagination", ->
       pager2\get_page 123
 
       assert_queries {
-        [[SELECT * from "things" where "color" = 'green' order by "things"."id" ASC limit 10]]
-        [[SELECT * from "things" where "things"."id" > 123 and ("color" = 'green') order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "color" = 'green' order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 123 and ("color" = 'green') order by "things"."id" ASC limit 10]]
 
-        [[SELECT * from "things" where "color" = 'green' OR "hue" = 'green' order by "things"."id" ASC limit 10]]
-        [[SELECT * from "things" where "things"."id" > 123 and ("color" = 'green' OR "hue" = 'green') order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "color" = 'green' OR "hue" = 'green' order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 123 and ("color" = 'green' OR "hue" = 'green') order by "things"."id" ASC limit 10]]
       }
 
     it "gets pages for multiple keys", ->
@@ -265,21 +265,21 @@ describe "lapis.db.pagination", ->
       pager\before 32, 42
 
       assert_queries {
-        'SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+        'SELECT * FROM "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
 
-        'SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-        'SELECT * from "things" where color = blue order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
+        'SELECT * FROM "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+        'SELECT * FROM "things" where color = blue order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
 
-        'SELECT * from "things" where "things"."id" > 100 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-        'SELECT * from "things" where "things"."id" < 32 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
+        'SELECT * FROM "things" where "things"."id" > 100 and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+        'SELECT * FROM "things" where "things"."id" < 32 and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
 
-        'SELECT * from "things" where ("things"."id", "things"."updated_at") > (100, 200) and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
-        'SELECT * from "things" where ("things"."id", "things"."updated_at") < (32, 42) and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
+        'SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (100, 200) and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10'
+        'SELECT * FROM "things" where ("things"."id", "things"."updated_at") < (32, 42) and (color = blue) order by "things"."id" DESC, "things"."updated_at" DESC limit 10'
       }
 
     it "iterates through pages", ->
       -- base query
-      mock_query 'from "things" order by', { { id: 101 }, { id: 202 } }
+      mock_query 'FROM "things" order by', { { id: 101 }, { id: 202 } }
       mock_query '"things"."id" > 202', { { id: 302 } }
       mock_query '"things"."id" > 302', { }
 
@@ -299,13 +299,13 @@ describe "lapis.db.pagination", ->
       }, [item for item in pager\each_item!]
 
       assert_queries {
-        [[SELECT * from "things" order by "things"."id" ASC limit 10]]
-        [[SELECT * from "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
-        [[SELECT * from "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
 
-        [[SELECT * from "things" order by "things"."id" ASC limit 10]]
-        [[SELECT * from "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
-        [[SELECT * from "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
       }
 
     it "iterates through pages with multiple keys", ->
@@ -337,7 +337,7 @@ describe "lapis.db.pagination", ->
       }, [page for page in pager\each_page!]
 
       assert_queries {
-        [[SELECT * from "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
-        [[SELECT * from "things" where ("things"."id", "things"."updated_at") > (102, 'a') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
-        [[SELECT * from "things" where ("things"."id", "things"."updated_at") > (301, 'e') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * FROM "things" where color = blue order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (102, 'a') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (301, 'e') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
       }

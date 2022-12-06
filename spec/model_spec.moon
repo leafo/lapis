@@ -49,11 +49,11 @@ describe "lapis.db.model", ->
 
 
     assert_queries {
-      'SELECT * from "things" '
-      'SELECT * from "things" where id = 1234'
-      'SELECT hello from "things" '
-      'SELECT hello, world from "things" where id = 1234'
-      [[SELECT * from "things" where color = '?']]
+      'SELECT * FROM "things" '
+      'SELECT * FROM "things" where id = 1234'
+      'SELECT hello FROM "things" '
+      'SELECT hello, world FROM "things" where id = 1234'
+      [[SELECT * FROM "things" where color = '?']]
     }
 
   it "selects with db.clause", ->
@@ -83,11 +83,11 @@ describe "lapis.db.model", ->
     }, operator: "OR"
 
     assert_queries {
-      [[SELECT * from "things" WHERE "id" = 999]]
-      [[SELECT one, two from "things" WHERE "id" = 999]]
-      [[SELECT * from "things" WHERE "id" = 1289]]
-      [[SELECT * from "things" inner join dogs on "things"."id" = thing_id where "dogs"."height" = 10]]
-      [[SELECT * from "things" WHERE "one" OR "two"]]
+      [[SELECT * FROM "things" WHERE "id" = 999]]
+      [[SELECT one, two FROM "things" WHERE "id" = 999]]
+      [[SELECT * FROM "things" WHERE "id" = 1289]]
+      [[SELECT * FROM "things" inner join dogs on "things"."id" = thing_id where "dogs"."height" = 10]]
+      [[SELECT * FROM "things" WHERE "one" OR "two"]]
     }
 
   it "should count", ->
@@ -110,11 +110,11 @@ describe "lapis.db.model", ->
     }, operator: "OR"
 
     assert_queries {
-      [[SELECT COUNT(*) as c from "things"]]
-      [[SELECT COUNT(*) as c from "things" WHERE not deleted]]
-      [[SELECT COUNT(*) as c from "things" WHERE views > 100]]
-      [[SELECT COUNT(*) as c from "things" WHERE "status" = 'promoted']]
-      [[SELECT COUNT(*) as c from "things" WHERE "alpha" OR "beta"]]
+      [[SELECT COUNT(*) AS c FROM "things"]]
+      [[SELECT COUNT(*) AS c FROM "things" WHERE not deleted]]
+      [[SELECT COUNT(*) AS c FROM "things" WHERE views > 100]]
+      [[SELECT COUNT(*) AS c FROM "things" WHERE "status" = 'promoted']]
+      [[SELECT COUNT(*) AS c FROM "things" WHERE "alpha" OR "beta"]]
     }
 
 
@@ -157,13 +157,13 @@ describe "lapis.db.model", ->
     it "many ids", ->
       Things\find_all { 1,2,3,4,5 }
       assert_queries {
-        [[SELECT * from "things" WHERE "id" IN (1, 2, 3, 4, 5)]]
+        [[SELECT * FROM "things" WHERE "id" IN (1, 2, 3, 4, 5)]]
       }
 
     it "single id", ->
       Things\find_all { "yeah" }
       assert_queries {
-        [[SELECT * from "things" WHERE "id" IN ('yeah')]]
+        [[SELECT * FROM "things" WHERE "id" IN ('yeah')]]
       }
 
     it "empty ids", ->
@@ -173,25 +173,25 @@ describe "lapis.db.model", ->
     it "custom field", ->
       Things\find_all { 1,2,4 }, "dad"
       assert_queries {
-        [[SELECT * from "things" WHERE "dad" IN (1, 2, 4)]]
+        [[SELECT * FROM "things" WHERE "dad" IN (1, 2, 4)]]
       }
     
     it "with fields option", ->
       Things\find_all { 1,2,4 }, fields: "hello"
       assert_queries {
-        [[SELECT hello from "things" WHERE "id" IN (1, 2, 4)]]
+        [[SELECT hello FROM "things" WHERE "id" IN (1, 2, 4)]]
       }
     
     it "with multiple field and key option", ->
       Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
       assert_queries {
-        [[SELECT hello, world from "things" WHERE "dad" IN (1, 2, 4)]]
+        [[SELECT hello, world FROM "things" WHERE "dad" IN (1, 2, 4)]]
       }
 
     it "with empty where option", ->
       Things\find_all { 1,2,4 }, where: {}
       assert_queries {
-        [[SELECT * from "things" WHERE "id" IN (1, 2, 4)]]
+        [[SELECT * FROM "things" WHERE "id" IN (1, 2, 4)]]
       }
 
     it "with db.clause", ->
@@ -205,8 +205,8 @@ describe "lapis.db.model", ->
       }, operator: "OR"
 
       assert_queries {
-        [[SELECT * from "things" WHERE "name" = 'thing' AND "id" IN (1, 2, 4)]]
-        [[SELECT * from "things" WHERE ("deleted" OR "status" = 'deleted') AND "id" IN (1, 2, 4)]]
+        [[SELECT * FROM "things" WHERE "name" = 'thing' AND "id" IN (1, 2, 4)]]
+        [[SELECT * FROM "things" WHERE ("deleted" OR "status" = 'deleted') AND "id" IN (1, 2, 4)]]
       }
 
     it "with complex options", ->
@@ -221,7 +221,7 @@ describe "lapis.db.model", ->
 
       -- :/
       assert_queries {
-        [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) AND "height" = '10px']]
+        [[SELECT hello, world FROM "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) AND "height" = '10px']]
       }
 
     it "with complex options & interpolated clause", ->
@@ -237,7 +237,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) order by id limit 1234]]
+        [[SELECT hello, world FROM "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) order by id limit 1234]]
       }
 
     it "with complex options & plain clause", ->
@@ -251,7 +251,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT hello, world from "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) group by color]]
+        [[SELECT hello, world FROM "things" WHERE "color" = 'blue' AND "dad" IN (1, 2, 4) group by color]]
       }
 
 
@@ -271,8 +271,8 @@ describe "lapis.db.model", ->
 
     assert_queries {
       [[SELECT COUNT(*) AS c FROM "things" where color = 'blue']]
-      [[SELECT * from "things" where color = 'blue' LIMIT 99 OFFSET 198]]
-      [[SELECT * from "things" where number = 100 LIMIT 10 OFFSET 10]]
+      [[SELECT * FROM "things" where color = 'blue' LIMIT 99 OFFSET 198]]
+      [[SELECT * FROM "things" where number = 100 LIMIT 10 OFFSET 10]]
     }
 
 
@@ -300,8 +300,8 @@ describe "lapis.db.model", ->
     pager2\get_page "2020-6-8", 202
 
     assert_queries {
-      [[SELECT * from "things" where "things"."id" > 100 and (color = 'blue') order by "things"."id" ASC limit 99]]
-      [[SELECT * from "things" where ("things"."created_at", "things"."id") > ('2020-6-8', 202) and (not deleted) order by "things"."created_at" ASC, "things"."id" ASC limit 55]]
+      [[SELECT * FROM "things" where "things"."id" > 100 and (color = 'blue') order by "things"."id" ASC limit 99]]
+      [[SELECT * FROM "things" where ("things"."created_at", "things"."id") > ('2020-6-8', 202) and (not deleted) order by "things"."created_at" ASC, "things"."id" ASC limit 55]]
     }
 
 
