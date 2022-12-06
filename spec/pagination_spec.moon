@@ -6,9 +6,12 @@ db = require "lapis.db.postgres"
 import Model from require "lapis.db.postgres.model"
 import stub_queries, assert_queries from require "spec.helpers"
 
+import sorted_pairs from require "spec.helpers"
+
 import escape_pattern from require "lapis.util"
 
 describe "lapis.db.pagination", ->
+  sorted_pairs!
   get_queries, mock_query = stub_queries!
 
   with old = assert_queries
