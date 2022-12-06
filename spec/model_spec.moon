@@ -134,10 +134,10 @@ describe "lapis.db.model", ->
       }, operator: "OR"
 
       assert_queries {
-        [[SELECT * from "things" where "id" = 'hello' limit 1]]
-        [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
-        [[SELECT * from "things" where "age" = 11 limit 1]]
-        [[SELECT * from "things" where "deleted" OR "status" = 'deleted' limit 1]]
+        [[SELECT * FROM "things" WHERE "id" = 'hello' LIMIT 1]]
+        [[SELECT * FROM "things" WHERE "cat" = TRUE AND "weight" = 120 LIMIT 1]]
+        [[SELECT * FROM "things" WHERE "age" = 11 LIMIT 1]]
+        [[SELECT * FROM "things" WHERE "deleted" OR "status" = 'deleted' LIMIT 1]]
       }
 
     it "composite primary key", ->
@@ -146,7 +146,7 @@ describe "lapis.db.model", ->
 
       Things2\find 1,2
       assert_queries {
-        [[SELECT * from "things" where "hello" = 1 AND "world" = 2 limit 1]]
+        [[SELECT * FROM "things" WHERE "hello" = 1 AND "world" = 2 LIMIT 1]]
       }
 
   describe "find_all", ->

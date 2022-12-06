@@ -57,8 +57,8 @@ describe "lapis.db.model.relations", ->
     post\get_cool_user!
 
     assert_queries {
-      'SELECT * from "users" where "id" = 123 limit 1'
-      'SELECT * from "cool_users" where "user_id" = 99 limit 1'
+      'SELECT * FROM "users" WHERE "id" = 123 LIMIT 1'
+      'SELECT * FROM "cool_users" WHERE "user_id" = 99 LIMIT 1'
     }
 
   it "should make belongs_to getter with inheritance", ->
@@ -199,7 +199,7 @@ describe "lapis.db.model.relations", ->
     assert obj\get_user! == obj\get_user!
 
     assert_queries {
-      'SELECT * from "users" where "id" = 101 limit 1'
+      [[SELECT * FROM "users" WHERE "id" = 101 LIMIT 1]]
     }
 
   it "should make has_one getter", ->
@@ -217,7 +217,7 @@ describe "lapis.db.model.relations", ->
     user\get_user_profile!
 
     assert_queries {
-      'SELECT * from "user_profiles" where "user_id" = 123 limit 1'
+      'SELECT * FROM "user_profiles" WHERE "user_id" = 123 LIMIT 1'
     }
 
   it "fails with composite primary key on has_one", ->
@@ -254,7 +254,7 @@ describe "lapis.db.model.relations", ->
     Users\preload_relations { user }, "user_profile_with_key"
 
     assert_queries {
-      'SELECT * from "user_profiles" where "id" = 111 AND "id2" = 222 limit 1'
+      'SELECT * FROM "user_profiles" WHERE "id" = 111 AND "id2" = 222 LIMIT 1'
       'SELECT * FROM "user_profiles" WHERE ("id", "id2") IN ((111, 222))'
     }
 
@@ -273,7 +273,7 @@ describe "lapis.db.model.relations", ->
     assert user\get_data!
 
     assert_queries {
-      'SELECT * from "user_data" where "owner_id" = 123 limit 1'
+      'SELECT * FROM "user_data" WHERE "owner_id" = 123 LIMIT 1'
     }
 
   it "makes has_one getter with composite key", ->
@@ -301,8 +301,8 @@ describe "lapis.db.model.relations", ->
     assert up2\get_data!
 
     assert_queries {
-      'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
-      [[SELECT * from "user_page_data" where "page_id" = 'hello' AND "user_id" IS NULL limit 1]]
+      [[SELECT * FROM "user_page_data" WHERE "page_id" = 234 AND "user_id" = 99 LIMIT 1]]
+      [[SELECT * FROM "user_page_data" WHERE "page_id" = 'hello' AND "user_id" IS NULL LIMIT 1]]
     }
 
   it "should make has_one getter key and local key", ->
@@ -321,7 +321,7 @@ describe "lapis.db.model.relations", ->
     assert user\get_data!
 
     assert_queries {
-      [[SELECT * from "things" where "thing_email" = 'leafo@leafo' limit 1]]
+      [[SELECT * FROM "things" WHERE "thing_email" = 'leafo@leafo' LIMIT 1]]
     }
 
   it "makes has_one getter with where clause", ->
@@ -341,7 +341,7 @@ describe "lapis.db.model.relations", ->
     Users\preload_relations { user }, "data"
 
     assert_queries {
-      [[SELECT * from "user_data" where "owner_id" = 123 AND "state" = 'good' limit 1]]
+      [[SELECT * FROM "user_data" WHERE "owner_id" = 123 AND "state" = 'good' LIMIT 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND "state" = 'good']]
     }
 
@@ -373,9 +373,9 @@ describe "lapis.db.model.relations", ->
     Users\preload_relations { user }, "living_data"
 
     assert_queries {
-      [[SELECT * from "user_data" where "owner_id" = 123 AND (deleted) AND "owner_id" = 'oops' limit 1]]
+      [[SELECT * FROM "user_data" WHERE "owner_id" = 123 AND (deleted) AND "owner_id" = 'oops' LIMIT 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (deleted) AND "owner_id" = 'oops']]
-      [[SELECT * from "user_data" where "owner_id" = 123 AND (not "deleted" OR "deleted_at" IS NULL) limit 1]]
+      [[SELECT * FROM "user_data" WHERE "owner_id" = 123 AND (not "deleted" OR "deleted_at" IS NULL) LIMIT 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (not "deleted" OR "deleted_at" IS NULL)]]
     }
 
@@ -399,7 +399,7 @@ describe "lapis.db.model.relations", ->
     assert up\get_data!
 
     assert_queries {
-      'SELECT * from "user_page_data" where "page_id" = 234 AND "user_id" = 99 limit 1'
+      'SELECT * FROM "user_page_data" WHERE "page_id" = 234 AND "user_id" = 99 LIMIT 1'
     }
 
   it "make has_many paginated getter", ->
@@ -653,8 +653,8 @@ describe "lapis.db.model.relations", ->
       }
 
     assert_queries {
-      [[SELECT * from "posts" where "user_id" = 1 AND "user_id" = 'theta' limit 1]]
-      [[SELECT * from "posts" where "user_id" = 2 AND "user_id" = 'mu' limit 1]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 1 AND "user_id" = 'theta' LIMIT 1]]
+      [[SELECT * FROM "posts" WHERE "user_id" = 2 AND "user_id" = 'mu' LIMIT 1]]
 
       [[SELECT * FROM "posts" WHERE "user_id" IN (3) AND "user_id" = 'theta']]
       [[SELECT * FROM "posts" WHERE "user_id" IN (3) AND "user_id" = 'mu']]
@@ -827,9 +827,9 @@ describe "lapis.db.model.relations", ->
         assert.same obj, obj2
 
       assert_queries {
-        'SELECT * from "foos" where "id" = 33 limit 1'
-        'SELECT * from "bars" where "frog_index" = 66 limit 1'
-        'SELECT * from "bazs" where "id" = 99 limit 1'
+        'SELECT * FROM "foos" WHERE "id" = 33 LIMIT 1'
+        'SELECT * FROM "bars" WHERE "frog_index" = 66 LIMIT 1'
+        'SELECT * FROM "bazs" WHERE "id" = 99 LIMIT 1'
       }
 
 
@@ -1341,7 +1341,7 @@ describe "lapis.db.model.relations", ->
       assert.same 101, a.user_id
 
       assert_queries {
-        [[SELECT * from "item_applications" where "user_id" = 100 limit 1]]
+        [[SELECT * FROM "item_applications" WHERE "user_id" = 100 LIMIT 1]]
         [[SELECT * FROM "item_applications" WHERE "user_id" IN (101)]]
       }
 

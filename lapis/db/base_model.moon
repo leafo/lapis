@@ -445,7 +445,7 @@ class BaseModel
 
     table_name = @db.escape_identifier @table_name!
 
-    if result = unpack @db.select "* from #{table_name} where #{cond} limit 1"
+    if result = unpack @db.select "* FROM #{table_name} WHERE #{cond} LIMIT 1"
       @load result
     else
     	nil

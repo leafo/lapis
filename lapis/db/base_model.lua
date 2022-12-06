@@ -748,7 +748,7 @@ do
     end
     local table_name = self.db.escape_identifier(self:table_name())
     do
-      local result = unpack(self.db.select("* from " .. tostring(table_name) .. " where " .. tostring(cond) .. " limit 1"))
+      local result = unpack(self.db.select("* FROM " .. tostring(table_name) .. " WHERE " .. tostring(cond) .. " LIMIT 1"))
       if result then
         return self:load(result)
       else
