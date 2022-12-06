@@ -705,12 +705,11 @@ do
       by_key = by_key.key or self.primary_key
     end
     if type(by_key) == "table" and by_key[1] ~= "raw" then
-      error(tostring(self:table_name()) .. " find_all must have a singular key to search")
+      error("Model.find_all: (" .. tostring(self:table_name()) .. ") Must have a singular key to search")
     end
     if #ids == 0 then
       return { }
     end
-    self.db.list(ids)
     local where = {
       [by_key] = self.db.list(ids)
     }

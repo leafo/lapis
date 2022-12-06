@@ -77,11 +77,17 @@ describe "lapis.db.model", ->
       db.clause { height: 10 }, table_name: "dogs"
     )
 
+    Things\select db.clause {
+      one: true
+      two: true
+    }, operator: "OR"
+
     assert_queries {
       [[SELECT * from "things" WHERE "id" = 999]]
       [[SELECT one, two from "things" WHERE "id" = 999]]
       [[SELECT * from "things" WHERE "id" = 1289]]
       [[SELECT * from "things" inner join dogs on "things"."id" = thing_id where "dogs"."height" = 10]]
+      [[SELECT * from "things" WHERE "one" OR "two"]]
     }
 
   it "should count", ->
@@ -98,11 +104,17 @@ describe "lapis.db.model", ->
       status: "promoted"
     }
 
+    Things\count db.clause {
+      alpha: true
+      beta: true
+    }, operator: "OR"
+
     assert_queries {
       [[SELECT COUNT(*) as c from "things"]]
       [[SELECT COUNT(*) as c from "things" WHERE not deleted]]
       [[SELECT COUNT(*) as c from "things" WHERE views > 100]]
       [[SELECT COUNT(*) as c from "things" WHERE "status" = 'promoted']]
+      [[SELECT COUNT(*) as c from "things" WHERE "alpha" OR "beta"]]
     }
 
 
@@ -116,10 +128,16 @@ describe "lapis.db.model", ->
         age: 11
       }
 
+      Things\find db.clause {
+        deleted: true
+        status: "deleted"
+      }, operator: "OR"
+
       assert_queries {
         [[SELECT * from "things" where "id" = 'hello' limit 1]]
         [[SELECT * from "things" where "cat" = TRUE AND "weight" = 120 limit 1]]
         [[SELECT * from "things" where "age" = 11 limit 1]]
+        [[SELECT * from "things" where "deleted" OR "status" = 'deleted' limit 1]]
       }
 
     it "composite primary key", ->
@@ -181,8 +199,14 @@ describe "lapis.db.model", ->
         name: "thing"
       }
 
+      Things\find_all { 1,2,4 }, where: db.clause {
+        deleted: true
+        status: "deleted"
+      }, operator: "OR"
+
       assert_queries {
         [[SELECT * from "things" WHERE "name" = 'thing' AND "id" IN (1, 2, 4)]]
+        [[SELECT * from "things" WHERE ("deleted" OR "status" = 'deleted') AND "id" IN (1, 2, 4)]]
       }
 
     it "with complex options", ->
@@ -482,6 +506,13 @@ describe "lapis.db.model", ->
       actor: "good"
     }, thing2
 
+    thing2\update {
+      yes: "no"
+    }, where: db.clause {
+      deleted: true
+      status: "deleted"
+    }, operator: "OR"
+
     mock_query "count %+ 1", {
       affected_rows: 1
       {
@@ -522,6 +553,7 @@ describe "lapis.db.model", ->
     assert_queries {
       [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12 AND ("color" = 'blue')]]
       [[UPDATE "timed_things" SET "actor" = 'good', "b" = 4, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3 AND (update_count < 100) AND "update_id" IS NULL]]
+      [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "yes" = 'no' WHERE "a" = 2 AND "b" = 4 AND ("deleted" OR "status" = 'deleted')]]
       [[UPDATE "things" SET "count" = count + 1 WHERE "id" = 12 AND ("count" = 0) RETURNING "count"]]
       [[UPDATE "timed_things" SET "color" = 'green' WHERE "a" = 2 AND "b" IS NULL AND ("age" = '10')]]
     }
@@ -548,6 +580,7 @@ describe "lapis.db.model", ->
 
     thing.key2 = nil
     thing\delete db.clause(status: "spam"), "cool"
+    thing\delete db.clause({status: "spam", spam: true}, operator: "OR"), "cool"
 
     assert_queries {
       [[DELETE FROM "things" WHERE "id" = 2]]
@@ -556,6 +589,7 @@ describe "lapis.db.model", ->
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821 RETURNING "one", "two"]]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" = 4821 AND "status" = 'spam']]
       [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" IS NULL AND "status" = 'spam' RETURNING "cool"]]
+      [[DELETE FROM "things" WHERE "key1" = 'blah blag' AND "key2" IS NULL AND ("spam" OR "status" = 'spam') RETURNING "cool"]]
     }
 
   it "should check unique constraint", ->

@@ -407,12 +407,12 @@ class BaseModel
       clause = by_key.clause
       by_key = by_key.key or @primary_key
 
+    -- TODO: we can support composite keys here
     if type(by_key) == "table" and by_key[1] != "raw"
-      error "#{@table_name!} find_all must have a singular key to search"
+      error "Model.find_all: (#{@table_name!}) Must have a singular key to search"
 
     return {} if #ids == 0
 
-    @db.list ids
     where = { [by_key]: @db.list ids }
     if extra_where
       if @db.is_clause extra_where
