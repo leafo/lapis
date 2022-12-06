@@ -809,9 +809,27 @@ describe "lapis.db.postgres", ->
         assert.same group[2], output
 
 
-  describe "encode_assigns", ->
-    sorted_pairs!
+  describe "db.clause", ->
+    it "fails to create clause from object with a metatable", ->
+      assert.has_error(
+        -> db.clause setmetatable {}, {}
+        "db.clause: attempted to create clause from object that has metatable"
+      )
 
+    it "fails to encode empty clause", ->
+      assert.has_error(
+        -> db.encode_clause db.clause {}
+        "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)"
+      )
+
+      assert.has_error(
+        -> db.encode_clause db.clause {
+          db.clause {}
+        }
+        "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)"
+      )
+
+  describe "encode_assigns", ->
     it "writes output to buffer", ->
       buffer = {"hello"}
 
@@ -843,8 +861,6 @@ describe "lapis.db.postgres", ->
       assert.same { "hello" }, buffer
 
   describe "encode_clause", ->
-    sorted_pairs!
-
     it "writes output to buffer", ->
       buffer = {"hello"}
 
@@ -872,8 +888,6 @@ describe "lapis.db.postgres", ->
       assert.same { "hello" }, buffer
 
   describe "encode_values", ->
-    sorted_pairs!
-
     it "writes output to buffer", ->
       buffer = {"hello"}
 
