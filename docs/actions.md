@@ -4,10 +4,10 @@
 # Requests and Actions
 
 Every HTTP request that is handled by Lapis follows the same basic flow after
-being handed off from Nginx. The first step is routing. A *route* is a pattern
-that a URL must match. When you define a route you also include an *action*. An
-action is a regular Lua/MoonScript function that will be called if the
-associated route matches.
+being handed off from processing server. The first step is routing. A *route*
+is a pattern that a URL must match. When you define a route you also include an
+*action*. An action is a regular Lua/MoonScript function that will be called if
+the associated route matches.
 
 All actions are invoked with one argument, a [*request
 object*](#request-object). The request object is where you'll store all the
@@ -1067,7 +1067,7 @@ class App extends lapis.Application
 
 Every action executed by Lapis is wrapped by [`xpcall`][1]. This ensures fatal
 errors can be captured and a meaningful error page can be generated instead of
-Nginx's default which is unaware of Lua code.
+the server's default error page, which may not be useful.
 
 The error handler should only be used to capture fatal and unexpected errors,
 expected errors are discussed in the [Exception Handling

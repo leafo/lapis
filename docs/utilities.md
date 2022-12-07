@@ -816,6 +816,30 @@ there was an error parsing the JSON then <span
 class="for_moon">`@json`</span><span class="for_lua">`self.json`</span> will be
 `nil` and the request will continue.
 
+## UTF8
+
+This module includes a collection of LPeg patterns for working with UTF8 text.
+
+$dual_code{[[
+utf8 = requrie("lapis.util.utf8")
+]]}
+
+### `utf8.trim`
+
+A pattern that will trim all invisible characters from either side of the
+matched string. (Utilizes the `whitespace` pattern described below)
+
+### `utf8.printable_character`
+
+A pattern that matches a single printable character. Note that printable
+characters include whitepace, but don't include invalid unicode codepoints or
+control characters.
+
+### `utf8.whitepace`
+
+An optimal pattern that matches any unicode codepoints that are classified as
+whitespace.
+
 
 [0]: exception_handling.html
 [1]: actions.html#handling-http-verbs

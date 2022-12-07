@@ -729,7 +729,25 @@ derived field name when `many` is true.)
 
 Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagination).
 
+### `Model:get_relation_model(name)`
+
+
+This method is used to look up the model for a relation by the name specified
+in the relation. By default the following function is provided:
+
+$dual_code{[[
+get_relation_model = (name) =>
+	require("models")[name]
+]]}
+
+If your model has relations that are pulled from other sources than the
+`models` module, then you can overwrite this method to handle loading the
+models for those relations.
+
 ## Instance Methods
+
+When extending the base Model class, you should avoid overriding any of the
+built in methods to avoid unexpected issues.
 
 ### `model:update(..., opts={})`
 
@@ -961,6 +979,18 @@ post:refresh("color", "height")
 ```sql
 SELECT "color", "height" from "posts" where id = 1
 ```
+
+### `model:url_key(...)`
+
+This method implements the interface for `url_for` that allows the model
+instance to be used as a value for a URL parameter. The default implementation
+will concatenate all of the primary keys by the `-` character. If there is only
+one primary key, then the `url_key` will be just that value converted to a
+string.
+
+Generally, you should implement `url_params` method on your model if you would
+like to have the model have a fully declared URL within your app.
+
 
 ## Timestamps
 
