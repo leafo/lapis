@@ -29,11 +29,17 @@ used to run MySQL queries. When on the command line,
 
 ## Establishing A Connection
 
-You'll need to configure Lapis so it can connect to the database.
+You'll need to configure Lapis so it can connect to the database. Lapis manages
+a single global database connection (or pool of connections) in the `lapis.db`
+module. It will ensure that you are using connections efficiently, and clean up
+any resources automatically.
+
+If you need multiple connections in the same request then you will have to
+manually create and release them.
 
 ### PostgreSQL
 
-If you're using PostgreSQL create a `postgres` block in our <span
+To use PostgreSQL create a `postgres` block in the <span
 class="for_moon">`config.moon`</span><span class="for_lua">`config.lua`</span>
 file.
 
@@ -68,8 +74,9 @@ syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
 
 ### MySQL
 
-If you're using MySQL the approach is similar, but you will define a `mysql`
-block:
+To use MySQL create a `mysql` block in the <span
+class="for_moon">`config.moon`</span><span class="for_lua">`config.lua`</span>
+file.
 
 ```lua
 -- config.lua
@@ -99,16 +106,17 @@ You're now ready to start making queries.
 
 ## Making a Query
 
-There are two ways to make queries:
+There are generally two ways to work with the data in your database:
 
-1. The raw query interface is a collection of functions to help you write SQL.
+1. The `lapis.db` module is a collection of functions to make queries to the database, returning the reults as plain Lua tables.
 1. The [`Model` class](models.html) is a wrapper around a Lua table that helps you synchronize it with a row in a database table.
 
-The `Model` class is the preferred way to interact with the database. The raw
-query interface is for achieving things the `Model` class is unable to do
-easily.
+The `Model` class is the preferred way to interact with the database. Issuing
+queries from the `lapis.db` module should preferred for achieving things the
+`Model` class is unable to do easily.
 
-Here's an example of the raw query interface:
+Here's an example of how you might use the `query` function in the `lapis.db`
+module to issue a query to the database:
 
 ```lua
 local lapis = require("lapis")
@@ -134,7 +142,8 @@ class extends lapis.Application
     "ok!"
 ```
 
-And the same query represented with the `Model` class:
+And here's how you would accomplish something similar using `Model` class to
+represent rows in a table:
 
 ```lua
 local lapis = require("lapis")
@@ -180,29 +189,25 @@ db = require "lapis.db"
 
 The `db` module provides the following functions:
 
-### `query(query, params...)`
+### `db.query(query, params...)`
 
-Performs a raw query. Returns the result set if successful, returns `nil` if
-failed.
+Sends a query to the database using an active & available connection. If there
+is no connection, then Lapis will automatically allocate & connect one using
+the details provided in your configuration.
+
+Returns the results as a Lua table if successful. Will throw an error if the
+operation failed.
 
 The first argument is the query to perform. If the query contains any `?`s then
 they are replaced in the order they appear with the remaining arguments. The
 remaining arguments are escaped with `escape_literal` before being
 interpolated, making SQL injection impossible.
 
-```lua
-local res
-
-res = db.query("SELECT * FROM hello")
-res = db.query("UPDATE things SET color = ?", "blue")
-res = db.query("INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true)
-```
-
-```moon
-res = db.query "SELECT * FROM hello"
-res = db.query "UPDATE things SET color = ?", "blue"
-res = db.query "INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true
-```
+$dual_code{[[
+res1 = db.query "SELECT * FROM hello"
+res2 = db.query "UPDATE things SET color = ?", "blue"
+res3 = db.query "INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true
+]]}
 
 ```sql
 SELECT * FROM hello
@@ -213,40 +218,34 @@ INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 A query that fails to execute will raise a Lua error. The error will contain
 the message from the database along with the query.
 
-### `select(query, params...)`
+Every single function that Lapis provides which communicates with the datbase
+will eventually end up calling `db.query`. The same logic with regards to error
+handling and connection management applies to all database operations that
+Lapis does.
 
-The same as `query` except it appends `"SELECT"` to the front of the query.
+### `db.select(query, params...)`
 
-```lua
-local res = db.select("* from hello where active = ?", db.FALSE)
-```
+Similar to `db.query`, but it appends `"SELECT"` to the front of the query.
 
-```moon
-res = db.select "* from hello where active = ?", db.FALSE
-```
+$dual_code{[[
+res = db.select "* from hello where active = ?", false
+]]}
+
 
 ```sql
 SELECT * from hello where active = FALSE
 ```
 
-### `insert(table, values, opts_or_returning...)`
+### `db.insert(table, values, opts_or_returning...)`
 
 Inserts a row into `table`. `values` is a Lua table of column names and values.
 
-```lua
-db.insert("my_table", {
-  age = 10,
-  name = "Hello World"
-})
-```
-
-
-```moon
+$dual_code{[[
 db.insert "my_table", {
   age: 10
   name: "Hello World"
 }
-```
+]]}
 
 ```sql
 INSERT INTO "my_table" ("age", "name") VALUES (10, 'Hello World')
@@ -254,17 +253,11 @@ INSERT INTO "my_table" ("age", "name") VALUES (10, 'Hello World')
 
 A list of column names to be returned can be given after the value table:
 
-```lua
-local res = db.insert("some_other_table", {
-  name = "Hello World"
-}, "id")
-```
-
-```moon
+$dual_code{[[
 res = db.insert "some_other_table", {
   name: "Hello World"
 }, "id"
-```
+]]}
 
 ```sql
 INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
@@ -299,10 +292,11 @@ $options_table{
 }
 
 
+### `db.update(table, values, conditions, params...)`
 
-### `update(table, values, conditions, params...)`
-
-Updates `table` with `values` on all rows that match `conditions`.
+Updates `table` with `values` on all rows that match `conditions`. If
+conditions is a plain table or a `db.clause` object, then it will be converted
+to SQL using `db.encode_clause`.
 
 $dual_code{[[
 db.update "the_table", {
@@ -310,36 +304,34 @@ db.update "the_table", {
   active: true
 }, {
   id: 100
+  active: db.NULL
 }
 ]]}
 
 
 ```sql
-UPDATE "the_table" SET "name" = 'Dogbert 2.0', "active" = TRUE WHERE "id" = 100
+UPDATE "the_table" SET "name" = 'Dogbert 2.0', "active" = TRUE WHERE "id" = 100 and "active" IS NULL
 ```
 
 The return value is a table containing the status of the update. The number of
 rows updated can be determined by the `affected_rows` field of the returned
 table.
 
-
-`conditions` can also be a string, and `params` will be interpolated into the
-query as if you called `db.interpolate_query`.
+`conditions` can also be a string, the remaining arguments will be interpolated
+into the query as if you called `db.interpolate_query`.
 
 $dual_code{[[
-
-    db.update "the_table", {
-      count: db.raw"count + 1"
-    }, "count < ?", 10
-
+db.update "the_table", {
+  count: db.raw"count + 1"
+}, "count > ?", 10
 ]]}
 
 ```sql
-UPDATE "the_table" SET "count" = count + 1 WHERE count < 10
+UPDATE "the_table" SET "count" = count + 1 WHERE count > 10
 ```
 
-When using a table argument for conditions, all the extra arguments are
-escaped as identifiers and appended as a `RETURNING` clause:
+When using a table or `db.clause` argument for conditions, all the extra
+arguments are escaped as identifiers and appended as a `RETURNING` clause:
 
 $dual_code{[[
 db.update "cats", {
@@ -362,14 +354,14 @@ containing the `affected_rows` field.
 
 > `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
 
-### `delete(table, conditions, params...)`
+### `db.delete(table, conditions, params...)`
 
 Deletes rows from `table` that match `conditions`.
 
-The `conditions` arugment can either be a table mapping column to value, or a
-string as a SQL fragment. When using the string condition, the remaining
-arguments as passed as parameters to the SQL fragment as if you called
-`db.interpolate_query`.
+The `conditions` arugment can either be a Lua table mapping column to value, a
+`db.clause`, or a string as a SQL fragment. When using the string condition,
+the remaining arguments as passed as parameters to the SQL fragment as if you
+called `db.interpolate_query`.
 
 The return value is a table containing the status of the delete. The number of
 rows deleted can be determined by the `affected_rows` field of the returned
@@ -409,34 +401,7 @@ in addition to containing the `affected_rows` field.
 > `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
 
 
-### `raw(str)`
-
-Returns a special value that will be inserted verbatim into the query without being
-escaped:
-
-```lua
-db.update("the_table", {
-  count = db.raw("count + 1")
-})
-
-db.select("* from another_table where x = ?", db.raw("now()"))
-```
-
-```moon
-db.update "the_table", {
-  count: db.raw"count + 1"
-}
-
-db.select "* from another_table where x = ?", db.raw"now()"
-```
-
-```sql
-UPDATE "the_table" SET "count" = count + 1
-SELECT * from another_table where x = now()
-```
-
-
-### `escape_literal(value)`
+### `db.escape_literal(value)`
 
 Escapes a value for use in a query. A value is any type that can be stored in a
 column. Numbers, strings, and booleans will be escaped accordingly.
@@ -454,7 +419,7 @@ res = db.query "select * from hello where id = #{escaped}"
 `escape_literal` is not appropriate for escaping column or table names. See
 `escape_identifier`.
 
-### `escape_identifier(str)`
+### `db.escape_identifier(str)`
 
 Escapes a string for use in a query as an identifier. An identifier is a column
 or table name.
@@ -472,43 +437,46 @@ res = db.query "select * from #{table_name}"
 `escape_identifier` is not appropriate for escaping values. See
 `escape_literal` for escaping values.
 
-#### `interpolate_query(query, ...)`
+#### `db.interpolate_query(query, ...)`
 
-Interpolates a query containing `?` markers with the rest of the
-arguments escaped via `escape_literal`.
+Interpolates a query containing `?` markers with the rest of the arguments
+escaped via `escape_literal`. If a `db.clause` is passed as one of the
+arguments, then it will be encoded using `db.encode_clause`.
 
-```lua
-local q = "select * from table"
-q = q .. db.interpolate_query("where value = ?", 42)
-local res = db.query(q)
-```
-
-```moon
-q = "select * from table"
-q ..= db.interpolate_query "where value = ?", 42
+$dual_code{[[
+q = db.interpolate_query "select * from table where value = ?", 42
 res = db.query q
-```
 
-### Constants
-
-The following constants are also available:
-
- * `NULL` -- represents `NULL` in SQL
- * `TRUE` -- represents `TRUE` in SQL
- * `FALSE` -- represents `FALSE` in SQL
+]]}
 
 
-```lua
-db.update("the_table", {
-  name = db.NULL
-})
-```
+#### `db.encode_clause(clause_obj)`
 
-```moon
-db.update "the_table", {
-  name: db.NULL
-}
-```
+Generates a boolean SQL expression from an object describing one or many
+conditions. The `clause` argument must be either a plain Lua table or a value
+returned by `db.clause`.
+
+If provided a plain table, then all key, value pairs are taken from the table
+using `pairs`,and converted to an SQL fragment similar to
+`db.escape_identifier(key) = db.escape_literal(value)`, then concatenated with
+the `AND` SQL operator.
+
+$dual_code{[[
+print db.encode_clause {
+  name: "Garf"
+  color: db.list {"orange", "ginger"}
+  processed_at: db.NULL
+} --> "color" IN ('orange', 'ginger') AND "processed_at" IS NULL AND "name" = 'Garf'
+]]}
+
+
+If provided a `db.clause`, then a richer set of conditions can be described.
+See the documentation for [`db.clause`](#database-primitives/clause)
+
+`db.encode_clause` will throw an error on an empty clause. This is to prevent
+the mistake of accidentally providing `nil` in place of a value of `db.NULL`
+that results in generating a clause that matches a much wider range of data
+than desired.
 
 ## Database Primitives
 
@@ -524,6 +492,39 @@ module:
 $dual_code{[[
 db = require "lapis.db"
 ]]}
+
+
+
+### `db.raw(str)`
+
+Returns a an object wrapping the string argument that will be inserted verbatim
+into a query without being escaped. Special care should be taken to avoid
+generating invalid SQL and and to avoid introducing SQL injection attacks by
+concatenated unsafe data into the string.
+
+`db.raw` can be used inin almost any place where SQL query construction takes
+place.  For example, `db.escape_literal` and `db.escape_identifier` will both
+pass the string through unchanged. It can also be used in `db.encode_clause`
+for both keys and values. You can use it where things like column names or
+table names are also requested (eg. `db.update`)
+
+$dual_code{[[
+db.update "the_table", {
+  count: db.raw"count + 1"
+}
+
+db.select "* from another_table where x = ?", db.raw"now()"
+]]}
+
+```sql
+UPDATE "the_table" SET "count" = count + 1
+SELECT * from another_table where x = now()
+```
+
+
+### `db.is_raw(obj)`
+
+Returns `true` if `obj` is a value created by `db.raw`.
 
 ### `db.list({values...})`
 
@@ -549,6 +550,117 @@ db.update "the_table", {
 }, { :ids }
 ]]}
 
+### `db.is_list(obj)`
+
+Returns `true` if `obj` is a value created by `db.list`.
+
+### `db.clause({clause...}, opts?)`
+
+Creates a *clause* object that can be encoded into a boolean SQL expression for
+filtering or finding operations in the database. A clause object is an
+encodable type that can be used in places like `db.encode_clause` and and
+`db.interpolate_query` to safely generate an SQL fragment where all values are
+escaped accordingly. Any built in Lapis functions that can take an object to
+filter the affected rows can also take a clause object in place of a query
+fragment or plain Lua table.
+
+By default, a clause object will combine all paramters contained with the `AND`
+operator.
+
+When encoded to SQL, the clause object will attempt to extract filters from all
+entries in the table:
+
+* Key, value pairs in the hash-table portion of the clause table will be converted to a SQL fragment similar to `db.escape_identifier(key) = db.escape_literal(value)`. This mode is aware of booleans and `db.list` objects to generate the correct syntax
+* Values in the array portion of the clause table will handled based on their type:
+  * String values will be treated as raw SQL fragments that will be concatenated into the clause directly. All string values are warpped in `()` to ensure there are no precedence issues
+  * Table values will passed to `interpolate_query` if the sub-table's first item is a string, eg. `{"views_count > ?", 100}`
+  * A `nil` value will be skipped, meaning you can place conditionals directly inside of the clause
+  * Clause objects can be nested by placing them in the array portion of the clause table
+
+Here is an example demonstrating all the different ways of building out a clause:
+
+$dual_code{[[
+filter = db.clause {
+  id: 12
+  "username like '%admin'"
+  deleted: false
+  status: db.list {3,4}
+  {"views_count > ?", 100}
+
+  db.clause {
+    active: true
+    promoted: true
+  }, operator: "OR"
+}
+
+res = db.query "SELECT * FROM profiles WHERE ?", filter
+]]}
+
+The following SQL will be generated:
+
+```sql
+SELECT * FROM profiles WHERE (username like '%admin') AND (views_count > 100) AND ("active" OR "promoted") AND "status" IN (3, 4) AND "id" = 12 AND not "deleted",
+```
+
+The second argument can be a table of options. The following properties are
+supported:
+
+$options_table{
+  {
+    name = "operator",
+    description = [[
+      Change the operator used to join the clause components. eg. `AND`, `OR`
+
+    ]],
+    example = dual_code{[[
+      filter = db.clause {
+         status: "deleted"
+         deleted: true
+      }, operator: "OR"
+
+      print db.encode_clause filter --> "deleted" OR "status" = 'deleted'
+    ]]},
+    default = '`"AND"`'
+  }, {
+    name = "table_name",
+    description = [[
+      Prefixes each named field with the escaped table name. Note that this
+      does not apply to SQL fragments in the clause. Sub-clauses are also not
+      affected.
+    ]],
+    example = dual_code{[[
+      filter = db.clause {
+        color: "green"
+        published: true
+      }, table_name: "posts"
+
+      print db.encode_clause filter --> "posts"."color" = 'green' AND "posts"."published"
+    ]]}
+  }, {
+    name = "allow_empty",
+    description = [[
+      By default, an empty clause will throw an error when it is attampted to
+      be encoded. This is to prevent you from accidentally filtering on
+      something that has a nil value that should actually be provided. You must
+      set this field to `true` in order to allow for the empty clause to be
+      encoded into a query.
+    ]],
+    example = dual_code{[[
+      some_object = { the_id: 1 }
+
+      -- This will throw an error to prevent you from accidentally deleting all
+      -- rows because of an empty clause created by a nil value
+      db.delete "users", db.clause {
+        user_id: something.id -- oops, used the wrong field name and set this to nil
+      }
+    ]]}
+  }
+}
+
+### `db.is_clause(obj)`
+
+Returns `true` if `obj` is a value created by `db.clause`.
+
 ### `db.array({values...})`
 
 Converts the argument passed to an array type that will be inserted/updated
@@ -558,27 +670,55 @@ The return value of this function can be used in place of any regular value
 passed to a SQL query function. Each item in the list will be escaped with
 `escape_literal` before being inserted into the query.
 
-The argument is converted, not copied. If you need to avoid modifying the
-argument then create a copy before passing it to this function.
+**Note:** This function mutates the object passed in by setting its metatable.
+The returning object is the same value as the argument. This will allow the
+object to still function as a regular Lua array. If you do not want to mutate
+the argument, you must make a copy before passing it in.
 
+Additionally, when a query returns an array from the database, it is
+automatically converted into a `db.array`.
 
-```lua
-db.insert("some_table", {
-  tags = db.array({"hello", "world"})
-})
-```
-
-```moon
+$dual_code{[[
 db.insert "some_table", {
   tags: db.array {"hello", "world"}
 }
-```
+]]}
+
 
 ```sql
 INSERT INTO "some_table" ("tags") VALUES (ARRAY['hello','world'])
 ```
 
+### `db.NULL`
 
+Represents `NULL` in SQL syntax. In Lua, `nil` can't be stored in a table, so the
+`db.NULL` object can be used to provide `NULL` as a value. When used with
+`encode_clause`, the `IS NULL` syntax is automatically used.
+
+$dual_code{[[
+db.update "the_table", {
+  name: db.NULL
+}
+]]}
+
+```SQL
+UPDATE "the_table" SET name = NULL
+```
+
+### `db.is_array(obj)`
+
+Returns `true` if `obj` is a table with the `PostgresArray` metatable (eg. a
+value created by `db.array`)
+
+### `db.TRUE`
+
+Represents `TRUE` in SQL syntax. In most cases, it is not necessary to use this
+constant, and instead the Lua boolean values can be used.
+
+### `db.FALSE`
+
+Represents `FALSE` in SQL syntax. In most cases, it is not necessary to use this
+constant, and instead the Lua boolean values can be used.
 
 ## Database Schemas
 
@@ -890,8 +1030,7 @@ types.real array: true                --> real[]
 types.text array: 2                   --> text[][]
 ```
 
-> MySQL has a complete different type set than PostgreSQL, see [MySQL
-> types](https://github.com/leafo/lapis/blob/master/lapis/db/mysql/schema.moon#L162)
+> MySQL has a complete different type set than PostgreSQL, see [MySQL types](https://github.com/leafo/lapis/blob/master/lapis/db/mysql/schema.moon#L162)
 
 ## Database Migrations
 
@@ -1015,6 +1154,7 @@ CREATE TABLE IF NOT EXISTS "lapis_migrations" (
 
 Then we can manually run migrations with the following code:
 
+
 ```lua
 local migrations = require("lapis.db.migrations")
 migrations.run_migrations(require("migrations"))
@@ -1030,19 +1170,15 @@ run_migrations require "migrations"
 These are additional helper functions from the `db` module that
 aren't directly related to the query interface.
 
-#### `format_date(time)`
+#### `db.format_date(time)`
 
 Returns a date string formatted properly for insertion in the database.
 
 The `time` argument is optional, will default to the current UTC time.
 
-```lua
-local date = db.format_date()
-db.query("update things set published_at = ?", date)
-```
 
-```moon
+$dual_code{[[
 date = db.format_date!
 db.query "update things set published_at = ?", date
-```
+]]}
 
