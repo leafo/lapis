@@ -3,7 +3,7 @@
 }
 # Utilities
 
-## Functions
+## Functions <span stat-keyword="util"></span>
 
 Utility functions are found in:
 
@@ -51,7 +51,9 @@ table, then returns the new one.
 
 ###  `trim(str)`
 
-Trims the whitespace off of both sides of a string.
+Trims the whitespace off of both sides of a string. Note that this function is
+only aware of ASCII whitepsace characters, such as space, newline, tab, etc.
+For full Unicode/UTF8 support see the `lapis.util.utf8` module
 
 ### `trim_all(tbl)`
 
