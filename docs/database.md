@@ -729,7 +729,7 @@ constant, and instead the Lua boolean values can be used.
 Represents `FALSE` in SQL syntax. In most cases, it is not necessary to use this
 constant, and instead the Lua boolean values can be used.
 
-## Database Schemas
+## Database Schemas <span data-keywords="schema"></span>
 
 Lapis comes with a collection of tools for creating your database schema inside
 of the `lapis.db.schema` module.
