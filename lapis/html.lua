@@ -64,10 +64,6 @@ unescape = function(text)
     end
   end))
 end
-local strip_tags
-strip_tags = function(html)
-  return html:gsub("<[^>]+>", "")
-end
 local void_tags = {
   "area",
   "base",

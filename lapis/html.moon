@@ -39,9 +39,6 @@ unescape = (text) ->
     decoded = html_unescape_entities[enc]
     decoded if decoded else enc)
 
-strip_tags = (html) ->
-  html\gsub "<[^>]+>", ""
-
 void_tags = {
   "area"
   "base"
