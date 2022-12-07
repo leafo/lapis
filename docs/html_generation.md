@@ -392,3 +392,40 @@ Escapes any HTML special characters in the string. The following are escaped:
  * `"` -- `&quot;`
  * `'` -- `&#039;`
 
+### `html.classnames(t)`
+
+Converts a nested Lua table into a HTML class attribute string. Passing a
+string to this function will return the string unmodified.
+
+This function is applied to the value of the class attribute when using the
+HTML builder syntax.
+
+$dual_code{[[
+classnames({
+  "one"
+  "two"
+  yes: true
+  {skipped: false, haveit: true, "", "last"}
+}) --> "one two yes haveit last"
+]]}
+
+
+### `html.is_mixins_class(obj)`
+
+Returns `true` if the the argument `obj` is an auto-generated mixin class that
+is inserted into the class hierarchy of a widget when `Widget:include` is
+called.
+
+```moon
+html = require "lapis.html"
+
+class MyHelpers
+  say_hi: => div "hi"
+
+class SomeWidget extends html.Widget
+  @include MyHelpers
+  content: => @say_hi!
+
+print html.is_mixins_class(SomeWidget.__parent) --> true
+
+```
