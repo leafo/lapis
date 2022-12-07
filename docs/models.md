@@ -102,7 +102,7 @@ class Tags extends Model
   @primary_key: {"user_id", "tag"}
 ```
 
-### `find(...)`
+### `Model:find(...)`
 
 The `find` class method fetches a single row from the table by some condition.
 Pass the values of the primary keys you want to look up by in the order
@@ -160,7 +160,7 @@ user = Users\find [db.raw "lower(email)"]: some_email\lower!
 SELECT * from "users" where lower(email) = 'person@example.com' limit 1
 ```
 
-### `select(query, ...)`
+### `Model:select(query, ...)`
 
 When searching for multiple rows the `select` class method is used. It works
 similarly to the [`select` function from the raw query
@@ -207,7 +207,7 @@ loaded as. By default it will convert each row to an instance of the model that
 is calling the `select` method. Passing `false` to load will return the results
 unaffected, as plain Lua tables.
 
-### `find_all(primary_keys)`
+### `Model:find_all(primary_keys)`
 
 If you want to find many rows by their primary key you can use the `find_all`
 method. It takes an array table of primary keys. This method only works on
@@ -292,7 +292,7 @@ users = UserProfile\find_all {1,2,3,4}, {
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
-### `count(clause, ...)`
+### `Model:count(clause, ...)`
 
 Counts the number of records in the table that match the clause.
 
@@ -311,7 +311,7 @@ SELECT COUNT(*) "users"
 SELECT COUNT(*) "users" where username like '%' || 'leafo' || '%'
 ```
 
-### `create(values, create_opts=nil)`
+### `Model:create(values, create_opts=nil)`
 
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
@@ -389,22 +389,19 @@ $options_table{
   }
 }
 
-### `columns()`
+### `Model:columns()`
 
-Returns all the columns on the table. Returns an array of tables that contain
-column names and their types.
+Returns an array of details about each column the table has. Each item in the
+array is a table with the name, `column_name`, and the column type,
+`data_type`.
 
-```lua
-local cols = Users:columns()
-```
-
-```moon
+$dual_code{[[
 cols = Users\columns!
-```
+]]}
+
 
 ```sql
-SELECT column_name, data_type
-  FROM information_schema.columns WHERE table_name = 'users'
+SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users'
 ```
 
 The output might look like this:
@@ -438,7 +435,7 @@ The output might look like this:
 
 > MySQL will return a slightly different format, but will contain the same information.
 
-### `table_name()`
+### `Model:table_name()`
 
 Returns the name of the table backed by the model.
 
@@ -461,7 +458,7 @@ class Users extends Model
   @table_name: => "active_users"
 ```
 
-### `singular_name()`
+### `Model:singular_name()`
 
 Returns the singular name of the table.
 
@@ -480,7 +477,7 @@ the field is when loading rows with `include_in`. It's also used when
 determining the foreign key column name with a `has_one` or `has_many`
 relation.
 
-### `include_in(objects, key, opts={})`
+### `Model:include_in(objects, key, opts={})`
 
 Bulk load rows of the model into an array of objects (often the array of
 objects is an array of instances of another model). This is used to preload
@@ -728,13 +725,13 @@ Each `users` object will now have a `posts` field that is an array containing
 all the associated posts that were found. (Note that `posts` is a plural
 derived field name when `many` is true.)
 
-### `paginated(query, ...)`
+### `Model:paginated(query, ...)`
 
 Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagination).
 
 ## Instance Methods
 
-### `update(..., opts={})`
+### `model:update(..., opts={})`
 
 Generate and issue a query to update the row backed by the instance of the
 model. The values of the primary keys specified by the model's class are used
@@ -842,68 +839,84 @@ $options_table{
   }
 }
 
-### `delete()`
+### `model:delete(...)`
 
 Attempts to delete the row backed by the model instance based on the primary
 key.
 
-```lua
-local user = Users:find(1)
-user:delete()
-```
-
-```moon
+$dual_code{[[
 user = Users\find 1
 user\delete!
-```
+]]}
+
 
 ```sql
 DELETE FROM "users" WHERE "id" = 1
 ```
 
-`delete` will return `true` if the row was actually deleted. It's important to
-check this value to avoid any race conditions when running code in response to a
-delete.
+The first argument can be a `db.clause` object to cause the deletion be
+contingent on another set of conditions:
 
-Consider the following code:
-
-```lua
-local user = Users:find()
-
--- Wrong:
-if user then
-  user:delete()
-  decrement_total_user_count()
-end
-
--- Correct:
-if user then
-  if user:delete() then
-    decrement_total_user_count()
-  end
-end
-```
-
-```moon
+$dual_code{[[
 user = Users\find 1
+user\delete db.clause {
+  active: false
+}
+]]}
 
--- Wrong:
-if user
-  user\delete!
-  decrement_total_user_count!
 
--- Correct:
-if user
-  if user\delete!
-    decrement_total_user_count!
+```sql
+DELETE FROM "users" WHERE "id" = 1 and not "active"
 ```
 
-Due to the asynchronous nature of OpenResty, it's possible that if two requests
-enter this block of code around the same time `delete` may end up getting called
-twice. This isn't a problem by itself, but the `decrement_total_user_count`
-function would get called twice and may invalidate whatever data it has.
+Any remaining arugments will be append as `RETURNING` columns for the result
+object in the second return value. This can be used to atomically know what the
+row contained at the time of deletion, as the model instance that delete was
+called on may be out of date if two requests are processing the same request at
+the same time.
 
-### `refresh(...)`
+$dual_code{[[
+user = Users\find 1
+success, res = user\delete "status"
+
+print res.affected_rows --> will be 1 when delete succeeded, and success = true
+print res[1].status --> the status field of the row when it was deleted
+]]}
+
+```sql
+DELETE FROM "users" WHERE "id" = 1 RETURNING "status"
+```
+
+`delete` will return `true` as the first return value if the row was actually
+deleted. It's important to check this value to avoid any race conditions when
+running code in response to a delete.
+
+The following is an example of an incorrect way to delete a row with side
+effects. It's possible that the delete did not if another thread processed the
+request first.
+
+$dual_code{[[
+-- This is incorrect!
+user = assert Users\find 1
+user\delete!
+decrement_total_user_count!
+]]}
+
+This is the correct way to write a deletion side effect:
+
+$dual_code{[[
+user = assert Users\find 1
+if user\delete!
+  decrement_total_user_count!
+]]}
+
+Because multiple request can be processed at the same time, it's possible that
+if two requests are able to load the model instance at the same time, and
+`delete` may end up getting called twice. This isn't a problem by itself, but
+the `decrement_total_user_count` function would get called twice and may
+invalidate whatever data it has.
+
+### `model:refresh(...)`
 
 Updates the values of the fields on the instance from the database.
 
@@ -1531,16 +1544,18 @@ The following relations are available:
 ### `belongs_to`
 
 A relation that fetches a single related model. The foreign key column used to
-fetch the other model is located on the same table as the model.
+fetch the other model is located on the same table as the model. For example, a
+table named `posts` with a column named `user_id` would belong to a table named
+`users`.  From the opposite end, the `users` table can either user `has_one` or
+`has_many` to relate to the `posts` table.
 
 The name of the relation is used to derive the name of the column used as the
-foreign key in addition to the name of the method added to the model to fetch
-the associated row.
+foreign key. Additionally, the auto-generated methods on the model for fetching
+the associated row(s) will use the name of the relation.
 
 A `belongs_to` relation named `user` would look for a column named `user_id` on
 the current model. When the relation is fetched, it will be cached in a field
-named `user` in the model.
-
+named `user` in the model with an autogenerated method named `get_user`.
 
 ```lua
 local Model = require("lapis.db.model").Model

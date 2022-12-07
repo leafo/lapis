@@ -280,7 +280,7 @@ being rendered.
 
 ## Widget Methods
 
-### `@@include(other_class)`
+### `Widget:include(other_class)`
 
 Class method that copies the methods from another class into this widget.
 Useful for mixin in shared functionality across multiple widgets.
@@ -301,7 +301,7 @@ class SomeWidget extends html.Widget
 ```
 
 
-### `@content_for(name, [content])`
+### `widget:content_for(name, [content])`
 
 `content_for` is used for sending HTML or strings from the view to the layout.
 You've probably already seen `@content_for "inner"` if you've looked at
@@ -347,7 +347,7 @@ use a builder function in conjunction with the `raw` function:
   raw "<pre>this wont' be escaped</pre>"
 ```
 
-### `@has_content_for(name)`
+### `widget:has_content_for(name)`
 
 Checks to see if content for `name` is set.
 
@@ -367,7 +367,7 @@ class MyView extends Widget
 html = require "lapis.html"
 ```
 
-### `render_html(fn)`
+### `html.render_html(fn)`
 
 Runs the function, `fn` in the HTML rendering context as described above.
 Returns the resulting HTML. The HTML context will automatically convert any
@@ -382,7 +382,7 @@ print render_html ->
     strong "Hello!"
 ```
 
-### `escape(str)`
+### `html.escape(str)`
 
 Escapes any HTML special characters in the string. The following are escaped:
 

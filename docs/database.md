@@ -32,10 +32,12 @@ used to run MySQL queries. When on the command line,
 You'll need to configure Lapis so it can connect to the database. Lapis manages
 a single global database connection (or pool of connections) in the `lapis.db`
 module. It will ensure that you are using connections efficiently, and clean up
-any resources automatically.
+any resources automatically. When you first attempt to send a query, Lapis will
+automatically prepare a connection for use. It is not necessary to manually
+connect or disconnect to the database for standard use.
 
-If you need multiple connections in the same request then you will have to
-manually create and release them.
+If you need multiple database connections in the same project then you will
+have to manually create and release them.
 
 ### PostgreSQL
 
@@ -109,7 +111,7 @@ You're now ready to start making queries.
 There are generally two ways to work with the data in your database:
 
 1. The `lapis.db` module is a collection of functions to make queries to the database, returning the reults as plain Lua tables.
-1. The [`Model` class](models.html) is a wrapper around a Lua table that helps you synchronize it with a row in a database table.
+1. The [`Model` class](models.html) is a wrapper around a Lua table that helps you synchronize it with a row in a database table. When appropriate, the results from the database are converted to instances of the model's class.
 
 The `Model` class is the preferred way to interact with the database. Issuing
 queries from the `lapis.db` module should preferred for achieving things the
@@ -176,6 +178,14 @@ class extends lapis.Application
 
 By default all queries will log to the Nginx notice log. You'll be able to see
 each query as it happens.
+
+You can also issue queries in your command line scripts using the same
+configuration, just require the model or `lapis.db` module and start using it.
+Keep in mind that your configuration is loaded based on the working directory
+of your project, so you should execute your scripts from the same directory as
+your <span class="for_moon">`config.moon`</span><span
+class="for_lua">`config.lua`</span> file so that you configuration can
+be loaded.
 
 ## Query Interface
 
@@ -521,7 +531,6 @@ UPDATE "the_table" SET "count" = count + 1
 SELECT * from another_table where x = now()
 ```
 
-
 ### `db.is_raw(obj)`
 
 Returns `true` if `obj` is a value created by `db.raw`.
@@ -689,6 +698,11 @@ db.insert "some_table", {
 INSERT INTO "some_table" ("tags") VALUES (ARRAY['hello','world'])
 ```
 
+### `db.is_array(obj)`
+
+Returns `true` if `obj` is a table with the `PostgresArray` metatable (eg. a
+value created by `db.array`)
+
 ### `db.NULL`
 
 Represents `NULL` in SQL syntax. In Lua, `nil` can't be stored in a table, so the
@@ -704,11 +718,6 @@ db.update "the_table", {
 ```SQL
 UPDATE "the_table" SET name = NULL
 ```
-
-### `db.is_array(obj)`
-
-Returns `true` if `obj` is a table with the `PostgresArray` metatable (eg. a
-value created by `db.array`)
 
 ### `db.TRUE`
 

@@ -280,7 +280,7 @@ local csrf = require("lapis.csrf")
 csrf = require "lapis.csrf"
 ```
 
-###  `generate_token(req, data=nil)`
+###  `csrf.generate_token(req, data=nil)`
 
 Generates a token for the current session. If a random string has not been set
 in the cookie yet, then it will be generated. You can optionally pass in data
@@ -290,7 +290,7 @@ to have it encoded into the token. You can then use the `callback` parameter of
 The random string is stored in a cookie named as your session name with
 `_token` appended to the end.
 
-###  `validate_token(req, callback=nil)`
+###  `csrf.validate_token(req, callback=nil)`
 
 Validates the CSRF token located in `req.params.csrf_token`. For any endpoints
 you validation the token on you must pass the query or form parameter
@@ -354,7 +354,7 @@ class extends lapis.Application
   }
 ```
 
-###  `assert_token(...)`
+###  `csrf.assert_token(...)`
 
 First calls `validate_token` with same arguments, then calls `assert_error` if
 validation fails.
@@ -461,7 +461,7 @@ class extends lapis.Application
     }
 ```
 
-### `simple(req, body)`
+### `http.simple(req, body)`
 
 Performs an HTTP request using the internal `/proxy` location.
 
@@ -484,7 +484,7 @@ parameters. It takes the following keys:
  * `headers` -- a table of request headers to set
 
 
-### `request(url_or_table, body)`
+### `http.request(url_or_table, body)`
 
 Implements a subset of [Lua Socket's
 `http.request`](http://w3.impa.br/~diego/software/luasocket/http.html#request).
@@ -511,7 +511,7 @@ lua_shared_dict page_cache 15m;
 
 Now we are ready to start using the caching module, `lapis.cache`.
 
-### `cached(fn_or_tbl)`
+### `cache.cached(fn_or_tbl)`
 
 Wraps an action to use the cache.
 
@@ -588,7 +588,7 @@ class extends lapis.Application
   }
 ```
 
-### `delete(key, [dict_name="page_cache"])`
+### `cache.delete(key, [dict_name="page_cache"])`
 
 Deletes an entry from the cache. Key can either be a plain string, or a tuple
 of `{path, params}` that will be encoded as the key.
@@ -604,11 +604,11 @@ cache = require "lapis.cache"
 cache.delete { "/hello", { thing: "world" } }
 ```
 
-### `delete_all([dict_name="page_cache"])`
+### `cache.delete_all([dict_name="page_cache"])`
 
 Deletes all entries from the cache.
 
-### `delete_path(path, [dict_name="page_cache"])`
+### `cache.delete_path(path, [dict_name="page_cache"])`
 
 Deletes all entries for a specific path.
 

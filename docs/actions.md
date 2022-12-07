@@ -399,7 +399,7 @@ Additionally the request object has the following methods:
 * `build_url(path, params)` -- build a fully qualified URL from a path and parameters
 * `html(fn)` -- generate a string using the HTML builder syntax
 
-### @req
+### `request.req`
 
 The raw request table <span class="for_moon">`@req`</span><span
 class="for_lua">`self.req`</span> wraps additional data provided by the server
@@ -614,7 +614,7 @@ server with a large amount of data.
 
 ## Request Object Methods
 
-###  `write(things...)`
+### `request:write(things...)`
 
 Writes all of the arguments. A different action is done depending on the type
 of each argument.
@@ -629,7 +629,7 @@ action is automatically passed to write. In before filters, write has the dual
 purpose of writing to the output and cancelling any further actions from
 running.
 
-### `url_for(name_or_obj, params, query_params=nil, ...)`
+### `request:url_for(name_or_obj, params, query_params=nil, ...)`
 
 Generates a URL for `name_or_obj`.
 
@@ -882,7 +882,7 @@ user = Users\find 1
 > The `url_key` method takes the name of the path as the first argument, so we
 > could change what we return based on which route is being handled.
 
-### `build_url(path, [options])`
+### `request:build_url(path, [options])`
 
 Builds an absolute URL for the path. The current request's URI is used to build
 the URL.
@@ -903,6 +903,18 @@ self:build_url("world", { host = "leafo.net", port = 2000 }) --> http://leafo.ne
 
 @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
 ```
+
+### `request:flow(module_name)`
+
+Loads a flow by `module_name` with the `flows_prefix` on the current request
+object. If the flow with that name had been previously loaded, then the
+existing flow instance is returned.
+
+### `request:html(fn)`
+
+Returns a new function that implements the buffer writer interface for
+rendering the contents of `fn` as an HTML scoped function. Suitable for
+returning from an action.
 
 ## Render Options
 
