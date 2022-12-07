@@ -1,5 +1,7 @@
 
-import render_html, Widget from require "lapis.html"
+import render_html, Widget, is_mixins_class from require "lapis.html"
+
+import sorted_pairs from require "spec.helpers"
 
 render_widget = (w) ->
   buffer = {}
@@ -7,6 +9,8 @@ render_widget = (w) ->
   table.concat buffer
 
 describe "lapis.html", ->
+  sorted_pairs!
+
   it "should render html", ->
     output = render_html ->
       b "what is going on?"
@@ -91,6 +95,23 @@ describe "lapis.html", ->
 
     assert.same "helloworld", output
     assert.same "<div>This is the capture</div>", capture_result.value
+
+
+  describe "classnames", ->
+    import classnames from require "lapis.html"
+
+    it "flattens classes", ->
+      assert.same "one two last haveit yes", classnames {
+        "one"
+        "two"
+        yes: true
+        { skipped: false, haveit: true, "", "last"}
+      }
+
+    it "passes string through", ->
+      assert.same "hi", classnames "hi"
+      assert.same "", classnames ""
+      assert.same " um  ", classnames " um  "
 
   describe "Widget", ->
     it "should render the widget", ->
@@ -369,6 +390,13 @@ describe "lapis.html", ->
 
         assert.same [[<div class="outer"><div class="the_thing">hello world</div></div>]],
           render_widget SomeWidget!
+
+        assert.false is_mixins_class SomeWidget
+        assert.true is_mixins_class SomeWidget.__parent
+        assert.false is_mixins_class SomeWidget.__parent.__parent
+
+        assert.false is_mixins_class SomeWidget!
+        assert.false is_mixins_class SomeWidget.__parent! -- should it be impossible to instantiate a mixins class??
 
       it "includes by module name", ->
         package.loaded["widgets.mymixin"] = class MyMixin
