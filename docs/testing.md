@@ -1,7 +1,7 @@
 {
   title: "Testing"
 }
-# Testing
+# Testing <span data-keywords="spec"></span>
 
 Lapis comes with modes of executing tests:
 

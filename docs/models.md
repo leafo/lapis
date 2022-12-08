@@ -737,7 +737,7 @@ in the relation. By default the following function is provided:
 
 $dual_code{[[
 get_relation_model = (name) =>
-	require("models")[name]
+  require("models")[name]
 ]]}
 
 If your model has relations that are pulled from other sources than the
