@@ -311,8 +311,13 @@ the initialization conditions of your widget.
 
 ### `Widget:include(other_class)`
 
-Class method that copies the methods from another class into this widget.
-Useful for mixin in shared functionality across multiple widgets.
+Makes the methods and properties from another class available on the widget
+class. This can be used to implement a form a multiple inheritance for sharing
+code across many widgets without having to change the parent-class.
+
+The argument `other_class` can either be a reference to a class, or a string.
+If it's a string, it will be passed to `require`. The module should return a
+class to be included.
 
 ```moon
 class MyHelpers
@@ -327,6 +332,38 @@ class SomeWidget extends Widget
   content: =>
     @item_list {"hello", "world"}
 ```
+
+When including another class, the widget's class hierarchy is changed: A
+dynamic *mixins* class is created exactly one level above the widget class.
+This dynamically inserted class will contain all the copied fields from any
+included classes. A widget will only ever have one mixins class created for it,
+regardless of how many classes are included. The mixins class's parent class
+will be the original parent class of the widget when it was first defined.
+
+As an example, if given the following class hierarchy:
+
+`LoginPage < Pages < lapis.Widget`
+
+The first call to `include` within `LoginPage` will change the class hierarchy
+to:
+
+`LoginPage < LoginPageMixins < Pages < lapis.Widget`
+
+The dynamically inserted class `LoginPageMixins` will contain all the fields
+copied from the included classes.
+
+Because of this organization, the following hold true:
+
+* Any methods or properties declared directly on the widget will take precedence over any fields in the mixins class.
+* `super` can be used in the widget's methods to access overrided methods in the mixin class
+* The included class is able to use `super`, but it will point to the widget's original parent class, and not to a method in the hierarchy of the included class
+  * If the included class is using inheritance, the hierarchy is flattened when fields are copied into the mixins class
+* Because there is only one mixin class per widget class, if multiple included classes implement the same fields, they will be overwritten by subsequent calls to `include`. It is not possible to access overwritten properties
+
+
+The function `is_mixins_class` from the `lapis.html` module can be used to
+determine if a class is a mixins class or not.
+
 
 ### `widget:render_to_string()`
 
@@ -443,9 +480,7 @@ class IndexPage extends Widget
 ### `html.render_html(fn)`
 
 Runs the function, `fn` in the HTML rendering context as described above.
-Returns the resulting HTML. The HTML context will automatically convert any
-reference to an undefined global variable into a function that will render the
-appropriate tag.
+Returns the resulting HTML as a string.
 
 ```moon
 import render_html from require "lapis.html"
@@ -453,6 +488,8 @@ import render_html from require "lapis.html"
 print render_html ->
   div class: "item", ->
     strong "Hello!"
+
+--> <div class="item"><strong>Hello!</strong></div>
 ```
 
 ### `html.escape(str)`
@@ -485,7 +522,7 @@ classnames({
 
 ### `html.is_mixins_class(obj)`
 
-Returns `true` if the the argument `obj` is an auto-generated mixin class that
+Returns `true` if the argument `obj` is an auto-generated mixin class that
 is inserted into the class hierarchy of a widget when `Widget:include` is
 called.
 
