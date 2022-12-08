@@ -137,7 +137,53 @@ Would render (with the correct content type):
 { errors: ["something bad happened"] }
 ```
 
-### `assert_error`
+## Error Handling Functions
+
+All of these functions are available in the `lapis.application` module.
+
+$dual_code{[[
+application = require "lapis.application"
+]]}
+
+### `capture_errors(fn, [error_handler_fn])`
+
+Wraps action action handler `fn` in a coroutine that will look for errors
+thrown by `yield_error` or `assert_error`.
+
+As a convenience, `fn` can also be a table. In that case, then the first item
+of the table will be used as the `fn` and the `on_error` field will be used as
+the `error_handler_fn`
+
+The default `error_handler_fn` will return `{render = true}`, but `self.errors`
+will be set on the request object as a Lua array table containing all of the
+errors that have been captured. Keep in mind this will attempt to render the
+default view based on the name of the route. If your route does not have a
+name, then this will cause the request to fail with an exception.
+
+If providing a custom error handler, it can be written as a standard action
+handler function. The return value is used to control how the response is
+written. Things like status codes and redirects can be used as normally.
+
+### `capture_errors_json(fn)`
+
+Similar to `capture_errors` but provides a default error handler that returns
+`self.errors` as a JSON response. Here is the full implementation:
+
+$dual_code{[[
+capture_errors_json = (fn) ->
+  capture_errors fn, => {
+    json: { errors: @errors }
+  }
+]]}
+
+
+### `yield_error(msg)`
+
+Sends an error message up to the wrapping `capture_errors`. The coroutine is
+never resumed on error so the any code following `yield_error` will not
+execute.
+
+### `assert_error(cond, ...)`
 
 It is idiomatic in Lua to return `nil` and an error message from a function
 when it fails. For this reason the helper `assert_error` exists. If the first
@@ -170,5 +216,8 @@ class App extends lapis.Application
     user = assert_error Users\find id: "leafo"
     "result: #{user.id}"
 ```
+
+If you call this function not within a `capture_errors` context, then a hard
+Lua `error` will be thrown.
 
 
