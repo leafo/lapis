@@ -280,6 +280,10 @@ being rendered.
 
 ## Widget Methods
 
+```moon
+import Widget from require "lapis.html"
+```
+
 ### `Widget:include(other_class)`
 
 Class method that copies the methods from another class into this widget.
@@ -293,7 +297,7 @@ class MyHelpers
         li item
 
 
-class SomeWidget extends html.Widget
+class SomeWidget extends Widget
   @include MyHelpers
 
   content: =>
@@ -377,7 +381,7 @@ local html = require("lapis.html")
 local class = require("lapis.lua").class
 
 local IndexPage = class "IndexPage", {
-  content: function(self)
+  content = function(self)
     div("Hello!")
   end
 }, html.Widget
