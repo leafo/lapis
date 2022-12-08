@@ -123,6 +123,18 @@ describe "lapis.html", ->
       input = render_widget TestWidget message: "Hello World!", inner: -> b "Stay Safe"
       assert.same input, [[<div class="hello">Hello World!</div><b>Stay Safe</b>]]
 
+    it "creates widget from the lapis.lua module", ->
+      TestWidget = require("lapis.lua").class "TestWidget", {
+        some_method: =>
+          span "good work"
+
+        content: =>
+          div "Hello world"
+          @some_method!
+      }, Widget
+
+      assert.same [[<div>Hello world</div><span>good work</span>]], TestWidget!\render_to_string!
+
     it "renders widget with inheritance", ->
       class BaseWidget extends Widget
         value: 100
@@ -397,6 +409,23 @@ describe "lapis.html", ->
 
         assert.false is_mixins_class SomeWidget!
         assert.false is_mixins_class SomeWidget.__parent! -- should it be impossible to instantiate a mixins class??
+
+      it "includes mixin from Lua created class", ->
+        class SomeMixin
+          some_method: =>
+            span "good work"
+
+        TestWidget = require("lapis.lua").class "TestWidget", {
+          content: =>
+            div "Hello world"
+            @some_method!
+        }, Widget, (cls) ->
+          cls\include SomeMixin
+
+        assert.same [[<div>Hello world</div><span>good work</span>]], TestWidget!\render_to_string!
+
+        assert.false is_mixins_class TestWidget
+        assert.true is_mixins_class TestWidget.__parent
 
       it "includes by module name", ->
         package.loaded["widgets.mymixin"] = class MyMixin

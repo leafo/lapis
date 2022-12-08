@@ -367,6 +367,30 @@ class MyView extends Widget
 html = require "lapis.html"
 ```
 
+### `html.Widget`
+
+The Widget base class for creating templates in code as a class. See the [HTML
+Widgets](#html-widgets) for a full guide on using the Widget class.
+
+```lua
+local html = require("lapis.html")
+local class = require("lapis.lua").class
+
+local IndexPage = class "IndexPage", {
+  content: function(self)
+    div("Hello!")
+  end
+}, html.Widget
+```
+
+```moon
+import Widget from require "lapis.html"
+
+class IndexPage extends Widget
+  content: =>
+    div "Hello!"
+```
+
 ### `html.render_html(fn)`
 
 Runs the function, `fn` in the HTML rendering context as described above.
