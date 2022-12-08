@@ -17,13 +17,13 @@ Moonscript, but it can also be used in Lua code.
 HTML templates can be written directly as MoonScript (or Lua) code. This is a
 very powerful feature (inspired by [Erector](http://erector.rubyforge.org/))
 that gives us the ability to write templates with high composability and also
-all the features of MoonScript or Lua. No need to learn any goofy templating
-syntax with arbitrary restrictions.
+all the features of MoonScript or Lua. No need to learn a separate templating
+language, you can use the full power of the language you're already using.
 
 In the context of a HTML renderer, the environment exposes functions that
 create HTML tags. The tag builder functions are generated on the fly as you
-call them. The output of these functions is written into a buffer that is
-compiled in the end and returned as the result
+call them via a custom function environment. The output of these functions is
+written into a buffer that is compiled in the end and returned as the result
 
 Here are some examples of the HTML generation:
 
@@ -80,15 +80,17 @@ Will generate:
 <div class="one two four">Hello world!</div>
 ```
 
+This conversion is done by the `html.classnames` function described below.
 
 ### Helper functions
 
-In addition to the tag functions, a few other helper functions are also available:
+In the scope of a HTML builder function, in addition to the auto generated
+functions for writing HTML tags, the following functions are also available:
 
 * `raw(str)` -- outputs the argument, a string, directly to the buffer without escaping.
 * `capture(func)` -- executes the function argument in the context of the HTML builder environment, returns the compiled result as a string instead of writing to buffer.
 * `text(args)` -- outputs the argument to the buffer, escaping it if it's a string. If it's a function, it executes the function in HTML builder environment. If it's a table, it writes each item in the table
-* `widget(SomeWidget)` -- renders another widget in the current output buffer. Automatically passes the enclosing context
+* `widget(some_widget)` -- renders another widget in the current output buffer. Automatically passes the enclosing context. The widget can either be an instance of a widget, or a widget class. If a class is provided, then an instance with no arguments is created.
 * `render(template_name)` -- renders another widget or view by the module name. Lets you render etlua templates from inside builder
 
 ## HTML In Actions
@@ -97,11 +99,12 @@ If we want to generate HTML directly in our action we can use the `@html`
 method:
 
 ```moon
-"/": =>
-  @html ->
-    h1 class: "header", "Hello"
-    div class: "body", ->
-      text "Welcome to my site!"
+class MyApp extends lapis.Application
+  "/": =>
+    @html ->
+      h1 class: "header", "Hello"
+      div class: "body", ->
+        text "Welcome to my site!"
 ```
 
 The environment of the function passed to `@html` is set to one that support
@@ -112,8 +115,9 @@ us to render send it right to the browser
 ## HTML Widgets
 
 The preferred way to write HTML is through widgets. Widgets are classes who are
-only concerned with outputting HTML. They use the same syntax as the `@html`
-helper shown above for writing HTML.
+only concerned with outputting HTML. Each method in the widget is executed in
+the HTML builder scope that allows you to use the syntax described above to
+write HTML to the response buffer.
 
 When Lapis loads a widget automatically it does it by package name. For
 example, if it was loading the widget for the name `"index"` it would try to
@@ -284,6 +288,27 @@ being rendered.
 import Widget from require "lapis.html"
 ```
 
+When sub-classing a widget, take care not to override these methods if you don't
+intend to change the default behavior.
+
+### `Widget([opts])`
+
+The default constructor of the widget class will copy over every field from the
+`opts` argument to `self`, if the `opts` argument is provided. You can use this
+to set render-time parameters or override methods.
+
+```moon
+class SomeWidget extends html.Widget
+  content: =>
+    div "Hello ", @name
+
+widget = SomeWidget name: "Garf"
+print widget\render_to_string! --> <div>Hello Garf</div>
+```
+
+It is safe to override the constructor and not call `super` if you want to change
+the initialization conditions of your widget.
+
 ### `Widget:include(other_class)`
 
 Class method that copies the methods from another class into this widget.
@@ -296,7 +321,6 @@ class MyHelpers
       for item in *items
         li item
 
-
 class SomeWidget extends Widget
   @include MyHelpers
 
@@ -304,6 +328,24 @@ class SomeWidget extends Widget
     @item_list {"hello", "world"}
 ```
 
+### `widget:render_to_string()`
+
+Renders the `content` method of a widget and returns the string result. This
+will automatically create a temporary buffer for the duration of the render.
+This internally calls `widget.render()` with the temporary buffer.
+
+Keep in mind that widgets must be executed in a special scope to enable the
+HTML builder functions to work. It is not possible to call the `content` method
+directly on the widget if you wish to render it, you must use this method.
+
+### `widget:render(buffer, ...)`
+
+Renders the `content` method of the widget to the provided buffer. Under normal
+circumstances it is not necessary to use this method directly. However, it's
+worth noting it exists to avoid accidentally overwriting the method when
+sub-classing your own widgets.
+
+This method returns nothing.
 
 ### `widget:content_for(name, [content])`
 
@@ -311,6 +353,9 @@ class SomeWidget extends Widget
 You've probably already seen `@content_for "inner"` if you've looked at
 layouts. By default the content of the view is placed in the content block
 called `"inner"`.
+
+If `content_for` is called multiple times on the same `name`, the results will be
+appended, not overwritten.
 
 You can create arbitrary content blocks from the view by calling `@content_for`
 with a name and some content:
