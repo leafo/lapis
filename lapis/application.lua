@@ -102,20 +102,20 @@ do
           return self.router:add_route(path, self:wrap_handler(handler))
         end
       end
-      local add_routes
-      add_routes = function(cls)
+      local add_routes_from_object
+      add_routes_from_object = function(obj)
         local added = { }
         do
-          local ordered = rawget(cls, "ordered_routes")
+          local ordered = rawget(obj, "ordered_routes")
           if ordered then
             for _index_0 = 1, #ordered do
               local path = ordered[_index_0]
               added[path] = true
-              add_route(path, assert(cls.__base[path], "Failed to find route handler when adding ordered route"))
+              add_route(path, assert(obj[path], "Failed to find route handler when adding ordered route"))
             end
           end
         end
-        for path, handler in pairs(cls.__base) do
+        for path, handler in pairs(obj) do
           local _continue_0 = false
           repeat
             if added[path] then
@@ -129,14 +129,20 @@ do
             break
           end
         end
+      end
+      local add_routes_from_class
+      add_routes_from_class = function(cls)
+        add_routes_from_object(cls.__base)
         do
           local parent = cls.__parent
           if parent then
-            return add_routes(parent)
+            return add_routes_from_class(parent)
           end
         end
       end
-      return add_routes(self.__class)
+      add_routes_from_object(self)
+      add_routes_from_class(self.__class)
+      return self.router
     end,
     wrap_handler = function(self, handler)
       return function(params, path, name, r)
@@ -303,10 +309,10 @@ do
       path = route_name
       route_name = nil
     end
-    local ordered_routes = rawget(self, "ordered_routes")
+    local ordered_routes = rawget(self.__base, "ordered_routes")
     if not (ordered_routes) then
       ordered_routes = { }
-      self.ordered_routes = ordered_routes
+      self.__base.ordered_routes = ordered_routes
     end
     local key
     if route_name then

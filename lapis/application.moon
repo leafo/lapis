@@ -116,10 +116,10 @@ class Application
     -- store the route insertion order to ensure they are added to the router
     -- in the same order as they are defined (NOTE: routes are still sorted by
     -- precedence)
-    ordered_routes = rawget @, "ordered_routes"
+    ordered_routes = rawget @__base, "ordered_routes"
     unless ordered_routes
       ordered_routes = {}
-      @ordered_routes = ordered_routes
+      @__base.ordered_routes = ordered_routes
 
     key = if route_name
       {[route_name]: path}
@@ -211,33 +211,39 @@ class Application
     @router = Router!
     @router.default_route = => false
 
-    -- TODO: inheritance of routes is not handled
+    -- TODO: inheritance precedence
 
     add_route = (path, handler) ->
       t = type path
       if t == "table" or t == "string" and path\match "^/"
         @router\add_route path, @wrap_handler handler
 
-    -- this function scans over the class for fields that declare routes and
-    -- adds them to the router it then will scan the parent class for routes
-    add_routes = (cls) ->
+    -- scans the routes contained in the object to add
+    add_routes_from_object = (obj) ->
       -- track what ones were added by ordered routes so they aren't re-added
-      -- when scanning the class's fields
+      -- when finding every other route on the object
       added = {}
 
-      if ordered = rawget cls, "ordered_routes"
+      if ordered = rawget obj, "ordered_routes"
         for path in *ordered
           added[path] = true
-          add_route path, assert cls.__base[path], "Failed to find route handler when adding ordered route"
+          add_route path, assert obj[path], "Failed to find route handler when adding ordered route"
 
-      for path, handler in pairs cls.__base
+      for path, handler in pairs obj
         continue if added[path]
         add_route path, handler
 
-      if parent = cls.__parent
-        add_routes parent
+    -- this function scans over the class for fields that declare routes and
+    -- adds them to the router it then will scan the parent class for routes
+    add_routes_from_class = (cls) ->
+      add_routes_from_object cls.__base
 
-    add_routes @@
+      if parent = cls.__parent
+        add_routes_from_class parent
+
+    add_routes_from_object @
+    add_routes_from_class @@
+    @router
 
   -- this performs the initialization of an action (called handler in this
   -- file) the wrapped action is stored in the router so it can be returned
