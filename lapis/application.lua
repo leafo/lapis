@@ -32,53 +32,13 @@ load_action = function(prefix, action, route_name)
     return action
   end
 end
-local get_instance_application
-get_instance_application = function(app)
-  local cls = assert(app.__class, "get_instance_application: You passed in something without a __class")
-  assert(app ~= cls, "get_instance_application: An instance, not a class should be passed in as the argument")
-  if cls == Application then
-    local InstanceApplication
-    do
-      local _class_0
-      local _parent_0 = cls
-      local _base_0 = { }
-      _base_0.__index = _base_0
-      setmetatable(_base_0, _parent_0.__base)
-      _class_0 = setmetatable({
-        __init = function(self, ...)
-          return _class_0.__parent.__init(self, ...)
-        end,
-        __base = _base_0,
-        __name = "InstanceApplication",
-        __parent = _parent_0
-      }, {
-        __index = function(cls, name)
-          local val = rawget(_base_0, name)
-          if val == nil then
-            local parent = rawget(cls, "__parent")
-            if parent then
-              return parent[name]
-            end
-          else
-            return val
-          end
-        end,
-        __call = function(cls, ...)
-          local _self_0 = setmetatable({}, _base_0)
-          cls.__init(_self_0, ...)
-          return _self_0
-        end
-      })
-      _base_0.__class = _class_0
-      if _parent_0.__inherited then
-        _parent_0.__inherited(_parent_0, _class_0)
-      end
-      InstanceApplication = _class_0
-    end
-    setmetatable(app, InstanceApplication.__base)
-    return InstanceApplication
+local get_target_route_group
+get_target_route_group = function(obj)
+  assert(obj ~= Application, "lapis.Application is not able to be modified with routes. You must either subclass or instantiate it")
+  if obj == obj.__class then
+    return obj.__base
   else
-    return cls
+    return obj
   end
 end
 do
@@ -90,6 +50,28 @@ do
     views_prefix = "views",
     actions_prefix = "actions",
     flows_prefix = "flows",
+    enable = function(self, feature)
+      assert(self ~= Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features")
+      local fn = require("lapis.features." .. tostring(feature))
+      if type(fn) == "function" then
+        return fn(self)
+      end
+    end,
+    match = function(self, route_name, path, handler)
+      local route_group = get_target_route_group(self)
+      local add_route
+      add_route = require("lapis.application.route_group").add_route
+      add_route(route_group, route_name, path, handler)
+      if route_group == self then
+        self.router = nil
+      end
+    end,
+    before_filter = function(self, fn)
+      local route_group = get_target_route_group(self)
+      local add_before_filter
+      add_before_filter = require("lapis.application.route_group").add_before_filter
+      return add_before_filter(route_group, fn)
+    end,
     build_router = function(self)
       self.router = Router()
       self.router.default_route = function(self)
@@ -269,19 +251,6 @@ do
     end
     return action, route
   end
-  self.enable = function(self, feature)
-    assert(self ~= Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features")
-    local fn = require("lapis.features." .. tostring(feature))
-    if type(fn) == "function" then
-      return fn(self)
-    end
-  end
-  self.match = function(self, route_name, path, handler)
-    assert(self ~= Application, "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes")
-    local add_route
-    add_route = require("lapis.application.route_group").add_route
-    return add_route(self.__base, route_name, path, handler)
-  end
   local _list_0 = {
     "get",
     "post",
@@ -291,7 +260,8 @@ do
   for _index_0 = 1, #_list_0 do
     local meth = _list_0[_index_0]
     local upper_meth = meth:upper()
-    self[meth] = function(self, route_name, path, handler)
+    self.__base[meth] = function(self, route_name, path, handler)
+      self.router = nil
       if handler == nil then
         handler = path
         path = route_name
@@ -300,31 +270,13 @@ do
       if type(handler) ~= "function" then
         handler = load_action(self.actions_prefix, handler, route_name)
       end
+      local route_group = get_target_route_group(self)
       local add_route_verb
       add_route_verb = require("lapis.application.route_group").add_route_verb
-      return add_route_verb(self.__base, respond_to, upper_meth, route_name, path, handler)
-    end
-  end
-  self.before_filter = function(self, fn)
-    local add_before_filter
-    add_before_filter = require("lapis.application.route_group").add_before_filter
-    return add_before_filter(self.__base, fn)
-  end
-  local _list_1 = {
-    "enable",
-    "before_filter",
-    "match",
-    "get",
-    "post",
-    "delete",
-    "put"
-  }
-  for _index_0 = 1, #_list_1 do
-    local meth = _list_1[_index_0]
-    self.__base[meth] = function(self, ...)
-      self.router = nil
-      local cls = get_instance_application(self)
-      return cls[meth](cls, ...)
+      add_route_verb(route_group, respond_to, upper_meth, route_name, path, handler)
+      if route_group == self then
+        self.router = nil
+      end
     end
   end
   self.include = function(self, other_app, opts, into)

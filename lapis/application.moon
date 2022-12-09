@@ -36,25 +36,15 @@ load_action = (prefix, action, route_name) ->
   else
     action
 
-
--- this returns the class for an application instance, unless it's
--- lapis.Application, in which case it will generate a new intermediate class,
--- insert it into the class hierarchy of the instance, and return it. This will
--- allow class level data to be stored without mutating the base
--- lapis.Application class
-get_instance_application = (app) ->
-  cls = assert app.__class, "get_instance_application: You passed in something without a __class"
-
-  -- if they are the same, then the class was passed in
-  assert app != cls, "get_instance_application: An instance, not a class should be passed in as the argument"
-
-  -- if we are a direct instance of Application, we must update the class
-  if cls == Application
-    InstanceApplication = class extends cls
-    setmetatable app, InstanceApplication.__base
-    InstanceApplication
+-- if obj is a class, then the __base, otherwise obj is an instance and is the
+-- route group
+get_target_route_group = (obj) ->
+  assert obj != Application, "lapis.Application is not able to be modified with routes. You must either subclass or instantiate it"
+  if obj == obj.__class
+    obj.__base
   else
-    cls
+    obj
+
 
 class Application
   Request: require "lapis.request"
@@ -64,6 +54,8 @@ class Application
   views_prefix: "views"
   actions_prefix: "actions"
   flows_prefix: "flows"
+
+  new: => @build_router!
 
   @extend: (name, tbl) =>
     lua = require "lapis.lua"
@@ -97,7 +89,9 @@ class Application
 
     action, route
 
-  @enable: (feature) =>
+
+  -- NOTE: this is a special method that can be called on either the class or the instance
+  enable: (feature) =>
     assert @ != Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features"
 
     fn = require "lapis.features.#{feature}"
@@ -105,16 +99,20 @@ class Application
       fn @
 
   -- add new route to the set of routes
-  @match: (route_name, path, handler) =>
-    assert @ != Application, "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes"
+  -- NOTE: this is a special method that can be called on either the class or the instance
+  match: (route_name, path, handler) =>
+    route_group = get_target_route_group(@)
     import add_route from require "lapis.application.route_group"
-    add_route @__base, route_name, path, handler
+    add_route route_group, route_name, path, handler
+    if route_group == @
+      @router = nil
 
   -- dynamically create methods for common HTTP verbs
   for meth in *{"get", "post", "delete", "put"}
     upper_meth = meth\upper!
 
-    @[meth] = (route_name, path, handler) =>
+    @__base[meth] = (route_name, path, handler) =>
+      @router = nil
       if handler == nil
         handler = path
         path = route_name
@@ -126,23 +124,17 @@ class Application
         -- is okay for now as we'll likely be overhauling this interface
         handler = load_action @actions_prefix, handler, route_name
 
+      route_group = get_target_route_group(@)
       import add_route_verb from require "lapis.application.route_group"
-      add_route_verb @__base, respond_to, upper_meth, route_name, path, handler
+      add_route_verb route_group, respond_to, upper_meth, route_name, path, handler
+      if route_group == @
+        @router = nil
 
   -- Add before filter `fn` to __base
-  @before_filter: (fn) =>
+  before_filter: (fn) =>
+    route_group = get_target_route_group(@)
     import add_before_filter from require "lapis.application.route_group"
-    add_before_filter @__base, fn
-
-  new: =>
-    @build_router!
-
-  -- all of these methods are forwarded to class
-  for meth in *{"enable", "before_filter", "match", "get", "post", "delete", "put"}
-    @__base[meth] = (...) =>
-      @router = nil -- purge any cached router
-      cls = get_instance_application  @
-      cls[meth] cls, ...
+    add_before_filter route_group, fn
 
   build_router: =>
     @router = Router!
