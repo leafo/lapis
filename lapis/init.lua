@@ -29,7 +29,6 @@ serve = function(app_cls)
 end
 return {
   serve = serve,
-  application = application,
   Application = Application,
   app_cache = app_cache
 }

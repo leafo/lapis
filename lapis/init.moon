@@ -30,5 +30,5 @@ serve = (app_cls) ->
   dispatcher.dispatch app
 
 {
-  :serve, :application, :Application, :app_cache
+  :serve, :Application, :app_cache
 }
