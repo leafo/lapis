@@ -14,6 +14,19 @@ describe "lapis.application", ->
       if k\match("^actions%.") or k\match("^vies%.")
         package.loaded[k] = nil
 
+  describe "mutation check", ->
+    it "prevents adding routes", ->
+      assert.has_error(
+        -> lapis.Application\match("hello", ->)
+        "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes"
+      )
+
+    it "prevents adding features", ->
+      assert.has_error(
+        -> lapis.Application\enable "exceptions"
+        "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features"
+      )
+
   describe "find_action", ->
     action1 = ->
     action2 = ->
@@ -534,7 +547,6 @@ describe "lapis.application", ->
 
       assert_request app, "/hello", post: {}
       assert.same "post", res
-
 
     it "finds actions by name for verb", ->
       local res

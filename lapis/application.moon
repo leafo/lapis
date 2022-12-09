@@ -12,6 +12,8 @@ unpack = unpack or table.unpack
 
 local capture_errors, capture_errors_json, respond_to
 
+local Application
+
 MISSING_ROUTE_NAME_ERORR = "Attempted to load action `true` for route with no name, a name must be provided to require the action"
 
 run_before_filter = (filter, r) ->
@@ -28,12 +30,31 @@ run_before_filter = (filter, r) ->
 load_action = (prefix, action, route_name) ->
   if action == true
     assert route_name, MISSING_ROUTE_NAME_ERORR
-
     require "#{prefix}.#{route_name}"
   elseif type(action) == "string"
     require "#{prefix}.#{action}"
   else
     action
+
+
+-- this returns the class for an application instance, unless it's
+-- lapis.Application, in which case it will generate a new intermediate class,
+-- insert it into the class hierarchy of the instance, and return it. This will
+-- allow class level data to be stored without mutating the base
+-- lapis.Application class
+get_instance_application = (app) ->
+  cls = assert app.__class, "get_instance_application: You passed in something without a __class"
+
+  -- if they are the same, then the class was passed in
+  assert app != cls, "get_instance_application: An instance, not a class should be passed in as the argument"
+
+  -- if we are a direct instance of Application, we must update the class
+  if cls == Application
+    InstanceApplication = class extends cls
+    setmetatable app, InstanceApplication.__base
+    InstanceApplication
+  else
+    cls
 
 class Application
   Request: require "lapis.request"
@@ -44,7 +65,19 @@ class Application
   actions_prefix: "actions"
   flows_prefix: "flows"
 
+  @extend: (name, tbl) =>
+    lua = require "lapis.lua"
+
+    if type(name) == "table"
+      tbl = name
+      name = nil
+
+    class_fields = { }
+
+    lua.class name or "ExtendedApplication", tbl, @
+
   -- find action for named route in this application
+  -- NOTE: this currently doesn't work with inheritance
   @find_action: (name, resolve=true) =>
     @_named_route_cache or= {}
     route = @_named_route_cache[name]
@@ -64,54 +97,56 @@ class Application
 
     action, route
 
-  new: =>
-    @build_router!
+  @enable: (feature) =>
+    assert @ != Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features"
 
-  enable: (feature) =>
     fn = require "lapis.features.#{feature}"
     if type(fn) == "function"
       fn @
 
-  match: (route_name, path, handler) =>
+  -- add new route to the set of routes
+  @match: (route_name, path, handler) =>
+    assert @ != Application, "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes"
+
     if handler == nil
       handler = path
       path = route_name
       route_name = nil
 
-    @ordered_routes or= {}
-    key = if route_name
-      tuple = @ordered_routes[route_name]
-      if old_path = tuple and tuple[next(tuple)]
-        if old_path != path
-          error "named route mismatch (#{old_path} != #{path})"
+    -- store the route insertion order to ensure they are added to the router
+    -- in the same order as they are defined (NOTE: routes are still sorted by
+    -- precedence)
+    ordered_routes = rawget @, "ordered_routes"
+    unless ordered_routes
+      ordered_routes = {}
+      @ordered_routes = ordered_routes
 
-      if tuple
-        tuple
-      else
-        tuple = {[route_name]: path}
-        @ordered_routes[route_name] = tuple
-        tuple
+    key = if route_name
+      {[route_name]: path}
     else
       path
 
-    unless @[key]
-      insert @ordered_routes, key
+    insert ordered_routes, key
 
-    @[key] = handler
+    @__base[key] = handler
+    return -- return nothing
 
-    @router = nil
-    handler
-
+  -- dynamically create methods for common HTTP verbs
   for meth in *{"get", "post", "delete", "put"}
     upper_meth = meth\upper!
-    @__base[meth] = (route_name, path, handler) =>
+
+    @[meth] = (route_name, path, handler) =>
       if handler == nil
         handler = path
         path = route_name
         route_name = nil
 
-      @responders or= {}
-      existing = @responders[route_name or path]
+      responders = rawget @, "responders"
+      unless responders
+        responders = {}
+        @responders = responders
+
+      existing = responders[path]
 
       if type(handler) != "function"
         -- NOTE: this works slightly differently, as it loads the action
@@ -119,35 +154,85 @@ class Application
         -- is okay for now as we'll likely be overhauling this interface
         handler = load_action @actions_prefix, handler, route_name
 
-      tbl = { [upper_meth]: handler }
-
       if existing
-        setmetatable tbl, __index: (key) =>
-          existing if key\match "%u"
+        -- add the handler to the responder table for the method
 
-      responder = respond_to tbl
-      @responders[route_name or path] = responder
-      @match route_name, path, responder
+        -- TODO: write specs for this
+        -- assert that what we are adding to matches what it was initially declared as
+        assert existing.path == path,
+          "You are trying to add a new verb action to a route that was declared with an existing route name but a different path. Please ensure you use the same route name and path combination when adding additional verbs to a route."
+
+        assert existing.route_name == route_name,
+          "You are trying to add a new verb action to a route that was declared with and existing path but different route name. Please ensure you use the same route name and path combination when adding additional verbs to a route."
+
+        existing.respond_to[upper_meth] = handler
+      else
+        -- create the initial responder and add route to match
+
+        tbl = { [upper_meth]: handler }
+
+        -- NOTE: we store the pre-wrapped table in responders so we can mutate it
+        responders[path] = {
+          :path
+          :route_name
+          respond_to: tbl
+        }
+
+        responder = respond_to tbl
+
+        if route_name
+          @match route_name, path, responder
+        else
+          @match path, responder
+
+      return -- return nothing
+
+  -- append a function to the before filters arrray stored on the class's
+  -- __base
+  @before_filter: (fn) =>
+    before_filters =  rawget @__base, "before_filters"
+    unless before_filters
+      before_filters = {}
+      @__base.before_filters = before_filters
+
+    insert before_filters, fn
+
+  new: =>
+    @build_router!
+
+  -- all of these methods are forwarded to class
+  for meth in *{"enable", "before_filter", "match", "get", "post", "delete", "put"}
+    @__base[meth] = (...) =>
+      @router = nil -- purge any cached router
+      cls = get_instance_application  @
+      cls[meth] cls, ...
 
   build_router: =>
     @router = Router!
     @router.default_route = => false
+
+    -- TODO: inheritance of routes is not handled
 
     add_route = (path, handler) ->
       t = type path
       if t == "table" or t == "string" and path\match "^/"
         @router\add_route path, @wrap_handler handler
 
+    -- this function scans over the class for fields that declare routes and
+    -- adds them to the router it then will scan the parent class for routes
     add_routes = (cls) ->
-      for path, handler in pairs cls.__base
-        add_route path, handler
+      -- track what ones were added by ordered routes so they aren't re-added
+      -- when scanning the class's fields
+      added = {}
 
-      if ordered = @ordered_routes
+      if ordered = rawget cls, "ordered_routes"
         for path in *ordered
-          add_route path, @[path]
-      else
-        for path, handler in pairs @
-          add_route path, handler
+          added[path] = true
+          add_route path, assert cls.__base[path], "Failed to find route handler when adding ordered route"
+
+      for path, handler in pairs cls.__base
+        continue if added[path]
+        add_route path, handler
 
       if parent = cls.__parent
         add_routes parent
@@ -155,9 +240,8 @@ class Application
     add_routes @@
 
   -- this performs the initialization of an action (called handler in this
-  -- file)
-  -- the wrapped action is stored in the router so it can be returned directly
-  -- when the router is matched
+  -- file) the wrapped action is stored in the router so it can be returned
+  -- directly when the router is matched
   wrap_handler: (handler) =>
     (params, path, name, r) ->
       support = r.__class.support
@@ -229,15 +313,6 @@ class Application
       @render_error_request error_request, err, trace
 
     success, r
-
-  @before_filter: (...) =>
-    @__base.before_filter @__base, ...
-
-  before_filter: (fn) =>
-    unless rawget @, "before_filters"
-      @before_filters = {}
-
-    insert @before_filters, fn
 
   -- copies all actions into this application, preserves before filters
   -- other app can just be a plain table, doesn't have to be another application

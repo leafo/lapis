@@ -7,6 +7,7 @@ insert = table.insert
 local json = require("cjson")
 local unpack = unpack or table.unpack
 local capture_errors, capture_errors_json, respond_to
+local Application
 local MISSING_ROUTE_NAME_ERORR = "Attempted to load action `true` for route with no name, a name must be provided to require the action"
 local run_before_filter
 run_before_filter = function(filter, r)
@@ -31,7 +32,55 @@ load_action = function(prefix, action, route_name)
     return action
   end
 end
-local Application
+local get_instance_application
+get_instance_application = function(app)
+  local cls = assert(app.__class, "get_instance_application: You passed in something without a __class")
+  assert(app ~= cls, "get_instance_application: An instance, not a class should be passed in as the argument")
+  if cls == Application then
+    local InstanceApplication
+    do
+      local _class_0
+      local _parent_0 = cls
+      local _base_0 = { }
+      _base_0.__index = _base_0
+      setmetatable(_base_0, _parent_0.__base)
+      _class_0 = setmetatable({
+        __init = function(self, ...)
+          return _class_0.__parent.__init(self, ...)
+        end,
+        __base = _base_0,
+        __name = "InstanceApplication",
+        __parent = _parent_0
+      }, {
+        __index = function(cls, name)
+          local val = rawget(_base_0, name)
+          if val == nil then
+            local parent = rawget(cls, "__parent")
+            if parent then
+              return parent[name]
+            end
+          else
+            return val
+          end
+        end,
+        __call = function(cls, ...)
+          local _self_0 = setmetatable({}, _base_0)
+          cls.__init(_self_0, ...)
+          return _self_0
+        end
+      })
+      _base_0.__class = _class_0
+      if _parent_0.__inherited then
+        _parent_0.__inherited(_parent_0, _class_0)
+      end
+      InstanceApplication = _class_0
+    end
+    setmetatable(app, InstanceApplication.__base)
+    return InstanceApplication
+  else
+    return cls
+  end
+end
 do
   local _class_0
   local _base_0 = {
@@ -41,49 +90,6 @@ do
     views_prefix = "views",
     actions_prefix = "actions",
     flows_prefix = "flows",
-    enable = function(self, feature)
-      local fn = require("lapis.features." .. tostring(feature))
-      if type(fn) == "function" then
-        return fn(self)
-      end
-    end,
-    match = function(self, route_name, path, handler)
-      if handler == nil then
-        handler = path
-        path = route_name
-        route_name = nil
-      end
-      self.ordered_routes = self.ordered_routes or { }
-      local key
-      if route_name then
-        local tuple = self.ordered_routes[route_name]
-        do
-          local old_path = tuple and tuple[next(tuple)]
-          if old_path then
-            if old_path ~= path then
-              error("named route mismatch (" .. tostring(old_path) .. " != " .. tostring(path) .. ")")
-            end
-          end
-        end
-        if tuple then
-          key = tuple
-        else
-          tuple = {
-            [route_name] = path
-          }
-          self.ordered_routes[route_name] = tuple
-          key = tuple
-        end
-      else
-        key = path
-      end
-      if not (self[key]) then
-        insert(self.ordered_routes, key)
-      end
-      self[key] = handler
-      self.router = nil
-      return handler
-    end,
     build_router = function(self)
       self.router = Router()
       self.router.default_route = function(self)
@@ -98,20 +104,29 @@ do
       end
       local add_routes
       add_routes = function(cls)
-        for path, handler in pairs(cls.__base) do
-          add_route(path, handler)
-        end
+        local added = { }
         do
-          local ordered = self.ordered_routes
+          local ordered = rawget(cls, "ordered_routes")
           if ordered then
             for _index_0 = 1, #ordered do
               local path = ordered[_index_0]
-              add_route(path, self[path])
+              added[path] = true
+              add_route(path, assert(cls.__base[path], "Failed to find route handler when adding ordered route"))
             end
-          else
-            for path, handler in pairs(self) do
-              add_route(path, handler)
+          end
+        end
+        for path, handler in pairs(cls.__base) do
+          local _continue_0 = false
+          repeat
+            if added[path] then
+              _continue_0 = true
+              break
             end
+            add_route(path, handler)
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
           end
         end
         do
@@ -195,12 +210,6 @@ do
       end
       return success, r
     end,
-    before_filter = function(self, fn)
-      if not (rawget(self, "before_filters")) then
-        self.before_filters = { }
-      end
-      return insert(self.before_filters, fn)
-    end,
     default_route = function(self)
       if self.req.parsed_url.path:match("./$") then
         local stripped = self.req.parsed_url.path:match("^(.+)/+$")
@@ -248,6 +257,15 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
+  self.extend = function(self, name, tbl)
+    local lua = require("lapis.lua")
+    if type(name) == "table" then
+      tbl = name
+      name = nil
+    end
+    local class_fields = { }
+    return lua.class(name or "ExtendedApplication", tbl, self)
+  end
   self.find_action = function(self, name, resolve)
     if resolve == nil then
       resolve = true
@@ -271,6 +289,36 @@ do
     end
     return action, route
   end
+  self.enable = function(self, feature)
+    assert(self ~= Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features")
+    local fn = require("lapis.features." .. tostring(feature))
+    if type(fn) == "function" then
+      return fn(self)
+    end
+  end
+  self.match = function(self, route_name, path, handler)
+    assert(self ~= Application, "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes")
+    if handler == nil then
+      handler = path
+      path = route_name
+      route_name = nil
+    end
+    local ordered_routes = rawget(self, "ordered_routes")
+    if not (ordered_routes) then
+      ordered_routes = { }
+      self.ordered_routes = ordered_routes
+    end
+    local key
+    if route_name then
+      key = {
+        [route_name] = path
+      }
+    else
+      key = path
+    end
+    insert(ordered_routes, key)
+    self.__base[key] = handler
+  end
   local _list_0 = {
     "get",
     "post",
@@ -280,36 +328,67 @@ do
   for _index_0 = 1, #_list_0 do
     local meth = _list_0[_index_0]
     local upper_meth = meth:upper()
-    self.__base[meth] = function(self, route_name, path, handler)
+    self[meth] = function(self, route_name, path, handler)
       if handler == nil then
         handler = path
         path = route_name
         route_name = nil
       end
-      self.responders = self.responders or { }
-      local existing = self.responders[route_name or path]
+      local responders = rawget(self, "responders")
+      if not (responders) then
+        responders = { }
+        self.responders = responders
+      end
+      local existing = responders[path]
       if type(handler) ~= "function" then
         handler = load_action(self.actions_prefix, handler, route_name)
       end
-      local tbl = {
-        [upper_meth] = handler
-      }
       if existing then
-        setmetatable(tbl, {
-          __index = function(self, key)
-            if key:match("%u") then
-              return existing
-            end
-          end
-        })
+        assert(existing.path == path, "You are trying to add a new verb action to a route that was declared with an existing route name but a different path. Please ensure you use the same route name and path combination when adding additional verbs to a route.")
+        assert(existing.route_name == route_name, "You are trying to add a new verb action to a route that was declared with and existing path but different route name. Please ensure you use the same route name and path combination when adding additional verbs to a route.")
+        existing.respond_to[upper_meth] = handler
+      else
+        local tbl = {
+          [upper_meth] = handler
+        }
+        responders[path] = {
+          path = path,
+          route_name = route_name,
+          respond_to = tbl
+        }
+        local responder = respond_to(tbl)
+        if route_name then
+          self:match(route_name, path, responder)
+        else
+          self:match(path, responder)
+        end
       end
-      local responder = respond_to(tbl)
-      self.responders[route_name or path] = responder
-      return self:match(route_name, path, responder)
     end
   end
-  self.before_filter = function(self, ...)
-    return self.__base.before_filter(self.__base, ...)
+  self.before_filter = function(self, fn)
+    local before_filters = rawget(self.__base, "before_filters")
+    if not (before_filters) then
+      before_filters = { }
+      self.__base.before_filters = before_filters
+    end
+    return insert(before_filters, fn)
+  end
+  local _list_1 = {
+    "enable",
+    "before_filter",
+    "match",
+    "get",
+    "post",
+    "delete",
+    "put"
+  }
+  for _index_0 = 1, #_list_1 do
+    local meth = _list_1[_index_0]
+    self.__base[meth] = function(self, ...)
+      self.router = nil
+      local cls = get_instance_application(self)
+      return cls[meth](cls, ...)
+    end
   end
   self.include = function(self, other_app, opts, into)
     if into == nil then
