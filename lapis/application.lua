@@ -102,37 +102,11 @@ do
           return self.router:add_route(path, self:wrap_handler(handler))
         end
       end
-      local add_routes_from_object
-      add_routes_from_object = function(obj)
-        local added = { }
-        do
-          local ordered = rawget(obj, "ordered_routes")
-          if ordered then
-            for _index_0 = 1, #ordered do
-              local path = ordered[_index_0]
-              added[path] = true
-              add_route(path, assert(obj[path], "Failed to find route handler when adding ordered route"))
-            end
-          end
-        end
-        for path, handler in pairs(obj) do
-          local _continue_0 = false
-          repeat
-            if added[path] then
-              _continue_0 = true
-              break
-            end
-            add_route(path, handler)
-            _continue_0 = true
-          until true
-          if not _continue_0 then
-            break
-          end
-        end
-      end
+      local scan_routes_on_object
+      scan_routes_on_object = require("lapis.application.route_group").scan_routes_on_object
       local add_routes_from_class
       add_routes_from_class = function(cls)
-        add_routes_from_object(cls.__base)
+        scan_routes_on_object(cls.__base, add_route)
         do
           local parent = cls.__parent
           if parent then
@@ -140,7 +114,7 @@ do
           end
         end
       end
-      add_routes_from_object(self)
+      scan_routes_on_object(self, add_route)
       add_routes_from_class(self.__class)
       return self.router
     end,
@@ -304,26 +278,9 @@ do
   end
   self.match = function(self, route_name, path, handler)
     assert(self ~= Application, "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes")
-    if handler == nil then
-      handler = path
-      path = route_name
-      route_name = nil
-    end
-    local ordered_routes = rawget(self.__base, "ordered_routes")
-    if not (ordered_routes) then
-      ordered_routes = { }
-      self.__base.ordered_routes = ordered_routes
-    end
-    local key
-    if route_name then
-      key = {
-        [route_name] = path
-      }
-    else
-      key = path
-    end
-    insert(ordered_routes, key)
-    self.__base[key] = handler
+    local add_route
+    add_route = require("lapis.application.route_group").add_route
+    return add_route(self.__base, route_name, path, handler)
   end
   local _list_0 = {
     "get",
@@ -340,44 +297,18 @@ do
         path = route_name
         route_name = nil
       end
-      local responders = rawget(self, "responders")
-      if not (responders) then
-        responders = { }
-        self.responders = responders
-      end
-      local existing = responders[path]
       if type(handler) ~= "function" then
         handler = load_action(self.actions_prefix, handler, route_name)
       end
-      if existing then
-        assert(existing.path == path, "You are trying to add a new verb action to a route that was declared with an existing route name but a different path. Please ensure you use the same route name and path combination when adding additional verbs to a route.")
-        assert(existing.route_name == route_name, "You are trying to add a new verb action to a route that was declared with and existing path but different route name. Please ensure you use the same route name and path combination when adding additional verbs to a route.")
-        existing.respond_to[upper_meth] = handler
-      else
-        local tbl = {
-          [upper_meth] = handler
-        }
-        responders[path] = {
-          path = path,
-          route_name = route_name,
-          respond_to = tbl
-        }
-        local responder = respond_to(tbl)
-        if route_name then
-          self:match(route_name, path, responder)
-        else
-          self:match(path, responder)
-        end
-      end
+      local add_route_verb
+      add_route_verb = require("lapis.application.route_group").add_route_verb
+      return add_route_verb(self.__base, respond_to, upper_meth, route_name, path, handler)
     end
   end
   self.before_filter = function(self, fn)
-    local before_filters = rawget(self.__base, "before_filters")
-    if not (before_filters) then
-      before_filters = { }
-      self.__base.before_filters = before_filters
-    end
-    return insert(before_filters, fn)
+    local add_before_filter
+    add_before_filter = require("lapis.application.route_group").add_before_filter
+    return add_before_filter(self.__base, fn)
   end
   local _list_1 = {
     "enable",

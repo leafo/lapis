@@ -107,29 +107,8 @@ class Application
   -- add new route to the set of routes
   @match: (route_name, path, handler) =>
     assert @ != Application, "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes"
-
-    if handler == nil
-      handler = path
-      path = route_name
-      route_name = nil
-
-    -- store the route insertion order to ensure they are added to the router
-    -- in the same order as they are defined (NOTE: routes are still sorted by
-    -- precedence)
-    ordered_routes = rawget @__base, "ordered_routes"
-    unless ordered_routes
-      ordered_routes = {}
-      @__base.ordered_routes = ordered_routes
-
-    key = if route_name
-      {[route_name]: path}
-    else
-      path
-
-    insert ordered_routes, key
-
-    @__base[key] = handler
-    return -- return nothing
+    import add_route from require "lapis.application.route_group"
+    add_route @__base, route_name, path, handler
 
   -- dynamically create methods for common HTTP verbs
   for meth in *{"get", "post", "delete", "put"}
@@ -141,61 +120,19 @@ class Application
         path = route_name
         route_name = nil
 
-      responders = rawget @, "responders"
-      unless responders
-        responders = {}
-        @responders = responders
-
-      existing = responders[path]
-
       if type(handler) != "function"
         -- NOTE: this works slightly differently, as it loads the action
         -- immediately instead of lazily, how it happens in wrap_handler. This
         -- is okay for now as we'll likely be overhauling this interface
         handler = load_action @actions_prefix, handler, route_name
 
-      if existing
-        -- add the handler to the responder table for the method
+      import add_route_verb from require "lapis.application.route_group"
+      add_route_verb @__base, respond_to, upper_meth, route_name, path, handler
 
-        -- TODO: write specs for this
-        -- assert that what we are adding to matches what it was initially declared as
-        assert existing.path == path,
-          "You are trying to add a new verb action to a route that was declared with an existing route name but a different path. Please ensure you use the same route name and path combination when adding additional verbs to a route."
-
-        assert existing.route_name == route_name,
-          "You are trying to add a new verb action to a route that was declared with and existing path but different route name. Please ensure you use the same route name and path combination when adding additional verbs to a route."
-
-        existing.respond_to[upper_meth] = handler
-      else
-        -- create the initial responder and add route to match
-
-        tbl = { [upper_meth]: handler }
-
-        -- NOTE: we store the pre-wrapped table in responders so we can mutate it
-        responders[path] = {
-          :path
-          :route_name
-          respond_to: tbl
-        }
-
-        responder = respond_to tbl
-
-        if route_name
-          @match route_name, path, responder
-        else
-          @match path, responder
-
-      return -- return nothing
-
-  -- append a function to the before filters arrray stored on the class's
-  -- __base
+  -- Add before filter `fn` to __base
   @before_filter: (fn) =>
-    before_filters =  rawget @__base, "before_filters"
-    unless before_filters
-      before_filters = {}
-      @__base.before_filters = before_filters
-
-    insert before_filters, fn
+    import add_before_filter from require "lapis.application.route_group"
+    add_before_filter @__base, fn
 
   new: =>
     @build_router!
@@ -218,30 +155,17 @@ class Application
       if t == "table" or t == "string" and path\match "^/"
         @router\add_route path, @wrap_handler handler
 
-    -- scans the routes contained in the object to add
-    add_routes_from_object = (obj) ->
-      -- track what ones were added by ordered routes so they aren't re-added
-      -- when finding every other route on the object
-      added = {}
-
-      if ordered = rawget obj, "ordered_routes"
-        for path in *ordered
-          added[path] = true
-          add_route path, assert obj[path], "Failed to find route handler when adding ordered route"
-
-      for path, handler in pairs obj
-        continue if added[path]
-        add_route path, handler
+    import scan_routes_on_object from require "lapis.application.route_group"
 
     -- this function scans over the class for fields that declare routes and
     -- adds them to the router it then will scan the parent class for routes
     add_routes_from_class = (cls) ->
-      add_routes_from_object cls.__base
+      scan_routes_on_object cls.__base, add_route
 
       if parent = cls.__parent
         add_routes_from_class parent
 
-    add_routes_from_object @
+    scan_routes_on_object @, add_route
     add_routes_from_class @@
     @router
 

@@ -32,6 +32,7 @@ build = {
 	modules = {
 		["lapis"] = "lapis/init.lua",
 		["lapis.application"] = "lapis/application.lua",
+		["lapis.application.route_group"] = "lapis/application/route_group.lua",
 		["lapis.cache"] = "lapis/cache.lua",
 		["lapis.cmd.actions"] = "lapis/cmd/actions.lua",
 		["lapis.cmd.attached_server"] = "lapis/cmd/attached_server.lua",
