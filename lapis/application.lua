@@ -77,31 +77,11 @@ do
       self.router.default_route = function(self)
         return false
       end
-      local add_route
-      add_route = function(path, handler)
-        local t = type(path)
-        if t == "table" or t == "string" and path:match("^/") then
-          return self.router:add_route(path, self:wrap_handler(handler))
-        end
-      end
       local each_route
       each_route = require("lapis.application.route_group").each_route
-      local add_routes_from_class
-      add_routes_from_class = function(cls)
-        for path, handler in each_route(cls.__base) do
-          add_route(path, handler)
-        end
-        do
-          local parent = cls.__parent
-          if parent then
-            return add_routes_from_class(parent)
-          end
-        end
+      for path, handler in each_route(self, true) do
+        self.router:add_route(path, self:wrap_handler(handler))
       end
-      for path, handler in each_route(self) do
-        add_route(path, handler)
-      end
-      add_routes_from_class(self.__class)
       return self.router
     end,
     wrap_handler = function(self, handler)

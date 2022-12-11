@@ -139,28 +139,11 @@ class Application
     @router = Router!
     @router.default_route = => false
 
-    -- TODO: inheritance precedence
-
-    add_route = (path, handler) ->
-      t = type path
-      if t == "table" or t == "string" and path\match "^/"
-        @router\add_route path, @wrap_handler handler
-
     import each_route from require "lapis.application.route_group"
 
-    -- this function scans over the class for fields that declare routes and
-    -- adds them to the router it then will scan the parent class for routes
-    add_routes_from_class = (cls) ->
-      for path, handler in each_route(cls.__base)
-        add_route path, handler
+    for path, handler in each_route @, true
+      @router\add_route path, @wrap_handler handler
 
-      if parent = cls.__parent
-        add_routes_from_class parent
-
-    for path, handler in each_route @
-      add_route path, handler
-
-    add_routes_from_class @@
     @router
 
   -- this performs the initialization of an action (called handler in this
