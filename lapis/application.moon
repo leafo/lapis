@@ -153,7 +153,7 @@ class Application
 
     import each_route from require "lapis.application.route_group"
 
-    for path, handler in each_route @, true
+    each_route @, true, (path, handler) ->
       @router\add_route path, @wrap_handler handler
 
     @router
@@ -253,7 +253,7 @@ class Application
 
     import each_route from require "lapis.application.route_group"
 
-    for path, action in each_route source, true
+    each_route source, true, (path, action) ->
       t = type path
       -- named action
       if t == "table"
@@ -271,7 +271,7 @@ class Application
           path = path_prefix .. path
       -- other field in class, ignore
       else
-        continue
+        return
 
       if name_prefix
         -- normalize and adjust lazy loaded actions
@@ -291,6 +291,8 @@ class Application
           original_action r
 
       into[path] = action
+
+    return
 
   -- Callbacks
   -- run with Request as self, instead of application

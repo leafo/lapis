@@ -64,8 +64,11 @@ add_before_filter = function(obj, fn)
   end
   table.insert(before_filters, fn)
 end
-local each_route_iterator
-each_route_iterator = function(obj, scan_metatable)
+local each_route
+each_route = function(obj, scan_metatable, callback)
+  if scan_metatable == nil then
+    scan_metatable = false
+  end
   local added = { }
   do
     local ordered = rawget(obj, "ordered_routes")
@@ -74,7 +77,7 @@ each_route_iterator = function(obj, scan_metatable)
         local path = ordered[_index_0]
         added[path] = true
         local handler = assert(obj[path], "Failed to find route handler when adding ordered route")
-        coroutine.yield(path, handler)
+        callback(path, handler)
       end
     end
   end
@@ -101,7 +104,7 @@ each_route_iterator = function(obj, scan_metatable)
         _continue_0 = true
         break
       end
-      coroutine.yield(path, handler)
+      callback(path, handler)
       _continue_0 = true
     until true
     if not _continue_0 then
@@ -111,21 +114,19 @@ each_route_iterator = function(obj, scan_metatable)
   if scan_metatable then
     local obj_mt = getmetatable(obj)
     if obj_mt and type(obj_mt.__index) == "table" then
-      return each_route_iterator(obj_mt.__index, scan_metatable)
+      return each_route(obj_mt.__index, scan_metatable, callback)
     end
   end
 end
-local each_route
-each_route = function(obj, scan_metatable)
-  if scan_metatable == nil then
-    scan_metatable = false
-  end
+local each_route_iter
+each_route_iter = function(obj, scan_metatable)
   return coroutine.wrap(function()
-    return each_route_iterator(obj, scan_metatable)
+    return each_route(obj, scan_metatable, coroutine.yield)
   end)
 end
 return {
   each_route = each_route,
+  each_route_iter = each_route_iter,
   add_route = add_route,
   add_route_verb = add_route_verb,
   add_before_filter = add_before_filter

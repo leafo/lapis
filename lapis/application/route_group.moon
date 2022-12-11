@@ -107,14 +107,16 @@ add_before_filter = (obj, fn) ->
   table.insert before_filters, fn
   return
 
-each_route_iterator = (obj, scan_metatable) ->
+-- Finds all routes on the object, in order, and calls callback with each one.
+-- callback recives arguments path_key, handler_function
+each_route = (obj, scan_metatable=false, callback) ->
   added = {}
 
   if ordered = rawget obj, "ordered_routes"
     for path in *ordered
       added[path] = true
       handler = assert obj[path], "Failed to find route handler when adding ordered route"
-      coroutine.yield path, handler
+      callback path, handler
 
   for path, handler in pairs obj
     continue if added[path] -- do not re-add things that ordered_routes already took care of
@@ -130,20 +132,15 @@ each_route_iterator = (obj, scan_metatable) ->
       else
         continue
 
-    coroutine.yield path, handler
+    callback path, handler
 
   if scan_metatable
     obj_mt = getmetatable obj
     if obj_mt and type(obj_mt.__index) == "table"
-      each_route_iterator obj_mt.__index, scan_metatable
+      each_route obj_mt.__index, scan_metatable, callback
 
--- Finds all routes on the object, in order, and calls each_route_fn with each
--- one. each_route_fn recives arguments path_key, handler_function
-each_route = (obj, scan_metatable=false) ->
-  -- track what ones were added by ordered routes so they aren't re-added
-  -- when finding every other route on the object
+each_route_iter = (obj, scan_metatable) ->
   coroutine.wrap ->
-    each_route_iterator obj, scan_metatable
+    each_route obj, scan_metatable, coroutine.yield
 
-
-{ :each_route, :add_route, :add_route_verb, :add_before_filter }
+{ :each_route, :each_route_iter, :add_route, :add_route_verb, :add_before_filter }

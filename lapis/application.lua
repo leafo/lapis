@@ -93,9 +93,9 @@ do
       end
       local each_route
       each_route = require("lapis.application.route_group").each_route
-      for path, handler in each_route(self, true) do
-        self.router:add_route(path, self:wrap_handler(handler))
-      end
+      each_route(self, true, function(path, handler)
+        return self.router:add_route(path, self:wrap_handler(handler))
+      end)
       return self.router
     end,
     wrap_handler = function(self, handler)
@@ -179,58 +179,50 @@ do
       local source = get_target_route_group(other_app)
       local each_route
       each_route = require("lapis.application.route_group").each_route
-      for path, action in each_route(source, true) do
-        local _continue_0 = false
-        repeat
-          local t = type(path)
-          if t == "table" then
-            if path_prefix then
-              local name = next(path)
-              path[name] = path_prefix .. path[name]
-            end
-            if name_prefix then
-              local name = next(path)
-              path[name_prefix .. name] = path[name]
-              path[name] = nil
-            end
-          elseif t == "string" and path:match("^/") then
-            if path_prefix then
-              path = path_prefix .. path
-            end
-          else
-            _continue_0 = true
-            break
+      each_route(source, true, function(path, action)
+        local t = type(path)
+        if t == "table" then
+          if path_prefix then
+            local name = next(path)
+            path[name] = path_prefix .. path[name]
           end
           if name_prefix then
-            if type(action) == "string" then
-              action = name_prefix .. action
-            elseif action == true then
-              assert(type(path) == "table", "include: " .. tostring(MISSING_ROUTE_NAME_ERORR))
-              action = next(path)
-            end
+            local name = next(path)
+            path[name_prefix .. name] = path[name]
+            path[name] = nil
           end
-          do
-            local before_filters = source.before_filters
-            if before_filters then
-              local original_action = wrap_action_loader(action)
-              action = function(r)
-                for _index_0 = 1, #before_filters do
-                  local filter = before_filters[_index_0]
-                  if run_before_filter(filter, r) then
-                    return 
-                  end
-                end
-                return original_action(r)
-              end
-            end
+        elseif t == "string" and path:match("^/") then
+          if path_prefix then
+            path = path_prefix .. path
           end
-          into[path] = action
-          _continue_0 = true
-        until true
-        if not _continue_0 then
-          break
+        else
+          return 
         end
-      end
+        if name_prefix then
+          if type(action) == "string" then
+            action = name_prefix .. action
+          elseif action == true then
+            assert(type(path) == "table", "include: " .. tostring(MISSING_ROUTE_NAME_ERORR))
+            action = next(path)
+          end
+        end
+        do
+          local before_filters = source.before_filters
+          if before_filters then
+            local original_action = wrap_action_loader(action)
+            action = function(r)
+              for _index_0 = 1, #before_filters do
+                local filter = before_filters[_index_0]
+                if run_before_filter(filter, r) then
+                  return 
+                end
+              end
+              return original_action(r)
+            end
+          end
+        end
+        into[path] = action
+      end)
     end,
     default_route = function(self)
       if self.req.parsed_url.path:match("./$") then
