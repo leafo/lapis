@@ -109,18 +109,20 @@ add_before_filter = (obj, fn) ->
 
 -- Finds all routes on the object, in order, and calls each_route_fn with each
 -- one. each_route_fn recives arguments path_key, handler_function
-scan_routes_on_object = (obj, each_route_fn) ->
+each_route = (obj, scan_metatable=false) ->
   -- track what ones were added by ordered routes so they aren't re-added
   -- when finding every other route on the object
-  added = {}
+  coroutine.wrap ->
+    added = {}
 
-  if ordered = rawget obj, "ordered_routes"
-    for path in *ordered
-      added[path] = true
-      each_route_fn path, assert obj[path], "Failed to find route handler when adding ordered route"
+    if ordered = rawget obj, "ordered_routes"
+      for path in *ordered
+        added[path] = true
+        handler = assert obj[path], "Failed to find route handler when adding ordered route"
+        coroutine.yield path, handler
 
-  for path, handler in pairs obj
-    continue if added[path]
-    each_route_fn path, handler
+    for path, handler in pairs obj
+      continue if added[path]
+      coroutine.yield path, handler
 
-{ :scan_routes_on_object, :add_route, :add_route_verb, :add_before_filter }
+{ :each_route, :add_route, :add_route_verb, :add_before_filter }

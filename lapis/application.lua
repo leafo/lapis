@@ -84,11 +84,13 @@ do
           return self.router:add_route(path, self:wrap_handler(handler))
         end
       end
-      local scan_routes_on_object
-      scan_routes_on_object = require("lapis.application.route_group").scan_routes_on_object
+      local each_route
+      each_route = require("lapis.application.route_group").each_route
       local add_routes_from_class
       add_routes_from_class = function(cls)
-        scan_routes_on_object(cls.__base, add_route)
+        for path, handler in each_route(cls.__base) do
+          add_route(path, handler)
+        end
         do
           local parent = cls.__parent
           if parent then
@@ -96,7 +98,9 @@ do
           end
         end
       end
-      scan_routes_on_object(self, add_route)
+      for path, handler in each_route(self) do
+        add_route(path, handler)
+      end
       add_routes_from_class(self.__class)
       return self.router
     end,

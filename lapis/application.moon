@@ -89,7 +89,6 @@ class Application
 
     action, route
 
-
   -- NOTE: this is a special method that can be called on either the class or the instance
   enable: (feature) =>
     assert @ != Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features"
@@ -147,17 +146,20 @@ class Application
       if t == "table" or t == "string" and path\match "^/"
         @router\add_route path, @wrap_handler handler
 
-    import scan_routes_on_object from require "lapis.application.route_group"
+    import each_route from require "lapis.application.route_group"
 
     -- this function scans over the class for fields that declare routes and
     -- adds them to the router it then will scan the parent class for routes
     add_routes_from_class = (cls) ->
-      scan_routes_on_object cls.__base, add_route
+      for path, handler in each_route(cls.__base)
+        add_route path, handler
 
       if parent = cls.__parent
         add_routes_from_class parent
 
-    scan_routes_on_object @, add_route
+    for path, handler in each_route @
+      add_route path, handler
+
     add_routes_from_class @@
     @router
 
