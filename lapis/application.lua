@@ -172,6 +172,67 @@ do
       end
       return success, r
     end,
+    include = function(self, other_app, opts)
+      local into = get_target_route_group(self)
+      if type(other_app) == "string" then
+        other_app = require(other_app)
+      end
+      local path_prefix = opts and opts.path or other_app.path
+      local name_prefix = opts and opts.name or other_app.name
+      local source = get_target_route_group(other_app)
+      for path, action in pairs(source) do
+        local _continue_0 = false
+        repeat
+          local t = type(path)
+          if t == "table" then
+            if path_prefix then
+              local name = next(path)
+              path[name] = path_prefix .. path[name]
+            end
+            if name_prefix then
+              local name = next(path)
+              path[name_prefix .. name] = path[name]
+              path[name] = nil
+            end
+          elseif t == "string" and path:match("^/") then
+            if path_prefix then
+              path = path_prefix .. path
+            end
+          else
+            _continue_0 = true
+            break
+          end
+          if name_prefix then
+            if type(action) == "string" then
+              action = name_prefix .. action
+            elseif action == true then
+              assert(type(path) == "table", "include: " .. tostring(MISSING_ROUTE_NAME_ERORR))
+              action = next(path)
+            end
+          end
+          do
+            local before_filters = other_app.before_filters
+            if before_filters then
+              local fn = action
+              action = function(r)
+                for _index_0 = 1, #before_filters do
+                  local filter = before_filters[_index_0]
+                  if run_before_filter(filter, r) then
+                    return 
+                  end
+                end
+                return load_action(r.app.actions_prefix, fn, r.route_name)(r)
+              end
+            end
+          end
+          into[path] = action
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+    end,
     default_route = function(self)
       if self.req.parsed_url.path:match("./$") then
         local stripped = self.req.parsed_url.path:match("^(.+)/+$")
@@ -276,68 +337,6 @@ do
       add_route_verb(route_group, respond_to, upper_meth, route_name, path, handler)
       if route_group == self then
         self.router = nil
-      end
-    end
-  end
-  self.include = function(self, other_app, opts, into)
-    if into == nil then
-      into = self.__base
-    end
-    if type(other_app) == "string" then
-      other_app = require(other_app)
-    end
-    local path_prefix = opts and opts.path or other_app.path
-    local name_prefix = opts and opts.name or other_app.name
-    for path, action in pairs(other_app.__base) do
-      local _continue_0 = false
-      repeat
-        local t = type(path)
-        if t == "table" then
-          if path_prefix then
-            local name = next(path)
-            path[name] = path_prefix .. path[name]
-          end
-          if name_prefix then
-            local name = next(path)
-            path[name_prefix .. name] = path[name]
-            path[name] = nil
-          end
-        elseif t == "string" and path:match("^/") then
-          if path_prefix then
-            path = path_prefix .. path
-          end
-        else
-          _continue_0 = true
-          break
-        end
-        if name_prefix then
-          if type(action) == "string" then
-            action = name_prefix .. action
-          elseif action == true then
-            assert(type(path) == "table", "include: " .. tostring(MISSING_ROUTE_NAME_ERORR))
-            action = next(path)
-          end
-        end
-        do
-          local before_filters = other_app.before_filters
-          if before_filters then
-            local fn = action
-            action = function(r)
-              for _index_0 = 1, #before_filters do
-                local filter = before_filters[_index_0]
-                if run_before_filter(filter, r) then
-                  return 
-                end
-              end
-              return load_action(r.app.actions_prefix, fn, r.route_name)(r)
-            end
-          end
-        end
-        into[path] = action
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
       end
     end
   end

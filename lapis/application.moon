@@ -239,14 +239,18 @@ class Application
   -- copies all actions into this application, preserves before filters
   -- other app can just be a plain table, doesn't have to be another application
   -- @include other_app, path: "/hello", name: "hello_"
-  @include: (other_app, opts, into=@__base) =>
+  include: (other_app, opts) =>
+    into = get_target_route_group @
+
     if type(other_app) == "string"
       other_app = require other_app
 
     path_prefix = opts and opts.path or other_app.path
     name_prefix = opts and opts.name or other_app.name
 
-    for path, action in pairs other_app.__base
+    source = get_target_route_group other_app
+
+    for path, action in pairs source
       t = type path
       -- named action
       if t == "table"
