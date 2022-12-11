@@ -4,7 +4,11 @@
 -- pattern classes
 --    :something[num] *[slug]
 
-import insert from table
+-- A router takes a list of routes and their callbacks and generates two lpeg
+-- patterns:
+
+
+import insert, concat from table
 unpack = unpack or table.unpack
 
 lpeg = require "lpeg"
@@ -13,15 +17,6 @@ import R, S, V, P from lpeg
 import C, Cs, Ct, Cmt, Cg, Cb, Cc from lpeg
 
 import encode_query_string from require "lapis.util"
-
-reduce = (items, fn) ->
-  count = #items
-  error "reducing 0 item list" if count == 0
-  return items[1] if count == 1
-  left = fn items[1], items[2]
-  for i = 3, count
-    left = fn left, items[i]
-  left
 
 class RouteParser
   new: =>
@@ -166,8 +161,6 @@ class RouteParser
     chunk = var / make_var + splat / make_splat
     chunk = (1 - chunk)^1 / make_lit + chunk
 
-    compile_chunks = @\compile_chunks
-
     g = P {
       "route"
       optional_literal: (1 - P")" - V"chunk")^1 / make_lit
@@ -180,7 +173,9 @@ class RouteParser
       route: Ct((V"chunk" + V"literal")^1)
     }
 
-    g / @\compile_chunks / (p, f) -> Ct(p) * -1, f
+    g / (chunks) ->
+      pattern, flags = @compile_chunks chunks
+      chunks, Ct(pattern) * -1, flags
 
 
 class Router
@@ -192,13 +187,10 @@ class Router
   add_route: (route, responder) =>
     @p = nil
     name = nil
+
     if type(route) == "table"
       name = next route
       route = route[name]
-
-      -- keep existing route
-      unless @named_routes[name]
-        @named_routes[name] = route
 
     insert @routes, { route, responder, name }
 
@@ -219,12 +211,16 @@ class Router
 
   build: =>
     by_precedence = {}
+    named_routes = {}
 
-    for r in *@routes
-      pattern, flags = @build_route unpack r
+    for {path, responder, name} in *@routes
+      pattern, flags, chunks = @build_route path, responder, name
       p = @route_precedence flags
       by_precedence[p] or= {}
       table.insert by_precedence[p], pattern
+
+      if name -- stored the parsed path by name to allow for URL generation
+        named_routes[name] = chunks
 
     precedences = [k for k in pairs by_precedence]
     table.sort precedences
@@ -238,65 +234,77 @@ class Router
           @p = pattern
 
     @p or= P -1
+    @named_routes = named_routes
   
   build_route: (path, responder, name) =>
-    pattern, flags = @parser\parse path
+    chunks, pattern, flags = @parser\parse path
+
     pattern = pattern / (params) ->
       params, responder, path, name
 
-    pattern, flags
+    pattern, flags, chunks
 
-  fill_path: (path, params={}, route_name) =>
-    local optional_stack
+  fill_path: do
+    compile_chunks = (buffer, chunks, get_var) ->
+      filled_vars = 0
 
-    replace = (s) ->
-      param_name = s\sub 2
-      if val = params[param_name]
+      for instruction in *chunks
+        switch instruction[1]
+          when "literal"
+            buffer[#buffer + 1] = instruction[2]
+          when "var", "splat"
+            var_name = if instruction[1] == "splat"
+              "splat"
+            else
+              instruction[2]
+
+            var_value = get_var var_name
+
+            if var_value != nil
+              filled_vars += 1
+              buffer[#buffer +  1] = var_value
+          when "optional"
+            pos = #buffer
+            optional_filled = compile_chunks buffer, instruction[2], get_var
+
+            if optional_filled > 0
+              filled_vars += optional_filled
+            else
+              -- remove anything written
+              for i=#buffer,pos+1,-1
+                buffer[i] = nil
+
+          else
+            error "got unknown chunk type when compiling url: #{instruction[1]}"
+
+      filled_vars
+
+    (chunks, params, route_name) =>
+      get_var = (param_name) ->
+        val = params and params[param_name]
+        return if val == nil
+
         if "table" == type val
           if get_key = val.url_key
-            val = get_key(val, route_name, param_name) or ""
+            get_key(val, route_name, param_name) or ""
           else
             obj_name = val.__class and val.__class.__name or type(val)
-            error "Don't know how to serialize object for url: #{obj_name}"
-        optional_stack.hits += 1 if optional_stack
-        val, true
-      else
-        optional_stack.misses += 1 if optional_stack
-        ""
-
-    patt = Cs P {
-      "string"
-
-      replacement: @parser.var / replace +
-        @parser.splat / (-> replace ":splat") +
-        V"optional"
-
-      optional: Cmt("(", (_, k) ->
-        optional_stack = {
-          hits: 0
-          misses: 0
-          prev: optional_stack
-        }
-
-        true, ""
-      ) * Cmt Cs((V"replacement" + 1 - ")")^0) * P")", (_, k, match) ->
-        result = optional_stack
-        optional_stack = optional_stack.prev
-
-        if result.hits > 0 and result.misses == 0
-          true, match
+            error "lapis.router: attmpted to generate route parameter for object without 'url_key' method: #{obj_name}"
         else
-          true, ""
+          val
 
-      string: (V"replacement" + 1)^0
-    }
-
-    patt\match path
+      b = {}
+      compile_chunks b, chunks, get_var
+      table.concat b
 
   url_for: (name, params, query) =>
-    return params unless name
-    path = assert @named_routes[name], "Missing route named #{name}"
-    path = @fill_path path, params, name
+    return params unless name -- a nil route name is a pass through (TODO: should this live in Request.url_for instead)
+
+    chunks = @named_routes[name]
+    unless chunks
+      error "lapis.router: There is no route named: #{name}"
+
+    path = @fill_path chunks, params, name
 
     if query
       if type(query) == "table"
@@ -304,6 +312,7 @@ class Router
 
       if query != ""
         path ..= "?" .. query
+
     path
 
   match: (route) =>

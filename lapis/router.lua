@@ -1,5 +1,8 @@
-local insert
-insert = table.insert
+local insert, concat
+do
+  local _obj_0 = table
+  insert, concat = _obj_0.insert, _obj_0.concat
+end
 local unpack = unpack or table.unpack
 local lpeg = require("lpeg")
 local R, S, V, P
@@ -8,21 +11,6 @@ local C, Cs, Ct, Cmt, Cg, Cb, Cc
 C, Cs, Ct, Cmt, Cg, Cb, Cc = lpeg.C, lpeg.Cs, lpeg.Ct, lpeg.Cmt, lpeg.Cg, lpeg.Cb, lpeg.Cc
 local encode_query_string
 encode_query_string = require("lapis.util").encode_query_string
-local reduce
-reduce = function(items, fn)
-  local count = #items
-  if count == 0 then
-    error("reducing 0 item list")
-  end
-  if count == 1 then
-    return items[1]
-  end
-  local left = fn(items[1], items[2])
-  for i = 3, count do
-    left = fn(left, items[i])
-  end
-  return left
-end
 local RouteParser
 do
   local _class_0
@@ -229,14 +217,6 @@ do
       self.splat = splat
       local chunk = var / make_var + splat / make_splat
       chunk = (1 - chunk) ^ 1 / make_lit + chunk
-      local compile_chunks
-      do
-        local _base_1 = self
-        local _fn_0 = _base_1.compile_chunks
-        compile_chunks = function(...)
-          return _fn_0(_base_1, ...)
-        end
-      end
       local g = P({
         "route",
         optional_literal = (1 - P(")") - V("chunk")) ^ 1 / make_lit,
@@ -246,14 +226,9 @@ do
         chunk = var / make_var + splat / make_splat + V("optional"),
         route = Ct((V("chunk") + V("literal")) ^ 1)
       })
-      return g / (function()
-        local _base_1 = self
-        local _fn_0 = _base_1.compile_chunks
-        return function(...)
-          return _fn_0(_base_1, ...)
-        end
-      end)() / function(p, f)
-        return Ct(p) * -1, f
+      return g / function(chunks)
+        local pattern, flags = self:compile_chunks(chunks)
+        return chunks, Ct(pattern) * -1, flags
       end
     end
   }
@@ -285,9 +260,6 @@ do
       if type(route) == "table" then
         name = next(route)
         route = route[name]
-        if not (self.named_routes[name]) then
-          self.named_routes[name] = route
-        end
       end
       return insert(self.routes, {
         route,
@@ -310,14 +282,20 @@ do
     end,
     build = function(self)
       local by_precedence = { }
+      local named_routes = { }
       local _list_0 = self.routes
       for _index_0 = 1, #_list_0 do
-        local r = _list_0[_index_0]
-        local pattern, flags = self:build_route(unpack(r))
+        local _des_0 = _list_0[_index_0]
+        local path, responder, name
+        path, responder, name = _des_0[1], _des_0[2], _des_0[3]
+        local pattern, flags, chunks = self:build_route(path, responder, name)
         local p = self:route_precedence(flags)
         local _update_0 = p
         by_precedence[_update_0] = by_precedence[_update_0] or { }
         table.insert(by_precedence[p], pattern)
+        if name then
+          named_routes[name] = chunks
+        end
       end
       local precedences
       do
@@ -344,79 +322,87 @@ do
         end
       end
       self.p = self.p or P(-1)
+      self.named_routes = named_routes
     end,
     build_route = function(self, path, responder, name)
-      local pattern, flags = self.parser:parse(path)
+      local chunks, pattern, flags = self.parser:parse(path)
       pattern = pattern / function(params)
         return params, responder, path, name
       end
-      return pattern, flags
+      return pattern, flags, chunks
     end,
-    fill_path = function(self, path, params, route_name)
-      if params == nil then
-        params = { }
-      end
-      local optional_stack
-      local replace
-      replace = function(s)
-        local param_name = s:sub(2)
-        do
-          local val = params[param_name]
-          if val then
-            if "table" == type(val) then
-              do
-                local get_key = val.url_key
-                if get_key then
-                  val = get_key(val, route_name, param_name) or ""
-                else
-                  local obj_name = val.__class and val.__class.__name or type(val)
-                  error("Don't know how to serialize object for url: " .. tostring(obj_name))
-                end
+    fill_path = (function()
+      local compile_chunks
+      compile_chunks = function(buffer, chunks, get_var)
+        local filled_vars = 0
+        for _index_0 = 1, #chunks do
+          local instruction = chunks[_index_0]
+          local _exp_0 = instruction[1]
+          if "literal" == _exp_0 then
+            buffer[#buffer + 1] = instruction[2]
+          elseif "var" == _exp_0 or "splat" == _exp_0 then
+            local var_name
+            if instruction[1] == "splat" then
+              var_name = "splat"
+            else
+              var_name = instruction[2]
+            end
+            local var_value = get_var(var_name)
+            if var_value ~= nil then
+              filled_vars = filled_vars + 1
+              buffer[#buffer + 1] = var_value
+            end
+          elseif "optional" == _exp_0 then
+            local pos = #buffer
+            local optional_filled = compile_chunks(buffer, instruction[2], get_var)
+            if optional_filled > 0 then
+              filled_vars = filled_vars + optional_filled
+            else
+              for i = #buffer, pos + 1, -1 do
+                buffer[i] = nil
               end
             end
-            if optional_stack then
-              optional_stack.hits = optional_stack.hits + 1
-            end
-            return val, true
           else
-            if optional_stack then
-              optional_stack.misses = optional_stack.misses + 1
-            end
-            return ""
+            error("got unknown chunk type when compiling url: " .. tostring(instruction[1]))
           end
         end
+        return filled_vars
       end
-      local patt = Cs(P({
-        "string",
-        replacement = self.parser.var / replace + self.parser.splat / (function()
-          return replace(":splat")
-        end) + V("optional"),
-        optional = Cmt("(", function(_, k)
-          optional_stack = {
-            hits = 0,
-            misses = 0,
-            prev = optional_stack
-          }
-          return true, ""
-        end) * Cmt(Cs((V("replacement") + 1 - ")") ^ 0) * P(")"), function(_, k, match)
-          local result = optional_stack
-          optional_stack = optional_stack.prev
-          if result.hits > 0 and result.misses == 0 then
-            return true, match
-          else
-            return true, ""
+      return function(self, chunks, params, route_name)
+        local get_var
+        get_var = function(param_name)
+          local val = params and params[param_name]
+          if val == nil then
+            return 
           end
-        end),
-        string = (V("replacement") + 1) ^ 0
-      }))
-      return patt:match(path)
-    end,
+          if "table" == type(val) then
+            do
+              local get_key = val.url_key
+              if get_key then
+                return get_key(val, route_name, param_name) or ""
+              else
+                local obj_name = val.__class and val.__class.__name or type(val)
+                return error("lapis.router: attmpted to generate route parameter for object without 'url_key' method: " .. tostring(obj_name))
+              end
+            end
+          else
+            return val
+          end
+        end
+        local b = { }
+        compile_chunks(b, chunks, get_var)
+        return table.concat(b)
+      end
+    end)(),
     url_for = function(self, name, params, query)
       if not (name) then
         return params
       end
-      local path = assert(self.named_routes[name], "Missing route named " .. tostring(name))
-      path = self:fill_path(path, params, name)
+      local chunks = self.named_routes[name]
+      if not (chunks) then
+        error("lapis.router: There is no route named: " .. tostring(name))
+      end
+      local path = self:fill_path(chunks, params, name)
       if query then
         if type(query) == "table" then
           query = encode_query_string(query)
