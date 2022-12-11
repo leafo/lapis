@@ -32,6 +32,20 @@ load_action = function(prefix, action, route_name)
     return action
   end
 end
+local wrap_action_loader
+wrap_action_loader = function(action)
+  if type(action) == "function" then
+    return action
+  end
+  local loaded = false
+  return function(self)
+    if not (loaded) then
+      action = load_action(self.app.actions_prefix, action, self.route_name)
+      loaded = true
+    end
+    return action(self)
+  end
+end
 local get_target_route_group
 get_target_route_group = function(obj)
   assert(obj ~= Application, "lapis.Application is not able to be modified with routes. You must either subclass or instantiate it")
@@ -196,9 +210,9 @@ do
             end
           end
           do
-            local before_filters = other_app.before_filters
+            local before_filters = source.before_filters
             if before_filters then
-              local fn = action
+              local original_action = wrap_action_loader(action)
               action = function(r)
                 for _index_0 = 1, #before_filters do
                   local filter = before_filters[_index_0]
@@ -206,7 +220,7 @@ do
                     return 
                   end
                 end
-                return load_action(r.app.actions_prefix, fn, r.route_name)(r)
+                return original_action(r)
               end
             end
           end
@@ -314,7 +328,7 @@ do
         route_name = nil
       end
       if type(handler) ~= "function" then
-        handler = load_action(self.actions_prefix, handler, route_name)
+        handler = wrap_action_loader(handler)
       end
       local route_group = get_target_route_group(self)
       local add_route_verb

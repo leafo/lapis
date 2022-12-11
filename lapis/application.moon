@@ -36,6 +36,21 @@ load_action = (prefix, action, route_name) ->
   else
     action
 
+-- if action is a non-function then we turn it into a function that can
+-- dynamically load the appropraite action via `load_action`
+wrap_action_loader = (action) ->
+  if type(action) == "function"
+    return action
+
+  -- NOTE: the closure on the argument is used as the cache
+  loaded = false
+  =>
+    unless loaded
+      action = load_action @app.actions_prefix, action, @route_name
+      loaded = true
+
+    action @
+
 -- if obj is a class, then the __base, otherwise obj is an instance and is the
 -- route group
 get_target_route_group = (obj) ->
@@ -118,10 +133,7 @@ class Application
         route_name = nil
 
       if type(handler) != "function"
-        -- NOTE: this works slightly differently, as it loads the action
-        -- immediately instead of lazily, how it happens in wrap_handler. This
-        -- is okay for now as we'll likely be overhauling this interface
-        handler = load_action @actions_prefix, handler, route_name
+        handler = wrap_action_loader handler
 
       route_group = get_target_route_group(@)
       import add_route_verb from require "lapis.application.route_group"
@@ -269,13 +281,14 @@ class Application
           assert type(path) == "table", "include: #{MISSING_ROUTE_NAME_ERORR}"
           action = next(path) -- the route name is the only key in the table
 
-      if before_filters = other_app.before_filters
-        fn = action
+      -- embed the before filters into the action
+      if before_filters = source.before_filters
+        original_action = wrap_action_loader action
         action = (r) ->
           for filter in *before_filters
             return if run_before_filter filter, r
 
-          load_action(r.app.actions_prefix, fn, r.route_name) r
+          original_action r
 
       into[path] = action
 
