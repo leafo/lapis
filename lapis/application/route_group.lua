@@ -64,38 +64,64 @@ add_before_filter = function(obj, fn)
   end
   table.insert(before_filters, fn)
 end
+local each_route_iterator
+each_route_iterator = function(obj, scan_metatable)
+  local added = { }
+  do
+    local ordered = rawget(obj, "ordered_routes")
+    if ordered then
+      for _index_0 = 1, #ordered do
+        local path = ordered[_index_0]
+        added[path] = true
+        local handler = assert(obj[path], "Failed to find route handler when adding ordered route")
+        coroutine.yield(path, handler)
+      end
+    end
+  end
+  for path, handler in pairs(obj) do
+    local _continue_0 = false
+    repeat
+      if added[path] then
+        _continue_0 = true
+        break
+      end
+      local _exp_0 = type(path)
+      if "string" == _exp_0 then
+        if not (path:match("^/")) then
+          _continue_0 = true
+          break
+        end
+      elseif "table" == _exp_0 then
+        local k = next(path)
+        if not (type(k) == "string" or type(path[k]) == "string") then
+          _continue_0 = true
+          break
+        end
+      else
+        _continue_0 = true
+        break
+      end
+      coroutine.yield(path, handler)
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
+  end
+  if scan_metatable then
+    local obj_mt = getmetatable(obj)
+    if obj_mt and type(obj_mt.__index) == "table" then
+      return each_route_iterator(obj_mt.__index, scan_metatable)
+    end
+  end
+end
 local each_route
 each_route = function(obj, scan_metatable)
   if scan_metatable == nil then
     scan_metatable = false
   end
   return coroutine.wrap(function()
-    local added = { }
-    do
-      local ordered = rawget(obj, "ordered_routes")
-      if ordered then
-        for _index_0 = 1, #ordered do
-          local path = ordered[_index_0]
-          added[path] = true
-          local handler = assert(obj[path], "Failed to find route handler when adding ordered route")
-          coroutine.yield(path, handler)
-        end
-      end
-    end
-    for path, handler in pairs(obj) do
-      local _continue_0 = false
-      repeat
-        if added[path] then
-          _continue_0 = true
-          break
-        end
-        coroutine.yield(path, handler)
-        _continue_0 = true
-      until true
-      if not _continue_0 then
-        break
-      end
-    end
+    return each_route_iterator(obj, scan_metatable)
   end)
 end
 return {
