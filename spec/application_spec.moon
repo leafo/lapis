@@ -150,7 +150,7 @@ describe "lapis.application", ->
       assert.same "/hello/whoa", app.router\url_for "second", cool: "whoa"
       assert.has_error(
         -> app.router\url_for "first"
-        "Missing route named first"
+        "lapis.router: There is no route named: first"
       )
 
   describe "include", ->

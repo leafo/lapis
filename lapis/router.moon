@@ -300,6 +300,8 @@ class Router
   url_for: (name, params, query) =>
     return params unless name -- a nil route name is a pass through (TODO: should this live in Request.url_for instead)
 
+    @build! unless @p
+
     chunks = @named_routes[name]
     unless chunks
       error "lapis.router: There is no route named: #{name}"

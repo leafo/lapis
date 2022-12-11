@@ -9,6 +9,7 @@ build_router = (routes) ->
     for pattern in *routes
       r\add_route pattern, handler
     r.default_route = -> "failed to find route"
+    r\build!
 
 describe "Router", ->
   it "matches a route", ->
@@ -153,7 +154,7 @@ describe "RouteParser.parse", ->
     do_test = (pattern, test, result) ->
       it "matches `#{pattern}` with `#{test}`", ->
         parser = RouteParser!
-        p = assert parser\parse pattern
+        chunks, p = assert parser\parse pattern
         assert.same result, (p\match test)
 
     if type(test) == "table"
@@ -202,7 +203,8 @@ describe "Router.fill_path", ->
   }
     do_test = (route, params, expected) ->
       r = Router!
-      assert.same expected, r\fill_path route, params
+      chunks = r.parser\parse route
+      assert.same expected, r\fill_path chunks, params
 
     if type(expected) == "table"
       for {_expected, _params} in *expected
@@ -347,9 +349,9 @@ describe "named routes", ->
     url = r\url_for "profile_settings", name: user
     assert.same "/profile/adam/settings", url
 
-  it "should not build url", ->
+  it "throws error on missing route", ->
     assert.has_error (-> r\url_for "fake_url", name: user),
-      "Missing route named fake_url"
+      "lapis.router: There is no route named: fake_url"
 
   it "builds url with optional component", ->
     url = r\url_for "optional", { format: "zip" }

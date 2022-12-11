@@ -398,6 +398,9 @@ do
       if not (name) then
         return params
       end
+      if not (self.p) then
+        self:build()
+      end
       local chunks = self.named_routes[name]
       if not (chunks) then
         error("lapis.router: There is no route named: " .. tostring(name))
