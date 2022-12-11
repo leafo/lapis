@@ -154,13 +154,18 @@ do
     end,
     include = function(self, other_app, opts)
       local into = get_target_route_group(self)
+      if into == self then
+        self.router = nil
+      end
       if type(other_app) == "string" then
         other_app = require(other_app)
       end
       local path_prefix = opts and opts.path or other_app.path
       local name_prefix = opts and opts.name or other_app.name
       local source = get_target_route_group(other_app)
-      for path, action in pairs(source) do
+      local each_route
+      each_route = require("lapis.application.route_group").each_route
+      for path, action in each_route(source, true) do
         local _continue_0 = false
         repeat
           local t = type(path)

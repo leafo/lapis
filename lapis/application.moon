@@ -228,6 +228,9 @@ class Application
   include: (other_app, opts) =>
     into = get_target_route_group @
 
+    if into == @ -- purge the route cache if it exists
+      @router = nil
+
     if type(other_app) == "string"
       other_app = require other_app
 
@@ -236,7 +239,9 @@ class Application
 
     source = get_target_route_group other_app
 
-    for path, action in pairs source
+    import each_route from require "lapis.application.route_group"
+
+    for path, action in each_route source, true
       t = type path
       -- named action
       if t == "table"
