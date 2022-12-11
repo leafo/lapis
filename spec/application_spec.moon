@@ -6,7 +6,6 @@ import mock_action, mock_request, assert_request from require "lapis.spec.reques
 mock_app = (...) ->
   mock_action lapis.Application, ...
 
-
 describe "lapis.application", ->
   before_each ->
     -- unload any dynamically loaded modules for views & actions
@@ -18,7 +17,7 @@ describe "lapis.application", ->
     it "prevents adding routes", ->
       assert.has_error(
         -> lapis.Application\match("hello", ->)
-        "You tried to mutate the read-only class lapis.Application. You must sub-class it before adding routes"
+        "lapis.Application is not able to be modified with routes. You must either subclass or instantiate it"
       )
 
     it "prevents adding features", ->
@@ -517,6 +516,41 @@ describe "lapis.application", ->
         req: { method: "POST" }
       }
 
+  describe "route builders on class", ->
+    it "calls match on calss", ->
+      local result
+
+      counter = 0
+
+      class SomeApp extends lapis.Application
+        @before_filter ->
+          counter += 1
+
+        @match "/", => result = "root"
+        @match "/user/:id", => result = "user_id"
+
+        @get "cool", "/cool", => result = "get:#{@route_name}"
+        @post "cool", "/cool", => result = "post:#{@route_name}"
+
+      assert_request SomeApp, "/"
+      assert.same "root", result
+      assert.same 1, counter
+
+      assert_request SomeApp, "/user/23042"
+      assert.same "user_id", result
+      assert.same 2, counter
+
+      assert_request SomeApp, "/cool"
+      assert.same "get:cool", result
+      assert.same 3, counter
+
+      assert_request SomeApp, "/cool", method: "POST"
+      assert.same "post:cool", result
+      assert.same 4, counter
+
+      assert.has_error ->
+        assert_request SomeApp, "/cool", method: "DELETE"
+
   describe "instancing", ->
     it "should match a route", ->
       local res
@@ -547,6 +581,25 @@ describe "lapis.application", ->
 
       assert_request app, "/hello", post: {}
       assert.same "post", res
+
+    it "doesn't allow route mismatch for verbs", ->
+      app = lapis.Application!
+
+      app\get "one", "/one", ->
+      assert.has_error(
+        -> app\post("/one", ->)
+        "You are trying to add a new verb action to a route that was declared with and existing path but different route name. Please ensure you use the same route name and path combination when adding additional verbs to a route."
+      )
+
+      app\get "/two", ->
+      assert.has_error(
+        -> app\post("two", "/two", ->)
+        "You are trying to add a new verb action to a route that was declared with and existing path but different route name. Please ensure you use the same route name and path combination when adding additional verbs to a route."
+      )
+
+      -- TODO: this should fail
+      app\get "three", "/three", ->
+      app\post "three", "/four", ->
 
     it "finds actions by name for verb", ->
       local res
