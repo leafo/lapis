@@ -45,6 +45,7 @@ test_db:
 	createdb -U postgres lapis_test
 
 mysql_test_db:
+	# echo 'ALTER USER root@localhost IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD("")' | sudo mysql -u root
 	echo 'drop database if exists lapis_test' | mysql -u root
 	echo 'create database lapis_test' | mysql -u root
 
