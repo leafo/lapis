@@ -93,7 +93,24 @@ do
       end
       local each_route
       each_route = require("lapis.application.route_group").each_route
+      local filled_routes = { }
       each_route(self, true, function(path, handler)
+        local route_name, path_string
+        if type(path) == "table" then
+          route_name, path_string = next(path), path[next(path)]
+        else
+          route_name, path_string = nil, path
+        end
+        if route_name then
+          if filled_routes[route_name] then
+            return 
+          end
+          filled_routes[route_name] = true
+        end
+        if filled_routes[path_string] then
+          return 
+        end
+        filled_routes[path_string] = true
         return self.router:add_route(path, self:wrap_handler(handler))
       end)
       return self.router

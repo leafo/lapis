@@ -153,7 +153,23 @@ class Application
 
     import each_route from require "lapis.application.route_group"
 
+    -- this will hold both paths and route names to prevent them from being
+    -- redeclared by paths lower in precedence
+    filled_routes = {}
+
     each_route @, true, (path, handler) ->
+      route_name, path_string = if type(path) == "table"
+        next(path), path[next path]
+      else
+        nil, path
+
+      if route_name
+        return if filled_routes[route_name]
+        filled_routes[route_name] = true
+
+      return if filled_routes[path_string]
+      filled_routes[path_string] = true
+
       @router\add_route path, @wrap_handler handler
 
     @router

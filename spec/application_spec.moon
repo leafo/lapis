@@ -118,6 +118,41 @@ describe "lapis.application", ->
       assert.same 200, status
       assert.same "child yeah", result
 
+    it "overrides route by route name", ->
+      class Root extends lapis.Application
+        layout: false
+        [test_route: "/hello/:var"]: => "original"
+
+      class ChildApp extends Root
+        [test_route: "/zone"]: => "override"
+
+      status, res = mock_request ChildApp, "/zone", {}
+      assert.same {200, "override"}, {status, res}
+
+      -- route does not exist, overwritten
+      assert.has_error ->
+        mock_request ChildApp, "/hello/world", {}
+
+      assert.same "/zone", ChildApp!.router\url_for "test_route", var: "whoa"
+
+    it "re-used path replaces route name", ->
+      class Root extends lapis.Application
+        layout: false
+        [first: "/hello/:cool"]: => "first"
+
+      class ChildApp extends Root
+        [second: "/hello/:cool"]: => "second"
+
+      status, res = mock_request ChildApp, "/hello/yeah", {}
+      assert.same {200, "second"}, {status, res}
+
+      app = ChildApp!
+      assert.same "/hello/whoa", app.router\url_for "second", cool: "whoa"
+      assert.has_error(
+        -> app.router\url_for "first"
+        "Missing route named first"
+      )
+
   describe "include", ->
     local result
 
