@@ -118,7 +118,7 @@ describe "lapis.application", ->
       assert.same 200, status
       assert.same "child yeah", result
 
-  describe "@include", ->
+  describe "include", ->
     local result
 
     before_each ->
@@ -299,6 +299,22 @@ describe "lapis.application", ->
         status: 200
         buffer: "hi"
       }, { :status, :buffer }
+
+    describe "instance", ->
+      it "it includes instance into instance", ->
+
+        app1 = lapis.Application!
+        app1\match "/hello", => "hello"
+
+        app2 = lapis.Application!
+        app2.layout = false
+        app2\match "/world", => "world"
+        app2\include app1
+
+        app2\build_router!
+
+        assert.same "hello", (select 2, mock_request app2, "/hello")
+        assert.same "world", (select 2, mock_request app2, "/world")
 
   describe "default route", ->
     it "hits default route", ->
