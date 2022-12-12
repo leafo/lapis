@@ -267,9 +267,7 @@ class Router
             pos = #buffer
             optional_filled = compile_chunks buffer, instruction[2], get_var
 
-            if optional_filled > 0
-              filled_vars += optional_filled
-            else
+            if optional_filled == 0
               -- remove anything written
               for i=#buffer,pos+1,-1
                 buffer[i] = nil

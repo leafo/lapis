@@ -355,9 +355,7 @@ do
           elseif "optional" == _exp_0 then
             local pos = #buffer
             local optional_filled = compile_chunks(buffer, instruction[2], get_var)
-            if optional_filled > 0 then
-              filled_vars = filled_vars + optional_filled
-            else
+            if optional_filled == 0 then
               for i = #buffer, pos + 1, -1 do
                 buffer[i] = nil
               end
