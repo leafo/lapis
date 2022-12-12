@@ -64,6 +64,38 @@ do
     views_prefix = "views",
     actions_prefix = "actions",
     flows_prefix = "flows",
+    find_action = function(self, name, resolve)
+      if resolve == nil then
+        resolve = true
+      end
+      local route_group = get_target_route_group(self)
+      local cache = rawget(route_group, "_named_route_cache")
+      if not (cache) then
+        cache = { }
+        route_group._named_route_cache = cache
+      end
+      local route = cache[name]
+      if not (route) then
+        local each_route
+        each_route = require("lapis.application.route_group").each_route
+        each_route(route_group, true, function(path)
+          if type(path) == "table" then
+            local route_name = next(path)
+            if not (cache[route_name]) then
+              cache[route_name] = path
+              if route_name == name then
+                route = path
+              end
+            end
+          end
+        end)
+      end
+      local action = route and self[route]
+      if resolve then
+        action = load_action(self.actions_prefix, action, name)
+      end
+      return action, route
+    end,
     enable = function(self, feature)
       assert(self ~= Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features")
       local fn = require("lapis.features." .. tostring(feature))
@@ -296,29 +328,6 @@ do
     end
     local class_fields = { }
     return lua.class(name or "ExtendedApplication", tbl, self)
-  end
-  self.find_action = function(self, name, resolve)
-    if resolve == nil then
-      resolve = true
-    end
-    self._named_route_cache = self._named_route_cache or { }
-    local route = self._named_route_cache[name]
-    if not (route) then
-      for app_route in pairs(self.__base) do
-        if type(app_route) == "table" then
-          local app_route_name = next(app_route)
-          self._named_route_cache[app_route_name] = app_route
-          if app_route_name == name then
-            route = app_route
-          end
-        end
-      end
-    end
-    local action = route and self[route]
-    if resolve then
-      action = load_action(self.actions_prefix, action, name)
-    end
-    return action, route
   end
   local _list_0 = {
     "get",

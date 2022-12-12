@@ -60,7 +60,6 @@ get_target_route_group = (obj) ->
   else
     obj
 
-
 class Application
   Request: require "lapis.request"
   layout: require "lapis.views.layout"
@@ -83,19 +82,26 @@ class Application
 
     lua.class name or "ExtendedApplication", tbl, @
 
-  -- find action for named route in this application
-  -- NOTE: this currently doesn't work with inheritance
-  @find_action: (name, resolve=true) =>
-    @_named_route_cache or= {}
-    route = @_named_route_cache[name]
+  -- search the route group hierarchy for the action handler that matches the route name
+  find_action: (name, resolve=true) =>
+    route_group = get_target_route_group @
 
-    -- update the cache
+    cache = rawget route_group, "_named_route_cache"
+    unless cache
+      cache = {}
+      route_group._named_route_cache = cache
+
+    route = cache[name]
+
+    -- refresh the entire route cache
     unless route
-      for app_route in pairs @__base
-        if type(app_route) == "table"
-          app_route_name = next app_route
-          @_named_route_cache[app_route_name] = app_route
-          route = app_route if app_route_name == name
+      import each_route from require "lapis.application.route_group"
+      each_route route_group, true, (path) ->
+        if type(path) == "table"
+          route_name = next path
+          unless cache[route_name]
+            cache[route_name] = path
+            route = path if route_name == name
 
     action = route and @[route]
 
