@@ -9,7 +9,7 @@ class LapisMigrations extends Model
     @find tostring name
 
   @create: (name) =>
-    Model.create @, { name: tostring name }
+    super name: tostring name
 
 create_migrations_table = (table_name=LapisMigrations\table_name!) ->
   schema = require "lapis.db.schema"
@@ -19,8 +19,28 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
     "PRIMARY KEY(name)"
   }
 
-run_migrations = (migrations, prefix) ->
+-- TODO: we need to guarantee we are getting isolated connection here in case
+-- transactions are run in a polled connection context
+start_transaction = ->
+  db = require "lapis.db"
+  if db == require "lapis.db.postgres"
+    db.query "BEGIN"
+  else
+    db.query "START TRANSACTION"
+
+commit_transaction = ->
+  db = require "lapis.db"
+  db.query "COMMIT"
+
+rollback_transaction = ->
+  db = require "lapis.db"
+  db.query "ROLLBACK"
+
+run_migrations = (migrations, prefix, options={}) ->
   assert type(migrations) == "table", "expecting a table of migrations for run_migrations"
+
+  if options.transaction == "global"
+    start_transaction!
 
   import entity_exists from require "lapis.db.schema"
   unless entity_exists LapisMigrations\table_name!
@@ -40,11 +60,24 @@ run_migrations = (migrations, prefix) ->
 
     unless exists[tostring name]
       logger.migration name
+
+      if options.transaction == "individual"
+        start_transaction!
+
       fn name
       LapisMigrations\create name
+
+      if options.transaction == "individual"
+        commit_transaction!
+
       count += 1
 
   logger.migration_summary count
+
+  if options.transaction == "global"
+    commit_transaction!
+
+  return
 
 { :create_migrations_table, :run_migrations, :LapisMigrations }
 

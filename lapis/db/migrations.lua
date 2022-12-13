@@ -40,7 +40,7 @@ do
     return self:find(tostring(name))
   end
   self.create = function(self, name)
-    return Model.create(self, {
+    return _class_0.__parent.create(self, {
       name = tostring(name)
     })
   end
@@ -65,9 +65,34 @@ create_migrations_table = function(table_name)
     "PRIMARY KEY(name)"
   })
 end
+local start_transaction
+start_transaction = function()
+  local db = require("lapis.db")
+  if db == require("lapis.db.postgres") then
+    return db.query("BEGIN")
+  else
+    return db.query("START TRANSACTION")
+  end
+end
+local commit_transaction
+commit_transaction = function()
+  local db = require("lapis.db")
+  return db.query("COMMIT")
+end
+local rollback_transaction
+rollback_transaction = function()
+  local db = require("lapis.db")
+  return db.query("ROLLBACK")
+end
 local run_migrations
-run_migrations = function(migrations, prefix)
+run_migrations = function(migrations, prefix, options)
+  if options == nil then
+    options = { }
+  end
   assert(type(migrations) == "table", "expecting a table of migrations for run_migrations")
+  if options.transaction == "global" then
+    start_transaction()
+  end
   local entity_exists
   entity_exists = require("lapis.db.schema").entity_exists
   if not (entity_exists(LapisMigrations:table_name())) then
@@ -110,12 +135,21 @@ run_migrations = function(migrations, prefix)
     end
     if not (exists[tostring(name)]) then
       logger.migration(name)
+      if options.transaction == "individual" then
+        start_transaction()
+      end
       fn(name)
       LapisMigrations:create(name)
+      if options.transaction == "individual" then
+        commit_transaction()
+      end
       count = count + 1
     end
   end
-  return logger.migration_summary(count)
+  logger.migration_summary(count)
+  if options.transaction == "global" then
+    commit_transaction()
+  end
 end
 return {
   create_migrations_table = create_migrations_table,

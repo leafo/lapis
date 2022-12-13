@@ -242,7 +242,15 @@ class Actions
         env.push environment, show_queries: true
 
         migrations = require "lapis.db.migrations"
-        migrations.run_migrations require "migrations"
+        migrations.run_migrations require("migrations"), nil, {
+          transaction: switch flags.transaction
+            when true
+              "global"
+            when "global", "individual"
+              flags.transaction
+            else
+              error "Got unknown --transaction setting"
+        }
 
         env.pop!
     }

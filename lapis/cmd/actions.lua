@@ -302,7 +302,18 @@ do
             show_queries = true
           })
           local migrations = require("lapis.db.migrations")
-          migrations.run_migrations(require("migrations"))
+          migrations.run_migrations(require("migrations"), nil, {
+            transaction = (function()
+              local _exp_0 = flags.transaction
+              if true == _exp_0 then
+                return "global"
+              elseif "global" == _exp_0 or "individual" == _exp_0 then
+                return flags.transaction
+              else
+                return error("Got unknown --transaction setting")
+              end
+            end)()
+          })
           return env.pop()
         end
       },
