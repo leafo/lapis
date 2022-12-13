@@ -962,9 +962,6 @@ class App extends lapis.Application
 ```
 
 
-
-
-
 ## Application Callbacks
 
 Application callbacks are special methods that can be overridden in an
@@ -1110,11 +1107,110 @@ class="for_moon">`@original_request`</span><span
 class="for_lua">`self.original_request`</span>
 
 Lapis' default error page shows an entire stack trace, so it's recommended to
-replace it with a custom one in your production envrionments, and log the
+replace it with a custom one in your production environments, and log the
 exception in the background.
 
 The [`lapis-exceptions`][2] module augments the error handler to records errors
 in a database. It can also email you when there's an exception.
 
+## Application Reference
+
+The Lapis Application class can be customized either by subclassing it (via
+MoonScript or `extend`), or by creating an instance of it and calling the
+appropriate methods or overriding the appropriate fields.
+
+### `application:match([route_name], route_patch, action_fn)`
+
+Adds a new route to the route group contained by the application. See above for
+more information on registering actions. Note that routes are inheritance by
+the inheritance change of the application object.
+
+You can overwrite a route by re-using the same route name, or path, and that
+route will take precedence over one defined further up in the inheritance
+change.
+
+Class approach:
+
+```lua
+local app = lapis.Application:extend()
+
+app:match("index", "/index", function(self) return "Hello world!" end)
+app:match("/about", function(self) return "My site is cool" end)
+
+return app
+```
+
+```moon
+class extends lapis.Application
+  @match "index", "/index", => "Hello world!"
+  @match "/about", => "My site is cool"
+```
+
+Instance approach:
+
+$dual_code{[[
+app = lapis.Application!
+
+app\match "index", "/index", => "Hello world!"
+app\match "/about", => "My site is cool"
+
+app
+]]}
+
+
+### `application:get([route_name], route_patch, action_fn)`
+
+Shortcut method for adding route for a specific HTTP verb by utilizing the `respond_to`.
+
+### `application:post([route_name], route_patch, action_fn)`
+
+Shortcut method for adding route for a specific HTTP verb by utilizing the `respond_to`.
+
+### `application:delete([route_name], route_patch, action_fn)`
+
+Shortcut method for adding route for a specific HTTP verb by utilizing the `respond_to`.
+
+### `application:put([route_name], route_patch, action_fn)`
+
+Shortcut method for adding route for a specific HTTP verb by utilizing the `respond_to`.
+
+### `application.enable(feature)`
+
+Loads a module named `feature` using `require`. If the result of that module is
+callable, then it will be called with one argument, `application`.
+
+### `application.before_filter(fn)`
+
+Appends a before filter to the chain of filters for the application. Before
+filters are applied in the order they are added.
+
+A before filter is a function that will run before the action function. If a
+`write` takes place in the before filter then the request is ended that before
+filter finishes executing. Any remaining before filters and the action function
+are not called.
+
+### `application.include(other_app)`
+
+Copies all the routes from `other_app` into the current app. `other_app` can be
+either an application class or an instance. If there are any before filters in
+`other_app`, every action of `other_app` will be be wrapped in a new function
+that calls those before filters before calling the original function.
+
+### `application.find_action(name, resolve=true)`
+
+Searches the inheritance chain for the first action specified by the route
+name, `name`.
+
+Returns the `action` value and the route path object if an action could be
+found. If `resolve` is true the action value will be loaded if it's a deferred
+action like `true` or a module name
+
+Returns `nil` if no action could be found.
+
+### `Application.extend([name], [fields], [init_fn])`
+
+Creates a subclass of the Application class. This method is only available on
+the class object, not the instance.
+ 
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
