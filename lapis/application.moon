@@ -15,6 +15,7 @@ local capture_errors, capture_errors_json, respond_to
 local Application
 
 MISSING_ROUTE_NAME_ERORR = "Attempted to load action `true` for route with no name, a name must be provided to require the action"
+INVALID_ACTION_TYPE = "Loaded an action that is the wrong type. Actions must be a function or callable table"
 
 run_before_filter = (filter, r) ->
   _write = r.write
@@ -36,6 +37,15 @@ load_action = (prefix, action, route_name) ->
   else
     action
 
+-- test the type of an action
+test_callable = (value) ->
+  switch type value
+    when "function"
+      true
+    when "table"
+      mt = getmetatable(value)
+      mt and mt.__call and true
+
 -- if action is a non-function then we turn it into a function that can
 -- dynamically load the appropraite action via `load_action`
 wrap_action_loader = (action) ->
@@ -47,6 +57,8 @@ wrap_action_loader = (action) ->
   =>
     unless loaded
       action = load_action @app.actions_prefix, action, @route_name
+      assert test_callable(action), INVALID_ACTION_TYPE
+
       loaded = true
 
     action @
@@ -83,6 +95,7 @@ class Application
     lua.class name or "ExtendedApplication", tbl, @
 
   -- search the route group hierarchy for the action handler that matches the route name
+  -- NOTE: this is a special method that can be called on either the class or the instance
   find_action: (name, resolve=true) =>
     route_group = get_target_route_group @
 
@@ -115,7 +128,7 @@ class Application
     assert @ != Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features"
 
     fn = require "lapis.features.#{feature}"
-    if type(fn) == "function"
+    if test_callable fn
       fn @
 
   -- add new route to the set of routes
@@ -201,6 +214,7 @@ class Application
 
         if type(handler) != "function"
           handler = load_action @actions_prefix, handler, name
+          assert test_callable(handler), INVALID_ACTION_TYPE
 
         \write handler r
 

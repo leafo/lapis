@@ -9,6 +9,7 @@ local unpack = unpack or table.unpack
 local capture_errors, capture_errors_json, respond_to
 local Application
 local MISSING_ROUTE_NAME_ERORR = "Attempted to load action `true` for route with no name, a name must be provided to require the action"
+local INVALID_ACTION_TYPE = "Loaded an action that is the wrong type. Actions must be a function or callable table"
 local run_before_filter
 run_before_filter = function(filter, r)
   local _write = r.write
@@ -32,6 +33,16 @@ load_action = function(prefix, action, route_name)
     return action
   end
 end
+local test_callable
+test_callable = function(value)
+  local _exp_0 = type(value)
+  if "function" == _exp_0 then
+    return true
+  elseif "table" == _exp_0 then
+    local mt = getmetatable(value)
+    return mt and mt.__call and true
+  end
+end
 local wrap_action_loader
 wrap_action_loader = function(action)
   if type(action) == "function" then
@@ -41,6 +52,7 @@ wrap_action_loader = function(action)
   return function(self)
     if not (loaded) then
       action = load_action(self.app.actions_prefix, action, self.route_name)
+      assert(test_callable(action), INVALID_ACTION_TYPE)
       loaded = true
     end
     return action(self)
@@ -99,7 +111,7 @@ do
     enable = function(self, feature)
       assert(self ~= Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features")
       local fn = require("lapis.features." .. tostring(feature))
-      if type(fn) == "function" then
+      if test_callable(fn) then
         return fn(self)
       end
     end,
@@ -167,6 +179,7 @@ do
           end
           if type(handler) ~= "function" then
             handler = load_action(self.actions_prefix, handler, name)
+            assert(test_callable(handler), INVALID_ACTION_TYPE)
           end
           _with_0:write(handler(r))
           return _with_0
