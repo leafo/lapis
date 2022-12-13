@@ -129,7 +129,7 @@ Returns a string in the format "1 day ago".
 `parts` allows you to add more words. With `parts=2`, the string
 returned would be in the format `1 day, 4 hours ago`.
 
-### Encoding Methods
+## Encoding Methods
 
 Encoding functions are found in:
 
@@ -713,7 +713,7 @@ local app_helpers = require("lapis.application")
 application = require "lapis.application"
 ```
 
-### `fn = respond_to(verbs_to_fn={})`
+### `respond_to(verbs_to_fn={})`
 
 `verbs_to_fn` is a table of functions that maps a HTTP verb to a corresponding
 function. Returns a new function that dispatches to the correct function in the
@@ -739,7 +739,7 @@ other action. If <span class="for_moon">`@write`</span><span
 class="for_lua">`self.write`</span> is called inside the before function then
 the regular handler will not be called.
 
-### `safe_fn = capture_errors(fn_or_tbl)`
+### `capture_errors(fn_or_tbl)`
 
 Wraps a function to catch errors sent by `yield_error` or `assert_error`. See
 [Exception Handling][0] for more information.
@@ -762,7 +762,7 @@ When an error is yielded then the <span class="for_moon">`@errors`</span><span
 class="for_lua">`self.errors`</span> variable is set on the current request and
 the error handler is called.
 
-### `safe_fn = capture_errors_json(fn)`
+### `capture_errors_json(fn)`
 
 A wrapper for `capture_errors` that passes in the following error handler:
 
@@ -784,10 +784,12 @@ Works like Lua's `assert` but instead of triggering a Lua error it triggers an
 error to be captured by `capture_errors`
 
 
-### `wrapped_fn = json_params(fn)`
+### `json_params(fn)`
 
 Return a new function that will parse the body of the request as JSON and
-inject it into `@params` if the `content-type` is set to `application/json`.
+inject it into $self_ref{"params"} if the `content-type` is set to
+`application/json`. Suitable for wrapping an action handler to make it aware of
+JSON encoded requests.
 
 ```lua
 local json_params = require("lapis.application").json_params
@@ -812,11 +814,9 @@ $ curl \
   'https://localhost:8080/json'
 ```
 
-The unmerged params can also be accessed from <span
-class="for_moon">`@json`</span><span class="for_lua">`self.json`</span>. If
-there was an error parsing the JSON then <span
-class="for_moon">`@json`</span><span class="for_lua">`self.json`</span> will be
-`nil` and the request will continue.
+The unmerged parameters can also be accessed from $self_ref{"json"}. If there
+was an error parsing the JSON then $self_ref{"json"} will be `nil` and the
+request will continue without error.
 
 ## UTF8
 
