@@ -343,6 +343,31 @@ describe "lapis.html", ->
       assert.same [[]], render_widget Outer!
       assert.same [[<div>before</div><dt>hello</dt><span>yeah</span><dt>world</dt><div>after</div>]], capture_result.value
 
+    describe "Widget:extend", ->
+      it "creates basic widget", ->
+        anonymous = Widget\extend {
+          content: =>
+            div "Hello #{@thing}"
+        }
+
+        named = Widget\extend "MyThing", {
+          content: =>
+            div "Wow #{@zang} from #{@@__name}"
+        }
+
+        assert.same "<div>Hello world</div>", anonymous(thing: "world")\render_to_string!
+        assert.same "<div>Wow zong from MyThing</div>", named(zang: "zong")\render_to_string!
+
+      it "creates widget from function", ->
+        anonymous = Widget\extend =>
+          div "Hello #{@thing}"
+
+        named = Widget\extend "MyThing", =>
+          div "Wow #{@zang} from #{@@__name}"
+
+        assert.same "<div>Hello world</div>", anonymous(thing: "world")\render_to_string!
+        assert.same "<div>Wow zong from MyThing</div>", named(zang: "zong")\render_to_string!
+
     describe "widget.render_to_file", ->
       class Inner extends Widget
         content: =>

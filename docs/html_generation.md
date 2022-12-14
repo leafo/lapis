@@ -447,11 +447,20 @@ intend to change the default behavior.
 
 Creates a new subclass of the `Widget` base class. The `fields` argument is a
 table of properties that will be copied into the instance metatable of the
-newly created class.
+newly created class, or it can be a function and it willl be set as the
+`content` field.
+
+`name` is not directly used by Lapis but it can be helpful to provide it for
+debugging and for implementing systems that derive details about the rendred
+output based on the name of the widget (eg. automatically generated a class
+based on the widget's name)
 
 `setup_fn` is an optional function that will be called with the class object as
-the only argument. This function is called before any `__inherited` callbacks
-are called.
+the only argument. This function is called after properties have been set but
+before any `__inherited` callbacks are called. The default `Widget` class does
+not have any `__inherited` callbacks so it is not necessary to use this
+function unless you specifically need that behavior for a subclass you have
+created.
 
 This method returns the newly created class object, followed by the instance
 metatable.

@@ -289,13 +289,17 @@ class Widget
   @extend: (name, tbl) =>
     lua = require "lapis.lua"
 
-    if type(name) == "table"
-      tbl = name
-      name = nil
+    switch type(name)
+      when "table", "function"
+        tbl = name
+        name = nil
+
+    if type(tbl) == "function"
+      tbl = { content: tbl }
 
     class_fields = { }
 
-    cls = lua.class name or "ExtendedFlow", tbl, @
+    cls = lua.class name or "ExtendedWidget", tbl, @
     cls, cls.__base
 
   @include: (other_cls) =>
