@@ -715,7 +715,7 @@ db.update "the_table", {
 }
 ]]}
 
-```SQL
+```sql
 UPDATE "the_table" SET name = NULL
 ```
 
