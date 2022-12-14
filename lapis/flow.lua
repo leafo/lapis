@@ -90,6 +90,17 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  self.extend = function(self, name, tbl)
+    local lua = require("lapis.lua")
+    if type(name) == "table" then
+      tbl = name
+      name = nil
+    end
+    local class_fields = { }
+    local cls = lua.class(name or "ExtendedFlow", tbl, self)
+    return cls, cls.__base
+  end
   Flow = _class_0
 end
 return {

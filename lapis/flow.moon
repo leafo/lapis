@@ -12,6 +12,18 @@ is_flow = (cls) ->
 class Flow
   expose_assigns: false
 
+  @extend: (name, tbl) =>
+    lua = require "lapis.lua"
+
+    if type(name) == "table"
+      tbl = name
+      name = nil
+
+    class_fields = { }
+
+    cls = lua.class name or "ExtendedFlow", tbl, @
+    cls, cls.__base
+
   new: (@_, obj={}) =>
     assert @_, "missing flow target"
     @_req = @_ -- TODO: for legacy flows
