@@ -267,6 +267,7 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
+  self.relation_models_module = "models"
   self.db = nil
   self.timestamp = false
   self.primary_key = "id"
@@ -283,7 +284,7 @@ do
     if "function" == _exp_0 then
       return model_name()
     elseif "string" == _exp_0 then
-      return require("models")[model_name]
+      return require(self.relation_models_module)[model_name]
     elseif "table" == _exp_0 then
       assert(model_name == model_name.__class, "Got an unknown table instead of a model class for relation")
       return model_name

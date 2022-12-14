@@ -79,6 +79,7 @@ enum = (tbl) ->
   setmetatable tbl, Enum.__base
 
 class BaseModel
+  @relation_models_module: "models"
   @db: nil -- set in implementing class
 
   @timestamp: false
@@ -93,7 +94,7 @@ class BaseModel
       when "function"
         model_name!
       when "string"
-        require("models")[model_name]
+        require(@relation_models_module)[model_name]
       when "table" -- probably already a relation model class
         assert model_name == model_name.__class,
           "Got an unknown table instead of a model class for relation"
