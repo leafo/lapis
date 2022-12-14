@@ -42,11 +42,55 @@ the database. You do not need to manually specify the names of the columns.  If
 you have any relationships, though, you can specify them using the
 [`relations` property](#relations).
 
+
+## Customizing The Model Class
+
+The model system in Lapis implements an object-oriented interface for working
+with tables and rows from your database.
+
+When you `extend` the base Model class you get a new model class that you can
+customize for your use. This includes adding your own properties and methods to
+the Model class and instances of that model.
+
+<p class="for_lua">
+The `extend` method on the base model class reutrns a second value: the
+instance metatable. You can use this table to add new methods & properties to
+instances of the model, aka rows fetched by that model.
+</p>
+
+
+```lua
+local Users, Users_mt = Model.extend("users")
+
+-- this method will be available on all User instances
+function Useers_mt:get_display_name()
+  return self.display_name or self.username
+end
+
+
+local some_user = Users:find(1)
+print some_user:get_display_name()
+```
+
+```moon
+class Users extends Model
+  get_display_name: =>
+    @display_name or @username
+
+some_user = Users\find 1
+print some_user\get_display_name!
+```
+
+
+To recap: the Model class object and the Model's metatable are two distinct
+objects. The metatable object is strictly for adding methods and properties to
+instances of the model. Adding a method to the Model itself, will only make it
+available on the Model class, and not for any rows.
+
 ## Primary Keys
 
 By default all models expect the table to have a primary key called`"id"`. This
-can be changed by setting the <span class="for_moon">`@primary_key`</span><span
-class="for_lua">`self.primary_key`</span> class variable.
+can be changed by setting the $self_ref{"primary_key"} field on the class.
 
 
 ```lua
