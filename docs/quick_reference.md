@@ -269,23 +269,26 @@ class App extends lapis.Application
 
 ## What versions of Lua are supported?
 
-Lapis is designed to work with LuaJIT. You can use Lua 5.1 to run Lapis from
-the command line as well. You can use modules installed for Lua 5.1 with
-LuaJIT.
+Lapis is tested against all versions of Lua (5.4 as of this guide). The default
+server is OpenResty, which is tied to LuaJIT (which is a hybrid version of
+Lua5.1)
 
 ## How do I handle multiple domains and subdomains?
 
-Lapis doesn't make any distinction between domains and subdomains. You can use
-Nginx configuration `location` blocks to identify different domains. Within the
-matched block you can execute the desired Lapis application.
+Lapis doesn't make any distinction between domains and subdomains. With
+OpenResty you can use Nginx configuration `location` blocks to identify
+different domains. Within the matched block you can execute the desired Lapis
+application.
 
 ## How can I read the entire body of the request?
 
-Lapis currently doesn't provide an interface for reading the raw body. You have
-to use the interface provided by `ngx_lua`.
+Lapis currently doesn't provide a generalized interface for reading the raw
+body or working with streaming large bodies. You will have to use the server
+specific interface.
 
-First load the body into memory by calling `ngx.req.read_body()`. Next call
-`ngx.req.get_body_data()` to get the contents of the body.
+For OpenResty and `ngx_lua`: Load the body into memory by calling
+`ngx.req.read_body()`. Next call `ngx.req.get_body_data()` to get the contents
+of the body.
 
 If the body does not fit in to the size set by the Nginx configuration
 directive `client_max_body_size` then these functions will fail and return
