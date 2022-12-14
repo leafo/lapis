@@ -658,12 +658,18 @@ do
   end
   self.extend = function(self, name, tbl)
     local lua = require("lapis.lua")
-    if type(name) == "table" then
+    local _exp_0 = type(name)
+    if "table" == _exp_0 or "function" == _exp_0 then
       tbl = name
       name = nil
     end
+    if type(tbl) == "function" then
+      tbl = {
+        content = tbl
+      }
+    end
     local class_fields = { }
-    local cls = lua.class(name or "ExtendedFlow", tbl, self)
+    local cls = lua.class(name or "ExtendedWidget", tbl, self)
     return cls, cls.__base
   end
   self.include = function(self, other_cls)
