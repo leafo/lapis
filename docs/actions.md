@@ -1417,20 +1417,25 @@ Returns `nil` if no action could be found.
 ### `Application:extend([name], [fields], [init_fn])`
 
 Creates a subclass of the Application class. This method is only available on
-the class object, not the instance. Note that when working with a application
-class, you must provide instance fields via the `fields` arugment, since any
-fields assigned directly to the class object will not be available on the
-application's instance.
+the class object, not the instance. Instance fields can be provided as via the
+`fields` arugment or by mutating the returned metatable object.
 
-$dual_code{[[
-my_app = lapis.Application\extend "MyApp", {
-  layout: "custom_layout"
-  views_prefix: "widgets"
-}
+This method returns the new class object, and the metatable for any instances
+of the class.
 
-my_app\match "home", "/", => "Hello world!"
-]]}
+```lua
+local MyApp, MyApp_mt = lapis.Application:extend("MyApp", {
+  layout = "custom_layout",
+  views_prefix = "widgets"
+})
 
+function MyApp_mt:handle_error(err)
+  error("oh no!")
+end
+
+-- note that `match` is a class method, so MyApp_mt is not used here
+MyApp:match("home", "/", function(self) return "Hello world!" end)
+```
  
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
