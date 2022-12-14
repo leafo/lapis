@@ -261,6 +261,9 @@ do
         name = next(route)
         route = route[name]
       end
+      if name then
+        self.named_routes[name] = route
+      end
       return insert(self.routes, {
         route,
         responder,
@@ -282,7 +285,7 @@ do
     end,
     build = function(self)
       local by_precedence = { }
-      local named_routes = { }
+      local parsed_routes = { }
       local _list_0 = self.routes
       for _index_0 = 1, #_list_0 do
         local _des_0 = _list_0[_index_0]
@@ -294,7 +297,7 @@ do
         by_precedence[_update_0] = by_precedence[_update_0] or { }
         table.insert(by_precedence[p], pattern)
         if name then
-          named_routes[name] = chunks
+          parsed_routes[name] = chunks
         end
       end
       local precedences
@@ -322,7 +325,7 @@ do
         end
       end
       self.p = self.p or P(-1)
-      self.named_routes = named_routes
+      self.parsed_routes = parsed_routes
     end,
     build_route = function(self, path, responder, name)
       local chunks, pattern, flags = self.parser:parse(path)
@@ -399,7 +402,7 @@ do
       if not (self.p) then
         self:build()
       end
-      local chunks = self.named_routes[name]
+      local chunks = self.parsed_routes[name]
       if not (chunks) then
         error("lapis.router: There is no route named: " .. tostring(name))
       end
@@ -437,6 +440,7 @@ do
     __init = function(self)
       self.routes = { }
       self.named_routes = { }
+      self.parsed_routes = { }
       self.parser = RouteParser()
     end,
     __base = _base_0,

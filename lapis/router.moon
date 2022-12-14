@@ -181,7 +181,8 @@ class RouteParser
 class Router
   new: =>
     @routes = {}
-    @named_routes = {}
+    @named_routes = {} -- maps route_name -> route pattern, created when routes are added
+    @parsed_routes = {} -- maps route_name -> parsed route (for url generation)
     @parser = RouteParser!
 
   add_route: (route, responder) =>
@@ -191,6 +192,9 @@ class Router
     if type(route) == "table"
       name = next route
       route = route[name]
+
+    if name
+      @named_routes[name] = route
 
     insert @routes, { route, responder, name }
 
@@ -211,7 +215,7 @@ class Router
 
   build: =>
     by_precedence = {}
-    named_routes = {}
+    parsed_routes = {}
 
     for {path, responder, name} in *@routes
       pattern, flags, chunks = @build_route path, responder, name
@@ -220,7 +224,7 @@ class Router
       table.insert by_precedence[p], pattern
 
       if name -- stored the parsed path by name to allow for URL generation
-        named_routes[name] = chunks
+        parsed_routes[name] = chunks
 
     precedences = [k for k in pairs by_precedence]
     table.sort precedences
@@ -234,7 +238,7 @@ class Router
           @p = pattern
 
     @p or= P -1
-    @named_routes = named_routes
+    @parsed_routes = parsed_routes
   
   build_route: (path, responder, name) =>
     chunks, pattern, flags = @parser\parse path
@@ -300,7 +304,7 @@ class Router
 
     @build! unless @p
 
-    chunks = @named_routes[name]
+    chunks = @parsed_routes[name]
     unless chunks
       error "lapis.router: There is no route named: #{name}"
 
