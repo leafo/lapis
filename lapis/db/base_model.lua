@@ -278,8 +278,16 @@ do
       end
     end
   end
-  self.get_relation_model = function(self, name)
-    return require("models")[name]
+  self.get_relation_model = function(self, model_name)
+    local _exp_0 = type(model_name)
+    if "function" == _exp_0 then
+      return model_name()
+    elseif "string" == _exp_0 then
+      return require("models")[model_name]
+    elseif "table" == _exp_0 then
+      assert(model_name == model_name.__class, "Got an unknown table instead of a model class for relation")
+      return model_name
+    end
   end
   self.primary_keys = function(self)
     if type(self.primary_key) == "table" then

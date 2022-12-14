@@ -88,8 +88,17 @@ class BaseModel
     if r = rawget child, "relations"
       add_relations child, r, @db
 
-  @get_relation_model: (name) =>
-    require("models")[name]
+  @get_relation_model: (model_name) =>
+    switch type model_name
+      when "function"
+        model_name!
+      when "string"
+        require("models")[model_name]
+      when "table" -- probably already a relation model class
+        assert model_name == model_name.__class,
+          "Got an unknown table instead of a model class for relation"
+
+        model_name
 
   @primary_keys: =>
     if type(@primary_key) == "table"
