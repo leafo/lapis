@@ -656,6 +656,16 @@ do
     setmetatable(model.__base, mixins_class.__base)
     return mixins_class, true
   end
+  self.extend = function(self, name, tbl)
+    local lua = require("lapis.lua")
+    if type(name) == "table" then
+      tbl = name
+      name = nil
+    end
+    local class_fields = { }
+    local cls = lua.class(name or "ExtendedFlow", tbl, self)
+    return cls, cls.__base
+  end
   self.include = function(self, other_cls)
     local other_cls_name
     if type(other_cls) == "string" then

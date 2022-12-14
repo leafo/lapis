@@ -286,10 +286,23 @@ class Widget
     setmetatable model.__base, mixins_class.__base
     mixins_class, true
 
+  @extend: (name, tbl) =>
+    lua = require "lapis.lua"
+
+    if type(name) == "table"
+      tbl = name
+      name = nil
+
+    class_fields = { }
+
+    cls = lua.class name or "ExtendedFlow", tbl, @
+    cls, cls.__base
+
   @include: (other_cls) =>
     other_cls, other_cls_name = if type(other_cls) == "string"
       require(other_cls), other_cls
 
+    -- uhh this check doesn't look right
     if other_cls == Widget
       error "Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget"
 
@@ -352,6 +365,9 @@ class Widget
     full_name = CONTENT_FOR_PREFIX .. name
     return @_buffer\write @[full_name] unless val
 
+    -- TODO: this is bad form, the first helper is assumed to be some kind of
+    -- request object that has layout_opts on it, this is tightly coupled the
+    -- the Request write method
     if helper = @_get_helper_chain![1]
       layout_opts = helper.layout_opts
 
