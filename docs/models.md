@@ -42,8 +42,7 @@ the database. You do not need to manually specify the names of the columns.  If
 you have any relationships, though, you can specify them using the
 [`relations` property](#relations).
 
-
-## Customizing The Model Class
+## Custom Methods
 
 The model system in Lapis implements an object-oriented interface for working
 with tables and rows from your database.
@@ -86,6 +85,13 @@ To recap: the Model class object and the Model's metatable are two distinct
 objects. The metatable object is strictly for adding methods and properties to
 instances of the model. Adding a method to the Model itself, will only make it
 available on the Model class, and not for any rows.
+
+You can even use the ability to add custom methods to implement interfaces that
+may be used by other parts of Lapis. For example, you can make model instances
+capable of generating their own URLs when passed to
+[`request:url_for`](actions.html#request-object-methods/request:url_for) by
+implementing a [`url_params`
+method](actions.html#request-object-methods/request:url_for/passing-an-object-to-url-for).
 
 ## Primary Keys
 
