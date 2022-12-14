@@ -63,13 +63,13 @@ instances of the model, aka rows fetched by that model.
 local Users, Users_mt = Model.extend("users")
 
 -- this method will be available on all User instances
-function Useers_mt:get_display_name()
+function Users_mt:get_display_name()
   return self.display_name or self.username
 end
 
 
 local some_user = Users:find(1)
-print some_user:get_display_name()
+print(some_user:get_display_name())
 ```
 
 ```moon
