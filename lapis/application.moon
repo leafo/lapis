@@ -92,7 +92,9 @@ class Application
 
     class_fields = { }
 
-    lua.class name or "ExtendedApplication", tbl, @
+    cls = lua.class name or "ExtendedApplication", tbl, @
+    cls, cls.__base
+
 
   -- search the route group hierarchy for the action handler that matches the route name
   -- NOTE: this is a special method that can be called on either the class or the instance

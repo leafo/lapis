@@ -491,7 +491,6 @@ class BaseModel
       import OffsetPaginator from require "lapis.db.pagination"
       OffsetPaginator @, ...
 
-  -- alternative to MoonScript inheritance
   @extend: (table_name, tbl={}) =>
     lua = require "lapis.lua"
 
@@ -499,11 +498,13 @@ class BaseModel
       "primary_key", "timestamp", "constraints", "relations"
     }
 
-    lua.class table_name, tbl, @, (cls) ->
+    cls = lua.class table_name, tbl, @, (cls) ->
       cls.table_name = -> table_name
       for f in *class_fields
         cls[f] = tbl[f]
         cls.__base[f] = nil
+
+    cls, cls.__base
 
   _primary_cond: =>
     cond = {}

@@ -828,7 +828,7 @@ do
       "constraints",
       "relations"
     }
-    return lua.class(table_name, tbl, self, function(cls)
+    local cls = lua.class(table_name, tbl, self, function(cls)
       cls.table_name = function()
         return table_name
       end
@@ -838,6 +838,7 @@ do
         cls.__base[f] = nil
       end
     end)
+    return cls, cls.__base
   end
   BaseModel = _class_0
 end

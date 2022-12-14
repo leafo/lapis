@@ -638,7 +638,7 @@ describe "lapis.db.model", ->
 
 
   it "should create model with extend syntax", ->
-    m = Model\extend "the_things", {
+    m, m_mt = Model\extend "the_things", {
       timestamp: true
       primary_key: {"hello", "world"}
       constraints: {
@@ -649,6 +649,13 @@ describe "lapis.db.model", ->
     assert.same "the_things", m\table_name!
     assert.same {"hello", "world"}, { m\primary_keys! }
     assert.truthy m.constraints.hello
+
+    m_mt.test_method = => "id:#{@id}"
+
+    inst = m\load { id: 55 }
+
+    assert.same "id:55", inst\test_method!
+
 
   describe "include_in", ->
     local Things, ThingItems, things

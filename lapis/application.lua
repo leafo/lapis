@@ -340,7 +340,8 @@ do
       name = nil
     end
     local class_fields = { }
-    return lua.class(name or "ExtendedApplication", tbl, self)
+    local cls = lua.class(name or "ExtendedApplication", tbl, self)
+    return cls, cls.__base
   end
   local _list_0 = {
     "get",
