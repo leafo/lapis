@@ -447,7 +447,7 @@ res = db.query "select * from #{table_name}"
 `escape_identifier` is not appropriate for escaping values. See
 `escape_literal` for escaping values.
 
-#### `db.interpolate_query(query, ...)`
+### `db.interpolate_query(query, ...)`
 
 Interpolates a query containing `?` markers with the rest of the arguments
 escaped via `escape_literal`. If a `db.clause` is passed as one of the
@@ -460,7 +460,7 @@ res = db.query q
 ]]}
 
 
-#### `db.encode_clause(clause_obj)`
+### `db.encode_clause(clause_obj)`
 
 Generates a boolean SQL expression from an object describing one or many
 conditions. The `clause` argument must be either a plain Lua table or a value

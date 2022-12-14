@@ -13,7 +13,7 @@ of files automatically using Lua's `require` function after you've enabled
 
 For example, here's a simple template that renders a random number:
 
-```html
+```erb
 <!-- views/hello.etlua -->
 <div class="my_page">
   Here is a random number: <%= math.random() %>
@@ -123,7 +123,7 @@ class App extends lapis.Application
     render: "my_template"
 ```
 
-```html
+```erb
 <!-- views/my_template.etlua -->
 <ul class="list">
 <% for i, item in ipairs(pets) do %>
@@ -143,7 +143,7 @@ Helper functions can be called just as if they were in scope when inside of a
 template. A common helper is the `url_for` function which helps us generate a
 URL to a named route:
 
-```html
+```erb
 <!-- views/about.etlua -->
 <div class="about_page">
   <p>This is a great page!</p>
@@ -169,7 +169,7 @@ a navigation.
 
 To render a sub-template you can use the `render` helper function:
 
-```html
+```erb
 <!-- views/navigation.etlua -->
 <div class="nav_bar">
   <a href="<%= url_for("index") %>">Home</a>
@@ -177,7 +177,7 @@ To render a sub-template you can use the `render` helper function:
 </div>
 ```
 
-```html
+```erb
 <!-- views/index.etlua -->
 <div class="page">
   <% render("views.navigation") %>
@@ -198,14 +198,14 @@ to pass into the sub-template.
 
 Here's a contrived example of using a sub-template to render a list of numbers:
 
-```html
+```erb
 <!-- templates/list_item.etlua -->
 <div class="list_item">
   <%= number_value %>
 </div>
 ```
 
-```html
+```erb
 <!-- templates/list.etlua -->
 <div class="list">
 <% for i, value in ipairs({}) do %>

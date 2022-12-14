@@ -178,7 +178,7 @@ end)
 return app
 ```
 
-```html
+```erb
 <!-- views/list.etlua -->
 <h1>Here are my favorite things</h1>
 <ol>
@@ -196,7 +196,7 @@ to replace it with something custom.
 
 We'll write the layout in etlua just like our views. Create `views/layout.etlua`:
 
-```html
+```erb
 <!-- views/layout.etlua -->
 <!DOCTYPE HTML>
 <html lang="en">
