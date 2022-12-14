@@ -309,6 +309,8 @@ do
                 return "global"
               elseif "global" == _exp_0 or "individual" == _exp_0 then
                 return flags.transaction
+              elseif nil == _exp_0 then
+                return nil
               else
                 return error("Got unknown --transaction setting")
               end

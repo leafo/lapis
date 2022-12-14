@@ -248,6 +248,8 @@ class Actions
               "global"
             when "global", "individual"
               flags.transaction
+            when nil
+              nil
             else
               error "Got unknown --transaction setting"
         }
