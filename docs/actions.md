@@ -1414,14 +1414,14 @@ action like `true` or a module name
 
 Returns `nil` if no action could be found.
 
-### `Application:extend([name], [fields], [init_fn])`
+### `Application:extend([name], fields={}, [init_fn])`
 
 Creates a subclass of the Application class. This method is only available on
 the class object, not the instance. Instance fields can be provided as via the
 `fields` arugment or by mutating the returned metatable object.
 
-This method returns the new class object, and the metatable for any instances
-of the class.
+This method returns the newly created class object, and the metatable for any
+instances of the class.
 
 ```lua
 local MyApp, MyApp_mt = lapis.Application:extend("MyApp", {

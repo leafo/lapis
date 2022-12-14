@@ -794,6 +794,22 @@ If your model has relations that are pulled from other sources than the
 `models` module, then you can overwrite this method to handle loading the
 models for those relations.
 
+### `Model:extend(table_name, fields={})`
+
+Creates a new subclass of the `Model` base class. The `fields` argument is a
+table of properties that will be copied into the instance metatable of the
+newly created class.
+
+The fields named "primary_key", "timestamp", "constraints", "relations" will be
+copied into the model class object instead of the instance. Relations must be
+set in `fields` in order for the auto-generated methods to be created.
+
+This method returns the newly created class object, followed by the instance
+metatable.
+
+The instance metatable can be used as an alternative syntax to add new methods
+to model instances.
+
 ## Instance Methods
 
 When extending the base Model class, you should avoid overriding any of the
@@ -1791,7 +1807,7 @@ $options_table{
 
       Defaults a singular foreign key by appending `_id` to the singular form of the table name, eg. `Users` → `user_id`
     ]],
-    default = "`#{singular(table_name)}_id`"
+    default = "`{singular(table_name)}_id`"
   },
   {
     name = "where",
@@ -2066,21 +2082,8 @@ Just like `enum`, it's recommended to explicitly write the integer keys to make
 it clear that they can't be reordered without changing the meaning of the
 relation.
 
-
-```lua
-local Model = require("lapis.db.model").Model
-
-local Purchases = Model:extend("purchases", {
-  relations = {
-    {"object", polymorphic_belongs_to = {
-      [1] = "Users",
-      [2] = "Books",
-    }},
-  }
-})
-```
-
-```moon
+$dual_code{
+moon = [[
 import Model from require "lapis.db.model"
 
 class Posts extends Model
@@ -2090,37 +2093,44 @@ class Posts extends Model
       [2]: "Books"
     }}
   }
-```
+]],
+lua = [[
+local Model = require("lapis.db.model").Model
+
+local Purchases = Model:extend("purchases", {
+  relations = {
+    {"object", polymorphic_belongs_to = {
+      [1] = "Users",
+      [2] = "Books",
+    }}
+  }
+})
+]]
+}
 
 In the example above, an `enum` named `object_types` is created. Note that is
 uses the table names, instead of the class names. It is equivalent to:
 
-
-```lua
-Purchases.object_types = enum {
-  users = 1,
-  books = 2
-}
-```
-
-```moon
+$dual_code{
+moon = [[
 Purchases.object_types = enum {
   users: 1
   books: 2
 }
-```
+]]
+}
 
 The following methods are automatically generated on the model class with the
-polymorphic relation: (where `#{name}` is the name of the relation)
+polymorphic relation: (where `{name}` is the name of the relation)
 
-* `model_for_#{name}_type(type)` -- Takes the integer or name from type `enum` and returns the model class associated to that type. If the class could not be found an error is raised
-* `#{name}_type_for_model(model)` -- Takes a model and returns the `enum` type for it (as integer)
-* `#{name}_type_for_object(obj)` -- Takes an instances of an object and returns the `enum` type for it (as integer)
+* `model_for_{name}_type(type)` -- Takes the integer or name from type `enum` and returns the model class associated to that type. If the class could not be found an error is raised
+* `{name}_type_for_model(model)` -- Takes a model and returns the `enum` type for it (as integer)
+* `{name}_type_for_object(obj)` -- Takes an instances of an object and returns the `enum` type for it (as integer)
 
 
 A *getter* instance method is added to the model:
 
-* `get_#{name}` -- Will fetch and return the associated object. This will only perform a query if the relation has not already been fetched or preloaded. `nil` will be returned if no object could be found, or the foreign key is `nil`
+* `get_{name}` -- Will fetch and return the associated object. This will only perform a query if the relation has not already been fetched or preloaded. `nil` will be returned if no object could be found, or the foreign key is `nil`
 
 Additionally, a preloader is installed into the model that will allow all
 associated objects across all the different tables to be loaded efficiently.
