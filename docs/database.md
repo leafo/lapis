@@ -215,12 +215,17 @@ interpolated, making SQL injection impossible.
 
 $dual_code{[[
 res1 = db.query "SELECT * FROM hello"
+res1 = db.query "SELECT * FROM users WHERE ?", db.clause {
+  deleted: true
+  status: "deleted"
+}
 res2 = db.query "UPDATE things SET color = ?", "blue"
 res3 = db.query "INSERT INTO cats (age, name, alive) VALUES (?, ?, ?)", 25, "dogman", true
 ]]}
 
 ```sql
 SELECT * FROM hello
+SELECT * FROM users WHERE deleted AND status = 'deleted'
 UPDATE things SET color = 'blue'
 INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 ```
@@ -228,7 +233,7 @@ INSERT INTO cats (age, name, alive) VALUES (25, 'dogman', TRUE)
 A query that fails to execute will raise a Lua error. The error will contain
 the message from the database along with the query.
 
-Every single function that Lapis provides which communicates with the datbase
+Every single function that Lapis provides which communicates with the database
 will eventually end up calling `db.query`. The same logic with regards to error
 handling and connection management applies to all database operations that
 Lapis does.
