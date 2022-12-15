@@ -465,6 +465,13 @@ created.
 This method returns the newly created class object, followed by the instance
 metatable.
 
+$dual_code{[[
+SomeWidget = Widget\extend =>
+  div "Hello world!"
+
+print SomeWidget!\render_to_string!
+]]}
+
 ### `Widget([opts])`
 
 The default constructor of the widget class will copy over every field from the
