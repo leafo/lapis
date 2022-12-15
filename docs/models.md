@@ -12,17 +12,18 @@ that table.
 The most primitive model is a blank model:
 
 
-```lua
-local Model = require("lapis.db.model").Model
-
-local Users = Model:extend("users")
-```
-
-```moon
+$dual_code{
+moon = [[
 import Model from require "lapis.db.model"
 
 class Users extends Model
-```
+]],
+lua = [[
+local Model = require("lapis.db.model").Model
+
+local Users = Model:extend("users")
+]]
+}
 
 <p class="for_lua">
 The first argument to <code>extend</code> is the name of the table to associate
@@ -52,13 +53,23 @@ customize for your use. This includes adding your own properties and methods to
 the Model class and instances of that model.
 
 <p class="for_lua">
-The `extend` method on the base model class reutrns a second value: the
+
+The `extend` method on the base model class returns a second value: the
 instance metatable. You can use this table to add new methods & properties to
 instances of the model, aka rows fetched by that model.
+
 </p>
 
+$dual_code{
+moon = [[
+class Users extends Model
+  get_display_name: =>
+    @display_name or @username
 
-```lua
+some_user = Users\find 1
+print some_user\get_display_name!
+]],
+lua = [[
 local Users, Users_mt = Model.extend("users")
 
 -- this method will be available on all User instances
@@ -69,17 +80,8 @@ end
 
 local some_user = Users:find(1)
 print(some_user:get_display_name())
-```
-
-```moon
-class Users extends Model
-  get_display_name: =>
-    @display_name or @username
-
-some_user = Users\find 1
-print some_user\get_display_name!
-```
-
+]]
+}
 
 To recap: the Model class object and the Model's metatable are two distinct
 objects. The metatable object is strictly for adding methods and properties to
@@ -162,15 +164,10 @@ specified by the `primary_keys` assigned in the Model's class.
 > default. For those models, `find` would take one argument, the value of `id`.
 
 
-```lua
-local user = Users:find(23232)
-local tag = Tags:find(1234, "programmer")
-```
-
-```moon
+$dual_code{[[
 user = Users\find 23232
 tag = Tags\find 1234, "programmer"
-```
+]]}
 
 ```sql
 SELECT * from "users" where "id" = 23232 limit 1
@@ -182,13 +179,9 @@ SELECT * from "tags" where "user_id" = 1234 and "tag" = 'programmer' limit 1
 An alternate way of calling find is to pass a table as the first argument. The
 table will be converted to a `WHERE` clause in the query:
 
-```lua
-local user = Users:find({ email = "person@example.com" })
-```
-
-```moon
+$dual_code{[[
 user = Users\find email: "person@example.com"
-```
+]]}
 
 ```sql
 SELECT * from "users" where "email" = 'person@example.com' limit 1
@@ -198,13 +191,9 @@ Like all database finders, you are free to use `db.raw` to embed raw SQL. For
 example, you might perform a case insensitive email search like so:
 
 
-```lua
-local user = Users:find({ [db.raw("lower(email)")] = some_email:lower() })
-```
-
-```moon
+$dual_code{[[
 user = Users\find [db.raw "lower(email)"]: some_email\lower!
-```
+]]}
 
 ```sql
 SELECT * from "users" where lower(email) = 'person@example.com' limit 1
@@ -217,13 +206,9 @@ similarly to the [`select` function from the raw query
 interface](database.html#query-interface-selectquery-params) except you specify
 the part of the query after the list of columns to select.
 
-```lua
-local tags = Tags:select("where tag = ?", "merchant")
-```
-
-```moon
+$dual_code{[[
 tags = Tags\select "where tag = ?", "merchant"
-```
+]]}
 
 ```sql
 SELECT * from "tags" where tag = 'merchant'
@@ -235,13 +220,9 @@ are no matching rows an empty table is returned.
 If you want to restrict which columns are selected, you can pass in a table as
 the last argument with the `fields` key set:
 
-```lua
-local tags = Tags:select("where tag = ?", "merchant", { fields = "created_at as c" })
-```
-
-```moon
+$dual_code{[[
 tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
-```
+]]}
 
 ```sql
 SELECT created_at as c from "tags" where tag = 'merchant'
@@ -264,13 +245,14 @@ method. It takes an array table of primary keys. This method only works on
 tables that have singular primary keys unless you explicitly pass a column to
 search by.
 
-```lua
-local users = Users:find_all({ 1,2,3,4,5 })
-```
-
-```moon
+$dual_code{
+moon = [[
 users = Users\find_all { 1,2,3,4,5 }
-```
+]],
+lua = [[
+local users = Users:find_all({ 1,2,3,4,5 })
+]]
+}
 
 ```sql
 SELECT * from "users" where "id" in (1, 2, 3, 4, 5)
@@ -280,13 +262,13 @@ If you need to find many rows for another column other than the primary key you
 can pass in the optional second argument:
 
 
-```lua
-local users = UserProfile:find_all({ 1,2,3,4,5 }, "user_id")
-```
-
-```moon
+$dual_code{
+moon = [[
 users = UserProfile\find_all { 1,2,3,4,5 }, "user_id"
-```
+]],
+lua = [[
+local users = UserProfile:find_all({ 1,2,3,4,5 }, "user_id")
+]]}
 
 ```sql
 SELECT * from "UserProfile" where "user_id" in (1, 2, 3, 4, 5)
@@ -1224,20 +1206,8 @@ object.
 
 For example, say we have the following table and model: (See [Database Schemas](database.html#database-schemas) for more information on creating tables.)
 
-```lua
-create_table("users", {
-  { "id", types.serial },
-  { "name", types.varchar },
-  { "group_id", types.foreign_key },
-
-  "PRIMARY KEY(id)"
-})
-
-local Users = Model:extend("users")
-```
-
-
-```moon
+$dual_code{
+moon = [[
 create_table "users", {
   { "id", types.serial }
   { "name", types.varchar }
@@ -1247,18 +1217,26 @@ create_table "users", {
 }
 
 class Users extends Model
+]],
+lua = [[
+create_table("users", {
+  { "id", types.serial },
+  { "name", types.varchar },
+  { "group_id", types.foreign_key },
 
-```
+  "PRIMARY KEY(id)"
+})
+
+local Users = Model:extend("users")
+]]
+}
+
 
 We can create a paginator like so:
 
-```lua
-local paginated = Users:paginated("where group_id = ? order by name asc", 123)
-```
-
-```moon
+$dual_code{[[
 paginated = Users\paginated [[where group_id = ? order by name asc]], 123
-```
+]]}
 
 The type of paginator created by the `paginated` class method is an
 `OffsetPaginator`. This paginator uses `LIMIT` and `OFFSET` query clauses to
@@ -1333,13 +1311,9 @@ Returns the total number of pages.
 Gets the total number of items that can be returned. The paginator will parse
 the query and remove all clauses except for the `WHERE` when issuing a `COUNT`.
 
-```lua
-local users = paginated:total_items()
-```
-
-```moon
+$dual_code{[[
 users = paginated\total_items!
-```
+]]}
 
 ```sql
 SELECT COUNT(*) as c from "users" where group_id = 123
@@ -1353,16 +1327,10 @@ result set loaded in memory at once.
 
 Each item is preloaded with the `prepare_results` function if provided.
 
-```lua
-for page_results, page_num in paginated:each_page() do
-  print(page_results, page_num)
-end
-```
-
-```moon
+$dual_code{[[
 for page_results, page_num in paginated\each_page!
   print(page_results, page_num)
-```
+]]}
 
 > Be careful modifying rows in the database when iterating over each page, as
 > your modifications might change the query result order and you may process
@@ -1391,16 +1359,17 @@ Checks to see if the paginator returns at least 1 item. Returns a boolean. This 
 more efficient than counting the items and checking for a number greater than 0
 because the query generated by this function doesn't do any counting.
 
-```lua
+$dual_code{
+moon = [[
+if pager\has_items!
+  do_something!
+]],
+lua = [[
 if pager:has_items() then
   -- ...
 end
-```
-
-```moon
-if pager\has_items!
-  do_something!
-```
+]]
+}
 
 ```sql
 SELECT 1 FROM "users" where group_id = 123 limit 1
@@ -1443,19 +1412,9 @@ method to paginate results.
 
 Here's an example model:
 
-```lua
-create_table("events", {
-  { "id", types.serial },
-  { "user_id", types.foreign_key },
-  { "data", types.text },
 
-  "PRIMARY KEY(id)"
-})
-
-local Events = Model:extend("events")
-```
-
-```moon
+$dual_code{
+moon = [[
 create_table "events", {
   { "id", types.serial }
   { "user_id", types.foreign_key }
@@ -1465,24 +1424,37 @@ create_table "events", {
 }
 
 class Events extends Model
-```
+]],
+lua = [[
+create_table("events", {
+  { "id", types.serial },
+  { "user_id", types.foreign_key },
+  { "data", types.text },
+
+  "PRIMARY KEY(id)"
+})
+
+local Events = Model:extend("events")
+]]}
+
 
 Here's how to instantiate an ordered paginator that can iterate over the `events`
 table for a specific user id, in ascending order:
+ 
 
-```lua
-local OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
-local pager = OrderedPaginator(Events, "id", "where user_id = ?", 123, {
-  per_page = 50
-})
-```
-
-```moon
+$dual_code{
+moon = [[
 import OrderedPaginator from require "lapis.db.pagination"
 pager = OrderedPaginator Events, "id", "where user_id = ?", 123, {
   per_page: 50
 }
-```
+]],
+lua = [[
+local OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+local pager = OrderedPaginator(Events, "id", "where user_id = ?", 123, {
+  per_page = 50
+})
+]]}
 
 The `OrderedPaginator` constructor function matches the same interface as the
 regular `Paginator` except it takes an additional argument after the model name:
@@ -1492,21 +1464,23 @@ Call `get_page` with no arguments to get the first page of results. In addition
 to the results of the query, the addition arguments contain the values that
 should be passed to get page to get the next page of results.
 
-```lua
--- get the first page
-local results, next_page = pager:get_page()
-
--- get the next page
-local results_2, next_page = pager:get_page(next_page)
-```
-
-```moon
+$dual_code{
+moon = [[
 -- get the first page
 results, next_page = pager\get_page!
 
 -- get the next page
 results_2, next_page = pager\get_page next_page
-```
+]],
+lua = [[
+-- get the first page
+local results, next_page = pager:get_page()
+
+-- get the next page
+local results_2, next_page = pager:get_page(next_page)
+]]
+
+}
 
 ```sql
 SELECT * from "events" where user_id = 123 order by "events"."id" ASC limit 50
