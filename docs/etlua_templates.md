@@ -73,8 +73,16 @@ template to render after the action is executed. If we place an `.etlua` file
 inside of the views directory, `views/` by default, then we can render a
 template by name like so:
 
+$dual_code{
+moon = [[
+lapis = require "lapis"
 
-```lua
+class App extends lapis.Application
+  @enable "etlua"
+  "/": =>
+    render: "hello"
+]],
+lua = [[
 local lapis = require("lapis")
 
 local app = lapis.Application()
@@ -85,28 +93,30 @@ app:match("/", function()
 end)
 
 return app
-```
-
-```moon
-lapis = require "lapis"
-
-class App extends lapis.Application
-  @enable "etlua"
-  "/": =>
-    render: "hello"
-```
+]]}
 
 
 Rendering `"hello"` will cause the module `"views.hello"` to load, which will
-resolve our `etlua` template located at `views/hello.etlua`
+resolve our `etlua` template located at `views/hello.etlua`. This works because
+`enable("etlua")` installs a custom package loader that is aware of `.etlua`
+files and will convert them into Lua modules that implement the interface
+necessary to be used as a view in Lapis.
 
 Because it's common to have a single view for every (or most actions) you can
 avoid repeating the name of the view when using a named route. A named route's
 action can just set `true` to the `render` option and the name of the route
 will be used as the name of the template:
 
+$dual_code{
+moon = [[
+lapis = require "lapis"
 
-```lua
+class App extends lapis.Application
+  @enable "etlua"
+  [index: "/"]: =>
+    render: true
+]],
+lua = [[
 local lapis = require("lapis")
 
 local app = lapis.Application()
@@ -117,16 +127,8 @@ app:match("index", "/", function()
 end)
 
 return app
-```
+]]}
 
-```moon
-lapis = require "lapis"
-
-class App extends lapis.Application
-  @enable "etlua"
-  [index: "/"]: =>
-    render: true
-```
 
 ```html
 <!-- views/index.etlua -->
@@ -135,27 +137,26 @@ class App extends lapis.Application
 </div>
 ```
 
-
 ### Passing Values to Views
 
 Values can be passed to views by setting them on `self` in the action. For
 example we might set some state for a template like so:
 
-
-```lua
-app:match("/", function(self)
-  self.pets = { "Cat", "Dog", "Bird" }
-  return { render = "my_template" }
-end)
-```
-
-```moon
+$dual_code{
+moon = [[
 class App extends lapis.Application
   @enable "etlua"
   "/": =>
     @pets = {"Cat", "Dog", "Bird"}
     render: "my_template"
-```
+]],
+lua = [[
+app:match("/", function(self)
+  self.pets = { "Cat", "Dog", "Bird" }
+  return { render = "my_template" }
+end)
+]]}
+
 
 ```erb
 <!-- views/my_template.etlua -->
