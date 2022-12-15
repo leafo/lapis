@@ -124,15 +124,22 @@ Migrations](database.html#database-migrations/running-migrations).
 
 It executes on the server approximately this code:
 
-```lua
-local migrations = require("migrations")
-require("lapis.db.migrations").run_migrations(migrations)
-```
-
-```moon
+$dual_code{
+moon = [[
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
-```
+]],
+lua = [[
+local migrations = require("migrations")
+require("lapis.db.migrations").run_migrations(migrations)
+]]
+}
+
+You can instruct the migrations to be run in a transaction by providng the
+`--transaction` flag.
+
+To wrap each individual migration in a transaction use:
+`--transaction=individual`
 
 ### `lapis term`
 
