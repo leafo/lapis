@@ -8,7 +8,26 @@
 Lapis comes with a set of validators for working with external inputs. Here's a
 quick example:
 
-```lua
+$dual_code{
+moon = [[
+import capture_errors from require "lapis.application"
+import assert_valid from require "lapis.validate"
+
+class App extends lapis.Application
+  "/create-user": capture_errors =>
+
+    assert_valid @params, {
+      { "username", exists: true, min_length: 2, max_length: 25 }
+      { "password", exists: true, min_length: 2 }
+      { "password_repeat", equals: @params.password }
+      { "email", exists: true, min_length: 3 }
+      { "accept_terms", equals: "yes", "You must accept the Terms of Service" }
+    }
+
+    create_the_user @params
+    render: true
+]],
+lua = [[
 local lapis = require("lapis")
 local app_helpers = require("lapis.application")
 local validate = require("lapis.validate")
@@ -30,29 +49,9 @@ app:match("/create-user", capture_errors(function(self)
   return { render = true }
 end))
 
-
 return app
+]]}
 
-```
-
-```moon
-import capture_errors from require "lapis.application"
-import assert_valid from require "lapis.validate"
-
-class App extends lapis.Application
-  "/create-user": capture_errors =>
-
-    assert_valid @params, {
-      { "username", exists: true, min_length: 2, max_length: 25 }
-      { "password", exists: true, min_length: 2 }
-      { "password_repeat", equals: @params.password }
-      { "email", exists: true, min_length: 3 }
-      { "accept_terms", equals: "yes", "You must accept the Terms of Service" }
-    }
-
-    create_the_user @params
-    render: true
-```
 
 `assert_valid` takes two arguments, a table to be validated, and a second array
 table with a list of validations to perform. Each validation is the following format:
@@ -89,24 +88,39 @@ You can set `optional` to true for a validation to make it validate only when
 some value is provided. If the parameter's value is `nil`, then the validation
 will skip it without failure.
 
-```lua
-validate.assert_valid(self.params, {
-  { "color", exists = true, min_length = 2, max_length = 25, optional = true },
-})
-
-```
-
-```moon
+$dual_code{
+moon = [[
 assert_valid @params, {
   { "color", exists: true, min_length: 2, max_length: 25, optional: true },
 }
-```
+]],
+lua = [[
+validate.assert_valid(self.params, {
+  { "color", exists = true, min_length = 2, max_length = 25, optional = true },
+})
+]]}
 
 ## Creating a Custom Validator
 
 Custom validators can be defined like so:
 
-```lua
+$dual_code{
+moon = [[
+import validate_functions, assert_valid from require "lapis.validate"
+
+validate_functions.integer_greater_than = (input, min) ->
+  num = tonumber input
+  num and num > min, "%s must be greater than #{min}"
+
+import capture_errors from require "lapis.application"
+
+class App extends lapis.Application
+  "/": capture_errors =>
+    assert_valid @params, {
+      { "number", integer_greater_than: 100 }
+    }
+]],
+lua = [[
 local validate = require("lapis.validate")
 
 validate.validate_functions.integer_greater_than = function(input, min)
@@ -124,35 +138,19 @@ app:match("/", capture_errors(function(self)
     { "number", integer_greater_than = 100 }
   })
 end))
-```
-
-```moon
-import validate_functions, assert_valid from require "lapis.validate"
-
-validate_functions.integer_greater_than = (input, min) ->
-  num = tonumber input
-  num and num > min, "%s must be greater than #{min}"
-
-import capture_errors from require "lapis.application"
-
-class App extends lapis.Application
-  "/": capture_errors =>
-    assert_valid @params, {
-      { "number", integer_greater_than: 100 }
-    }
-```
+]]}
 
 ## Manual Validation
 
 In addition to `assert_valid` there is one more useful validation function:
 
-```lua
-local validate = require("lapis.validate").validate
-```
-
-```moon
+$dual_code{
+moon = [[
 import validate from require "lapis.validate"
-```
+]],
+lua = [[
+local validate = require("lapis.validate").validate
+]]}
 
 * `validate(object, validation)` -- takes the same exact arguments as
   `assert_valid`, but returns either errors or `nil` on failure instead of
