@@ -22,10 +22,44 @@ For example, here's a simple template that renders a random number:
 
 `etlua` comes with the following tags for injecting Lua into your templates:
 
-* `<% lua_code %>` runs Lua code verbatim
-* `<%= lua_expression %>` writes result of expression to output, HTML escaped
-* `<%- lua_expression %>` same as above but with no HTML escaping
+* `<% lua_code %>` -- runs Lua code verbatim. If the code is an expression then the result is ignored
+* `<%= lua_expression %>` -- writes result of expression to output, HTML escaped
+* `<%- lua_expression %>` -- writes result of expression to output, **with no HTML escaping**. See [Security Considerations](#security-considerations)
 
+
+## Security Considerations
+
+If you are rendering user-provided data in your views then you must take
+special care to escape the data when rendering it to prevent cross-site
+scripting attacks.
+
+If a malicious user is able to inject JavaScript or other unapproved markup
+into your page then they may be able to comprise your platform for other users,
+including stealing sessions or performing unapproved authenticated actions.
+
+The etlua tag `<%= lua_expression %>` will HTML escape the output such that it
+is suitable for use in the content or attributes of an HTML tag.
+
+In some cases it may be cumbsome to use `<%= lua_expression %>` in multiple
+places when constructing HTML elements. The `element` function can be used to
+write a tag to the buffer programatically in Lua code, and it will
+automatically escape any values passed to it.
+
+In this example the `element` function is used to generate the link to the
+user, with the username and URL correctly escaped.
+
+```erb
+<ul class="list">
+  <% for i, user in ipairs(users) do %>
+    <li>
+      <% element("a", { href: url_for(user) }, user:get_display_name()) %>
+    </li>
+  <% end %>
+</ul>
+```
+
+Notice how `element` uses `<% %>` etlua tags. `element` does not return any
+value, but instead writes directly to the buffer.
 
 ## Rendering From Actions
 
@@ -172,8 +206,8 @@ To render a sub-template you can use the `render` helper function:
 ```erb
 <!-- views/navigation.etlua -->
 <div class="nav_bar">
-  <a href="<%= url_for("index") %>">Home</a>
-  <a href="<%= url_for("about") %>">About</a>
+  <a href="<%= url_for('index') %>">Home</a>
+  <a href="<%= url_for('about') %>">About</a>
 </div>
 ```
 
@@ -214,9 +248,77 @@ Here's a contrived example of using a sub-template to render a list of numbers:
 </div>
 ```
 
-## View Helper Functions
+## `etlua` template functions
 
-* `render(template_name, [template_params])` -- loads and renders a template
-* `widget(widget_instance)` -- renders and instance of a `Widget`
+The following functions are globally available in any `etlua` template loaded
+by Lapis to be used as a view.
+
+* `render(template_name, [template_params])` -- loads and renders a template to the buffer
+* `widget(widget_instance)` -- renders and instance of a `Widget` to the buffer
+* `element(name, ...)` -- renders an HTML element to the buffer with `name`, supporting the full HTML builder syntax for any nested functions
+
+Note that when a helper renders to the buffer, there will be no return value.
+It is not necessary to use an etlua tag that will take print the output of the
+function.
+
+## `EtluaWidget` reference
+
+Lapis transparently converts `.etlua` files to `EtluaWidget`s when you request
+them to be used as a template (after enabling `etlua`). You can manually
+compile template code programatically by interacting directly with the
+`EtluaWidget` class.
+
+It is not necessary to *enable* `etlua` if you are using the `EtluaWidget`
+class directly. Instances of the `EtluaWidget` implement the *render* interface
+necessary to be used in any place Lapis expects a template or view.
+
+Note that `etlua` templates are *compiled* to enable them to render at the
+highest possible performance. You should avoid compiling templates (eg.
+`EtluaWidget:load()`) during every request or it may have a negative impact on
+your performance. Cache the result as a Lua module or somewhere where it can
+persist between requests.
+
+### `EtluaWidget:load(template_code)`
+
+The `load` method takes a etlua template string, compiles it and creates a new
+`EtluaWidget` class that can be used to render the template with parameters.
+
+$dual_code{
+moon = [==[
+import EtluaWidget from require "lapis.etlua"
+
+widget = EtluaWidget\load [[
+  <h1>Hello <%= username %></h1>
+]]
+
+widget(username: "Garf")\render_to_string!
+]==],
+lua = [==[
+local etlua = require("lapis.etlua")
+
+local widget = etlua.EtluaWidget:load [[
+  <h1>Hello <%= username %></h1>
+]]
+
+widget({ username =  "Garf" }):render_to_string()
+]==]}
+
+### `EtluaWidget([opts])`
+
+The default constructor of the widget class will copy every field from the
+`opts` argument to `self`, if the `opts` argument is provided. Values on `self`
+will be available in scope for the template when it is rendered.
+
+### `etluawidget:render_to_string()`
+
+Renders the template and returns the string result. This will automatically
+create a temporary buffer for the duration of the render.
+
+### `etluawidget:render(buffer, ...)`
+
+Renders the template to the provided buffer. Under normal circumstances it is
+not necessary to use this method directly.
+
+This method returns nothing.
 
 [1]: https://github.com/leafo/etlua

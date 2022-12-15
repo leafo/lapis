@@ -474,7 +474,7 @@ print SomeWidget!\render_to_string!
 
 ### `Widget([opts])`
 
-The default constructor of the widget class will copy over every field from the
+The default constructor of the widget class will copy every field from the
 `opts` argument to `self`, if the `opts` argument is provided. You can use this
 to set render-time parameters or override methods.
 
