@@ -44,6 +44,8 @@ class EtluaWidget extends Widget
 
   _find_helper: (name) =>
     switch name
+      when "self"
+        return @
       when "render"
         return @_buffer\render
       when "widget"

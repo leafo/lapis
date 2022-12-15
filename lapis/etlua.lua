@@ -87,7 +87,9 @@ do
     end,
     _find_helper = function(self, name)
       local _exp_0 = name
-      if "render" == _exp_0 then
+      if "self" == _exp_0 then
+        return self
+      elseif "render" == _exp_0 then
         local _base_1 = self._buffer
         local _fn_0 = _base_1.render
         return function(...)

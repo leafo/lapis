@@ -23,6 +23,12 @@ describe "lapis.etlua", ->
     w = EtluaWidget\load([[before<% element("div", {color = "blue"}, function() span("good work") end) %>after]])!
     assert.same [[before<div color="blue"><span>good work</span></div>after]], w\render_to_string!
 
+  it "allows access to self", ->
+    w = EtluaWidget\load([[element: <%= self.element %>]])
+    assert.same [[element: Hello]], w({
+      element: "Hello"
+    })\render_to_string!
+
   it "should bind helpers correctly", ->
     w = EtluaWidget\load([[-<%= hello() %>-]])!
 
