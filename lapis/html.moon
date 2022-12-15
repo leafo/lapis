@@ -306,7 +306,11 @@ class Widget
     other_cls, other_cls_name = if type(other_cls) == "string"
       require(other_cls), other_cls
 
-    -- uhh this check doesn't look right
+    if @ == Widget
+      error "You attempted to call call Widget:include on the read-only Widget base class. You must create a sub-class to use include"
+
+    -- This works because include adds inheritance chain recursively depth
+    -- first, and it will hit Widget form parents
     if other_cls == Widget
       error "Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget"
 

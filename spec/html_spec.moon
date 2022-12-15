@@ -549,4 +549,12 @@ describe "lapis.html", ->
           "Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget"
         )
 
+      it "does not allow include on Widget", ->
+        class MistakeMixin
+          height: => 10
+
+        assert.has_error(
+          -> Widget\include MistakeMixin
+          "You attempted to call call Widget:include on the read-only Widget base class. You must create a sub-class to use include"
+        )
 

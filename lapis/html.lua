@@ -677,6 +677,9 @@ do
     if type(other_cls) == "string" then
       other_cls, other_cls_name = require(other_cls), other_cls
     end
+    if self == Widget then
+      error("You attempted to call call Widget:include on the read-only Widget base class. You must create a sub-class to use include")
+    end
     if other_cls == Widget then
       error("Your widget tried to include a class that extends from Widget. An included class should be a plain class and not another widget")
     end
