@@ -19,6 +19,10 @@ describe "lapis.etlua", ->
 
     assert.same "The object is blue and 10px!", w\render_to_string!
 
+  it "renders an element", ->
+    w = EtluaWidget\load([[before<% element("div", {color = "blue"}, function() span("good work") end) %>after]])!
+    assert.same [[before<div color="blue"><span>good work</span></div>after]], w\render_to_string!
+
   it "should bind helpers correctly", ->
     w = EtluaWidget\load([[-<%= hello() %>-]])!
 

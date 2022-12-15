@@ -1,7 +1,7 @@
 
 import Parser, Compiler from require "etlua"
 
-import Widget, Buffer, CONTENT_FOR_PREFIX from require "lapis.html"
+import Widget, Buffer, element, CONTENT_FOR_PREFIX from require "lapis.html"
 import locked_fn, release_fn from require "lapis.util.functions"
 
 parser = Parser!
@@ -48,6 +48,8 @@ class EtluaWidget extends Widget
         return @_buffer\render
       when "widget"
         return @_buffer\render_widget
+      when "element"
+        return (...) -> element @_buffer, ...
 
     if chain = @_get_helper_chain!
       for h in *chain
