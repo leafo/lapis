@@ -119,6 +119,25 @@ describe "lapis.db.model", ->
 
 
   describe "find", ->
+    it "handles empty clause", ->
+      class Things extends Model
+
+      assert.has_error(
+        -> Things\find {}
+        "db.encode_clause: passed an empty table"
+      )
+
+      assert.has_error(
+        -> Things\find nil
+        "Model.find: things: trying to find with no conditions"
+      )
+
+      assert.has_error(
+        -> Things\find!
+        "Model.find: things: trying to find with no conditions"
+      )
+
+
     it "basic", ->
       class Things extends Model
 
@@ -203,13 +222,13 @@ describe "lapis.db.model", ->
       assert_queries {
         [[SELECT * FROM "things" WHERE "dad" IN (1, 2, 4)]]
       }
-    
+
     it "with fields option", ->
       Things\find_all { 1,2,4 }, fields: "hello"
       assert_queries {
         [[SELECT hello FROM "things" WHERE "id" IN (1, 2, 4)]]
       }
-    
+
     it "with multiple field and key option", ->
       Things\find_all { 1,2,4 }, fields: "hello, world", key: "dad"
       assert_queries {
@@ -360,7 +379,7 @@ describe "lapis.db.model", ->
       [[INSERT INTO "things" ("color") VALUES ('blue') RETURNING "id"]]
       [[INSERT INTO "timed_things" ("created_at", "hello", "updated_at") VALUES ('2013-08-13 06:56:40', 'world', '2013-08-13 06:56:40') RETURNING "id"]]
       [[INSERT INTO "other_things" ("height", "id_a") VALUES ('400px', 120) RETURNING "id_a", "id_b"]]
-      
+
     }
 
   it "should create model with options", ->
@@ -488,7 +507,7 @@ describe "lapis.db.model", ->
 
     assert_queries {
       [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12]]
-      
+
       [[UPDATE "things" SET "age" = 2000 WHERE "id" IS NULL]]
       [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3]]
       [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]

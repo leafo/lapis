@@ -446,7 +446,8 @@ class BaseModel
   -- find by primary key, or by table of conds
   @find: (...) =>
     first = select 1, ...
-    error "#{@table_name!} trying to find with no conditions" if first == nil
+    if first == nil
+      error "Model.find: #{@table_name!}: trying to find with no conditions"
 
     cond = if "table" == type first
       @db.encode_clause (...)

@@ -747,7 +747,7 @@ do
   self.find = function(self, ...)
     local first = select(1, ...)
     if first == nil then
-      error(tostring(self:table_name()) .. " trying to find with no conditions")
+      error("Model.find: " .. tostring(self:table_name()) .. ": trying to find with no conditions")
     end
     local cond
     if "table" == type(first) then
