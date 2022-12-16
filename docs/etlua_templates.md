@@ -29,11 +29,12 @@ For example, here's a simple template that renders a random number:
 
 ## Security Considerations
 
-If you are rendering user-provided data in your views then you must take
-special care to escape the data when rendering it to prevent cross-site
-scripting attacks. `etlua` is fundamentally a system for templating strings,
-and makes no guarantee that the HTML generated is valid or secure. It's your
-responsibility to verify that valid markup is generated.
+If you are displaying user-provided data in HTML then you must take special
+care to *escape* the data when rendering to prevent cross-site scripting
+attacks. `etlua` is fundamentally a system for combining strings, and makes no
+guarantee that the HTML generated is valid or secure. **It's your
+responsibility to verify that valid markup is generated** by using the correct
+template tags in the correct locations.
 
 If a malicious user is able to inject JavaScript or other unapproved markup
 into your page then they may be able to comprise your platform for other users,
@@ -42,10 +43,10 @@ including stealing sessions or performing unapproved authenticated actions.
 The etlua tag `<%= lua_expression %>` will HTML escape the output such that it
 is suitable for use in the content or attributes of an HTML tag.
 
-In some cases it may be cumbsome to use `<%= lua_expression %>` in multiple
+In some cases it may be cumbersome to use `<%= lua_expression %>` in multiple
 places when constructing HTML elements. The `element` function can be used to
-write a tag to the buffer programatically in Lua code, and it will
-automatically escape any values passed to it.
+write a tag to the buffer programatically in Lua code. It will automatically
+escape any values passed to it and generate valid markup.
 
 In this example the `element` function is used to generate the link to the
 user, with the username and URL correctly escaped.
