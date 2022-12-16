@@ -31,7 +31,9 @@ For example, here's a simple template that renders a random number:
 
 If you are rendering user-provided data in your views then you must take
 special care to escape the data when rendering it to prevent cross-site
-scripting attacks.
+scripting attacks. `etlua` is fundamentally a system for templating strings,
+and makes no guarantee that the HTML generated is valid or secure. It's your
+responsibility to verify that valid markup is generated.
 
 If a malicious user is able to inject JavaScript or other unapproved markup
 into your page then they may be able to comprise your platform for other users,
@@ -52,7 +54,7 @@ user, with the username and URL correctly escaped.
 <ul class="list">
   <% for i, user in ipairs(users) do %>
     <li>
-      <% element("a", { href: url_for(user) }, user:get_display_name()) %>
+      <% element("a", { href = url_for(user) }, user:get_display_name()) %>
     </li>
   <% end %>
 </ul>
@@ -70,8 +72,15 @@ returning a table of options.
 
 The `render` option of the return value of an action lets us specify which
 template to render after the action is executed. If we place an `.etlua` file
-inside of the views directory, `views/` by default, then we can render a
-template by name like so:
+inside of the views directory, `views/` by default (Configured by the
+application `views_prefix`), then we can render a template by name like so:
+
+```html
+<!-- views/hello.etlua -->
+<div class="hello">
+  Welcome to my site!
+</div>
+```
 
 $dual_code{
 moon = [[
@@ -113,7 +122,9 @@ lapis = require "lapis"
 
 class App extends lapis.Application
   @enable "etlua"
-  [index: "/"]: =>
+
+  -- notice route name of `hello` has been added
+  [hello: "/"]: =>
     render: true
 ]],
 lua = [[
@@ -122,7 +133,8 @@ local lapis = require("lapis")
 local app = lapis.Application()
 app:enable("etlua")
 
-app:match("index", "/", function()
+-- notice route name of `hello` has been added
+app:match("hello", "/", function()
   return { render = true }
 end)
 
@@ -130,17 +142,10 @@ return app
 ]]}
 
 
-```html
-<!-- views/index.etlua -->
-<div class="index">
-  Welcome to the index of my site!
-</div>
-```
+### Passing Data to Views
 
-### Passing Values to Views
-
-Values can be passed to views by setting them on `self` in the action. For
-example we might set some state for a template like so:
+Data prepared in an action can be passed the view by storing it on `self`. For
+example we might set some state for our template to render:
 
 $dual_code{
 moon = [[
@@ -183,7 +188,7 @@ URL to a named route:
 <div class="about_page">
   <p>This is a great page!</p>
   <p>
-    <a href="<%= url_for("index") %>">Return home</a>
+    <a href="<%= url_for('index') %>">Return home</a>
   </p>
 </div>
 ```
@@ -221,15 +226,18 @@ To render a sub-template you can use the `render` helper function:
 
 Note that you have to type the full module name of the template for the first
 argument to require, in this case `"views.navigation"`, which points to
-`views/navigation.etlua`. If you happen to also be using MoonScript templates
-you can also include them using the `render` function.
+`views/navigation.etlua`. (The `views_prefix` is only used when an application
+is specifying a template to use)
 
-Any values and helpers available in the parent template are also available in
-the sub-template.
+The `render()` function can take any *renderable* object. This means you can
+use [`Widget` classes](html_generation.html) or `etlua` templates. When a
+string is provided as the object to render, it will be loaded with `require()`.
 
-Sometimes you need to pass data to a sub-template that's generated during the
-execution of the parent template. `render` takes a second argument of values
-to pass into the sub-template.
+Any values and helpers available in the parent template are made available in
+the scope of the rendered sub-template.
+
+If data needs to be passed to a sub-template, `render` takes an optional second
+argument of a table of fields to pass down.
 
 Here's a contrived example of using a sub-template to render a list of numbers:
 
@@ -297,11 +305,13 @@ widget(username: "Garf")\render_to_string!
 lua = [==[
 local etlua = require("lapis.etlua")
 
-local widget = etlua.EtluaWidget:load [[
+local MyWidget = etlua.EtluaWidget:load([[
   <h1>Hello <%= username %></h1>
-]]
+]])
 
-widget({ username =  "Garf" }):render_to_string()
+local w = MyWidget({ username = "Garf" })
+
+print(w:render_to_string()) --> <h1>Hello Garf</h1>
 ]==]}
 
 ### `EtluaWidget([opts])`
