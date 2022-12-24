@@ -45,7 +45,7 @@ local preload
 local preload_relation
 preload_relation = function(self, objects, name, ...)
   local optional
-  if name:sub(1, 1) == "?" then
+  if type(name) == "string" and name:sub(1, 1) == "?" then
     name = name:sub(2)
     optional = true
   end
@@ -79,10 +79,12 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
     for key, val in pairs(front) do
       local _continue_0 = false
       repeat
-        local relation = type(key) == "string" and key or val
-        local preload_opts = type(val) == "table" and val[preload] or nil
+        local val_type = type(val)
+        local key_type = type(key)
+        local relation = key_type == "string" and key or val
+        local preload_opts = val_type == "table" and val[preload] or nil
         preload_relation(model, objects, relation, preload_opts)
-        if type(key) == "string" then
+        if key_type == "string" and (val_type == "string" or val_type == "table") then
           local optional, relation_name
           if key:sub(1, 1) == "?" then
             optional, relation_name = true, key:sub(2)

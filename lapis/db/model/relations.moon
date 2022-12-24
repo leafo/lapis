@@ -26,7 +26,7 @@ local preload
 -- ...: options passed to preloader
 preload_relation = (objects, name, ...) =>
   -- relations prefixed with ? are optional loads, we can skip it if it doesn't exist
-  optional = if name\sub(1,1) == "?"
+  optional = if type(name) == "string" and name\sub(1,1) == "?"
     name = name\sub 2
     true
 
@@ -61,15 +61,21 @@ preload_homogeneous = (sub_relations, model, objects, front, ...) ->
 
   if type(front) == "table"
     for key, val in pairs front
-      relation = type(key) == "string" and key or val
+      val_type = type val
+      key_type = type key
+
+      relation = key_type == "string" and key or val
 
       -- this lets you set pass preload opts by using the reference to the
       -- preload function as a special key
-      preload_opts = type(val) == "table" and val[preload] or nil
+      preload_opts = val_type == "table" and val[preload] or nil
 
       preload_relation model, objects, relation, preload_opts
 
-      if type(key) == "string"
+      -- are there sub-relations to preload?
+      -- { parent: "child" }
+      -- { parent: {"child1", "child2"} }
+      if key_type == "string" and (val_type == "string" or val_type == "table")
         optional, relation_name = if key\sub(1,1) == "?"
           true, key\sub 2
         else
