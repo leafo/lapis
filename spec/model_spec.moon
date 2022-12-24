@@ -932,6 +932,40 @@ describe "lapis.db.model", ->
       assert.same thing_items[3], things[4].thing_item
       assert.same nil, things[5].thing_item
 
+    it "with mapped keys combined with where", ->
+      thing_items = {
+        { id: 1, aid: 101, bid: 202 }
+        { id: 2, aid: 101, bid: 203 }
+        { id: 3, aid: 102, bid: 204 }
+        { id: 4, aid: 100, bid: 201 }
+      }
+
+      mock_query "SELECT", thing_items
+
+      ThingItems\include_in things, {
+        aid: "alpha_id"
+        bid: "beta_id"
+      }, {
+        where: {
+          deleted: false
+        }
+      }
+
+      ThingItems\include_in things, {
+        aid: "alpha_id"
+        bid: "beta_id"
+      }, {
+        where: db.clause {
+          blessed: true
+          ordained: true
+        }, operator: "OR"
+      }
+
+      assert_queries {
+        [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205)) AND not "deleted"]]
+        [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205)) AND ("blessed" OR "ordained")]]
+      }
+
     it "with many", ->
       thing_items = {
         { id: 1, aid: 101, bid: 202 }
