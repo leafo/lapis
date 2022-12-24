@@ -239,6 +239,41 @@ tests = {
   }
 
   {
+    -> db.encode_clause {
+      [db.list {"a", "b"}]: db.list {
+        db.list {1,2}
+        db.list {3,4}
+      }
+    }
+    [[("a", "b") IN ((1, 2), (3, 4))]]
+  }
+
+  {
+    -> db.encode_clause {
+      [db.list {db.raw("a"), db.raw("b")}]: db.raw "(1, 2)"
+    }
+    [[(a, b) = (1, 2)]]
+  }
+
+  {
+    -> db.encode_clause db.clause {
+      [db.list {"a", "b"}]: db.list {
+        db.list {1,2}
+        db.list {3,4}
+      }
+    }
+    [[("a", "b") IN ((1, 2), (3, 4))]]
+  }
+
+  {
+    -> db.encode_clause db.clause {
+      [db.list {db.raw("a"), db.raw("b")}]: db.raw "(1, 2)"
+    }
+    [[(a, b) = (1, 2)]]
+  }
+
+
+  {
     -> db.interpolate_query "update items set x = ?", db.raw"y + 1"
     "update items set x = y + 1"
   }

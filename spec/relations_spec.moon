@@ -258,6 +258,38 @@ describe "lapis.db.model.relations", ->
       'SELECT * FROM "user_profiles" WHERE ("id", "id2") IN ((111, 222))'
     }
 
+  it "has_one with composite key and where", ->
+    import preload from require "lapis.db.model"
+    models.Notifications = class Notifications extends Model
+
+    models.Followings = class Followings extends Model
+      @primary_key: {"source_user_id", "object_type", "object_id"}
+      @relations: {
+        {"notification"
+          has_one: "Notifications"
+          key: {
+            object_id: "source_user_id"
+            user_id: "object_id"
+          }
+          where: {
+            type: 2
+            object_type: 1
+          }
+        }
+      }
+
+    f = models.Followings\load {
+      source_user_id: 1
+      object_type: 2
+      object_id: 3
+    }
+
+    preload {f}, "notification"
+
+    assert_queries {
+      [[SELECT * FROM "notifications" WHERE ("object_id", "user_id") IN ((1, 3)) AND "object_type" = 1 AND "type" = 2]]
+    }
+
   it "should make has_one getter with custom key", ->
     mock_query "SELECT", { { id: 101 } }
 

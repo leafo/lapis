@@ -156,7 +156,8 @@ build_helpers = (escape_literal, escape_identifier) ->
         switch k_type
           when "string", "table"
             field = if type(k) == "table"
-              assert is_raw(k), "db.encode_clause: got unknown table as key"
+              assert is_raw(k) or is_list(k),
+               "db.encode_clause: got unknown table as key: #{require("moon").dump k}"
               k
             elseif opts and opts.table_name
               raw "#{escape_identifier opts.table_name}.#{escape_identifier k}"

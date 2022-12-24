@@ -263,7 +263,7 @@ build_helpers = function(escape_literal, escape_identifier)
           if "string" == _exp_0 or "table" == _exp_0 then
             local field
             if type(k) == "table" then
-              assert(is_raw(k), "db.encode_clause: got unknown table as key")
+              assert(is_raw(k) or is_list(k), "db.encode_clause: got unknown table as key: " .. tostring(require("moon").dump(k)))
               field = k
             elseif opts and opts.table_name then
               field = raw(tostring(escape_identifier(opts.table_name)) .. "." .. tostring(escape_identifier(k)))
