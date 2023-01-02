@@ -44,7 +44,7 @@ jobs:
         [[ "${{ matrix.luaVersion }}" =~ ^5\.[12]$ ]] && luarocks install luabitop || true
         luarocks install busted
         luarocks install moonscript
-        luarocks install https://raw.githubusercontent.com/leafo/lua-cjson/master/lua-cjson-dev-1.rockspec
+        luarocks install tableshape
         luarocks make
 
     - name: test
