@@ -198,7 +198,7 @@ do
   is_base_type = instance_of(BaseType)
   param_validator_spec = types.annotate(types.shape({
     types.string:tag("field"),
-    is_base_type:describe("tableshape type"):tag("type"),
+    is_base_type,
     error = types["nil"] + types.string:tag("error"),
     label = types["nil"] + types.string:tag("label"),
     as = types["nil"] + types.string:tag("as")
