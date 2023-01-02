@@ -132,3 +132,187 @@ describe "lapis.validate.shapes", ->
 
     assert.same nil, run_with_errors ->
       assert_string "hello"
+
+  describe "ValidateParamsType", ->
+    import types from require "tableshape"
+    import assert_error, validate_params from require "lapis.validate.types"
+
+    it "works with assert_error", ->
+      t = assert_error validate_params {
+        {"good", types.one_of {"yes", "no"} }
+        {"dog", types.string\tag "sweet"}
+      }
+
+      assert.same {
+        [[good: expected "yes", or "no"]]
+        [[dog: expected type "string", got "nil"]]
+      }, run_with_errors ->
+        t\transform {}
+
+      assert.same {
+        {
+          dog: "fool"
+          good: "no"
+        }
+        {
+          sweet: "fool"
+        }
+      }, {
+        t\transform { good: "no", dog: "fool", bye: "heheh" }
+      }
+
+    it "fails to create object with invalid spec", ->
+      assert.has_error(
+        ->
+          validate_params {
+            item: "zone"
+          }
+        [[validate_params: Invalid validation specification object: expected type "table", got "string" (index: item)]]
+      )
+
+      assert.has_error(
+        ->
+          validate_params {
+            {"one", "two"}
+          }
+        [[validate_params: Invalid validation specification object: field 2: expected tableshape type (index: 1)]]
+      )
+
+      assert.has_error(
+        ->
+          validate_params {
+            {"one", types.string, fart: "zone"}
+          }
+        [[validate_params: Invalid validation specification object: extra fields: "fart" (index: 1)]]
+      )
+
+    it "tests basic object", ->
+      test_object = validate_params {
+        {"one", types.string}
+        {"two", types.string / (s) -> "-#{s}-"}
+      }
+
+      assert.same {
+        nil
+        {
+          [[params: expected type "table", got "string"]]
+        }
+      }, { test_object "wtf" }
+
+      assert.same {
+        nil
+        {
+          [[params: expected type "table", got "nil"]]
+        }
+      }, { test_object! }
+
+      assert.same {
+        nil
+        {
+          [[one: expected type "string", got "nil"]]
+          [[two: expected type "string", got "nil"]]
+        }
+      }, { test_object {} }
+ 
+      assert.same {
+        nil
+        {
+          [[one: expected type "string", got "number"]]
+          [[two: expected type "string", got "boolean"]]
+        }
+      }, { test_object {one: 55, two: true, whatthe: "heck"} }
+
+      assert.same {
+        nil
+        {
+          [[two: expected type "string", got "nil"]]
+        }
+      }, { test_object { one: "yes", another: false } }
+
+      assert.same {
+        nil
+        {
+          [[one: expected type "string", got "boolean"]]
+        }
+      }, { test_object { two: "sure", one: false } }
+
+      assert.same {
+        {
+          one: "whoa"
+          two: "-sure-"
+        }
+      }, { test_object\transform { two: "sure", one: "whoa", ignore: 99 } }
+
+    it "tests object with state", ->
+
+    it "test nested validate", ->
+      test_object = validate_params {
+        {"alpha", types.one_of {"one", "two"} }
+        {"two", validate_params {
+          {"one", as: "sure", error: "you messed up", types.string\tag "one"}
+          {"two", label: "The Two", types.string / (s) -> "-#{s}-"}
+        }}
+
+        {"optional", label: "Optionals", types.nil + validate_params {
+          {"confirm", types.literal "true" }
+        }}
+      }
+
+      assert.same [[
+params type {
+  alpha: "one", or "two"
+  two: params type {
+    one: type "string" tagged "one"
+    two: type "string"
+  }
+  optional: type "nil", or params type {confirm: "true"}
+}]], tostring test_object
+
+      assert.same {
+        nil
+        {
+          [[alpha: expected "one", or "two"]]
+          [[two: params: expected type "table", got "nil"]]
+        }
+      }, { test_object {} }
+
+      assert.same {
+        nil
+        {
+          [[alpha: expected "one", or "two"]]
+          [[two: params: expected type "table", got "nil"]]
+          [[Optionals: expected type "nil", or params type {confirm: "true"}]]
+        }
+      }, { test_object { optional: "fart"} }
+
+      assert.same {
+        nil
+        {
+          [[alpha: expected "one", or "two"]]
+          [[two: you messed up]]
+          [[two: The Two: expected type "string", got "nil"]]
+          [[Optionals: expected type "nil", or params type {confirm: "true"}]]
+        }
+      }, { test_object { optional: {}, two: {}} }
+
+      assert.same {
+        nil
+        {
+          [[Optionals: expected type "nil", or params type {confirm: "true"}]]
+        }
+      }, { test_object { optional: {}, alpha: "one", two: {one: "yes", two: "no"}} }
+
+
+      assert.same {
+        {
+          alpha: "one"
+          optional: {confirm: "true"}
+          two: {
+            sure: "yes"
+            two: "-no-"
+          }
+        }
+      }, { test_object\transform { optional: { confirm: "true", junk: "yes"}, alpha: "one", two: {1,2,3, for: true, one: "yes", two: "no"}} }
+
+
+

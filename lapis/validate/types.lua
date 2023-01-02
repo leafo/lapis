@@ -3,14 +3,48 @@ do
   local _obj_0 = require("tableshape")
   types, BaseType, FailedTransform = _obj_0.types, _obj_0.BaseType, _obj_0.FailedTransform
 end
-local assert_error
-assert_error = require("lapis.application").assert_error
+local instance_of
+instance_of = require("tableshape.moonscript").instance_of
+local yield_error
+yield_error = require("lapis.application").yield_error
+local indent
+indent = function(str)
+  local rows
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for s in str:gmatch("[^\n]+") do
+      _accum_0[_len_0] = s
+      _len_0 = _len_0 + 1
+    end
+    rows = _accum_0
+  end
+  return table.concat((function()
+    local _accum_0 = { }
+    local _len_0 = 1
+    for idx, r in ipairs(rows) do
+      _accum_0[_len_0] = idx > 1 and "  " .. tostring(r) or r
+      _len_0 = _len_0 + 1
+    end
+    return _accum_0
+  end)(), "\n")
+end
 local AssertErrorType
 do
   local _class_0
   local _parent_0 = types.assert
   local _base_0 = {
-    assert = assert_error
+    assert = function(first, msg, ...)
+      if not (first) then
+        if type(msg) == "table" then
+          coroutine.yield("error", msg)
+        else
+          yield_error(msg or "unknown error")
+        end
+        assert(first, msg, ...)
+      end
+      return first, msg, ...
+    end
   }
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
@@ -45,36 +79,96 @@ do
   end
   AssertErrorType = _class_0
 end
-local ParamsType
+local ValidateParamsType
 do
   local _class_0
-  local test_input_type
+  local test_input_type, is_base_type, validate_type, param_validator_spec
   local _parent_0 = BaseType
   local _base_0 = {
+    assert_errors = function(self)
+      return AssertErrorType(self)
+    end,
     _transform = function(self, value, state)
       local pass, err = test_input_type(value)
       if not (pass) then
-        return FailedTransform, err
+        return FailedTransform, {
+          err
+        }
       end
+      local out = { }
       local errors, state
       local _list_0 = self.params_spec
       for _index_0 = 1, #_list_0 do
         local validation = _list_0[_index_0]
-        local _ = nil
+        local result, state_or_err = validation.type:_transform(value[validation.field], state)
+        if result == FailedTransform then
+          if not (errors) then
+            errors = { }
+          end
+          if validation.error then
+            table.insert(errors, validation.error)
+          else
+            local error_prefix = tostring(validation.label or validation.field) .. ": "
+            if type(state_or_err) == "table" then
+              for _index_1 = 1, #state_or_err do
+                local e = state_or_err[_index_1]
+                table.insert(errors, error_prefix .. e)
+              end
+            else
+              table.insert(errors, error_prefix .. state_or_err)
+            end
+          end
+        else
+          state = state_or_err
+          out[validation.as or validation.field] = result
+        end
       end
+      if errors then
+        return FailedTransform, errors
+      end
+      return out, state
     end,
     _describe = function(self)
-      return "params validator"
+      local rows
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        local _list_0 = self.params_spec
+        for _index_0 = 1, #_list_0 do
+          local thing = _list_0[_index_0]
+          _accum_0[_len_0] = tostring(thing.field) .. ": " .. tostring(indent(tostring(thing.type)))
+          _len_0 = _len_0 + 1
+        end
+        rows = _accum_0
+      end
+      if #rows == 1 then
+        return "params type {" .. tostring(rows[1]) .. "}"
+      else
+        return "params type {\n  " .. tostring(table.concat(rows, "\n  ")) .. "\n}"
+      end
     end
   }
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
-    __init = function(self, params_spec, opts)
-      self.params_spec, self.opts = params_spec, opts
+    __init = function(self, params_spec)
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        for idx, validator in pairs(params_spec) do
+          local t, err = param_validator_spec(validator)
+          if not (t) then
+            error(tostring(err) .. " (index: " .. tostring(idx) .. ")")
+          end
+          local _value_0 = t
+          _accum_0[_len_0] = _value_0
+          _len_0 = _len_0 + 1
+        end
+        self.params_spec = _accum_0
+      end
     end,
     __base = _base_0,
-    __name = "ParamsType",
+    __name = "ValidateParamsType",
     __parent = _parent_0
   }, {
     __index = function(cls, name)
@@ -101,12 +195,27 @@ do
       return "params: " .. tostring(err)
     end
   })
+  is_base_type = instance_of(BaseType)
+  validate_type = types.one_of({
+    is_base_type
+  })
+  param_validator_spec = types.annotate(types.shape({
+    types.string:tag("field"),
+    validate_type:describe("tableshape type"):tag("type"),
+    error = types["nil"] + types.string:tag("error"),
+    label = types["nil"] + types.string:tag("label"),
+    as = types["nil"] + types.string:tag("as")
+  }), {
+    format_error = function(self, val, err)
+      return "validate_params: Invalid validation specification object: " .. tostring(err)
+    end
+  })
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
-  ParamsType = _class_0
+  ValidateParamsType = _class_0
 end
 return {
-  params = ParamsType,
+  validate_params = ValidateParamsType,
   assert_error = AssertErrorType
 }
