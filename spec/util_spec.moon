@@ -458,6 +458,16 @@ describe "lapis.util.utf8", ->
     assert.same 3, whitespace\match "\216\156"
     assert.nil whitespace\match "\216\156f"
 
+  it "counts length", ->
+    import string_length from require "lapis.util.utf8"
+    assert.same 5, string_length "hello"
+    emojis = "💁👌🎍😍"
+    assert.same 16, #emojis
+    assert.same 4, string_length emojis
+    assert.same {nil, "invalid string"}, { string_length "\0\0\0" }
+    assert.same 0, string_length ""
+    assert.same 1, string_length "\t"
+
   it "trim utf8 aware", ->
     import trim from require "lapis.util.utf8"
 

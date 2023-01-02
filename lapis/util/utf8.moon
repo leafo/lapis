@@ -25,5 +25,18 @@ printable_character = S("\r\n\t") + R("\032\126") + multibyte_character
 
 trim = whitespace^0 * C (whitespace^0 * (1-whitespace)^1)^0
 
+string_length = (str) ->
+  len = 0
+  pos = 1
+  while true
+    res = printable_character\match str, pos
+    break unless res
+    pos = res
+    len += 1
 
-{:multibyte_character, :printable_character, :whitespace, :direction_mark, :trim}
+  unless pos > #str
+    return nil, "invalid string"
+
+  len
+
+{:multibyte_character, :printable_character, :whitespace, :direction_mark, :trim, :string_length}

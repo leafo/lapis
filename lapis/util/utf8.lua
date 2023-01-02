@@ -11,10 +11,28 @@ local unused_direction_mark = direction_mark * #((whitespace + direction_mark) ^
 whitespace = whitespace + unused_direction_mark
 local printable_character = S("\r\n\t") + R("\032\126") + multibyte_character
 local trim = whitespace ^ 0 * C((whitespace ^ 0 * (1 - whitespace) ^ 1) ^ 0)
+local string_length
+string_length = function(str)
+  local len = 0
+  local pos = 1
+  while true do
+    local res = printable_character:match(str, pos)
+    if not (res) then
+      break
+    end
+    pos = res
+    len = len + 1
+  end
+  if not (pos > #str) then
+    return nil, "invalid string"
+  end
+  return len
+end
 return {
   multibyte_character = multibyte_character,
   printable_character = printable_character,
   whitespace = whitespace,
   direction_mark = direction_mark,
-  trim = trim
+  trim = trim,
+  string_length = string_length
 }
