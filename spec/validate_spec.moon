@@ -111,3 +111,24 @@ describe "lapis.validate", ->
       age: "age must be provided",
       rupture: "rupture is required"
     }
+
+describe "lapis.validate.shapes", ->
+  run_with_errors = (fn) ->
+    import capture_errors from require "lapis.application"
+    req = {}
+    capture_errors(fn) req
+    req.errors
+
+  it "creates assert type", ->
+    import types from require "tableshape"
+    import assert_error from require "lapis.validate.types"
+
+    assert_string = assert_error(types.string)
+
+    assert.same {
+      [[expected type "string", got "number"]]
+    }, run_with_errors ->
+      assert_string 77
+
+    assert.same nil, run_with_errors ->
+      assert_string "hello"
