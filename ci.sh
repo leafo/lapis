@@ -5,6 +5,7 @@ set -o xtrace
 
 eval $(luarocks --lua-version=5.1 path)
 luarocks --lua-version=5.1 make lapis-dev-1.rockspec
+luarocks --lua-version=5.1 install tableshape
 
 # add openresty
 export LUA_PATH="$LUA_PATH;/usr/local/openresty/lualib/?.lua"
