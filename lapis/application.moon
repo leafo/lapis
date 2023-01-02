@@ -411,7 +411,7 @@ capture_errors_json = (fn) ->
     json: { errors: @errors }
   }
 
-yield_error = (msg) ->
+yield_error = (msg="unknown error") ->
   coroutine.yield "error", {msg}
 
 assert_error = (thing, msg, ...) ->

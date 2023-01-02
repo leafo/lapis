@@ -463,6 +463,9 @@ capture_errors_json = function(fn)
 end
 local yield_error
 yield_error = function(msg)
+  if msg == nil then
+    msg = "unknown error"
+  end
   return coroutine.yield("error", {
     msg
   })
