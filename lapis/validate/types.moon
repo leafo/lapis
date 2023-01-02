@@ -32,14 +32,11 @@ class ValidateParamsType extends BaseType
   test_input_type = types.annotate types.table, format_error: (val, err) => "params: #{err}"
   is_base_type = instance_of BaseType
 
-  validate_type = types.one_of {
-    -- instance_of(ValidateParamsType) / (t) ->
-    is_base_type
-  }
-
   param_validator_spec = types.annotate types.shape({
     types.string\tag "field"
-    validate_type\describe("tableshape type")\tag "type" -- TODO: extract AssertErrorType wrapped type out so we don't yield error when processing entire object
+
+     -- TODO: AssertErrorType should be unwrapped so we don't yield error when processing nested object
+    is_base_type\describe("tableshape type")\tag "type"
 
     error: types.nil + types.string\tag "error"
     label: types.nil + types.string\tag "label"
@@ -96,7 +93,6 @@ class ValidateParamsType extends BaseType
     out, state
 
   _describe: =>
-
     rows = for thing in *@params_spec
       "#{thing.field}: #{indent tostring thing.type}"
 
@@ -105,7 +101,30 @@ class ValidateParamsType extends BaseType
     else
       "params type {\n  #{table.concat rows, "\n  "}\n}"
 
+
+
+import printable_character, trim from require "lapis.util.utf8"
+
+valid_text = (types.string * types.custom (printable_character^0 * -1)\match)\describe "valid text"
+
+trimmed_text = valid_text / trim\match * types.custom(
+  (v) -> v != "", "expected text"
+)\describe "text"
+
+limited_text = (max_len, min_len=1) ->
+  import string_length from require "lapis.util.utf8"
+  out = trimmed_text * types.custom (str) ->
+    len = string_length(str)
+    return nil, "invalid text" unless len
+    len =< max_len and len >= min_len
+
+  out\describe "text between #{min_len} and #{max_len} characters"
+
+
 {
   validate_params: ValidateParamsType
   assert_error: AssertErrorType
+
+  :valid_text
+  :trimmed_text
 }

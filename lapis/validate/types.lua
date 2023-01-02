@@ -215,7 +215,38 @@ do
   end
   ValidateParamsType = _class_0
 end
+local printable_character, trim
+do
+  local _obj_0 = require("lapis.util.utf8")
+  printable_character, trim = _obj_0.printable_character, _obj_0.trim
+end
+local valid_text = (types.string * types.custom((function()
+  local _base_0 = (printable_character ^ 0 * -1)
+  local _fn_0 = _base_0.match
+  return function(...)
+    return _fn_0(_base_0, ...)
+  end
+end)())):describe("valid text")
+local trimmed_text = valid_text / (function()
+  local _base_0 = trim
+  local _fn_0 = _base_0.match
+  return function(...)
+    return _fn_0(_base_0, ...)
+  end
+end)() * types.custom(function(v)
+  return v ~= "", "expected text"
+end):describe("text")
+local limited_text
+limited_text = function(max_len, min_len)
+  if min_len == nil then
+    min_len = 1
+  end
+  local out = trimmed_text * types.string:length(min_len, max_len)
+  return out:describe("text between " .. tostring(min_len) .. " and " .. tostring(max_len) .. " characters")
+end
 return {
   validate_params = ValidateParamsType,
-  assert_error = AssertErrorType
+  assert_error = AssertErrorType,
+  valid_text = valid_text,
+  trimmed_text = trimmed_text
 }
