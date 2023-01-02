@@ -112,7 +112,7 @@ describe "lapis.validate", ->
       rupture: "rupture is required"
     }
 
-describe "lapis.validate.shapes", ->
+describe "lapis.validate.types", ->
   run_with_errors = (fn) ->
     import capture_errors from require "lapis.application"
     req = {}
@@ -314,5 +314,44 @@ params type {
         }
       }, { test_object\transform { optional: { confirm: "true", junk: "yes"}, alpha: "one", two: {1,2,3, for: true, one: "yes", two: "no"}} }
 
+    describe "valid_text", ->
+      import valid_text from require "lapis.validate.types"
 
+      it "invalid type", ->
+        assert.same {
+          nil
+          "expected valid text"
+        }, {
+          valid_text\transform 100
+        }
+
+        assert.same {
+          nil
+          "expected valid text"
+        }, {
+          valid_text\transform nil
+        }
+
+      it "empty string", ->
+        assert.same {
+          ""
+        }, {
+          valid_text\transform ""
+        }
+
+      it "regular string", ->
+        assert.same {
+          "hello world\r\nyeah"
+        }, {
+          valid_text\transform "hello world\r\nyeah"
+        }
+
+      it "removes bad chars", ->
+        assert.same {
+          nil
+          "expected valid text"
+        }, {
+          valid_text\transform "\008\000umm\127and\200f"
+        }
+   
 

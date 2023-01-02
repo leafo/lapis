@@ -116,7 +116,7 @@ limited_text = (max_len, min_len=1) ->
   out = trimmed_text * types.custom (str) ->
     len = string_length(str)
     return nil, "invalid text" unless len
-    len =< max_len and len >= min_len
+    len <= max_len and len >= min_len
 
   out\describe "text between #{min_len} and #{max_len} characters"
 

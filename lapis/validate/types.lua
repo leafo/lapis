@@ -82,7 +82,7 @@ end
 local ValidateParamsType
 do
   local _class_0
-  local test_input_type, is_base_type, validate_type, param_validator_spec
+  local test_input_type, is_base_type, param_validator_spec
   local _parent_0 = BaseType
   local _base_0 = {
     assert_errors = function(self)
@@ -196,12 +196,9 @@ do
     end
   })
   is_base_type = instance_of(BaseType)
-  validate_type = types.one_of({
-    is_base_type
-  })
   param_validator_spec = types.annotate(types.shape({
     types.string:tag("field"),
-    validate_type:describe("tableshape type"):tag("type"),
+    is_base_type:describe("tableshape type"):tag("type"),
     error = types["nil"] + types.string:tag("error"),
     label = types["nil"] + types.string:tag("label"),
     as = types["nil"] + types.string:tag("as")
@@ -241,7 +238,15 @@ limited_text = function(max_len, min_len)
   if min_len == nil then
     min_len = 1
   end
-  local out = trimmed_text * types.string:length(min_len, max_len)
+  local string_length
+  string_length = require("lapis.util.utf8").string_length
+  local out = trimmed_text * types.custom(function(str)
+    local len = string_length(str)
+    if not (len) then
+      return nil, "invalid text"
+    end
+    return len <= max_len and len >= min_len
+  end)
   return out:describe("text between " .. tostring(min_len) .. " and " .. tostring(max_len) .. " characters")
 end
 return {
