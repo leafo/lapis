@@ -162,6 +162,7 @@ db_enum = (e) ->
   :valid_text
   :trimmed_text
   :truncated_text
+  :limited_text
 
   :db_id
   :db_enum

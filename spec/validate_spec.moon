@@ -388,6 +388,24 @@ params type {
           trimmed_text\transform " trimz   "
         }
 
+    describe "limited_text", ->
+      import limited_text, trimmed_text from require "lapis.validate.types"
+
+      it "passes valid text", ->
+        assert.same "hello", limited_text(10)\transform "hello"
+        assert.same "hello", limited_text(5)\transform "hello"
+        assert.same "hello", limited_text(10)\transform "   hello           "
+        assert.same "hello", limited_text(10)\transform "  hello   \t  \n    "
+
+        assert.same "💁👌🎍😍", limited_text(4)\transform "💁👌🎍😍"
+
+      it "fails invalid input", ->
+        assert.same {nil, "expected text between 1 and 4 characters"}, { limited_text(4)\transform "\0\0\0" }
+
+      it "fails with text outside range", ->
+        assert.same {nil, "expected text between 1 and 10 characters"}, { limited_text(10)\transform "helloworldthisfails" }
+        assert.same {nil, "expected text between 1 and 10 characters"}, { limited_text(10)\transform "" }
+
     describe "truncated_text", ->
       import truncated_text from require "lapis.validate.types"
 

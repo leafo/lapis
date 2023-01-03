@@ -302,6 +302,7 @@ return {
   valid_text = valid_text,
   trimmed_text = trimmed_text,
   truncated_text = truncated_text,
+  limited_text = limited_text,
   db_id = db_id,
   db_enum = db_enum
 }
