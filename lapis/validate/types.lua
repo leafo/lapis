@@ -92,7 +92,7 @@ do
       local pass, err = test_input_type(value)
       if not (pass) then
         return FailedTransform, {
-          err
+          tostring(self.error_prefix or "params") .. ": " .. tostring(err)
         }
       end
       local out = { }
@@ -109,6 +109,9 @@ do
             table.insert(errors, validation.error)
           else
             local error_prefix = tostring(validation.label or validation.field) .. ": "
+            if self.error_prefix then
+              error_prefix = tostring(self.error_prefix) .. ": " .. tostring(error_prefix)
+            end
             if type(state_or_err) == "table" then
               for _index_1 = 1, #state_or_err do
                 local e = state_or_err[_index_1]
@@ -151,7 +154,8 @@ do
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
-    __init = function(self, params_spec)
+    __init = function(self, params_spec, opts)
+      self.error_prefix = opts and opts.error_prefix
       do
         local _accum_0 = { }
         local _len_0 = 1
@@ -190,11 +194,7 @@ do
   })
   _base_0.__class = _class_0
   local self = _class_0
-  test_input_type = types.annotate(types.table, {
-    format_error = function(self, val, err)
-      return "params: " .. tostring(err)
-    end
-  })
+  test_input_type = types.table
   is_base_type = instance_of(BaseType)
   param_validator_spec = types.annotate(types.shape({
     types.string:tag("field"),

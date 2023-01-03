@@ -29,7 +29,7 @@ class AssertErrorType extends types.assert
 -- * takes a ordered list of field names that can apply customizations
 -- * aggregates all errors into a table, returns errors compatible object on error (an array of strings)
 class ValidateParamsType extends BaseType
-  test_input_type = types.annotate types.table, format_error: (val, err) => "params: #{err}"
+  test_input_type = types.table
   is_base_type = instance_of BaseType
 
   param_validator_spec = types.annotate types.shape({
@@ -46,7 +46,8 @@ class ValidateParamsType extends BaseType
   assert_errors: =>
     AssertErrorType @
 
-  new: (params_spec) =>
+  new: (params_spec, opts) =>
+    @error_prefix = opts and opts.error_prefix
     @params_spec = for idx, validator in pairs params_spec
       t, err = param_validator_spec validator
 
@@ -59,7 +60,7 @@ class ValidateParamsType extends BaseType
     pass, err = test_input_type value
     unless pass
       -- NOTE: must always return table of errors, different from tableshape
-      return FailedTransform, {err}
+      return FailedTransform, {"#{@error_prefix or "params"}: #{err}"}
 
     out = {}
 
@@ -75,6 +76,8 @@ class ValidateParamsType extends BaseType
           table.insert errors, validation.error
         else
           error_prefix = "#{validation.label or validation.field}: "
+          if @error_prefix
+            error_prefix = "#{@error_prefix}: #{error_prefix}"
 
           if type(state_or_err) == "table"
             for e in *state_or_err
