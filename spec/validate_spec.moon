@@ -449,20 +449,33 @@ params type {
       assert.same {nil, "expected database ID integer"}, {db_id\transform 5.5}
 
       assert.same {5}, {db_id\transform 5}
-      assert.same {"5"}, {db_id\transform "5"}
-      assert.same {"5"}, {db_id\transform " 5"}
+      assert.same {5}, {db_id\transform "5"}
+      assert.same {5}, {db_id\transform " 5"}
       assert.same {nil, "expected database ID integer"}, {db_id\transform "fjwekfwejfwe"}
 
-      assert.same {"0"}, {db_id\transform "0"}
+      assert.same {0}, {db_id\transform "0"}
       assert.same {0}, {db_id\transform 0}
       assert.same {
         nil
         "expected database ID integer"
       }, {db_id\transform "239203280932932803023920302302302032203280328038203820380232802032083232239023820328903283209382039238209382032"}
 
+      -- too large number
       assert.same {
-        "92147483647"
+        nil
+        "expected database ID integer"
       }, {db_id\transform "92147483647"}
+
+      -- too large number
+      assert.same {
+        nil
+        "expected database ID integer"
+      }, {db_id\transform "-34"}
+
+      assert.same {
+        nil
+        "expected database ID integer"
+      }, {db_id\transform -1}
 
       assert.same {
         nil
