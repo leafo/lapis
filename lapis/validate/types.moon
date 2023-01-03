@@ -4,6 +4,9 @@ import instance_of from require "tableshape.moonscript"
 
 import yield_error from require "lapis.application"
 
+-- NOTE: this is the max length for postgres bigint
+MAX_INT_LENGTH = 18
+
 indent = (str) ->
   rows = [s for s in str\gmatch "[^\n]+"]
   table.concat [idx > 1 and "  #{r}" or r for idx, r in ipairs rows], "\n"
@@ -137,6 +140,24 @@ truncated_text = (len) ->
       pattern\match s
   }) * trimmed_text
 
+db_id = types.one_of({
+  -- NOTE: to use a larger integer you must use string variant
+  types.number * types.custom((v) -> v == math.floor(v)) * types.range 0, 2147483647
+  types.string\length(1,MAX_INT_LENGTH) * trimmed_text * types.pattern("^%d+$")
+})\describe "database ID integer"
+
+db_enum = (e) ->
+  assert e, "missing enum for shapes.db_enum"
+  for_db = e\for_db
+
+  names = { unpack e }
+
+  types.one_of({
+    types.one_of(names) / for_db
+    db_id / tonumber * types.custom((n) -> e[n]) / for_db
+  })\describe "enum(#{table.concat names, ", "})"
+
+
 {
   validate_params: ValidateParamsType
   assert_error: AssertErrorType
@@ -144,4 +165,7 @@ truncated_text = (len) ->
   :valid_text
   :trimmed_text
   :truncated_text
+
+  :db_id
+  :db_enum
 }

@@ -443,3 +443,70 @@ params type {
         }
 
 
+    it "db_id", ->
+      import db_id from require "lapis.validate.types"
+      assert.same {nil, "expected database ID integer"}, {db_id\transform "5.5"}
+      assert.same {nil, "expected database ID integer"}, {db_id\transform 5.5}
+
+      assert.same {5}, {db_id\transform 5}
+      assert.same {"5"}, {db_id\transform "5"}
+      assert.same {"5"}, {db_id\transform " 5"}
+      assert.same {nil, "expected database ID integer"}, {db_id\transform "fjwekfwejfwe"}
+
+      assert.same {"0"}, {db_id\transform "0"}
+      assert.same {0}, {db_id\transform 0}
+      assert.same {
+        nil
+        "expected database ID integer"
+      }, {db_id\transform "239203280932932803023920302302302032203280328038203820380232802032083232239023820328903283209382039238209382032"}
+
+      assert.same {
+        "92147483647"
+      }, {db_id\transform "92147483647"}
+
+      assert.same {
+        nil
+        "expected database ID integer"
+      }, {db_id\transform 10^18}
+
+    it "db_enum", ->
+      import db_enum from require "lapis.validate.types"
+      import enum from require "lapis.db.base_model"
+
+      Types = enum {
+        default: 1
+        flash: 2
+        unity: 3
+        java: 4
+        html: 5
+      }
+
+      t = db_enum Types
+
+      assert.same {
+        Types.flash
+      }, { t\transform "flash" }
+
+      assert.same {
+        Types.flash
+      }, { t\transform Types.flash }
+
+      assert.same {
+        Types.flash
+      }, { t\transform "#{Types.flash }" }
+
+      assert.same {
+        nil
+        "expected enum(default, flash, unity, java, html)"
+      }, { t\transform "flahs" }
+
+      assert.same {
+        nil
+        "expected enum(default, flash, unity, java, html)"
+      }, { t\transform "9" }
+
+      assert.same {
+        nil
+        "expected enum(default, flash, unity, java, html)"
+      }, { t\transform 9 }
+

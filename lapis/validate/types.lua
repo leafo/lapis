@@ -7,6 +7,7 @@ local instance_of
 instance_of = require("tableshape.moonscript").instance_of
 local yield_error
 yield_error = require("lapis.application").yield_error
+local MAX_INT_LENGTH = 18
 local indent
 indent = function(str)
   local rows
@@ -269,10 +270,39 @@ truncated_text = function(len)
     end
   }) * trimmed_text
 end
+local db_id = types.one_of({
+  types.number * types.custom(function(v)
+    return v == math.floor(v)
+  end) * types.range(0, 2147483647),
+  types.string:length(1, MAX_INT_LENGTH) * trimmed_text * types.pattern("^%d+$")
+}):describe("database ID integer")
+local db_enum
+db_enum = function(e)
+  assert(e, "missing enum for shapes.db_enum")
+  local for_db
+  do
+    local _base_0 = e
+    local _fn_0 = _base_0.for_db
+    for_db = function(...)
+      return _fn_0(_base_0, ...)
+    end
+  end
+  local names = {
+    unpack(e)
+  }
+  return types.one_of({
+    types.one_of(names) / for_db,
+    db_id / tonumber * types.custom(function(n)
+      return e[n]
+    end) / for_db
+  }):describe("enum(" .. tostring(table.concat(names, ", ")) .. ")")
+end
 return {
   validate_params = ValidateParamsType,
   assert_error = AssertErrorType,
   valid_text = valid_text,
   trimmed_text = trimmed_text,
-  truncated_text = truncated_text
+  truncated_text = truncated_text,
+  db_id = db_id,
+  db_enum = db_enum
 }
