@@ -4,6 +4,8 @@ import instance_of from require "tableshape.moonscript"
 
 import yield_error from require "lapis.application"
 
+unpack = unpack or table.unpack
+
 indent = (str) ->
   rows = [s for s in str\gmatch "[^\n]+"]
   table.concat [idx > 1 and "  #{r}" or r for idx, r in ipairs rows], "\n"
