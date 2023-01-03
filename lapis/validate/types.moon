@@ -36,7 +36,7 @@ class ValidateParamsType extends BaseType
     types.string\tag "field"
 
      -- TODO: AssertErrorType should be unwrapped so we don't yield error when processing nested object
-    types.annotate(is_base_type\describe("tableshape type"))\tag "type"
+    is_base_type\describe("tableshape type")\tag "type"
 
     error: types.nil + types.string\tag "error"
     label: types.nil + types.string\tag "label"
