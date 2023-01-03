@@ -354,4 +354,92 @@ params type {
           valid_text\transform "\008\000umm\127and\200f"
         }
    
+    describe "trimmed_text", ->
+      import trimmed_text from require "lapis.validate.types"
+
+      it "empty string", ->
+        assert.same {
+          nil
+          "expected text"
+        }, {
+          trimmed_text\repair ""
+        }
+
+      it "nil value", ->
+        assert.same {
+          nil
+          'expected valid text'
+        }, {
+          trimmed_text\repair nil
+        }
+
+      it "bad type", ->
+        assert.same {
+          nil
+          'expected valid text'
+        }, {
+          trimmed_text\repair {}
+        }
+
+      it "trims text", ->
+        assert.same {
+          "trimz"
+        }, {
+          trimmed_text\transform " trimz   "
+        }
+
+    describe "truncated_text", ->
+      import truncated_text from require "lapis.validate.types"
+
+      it "invalid input", ->
+        assert.same {
+          nil,
+          "expected valid text"
+        }, {
+          truncated_text(5)\transform true
+        }
+
+      it "empty string", ->
+        assert.same {
+          nil,
+          "expected text"
+        }, {
+          truncated_text(5)\transform ""
+        }
+
+      it "1 char string", ->
+        assert.same {
+          "a"
+        }, {
+          truncated_text(5)\transform "a"
+        }
+
+      it "5 char string", ->
+        assert.same {
+          "abcde"
+        }, {
+          truncated_text(5)\transform "abcde"
+        }
+
+      it "6 char string", ->
+        assert.same {
+          "abcde"
+        }, {
+          truncated_text(5)\transform "abcdef"
+        }
+
+      it "very long strong", ->
+        assert.same {
+          "abcde"
+        }, {
+          truncated_text(5)\transform "abcdef"\rep 100
+        }
+
+      it "unicode string", ->
+        assert.same {
+          "基本上獲得"
+        }, {
+          truncated_text(5)\transform "基本上獲得全國軍"
+        }
+
 

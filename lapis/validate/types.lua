@@ -249,9 +249,30 @@ limited_text = function(max_len, min_len)
   end)
   return out:describe("text between " .. tostring(min_len) .. " and " .. tostring(max_len) .. " characters")
 end
+local truncated_text
+truncated_text = function(len)
+  assert(len, "missing length for shapes.truncated_text")
+  return trimmed_text * types.one_of({
+    types.string:length(0, len),
+    types.string / function(s)
+      local C, Cmt
+      do
+        local _obj_0 = require("lpeg")
+        C, Cmt = _obj_0.C, _obj_0.Cmt
+      end
+      local count = 0
+      local pattern = C(Cmt(printable_character, function()
+        count = count + 1
+        return count <= len
+      end) ^ 0)
+      return pattern:match(s)
+    end
+  }) * trimmed_text
+end
 return {
   validate_params = ValidateParamsType,
   assert_error = AssertErrorType,
   valid_text = valid_text,
-  trimmed_text = trimmed_text
+  trimmed_text = trimmed_text,
+  truncated_text = truncated_text
 }

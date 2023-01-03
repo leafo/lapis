@@ -120,6 +120,22 @@ limited_text = (max_len, min_len=1) ->
 
   out\describe "text between #{min_len} and #{max_len} characters"
 
+truncated_text = (len) ->
+  assert len, "missing length for shapes.truncated_text"
+
+  trimmed_text * types.one_of({
+    types.string\length 0, len
+    types.string / (s) ->
+      import C, Cmt from require "lpeg"
+
+      count = 0
+      pattern = C Cmt(printable_character, ->
+        count += 1
+        count <= len
+      )^0
+
+      pattern\match s
+  }) * trimmed_text
 
 {
   validate_params: ValidateParamsType
@@ -127,4 +143,5 @@ limited_text = (max_len, min_len=1) ->
 
   :valid_text
   :trimmed_text
+  :truncated_text
 }
