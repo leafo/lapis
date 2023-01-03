@@ -1,6 +1,13 @@
 
 import validate from require "lapis.validate"
 
+
+run_with_errors = (fn) ->
+  import capture_errors from require "lapis.application"
+  req = {}
+  capture_errors(fn) req
+  req.errors
+
 o = {
   age: ""
   name: "abc"
@@ -113,12 +120,6 @@ describe "lapis.validate", ->
     }
 
 describe "lapis.validate.types", ->
-  run_with_errors = (fn) ->
-    import capture_errors from require "lapis.application"
-    req = {}
-    capture_errors(fn) req
-    req.errors
-
   it "creates assert type", ->
     import types from require "tableshape"
     import assert_error from require "lapis.validate.types"
@@ -244,6 +245,7 @@ describe "lapis.validate.types", ->
       }, { test_object\transform { two: "sure", one: "whoa", ignore: 99 } }
 
     it "tests object with state", ->
+      -- TODO:
 
     it "test nested validate", ->
       test_object = validate_params {
@@ -540,4 +542,59 @@ params type {
         nil
         "expected enum(default, flash, unity, java, html)"
       }, { t\transform 9 }
+
+describe "lapis.validate.with_params", ->
+  it "constructs from table", ->
+    import with_params from require "lapis.validate"
+    import db_id from require "lapis.validate.types"
+
+    fn = with_params {
+      {"id", db_id}
+    }, (params) =>
+      assert.same {
+        id: 12
+      }, params
+      "success"
+
+    assert.same {
+      "id: expected database ID integer"
+    }, run_with_errors ->
+      fn { params: {} }
+
+    assert.same {
+      "id: expected database ID integer"
+    }, run_with_errors ->
+      fn { params: { id: "fart" } }
+
+    assert.same "success", fn { params: { id: "12" } }
+    assert.same "success", fn { params: { id: "12", ignore: "thing" } }
+
+  it "constructs from tableshape", ->
+    import with_params from require "lapis.validate"
+    import types from require "tableshape"
+
+    shape = types.shape { id: types.number }
+
+    fn = with_params shape, (params) =>
+      assert.same {
+        id: 12
+      }, params
+      "success"
+
+    assert.same {
+      [[field "id": expected type "number", got "nil"]]
+    }, run_with_errors ->
+      fn { params: {} }
+
+    assert.same {
+      [[field "id": expected type "number", got "string"]]
+    }, run_with_errors ->
+      fn { params: { id: "fart" } }
+
+    assert.same {
+      [[extra fields: "ignore"]]
+    }, run_with_errors ->
+      assert.same "success", fn { params: { id: 12, ignore: "thing" } }
+
+    assert.same "success", fn { params: { id: 12 } }
 

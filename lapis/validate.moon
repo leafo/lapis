@@ -93,4 +93,19 @@ assert_valid = (object, validations) ->
     coroutine.yield "error", errors
     error "assert_valid was not captured: #{table.concat errors, ", "}"
 
-{ :validate, :assert_valid, :test_input, :validate_functions }
+-- action wrapper that applies validation to params
+with_params = (params_spec, fn) ->
+  types = require "lapis.validate.types"
+  tableshape = require "tableshape"
+
+  t = if tableshape.is_type params_spec
+    types.assert_error params_spec
+  else
+    types.validate_params(params_spec)\assert_errors!
+
+  (...) =>
+    params, errs_or_state = t\transform @params
+    fn @, params, errs_or_state, ...
+
+
+{ :validate, :assert_valid, :test_input, :validate_functions, :with_params }
