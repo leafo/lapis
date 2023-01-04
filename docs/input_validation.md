@@ -211,33 +211,111 @@ if types.empty some_value
   result = types.empty\transform some_value
 ]]
 }
-
+> Alternatively, `types.assert` or `types.assert_error` can be used to guarante
+> the value matches the type checker
 
 #### `types.valid_text`
 
 Matches a string that is valid UTF8. Invalid characters sequences or
 unprintable charactres will cause validation to valid.
 
+$dual_code{
+moon = [[
+types.valid_text "hello" --> true
+types.valid_text "hel\0o" --> nil, "expected valid text"
+]],
+lua = [[
+types.valid_text("hello") --> true
+types.valid_text("hel\0o") --> nil, "expected valid text"
+]]
+}
+
+
 #### `types.cleaned_text`
 
 Matches a string, transforms it such that any invalid UTF8 sequences and
 non-printable charactres are stripped (eg removing `null` bytes)
+
+$dual_code{
+moon = [[
+types.cleaned_text\transform "hello"  --> "hello"
+types.cleaned_text\transform "hel\0o" --> "helo"
+types.cleaned_text\transform 55 --> nil, "expected text"
+]],
+lua = [[
+types.cleaned_text:transform("hello")  --> "hello"
+types.cleaned_text:transform("hel\0o") --> "helo"
+types.cleaned_text:transform(55) --> nil, "expected text"
+]]
+}
+
 
 #### `types.trimmed_text`
 
 Matches a string that is valid UTF8, and transforms such that any whitespace or
 empty UTF8 characters stripped from either side.
 
+$dual_code{
+moon = [[
+types.trimmed_text\transform "hello" --> "hello"
+types.trimmed_text\transform " wor ld \t " --> "wor ld"
+]],
+lua = [[
+types.trimmed_text:transform("hello") --> "hello"
+types.trimmed_text:transform(" wor ld \t ") --> "wor ld"
+]]
+}
+
 #### `types.truncated_text(len)`
 
 Matches a string that is valid UTF8, and transforms it such that it is `len`
-characters or shorter. Note that length is UTF8 aware, and will count truncate
-by the number of characters and not bytes.
+characters or shorter. Note that length is UTF8 aware, and will truncate by the
+number of characters and not bytes.
+
+$dual_code{
+moon = [[
+types.truncated_text(5)\transform "hello" --> "hello"
+types.truncated_text(5)\transform "hi world" --> "hi wo"
+
+-- invalid types are rejected
+types.truncated_text(5)\transform(true) --> nil, "expected text"
+]],
+lua = [[
+types.truncated_text(5):transform("hello") --> "hello"
+types.truncated_text(5):transform("hi world") --> "hi wo"
+
+-- invalid types are rejected
+types.truncated_text(5):transform(true) --> nil, "expected text"
+]]
+}
+
 
 #### `types.limited_text(max_len, min_len=1)`
 
 Matches a string that is valid UTF8 and has a length within the specified range
-of `min_len` to `max_len`, inclusive.
+of `min_len` to `max_len`, inclusive. Note that length is UTF8 aware, and will
+count by the number of characters and not bytes.
+
+$dual_code{
+moon = [[
+limit5 = types.limited_text 5
+
+limit5 "hello"
+limit5 "hi world" --> nil, "expected text between 1 and 5 characters"
+
+-- invalid types are rejected
+limit5 12 --> nil, "expected text between 1 and 5 characters"
+]],
+lua = [[
+local limit5 = types.limited_text(5)
+
+limit5("hello")
+limit5("hi world") --> nil, "expected text between 1 and 5 characters"
+
+-- invalid types are rejected
+limit5(12) --> nil, "expected text between 1 and 5 characters"
+]]
+}
 
 #### `types.db_id`
 
@@ -245,15 +323,87 @@ Matches number or string that represents an integer that is suitable for the
 default 4 byte `serial` type of a PostgreSQL database column. The value is
 transformed to a number.
 
+$dual_code{
+moon = [[
+types.db_id\transform "0" -->  0
+types.db_id\transform "2392" --> 2392
+
+types.db_id\transform -5 --> nil, "expected database ID integer"
+types.db_id\transform "-5" --> nil, "expected database ID integer"
+types.db_id\transform "42.8" --> nil, "expected database ID integer"
+
+-- value is too big
+types.db_id\transform "29328302830230" --> nil, "expected database ID integer"
+]],
+lua = [[
+types.db_id:transform("0") -->  0
+types.db_id:transform("2392") --> 2392
+
+types.db_id:transform(-5) --> nil, "expected database ID integer"
+types.db_id:transform("-5") --> nil, "expected database ID integer"
+types.db_id:transform("42.8") --> nil, "expected database ID integer"
+
+-- value is too big
+types.db_id:transform("29328302830230") --> nil, "expected database ID integer"
+]]
+}
+
+
 #### `types.db_enum(enum)`
 
-Matches a set of values that is specified by a `db.enum`. Transforms the value
-to the integer value of the enum using `for_db`.
+Matches from the set of values contained by a `db.enum` object. Transforms the
+value to the integer value of the enum using `for_db`.
+
+$dual_code{
+moon = [[
+import enum from require "lapis.db.model"
+
+statuses = enum {
+  default: 1
+  banned: 2
+  deleted: 3
+}
+
+check_status = types.db_enum statuses
+
+check_status\transform "default" --> 1
+check_status\transform "invalid" --> nil, "expected enum(default, banned, deleted)"
+
+check_status\transform 2 --> 2
+check_status\transform "2" --> 2
+
+-- value out of range is rejected
+check_status\transform 5 --> nil, "expected enum(default, banned, deleted)"
+]],
+lua = [[
+local model = require "lapis.db.model"
+
+local statuses = model.enum {
+  default = 1,
+  banned = 2,
+  deleted = 3
+}
+
+local check_status = types.db_enum(statuses)
+
+check_status:transform("default") --> 1
+check_status:transform("invalid") --> nil, "expected enum(default, banned, deleted)"
+
+check_status:transform(2) --> 2
+check_status:transform("2") --> 2
+
+-- value out of range is rejected
+check_status:transform(5) --> nil, "expected enum(default, banned, deleted)"
+
+]]
+}
+
 
 ## Assert Valid
 
-> This is the legacy validation system. Due to shortcomings addressed by the
-> tableshape system described above, it is not recommended to use this system
+> **This is the legacy validation system.** Due to shortcomings addressed by
+> the tableshape validation system, it is not recommended to `assert_valid` and
+> related functions any more
 
 The `assert_valid` function is Lapis's legacy validation framework. It provides
 a simple set of validation functions. Here's a complete example:
@@ -331,8 +481,8 @@ validation functions as demonstrated in the example above.
 
 * `exists: true` -- check if the value exists and is not an empty string
 * `matches_pattern: pat` -- value is a string that matches the Lua pattern provided by `pat`
-* `min_length: Min_Length` -- value must be at least `Min_Length` chars
-* `max_length: Max_Length` -- value must be at most `Max_Length` chars
+* `min_length: Min_Length` -- value must be at least `Min_Length` chars (Warning: this counts by number of bytes, not characters)
+* `max_length: Max_Length` -- value must be at most `Max_Length` chars (Warning: this counts by number of bytes, not characters)
 * `is_integer: true` -- value matches integer pattern
 * `is_color: true` -- value matches CSS hex color (eg. `#1234AA`)
 * `is_file: true` -- value is an uploaded file, see [File Uploads][0]
@@ -358,9 +508,9 @@ validate.assert_valid(self.params, {
 })
 ]]}
 
-## Creating a Custom Validator
+### Creating a Custom Validator
 
-Custom validators can be defined like so:
+Custom validators for use in `assert_valid` can be defined like so:
 
 $dual_code{
 moon = [[
