@@ -121,10 +121,9 @@ describe "lapis.validate", ->
 
 describe "lapis.validate.types", ->
   it "creates assert type", ->
-    import types from require "tableshape"
-    import assert_error from require "lapis.validate.types"
+    types = require "lapis.validate.types"
 
-    assert_string = assert_error(types.string)
+    assert_string = types.assert_error(types.string)
 
     assert.same {
       [[expected type "string", got "number"]]
@@ -135,11 +134,10 @@ describe "lapis.validate.types", ->
       assert_string "hello"
 
   describe "ValidateParamsType", ->
-    import types from require "tableshape"
-    import assert_error, validate_params from require "lapis.validate.types"
+    types = require "lapis.validate.types"
 
     it "works with assert_error", ->
-      t = assert_error validate_params {
+      t = types.assert_error types.validate_params {
         {"good", types.one_of {"yes", "no"} }
         {"dog", types.string\tag "sweet"}
       }
@@ -165,7 +163,7 @@ describe "lapis.validate.types", ->
     it "fails to create object with invalid spec", ->
       assert.has_error(
         ->
-          validate_params {
+          types.validate_params {
             item: "zone"
           }
         [[validate_params: Invalid validation specification object: expected type "table", got "string" (index: item)]]
@@ -173,7 +171,7 @@ describe "lapis.validate.types", ->
 
       assert.has_error(
         ->
-          validate_params {
+          types.validate_params {
             {"one", "two"}
           }
         [[validate_params: Invalid validation specification object: field 2: expected tableshape type (index: 1)]]
@@ -181,14 +179,14 @@ describe "lapis.validate.types", ->
 
       assert.has_error(
         ->
-          validate_params {
+          types.validate_params {
             {"one", types.string, fart: "zone"}
           }
         [[validate_params: Invalid validation specification object: extra fields: "fart" (index: 1)]]
       )
 
     it "tests basic object", ->
-      test_object = validate_params {
+      test_object = types.validate_params {
         {"one", types.string}
         {"two", types.string / (s) -> "-#{s}-"}
       }
@@ -248,14 +246,14 @@ describe "lapis.validate.types", ->
       -- TODO:
 
     it "test nested validate", ->
-      test_object = validate_params {
+      test_object = types.validate_params {
         {"alpha", types.one_of {"one", "two"} }
-        {"two", validate_params {
+        {"two", types.validate_params {
           {"one", as: "sure", error: "you messed up", types.string\tag "one"}
           {"two", label: "The Two", types.string / (s) -> "-#{s}-"}
         }}
 
-        {"optional", label: "Optionals", types.nil + validate_params {
+        {"optional", label: "Optionals", types.nil + types.validate_params {
           {"confirm", types.literal "true" }
         }}
       }
