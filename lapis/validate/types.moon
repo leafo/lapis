@@ -110,6 +110,13 @@ class ValidateParamsType extends BaseType
 
 import printable_character, trim from require "lapis.util.utf8"
 
+-- strips invalid unicode sequences
+cleaned_text = do
+  import Cs, P from require "lpeg"
+  p = Cs (printable_character + P(1) / "")^0 * -1
+  (types.string / (str) -> p\match str)\describe "text"
+
+-- verify string is all valid UTF8
 valid_text = (types.string * types.custom (printable_character^0 * -1)\match)\describe "valid text"
 
 trimmed_text = valid_text / trim\match * types.custom(
@@ -168,6 +175,7 @@ setmetatable {
   validate_params: ValidateParamsType
   assert_error: AssertErrorType
 
+  :cleaned_text
   :valid_text
   :trimmed_text
   :truncated_text

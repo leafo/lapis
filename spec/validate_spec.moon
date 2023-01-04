@@ -314,6 +314,66 @@ params type {
         }
       }, { test_object\transform { optional: { confirm: "true", junk: "yes"}, alpha: "one", two: {1,2,3, for: true, one: "yes", two: "no"}} }
 
+
+    describe "empty", ->
+      types = require "lapis.validate.types"
+
+      it "tests empty", ->
+        assert.same true, types.empty nil
+        assert.same true, types.empty ""
+        assert.same true, types.empty "   "
+        assert.same true, types.empty "\t\n"
+
+        assert.same {nil, "expected empty"}, { types.empty -> }
+        assert.same {nil, "expected empty"}, { types.empty true }
+        assert.same {nil, "expected empty"}, { types.empty "hello" }
+        assert.same {nil, "expected empty"}, { types.empty {} }
+
+      it "tranforms empty", ->
+        assert.same nil, types.empty\transform nil
+        assert.same nil, types.empty\transform ""
+        assert.same nil, types.empty\transform "   "
+        assert.same nil, types.empty\transform "\t\n"
+
+    describe "cleaned_text", ->
+      import cleaned_text from require "lapis.validate.types"
+
+      it "invalid type", ->
+        assert.same {
+          nil
+          "expected text"
+        }, {
+          cleaned_text\transform 100
+        }
+
+        assert.same {
+          nil
+          "expected text"
+        }, {
+          cleaned_text\transform nil
+        }
+
+      it "empty string", ->
+        assert.same {
+          ""
+        }, {
+          cleaned_text\transform ""
+        }
+
+      it "regular string", ->
+        assert.same {
+          "hello world\r\nyeah"
+        }, {
+          cleaned_text\transform "hello world\r\nyeah"
+        }
+
+      it "removes bad chars", ->
+        assert.same {
+          "ummandf"
+        }, {
+          cleaned_text\transform "\008\000umm\127and\200f"
+        }
+
     describe "valid_text", ->
       import valid_text from require "lapis.validate.types"
 
@@ -346,7 +406,7 @@ params type {
           valid_text\transform "hello world\r\nyeah"
         }
 
-      it "removes bad chars", ->
+      it "fails on bad chars", ->
         assert.same {
           nil
           "expected valid text"
