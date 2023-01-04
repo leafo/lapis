@@ -236,15 +236,24 @@ by the number of characters and not bytes.
 
 #### `types.limited_text(max_len, min_len=1)`
 
-Matches a string that is valid UTF8
+Matches a string that is valid UTF8 and has a length within the specified range
+of `min_len` to `max_len`, inclusive.
 
 #### `types.db_id`
 
+Matches number or string that represents an integer that is suitable for the
+default 4 byte `serial` type of a PostgreSQL database column. The value is
+transformed to a number.
+
 #### `types.db_enum(enum)`
+
+Matches a set of values that is specified by a `db.enum`. Transforms the value
+to the integer value of the enum using `for_db`.
 
 ## Assert Valid
 
-> *Note:* This is the legacy validation system
+> This is the legacy validation system. Due to shortcomings addressed by the
+> tableshape system described above, it is not recommended to use this system
 
 The `assert_valid` function is Lapis's legacy validation framework. It provides
 a simple set of validation functions. Here's a complete example:
@@ -265,7 +274,11 @@ class App extends lapis.Application
       { "accept_terms", equals: "yes", "You must accept the Terms of Service" }
     }
 
-    create_the_user @params
+    create_the_user {
+      username: @params.username
+      password: @params.password
+      email: @params.email
+    }
     render: true
 ]],
 lua = [[
@@ -286,7 +299,11 @@ app:match("/create-user", capture_errors(function(self)
     { "accept_terms", equals = "yes", "You must accept the Terms of Service" }
   })
 
-  create_the_user(self.params)
+  create_the_user({
+    username = self.params.username,
+    password = self.params.password,
+    email = self.params.email
+  })
   return { render = true }
 end))
 
