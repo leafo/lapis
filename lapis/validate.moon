@@ -1,4 +1,7 @@
 
+-- Note: until tableshape is made a dependency of lapis, do not require it here
+-- on the top level to avoid breaking existing users of these functions
+
 import insert from table
 
 unpack = unpack or table.unpack

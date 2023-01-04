@@ -59,6 +59,59 @@ moon = [[types = require "lapis.validate.types"]]
 > types provided by tableshape (eg. `types.string` is a type provided by
 > tableshape that verifies a value such that `type(value) == "string"`).
 
+
+### `with_params(t, fn)`
+
+The `with_params` is a helper function for wrapping an action function such
+that it only runs if fields from $self_ref{"params"} can be validated. The
+validated paramter table is passed as the the first argument to `fn`.
+
+> $self_ref{"params"} is left unchanged. This enables the calling of nested
+> functions that use `with_params` to work with other sets of parameters
+
+It returns a new function that is designed to be called with a *request object*
+as the first argument.
+
+The argument, `t`, can either be a tableshape type, or it can be a plain Lua
+table that will be converted into a type using `types.params_shape(t)`.
+
+
+$dual_code{
+moon = [[
+lapis = require "lapis"
+import capture_errors_json from require "lapis.application"
+
+types = require "lapis.validate.types"
+import with_params from require "lapis.validate"
+
+class App extends lapis.Application
+  "/user/:id": capture_errors_json with_params {
+    {"id", types.db_id}
+    {"action", types.one_of {"delete", "update"}}
+  }, (params) =>
+    print "Perform", params.action, "on user", params.id
+]],
+lua = [[
+local lapis = require "lapis"
+local capture_errors_json = require("lapis.application").capture_errors_json
+
+local app = lapis.Application()
+
+app:post("/user/:id", capture_errors_json(with_params({
+  {"id", types.db_id},
+  {"action", types.one_of {"delete", "update"}}
+}, function(self, params)
+  print("Perform", params.action, "on user", params.id)
+end)))
+
+return app
+]]
+}
+
+The params type, `t`, is wrapped in `types.assert_error`. If validation fails
+then an error is raised for the nearest `capture_errors`. In the example above,
+`capture_errors_json` is used to display errors as a JSON response.
+
 ### Type Constructors
 
 #### `types.params_shape(param_spec, opts)`
