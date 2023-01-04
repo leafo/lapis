@@ -407,8 +407,8 @@ describe "lapis.db.model.relations", ->
     assert_queries {
       [[SELECT * FROM "user_data" WHERE "owner_id" = 123 AND (deleted) AND "owner_id" = 'oops' LIMIT 1]]
       [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (deleted) AND "owner_id" = 'oops']]
-      [[SELECT * FROM "user_data" WHERE "owner_id" = 123 AND (not "deleted" OR "deleted_at" IS NULL) LIMIT 1]]
-      [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (not "deleted" OR "deleted_at" IS NULL)]]
+      [[SELECT * FROM "user_data" WHERE "owner_id" = 123 AND (NOT "deleted" OR "deleted_at" IS NULL) LIMIT 1]]
+      [[SELECT * FROM "user_data" WHERE "owner_id" IN (123) AND (NOT "deleted" OR "deleted_at" IS NULL)]]
     }
 
   it "makes has_one getter with composite key with custom local names", ->
@@ -499,7 +499,7 @@ describe "lapis.db.model.relations", ->
       'SELECT * FROM "posts" where "user_id" = 1234 order by "posts"."id" ASC limit 10'
       'SELECT * FROM "posts" where "posts"."id" > 1023 and ("user_id" = 1234) order by "posts"."id" ASC limit 10'
       [[SELECT * FROM "posts" where ("posts"."created_at", "posts"."id") < ('2020-1-1', 238) and ("user_id" = 1234) order by "posts"."created_at" desc, "posts"."id" desc limit 10]]
-      [[SELECT * FROM "posts" where "user_id" = 1234 AND not "deleted" order by "posts"."id" ASC limit 10]]
+      [[SELECT * FROM "posts" where "user_id" = 1234 AND NOT "deleted" order by "posts"."id" ASC limit 10]]
     }, ->
       user\get_posts_paginated(ordered: {"id"})\get_page!
       user\get_posts_paginated(ordered: {"id"})\get_page 1023
@@ -1177,7 +1177,7 @@ describe "lapis.db.model.relations", ->
       }, thing.beta_file
 
       assert_queries {
-        [[SELECT * FROM "files" WHERE "thing_id" IN (123) AND not "deleted" AND "whoa" IS NULL]]
+        [[SELECT * FROM "files" WHERE "thing_id" IN (123) AND NOT "deleted" AND "whoa" IS NULL]]
       }
 
     it "preloads has_one with composite key", ->
@@ -1256,7 +1256,7 @@ describe "lapis.db.model.relations", ->
       }, thing.cool_tags
 
       assert_queries {
-        [[SELECT * FROM "tags" WHERE "primary_thing_id" IN (123) AND not "deleted" ORDER BY name asc]]
+        [[SELECT * FROM "tags" WHERE "primary_thing_id" IN (123) AND NOT "deleted" ORDER BY name asc]]
       }
 
     it "preloads belongs_to with correct name", ->

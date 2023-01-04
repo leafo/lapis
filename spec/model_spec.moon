@@ -742,12 +742,12 @@ describe "lapis.db.model", ->
         db.clause {
           thing: true
           thong: false
-        }, operator: "and"
+        }, operator: "and" -- NOTE: intentionally testing lowercase operator here
       }, operator: "OR"
 
       assert_queries {
         [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) AND (counter > 10) AND ((alpha) OR "beta" = 'dog')]]
-        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) AND (("thing" and not "thong") OR "alpha" IS NULL OR "beta" IN ('dog', 'cat', 'snot'))]]
+        [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105) AND (("thing" and NOT "thong") OR "alpha" IS NULL OR "beta" IN ('dog', 'cat', 'snot'))]]
       }
 
     it "with fields", ->
@@ -796,7 +796,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT yeah, count(*) FROM "thing_items" WHERE "thing_id" IN (16, 18, 20, 22, 24) AND not "deleted" GROUP BY yeah ORDER BY color desc]]
+        [[SELECT yeah, count(*) FROM "thing_items" WHERE "thing_id" IN (16, 18, 20, 22, 24) AND NOT "deleted" GROUP BY yeah ORDER BY color desc]]
       }
 
     it "applies value function", ->
@@ -962,7 +962,7 @@ describe "lapis.db.model", ->
       }
 
       assert_queries {
-        [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205)) AND not "deleted"]]
+        [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205)) AND NOT "deleted"]]
         [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205)) AND ("blessed" OR "ordained")]]
       }
 

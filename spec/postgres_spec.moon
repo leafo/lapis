@@ -117,7 +117,7 @@ tests = {
       d: db.NULL
       [db.raw "something.zone"]: db.list {1,2,3}
     }, table_name: "blimp"
-    [["blimp"."a" = 'two' AND "blimp"."b" AND not "blimp"."c" AND "blimp"."d" IS NULL AND something.zone IN (1, 2, 3)]]
+    [["blimp"."a" = 'two' AND "blimp"."b" AND NOT "blimp"."c" AND "blimp"."d" IS NULL AND something.zone IN (1, 2, 3)]]
   }
 
   {
@@ -156,7 +156,7 @@ tests = {
         "OFFSET 99"
       }, operator: false
 
-    [[INNER JOIN things ON (things.user_id = id) AND not "things"."deleted" AND "things"."status" IN (1, 2, 3) WHERE "eggs" = 'ham' LIMIT 100 OFFSET 99]]
+    [[INNER JOIN things ON (things.user_id = id) AND NOT "things"."deleted" AND "things"."status" IN (1, 2, 3) WHERE "eggs" = 'ham' LIMIT 100 OFFSET 99]]
   }
 
   {
@@ -189,7 +189,7 @@ tests = {
           }, operator: "OR"
         }
       }
-    [["age" = 99 AND "color" = 'blue' AND ("gold" IS NULL OR "sigma") AND ("prefix" = 'zup_' OR "used_count" = 0) AND not "delta" AND "status" = 'spam']]
+    [["age" = 99 AND "color" = 'blue' AND ("gold" IS NULL OR "sigma") AND ("prefix" = 'zup_' OR "used_count" = 0) AND NOT "delta" AND "status" = 'spam']]
   }
 
   {
@@ -212,7 +212,7 @@ tests = {
           }, operator: "AND"
         }, operator: "OR"
       }, operator: "OR"
-    [["age" = 99 OR "color" = 'blue' OR ("gold" IS NULL AND "sigma") OR ("prefix" = 'zup_' AND "used_count" = 0) OR not "delta" OR "status" = 'spam']]
+    [["age" = 99 OR "color" = 'blue' OR ("gold" IS NULL AND "sigma") OR ("prefix" = 'zup_' AND "used_count" = 0) OR NOT "delta" OR "status" = 'spam']]
   }
 
   {
@@ -235,7 +235,7 @@ tests = {
           }, operator: "AND"
         }, operator: "OR"
       }, operator: "AND"
-    [[("age" = 99 OR "color" = 'blue') AND "gold" IS NULL AND "sigma" AND (("prefix" = 'zup_' AND "used_count" = 0) OR not "delta" OR "status" = 'spam')]]
+    [[("age" = 99 OR "color" = 'blue') AND "gold" IS NULL AND "sigma" AND (("prefix" = 'zup_' AND "used_count" = 0) OR NOT "delta" OR "status" = 'spam')]]
   }
 
   {
@@ -291,7 +291,7 @@ tests = {
 
   {
     -> db.select "* from things where ?", db.clause { deleted: false, "height < 5"}
-    [[SELECT * from things where (height < 5) AND not "deleted"]]
+    [[SELECT * from things where (height < 5) AND NOT "deleted"]]
   }
 
   {

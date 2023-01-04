@@ -273,7 +273,7 @@ build_helpers = function(escape_literal, escape_identifier)
             if v == true then
               append_all(buffer, escape_identifier(field))
             elseif v == false then
-              append_all(buffer, "not " .. tostring(escape_identifier(field)))
+              append_all(buffer, "NOT " .. tostring(escape_identifier(field)))
             else
               append_tuple(buffer, field, v)
             end

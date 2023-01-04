@@ -167,7 +167,7 @@ build_helpers = (escape_literal, escape_identifier) ->
             if v == true
               append_all buffer, escape_identifier field
             elseif v == false
-              append_all buffer, "not #{escape_identifier field}"
+              append_all buffer, "NOT #{escape_identifier field}"
             else
               append_tuple buffer, field, v
           when "number" -- array elements
