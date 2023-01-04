@@ -309,6 +309,10 @@ db_enum = function(e)
     end) / for_db
   }):describe("enum(" .. tostring(table.concat(names, ", ")) .. ")")
 end
+local file_upload = types.partial({
+  filename = types.string * -types.empty,
+  content = -types.literal("")
+}):describe("file upload")
 local empty = types.one_of({
   types["nil"],
   types.pattern("^%s*$") / nil
@@ -322,6 +326,7 @@ return setmetatable({
   truncated_text = truncated_text,
   limited_text = limited_text,
   empty = empty,
+  file_upload = file_upload,
   db_id = db_id,
   db_enum = db_enum
 }, {
