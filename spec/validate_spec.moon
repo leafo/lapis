@@ -598,3 +598,23 @@ describe "lapis.validate.with_params", ->
 
     assert.same "success", fn { params: { id: 12 } }
 
+  it "passes state", ->
+    import with_params from require "lapis.validate"
+    import db_id from require "lapis.validate.types"
+
+    fn = with_params {
+      {"id", db_id\tag "hello"}
+    }, (params, state, rest) =>
+      assert.same {
+        id: 12
+      }, params
+
+      assert.same {
+        hello: 12
+      }, state
+
+      assert.same "cool", rest
+
+      "success"
+
+    assert.same "success", fn { params: { id: 12 } }, "cool"
