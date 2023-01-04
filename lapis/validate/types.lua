@@ -297,13 +297,20 @@ db_enum = function(e)
     end) / for_db
   }):describe("enum(" .. tostring(table.concat(names, ", ")) .. ")")
 end
-return {
+local empty = types.one_of({
+  types["nil"],
+  types.pattern("^%s*$") / nil
+}):describe("empty")
+return setmetatable({
   validate_params = ValidateParamsType,
   assert_error = AssertErrorType,
   valid_text = valid_text,
   trimmed_text = trimmed_text,
   truncated_text = truncated_text,
   limited_text = limited_text,
+  empty = empty,
   db_id = db_id,
   db_enum = db_enum
-}
+}, {
+  __index = types
+})

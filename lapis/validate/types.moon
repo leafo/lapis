@@ -159,8 +159,12 @@ db_enum = (e) ->
     db_id / tonumber * types.custom((n) -> e[n]) / for_db
   })\describe "enum(#{table.concat names, ", "})"
 
+empty = types.one_of({
+  types.nil
+  types.pattern("^%s*$") / nil
+})\describe "empty"
 
-{
+setmetatable {
   validate_params: ValidateParamsType
   assert_error: AssertErrorType
 
@@ -168,7 +172,8 @@ db_enum = (e) ->
   :trimmed_text
   :truncated_text
   :limited_text
+  :empty
 
   :db_id
   :db_enum
-}
+}, __index: types
