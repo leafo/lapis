@@ -101,7 +101,7 @@ with_params = (params_spec, fn) ->
   t = if tableshape.is_type params_spec
     types.assert_error params_spec
   else
-    types.validate_params(params_spec)\assert_errors!
+    types.params_shape(params_spec)\assert_errors!
 
   (...) =>
     params, errs_or_state = t\transform @params

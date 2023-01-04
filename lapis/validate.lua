@@ -141,7 +141,7 @@ with_params = function(params_spec, fn)
   if tableshape.is_type(params_spec) then
     t = types.assert_error(params_spec)
   else
-    t = types.validate_params(params_spec):assert_errors()
+    t = types.params_shape(params_spec):assert_errors()
   end
   return function(self, ...)
     local params, errs_or_state = t:transform(self.params)

@@ -30,7 +30,7 @@ class AssertErrorType extends types.assert
 -- this is different than types.shape because it:
 -- * takes a ordered list of field names that can apply customizations
 -- * aggregates all errors into a table, returns errors compatible object on error (an array of strings)
-class ValidateParamsType extends BaseType
+class ParamsShapeType extends BaseType
   test_input_type = types.table
   is_base_type = instance_of BaseType
 
@@ -43,7 +43,7 @@ class ValidateParamsType extends BaseType
     error: types.nil + types.string\tag "error"
     label: types.nil + types.string\tag "label"
     as: types.nil + types.string\tag "as"
-  }), format_error: (val, err) => "validate_params: Invalid validation specification object: #{err}"
+  }), format_error: (val, err) => "params_shape: Invalid validation specification object: #{err}"
 
   assert_errors: =>
     AssertErrorType @
@@ -172,7 +172,7 @@ empty = types.one_of({
 })\describe "empty"
 
 setmetatable {
-  validate_params: ValidateParamsType
+  params_shape: ParamsShapeType
   assert_error: AssertErrorType
 
   :cleaned_text

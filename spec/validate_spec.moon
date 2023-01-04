@@ -137,7 +137,7 @@ describe "lapis.validate.types", ->
     types = require "lapis.validate.types"
 
     it "works with assert_error", ->
-      t = types.assert_error types.validate_params {
+      t = types.assert_error types.params_shape {
         {"good", types.one_of {"yes", "no"} }
         {"dog", types.string\tag "sweet"}
       }
@@ -163,30 +163,30 @@ describe "lapis.validate.types", ->
     it "fails to create object with invalid spec", ->
       assert.has_error(
         ->
-          types.validate_params {
+          types.params_shape {
             item: "zone"
           }
-        [[validate_params: Invalid validation specification object: expected type "table", got "string" (index: item)]]
+        [[params_shape: Invalid validation specification object: expected type "table", got "string" (index: item)]]
       )
 
       assert.has_error(
         ->
-          types.validate_params {
+          types.params_shape {
             {"one", "two"}
           }
-        [[validate_params: Invalid validation specification object: field 2: expected tableshape type (index: 1)]]
+        [[params_shape: Invalid validation specification object: field 2: expected tableshape type (index: 1)]]
       )
 
       assert.has_error(
         ->
-          types.validate_params {
+          types.params_shape {
             {"one", types.string, fart: "zone"}
           }
-        [[validate_params: Invalid validation specification object: extra fields: "fart" (index: 1)]]
+        [[params_shape: Invalid validation specification object: extra fields: "fart" (index: 1)]]
       )
 
     it "tests basic object", ->
-      test_object = types.validate_params {
+      test_object = types.params_shape {
         {"one", types.string}
         {"two", types.string / (s) -> "-#{s}-"}
       }
@@ -246,14 +246,14 @@ describe "lapis.validate.types", ->
       -- TODO:
 
     it "test nested validate", ->
-      test_object = types.validate_params {
+      test_object = types.params_shape {
         {"alpha", types.one_of {"one", "two"} }
-        {"two", types.validate_params {
+        {"two", types.params_shape {
           {"one", as: "sure", error: "you messed up", types.string\tag "one"}
           {"two", label: "The Two", types.string / (s) -> "-#{s}-"}
         }}
 
-        {"optional", label: "Optionals", types.nil + types.validate_params {
+        {"optional", label: "Optionals", types.nil + types.params_shape {
           {"confirm", types.literal "true" }
         }}
       }

@@ -61,10 +61,10 @@ moon = [[types = require "lapis.validate.types"]]
 
 ### Type Constructors
 
-#### `types.validate_params(param_spec, opts)`
+#### `types.params_shape(param_spec, opts)`
 
 Creates a type checker that is suitable for extracting validated values from a
-parameters objects (or any other plain Lua table). `validate_params` is similar
+parameters objects (or any other plain Lua table). `params_shape` is similar
 to `types.shape` from tableshape with a few key differences:
 
 * Any excess fields that are not explicitly specified by the `param_spec` do not generate an error, and are left out of the transformed result.
@@ -72,7 +72,7 @@ to `types.shape` from tableshape with a few key differences:
 * Because fields are specified in an array, the values are checked in the order they provided.
 * The formatting of error messages can be customized.
 
-`types.validate_params` is designed to be used with the transform API of
+`types.params_shape` is designed to be used with the transform API of
 tableshape. The resulting transformed object is a validated table of
 parameters.
 
@@ -83,7 +83,7 @@ $dual_code{
 moon = [[
 types = require "lapis.validate.types"
 
-test_params = types.validate_params {
+test_params = types.params_shape {
   {"user_id", types.db_id}
   {"bio", types.empty + types.limited_text 256 }
   {"confirm", types.literal("yes"), error: "Please check confirm" }
@@ -97,7 +97,7 @@ if params
 lua = [[
 local types = require("lapis.validate.types")
 
-local test_params = types.validate_params({
+local test_params = types.params_shape({
   {"user_id", types.db_id},
   {"bio", types.empty + types.limited_text(256) },
   {"confirm", types.literal("yes"), error = "Please check confirm" }
@@ -200,7 +200,7 @@ types.empty\transform nil --> nil
 > value with `types.empty` and only checking the first return value may not be
 > desirable.  The transform method can be combined with a type check to ensure
 > an empty value is provided. When using nested type checkers, like
-> `types.shape` and `table.validate_params`, tableshape is aware of this
+> `types.shape` and `table.params_shape`, tableshape is aware of this
 > distinction and no additional code is necessary.
 >
 > $dual_code{

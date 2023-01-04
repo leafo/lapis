@@ -80,7 +80,7 @@ do
   end
   AssertErrorType = _class_0
 end
-local ValidateParamsType
+local ParamsShapeType
 do
   local _class_0
   local test_input_type, is_base_type, param_validator_spec
@@ -173,7 +173,7 @@ do
       end
     end,
     __base = _base_0,
-    __name = "ValidateParamsType",
+    __name = "ParamsShapeType",
     __parent = _parent_0
   }, {
     __index = function(cls, name)
@@ -205,13 +205,13 @@ do
     as = types["nil"] + types.string:tag("as")
   }), {
     format_error = function(self, val, err)
-      return "validate_params: Invalid validation specification object: " .. tostring(err)
+      return "params_shape: Invalid validation specification object: " .. tostring(err)
     end
   })
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
-  ValidateParamsType = _class_0
+  ParamsShapeType = _class_0
 end
 local printable_character, trim
 do
@@ -314,7 +314,7 @@ local empty = types.one_of({
   types.pattern("^%s*$") / nil
 }):describe("empty")
 return setmetatable({
-  validate_params = ValidateParamsType,
+  params_shape = ParamsShapeType,
   assert_error = AssertErrorType,
   cleaned_text = cleaned_text,
   valid_text = valid_text,
