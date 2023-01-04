@@ -67,9 +67,9 @@ Creates a type checker that is suitable for extracting validated values from a
 parameters objects (or any other plain Lua table). `params_shape` is similar
 to `types.shape` from tableshape with a few key differences:
 
-* Any excess fields that are not explicitly specified by the `param_spec` do not generate an error, and are left out of the transformed result.
+* Fields to verify are specified in an array of tuples, values are checked in the order they provided.
+* Any excess fields that are not explicitly specified within `param_spec` do not generate an error, and are left out of the transformed result.
 * The error returned by the type checker is not a single string value, but instead an array of errors that is compatible with the $self_ref{"errors"} pattern seen in Lapis actions.
-* Because fields are specified in an array, the values are checked in the order they provided.
 * The formatting of error messages can be customized.
 
 `types.params_shape` is designed to be used with the transform API of
