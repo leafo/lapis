@@ -166,17 +166,17 @@ db_enum = (e) ->
     db_id / tonumber * types.custom((n) -> e[n]) / for_db
   })\describe "enum(#{table.concat names, ", "})"
 
--- NOTE: this is based off of the legacy `lapis.validate` check, it probably
--- needs to be revamped
-file_upload = types.partial({
-  filename: types.string * -types.empty
-  content: -types.literal("")
-})\describe "file upload"
-
 empty = types.one_of({
   types.nil
   types.pattern("^%s*$") / nil
 })\describe "empty"
+
+-- NOTE: this is based off of the legacy `lapis.validate` check, it probably
+-- needs to be revamped
+file_upload = types.partial({
+  filename: types.string * -empty
+  content: -types.literal("")
+})\describe "file upload"
 
 setmetatable {
   params_shape: ParamsShapeType
