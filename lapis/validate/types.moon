@@ -91,7 +91,7 @@ class ParamsShapeType extends BaseType
       else
         state = state_or_err
         out[validation.as or validation.field] = result
-      
+
     if errors
       return FailedTransform, errors
 
@@ -113,11 +113,13 @@ import printable_character, trim from require "lapis.util.utf8"
 -- strips invalid unicode sequences
 cleaned_text = do
   import Cs, P from require "lpeg"
-  p = Cs (printable_character + P(1) / "")^0 * -1
-  (types.string / (str) -> p\match str)\describe "text"
+  patt = Cs (printable_character + P(1) / "")^0 * -1
+  (types.string / (str) -> patt\match str)\describe "text"
 
 -- verify string is all valid UTF8
-valid_text = (types.string * types.custom (printable_character^0 * -1)\match)\describe "valid text"
+valid_text = do
+  patt = printable_character^0 * -1
+  (types.string * types.custom((str) -> patt\match str))\describe "valid text"
 
 trimmed_text = valid_text / trim\match * types.custom(
   (v) -> v != "", "expected text"

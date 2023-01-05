@@ -225,18 +225,18 @@ do
     local _obj_0 = require("lpeg")
     Cs, P = _obj_0.Cs, _obj_0.P
   end
-  local p = Cs((printable_character + P(1) / "") ^ 0 * -1)
+  local patt = Cs((printable_character + P(1) / "") ^ 0 * -1)
   cleaned_text = (types.string / function(str)
-    return p:match(str)
+    return patt:match(str)
   end):describe("text")
 end
-local valid_text = (types.string * types.custom((function()
-  local _base_0 = (printable_character ^ 0 * -1)
-  local _fn_0 = _base_0.match
-  return function(...)
-    return _fn_0(_base_0, ...)
-  end
-end)())):describe("valid text")
+local valid_text
+do
+  local patt = printable_character ^ 0 * -1
+  valid_text = (types.string * types.custom(function(str)
+    return patt:match(str)
+  end)):describe("valid text")
+end
 local trimmed_text = valid_text / (function()
   local _base_0 = trim
   local _fn_0 = _base_0.match
