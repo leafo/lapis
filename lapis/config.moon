@@ -1,6 +1,8 @@
 
 import insert from table
 
+CONFIG_MODULE = "config"
+
 local *
 
 config_cache = {} -- the final merged config by environment
@@ -128,8 +130,8 @@ get = do
 
     unless loaded_config
       loaded_config = true
-      success, err = pcall -> require "config"
-      unless success or err\match "module 'config' not found"
+      success, err = pcall -> require CONFIG_MODULE
+      unless success or err\match "module '#{CONFIG_MODULE}' not found"
         error err
 
     return config_cache[name] if config_cache[name]
