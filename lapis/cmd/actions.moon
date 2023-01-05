@@ -11,7 +11,7 @@ COMMANDS = {
     help: "Create a new Lapis project in the current directory"
 
     -- set up the argparse command
-    configure: (command) =>
+    argparse: (command) ->
       with command
         \mutex(
           \flag "--cqueues", "Generate config for cqueues server"
@@ -52,19 +52,23 @@ COMMANDS = {
   {
     name: "server"
     aliases: {"serve"}
-    usage: "server [environment]"
-    help: "build config and start server"
+    help: "Rebuild configuration and send a reload signal to running server"
 
-    (flags) =>
-      environment = flags.environment
-      @get_server_actions(environment).server @, flags, environment
+    argparse: (command) ->
+      command\argument("environment")\args "?"
+
+    (args) =>
+      {:environment} = args
+      @get_server_actions(environment).server @, args, environment
   }
 
   {
     name: "build"
-    usage: "build [environment]"
-    help: "build config, send HUP if server running"
+    help: "Rebuild configuration and send a reload signal to running server"
     context: { "nginx" }
+
+    argparse: (command) ->
+      command\argument("environment")\args "?"
 
     (flags) =>
       import write_config_for from require "lapis.cmd.nginx"
@@ -75,11 +79,10 @@ COMMANDS = {
       print colors "%{green}HUP #{pid}" if pid
   }
 
-  -- TODO: this is hidden comand
   {
     name: "hup"
     hidden: true
-    help: "send HUP signal to running server"
+    help: "Send HUP signal to running server"
     context: { "nginx" }
 
     =>
@@ -93,7 +96,7 @@ COMMANDS = {
 
   {
     name: "term"
-    help: "sends TERM signal to shut down a running server"
+    help: "Sends TERM signal to shut down a running server"
     context: { "nginx" }
 
     =>
@@ -106,15 +109,18 @@ COMMANDS = {
 
   }
 
-  -- TODO: this is hidden
   {
     name: "signal"
     hidden: true
-    help: "send arbitrary signal to running server"
+    help: "Send arbitrary signal to running server"
     context: { "nginx" }
 
-    (flags, signal) =>
-      assert signal, "Missing signal"
+    argparse: (command) ->
+      command\argument "signal", "Signal to send, eg. TERM, SIGHUP, etc."
+
+    (args) =>
+      {:signal} = args
+
       import send_signal from require "lapis.cmd.nginx"
 
       pid = send_signal signal
@@ -126,9 +132,17 @@ COMMANDS = {
 
   {
     name: "exec"
-    usage: "exec <lua-string> [environment]"
-    help: "execute Lua on the server"
+    help: "Execute Lua on the server"
     context: { "nginx" }
+
+    argparse: (command) ->
+      with command
+        \argument "code", "String code to execute. Set - to read code from stdin"
+        \mutex(
+          -- TODO: add this
+          -- \flag "--moonscript --moon", "Execute code as MoonScript"
+          \flag "--lua", "Execute code as Lua"
+        )
 
     (flags) =>
       import attach_server, get_pid from require "lapis.cmd.nginx"
@@ -143,24 +157,23 @@ COMMANDS = {
 
   {
     name: "migrate"
-    usage: "migrate [environment]"
-    help: "run migrations"
+    help: "Run any outstanding migrations"
 
-    (flags) =>
+    argparse: (command) ->
+      with command
+        \argument("environment")\args "?"
+        \option("--migrations-module", "Module to load for migrations")\argname("<module>")\default "migrations"
+        \option("--transaction")\args("?")\choices({"global", "individual"})\action (args, name, val) ->
+          -- flatten the table that's created from args("?")
+          args[name] = val[next(val)] or "global"
+
+    (args) =>
       env = require "lapis.environment"
-      env.push flags.environment, show_queries: true
+      env.push args.environment, show_queries: true
 
       migrations = require "lapis.db.migrations"
-      migrations.run_migrations require("migrations"), nil, {
-        transaction: switch flags.transaction
-          when true
-            "global"
-          when "global", "individual"
-            flags.transaction
-          when nil
-            nil
-          else
-            error "Got unknown --transaction setting"
+      migrations.run_migrations require(args.migrations_module), nil, {
+        transaction: args.transaction
       }
 
       env.pop!
@@ -168,11 +181,20 @@ COMMANDS = {
 
   {
     name: "generate"
-    usage: "generate <template> [args...]"
-    help: "generates a new file from template"
+    help: "Generates a new file in the current directory from template"
 
-    (flags) =>
-      {:template_name, :template_args} = flags
+    argparse: (command) ->
+      with command
+        \argument("template_name", "Which template to load (eg. model, flow)")
+        \argument("template_args", "Template arguments")\args("*")
+        \mutex(
+          \flag "--moonscript --moon", "Prefer to generate MoonScript file when appropriate"
+          \flag "--lua", "Prefer to generate Lua file when appropriate"
+        )
+
+
+    (args) =>
+      {:template_name, :template_args} = args
 
       local tpl, module_name
 
@@ -200,6 +222,47 @@ COMMANDS = {
 
       tpl.write writer, unpack template_args
   }
+
+  {
+    name: "_"
+    help: "Excute third-party command from module lapis.cmd.actions._"
+
+    argparse: (command) ->
+      with command
+        \handle_options false
+        \argument("subcommand", "Which command module to load")
+        \argument("args", "Arguments to command")\args("*")
+
+    => error "This command is not implemented yet"
+  }
+
+  {
+    name: "systemd"
+    help: "Generate systemd service file"
+    test_available: ->
+      pcall -> require "lapis.cmd.actions.systemd"
+
+    argparse: (command) ->
+      with command
+        \argument("sub_command", "Sub command to execute")\choices {"service"}
+        \argument("environment", "Environment to create service file for")\args "?"
+        \flag "--install", "Installs the service file to the system, requires sudo permission"
+
+    => error "not yet"
+  }
+
+  {
+    name: "annotate"
+    help: "Annotate model files with schema information"
+    test_available: ->
+      pcall -> require "lapis.cmd.actions.annotate"
+
+    argparse: (command) ->
+      with command
+        \argument("files", "Paths to model classes to annotate (eg. models/first.moon models/second.moon ...)")\args "+"
+
+    => error "not yet"
+  }
 }
 
 class CommandRunner
@@ -208,6 +271,60 @@ class CommandRunner
   new: =>
     @path = require "lapis.cmd.path"
     @path = @path\annotate!
+
+  build_parser: =>
+    import default_environment from require "lapis.environment"
+    import find_nginx from require "lapis.cmd.nginx"
+
+    colors = require "ansicolors"
+    argparse = require "argparse"
+
+    lua_http_status_string = ->
+      local str
+      pcall ->
+        str = colors "cqueues: %{bright}#{require("cqueues").VERSION}%{reset} lua-http: %{bright}#{require("http.version").version}%{reset}"
+
+      str
+
+    parser = argparse "lapis",
+      table.concat {
+        "Control & create web applications written with Lapis"
+        colors "Lapis: %{bright}#{require "lapis.version"}"
+        colors "Default environment: %{yellow}#{default_environment!}"
+        if nginx = find_nginx!
+          colors "OpenResty: %{bright}#{nginx}"
+        else
+          "No OpenResty installation found"
+
+        if status = lua_http_status_string!
+          status
+        else
+          "cqueues lua-http: not available"
+      }, "\n"
+
+    parser\command_target "command"
+    parser\add_help_command!
+
+    parser\option("--environment", "Override the default environment")\default default_environment!
+    parser\flag "--trace", "Show full error trace if lapis command fails"
+
+    for command_spec in *COMMANDS
+      if command_spec.test_available
+        continue unless command_spec.test_available!
+
+      name = command_spec.name
+      if command_spec.aliases
+        name = "#{name} #{table.concat command_spec.aliases, " "}"
+
+      command = parser\command name, command_spec.help
+
+      if command_spec.hidden
+        command\hidden true
+      
+      if type(command_spec.argparse) == "function"
+        command_spec.argparse command
+
+    parser
 
   format_error: (msg) =>
     colors "%{bright red}Error:%{reset} #{msg}"
@@ -232,9 +349,10 @@ class CommandRunner
     @path.write_file file, content
     true
 
+
   parse_args: (args) =>
     args = {i, a for i, a in pairs(args) when type(i) == "number" and i > 0}
-    parser = require("lapis.cmd.argparser")
+    parser = @build_parser!
 
     if next(args) == nil
       args = { @default_action }

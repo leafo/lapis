@@ -9,7 +9,7 @@ local COMMANDS = {
   {
     name = "new",
     help = "Create a new Lapis project in the current directory",
-    configure = function(self, command)
+    argparse = function(command)
       do
         local _with_0 = command
         _with_0:mutex(_with_0:flag("--cqueues", "Generate config for cqueues server"), _with_0:flag("--nginx", "Generate config for nginx server"))
@@ -51,20 +51,25 @@ local COMMANDS = {
     aliases = {
       "serve"
     },
-    usage = "server [environment]",
-    help = "build config and start server",
-    function(self, flags)
-      local environment = flags.environment
-      return self:get_server_actions(environment).server(self, flags, environment)
+    help = "Rebuild configuration and send a reload signal to running server",
+    argparse = function(command)
+      return command:argument("environment"):args("?")
+    end,
+    function(self, args)
+      local environment
+      environment = args.environment
+      return self:get_server_actions(environment).server(self, args, environment)
     end
   },
   {
     name = "build",
-    usage = "build [environment]",
-    help = "build config, send HUP if server running",
+    help = "Rebuild configuration and send a reload signal to running server",
     context = {
       "nginx"
     },
+    argparse = function(command)
+      return command:argument("environment"):args("?")
+    end,
     function(self, flags)
       local write_config_for
       write_config_for = require("lapis.cmd.nginx").write_config_for
@@ -80,7 +85,7 @@ local COMMANDS = {
   {
     name = "hup",
     hidden = true,
-    help = "send HUP signal to running server",
+    help = "Send HUP signal to running server",
     context = {
       "nginx"
     },
@@ -97,7 +102,7 @@ local COMMANDS = {
   },
   {
     name = "term",
-    help = "sends TERM signal to shut down a running server",
+    help = "Sends TERM signal to shut down a running server",
     context = {
       "nginx"
     },
@@ -115,12 +120,16 @@ local COMMANDS = {
   {
     name = "signal",
     hidden = true,
-    help = "send arbitrary signal to running server",
+    help = "Send arbitrary signal to running server",
     context = {
       "nginx"
     },
-    function(self, flags, signal)
-      assert(signal, "Missing signal")
+    argparse = function(command)
+      return command:argument("signal", "Signal to send, eg. TERM, SIGHUP, etc.")
+    end,
+    function(self, args)
+      local signal
+      signal = args.signal
       local send_signal
       send_signal = require("lapis.cmd.nginx").send_signal
       local pid = send_signal(signal)
@@ -133,11 +142,18 @@ local COMMANDS = {
   },
   {
     name = "exec",
-    usage = "exec <lua-string> [environment]",
-    help = "execute Lua on the server",
+    help = "Execute Lua on the server",
     context = {
       "nginx"
     },
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:argument("code", "String code to execute. Set - to read code from stdin")
+        _with_0:mutex(_with_0:flag("--lua", "Execute code as Lua"))
+        return _with_0
+      end
+    end,
     function(self, flags)
       local attach_server, get_pid
       do
@@ -154,38 +170,48 @@ local COMMANDS = {
   },
   {
     name = "migrate",
-    usage = "migrate [environment]",
-    help = "run migrations",
-    function(self, flags)
+    help = "Run any outstanding migrations",
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:argument("environment"):args("?")
+        _with_0:option("--migrations-module", "Module to load for migrations"):argname("<module>"):default("migrations")
+        _with_0:option("--transaction"):args("?"):choices({
+          "global",
+          "individual"
+        }):action(function(args, name, val)
+          args[name] = val[next(val)] or "global"
+        end)
+        return _with_0
+      end
+    end,
+    function(self, args)
       local env = require("lapis.environment")
-      env.push(flags.environment, {
+      env.push(args.environment, {
         show_queries = true
       })
       local migrations = require("lapis.db.migrations")
-      migrations.run_migrations(require("migrations"), nil, {
-        transaction = (function()
-          local _exp_0 = flags.transaction
-          if true == _exp_0 then
-            return "global"
-          elseif "global" == _exp_0 or "individual" == _exp_0 then
-            return flags.transaction
-          elseif nil == _exp_0 then
-            return nil
-          else
-            return error("Got unknown --transaction setting")
-          end
-        end)()
+      migrations.run_migrations(require(args.migrations_module), nil, {
+        transaction = args.transaction
       })
       return env.pop()
     end
   },
   {
     name = "generate",
-    usage = "generate <template> [args...]",
-    help = "generates a new file from template",
-    function(self, flags)
+    help = "Generates a new file in the current directory from template",
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:argument("template_name", "Which template to load (eg. model, flow)")
+        _with_0:argument("template_args", "Template arguments"):args("*")
+        _with_0:mutex(_with_0:flag("--moonscript --moon", "Prefer to generate MoonScript file when appropriate"), _with_0:flag("--lua", "Prefer to generate Lua file when appropriate"))
+        return _with_0
+      end
+    end,
+    function(self, args)
       local template_name, template_args
-      template_name, template_args = flags.template_name, flags.template_args
+      template_name, template_args = args.template_name, args.template_args
       local tpl, module_name
       pcall(function()
         module_name = "generators." .. tostring(template_name)
@@ -213,6 +239,64 @@ local COMMANDS = {
       end
       return tpl.write(writer, unpack(template_args))
     end
+  },
+  {
+    name = "_",
+    help = "Excute third-party command from module lapis.cmd.actions._",
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:handle_options(false)
+        _with_0:argument("subcommand", "Which command module to load")
+        _with_0:argument("args", "Arguments to command"):args("*")
+        return _with_0
+      end
+    end,
+    function(self)
+      return error("This command is not implemented yet")
+    end
+  },
+  {
+    name = "systemd",
+    help = "Generate systemd service file",
+    test_available = function()
+      return pcall(function()
+        return require("lapis.cmd.actions.systemd")
+      end)
+    end,
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:argument("sub_command", "Sub command to execute"):choices({
+          "service"
+        })
+        _with_0:argument("environment", "Environment to create service file for"):args("?")
+        _with_0:flag("--install", "Installs the service file to the system, requires sudo permission")
+        return _with_0
+      end
+    end,
+    function(self)
+      return error("not yet")
+    end
+  },
+  {
+    name = "annotate",
+    help = "Annotate model files with schema information",
+    test_available = function()
+      return pcall(function()
+        return require("lapis.cmd.actions.annotate")
+      end)
+    end,
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:argument("files", "Paths to model classes to annotate (eg. models/first.moon models/second.moon ...)"):args("+")
+        return _with_0
+      end
+    end,
+    function(self)
+      return error("not yet")
+    end
   }
 }
 local CommandRunner
@@ -220,6 +304,79 @@ do
   local _class_0
   local _base_0 = {
     default_action = "help",
+    build_parser = function(self)
+      local default_environment
+      default_environment = require("lapis.environment").default_environment
+      local find_nginx
+      find_nginx = require("lapis.cmd.nginx").find_nginx
+      colors = require("ansicolors")
+      local argparse = require("argparse")
+      local lua_http_status_string
+      lua_http_status_string = function()
+        local str
+        pcall(function()
+          str = colors("cqueues: %{bright}" .. tostring(require("cqueues").VERSION) .. "%{reset} lua-http: %{bright}" .. tostring(require("http.version").version) .. "%{reset}")
+        end)
+        return str
+      end
+      local parser = argparse("lapis", table.concat({
+        "Control & create web applications written with Lapis",
+        colors("Lapis: %{bright}" .. tostring(require("lapis.version"))),
+        colors("Default environment: %{yellow}" .. tostring(default_environment())),
+        (function()
+          do
+            local nginx = find_nginx()
+            if nginx then
+              return colors("OpenResty: %{bright}" .. tostring(nginx))
+            else
+              return "No OpenResty installation found"
+            end
+          end
+        end)(),
+        (function()
+          do
+            local status = lua_http_status_string()
+            if status then
+              return status
+            else
+              return "cqueues lua-http: not available"
+            end
+          end
+        end)()
+      }, "\n"))
+      parser:command_target("command")
+      parser:add_help_command()
+      parser:option("--environment", "Override the default environment"):default(default_environment())
+      parser:flag("--trace", "Show full error trace if lapis command fails")
+      for _index_0 = 1, #COMMANDS do
+        local _continue_0 = false
+        repeat
+          local command_spec = COMMANDS[_index_0]
+          if command_spec.test_available then
+            if not (command_spec.test_available()) then
+              _continue_0 = true
+              break
+            end
+          end
+          local name = command_spec.name
+          if command_spec.aliases then
+            name = tostring(name) .. " " .. tostring(table.concat(command_spec.aliases, " "))
+          end
+          local command = parser:command(name, command_spec.help)
+          if command_spec.hidden then
+            command:hidden(true)
+          end
+          if type(command_spec.argparse) == "function" then
+            command_spec.argparse(command)
+          end
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+      return parser
+    end,
     format_error = function(self, msg)
       return colors("%{bright red}Error:%{reset} " .. tostring(msg))
     end,
@@ -259,7 +416,7 @@ do
         end
         args = _tbl_0
       end
-      local parser = require("lapis.cmd.argparser")
+      local parser = self:build_parser()
       if next(args) == nil then
         args = {
           self.default_action
