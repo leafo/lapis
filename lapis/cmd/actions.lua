@@ -3,15 +3,13 @@ do
   local _obj_0 = require("lapis.cmd.util")
   columnize, parse_flags, write_file_safe = _obj_0.columnize, _obj_0.parse_flags, _obj_0.write_file_safe
 end
-local default_environment
-default_environment = require("lapis.environment").default_environment
 local colors = require("ansicolors")
 local unpack = unpack or table.unpack
 local Actions
 do
   local _class_0
   local _base_0 = {
-    defalt_action = "help",
+    default_action = "help",
     format_error = function(self, msg)
       return colors("%{bright red}Error:%{reset} " .. tostring(msg))
     end,
@@ -41,7 +39,7 @@ do
       self.path.write_file(file, content)
       return true
     end,
-    execute = function(self, args)
+    parse_args = function(self, args)
       do
         local _tbl_0 = { }
         for i, a in pairs(args) do
@@ -51,28 +49,22 @@ do
         end
         args = _tbl_0
       end
-      local flags, plain_args = parse_flags(args)
-      local action_name = plain_args[1] or self.defalt_action
-      local action = self:get_action(action_name)
-      local rest
-      do
-        local _accum_0 = { }
-        local _len_0 = 1
-        for _index_0 = 2, #plain_args do
-          local arg = plain_args[_index_0]
-          _accum_0[_len_0] = arg
-          _len_0 = _len_0 + 1
-        end
-        rest = _accum_0
+      local parser = require("lapis.cmd.argparser")
+      if next(args) == nil then
+        args = {
+          self.default_action
+        }
       end
-      if not (action) then
-        print(self:format_error("unknown command `" .. tostring(action_name) .. "'"))
-        self:get_action("help")[1](self, unpack(rest))
-        return 
+      return parser:parse(args)
+    end,
+    execute = function(self, args)
+      args = self:parse_args(args)
+      local action = self:get_action(args.action)
+      if action.context then
+        assert(self:check_context(args.environment, action.context))
       end
-      local fn = assert(action[1], "action `" .. tostring(action_name) .. "' not implemented")
-      assert(self:check_context(action.context))
-      return fn(self, flags, unpack(rest))
+      local fn = assert(action[1], "action `" .. tostring(args.action) .. "' not implemented")
+      return fn(self, args)
     end,
     execute_safe = function(self, args)
       local trace = false
@@ -108,10 +100,7 @@ do
     get_server_actions = function(self, environment)
       return require("lapis.cmd." .. tostring(self:get_server_type(environment)) .. ".actions")
     end,
-    check_context = function(self, contexts)
-      if not (contexts) then
-        return true
-      end
+    check_context = function(self, environment, contexts)
       local s = self:get_server_module()
       for _index_0 = 1, #contexts do
         local c = contexts[_index_0]
@@ -179,10 +168,8 @@ do
         },
         usage = "server [environment]",
         help = "build config and start server",
-        function(self, flags, environment)
-          if environment == nil then
-            environment = default_environment()
-          end
+        function(self, flags)
+          local environment = flags.environment
           return self:get_server_actions(environment).server(self, flags, environment)
         end
       },
@@ -193,13 +180,10 @@ do
         context = {
           "nginx"
         },
-        function(self, flags, environment)
-          if environment == nil then
-            environment = default_environment()
-          end
+        function(self, flags)
           local write_config_for
           write_config_for = require("lapis.cmd.nginx").write_config_for
-          write_config_for(environment)
+          write_config_for(flags.environment)
           local send_hup
           send_hup = require("lapis.cmd.nginx").send_hup
           local pid = send_hup()
@@ -269,13 +253,7 @@ do
         context = {
           "nginx"
         },
-        function(self, flags, code, environment)
-          if environment == nil then
-            environment = default_environment()
-          end
-          if not (code) then
-            self:fail_with_message("missing lua-string: exec <lua-string>")
-          end
+        function(self, flags)
           local attach_server, get_pid
           do
             local _obj_0 = require("lapis.cmd.nginx")
@@ -284,8 +262,8 @@ do
           if not (get_pid()) then
             print(colors("%{green}Using temporary server..."))
           end
-          local server = attach_server(environment)
-          print(server:exec(code))
+          local server = attach_server(flags.environment)
+          print(server:exec(flags.code))
           return server:detach()
         end
       },
@@ -293,12 +271,9 @@ do
         name = "migrate",
         usage = "migrate [environment]",
         help = "run migrations",
-        function(self, flags, environment)
-          if environment == nil then
-            environment = default_environment()
-          end
+        function(self, flags)
           local env = require("lapis.environment")
-          env.push(environment, {
+          env.push(flags.environment, {
             show_queries = true
           })
           local migrations = require("lapis.db.migrations")
@@ -323,7 +298,9 @@ do
         name = "generate",
         usage = "generate <template> [args...]",
         help = "generates a new file from template",
-        function(self, flags, template_name, ...)
+        function(self, flags)
+          local template_name, template_args
+          template_name, template_args = flags.template_name, flags.template_args
           local tpl, module_name
           pcall(function()
             module_name = "generators." .. tostring(template_name)
@@ -344,49 +321,12 @@ do
             end
           }
           if tpl.check_args then
-            tpl.check_args(...)
+            tpl.check_args(unpack(template_args))
           end
           if not (type(tpl.write) == "function") then
-            error("generator `" .. tostring(module_name or template_name) .. "` is missing write function")
+            error("generator `#{module_name or }` is missing write function")
           end
-          return tpl.write(writer, ...)
-        end
-      },
-      {
-        name = "help",
-        help = "show this text",
-        function(self)
-          print(colors("Lapis " .. tostring(require("lapis.version"))))
-          print("usage: lapis <action> [arguments]")
-          local find_nginx
-          find_nginx = require("lapis.cmd.nginx").find_nginx
-          local nginx = find_nginx()
-          if nginx then
-            print("using nginx: " .. tostring(nginx))
-          else
-            print("can not find suitable server installation")
-          end
-          print("default environment: " .. tostring(default_environment()))
-          print()
-          print("Available actions:")
-          print()
-          print(columnize((function()
-            local _accum_0 = { }
-            local _len_0 = 1
-            local _list_0 = self.actions
-            for _index_0 = 1, #_list_0 do
-              local t = _list_0[_index_0]
-              if not t.hidden then
-                _accum_0[_len_0] = {
-                  t.usage or t.name,
-                  t.help
-                }
-                _len_0 = _len_0 + 1
-              end
-            end
-            return _accum_0
-          end)()))
-          return print()
+          return tpl.write(writer, unpack(template_args))
         end
       }
     }

@@ -1,13 +1,12 @@
 
 import columnize, parse_flags, write_file_safe from require "lapis.cmd.util"
-import default_environment from require "lapis.environment"
 
 colors = require "ansicolors"
 
 unpack = unpack or table.unpack
 
 class Actions
-  defalt_action: "help"
+  default_action: "help"
 
   new: =>
     @path = require "lapis.cmd.path"
@@ -36,25 +35,25 @@ class Actions
     @path.write_file file, content
     true
 
-  execute: (args) =>
+  parse_args: (args) =>
     args = {i, a for i, a in pairs(args) when type(i) == "number" and i > 0}
-    flags, plain_args = parse_flags args
+    parser = require("lapis.cmd.argparser")
 
-    action_name = plain_args[1] or @defalt_action
-    action = @get_action action_name
+    if next(args) == nil
+      args = { @default_action }
 
-    rest = [arg for arg in *plain_args[2,]]
+    parser\parse args
 
-    unless action
-      print @format_error "unknown command `#{action_name}'"
-      @get_action("help")[1] @, unpack rest
-      return
+  execute: (args) =>
+    args = @parse_args args
+    action = @get_action args.action
 
-    fn = assert(action[1], "action `#{action_name}' not implemented")
-    -- TODO: this should be aware of the environment from the args otherwise it
-    -- will use default environemnt and could read incorrect server
-    assert @check_context action.context
-    fn @, flags, unpack rest
+    -- verify that we have suitable server install to run the environment
+    if action.context
+      assert @check_context args.environment, action.context
+
+    fn = assert(action[1], "action `#{args.action}' not implemented")
+    fn @, args
 
   execute_safe: (args) =>
     trace = false
@@ -88,9 +87,7 @@ class Actions
   get_server_actions: (environment) =>
     require "lapis.cmd.#{@get_server_type environment}.actions"
 
-  check_context: (contexts) =>
-    return true unless contexts
-
+  check_context: (environment, contexts) =>
     s = @get_server_module!
 
     for c in *contexts
@@ -147,7 +144,8 @@ class Actions
       usage: "server [environment]"
       help: "build config and start server"
 
-      (flags, environment=default_environment!) =>
+      (flags) =>
+        environment = flags.environment
         @get_server_actions(environment).server @, flags, environment
     }
 
@@ -157,15 +155,16 @@ class Actions
       help: "build config, send HUP if server running"
       context: { "nginx" }
 
-      (flags, environment=default_environment!) =>
+      (flags) =>
         import write_config_for from require "lapis.cmd.nginx"
-        write_config_for environment
+        write_config_for flags.environment
 
         import send_hup from require "lapis.cmd.nginx"
         pid = send_hup!
         print colors "%{green}HUP #{pid}" if pid
     }
 
+    -- TODO: this is hidden comand
     {
       name: "hup"
       hidden: true
@@ -196,6 +195,7 @@ class Actions
 
     }
 
+    -- TODO: this is hidden
     {
       name: "signal"
       hidden: true
@@ -219,16 +219,14 @@ class Actions
       help: "execute Lua on the server"
       context: { "nginx" }
 
-      (flags, code, environment=default_environment!) =>
-        @fail_with_message("missing lua-string: exec <lua-string>") unless code
-
+      (flags) =>
         import attach_server, get_pid from require "lapis.cmd.nginx"
 
         unless get_pid!
           print colors "%{green}Using temporary server..."
 
-        server = attach_server environment
-        print server\exec code
+        server = attach_server flags.environment
+        print server\exec flags.code
         server\detach!
     }
 
@@ -237,9 +235,9 @@ class Actions
       usage: "migrate [environment]"
       help: "run migrations"
 
-      (flags, environment=default_environment!) =>
+      (flags) =>
         env = require "lapis.environment"
-        env.push environment, show_queries: true
+        env.push flags.environment, show_queries: true
 
         migrations = require "lapis.db.migrations"
         migrations.run_migrations require("migrations"), nil, {
@@ -262,7 +260,9 @@ class Actions
       usage: "generate <template> [args...]"
       help: "generates a new file from template"
 
-      (flags, template_name, ...) =>
+      (flags) =>
+        {:template_name, :template_args} = flags
+
         local tpl, module_name
 
         pcall ->
@@ -282,37 +282,12 @@ class Actions
         }
 
         if tpl.check_args
-          tpl.check_args ...
+          tpl.check_args unpack template_args
 
         unless type(tpl.write) == "function"
-          error "generator `#{module_name or template_name}` is missing write function"
+          error "generator `#{module_name or }` is missing write function"
 
-        tpl.write writer, ...
-    }
-
-    {
-      name: "help"
-      help: "show this text"
-
-      =>
-        print colors "Lapis #{require "lapis.version"}"
-        print "usage: lapis <action> [arguments]"
-
-        import find_nginx from require "lapis.cmd.nginx"
-
-        nginx = find_nginx!
-
-        if nginx
-          print "using nginx: #{nginx}"
-        else
-          print "can not find suitable server installation"
-
-        print "default environment: #{default_environment!}"
-        print!
-        print "Available actions:"
-        print!
-        print columnize [ { t.usage or t.name, t.help } for t in *@actions when not t.hidden ]
-        print!
+        tpl.write writer, unpack template_args
     }
 }
 
