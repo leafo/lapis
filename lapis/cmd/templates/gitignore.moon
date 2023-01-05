@@ -3,7 +3,7 @@ import insert, concat from table
 (flags={}) ->
   lines = {}
 
-  if flags.server ~= "cqueues"
+  if flags.server != "cqueues"
     insert lines, "logs/"
     insert lines, "nginx.conf.compiled"
 

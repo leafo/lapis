@@ -20,25 +20,25 @@ local COMMANDS = {
         return _with_0
       end
     end,
-    function(self, flags)
+    function(self, args)
       local server_actions
-      if flags.cqueues then
+      if args.cqueues then
         server_actions = require("lapis.cmd.cqueues.actions")
       else
         server_actions = require("lapis.cmd.nginx.actions")
       end
-      server_actions.new(self, flags)
-      if flags.lua then
+      server_actions.new(self, args)
+      if args.lua then
         self:write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
         self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
       else
         self:write_file_safe("app.moon", require("lapis.cmd.templates.app"))
         self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
       end
-      if flags.git then
-        self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(flags))
+      if args.git then
+        self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(args))
       end
-      if flags.tup then
+      if args.tup then
         local tup_files = require("lapis.cmd.templates.tup")
         for fname, content in pairs(tup_files) do
           self:write_file_safe(fname, content)
@@ -51,7 +51,7 @@ local COMMANDS = {
     aliases = {
       "serve"
     },
-    help = "Rebuild configuration and send a reload signal to running server",
+    help = "Start the server from the current directory",
     argparse = function(command)
       return command:argument("environment"):args("?")
     end,
@@ -142,6 +142,9 @@ local COMMANDS = {
   },
   {
     name = "exec",
+    aliases = {
+      "execute"
+    },
     help = "Execute Lua on the server",
     context = {
       "nginx"
@@ -346,7 +349,7 @@ do
       }, "\n"))
       parser:command_target("command")
       parser:add_help_command()
-      parser:option("--environment", "Override the default environment"):default(default_environment())
+      parser:option("--environment", "Override the default environment"):argname("<name>"):default(default_environment())
       parser:flag("--trace", "Show full error trace if lapis command fails")
       for _index_0 = 1, #COMMANDS do
         local _continue_0 = false
@@ -362,7 +365,11 @@ do
           if command_spec.aliases then
             name = tostring(name) .. " " .. tostring(table.concat(command_spec.aliases, " "))
           end
-          local command = parser:command(name, command_spec.help)
+          local help_string = command_spec.help
+          if command_spec.context then
+            help_string = tostring(help_string) .. " (server: " .. tostring(table.concat(command_spec.context, ", ")) .. ")"
+          end
+          local command = parser:command(name, help_string)
           if command_spec.hidden then
             command:hidden(true)
           end
@@ -475,7 +482,7 @@ do
           return true
         end
       end
-      return nil, "command not available for selected server (using " .. tostring(s.type) .. ", needs " .. tostring(table.concat(contexts, ", ")) .. ")"
+      return nil, "Command not available for selected server (using " .. tostring(s.type) .. ", needs " .. tostring(table.concat(contexts, ", ")) .. ")"
     end,
     get_command = function(self, name)
       for k, v in ipairs(COMMANDS) do

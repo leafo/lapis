@@ -25,25 +25,25 @@ COMMANDS = {
         \flag "--git", "Generate default .gitignore file"
         \flag "--tup", "Generate default Tupfile"
 
-    (flags) =>
-      server_actions = if flags.cqueues
+    (args) =>
+      server_actions = if args.cqueues
         require "lapis.cmd.cqueues.actions"
       else
         require "lapis.cmd.nginx.actions"
 
-      server_actions.new @, flags
+      server_actions.new @, args
 
-      if flags.lua
+      if args.lua
         @write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
         @write_file_safe "models.lua", require "lapis.cmd.templates.models_lua"
       else
         @write_file_safe "app.moon", require "lapis.cmd.templates.app"
         @write_file_safe "models.moon", require "lapis.cmd.templates.models"
 
-      if flags.git
-        @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") flags
+      if args.git
+        @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") args
 
-      if flags.tup
+      if args.tup
         tup_files = require "lapis.cmd.templates.tup"
         for fname, content in pairs tup_files
           @write_file_safe fname, content
@@ -52,7 +52,7 @@ COMMANDS = {
   {
     name: "server"
     aliases: {"serve"}
-    help: "Rebuild configuration and send a reload signal to running server"
+    help: "Start the server from the current directory"
 
     argparse: (command) ->
       command\argument("environment")\args "?"
@@ -132,6 +132,7 @@ COMMANDS = {
 
   {
     name: "exec"
+    aliases: {"execute"}
     help: "Execute Lua on the server"
     context: { "nginx" }
 
@@ -305,7 +306,7 @@ class CommandRunner
     parser\command_target "command"
     parser\add_help_command!
 
-    parser\option("--environment", "Override the default environment")\default default_environment!
+    parser\option("--environment", "Override the default environment")\argname("<name>")\default default_environment!
     parser\flag "--trace", "Show full error trace if lapis command fails"
 
     for command_spec in *COMMANDS
@@ -316,7 +317,12 @@ class CommandRunner
       if command_spec.aliases
         name = "#{name} #{table.concat command_spec.aliases, " "}"
 
-      command = parser\command name, command_spec.help
+      help_string = command_spec.help
+
+      if command_spec.context
+        help_string = "#{help_string} (server: #{table.concat command_spec.context, ", "})"
+
+      command = parser\command name, help_string
 
       if command_spec.hidden
         command\hidden true
@@ -408,7 +414,7 @@ class CommandRunner
     for c in *contexts
       return true if c == s.type
 
-    nil, "command not available for selected server (using #{s.type}, needs #{table.concat contexts, ", "})"
+    nil, "Command not available for selected server (using #{s.type}, needs #{table.concat contexts, ", "})"
 
   get_command: (name) =>
     for k,v in ipairs COMMANDS
