@@ -5,7 +5,217 @@ do
 end
 local colors = require("ansicolors")
 local unpack = unpack or table.unpack
-local Actions
+local COMMANDS = {
+  {
+    name = "new",
+    help = "Create a new Lapis project in the current directory",
+    configure = function(self, command)
+      do
+        local _with_0 = command
+        _with_0:mutex(_with_0:flag("--cqueues", "Generate config for cqueues server"), _with_0:flag("--nginx", "Generate config for nginx server"))
+        _with_0:mutex(_with_0:flag("--lua", "Generate app template file in Lua"), _with_0:flag("--moonscript --moon", "Generate app template file in MoonScript"))
+        _with_0:flag("--etlua-config", "Use etlua for templmated configuration files (eg. nginx.conf)")
+        _with_0:flag("--git", "Generate default .gitignore file")
+        _with_0:flag("--tup", "Generate default Tupfile")
+        return _with_0
+      end
+    end,
+    function(self, flags)
+      local server_actions
+      if flags.cqueues then
+        server_actions = require("lapis.cmd.cqueues.actions")
+      else
+        server_actions = require("lapis.cmd.nginx.actions")
+      end
+      server_actions.new(self, flags)
+      if flags.lua then
+        self:write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
+        self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
+      else
+        self:write_file_safe("app.moon", require("lapis.cmd.templates.app"))
+        self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
+      end
+      if flags.git then
+        self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(flags))
+      end
+      if flags.tup then
+        local tup_files = require("lapis.cmd.templates.tup")
+        for fname, content in pairs(tup_files) do
+          self:write_file_safe(fname, content)
+        end
+      end
+    end
+  },
+  {
+    name = "server",
+    aliases = {
+      "serve"
+    },
+    usage = "server [environment]",
+    help = "build config and start server",
+    function(self, flags)
+      local environment = flags.environment
+      return self:get_server_actions(environment).server(self, flags, environment)
+    end
+  },
+  {
+    name = "build",
+    usage = "build [environment]",
+    help = "build config, send HUP if server running",
+    context = {
+      "nginx"
+    },
+    function(self, flags)
+      local write_config_for
+      write_config_for = require("lapis.cmd.nginx").write_config_for
+      write_config_for(flags.environment)
+      local send_hup
+      send_hup = require("lapis.cmd.nginx").send_hup
+      local pid = send_hup()
+      if pid then
+        return print(colors("%{green}HUP " .. tostring(pid)))
+      end
+    end
+  },
+  {
+    name = "hup",
+    hidden = true,
+    help = "send HUP signal to running server",
+    context = {
+      "nginx"
+    },
+    function(self)
+      local send_hup
+      send_hup = require("lapis.cmd.nginx").send_hup
+      local pid = send_hup()
+      if pid then
+        return print(colors("%{green}HUP " .. tostring(pid)))
+      else
+        return self:fail_with_message("failed to find nginx process")
+      end
+    end
+  },
+  {
+    name = "term",
+    help = "sends TERM signal to shut down a running server",
+    context = {
+      "nginx"
+    },
+    function(self)
+      local send_term
+      send_term = require("lapis.cmd.nginx").send_term
+      local pid = send_term()
+      if pid then
+        return print(colors("%{green}TERM " .. tostring(pid)))
+      else
+        return self:fail_with_message("failed to find nginx process")
+      end
+    end
+  },
+  {
+    name = "signal",
+    hidden = true,
+    help = "send arbitrary signal to running server",
+    context = {
+      "nginx"
+    },
+    function(self, flags, signal)
+      assert(signal, "Missing signal")
+      local send_signal
+      send_signal = require("lapis.cmd.nginx").send_signal
+      local pid = send_signal(signal)
+      if pid then
+        return print(colors("%{green}Sent " .. tostring(signal) .. " to " .. tostring(pid)))
+      else
+        return self:fail_with_message("failed to find nginx process")
+      end
+    end
+  },
+  {
+    name = "exec",
+    usage = "exec <lua-string> [environment]",
+    help = "execute Lua on the server",
+    context = {
+      "nginx"
+    },
+    function(self, flags)
+      local attach_server, get_pid
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        attach_server, get_pid = _obj_0.attach_server, _obj_0.get_pid
+      end
+      if not (get_pid()) then
+        print(colors("%{green}Using temporary server..."))
+      end
+      local server = attach_server(flags.environment)
+      print(server:exec(flags.code))
+      return server:detach()
+    end
+  },
+  {
+    name = "migrate",
+    usage = "migrate [environment]",
+    help = "run migrations",
+    function(self, flags)
+      local env = require("lapis.environment")
+      env.push(flags.environment, {
+        show_queries = true
+      })
+      local migrations = require("lapis.db.migrations")
+      migrations.run_migrations(require("migrations"), nil, {
+        transaction = (function()
+          local _exp_0 = flags.transaction
+          if true == _exp_0 then
+            return "global"
+          elseif "global" == _exp_0 or "individual" == _exp_0 then
+            return flags.transaction
+          elseif nil == _exp_0 then
+            return nil
+          else
+            return error("Got unknown --transaction setting")
+          end
+        end)()
+      })
+      return env.pop()
+    end
+  },
+  {
+    name = "generate",
+    usage = "generate <template> [args...]",
+    help = "generates a new file from template",
+    function(self, flags)
+      local template_name, template_args
+      template_name, template_args = flags.template_name, flags.template_args
+      local tpl, module_name
+      pcall(function()
+        module_name = "generators." .. tostring(template_name)
+        tpl = require(module_name)
+      end)
+      if not (tpl) then
+        tpl = require("lapis.cmd.templates." .. tostring(template_name))
+      end
+      if not (type(tpl) == "table") then
+        error("invalid generator `" .. tostring(module_name or template_name) .. "`, module must be table")
+      end
+      local writer = {
+        write = function(_, ...)
+          return assert(self:write_file_safe(...))
+        end,
+        mod_to_path = function(self, mod)
+          return mod:gsub("%.", "/")
+        end
+      }
+      if tpl.check_args then
+        tpl.check_args(unpack(template_args))
+      end
+      if not (type(tpl.write) == "function") then
+        error("generator `#{module_name or }` is missing write function")
+      end
+      return tpl.write(writer, unpack(template_args))
+    end
+  }
+}
+local CommandRunner
 do
   local _class_0
   local _base_0 = {
@@ -59,11 +269,11 @@ do
     end,
     execute = function(self, args)
       args = self:parse_args(args)
-      local action = self:get_action(args.action)
+      local action = self:get_command(args.command)
       if action.context then
         assert(self:check_context(args.environment, action.context))
       end
-      local fn = assert(action[1], "action `" .. tostring(args.action) .. "' not implemented")
+      local fn = assert(action[1], "command `" .. tostring(args.command) .. "' not implemented")
       return fn(self, args)
     end,
     execute_safe = function(self, args)
@@ -110,19 +320,10 @@ do
       end
       return nil, "command not available for selected server (using " .. tostring(s.type) .. ", needs " .. tostring(table.concat(contexts, ", ")) .. ")"
     end,
-    get_action = function(self, name)
-      for k, v in ipairs(self.actions) do
+    get_command = function(self, name)
+      for k, v in ipairs(COMMANDS) do
         if v.name == name then
           return v
-        end
-        if v.aliases then
-          local _list_0 = v.aliases
-          for _index_0 = 1, #_list_0 do
-            local a = _list_0[_index_0]
-            if a == name then
-              return v
-            end
-          end
         end
       end
       local action
@@ -130,206 +331,7 @@ do
         action = require("lapis.cmd.actions." .. tostring(name))
       end)
       return action
-    end,
-    actions = {
-      {
-        name = "new",
-        help = "create a new lapis project in the current directory",
-        function(self, flags)
-          local server_actions
-          if flags.cqueues then
-            server_actions = require("lapis.cmd.cqueues.actions")
-          else
-            server_actions = require("lapis.cmd.nginx.actions")
-          end
-          server_actions.new(self, flags)
-          if flags.lua then
-            self:write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
-            self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
-          else
-            self:write_file_safe("app.moon", require("lapis.cmd.templates.app"))
-            self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
-          end
-          if flags.git then
-            self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(flags))
-          end
-          if flags.tup then
-            local tup_files = require("lapis.cmd.templates.tup")
-            for fname, content in pairs(tup_files) do
-              self:write_file_safe(fname, content)
-            end
-          end
-        end
-      },
-      {
-        name = "server",
-        aliases = {
-          "serve"
-        },
-        usage = "server [environment]",
-        help = "build config and start server",
-        function(self, flags)
-          local environment = flags.environment
-          return self:get_server_actions(environment).server(self, flags, environment)
-        end
-      },
-      {
-        name = "build",
-        usage = "build [environment]",
-        help = "build config, send HUP if server running",
-        context = {
-          "nginx"
-        },
-        function(self, flags)
-          local write_config_for
-          write_config_for = require("lapis.cmd.nginx").write_config_for
-          write_config_for(flags.environment)
-          local send_hup
-          send_hup = require("lapis.cmd.nginx").send_hup
-          local pid = send_hup()
-          if pid then
-            return print(colors("%{green}HUP " .. tostring(pid)))
-          end
-        end
-      },
-      {
-        name = "hup",
-        hidden = true,
-        help = "send HUP signal to running server",
-        context = {
-          "nginx"
-        },
-        function(self)
-          local send_hup
-          send_hup = require("lapis.cmd.nginx").send_hup
-          local pid = send_hup()
-          if pid then
-            return print(colors("%{green}HUP " .. tostring(pid)))
-          else
-            return self:fail_with_message("failed to find nginx process")
-          end
-        end
-      },
-      {
-        name = "term",
-        help = "sends TERM signal to shut down a running server",
-        context = {
-          "nginx"
-        },
-        function(self)
-          local send_term
-          send_term = require("lapis.cmd.nginx").send_term
-          local pid = send_term()
-          if pid then
-            return print(colors("%{green}TERM " .. tostring(pid)))
-          else
-            return self:fail_with_message("failed to find nginx process")
-          end
-        end
-      },
-      {
-        name = "signal",
-        hidden = true,
-        help = "send arbitrary signal to running server",
-        context = {
-          "nginx"
-        },
-        function(self, flags, signal)
-          assert(signal, "Missing signal")
-          local send_signal
-          send_signal = require("lapis.cmd.nginx").send_signal
-          local pid = send_signal(signal)
-          if pid then
-            return print(colors("%{green}Sent " .. tostring(signal) .. " to " .. tostring(pid)))
-          else
-            return self:fail_with_message("failed to find nginx process")
-          end
-        end
-      },
-      {
-        name = "exec",
-        usage = "exec <lua-string> [environment]",
-        help = "execute Lua on the server",
-        context = {
-          "nginx"
-        },
-        function(self, flags)
-          local attach_server, get_pid
-          do
-            local _obj_0 = require("lapis.cmd.nginx")
-            attach_server, get_pid = _obj_0.attach_server, _obj_0.get_pid
-          end
-          if not (get_pid()) then
-            print(colors("%{green}Using temporary server..."))
-          end
-          local server = attach_server(flags.environment)
-          print(server:exec(flags.code))
-          return server:detach()
-        end
-      },
-      {
-        name = "migrate",
-        usage = "migrate [environment]",
-        help = "run migrations",
-        function(self, flags)
-          local env = require("lapis.environment")
-          env.push(flags.environment, {
-            show_queries = true
-          })
-          local migrations = require("lapis.db.migrations")
-          migrations.run_migrations(require("migrations"), nil, {
-            transaction = (function()
-              local _exp_0 = flags.transaction
-              if true == _exp_0 then
-                return "global"
-              elseif "global" == _exp_0 or "individual" == _exp_0 then
-                return flags.transaction
-              elseif nil == _exp_0 then
-                return nil
-              else
-                return error("Got unknown --transaction setting")
-              end
-            end)()
-          })
-          return env.pop()
-        end
-      },
-      {
-        name = "generate",
-        usage = "generate <template> [args...]",
-        help = "generates a new file from template",
-        function(self, flags)
-          local template_name, template_args
-          template_name, template_args = flags.template_name, flags.template_args
-          local tpl, module_name
-          pcall(function()
-            module_name = "generators." .. tostring(template_name)
-            tpl = require(module_name)
-          end)
-          if not (tpl) then
-            tpl = require("lapis.cmd.templates." .. tostring(template_name))
-          end
-          if not (type(tpl) == "table") then
-            error("invalid generator `" .. tostring(module_name or template_name) .. "`, module must be table")
-          end
-          local writer = {
-            write = function(_, ...)
-              return assert(self:write_file_safe(...))
-            end,
-            mod_to_path = function(self, mod)
-              return mod:gsub("%.", "/")
-            end
-          }
-          if tpl.check_args then
-            tpl.check_args(unpack(template_args))
-          end
-          if not (type(tpl.write) == "function") then
-            error("generator `#{module_name or }` is missing write function")
-          end
-          return tpl.write(writer, unpack(template_args))
-        end
-      }
-    }
+    end
   }
   _base_0.__index = _base_0
   _class_0 = setmetatable({
@@ -338,7 +340,7 @@ do
       self.path = self.path:annotate()
     end,
     __base = _base_0,
-    __name = "Actions"
+    __name = "CommandRunner"
   }, {
     __index = _base_0,
     __call = function(cls, ...)
@@ -348,14 +350,14 @@ do
     end
   })
   _base_0.__class = _class_0
-  Actions = _class_0
+  CommandRunner = _class_0
 end
-local actions = Actions()
+local actions = CommandRunner()
 return {
   actions = actions,
   get_action = (function()
     local _base_0 = actions
-    local _fn_0 = _base_0.get_action
+    local _fn_0 = _base_0.get_command
     return function(...)
       return _fn_0(_base_0, ...)
     end

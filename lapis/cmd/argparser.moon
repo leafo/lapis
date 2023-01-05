@@ -29,7 +29,7 @@ parser = argparse "lapis",
       "cqueues lua-http: not available"
   }, "\n"
 
-parser\command_target "action"
+parser\command_target "command"
 parser\add_help_command!
 
 parser\option("--environment", "Override the default environment")\default default_environment!

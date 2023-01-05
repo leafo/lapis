@@ -37,7 +37,7 @@ local parser = argparse("lapis", table.concat({
     end
   end)()
 }, "\n"))
-parser:command_target("action")
+parser:command_target("command")
 parser:add_help_command()
 parser:option("--environment", "Override the default environment"):default(default_environment())
 parser:flag("--trace", "Show full error trace if lapis command fails")
