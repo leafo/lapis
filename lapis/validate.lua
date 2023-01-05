@@ -127,6 +127,22 @@ validate = function(object, validations, opts)
 end
 local assert_valid
 assert_valid = function(object, validations)
+  if type(validations) == "table" and type(validations.transform) == "function" then
+    local result, err_or_state = validations:transform(object)
+    if result == nil and err_or_state then
+      local errors
+      if type(err_or_state) == "string" then
+        errors = {
+          err_or_state
+        }
+      else
+        errors = err_or_state
+      end
+      coroutine.yield("error", errors)
+      error("assert_valid was not captured: " .. tostring(table.concat(errors, ", ")))
+    end
+    return result, err_or_state
+  end
   local errors = validate(object, validations)
   if errors then
     coroutine.yield("error", errors)

@@ -107,17 +107,84 @@ describe "lapis.validate", ->
     it "should match", ->
       errors = validate o, input
       assert.same errors, output
-  
+
   it "should get key with error", ->
     errors = validate o, {
       { "age", exists: true }
       { "name", exists: true }
       { "rupture", exists: true, "rupture is required" }
     }, {keys: true }
+
     assert.same errors, {
       age: "age must be provided",
       rupture: "rupture is required"
     }
+
+  describe "assert_valid", ->
+    it "throws error", ->
+      import assert_valid from require "lapis.validate"
+
+      assert.same {
+        "thing must be provided"
+      }, run_with_errors ->
+        assert_valid { }, {
+          {"thing", exists: true}
+        }
+
+    it "passes on valid input", ->
+      import assert_valid from require "lapis.validate"
+
+      done = false
+
+      assert.same nil, run_with_errors ->
+        assert_valid {
+          thing: "cool"
+        }, {
+          {"thing", exists: true}
+        }
+
+        done = true
+
+      assert.true done
+
+    it "operates on tableshape type", ->
+      import assert_valid from require "lapis.validate"
+      types = require "lapis.validate.types"
+
+      assert.same {
+       'id: expected database ID integer'
+       'name: expected text between 1 and 10 characters'
+      }, run_with_errors ->
+        res = assert_valid {}, types.params_shape {
+          {"id", types.db_id}
+          {"name", types.limited_text 10 }
+        }
+
+        error "should not get here..."
+
+      done = false
+      assert.same nil, run_with_errors ->
+        res, state = assert_valid {
+          id: "15"
+          name: "Deep"
+        }, types.params_shape {
+          {"id", types.db_id\tag "cool" }
+          {"name", types.limited_text(10) / (s) -> "-#{s}-" }
+        }
+
+        assert.same {
+          id: 15
+          name: "-Deep-"
+        }, res
+
+        assert.same {
+          cool: 15
+        }, state
+
+        done = true
+
+      assert done
+
 
 describe "lapis.validate.types", ->
   it "creates assert type", ->
@@ -212,7 +279,7 @@ describe "lapis.validate.types", ->
           [[two: expected type "string", got "nil"]]
         }
       }, { test_object {} }
- 
+
       assert.same {
         nil
         {
@@ -413,7 +480,7 @@ params type {
         }, {
           valid_text\transform "\008\000umm\127and\200f"
         }
-   
+
     describe "trimmed_text", ->
       import trimmed_text from require "lapis.validate.types"
 

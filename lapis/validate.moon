@@ -91,6 +91,21 @@ validate = (object, validations, opts={}) ->
   next(errors) and errors
 
 assert_valid = (object, validations) ->
+  -- if validations is like a tableshape checker, call it directly
+  if type(validations) == "table" and type(validations.transform) == "function"
+    result, err_or_state = validations\transform object
+
+    if result == nil and err_or_state
+      errors = if type(err_or_state) == "string"
+        {err_or_state}
+      else
+        err_or_state
+
+      coroutine.yield "error", errors
+      error "assert_valid was not captured: #{table.concat errors, ", "}"
+
+    return result, err_or_state
+
   errors = validate object, validations
   if errors
     coroutine.yield "error", errors
