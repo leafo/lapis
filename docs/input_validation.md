@@ -7,11 +7,6 @@ Any parameters that are sent to your application should be treated as untrusted
 input. It is your responsibility to verify that the inputs match some expected
 format before you use them directly in your models and application logic.
 
-The Lapis validation module helps you ensure that inputs are correct and safe
-before you start using them. Validation is aslo able to cleaning up malformed
-text, like removing unnecessary whitespace, broken UTF8 sequences, or clearing
-out empty strings.
-
 Some common types of inputs that web application developers often forget to
 verify:
 
@@ -23,10 +18,15 @@ verify:
 * Inputs that are outside the domain of a smaller set of pre-existing options (eg. a value for an enum)
 * Incorrectly treating an empty string as a provided value
 
+The Lapis validation module helps you ensure that inputs are correct and safe
+before you start using them. Validation is also able to *transform* malformed
+input to turn it into something usable, eg. stripping whitespace from the start
+and end of a string.
+
 > Lapis is currently introducing a new validation system based around
-> [tableshape](https://github.com/leafo/tableshape). The legacy validation
+> [Tableshape](https://github.com/leafo/tableshape). The legacy validation
 > functions will remain unchanged until further notice, but we recommend using
-> the tableshape validation when possible.
+> the Tableshape validation when possible.
 
 ## Tableshape Validation
 
@@ -40,7 +40,7 @@ Lapis provides a handful of Tableshape compatible types and type constructors
 for the validation of request parameters.
 
 Tableshape is not installed by default as a dependency of Lapis. In order to
-use the tableshape powered validation types you must install tableshape:
+use the Tableshape powered validation types you must install Tableshape:
 
 ```bash
 $ luarocks install tableshape
@@ -54,17 +54,17 @@ moon = [[types = require "lapis.validate.types"]]
 
 > The `lapis.validate.types` module has its `__index` metamethod set to the
 > `types` object of the `tableshape` module. This enables access to any
-> tableshape type directly from the Lapis module without having to import both.
+> Tableshape type directly from the Lapis module without having to import both.
 > Any types used in the examples below that are not directly documented are
-> types provided by tableshape (eg. `types.string` is a type provided by
-> tableshape that verifies a value such that `type(value) == "string"`).
+> types provided by Tableshape (eg. `types.string` is a type provided by
+> Tableshape that verifies a value such that `type(value) == "string"`).
 
 
 ### `with_params(t, fn)`
 
 The `with_params` is a helper function for wrapping an action function such
 that it only runs if fields from $self_ref{"params"} can be validated. The
-validated paramter table is passed as the the first argument to `fn`.
+validated parameter table is passed as the first argument to `fn`.
 
 > $self_ref{"params"} is left unchanged. This enables the calling of nested
 > functions that use `with_params` to work with other sets of parameters
@@ -72,7 +72,7 @@ validated paramter table is passed as the the first argument to `fn`.
 It returns a new function that is designed to be called with a *request object*
 as the first argument.
 
-The argument, `t`, can either be a tableshape type, or it can be a plain Lua
+The argument, `t`, can either be a Tableshape type, or it can be a plain Lua
 table that will be converted into a type using `types.params_shape(t)`.
 
 
@@ -94,6 +94,7 @@ class App extends lapis.Application
 lua = [[
 local lapis = require "lapis"
 local capture_errors_json = require("lapis.application").capture_errors_json
+local with_params = require("lapis.validate").with_params
 
 local app = lapis.Application()
 
@@ -114,11 +115,11 @@ then an error is raised for the nearest `capture_errors`. In the example above,
 
 ### Type Constructors
 
-#### `types.params_shape(param_spec, opts)`
+#### `types.params_shape(param_spec, [opts])`
 
 Creates a type checker that is suitable for extracting validated values from a
 parameters objects (or any other plain Lua table). `params_shape` is similar
-to `types.shape` from tableshape with a few key differences:
+to `types.shape` from Tableshape with a few key differences:
 
 * Fields to verify are specified in an array of tuples, values are checked in the order they provided.
 * Any excess fields that are not explicitly specified within `param_spec` do not generate an error, and are left out of the transformed result.
@@ -126,7 +127,7 @@ to `types.shape` from tableshape with a few key differences:
 * The formatting of error messages can be customized.
 
 `types.params_shape` is designed to be used with the transform API of
-tableshape. The resulting transformed object is a validated table of
+Tableshape. The resulting transformed object is a validated table of
 parameters.
 
 `param_spec` is an array of parameter specification objects object, the
@@ -177,7 +178,7 @@ Each item in `params_spec` is a Lua table that matches the following format:
     {"field_name", type_checker, additional_options...}
 
 `field_name` must be a string, `type_checker` must be an instance of a
-tableshape type checker.
+Tableshape type checker.
 
 Additional options are provided as hash table properties of the table. The
 following options are supported:
@@ -197,14 +198,13 @@ $options_table{
   }
 }
 
-
 #### `types.assert_error(t)`
 
-Wraps tableshape type checker to yield an error when checking/transforming
+Wraps a Tableshape type checker to yield an error when checking/transforming
 fails. The yielded error is compatible with Lapis error handling (eg.
 `assert_error` & `capture_errors`).
 
-This can be used to simplify code paths, as it is no longer necessarry to check
+This can be used to simplify code paths, as it is no longer necessary to check
 for the error case when validating an input since the error will be passed up
 the stack to the enclosing `capture_errors`.
 
@@ -253,7 +253,7 @@ types.empty\transform nil --> nil
 > value with `types.empty` and only checking the first return value may not be
 > desirable.  The transform method can be combined with a type check to ensure
 > an empty value is provided. When using nested type checkers, like
-> `types.shape` and `table.params_shape`, tableshape is aware of this
+> `types.shape` and `table.params_shape`, Tableshape is aware of this
 > distinction and no additional code is necessary.
 >
 > $dual_code{
@@ -264,13 +264,13 @@ if types.empty some_value
   result = types.empty\transform some_value
 ]]
 }
-> Alternatively, `types.assert` or `types.assert_error` can be used to guarante
-> the value matches the type checker
+> Alternatively, `types.assert` or `types.assert_error` can be used to
+> guarantee the value matches the type checker
 
 #### `types.valid_text`
 
 Matches a string that is valid UTF8. Invalid characters sequences or
-unprintable charactres will cause validation to valid.
+unprintable characters will cause validation to valid.
 
 $dual_code{
 moon = [[
@@ -287,7 +287,7 @@ types.valid_text("hel\0o") --> nil, "expected valid text"
 #### `types.cleaned_text`
 
 Matches a string, transforms it such that any invalid UTF8 sequences and
-non-printable charactres are stripped (eg removing `null` bytes)
+non-printable characters are stripped (eg removing `null` bytes)
 
 $dual_code{
 moon = [[
@@ -455,7 +455,7 @@ check_status:transform(5) --> nil, "expected enum(default, banned, deleted)"
 ## Assert Valid
 
 > **This is the legacy validation system.** Due to shortcomings addressed by
-> the tableshape validation system, it is not recommended to `assert_valid` and
+> the Tableshape validation system, it is not recommended to `assert_valid` and
 > related functions any more
 
 The `assert_valid` function is Lapis's legacy validation framework. It provides
