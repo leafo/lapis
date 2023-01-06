@@ -115,7 +115,7 @@ COMMANDS = {
     context: { "nginx" }
 
     argparse: (command) ->
-      command\argument "signal", "Signal to send, eg. TERM, SIGHUP, etc."
+      command\argument "signal", "Signal to send, eg. TERM, HUP, etc."
 
     (args) =>
       {:signal} = args
@@ -170,6 +170,8 @@ COMMANDS = {
     (args) =>
       env = require "lapis.environment"
       env.push args.environment, show_queries: true
+
+      print colors "%{bright yellow}Running migrations for environment:%{reset} #{args.environment}"
 
       migrations = require "lapis.db.migrations"
       migrations.run_migrations require(args.migrations_module), nil, {

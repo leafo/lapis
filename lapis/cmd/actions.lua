@@ -120,7 +120,7 @@ local COMMANDS = {
       "nginx"
     },
     argparse = function(command)
-      return command:argument("signal", "Signal to send, eg. TERM, SIGHUP, etc.")
+      return command:argument("signal", "Signal to send, eg. TERM, HUP, etc.")
     end,
     function(self, args)
       local signal
@@ -188,6 +188,7 @@ local COMMANDS = {
       env.push(args.environment, {
         show_queries = true
       })
+      print(colors("%{bright yellow}Running migrations for environment:%{reset} " .. tostring(args.environment)))
       local migrations = require("lapis.db.migrations")
       migrations.run_migrations(require(args.migrations_module), nil, {
         transaction = args.transaction

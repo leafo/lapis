@@ -16,12 +16,9 @@ filename = function(name)
 end
 local spec_types = {
   models = function(name)
-    return [[import use_test_env from require "lapis.spec"
-import truncate_tables from require "lapis.spec.db"
+    return [[import truncate_tables from require "lapis.spec.db"
 
 describe "]] .. name .. [[", ->
-  use_test_env!
-
   before_each ->
 
   it "should ...", ->
