@@ -1,25 +1,51 @@
 
-check_args = (name, more) ->
-  error "model template takes arguments: name" unless name
+argparser = ->
+  with require("argparse") "lapis generate model", "Generates an empty model and places it in models_dir"
+    \argument("model_name", "The name of the model (eg. users, posts, daily_views)")\convert (name) ->
+      if name\match "%u"
+        return nil, "model name should be underscore form, all lowercase.\nUse --class-name to set the generated class name"
 
-  if name\match "%u"
-    error "name should be underscore form, all lowercase"
+      name
 
-  if more
-    error "got a second argument to generator, did you mean to pass a string?"
+    \option("--class-name", "Override the generated class name. Defauls to camelize(model_name)")\argname "<name>"
+    \option("--models-dir", "The directory where the model file is written")\argname("<dir>")\default "models"
 
-filename = (name) ->
-  "models/#{name}.moon"
+    \mutex(
+      \flag "--lua", "Force output to be Lua"
+      \flag "--moonscript --moon", "Force output to be MoonScript"
+    )
 
-write = (writer, name) ->
-  import camelize from require "lapis.util"
-  class_name = camelize name
+write = (writer, args) ->
+  class_name = if args.class_name
+    args.class_name
+  else
+    import camelize from require "lapis.util"
+    camelize args.model_name
 
-  writer\write filename(name), [[db = require "lapis.db"
+  output_language = if args.lua
+    "lua"
+  elseif args.moonscript
+    "moonscript"
+  else
+    writer.default_language
+
+  output_name = "#{args.models_dir}/#{args.model_name}"
+
+  switch output_language
+    when "lua"
+      writer\write "#{output_name}.lua", [[
+local Model = require("lapis.db.model").Model
+local ]] .. class_name .. [[ = Model:extend("]] .. args.model_name ..[[")
+
+return ]] .. class_name .. [[
+]]
+    when "moonscript"
+      writer\write "#{output_name}.moon", [[
+db = require "lapis.db"
 import Model from require "lapis.db.model"
 
 class ]] .. class_name .. [[ extends Model
 ]]
 
-{:check_args, :write}
+{:check_args, :write, :argparser}
 
