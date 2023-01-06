@@ -521,14 +521,14 @@ local command_runner = CommandRunner()
 return {
   command_runner = command_runner,
   get_command = (function()
-    local _base_0 = actions
+    local _base_0 = command_runner
     local _fn_0 = _base_0.get_command
     return function(...)
       return _fn_0(_base_0, ...)
     end
   end)(),
   execute = (function()
-    local _base_0 = actions
+    local _base_0 = command_runner
     local _fn_0 = _base_0.execute_safe
     return function(...)
       return _fn_0(_base_0, ...)

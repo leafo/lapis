@@ -445,8 +445,8 @@ command_runner = CommandRunner!
 
 {
   :command_runner
-  get_command: actions\get_command
 
-  execute: actions\execute_safe
+  get_command: command_runner\get_command
+  execute: command_runner\execute_safe
 }
 
