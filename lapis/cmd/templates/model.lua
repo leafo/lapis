@@ -15,7 +15,7 @@ argparser = function()
   end
 end
 local write
-write = function(writer, args)
+write = function(self, args)
   local class_name
   if args.class_name then
     class_name = args.class_name
@@ -30,17 +30,17 @@ write = function(writer, args)
   elseif args.moonscript then
     output_language = "moonscript"
   else
-    output_language = writer.default_language
+    output_language = self.default_language
   end
   local output_name = tostring(args.models_dir) .. "/" .. tostring(args.model_name)
   local _exp_0 = output_language
   if "lua" == _exp_0 then
-    return writer:write(tostring(output_name) .. ".lua", [[local Model = require("lapis.db.model").Model
+    return self:write(tostring(output_name) .. ".lua", [[local Model = require("lapis.db.model").Model
 local ]] .. class_name .. [[ = Model:extend("]] .. args.model_name .. [[")
 
 return ]] .. class_name .. [[]])
   elseif "moonscript" == _exp_0 then
-    return writer:write(tostring(output_name) .. ".moon", [[db = require "lapis.db"
+    return self:write(tostring(output_name) .. ".moon", [[db = require "lapis.db"
 import Model from require "lapis.db.model"
 
 class ]] .. class_name .. [[ extends Model
@@ -48,7 +48,6 @@ class ]] .. class_name .. [[ extends Model
   end
 end
 return {
-  check_args = check_args,
   write = write,
   argparser = argparser
 }

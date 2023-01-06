@@ -15,7 +15,7 @@ argparser = ->
       \flag "--moonscript --moon", "Force output to be MoonScript"
     )
 
-write = (writer, args) ->
+write = (args) =>
   class_name = if args.class_name
     args.class_name
   else
@@ -27,25 +27,25 @@ write = (writer, args) ->
   elseif args.moonscript
     "moonscript"
   else
-    writer.default_language
+    @default_language
 
   output_name = "#{args.models_dir}/#{args.model_name}"
 
   switch output_language
     when "lua"
-      writer\write "#{output_name}.lua", [[
+      @write "#{output_name}.lua", [[
 local Model = require("lapis.db.model").Model
 local ]] .. class_name .. [[ = Model:extend("]] .. args.model_name ..[[")
 
 return ]] .. class_name .. [[
 ]]
     when "moonscript"
-      writer\write "#{output_name}.moon", [[
+      @write "#{output_name}.moon", [[
 db = require "lapis.db"
 import Model from require "lapis.db.model"
 
 class ]] .. class_name .. [[ extends Model
 ]]
 
-{:check_args, :write, :argparser}
+{:write, :argparser}
 
