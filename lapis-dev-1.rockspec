@@ -16,6 +16,7 @@ dependencies = {
   "lua",
 
   "ansicolors",
+  "argparse",
   "date",
   "etlua",
   "loadkit",
