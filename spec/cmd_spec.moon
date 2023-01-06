@@ -2,6 +2,17 @@
 nginx = require "lapis.cmd.nginx"
 
 describe "lapis.cmd.nginx", ->
+  local snapshot
+
+  before_each ->
+    snapshot = assert\snapshot!
+
+    stub(os, "exit").invokes (status) ->
+      error "os.exit was called unexpectedly: #{exit_code}"
+
+  after_each ->
+    snapshot\revert!
+
   it "should compile config", ->
     tpl = [[
 hello: ${{some_var}}]]
@@ -75,34 +86,39 @@ hello: what's up]], compiled
     assert.same "env LAPIS_ENVIRONMENT;\nthing: #{val}", compiled
 
 describe "lapis.cmd.actions", ->
-  import get_action, execute from require "lapis.cmd.actions"
+  import get_command, command_runner, execute from require "lapis.cmd.actions"
+
+  it "builds the command parser", ->
+    parser = command_runner\build_parser!
+    assert.same {false, "a command is required"}, { parser\pparse {} }
 
   it "gets built in action", ->
-    action = get_action "help"
-    assert.same "help", action.name
-
-  it "gets aliased action", ->
-    action = get_action "serve"
-    assert.same "server", action.name
+    command = get_command "new"
+    assert.same "new", command.name
 
   it "gets nil for invalid action", ->
-    action = get_action "wazzupf2323"
-    assert.same nil, action
-
-  it "gets action from module", ->
-    package.loaded["lapis.cmd.actions.cool"] = {
-      name: "cool"
-      ->
-    }
-
-    action = get_action "cool"
-    assert.same "cool", action.name
+    command = get_command "wazzupf2323"
+    assert.same nil, command
 
   it "executes help", ->
-    p = _G.print
-    _G.print = ->
-    execute {"help"}
-    _G.print = p
+    local exit_status
+
+    stub(os, "exit").invokes (status) ->
+      exit_status = status
+      coroutine.yield "os.exit"
+
+    output = {}
+
+    s_print = stub(_G, "print").invokes (...) ->
+      table.insert output, table.concat {...}, "\t"
+
+    assert.same "os.exit", coroutine.wrap(-> execute {"help"})!
+    print\revert!
+
+    output = table.concat output, "\n"
+
+    assert.same 0, exit_status
+    assert output\match "Options:"
 
 
 describe "lapis.cmd.actions.execute", ->
@@ -114,7 +130,7 @@ describe "lapis.cmd.actions.execute", ->
   before_each ->
     cmd = require "lapis.cmd.actions"
     -- replace the annotated path with silent one
-    cmd.actions.path = require "lapis.cmd.path"
+    cmd.command_runner.path = require "lapis.cmd.path"
 
     old_dir = lfs.currentdir!
 
@@ -166,13 +182,6 @@ describe "lapis.cmd.actions.execute", ->
 
     it "etlua config", ->
       cmd.execute { [0]: "lapis", "new", "--etlua-config" }
-
-      assert_files {
-        "app.moon", "mime.types", "models.moon", "nginx.conf.etlua"
-      }
-
-    it "command line flags can go anywhere", ->
-      cmd.execute { [0]: "lapis", "--etlua-config", "new" }
 
       assert_files {
         "app.moon", "mime.types", "models.moon", "nginx.conf.etlua"
