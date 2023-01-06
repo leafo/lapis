@@ -1,5 +1,5 @@
 
-import columnize, parse_flags, write_file_safe from require "lapis.cmd.util"
+import parse_flags from require "lapis.cmd.util"
 
 colors = require "ansicolors"
 
@@ -58,8 +58,7 @@ COMMANDS = {
       command\argument("environment")\args "?"
 
     (args) =>
-      {:environment} = args
-      @get_server_actions(environment).server @, args, environment
+      @get_server_actions(args.environment).server @, args
   }
 
   {
@@ -231,11 +230,23 @@ COMMANDS = {
     argparse: (command) ->
       with command
         \handle_options false
-        \argument("subcommand", "Which command module to load")
-        \argument("args", "Arguments to command")\args("*")
+        \argument("sub_command", "Which command module to load")\argname("<command>")
+        \argument("sub_command_args", "Arguments to command")\argname("<args>")\args("*")
 
-    => error "This command is not implemented yet"
+    (args) =>
+      action = require "lapis.cmd.actions.#{args.sub_command}"
+
+      -- this runs commands legacy style, from before argparse
+      import parse_flags from require "lapis.cmd.util"
+      flags, rest = parse_flags args.sub_command_args
+      flags.environment or= args.environment
+
+      action[1] @, flags, unpack rest
   }
+
+  -- NOTE: to simplify migration to argparse we are currently including the arg
+  -- spec for these modules within lapis directly, even though they are
+  -- separate installs
 
   {
     name: "systemd"
@@ -249,7 +260,9 @@ COMMANDS = {
         \argument("environment", "Environment to create service file for")\args "?"
         \flag "--install", "Installs the service file to the system, requires sudo permission"
 
-    => error "not yet"
+    (args) =>
+      action = require "lapis.cmd.actions.systemd"
+      action[1] @, args, args.sub_command, args.environment
   }
 
   {
@@ -261,8 +274,12 @@ COMMANDS = {
     argparse: (command) ->
       with command
         \argument("files", "Paths to model classes to annotate (eg. models/first.moon models/second.moon ...)")\args "+"
+        \option("--preload-module", "Module to require before annotating a model")\argname "<name>"
 
-    => error "not yet"
+    (args) =>
+      action = require "lapis.cmd.actions.annotate"
+      args["preload-module"] = args.preload_module
+      action[1] @, args, unpack args.files
   }
 }
 
@@ -355,7 +372,6 @@ class CommandRunner
     @path.write_file file, content
     true
 
-
   parse_args: (args) =>
     args = {i, a for i, a in pairs(args) when type(i) == "number" and i > 0}
     parser = @build_parser!
@@ -368,6 +384,8 @@ class CommandRunner
   execute: (args) =>
     args = @parse_args args
     action = @get_command args.command
+
+    assert action, "Failed to find command: #{args.command}"
 
     -- verify that we have suitable server install to run the environment
     if action.context
@@ -398,9 +416,12 @@ class CommandRunner
         os.exit 1
     )
 
+
+  get_config: (environment) =>
+    require("lapis.config").get environment
+
   get_server_type: (environment) =>
-    config = require("lapis.config").get environment
-    (assert config.server, "failed to get server type from config (did you set `server`?)")
+    (assert @get_config(environment).server, "Failed to get server type from config (did you set `server`?)")
 
   get_server_module: (environment) =>
     require "lapis.cmd.#{@get_server_type environment}"
@@ -409,7 +430,7 @@ class CommandRunner
     require "lapis.cmd.#{@get_server_type environment}.actions"
 
   check_context: (environment, contexts) =>
-    s = @get_server_module!
+    s = @get_server_module environment
 
     for c in *contexts
       return true if c == s.type
@@ -420,18 +441,12 @@ class CommandRunner
     for k,v in ipairs COMMANDS
       return v if v.name == name
 
-    -- no match, try loading command by module name
-    local action
-    pcall ->
-      action = require "lapis.cmd.actions.#{name}"
-
-    action
-
-actions = CommandRunner!
+command_runner = CommandRunner!
 
 {
-  :actions
-  get_action: actions\get_command
+  :command_runner
+  get_command: actions\get_command
+
   execute: actions\execute_safe
 }
 

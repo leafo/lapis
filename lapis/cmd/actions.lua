@@ -1,8 +1,5 @@
-local columnize, parse_flags, write_file_safe
-do
-  local _obj_0 = require("lapis.cmd.util")
-  columnize, parse_flags, write_file_safe = _obj_0.columnize, _obj_0.parse_flags, _obj_0.write_file_safe
-end
+local parse_flags
+parse_flags = require("lapis.cmd.util").parse_flags
 local colors = require("ansicolors")
 local unpack = unpack or table.unpack
 local COMMANDS = {
@@ -56,9 +53,7 @@ local COMMANDS = {
       return command:argument("environment"):args("?")
     end,
     function(self, args)
-      local environment
-      environment = args.environment
-      return self:get_server_actions(environment).server(self, args, environment)
+      return self:get_server_actions(args.environment).server(self, args)
     end
   },
   {
@@ -250,13 +245,17 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:handle_options(false)
-        _with_0:argument("subcommand", "Which command module to load")
-        _with_0:argument("args", "Arguments to command"):args("*")
+        _with_0:argument("sub_command", "Which command module to load"):argname("<command>")
+        _with_0:argument("sub_command_args", "Arguments to command"):argname("<args>"):args("*")
         return _with_0
       end
     end,
-    function(self)
-      return error("This command is not implemented yet")
+    function(self, args)
+      local action = require("lapis.cmd.actions." .. tostring(args.sub_command))
+      parse_flags = require("lapis.cmd.util").parse_flags
+      local flags, rest = parse_flags(args.sub_command_args)
+      flags.environment = flags.environment or args.environment
+      return action[1](self, flags, unpack(rest))
     end
   },
   {
@@ -278,8 +277,9 @@ local COMMANDS = {
         return _with_0
       end
     end,
-    function(self)
-      return error("not yet")
+    function(self, args)
+      local action = require("lapis.cmd.actions.systemd")
+      return action[1](self, args, args.sub_command, args.environment)
     end
   },
   {
@@ -294,11 +294,14 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:argument("files", "Paths to model classes to annotate (eg. models/first.moon models/second.moon ...)"):args("+")
+        _with_0:option("--preload-module", "Module to require before annotating a model"):argname("<name>")
         return _with_0
       end
     end,
-    function(self)
-      return error("not yet")
+    function(self, args)
+      local action = require("lapis.cmd.actions.annotate")
+      args["preload-module"] = args.preload_module
+      return action[1](self, args, unpack(args.files))
     end
   }
 }
@@ -434,6 +437,7 @@ do
     execute = function(self, args)
       args = self:parse_args(args)
       local action = self:get_command(args.command)
+      assert(action, "Failed to find command: " .. tostring(args.command))
       if action.context then
         assert(self:check_context(args.environment, action.context))
       end
@@ -464,9 +468,11 @@ do
         return os.exit(1)
       end)
     end,
+    get_config = function(self, environment)
+      return require("lapis.config").get(environment)
+    end,
     get_server_type = function(self, environment)
-      local config = require("lapis.config").get(environment)
-      return (assert(config.server, "failed to get server type from config (did you set `server`?)"))
+      return (assert(self:get_config(environment).server, "Failed to get server type from config (did you set `server`?)"))
     end,
     get_server_module = function(self, environment)
       return require("lapis.cmd." .. tostring(self:get_server_type(environment)))
@@ -475,7 +481,7 @@ do
       return require("lapis.cmd." .. tostring(self:get_server_type(environment)) .. ".actions")
     end,
     check_context = function(self, environment, contexts)
-      local s = self:get_server_module()
+      local s = self:get_server_module(environment)
       for _index_0 = 1, #contexts do
         local c = contexts[_index_0]
         if c == s.type then
@@ -490,11 +496,6 @@ do
           return v
         end
       end
-      local action
-      pcall(function()
-        action = require("lapis.cmd.actions." .. tostring(name))
-      end)
-      return action
     end
   }
   _base_0.__index = _base_0
@@ -516,10 +517,10 @@ do
   _base_0.__class = _class_0
   CommandRunner = _class_0
 end
-local actions = CommandRunner()
+local command_runner = CommandRunner()
 return {
-  actions = actions,
-  get_action = (function()
+  command_runner = command_runner,
+  get_command = (function()
     local _base_0 = actions
     local _fn_0 = _base_0.get_command
     return function(...)
