@@ -136,9 +136,9 @@ do
     __init = function(self, runner)
       self.runner = runner
       if not (self.runner) then
-        local actions
-        actions = require("lapis.cmd.actions").actions
-        local _exp_0 = actions:get_server_type()
+        local command_runner
+        command_runner = require("lapis.cmd.actions").command_runner
+        local _exp_0 = command_runner:get_server_type()
         if "cqueues" == _exp_0 then
           self.runner = require("lapis.cmd.cqueues").runner
         else

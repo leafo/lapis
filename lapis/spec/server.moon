@@ -12,8 +12,9 @@ class SpecServer
 
   new: (@runner) =>
     unless @runner
-      import actions from require("lapis.cmd.actions")
-      @runner = switch actions\get_server_type!
+      -- this loads the runner for the default_environment's config
+      import command_runner from require("lapis.cmd.actions")
+      @runner = switch command_runner\get_server_type!
         when "cqueues"
           require("lapis.cmd.cqueues").runner
         else
