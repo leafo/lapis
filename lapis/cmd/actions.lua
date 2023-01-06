@@ -2,6 +2,18 @@ local parse_flags
 parse_flags = require("lapis.cmd.util").parse_flags
 local colors = require("ansicolors")
 local unpack = unpack or table.unpack
+local default_language
+default_language = function()
+  do
+    local f = io.open("config.moon")
+    if f then
+      f:close()
+      return "moonscript"
+    else
+      return "lua"
+    end
+  end
+end
 local COMMANDS = {
   {
     name = "new",
@@ -202,16 +214,22 @@ local COMMANDS = {
     argparse = function(command)
       do
         local _with_0 = command
+        _with_0:handle_options(false)
         _with_0:argument("template_name", "Which template to load (eg. model, flow)")
-        _with_0:argument("template_args", "Template arguments"):args("*")
-        _with_0:mutex(_with_0:flag("--moonscript --moon", "Prefer to generate MoonScript file when appropriate"), _with_0:flag("--lua", "Prefer to generate Lua file when appropriate"))
+        _with_0:argument("template_args", "Template arguments"):argname("<args>"):args("*")
         return _with_0
       end
     end,
     function(self, args)
-      local template_name, template_args
-      template_name, template_args = args.template_name, args.template_args
+      local template_name
+      template_name = args.template_name
       local tpl, module_name
+      if template_name == "--help" or template_name == "-h" then
+        return self:execute({
+          "help",
+          "generate"
+        })
+      end
       pcall(function()
         module_name = "generators." .. tostring(template_name)
         tpl = require(module_name)
@@ -220,21 +238,34 @@ local COMMANDS = {
         tpl = require("lapis.cmd.templates." .. tostring(template_name))
       end
       if not (type(tpl) == "table") then
-        error("invalid generator `" .. tostring(module_name or template_name) .. "`, module must be table")
+        error("invalid generator `" .. tostring(module_name or template_name) .. "`: module must be table")
+      end
+      if not (type(tpl.write) == "function") then
+        error("invalid generator `" .. tostring(module_name or template_name) .. "`: is missing write function")
       end
       local writer = {
         write = function(_, ...)
-          return assert(self:write_file_safe(...))
+          if os.getenv("LAPIS_GENERATE_STDOUT") then
+            io.stderr:write("Output: " .. tostring(select(1, ...)) .. "\n")
+            return print(select(2, ...))
+          else
+            return assert(self:write_file_safe(...))
+          end
         end,
         mod_to_path = function(self, mod)
           return mod:gsub("%.", "/")
-        end
+        end,
+        default_language = default_language()
       }
-      if tpl.check_args then
-        tpl.check_args(unpack(template_args))
-      end
-      if not (type(tpl.write) == "function") then
-        error("generator `#{module_name or }` is missing write function")
+      local template_args
+      if tpl.argparser then
+        local parse_args = tpl.argparser()
+        template_args = {
+          parse_args:parse(args.template_args)
+        }
+      elseif tpl.check_args then
+        tpl.check_args(unpack(args.template_args))
+        template_args = args.template_args
       end
       return tpl.write(writer, unpack(template_args))
     end

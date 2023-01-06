@@ -5,6 +5,13 @@ colors = require "ansicolors"
 
 unpack = unpack or table.unpack
 
+default_language = ->
+  if f = io.open "config.moon"
+    f\close!
+    "moonscript"
+  else
+    "lua"
+
 COMMANDS = {
   {
     name: "new"
@@ -187,19 +194,25 @@ COMMANDS = {
 
     argparse: (command) ->
       with command
+        \handle_options false
         \argument("template_name", "Which template to load (eg. model, flow)")
-        \argument("template_args", "Template arguments")\args("*")
-        \mutex(
-          \flag "--moonscript --moon", "Prefer to generate MoonScript file when appropriate"
-          \flag "--lua", "Prefer to generate Lua file when appropriate"
-        )
+        \argument("template_args", "Template arguments")\argname("<args>")\args("*")
 
+        -- Example to add language picking to a generators argparser function
+        -- \mutex(
+        --   \flag "--moonscript --moon", "Prefer to generate MoonScript file when appropriate"
+        --   \flag "--lua", "Prefer to generate Lua file when appropriate"
+        -- )
 
     (args) =>
-      {:template_name, :template_args} = args
+      {:template_name } = args
 
       local tpl, module_name
 
+      if template_name == "--help" or template_name == "-h"
+        return @execute {"help", "generate"}
+
+      -- Try to load the template from the local generators directory
       pcall ->
         module_name = "generators.#{template_name}"
         tpl = require module_name
@@ -208,19 +221,29 @@ COMMANDS = {
         tpl = require "lapis.cmd.templates.#{template_name}"
 
       unless type(tpl) == "table"
-        error "invalid generator `#{module_name or template_name}`, module must be table"
-
-      writer = {
-        write: (_, ...) -> assert @write_file_safe ...
-        mod_to_path: (mod) =>
-          mod\gsub "%.", "/"
-      }
-
-      if tpl.check_args
-        tpl.check_args unpack template_args
+        error "invalid generator `#{module_name or template_name}`: module must be table"
 
       unless type(tpl.write) == "function"
-        error "generator `#{module_name or }` is missing write function"
+        error "invalid generator `#{module_name or template_name}`: is missing write function"
+
+      writer = {
+        write: (_, ...) ->
+          if os.getenv "LAPIS_GENERATE_STDOUT"
+            io.stderr\write "Output: #{select 1, ...}\n"
+            print select 2, ...
+          else
+            assert @write_file_safe ...
+        mod_to_path: (mod) => mod\gsub "%.", "/"
+        default_language: default_language!
+      }
+
+      template_args = if tpl.argparser
+        parse_args = tpl.argparser!
+        -- we wrap it in a table to be unpacked when calling write
+        { parse_args\parse args.template_args }
+      elseif tpl.check_args
+        tpl.check_args unpack args.template_args
+        args.template_args
 
       tpl.write writer, unpack template_args
   }
