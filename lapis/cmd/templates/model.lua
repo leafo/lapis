@@ -36,7 +36,7 @@ write = function(self, args)
   local _exp_0 = output_language
   if "lua" == _exp_0 then
     return self:write(tostring(output_name) .. ".lua", [[local Model = require("lapis.db.model").Model
-local ]] .. class_name .. [[ = Model:extend("]] .. args.model_name .. [[")
+local ]] .. class_name .. [[, ]] .. class_name .. [[_mt = Model:extend("]] .. args.model_name .. [[")
 
 return ]] .. class_name .. [[]])
   elseif "moonscript" == _exp_0 then
