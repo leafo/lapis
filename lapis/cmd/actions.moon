@@ -12,6 +12,16 @@ default_language = ->
   else
     "lua"
 
+add_environment_argument = (command, summary) ->
+  with command\argument("environment", summary)
+    \args("?")
+    \target "_environment" -- needs to be different to avoid niling --environment
+    \action (args, name, val) ->
+      if val
+        if args.environment
+          error "You tried to set the environment twice. Use either --environment or the environment argument, not both"
+        args.environment = val
+
 COMMANDS = {
   {
     name: "new"
@@ -70,7 +80,7 @@ COMMANDS = {
     help: "Start the server from the current directory"
 
     argparse: (command) ->
-      command\argument("environment")\args "?"
+      add_environment_argument command
 
     (args) =>
       @get_server_actions(args.environment).server @, args
@@ -82,7 +92,7 @@ COMMANDS = {
     context: { "nginx" }
 
     argparse: (command) ->
-      command\argument("environment")\args "?"
+      add_environment_argument command
 
     (flags) =>
       import write_config_for from require "lapis.cmd.nginx"
@@ -175,8 +185,8 @@ COMMANDS = {
     help: "Run any outstanding migrations"
 
     argparse: (command) ->
+      add_environment_argument command
       with command
-        \argument("environment")\args "?"
         \option("--migrations-module", "Module to load for migrations")\argname("<module>")\default "migrations"
         \option("--transaction")\args("?")\choices({"global", "individual"})\action (args, name, val) ->
           -- flatten the table that's created from args("?")
@@ -287,7 +297,7 @@ COMMANDS = {
     argparse: (command) ->
       with command
         \argument("sub_command", "Sub command to execute")\choices {"service"}
-        \argument("environment", "Environment to create service file for")\args "?"
+        add_environment_argument command, "Environment to create service file for"
         \flag "--install", "Installs the service file to the system, requires sudo permission"
 
     (args) =>
@@ -334,11 +344,17 @@ class CommandRunner
 
       str
 
+    de = default_environment!
+
     parser = argparse "lapis",
       table.concat {
         "Control & create web applications written with Lapis"
         colors "Lapis: %{bright}#{require "lapis.version"}"
-        colors "Default environment: %{yellow}#{default_environment!}"
+        if de == "development"
+          colors "Default environment: %{yellow}#{de}"
+        else
+          colors "Default environment: %{bright green}#{de}"
+
         if nginx = find_nginx!
           colors "OpenResty: %{bright}#{nginx}"
         else
@@ -353,7 +369,8 @@ class CommandRunner
     parser\command_target "command"
     parser\add_help_command!
 
-    parser\option("--environment", "Override the default environment")\argname("<name>")\default default_environment!
+    parser\option("--environment", "Override the environment name")\argname("<name>")
+    parser\option("--config-module", "Override module name to require configuration from (default: config)")\argname("<name>")
     parser\flag "--trace", "Show full error trace if lapis command fails"
 
     for command_spec in *COMMANDS
@@ -418,6 +435,15 @@ class CommandRunner
     -- verify that we have suitable server install to run the environment
     if action.context
       assert @check_context args.environment, action.context
+
+    -- override the default config module if specified
+    if args.config_module
+      package.loaded["lapis.config_module_name"] = args.config_module
+
+
+    unless args.environment
+      import default_environment from require "lapis.environment"
+      args.environment = default_environment!
 
     fn = assert(action[1], "command `#{args.command}' not implemented")
     fn @, args

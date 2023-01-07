@@ -1,7 +1,7 @@
 
 import insert from table
 
-CONFIG_MODULE = "config"
+CONFIG_MODULE = package.loaded["lapis.config_module_name"] or "config"
 
 local *
 

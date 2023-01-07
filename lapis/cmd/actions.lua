@@ -14,6 +14,23 @@ default_language = function()
     end
   end
 end
+local add_environment_argument
+add_environment_argument = function(command, summary)
+  do
+    local _with_0 = command:argument("environment", summary)
+    _with_0:args("?")
+    _with_0:target("_environment")
+    _with_0:action(function(args, name, val)
+      if val then
+        if args.environment then
+          error("You tried to set the environment twice. Use either --environment or the environment argument, not both")
+        end
+        args.environment = val
+      end
+    end)
+    return _with_0
+  end
+end
 local COMMANDS = {
   {
     name = "new",
@@ -71,7 +88,7 @@ local COMMANDS = {
     },
     help = "Start the server from the current directory",
     argparse = function(command)
-      return command:argument("environment"):args("?")
+      return add_environment_argument(command)
     end,
     function(self, args)
       return self:get_server_actions(args.environment).server(self, args)
@@ -84,7 +101,7 @@ local COMMANDS = {
       "nginx"
     },
     argparse = function(command)
-      return command:argument("environment"):args("?")
+      return add_environment_argument(command)
     end,
     function(self, flags)
       local write_config_for
@@ -191,9 +208,9 @@ local COMMANDS = {
     name = "migrate",
     help = "Run any outstanding migrations",
     argparse = function(command)
+      add_environment_argument(command)
       do
         local _with_0 = command
-        _with_0:argument("environment"):args("?")
         _with_0:option("--migrations-module", "Module to load for migrations"):argname("<module>"):default("migrations")
         _with_0:option("--transaction"):args("?"):choices({
           "global",
@@ -308,7 +325,7 @@ local COMMANDS = {
         _with_0:argument("sub_command", "Sub command to execute"):choices({
           "service"
         })
-        _with_0:argument("environment", "Environment to create service file for"):args("?")
+        add_environment_argument(command, "Environment to create service file for")
         _with_0:flag("--install", "Installs the service file to the system, requires sudo permission")
         return _with_0
       end
@@ -361,10 +378,17 @@ do
         end)
         return str
       end
+      local de = default_environment()
       local parser = argparse("lapis", table.concat({
         "Control & create web applications written with Lapis",
         colors("Lapis: %{bright}" .. tostring(require("lapis.version"))),
-        colors("Default environment: %{yellow}" .. tostring(default_environment())),
+        (function()
+          if de == "development" then
+            return colors("Default environment: %{yellow}" .. tostring(de))
+          else
+            return colors("Default environment: %{bright green}" .. tostring(de))
+          end
+        end)(),
         (function()
           do
             local nginx = find_nginx()
@@ -388,7 +412,8 @@ do
       }, "\n"))
       parser:command_target("command")
       parser:add_help_command()
-      parser:option("--environment", "Override the default environment"):argname("<name>"):default(default_environment())
+      parser:option("--environment", "Override the environment name"):argname("<name>")
+      parser:option("--config-module", "Override module name to require configuration from (default: config)"):argname("<name>")
       parser:flag("--trace", "Show full error trace if lapis command fails")
       for _index_0 = 1, #COMMANDS do
         local _continue_0 = false
@@ -475,6 +500,14 @@ do
       assert(action, "Failed to find command: " .. tostring(args.command))
       if action.context then
         assert(self:check_context(args.environment, action.context))
+      end
+      if args.config_module then
+        package.loaded["lapis.config_module_name"] = args.config_module
+      end
+      if not (args.environment) then
+        local default_environment
+        default_environment = require("lapis.environment").default_environment
+        args.environment = default_environment()
       end
       local fn = assert(action[1], "command `" .. tostring(args.command) .. "' not implemented")
       return fn(self, args)

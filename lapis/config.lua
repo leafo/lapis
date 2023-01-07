@@ -1,6 +1,6 @@
 local insert
 insert = table.insert
-local CONFIG_MODULE = "config"
+local CONFIG_MODULE = package.loaded["lapis.config_module_name"] or "config"
 local config_cache, configs, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get
 config_cache = { }
 configs = { }
