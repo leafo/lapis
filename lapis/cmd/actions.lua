@@ -433,7 +433,6 @@ do
       end
     end,
     write_file_safe = function(self, file, content)
-      colors = require("ansicolors")
       if self.path.exists(file) then
         return nil, "file already exists: " .. tostring(file)
       end

@@ -242,6 +242,7 @@ COMMANDS = {
         -- we wrap it in a table to be unpacked when calling write
         { parse_args\parse args.template_args }
       elseif tpl.check_args
+        -- NOTE: check_args is deprecated and is only for backwards compatibility with old generators
         tpl.check_args unpack args.template_args
         args.template_args
 
@@ -387,8 +388,6 @@ class CommandRunner
       os.exit 1
 
   write_file_safe: (file, content) =>
-    colors = require "ansicolors"
-
     return nil, "file already exists: #{file}" if @path.exists file
 
     if prefix = file\match "^(.+)/[^/]+$"
