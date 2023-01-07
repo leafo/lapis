@@ -21,14 +21,14 @@ COMMANDS = {
     argparse: (command) ->
       with command
         \mutex(
+          \flag "--nginx", "Generate config for nginx server (default)"
           \flag "--cqueues", "Generate config for cqueues server"
-          \flag "--nginx", "Generate config for nginx server"
         )
         \mutex(
-          \flag "--lua", "Generate app template file in Lua"
+          \flag "--lua", "Generate app template file in Lua (defaul)"
           \flag "--moonscript --moon", "Generate app template file in MoonScript"
         )
-        \flag "--etlua-config", "Use etlua for templmated configuration files (eg. nginx.conf)"
+        \flag "--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)"
         \flag "--git", "Generate default .gitignore file"
         \flag "--tup", "Generate default Tupfile"
 
@@ -40,12 +40,20 @@ COMMANDS = {
 
       server_actions.new @, args
 
-      if args.lua
-        @write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
-        @write_file_safe "models.lua", require "lapis.cmd.templates.models_lua"
+      language = if args.lua
+        "lua"
+      elseif args.moonscript
+        "moonscript"
       else
-        @write_file_safe "app.moon", require "lapis.cmd.templates.app"
-        @write_file_safe "models.moon", require "lapis.cmd.templates.models"
+        default_language!
+
+      switch language
+        when "lua"
+          @write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
+          @write_file_safe "models.lua", require "lapis.cmd.templates.models_lua"
+        when "moonscript"
+          @write_file_safe "app.moon", require "lapis.cmd.templates.app"
+          @write_file_safe "models.moon", require "lapis.cmd.templates.models"
 
       if args.git
         @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") args

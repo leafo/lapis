@@ -21,9 +21,9 @@ local COMMANDS = {
     argparse = function(command)
       do
         local _with_0 = command
-        _with_0:mutex(_with_0:flag("--cqueues", "Generate config for cqueues server"), _with_0:flag("--nginx", "Generate config for nginx server"))
-        _with_0:mutex(_with_0:flag("--lua", "Generate app template file in Lua"), _with_0:flag("--moonscript --moon", "Generate app template file in MoonScript"))
-        _with_0:flag("--etlua-config", "Use etlua for templmated configuration files (eg. nginx.conf)")
+        _with_0:mutex(_with_0:flag("--nginx", "Generate config for nginx server (default)"), _with_0:flag("--cqueues", "Generate config for cqueues server"))
+        _with_0:mutex(_with_0:flag("--lua", "Generate app template file in Lua (defaul)"), _with_0:flag("--moonscript --moon", "Generate app template file in MoonScript"))
+        _with_0:flag("--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)")
         _with_0:flag("--git", "Generate default .gitignore file")
         _with_0:flag("--tup", "Generate default Tupfile")
         return _with_0
@@ -37,10 +37,19 @@ local COMMANDS = {
         server_actions = require("lapis.cmd.nginx.actions")
       end
       server_actions.new(self, args)
+      local language
       if args.lua then
+        language = "lua"
+      elseif args.moonscript then
+        language = "moonscript"
+      else
+        language = default_language()
+      end
+      local _exp_0 = language
+      if "lua" == _exp_0 then
         self:write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
         self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
-      else
+      elseif "moonscript" == _exp_0 then
         self:write_file_safe("app.moon", require("lapis.cmd.templates.app"))
         self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
       end

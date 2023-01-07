@@ -7,7 +7,7 @@ import insert, concat from table
     insert lines, "logs/"
     insert lines, "nginx.conf.compiled"
 
-  if not flags.lua
+  if flags.moonscript
     insert lines, "*.lua"
 
   if flags.tup

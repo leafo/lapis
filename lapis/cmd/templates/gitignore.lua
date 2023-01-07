@@ -12,7 +12,7 @@ return function(flags)
     insert(lines, "logs/")
     insert(lines, "nginx.conf.compiled")
   end
-  if not flags.lua then
+  if flags.moonscript then
     insert(lines, "*.lua")
   end
   if flags.tup then
