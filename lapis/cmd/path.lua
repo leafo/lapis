@@ -97,7 +97,6 @@ mod = {
   filename = filename,
   write_file = write_file,
   mkdir = mkdir,
-  copy = copy,
   join = join,
   read_file = read_file,
   shell_escape = shell_escape,
@@ -132,7 +131,6 @@ do
     return annotate(mod, {
       mkdir = colors("%{bright}%{magenta}make directory%{reset}"),
       write_file = colors("%{bright}%{yellow}write%{reset}"),
-      cp = colors("%{bright}%{yellow}copy%{reset}"),
       exec = colors("%{bright}%{red}exec%{reset}")
     })
   end

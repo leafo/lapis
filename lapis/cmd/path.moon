@@ -66,7 +66,7 @@ exec = (cmd, ...) ->
   os.execute full_cmd
 
 mod = {
-  :up, :exists, :normalize, :basepath, :filename, :write_file, :mkdir, :copy,
+  :up, :exists, :normalize, :basepath, :filename, :write_file, :mkdir
   :join, :read_file, :shell_escape, :exec
 }
 
@@ -93,7 +93,6 @@ mod.annotate = do
     annotate mod, {
       mkdir: colors "%{bright}%{magenta}make directory%{reset}"
       write_file: colors "%{bright}%{yellow}write%{reset}"
-      cp: colors "%{bright}%{yellow}copy%{reset}"
       exec: colors "%{bright}%{red}exec%{reset}"
     }
 
