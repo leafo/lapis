@@ -164,63 +164,72 @@ describe "lapis.cmd.actions.execute", ->
     assert.same files, have_files
 
   describe "new", ->
-    it "default app", ->
-      cmd.execute { [0]: "lapis", "new" }
+    it "lapis new", ->
+      cmd.execute { "new" }
+
+      assert_files {
+        "app.lua", "mime.types", "models.lua", "nginx.conf"
+      }
+
+    it "lapis new --moonscript", ->
+      cmd.execute { "new", "--moonscript" }
 
       assert_files {
         "app.moon", "mime.types", "models.moon", "nginx.conf"
       }
 
     it "fails if files already exist", ->
-      cmd.execute { [0]: "lapis", "new" }
+      cmd.execute { "new" }
       assert.has_error ->
-        cmd.execute { [0]: "lapis", "new" }
+        cmd.execute { "new" }
 
-    it "cqueues app", ->
-      cmd.execute { [0]: "lapis", "new", "--cqueues" }
-      assert_files { "app.moon", "config.lua", "models.moon" }
+    it "lapis new --cqueues", ->
+      cmd.execute { "new", "--cqueues" }
+      assert_files { "app.lua", "config.lua", "models.lua" }
 
-    it "etlua config", ->
-      cmd.execute { [0]: "lapis", "new", "--etlua-config" }
+    it "lapis new --etlua-config", ->
+      cmd.execute { "new", "--etlua-config" }
 
       assert_files {
-        "app.moon", "mime.types", "models.moon", "nginx.conf.etlua"
+        "app.lua", "mime.types", "models.lua", "nginx.conf.etlua"
       }
 
-    it "lua default", ->
-      cmd.execute { [0]: "lapis", "new", "--lua" }
+    it "lapis new --tup", ->
+      cmd.execute { "new", "--tup" }
       assert_files {
-        "app.lua", "mime.types", "models.lua", "nginx.conf"
+        "app.lua", "mime.types", "models.lua", "nginx.conf", "Tupfile", "Tuprules.tup"
       }
 
-    it "has tup", ->
-      cmd.execute { [0]: "lapis", "new", "--tup" }
+    it "lapis new --git", ->
+      cmd.execute { "new", "--git" }
       assert_files {
-        "app.moon", "mime.types", "models.moon", "nginx.conf", "Tupfile", "Tuprules.tup"
-      }
-
-    it "has git", ->
-      cmd.execute { [0]: "lapis", "new", "--git" }
-      assert_files {
-        "app.moon", "mime.types", "models.moon", "nginx.conf", ".gitignore"
+        "app.lua", "mime.types", "models.lua", "nginx.conf", ".gitignore"
       }
 
   describe "build", ->
-    it "buils app", ->
-      cmd.execute { [0]: "lapis", "new" }
-      cmd.execute { [0]: "lapis", "build" }
+    it "lapis build", ->
+      cmd.execute { "new" }
+      cmd.execute { "build" }
 
       assert_files {
-        "app.moon", "mime.types", "models.moon", "nginx.conf", "nginx.conf.compiled"
+        "app.lua", "mime.types", "models.lua", "nginx.conf", "nginx.conf.compiled"
       }
 
   describe "generate", ->
-    it "generates model", ->
-      cmd.execute { [0]: "lapis", "generate", "model", "things" }
+    it "lapis generate model things", ->
+      cmd.execute { "generate", "model", "things" }
+      assert_files { "models/things.lua" }
+
+    it "lapis generate model --moonscript things", ->
+      cmd.execute { "generate", "model", "things", "--moonscript" }
       assert_files { "models/things.moon" }
 
-    it "generates spec", ->
-      cmd.execute { [0]: "lapis", "generate", "spec", "models.things" }
+    it "lapis generate spec models.things", ->
+      cmd.execute { "generate", "spec", "models.things" }
+      assert_files { "spec/models/things_spec.lua" }
+
+    it "lapis generate spec models.things --moonscript", ->
+      cmd.execute { "generate", "spec", "models.things", "--moonscript" }
       assert_files { "spec/models/things_spec.moon" }
 
 

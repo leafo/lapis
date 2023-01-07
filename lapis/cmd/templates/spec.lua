@@ -120,7 +120,7 @@ write = function(self, args)
   elseif "moonscript" == _exp_0 then
     extension = "moon"
   end
-  local output_file = tostring(args.spec_dir) .. "/" .. tostring(self:mod_to_path(args.spec_name)) .. "." .. tostring(extension)
+  local output_file = tostring(args.spec_dir) .. "/" .. tostring(self:mod_to_path(args.spec_name)) .. "_spec." .. tostring(extension)
   local prefix = args.spec_name:match("^(.+)%.")
   local output_type
   if args.type then

@@ -29,6 +29,9 @@ wrap_text = (text, indent=0, max_width=80) ->
 
   concat lines, "\n" .. (" ")\rep indent
 
+-- This function is no longer used in Lapis since switch to argparse, but many
+-- random command line tools I have written happen to depend on this so it
+-- stays, sorry!
 columnize = (rows, indent=2, padding=4, wrap=true) ->
   max = 0
   max = math.max max, #row[1] for row in *rows

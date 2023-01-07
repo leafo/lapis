@@ -125,7 +125,7 @@ write = (args) =>
     when "moonscript"
       "moon"
 
-  output_file = "#{args.spec_dir}/#{@mod_to_path args.spec_name}.#{extension}"
+  output_file = "#{args.spec_dir}/#{@mod_to_path args.spec_name}_spec.#{extension}"
   prefix = args.spec_name\match "^(.+)%."
 
   output_type = if args.type
