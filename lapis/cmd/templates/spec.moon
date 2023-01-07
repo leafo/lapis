@@ -19,9 +19,6 @@ argparser = ->
       \flag "--moonscript --moon", "Force output to be MoonScript"
     )
 
-basename = (args) ->
-  "spec/#{name}_spec.moon"
-
 SPEC_TYPES = {
   models: {
     lua: (name) ->
@@ -63,6 +60,22 @@ describe "]] ..name .. [[", ->
 ]]
   }
 
+  default: {
+    lua: (name) ->
+      [[
+describe("]] .. name .. [[", function()
+  it("should ...", function()
+  end)
+end)
+]]
+
+    moonscript: (name) ->
+      [[
+describe "]] ..name .. [[", ->
+  it "should ...", ->
+]]
+  }
+
   applications: {
     lua: (name) ->
       [[
@@ -98,8 +111,6 @@ describe "]] ..name .. [[", ->
   }
 }
 
-SPEC_TYPES.helpers = SPEC_TYPES.models
-
 write = (args) =>
   output_language = if args.lua
     "lua"
@@ -120,11 +131,11 @@ write = (args) =>
   output_type = if args.type
     SPEC_TYPES[args.type]
   else
-    SPEC_TYPES[prefix] or SPEC_TYPES.applications
+    SPEC_TYPES[prefix] or SPEC_TYPES.default
 
   assert output_type, "Failed to find output type for spec"
 
   @write output_file, output_type[output_language] args.spec_name
 
-{:argparser, :check_args, :write}
+{:argparser, :write}
 

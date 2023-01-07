@@ -18,10 +18,6 @@ argparser = function()
     return _with_0
   end
 end
-local basename
-basename = function(args)
-  return "spec/" .. tostring(name) .. "_spec.moon"
-end
 local SPEC_TYPES = {
   models = {
     lua = function(name)
@@ -60,6 +56,20 @@ describe "]] .. name .. [[", ->
 ]]
     end
   },
+  default = {
+    lua = function(name)
+      return [[describe("]] .. name .. [[", function()
+  it("should ...", function()
+  end)
+end)
+]]
+    end,
+    moonscript = function(name)
+      return [[describe "]] .. name .. [[", ->
+  it "should ...", ->
+]]
+    end
+  },
   applications = {
     lua = function(name)
       return [[local use_test_server = require("lapis.spec").use_test_server
@@ -93,7 +103,6 @@ describe "]] .. name .. [[", ->
     end
   }
 }
-SPEC_TYPES.helpers = SPEC_TYPES.models
 local write
 write = function(self, args)
   local output_language
@@ -117,13 +126,12 @@ write = function(self, args)
   if args.type then
     output_type = SPEC_TYPES[args.type]
   else
-    output_type = SPEC_TYPES[prefix] or SPEC_TYPES.applications
+    output_type = SPEC_TYPES[prefix] or SPEC_TYPES.default
   end
   assert(output_type, "Failed to find output type for spec")
   return self:write(output_file, output_type[output_language](args.spec_name))
 end
 return {
   argparser = argparser,
-  check_args = check_args,
   write = write
 }
