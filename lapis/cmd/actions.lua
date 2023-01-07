@@ -245,12 +245,7 @@ local COMMANDS = {
       end
       local writer = {
         write = function(_, ...)
-          if os.getenv("LAPIS_GENERATE_STDOUT") then
-            io.stderr:write("Output: " .. tostring(select(1, ...)) .. "\n")
-            return print(select(2, ...))
-          else
-            return assert(self:write_file_safe(...))
-          end
+          return assert(self:write_file_safe(...))
         end,
         mod_to_path = function(self, mod)
           return mod:gsub("%.", "/")

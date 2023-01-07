@@ -3,7 +3,8 @@ local shell_escape
 shell_escape = function(str)
   return str:gsub("'", "'\\''")
 end
-local up, exists, normalize, basepath, filename, write_file, read_file, mkdir, copy, join, exec, mod
+local LAPIS_GENERATE_STDOUT, up, exists, normalize, basepath, filename, write_file, read_file, mkdir, join, exec, mod
+LAPIS_GENERATE_STDOUT = os.getenv("LAPIS_GENERATE_STDOUT")
 up = function(path)
   path = path:gsub("/$", "")
   path = path:gsub("[^/]*$", "")
@@ -28,11 +29,15 @@ filename = function(path)
 end
 write_file = function(path, content)
   assert(content, "trying to write file with no content")
-  do
-    local _with_0 = assert(io.open(path, "w"))
-    _with_0:write(content)
-    _with_0:close()
-    return _with_0
+  if LAPIS_GENERATE_STDOUT then
+    return print(content)
+  else
+    do
+      local _with_0 = assert(io.open(path, "w"))
+      _with_0:write(content)
+      _with_0:close()
+      return _with_0
+    end
   end
 end
 read_file = function(path)
@@ -47,10 +52,10 @@ read_file = function(path)
   end
 end
 mkdir = function(path)
+  if LAPIS_GENERATE_STDOUT then
+    return 
+  end
   return os.execute("mkdir -p '" .. tostring(shell_escape(path)) .. "'")
-end
-copy = function(src, dest)
-  return os.execute("cp '" .. tostring(shell_escape(src)) .. "' '" .. tostring(shell_escape(dest)) .. "'")
 end
 join = function(a, b)
   if a ~= "/" then
@@ -113,8 +118,8 @@ do
         end
         if verbs[name] then
           return function(...)
-            fn(...)
-            return log(verbs[name], (...))
+            log(verbs[name], (...))
+            return fn(...)
           end
         else
           return fn
@@ -125,8 +130,9 @@ do
   mod.annotate = function()
     local colors = require("ansicolors")
     return annotate(mod, {
-      mkdir = colors("%{bright}%{magenta}made directory%{reset}"),
-      write_file = colors("%{bright}%{yellow}wrote%{reset}"),
+      mkdir = colors("%{bright}%{magenta}make directory%{reset}"),
+      write_file = colors("%{bright}%{yellow}write%{reset}"),
+      cp = colors("%{bright}%{yellow}copy%{reset}"),
       exec = colors("%{bright}%{red}exec%{reset}")
     })
   end

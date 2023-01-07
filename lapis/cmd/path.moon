@@ -6,6 +6,10 @@ shell_escape = (str) ->
 
 local *
 
+-- Setting this environment variable will prevent altering the file system and
+-- just print written files to stdout
+LAPIS_GENERATE_STDOUT = os.getenv "LAPIS_GENERATE_STDOUT"
+
 -- move up a directory
 -- /hello/world -> /hello
 up = (path) ->
@@ -28,9 +32,13 @@ filename = (path) ->
 
 write_file = (path, content) ->
   assert content, "trying to write file with no content"
-  with assert io.open path, "w"
-    \write content
-    \close!
+
+  if LAPIS_GENERATE_STDOUT
+    print content
+  else
+    with assert io.open path, "w"
+      \write content
+      \close!
 
 read_file = (path) ->
   file = io.open path
@@ -39,10 +47,9 @@ read_file = (path) ->
     file\close!
 
 mkdir = (path) ->
+  if LAPIS_GENERATE_STDOUT
+    return -- do nothing
   os.execute "mkdir -p '#{shell_escape path}'"
-
-copy = (src, dest) ->
-  os.execute "cp '#{shell_escape src}' '#{shell_escape dest}'"
 
 join = (a, b) ->
   a = a\match"^(.*)/$" or a if a != "/"
@@ -75,8 +82,8 @@ mod.annotate = do
         return fn if not type(fn) == "function"
         if verbs[name]
           (...) ->
-            fn ...
             log verbs[name], (...)
+            fn ...
         else
           fn
     }
@@ -84,8 +91,9 @@ mod.annotate = do
   ->
     colors = require "ansicolors"
     annotate mod, {
-      mkdir: colors "%{bright}%{magenta}made directory%{reset}"
-      write_file: colors "%{bright}%{yellow}wrote%{reset}"
+      mkdir: colors "%{bright}%{magenta}make directory%{reset}"
+      write_file: colors "%{bright}%{yellow}write%{reset}"
+      cp: colors "%{bright}%{yellow}copy%{reset}"
       exec: colors "%{bright}%{red}exec%{reset}"
     }
 

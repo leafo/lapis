@@ -228,11 +228,7 @@ COMMANDS = {
 
       writer = {
         write: (_, ...) ->
-          if os.getenv "LAPIS_GENERATE_STDOUT"
-            io.stderr\write "Output: #{select 1, ...}\n"
-            print select 2, ...
-          else
-            assert @write_file_safe ...
+          assert @write_file_safe ...
         mod_to_path: (mod) => mod\gsub "%.", "/"
         default_language: default_language!
       }
