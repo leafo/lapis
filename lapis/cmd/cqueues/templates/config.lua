@@ -1,4 +1,6 @@
-return [[require "lapis.config" ("development", {
+return [[local config = require("lapis.config")
+
+config("development", {
   server = "cqueues";
 })
 ]]
