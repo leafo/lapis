@@ -3,60 +3,70 @@
 }
 # Command Line Interface
 
-## Command Reference
 
-The Lapis command line interface gives you a couple of handful tools for
-working with Lapis projects.
+## Default Environment
 
-Some commands can take an `environment` argument to specify which configuration
-to use. If the environment is not provided then the [default environment]($root/reference/configuration.html#default-environment) is
-used.
+Lapis will load your app's configuration by the environment name before
+executing a command. The default environment name is *development* unless you
+are running within *Busted*, then the default environment name is *test*.
 
-If the file
-`lapis_environment.lua` exists in the directory, then the return value of that
-file will be used, otherwise it is `development`.
+You are free to use any environment name you want. You can change the default
+environment in a few different ways:
+
+* Using the `--environment` flag on the `lapis` command will set the environment for the duration of the command
+* For convenience, some commands can also take the environment as an argument after the command name, eg `lapis serve production` (This will have the same effect as using `--environment`
+* Created a `lapis_environment.lua` file in your working directory that returns a string of the default environment's name
+
 
 For example, if you have a production deployment, you might add the following file:
 
-```lua
+$dual_code{
+lua = [[
 -- lapis_environment.lua
 return "production"
-```
-
-```moon
+]],
+moon = [[
 -- lapis_environment.moon
 return "production"
-```
+]],
+}
+
+
+## Command Reference
 
 ### `lapis new`
 
-```bash
-$ lapis new [--git] [--tup] [--lua] [--cqueues|--nginx]
+```
+Usage: lapis new ([--nginx] | [--cqueues]) ([--lua] | [--moonscript])
+       [-h] [--etlua-config] [--git] [--tup]
+
+Create a new Lapis project in the current directory
+
+Options:
+   -h, --help            Show this help message and exit.
+   --nginx               Generate config for nginx server (default)
+   --cqueues             Generate config for cqueues server
+   --lua                 Generate app template file in Lua (defaul)
+   --moonscript, --moon  Generate app template file in MoonScript
+   --etlua-config        Use etlua for templated configuration files (eg. nginx.conf)
+   --git                 Generate default .gitignore file
+   --tup                 Generate default Tupfile
 ```
 
-The `new` command will create a blank Lapis project in the current directory.
+The `new` command will create a blank Lapis project in the current directory by
+writing some starter files. Note that it is not necessary to use `lapis new` to
+create a new Lapis project, you're free to start with just a single Lua file.
+
 By default it creates the following files:
 
 * `nginx.conf`
 * `mime.types`
-* `app.moon`
+* `app.lua`
+
+> Use the `--moonscript` flag to generate a blank MoonScript based app
 
 You're encouraged to look at all of these files and customize them to your
 needs.
-
-You can tell it to generate additional files using the following flags:
-
-`--git` generates a `.gitignore` file containing the following:
-
-    *.lua
-    logs/
-    nginx.conf.compiled
-
-`--tup` -- generates `Tupfile` and `Tuprules.tup` for use with
-[Tup](http://gittup.org/tup/) build system. The rules file contains a rule for
-building MoonScript files to Lua.
-
-`--lua` -- generates a skeleton Lua app instead of MoonScript.
 
 ### `lapis server`
 
