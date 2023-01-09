@@ -293,6 +293,7 @@ local COMMANDS = {
   },
   {
     name = "_",
+    hidden = true,
     help = "Excute third-party command from module lapis.cmd.actions._",
     argparse = function(command)
       do
