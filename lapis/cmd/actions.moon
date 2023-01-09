@@ -401,7 +401,7 @@ class CommandRunner
 
       if command_spec.hidden
         command\hidden true
-      
+
       if type(command_spec.argparse) == "function"
         command_spec.argparse command
 
@@ -457,14 +457,13 @@ class CommandRunner
 
     assert action, "Failed to find command: #{args.command}"
 
-    -- verify that we have suitable server install to run the environment
-    if action.context
-      assert @check_context args.environment, action.context
-
     -- override the default config module if specified
     if args.config_module
       package.loaded["lapis.config_module_name"] = args.config_module
 
+    -- verify if command works with active config
+    if action.context
+      assert @check_context args.environment, action.context
 
     unless args.environment
       import default_environment from require "lapis.environment"

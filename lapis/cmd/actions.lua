@@ -523,11 +523,11 @@ do
       args = self:parse_args(args)
       local action = self:get_command(args.command)
       assert(action, "Failed to find command: " .. tostring(args.command))
-      if action.context then
-        assert(self:check_context(args.environment, action.context))
-      end
       if args.config_module then
         package.loaded["lapis.config_module_name"] = args.config_module
+      end
+      if action.context then
+        assert(self:check_context(args.environment, action.context))
       end
       if not (args.environment) then
         local default_environment
