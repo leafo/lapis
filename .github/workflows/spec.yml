@@ -49,4 +49,4 @@ jobs:
 
     - name: test
       run: |
-        busted -o utfTerminal
+        busted -o utfTerminal -v
