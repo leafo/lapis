@@ -174,6 +174,9 @@ describe "lapis.cmd.actions.execute", ->
     assert.same files, have_files
 
   describe "new", ->
+    before_each ->
+      stub(require("lapis.cmd.nginx"), "find").returns true
+
     it "lapis new", ->
       cmd.execute { "new" }
 
@@ -194,7 +197,8 @@ describe "lapis.cmd.actions.execute", ->
         cmd.execute { "new" }
 
     it "lapis new --cqueues", ->
-      cmd.execute { "new", "--cqueues" }
+      -- --forsce to bypass the module dependency check
+      cmd.execute { "new", "--cqueues", "--force" }
       assert_files { "app.lua", "config.lua", "models.lua" }
 
     it "lapis new --etlua-config", ->

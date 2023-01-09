@@ -1,7 +1,7 @@
-import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cmd.nginx"
 
 {
   new: (args) =>
+    import find_nginx from require "lapis.cmd.nginx"
     nginx = find_nginx!
 
     if not nginx and not args.force
@@ -27,6 +27,8 @@ import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cm
     }, __index: args
 
   server: (args) =>
+    import find_nginx, start_nginx, write_config_for from require "lapis.cmd.nginx"
+
     {:environment} = args
 
     nginx = find_nginx!

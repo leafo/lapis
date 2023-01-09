@@ -1,10 +1,7 @@
-local find_nginx, start_nginx, write_config_for, get_pid
-do
-  local _obj_0 = require("lapis.cmd.nginx")
-  find_nginx, start_nginx, write_config_for, get_pid = _obj_0.find_nginx, _obj_0.start_nginx, _obj_0.write_config_for, _obj_0.get_pid
-end
 return {
   new = function(self, args)
+    local find_nginx
+    find_nginx = require("lapis.cmd.nginx").find_nginx
     local nginx = find_nginx()
     if not nginx and not args.force then
       self:fail_with_message("Unable to find an OpenResty installation on your system. You can bypass this error with --force or use LAPIS_OPENRESTY environment variable to directly specify the path of the OpenResty binary")
@@ -32,6 +29,11 @@ return {
     }))
   end,
   server = function(self, args)
+    local find_nginx, start_nginx, write_config_for
+    do
+      local _obj_0 = require("lapis.cmd.nginx")
+      find_nginx, start_nginx, write_config_for = _obj_0.find_nginx, _obj_0.start_nginx, _obj_0.write_config_for
+    end
     local environment
     environment = args.environment
     local nginx = find_nginx()
