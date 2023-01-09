@@ -1,7 +1,6 @@
 
 {
   write: (args) =>
-    print "writing config", require("moon").dump args
     output_language = if args.lua
       "lua"
     elseif args.moonscript

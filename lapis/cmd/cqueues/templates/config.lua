@@ -1,6 +1,5 @@
 return {
   write = function(self, args)
-    print("writing config", require("moon").dump(args))
     local output_language
     if args.lua then
       output_language = "lua"

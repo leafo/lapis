@@ -168,14 +168,14 @@ describe "lapis.cmd.actions.execute", ->
       cmd.execute { "new" }
 
       assert_files {
-        "app.lua", "mime.types", "models.lua", "nginx.conf"
+        "app.lua", "config.lua", "mime.types", "models.lua", "nginx.conf"
       }
 
     it "lapis new --moonscript", ->
       cmd.execute { "new", "--moonscript" }
 
       assert_files {
-        "app.moon", "mime.types", "models.moon", "nginx.conf"
+        "app.moon", "config.moon", "mime.types", "models.moon", "nginx.conf"
       }
 
     it "fails if files already exist", ->
@@ -191,19 +191,19 @@ describe "lapis.cmd.actions.execute", ->
       cmd.execute { "new", "--etlua-config" }
 
       assert_files {
-        "app.lua", "mime.types", "models.lua", "nginx.conf.etlua"
+        "app.lua", "config.lua", "mime.types", "models.lua", "nginx.conf.etlua"
       }
 
     it "lapis new --tup", ->
       cmd.execute { "new", "--tup" }
       assert_files {
-        "app.lua", "mime.types", "models.lua", "nginx.conf", "Tupfile", "Tuprules.tup"
+        "app.lua", "config.lua", "mime.types", "models.lua", "nginx.conf", "Tupfile", "Tuprules.tup"
       }
 
     it "lapis new --git", ->
       cmd.execute { "new", "--git" }
       assert_files {
-        "app.lua", "mime.types", "models.lua", "nginx.conf", ".gitignore"
+        "app.lua", "config.lua", "mime.types", "models.lua", "nginx.conf", ".gitignore"
       }
 
   describe "build", ->
@@ -212,7 +212,7 @@ describe "lapis.cmd.actions.execute", ->
       cmd.execute { "build" }
 
       assert_files {
-        "app.lua", "mime.types", "models.lua", "nginx.conf", "nginx.conf.compiled"
+        "app.lua", "config.lua", "mime.types", "models.lua", "nginx.conf", "nginx.conf.compiled"
       }
 
   describe "generate", ->
