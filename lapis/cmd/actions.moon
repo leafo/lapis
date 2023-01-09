@@ -41,6 +41,7 @@ COMMANDS = {
         \flag "--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)"
         \flag "--git", "Generate default .gitignore file"
         \flag "--tup", "Generate default Tupfile"
+        \flag "--force", "Bypass errors when detecting functional server environment"
 
     (args) =>
       server_actions = if args.cqueues

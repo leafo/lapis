@@ -1,5 +1,12 @@
 return {
   new = function(self, args)
+    local valid_install = pcall(function()
+      require("cqueues")
+      return require("http.version")
+    end)
+    if not valid_install and not args.force then
+      self:fail_with_message("Unable to load necessary modules for server. Please use LuaRocks to install `cqueues` and `http` modules. You can bypass this error with --force")
+    end
     local writer = self:make_template_writer()
     local config_tpl = require("lapis.cmd.cqueues.templates.config")
     return config_tpl.write(writer, setmetatable({
