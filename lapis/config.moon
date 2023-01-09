@@ -9,10 +9,13 @@ config_cache = {} -- the final merged config by environment
 configs = {} -- lists of fns/tables to build config by environment
 
 default_config = {
-  server: "nginx"
   port: "8080"
   secret: "please-change-me"
   session_name: "lapis_session"
+  server: "nginx"
+
+  -- TODO: these fields as part of the default config are now deprecated, and
+  -- will be provided in the default generated config with lapis.new
   code_cache: "off"
   num_workers: "1"
 

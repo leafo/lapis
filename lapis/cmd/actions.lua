@@ -269,15 +269,7 @@ local COMMANDS = {
       if not (type(tpl.write) == "function") then
         error("invalid generator `" .. tostring(module_name or template_name) .. "`: is missing write function")
       end
-      local writer = {
-        write = function(_, ...)
-          return assert(self:write_file_safe(...))
-        end,
-        mod_to_path = function(self, mod)
-          return mod:gsub("%.", "/")
-        end,
-        default_language = default_language()
-      }
+      local writer = self:make_template_writer()
       local template_args
       if tpl.argparser then
         local parse_args = tpl.argparser()
@@ -461,6 +453,21 @@ do
         print(colors("%{bright}%{red}Aborting:%{reset} " .. msg))
         return os.exit(1)
       end
+    end,
+    make_template_writer = function(self)
+      return {
+        command_runner = self,
+        write = function(_, ...)
+          local success, err = self:write_file_safe(...)
+          if not (success) then
+            return self:fail_with_message(err)
+          end
+        end,
+        mod_to_path = function(self, mod)
+          return mod:gsub("%.", "/")
+        end,
+        default_language = default_language()
+      }
     end,
     write_file_safe = function(self, file, content)
       if self.path.exists(file) then

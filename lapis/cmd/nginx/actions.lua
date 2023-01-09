@@ -18,7 +18,14 @@ return {
     else
       self:write_file_safe(config_path, require("lapis.cmd.nginx.templates.config"))
     end
-    return self:write_file_safe("mime.types", require("lapis.cmd.nginx.templates.mime_types"))
+    self:write_file_safe("mime.types", require("lapis.cmd.nginx.templates.mime_types"))
+    local writer = self:make_template_writer()
+    local config_tpl = require("lapis.cmd.cqueues.templates.config")
+    return config_tpl.write(writer, setmetatable({
+      server = "nginx"
+    }, {
+      __index = args
+    }))
   end,
   server = function(self, args)
     local environment

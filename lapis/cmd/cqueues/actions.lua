@@ -1,9 +1,12 @@
 return {
   new = function(self, args)
-    if self.path.exists("config.lua") then
-      self:fail_with_message("config.lua already exists")
-    end
-    return self:write_file_safe("config.lua", require("lapis.cmd.cqueues.templates.config"))
+    local writer = self:make_template_writer()
+    local config_tpl = require("lapis.cmd.cqueues.templates.config")
+    return config_tpl.write(writer, setmetatable({
+      server = "cqueues"
+    }, {
+      __index = args
+    }))
   end,
   server = function(self, args)
     local environment

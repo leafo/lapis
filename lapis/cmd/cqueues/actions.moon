@@ -1,9 +1,11 @@
 {
   new: (args) =>
-    if @path.exists("config.lua")
-      @fail_with_message "config.lua already exists"
+    writer = @make_template_writer!
+    config_tpl = require "lapis.cmd.cqueues.templates.config"
 
-    @write_file_safe "config.lua", require "lapis.cmd.cqueues.templates.config"
+    config_tpl.write writer, setmetatable {
+      server: "cqueues"
+    }, __index: args
 
   server: (args) =>
     {:environment} = args

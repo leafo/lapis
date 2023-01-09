@@ -14,6 +14,13 @@ import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cm
 
     @write_file_safe "mime.types", require "lapis.cmd.nginx.templates.mime_types"
 
+    writer = @make_template_writer!
+    config_tpl = require "lapis.cmd.cqueues.templates.config"
+
+    config_tpl.write writer, setmetatable {
+      server: "nginx"
+    }, __index: args
+
   server: (args) =>
     {:environment} = args
 

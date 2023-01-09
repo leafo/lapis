@@ -244,12 +244,7 @@ COMMANDS = {
       unless type(tpl.write) == "function"
         error "invalid generator `#{module_name or template_name}`: is missing write function"
 
-      writer = {
-        write: (_, ...) ->
-          assert @write_file_safe ...
-        mod_to_path: (mod) => mod\gsub "%.", "/"
-        default_language: default_language!
-      }
+      writer = @make_template_writer!
 
       template_args = if tpl.argparser
         parse_args = tpl.argparser!
@@ -408,6 +403,20 @@ class CommandRunner
     else
       print colors "%{bright}%{red}Aborting:%{reset} " .. msg
       os.exit 1
+
+
+  -- scope used for template objects
+  make_template_writer: =>
+    {
+      command_runner: @
+      write: (_, ...) ->
+        success, err = @write_file_safe ...
+        unless success
+          @fail_with_message err
+
+      mod_to_path: (mod) => mod\gsub "%.", "/"
+      default_language: default_language!
+    }
 
   write_file_safe: (file, content) =>
     return nil, "file already exists: #{file}" if @path.exists file
