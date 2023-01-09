@@ -80,7 +80,6 @@ describe("]] .. name .. [[", function()
   use_test_server()
 
   before_each(function()
-  truncate_tables()
   end)
 
   it("should ...", function()
