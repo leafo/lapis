@@ -1,4 +1,3 @@
-
 [[
 worker_processes ${{NUM_WORKERS}};
 error_log stderr notice;
@@ -11,6 +10,10 @@ events {
 
 http {
   include mime.types;
+
+  init_by_lua_block {
+    require "lpeg"
+  }
 
   server {
     listen ${{PORT}};

@@ -10,6 +10,10 @@ events {
 http {
   include mime.types;
 
+  init_by_lua_block {
+    require "lpeg"
+  }
+
   server {
     listen ${{PORT}};
     lua_code_cache ${{CODE_CACHE}};
