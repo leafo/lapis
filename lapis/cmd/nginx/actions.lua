@@ -5,6 +5,10 @@ do
 end
 return {
   new = function(self, args)
+    local nginx = find_nginx()
+    if not nginx and not args.force then
+      self:fail_with_message("Unable to find an OpenResty installation on your system. You can bypass this error with --force")
+    end
     local config_path, config_path_etlua
     do
       local _obj_0 = require("lapis.cmd.nginx").nginx_runner
@@ -32,7 +36,7 @@ return {
     environment = args.environment
     local nginx = find_nginx()
     if not (nginx) then
-      self:fail_with_message("can not find suitable server installation")
+      self:fail_with_message("Unable to find an OpenResty installation on your system")
     end
     write_config_for(environment)
     return start_nginx()
