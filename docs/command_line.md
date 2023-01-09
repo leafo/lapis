@@ -3,55 +3,78 @@
 }
 # Command Line Interface
 
+A `lapis` command is installed into your system when Lapis is installed with
+LuaRocks. Run `lapis` in your terminal to install without any arguments to get
+a summary of what it can do, along with information about the installation, eg.
+
+    Usage: lapis [-h] [--environment <name>] [--config-module <name>]
+           [--trace] <command> ...
+
+    Control & create web applications written with Lapis
+    Lapis: 1.12.0
+    Default environment: development
+    OpenResty: /usr/local/openresty/nginx/sbin/nginx
+    cqueues: 20200726 lua-http: 0.4
+
+    Options:
+       -h, --help            Show this help message and exit.
+       --environment <name>  Override the environment name
+       --config-module <name>
+                             Override module name to require configuration from (default: config)
+       --trace               Show full error trace if lapis command fails
+
+    Commands:
+       help                  Show help for commands.
+       new                   Create a new Lapis project in the current directory
+       server, serve         Start the server from the current directory
+       build                 Rebuild configuration and send a reload signal (server: nginx)
+       term                  Sends TERM signal to shut down a running server (server: nginx)
+       exec, execute         Execute Lua on the server (server: nginx)
+       migrate               Run any outstanding migrations
+       generate              Generates a new file in the current directory from template
+
+Note that some commands are only available for certain server types, eg. `lapis
+term` is only available for OpenResty/nginx.
+
+To learn more about a command you can type `lapis help COMMAND`, eg. `lapis
+help migrate`.
 
 ## Default Environment
 
-Lapis will load your app's configuration by the environment name before
-executing a command. The default environment name is *development* unless you
-are running within *Busted*, then the default environment name is *test*.
+Lapis will load your Applications's configuration by for an environment before
+executing a command. The default environment name is `development` unless you
+are running within *Busted*, then the default environment name is `test`.
 
-You are free to use any environment name you want. You can change the default
+You can confirm what the default environment is by running `lapis help`.
+
+You are free to use any environment name you want. You can change the
 environment in a few different ways:
 
 * Using the `--environment` flag on the `lapis` command will set the environment for the duration of the command
-* For convenience, some commands can also take the environment as an argument after the command name, eg `lapis serve production` (This will have the same effect as using `--environment`
-* Created a `lapis_environment.lua` file in your working directory that returns a string of the default environment's name
+* For convenience, some commands can also take the environment as an argument after the command name, eg `lapis server production` (This will have the same effect as using `--environment`
+* Created a `lapis_environment.lua` file in your working directory that returns a string will allow you to change the default environment
+* Setting the `LAPIS_ENVIRONMENT` environment variable will change the default environment
 
-
-For example, if you have a production deployment, you might add the following file:
-
-$dual_code{
-lua = [[
--- lapis_environment.lua
-return "production"
-]],
-moon = [[
--- lapis_environment.moon
-return "production"
-]],
-}
-
+Learn more about environments on the [Configuration](configuration.html) guide.
 
 ## Command Reference
 
 ### `lapis new`
 
-```
-Usage: lapis new ([--nginx] | [--cqueues]) ([--lua] | [--moonscript])
-       [-h] [--etlua-config] [--git] [--tup]
+    Usage: lapis new ([--nginx] | [--cqueues]) ([--lua] | [--moonscript])
+           [-h] [--etlua-config] [--git] [--tup]
 
-Create a new Lapis project in the current directory
+    Create a new Lapis project in the current directory
 
-Options:
-   -h, --help            Show this help message and exit.
-   --nginx               Generate config for nginx server (default)
-   --cqueues             Generate config for cqueues server
-   --lua                 Generate app template file in Lua (defaul)
-   --moonscript, --moon  Generate app template file in MoonScript
-   --etlua-config        Use etlua for templated configuration files (eg. nginx.conf)
-   --git                 Generate default .gitignore file
-   --tup                 Generate default Tupfile
-```
+    Options:
+       -h, --help            Show this help message and exit.
+       --nginx               Generate config for nginx server (default)
+       --cqueues             Generate config for cqueues server
+       --lua                 Generate app template file in Lua (defaul)
+       --moonscript, --moon  Generate app template file in MoonScript
+       --etlua-config        Use etlua for templated configuration files (eg. nginx.conf)
+       --git                 Generate default .gitignore file
+       --tup                 Generate default Tupfile
 
 The `new` command will create a blank Lapis project in the current directory by
 writing some starter files. Note that it is not necessary to use `lapis new` to
@@ -65,8 +88,8 @@ By default it creates the following files:
 
 > Use the `--moonscript` flag to generate a blank MoonScript based app
 
-You're encouraged to look at all of these files and customize them to your
-needs.
+The generated files are only starting points, you are encouraged to read, and
+customize them.
 
 ### `lapis server`
 
@@ -74,8 +97,14 @@ needs.
 $ lapis server [environment]
 ```
 
-This command is a wrapper around starting OpenResty. It firsts builds the
-config, ensures logs exist, then starts the sever with the correct environment.
+This command start the configured webserver for your app under the specified
+environment.
+
+#### OpenResty Server
+
+The default configuration utilizes OpenResty as the webserver. The `server`
+command first builds the config, ensures logs exist, then starts the nginx
+binary with the local `nginx.conf` file.
 
 Lapis ensures that it runs a version of Nginx that is OpenResty. It will search
 `$PATH` and any common OpenResty installation directories to find the correct
@@ -100,37 +129,30 @@ the server (where `nginx` is the path to the located OpenResty installation):
 $ nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
 ```
 
-### `lapis build`
-
-```bash
-$ lapis build [environment]
-```
-
-Rebuilds the config. If the server is currently running then a `HUP` signal
-will be sent to it. This causes the configuration to be reloaded. By default
-Nginx does not see changes to the config file while it is running. By executing
-`lapis build` you will tell Nginx to reload the config without having to
-restart the server.
-
-As a side effect all the Nginx workers are restarted, so your application code
-is also reloaded.
-
-This is the best approach when deploying a new version of your code to
-production. You'll be able to reload everything without dropping any requests.
-
-You can read more in the [Nginx manual](http://wiki.nginx.org/CommandLine#Loading_a_New_Configuration_Using_Signals).
-
 ### `lapis migrate`
 
-```bash
-$ lapis migrate [environment]
-```
+    Usage: lapis migrate [-h] [--migrations-module <module>]
+           [<environment>] [--transaction [{global,individual}]]
 
-This will run any outstanding migrations. It will also create the migrations
-table if it does not exist yet.
+    Run any outstanding migrations
+
+    Arguments:
+       environment
+
+    Options:
+       -h, --help            Show this help message and exit.
+       --migrations-module <module>
+                             Module to load for migrations (default: migrations)
+       --transaction [{global,individual}]
+
+
+This will run any outstanding migrations. The migrations table if it does not
+exist yet. A database must be configured in the environment for this command to
+work.
 
 This command expects a `migrations` module as described in [Running
-Migrations](database.html#database-migrations/running-migrations).
+Migrations](database.html#database-migrations/running-migrations). The module
+loaded can be overwritten with the `--migrations-module` flag.
 
 It executes on the server approximately this code:
 
@@ -151,7 +173,32 @@ You can instruct the migrations to be run in a transaction by providng the
 To wrap each individual migration in a transaction use:
 `--transaction=individual`
 
+
+### `lapis build`
+
+```bash
+$ lapis build [environment]
+```
+
+> This command is only available for OpenResty
+
+Rebuilds the config. If the server is currently running then a `HUP` signal
+will be sent to it. This causes the configuration to be reloaded. By default
+Nginx does not see changes to the config file while it is running. By executing
+`lapis build` you will tell Nginx to reload the config without having to
+restart the server.
+
+As a side effect all the Nginx workers are restarted, so your application code
+is also reloaded.
+
+This is the best approach when deploying a new version of your code to
+production. You'll be able to reload everything without dropping any requests.
+
+You can read more in the [Nginx manual](http://wiki.nginx.org/CommandLine#Loading_a_New_Configuration_Using_Signals).
+
 ### `lapis term`
+
+> This command is only available for OpenResty
 
 This will shut down a running server. This is useful if you've instructed Lapis
 to start Nginx as a daemon. If you are running the server in the foreground you
