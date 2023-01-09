@@ -5,7 +5,7 @@ import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cm
     nginx = find_nginx!
 
     if not nginx and not args.force
-      @fail_with_message "Unable to find an OpenResty installation on your system. You can bypass this error with --force"
+      @fail_with_message "Unable to find an OpenResty installation on your system. You can bypass this error with --force or use LAPIS_OPENRESTY environment variable to directly specify the path of the OpenResty binary"
 
     import config_path, config_path_etlua from require("lapis.cmd.nginx").nginx_runner
 
@@ -32,7 +32,7 @@ import find_nginx, start_nginx, write_config_for, get_pid from require "lapis.cm
     nginx = find_nginx!
 
     unless nginx
-      @fail_with_message "Unable to find an OpenResty installation on your system"
+      @fail_with_message "Unable to find an OpenResty installation on your system. The LAPIS_OPENRESTY environment variable can be used to directly specify the path of the OpenResty binary"
 
     write_config_for environment
     start_nginx!

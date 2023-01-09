@@ -7,7 +7,7 @@ return {
   new = function(self, args)
     local nginx = find_nginx()
     if not nginx and not args.force then
-      self:fail_with_message("Unable to find an OpenResty installation on your system. You can bypass this error with --force")
+      self:fail_with_message("Unable to find an OpenResty installation on your system. You can bypass this error with --force or use LAPIS_OPENRESTY environment variable to directly specify the path of the OpenResty binary")
     end
     local config_path, config_path_etlua
     do
@@ -36,7 +36,7 @@ return {
     environment = args.environment
     local nginx = find_nginx()
     if not (nginx) then
-      self:fail_with_message("Unable to find an OpenResty installation on your system")
+      self:fail_with_message("Unable to find an OpenResty installation on your system. The LAPIS_OPENRESTY environment variable can be used to directly specify the path of the OpenResty binary")
     end
     write_config_for(environment)
     return start_nginx()
