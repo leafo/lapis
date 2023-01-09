@@ -318,6 +318,20 @@ COMMANDS = {
       args["preload-module"] = args.preload_module
       action[1] @, args, unpack args.files
   }
+
+  {
+    name: "debug"
+    hidden: true
+    help: "Debug information for test sutie"
+    test_available: ->
+      import running_in_test from require "lapis.spec"
+      running_in_test!
+
+    argparse: (command) ->
+      add_environment_argument command
+
+    (args) => args
+  }
 }
 
 class CommandRunner

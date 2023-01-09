@@ -350,6 +350,22 @@ local COMMANDS = {
       args["preload-module"] = args.preload_module
       return action[1](self, args, unpack(args.files))
     end
+  },
+  {
+    name = "debug",
+    hidden = true,
+    help = "Debug information for test sutie",
+    test_available = function()
+      local running_in_test
+      running_in_test = require("lapis.spec").running_in_test
+      return running_in_test()
+    end,
+    argparse = function(command)
+      return add_environment_argument(command)
+    end,
+    function(self, args)
+      return args
+    end
   }
 }
 local CommandRunner

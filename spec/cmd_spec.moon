@@ -173,6 +173,28 @@ describe "lapis.cmd.actions.execute", ->
     table.sort have_files
     assert.same files, have_files
 
+  describe "debug", ->
+    it "gets default environment with no overrides", ->
+      res = cmd.execute { "debug" }
+      assert.same "test", res.environment
+
+    it "environment with --environment", ->
+      res = cmd.execute { "debug", "--environment", "cool" }
+      assert.same "cool", res.environment
+
+      res = cmd.execute { "--environment", "cool", "debug" }
+      assert.same "cool", res.environment
+
+    it "environment with arg", ->
+      res = cmd.execute { "debug", "wow" }
+      assert.same "wow", res.environment
+
+    it "fails with double env", ->
+      assert.has_error(
+        -> cmd.execute { "--environment=umm", "debug", "wow" }
+        "You tried to set the environment twice. Use either --environment or the environment argument, not both"
+      )
+
   describe "new", ->
     before_each ->
       stub(require("lapis.cmd.nginx"), "find_nginx").returns true
