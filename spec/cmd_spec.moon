@@ -175,7 +175,7 @@ describe "lapis.cmd.actions.execute", ->
 
   describe "new", ->
     before_each ->
-      stub(require("lapis.cmd.nginx"), "find").returns true
+      stub(require("lapis.cmd.nginx"), "find_nginx").returns true
 
     it "lapis new", ->
       cmd.execute { "new" }
