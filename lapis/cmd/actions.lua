@@ -241,7 +241,7 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:handle_options(false)
-        _with_0:argument("template_name", "Which template to load (eg. model, flow)")
+        _with_0:argument("template_name", "Which template to load (eg. model, flow, spec)")
         _with_0:argument("template_args", "Template arguments"):argname("<args>"):args("*")
         return _with_0
       end

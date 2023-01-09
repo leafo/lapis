@@ -213,7 +213,7 @@ COMMANDS = {
     argparse: (command) ->
       with command
         \handle_options false
-        \argument("template_name", "Which template to load (eg. model, flow)")
+        \argument("template_name", "Which template to load (eg. model, flow, spec)")
         \argument("template_args", "Template arguments")\argname("<args>")\args("*")
 
         -- Example to add language picking to a generators argparser function
