@@ -42,8 +42,8 @@ help migrate`.
 ## Default Environment
 
 Lapis will load your Applications's configuration by for an environment before
-executing a command. The default environment name is `development` unless you
-are running within *Busted*, then the default environment name is `test`.
+executing a command. The default environment name in command line `development`
+unless otherwise overwritten.
 
 You can confirm what the default environment is by running `lapis help`.
 
@@ -52,7 +52,7 @@ environment in a few different ways:
 
 * Using the `--environment` flag on the `lapis` command will set the environment for the duration of the command
 * For convenience, some commands can also take the environment as an argument after the command name, eg `lapis server production` (This will have the same effect as using `--environment`
-* Created a `lapis_environment.lua` file in your working directory that returns a string will allow you to change the default environment
+* Creating a `lapis_environment.lua` file in your working directory that returns a string will allow you to change the default environment to whatever is returned
 * Setting the `LAPIS_ENVIRONMENT` environment variable will change the default environment
 
 Learn more about environments on the [Configuration](configuration.html) guide.
@@ -78,13 +78,14 @@ Learn more about environments on the [Configuration](configuration.html) guide.
 
 The `new` command will create a blank Lapis project in the current directory by
 writing some starter files. Note that it is not necessary to use `lapis new` to
-create a new Lapis project, you're free to start with just a single Lua file.
+create a new Lapis project, but it can help you get started more quickly.
 
-By default it creates the following files:
+By default it creates the following files for a OpenResty server:
 
 * `nginx.conf`
 * `mime.types`
 * `app.lua`
+* `config.lua`
 
 > Use the `--moonscript` flag to generate a blank MoonScript based app
 
@@ -98,7 +99,9 @@ $ lapis server [environment]
 ```
 
 This command start the configured webserver for your app under the specified
-environment.
+environment. This command will first read your configuration file to determine
+the server type for the environment, then it will attempt to start your
+application using the entry point for the app.
 
 #### OpenResty Server
 
@@ -128,6 +131,13 @@ the server (where `nginx` is the path to the located OpenResty installation):
 ```bash
 $ nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
 ```
+
+
+#### Cqueues Server
+
+When using Cqueues & lua-http, no additional processes are created. Your server
+is started directly inside of the Lapis command. After reading the
+configuration model it will attempt to load a module called `app` to serve.
 
 ### `lapis migrate`
 

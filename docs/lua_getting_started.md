@@ -11,15 +11,16 @@ If you haven't already, read through the [generic getting started guide][2] for
 information on creating a new project skeleton along with details on OpenResty,
 Nginx configurations, and the `lapis` command.
 
-You can start a new Lua project in the current directory by running the
-following command:
+As a reminder, you can create a new Lapis project in the current directory by
+running the following command:
 
 ```bash
-$ lapis new --lua
+$ lapis new
 ```
 
-The default `nginx.conf` reads a file called `app.lua` for your application. A
-basic one is provided with the `lapis new` command.
+By default, an OpenResty project is generated. The default `nginx.conf` reads a
+file called `app.lua` for your application. A basic one is provided with the
+`lapis new` command.
 
 `app.lua` is a regular Lua module that contains the application. You can even
 require the module like any other in the regular Lua interpreter. It looks like
@@ -45,7 +46,7 @@ lapis server
 
 Visit <http://localhost:8080> to see the page.
 
-To change the port we can create a configuration. Create `config.lua`.
+To change the port we can create a configuration. Open `config.lua`.
 
 In this example we change the port in the `development` environment to 9090:
 
@@ -54,19 +55,16 @@ In this example we change the port in the `development` environment to 9090:
 local config = require("lapis.config")
 
 config("development", {
+  -- Add a port option:
   port = 9090
 })
 ```
 
-> You can read more about configurations on the [Configurations and
-> Environments guide][3].
+> You can read more about configurations on the [Configurations and Environments guide][3].
 
-The `development` environment is used and loaded automatically when `lapis
-server` is run with no additional arguments. (And the file
-`lapis_environment.lua` doesn't exist)
+Keep in mind that the default environment name is `development` unless overwritten.
 
-Lapis uses a handful of fields in the configuration (such as `port`), other
-fields can be used to store anything you want. For example:
+The configuration can hold any values and keys you want, and you can reference them directly in your app as needed:
 
 ```lua
 -- config.lua
@@ -77,8 +75,8 @@ config("development", {
 })
 ```
 
-You can get the current configuration by calling `get`. It returns a plain Lua
-table:
+You can get the configuration for the current environment by calling `get`. It
+returns a plain Lua table:
 
 ```lua
 -- app.lua
@@ -133,10 +131,10 @@ end)
 return app
 ```
 
-`etlua` is not enabled by default, you must enable it by calling the `enable`
-method on your application instance.
+Transparently loading `etlua` files as Lua modules is not enabled by default,
+you must enable it by calling the `enable` method on your application instance.
 
-We use the `render` parameter of our action's return value to instruct what
+The `render` parameter of the action's return value instructs Lapis which
 template to use when rendering the page. In this case `"index"` refers to the
 module with the name `views.index`. `etalua` injects itself into Lua's
 `require` method and so when the module `views.index` is loaded, an attempt to
@@ -240,7 +238,6 @@ usable by Lua.
 
 Read the [Requests and Actions guide][5] next to learn how Lapis routes HTTP
 requests and lets you respond to them.
-
 
 [1]: https://github.com/leafo/etlua
 [2]: getting_started.html

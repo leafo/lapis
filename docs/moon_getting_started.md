@@ -1,7 +1,7 @@
 {
   title: "Creating a Lapis Application with MoonScript"
 }
-<div class="override_lang"></div>
+<div class="override_lang" data-lang="moonscript"></div>
 
 # Creating a Lapis Application with MoonScript
 
@@ -11,7 +11,7 @@ You can start a new MoonScript project in the current directory by running the
 following command:
 
 ```bash
-$ lapis new
+$ lapis new --moonscript
 ```
 
 This provides us with a default Nginx configuration, `nginx.conf`, and a
@@ -193,13 +193,6 @@ class extends lapis.Application
   "/": =>
     @url_for("user_login") -- returns "/users/login"
 ```
-
-### Class Methods
-
-#### `@find_action(action_name)`
-
-Returns the function of the action that has the name specified by
-`action_name`.
 
 [1]: http://moonscript.org/reference/#moonc
 [2]: $root/reference/actions.html
