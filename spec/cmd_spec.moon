@@ -23,6 +23,16 @@ hello: ${{some_var}}]]
 env LAPIS_ENVIRONMENT;
 hello: what's up]], compiled
 
+  it "compies config with variable that doesn't exist", ->
+    tpl = [[
+hello: ${{oops_var}}]]
+
+    compiled = nginx.compile_config tpl, { some_var: "what's up" }
+
+    assert.same [[
+env LAPIS_ENVIRONMENT;
+hello: ${{oops_var}}]], compiled
+
   it "should compile postgres connect string", ->
     tpl = [[
 pg-connect: ${{pg postgres}}]]
