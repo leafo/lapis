@@ -125,6 +125,7 @@ to `types.shape` from Tableshape with a few key differences:
 * Any excess fields that are not explicitly specified within `param_spec` do not generate an error, and are left out of the transformed result.
 * The error returned by the type checker is not a single string value, but instead an array of errors that is compatible with the $self_ref{"errors"} pattern seen in Lapis actions.
 * The formatting of error messages can be customized.
+* A new object is always returned from transform, even if the input matches the output
 
 `types.params_shape` is designed to be used with the transform API of
 Tableshape. The resulting transformed object is a validated table of

@@ -309,6 +309,17 @@ describe "lapis.validate.types", ->
         }
       }, { test_object\transform { two: "sure", one: "whoa", ignore: 99 } }
 
+
+    it "always returns new object", ->
+      s = types.params_shape {
+        {"color", types.literal "blue"}
+      }
+
+      input = { color: "blue" }
+      output = s\transform input
+      assert.same input, output
+      assert.false input == output, "input and output should be distinct objects"
+
     it "tests object with state", ->
       -- TODO:
 
