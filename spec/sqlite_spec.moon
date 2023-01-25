@@ -1,4 +1,4 @@
-
+unpack = unpack or table.unpack
 
 TESTS = {
   -- lapis.db.postgres
