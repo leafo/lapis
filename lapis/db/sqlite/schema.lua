@@ -138,5 +138,5 @@ local types = {
 return {
   types = types,
   create_table = create_table,
-  delete_table = delete_table
+  drop_table = drop_table
 }

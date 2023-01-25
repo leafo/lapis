@@ -78,7 +78,7 @@ connect = function()
     active_connection:close()
     active_connection = nil
   end
-  local lsqlite3 = require("lsqlite3")
+  local sqlite3 = require("lsqlite3")
   local config = require("lapis.config").get()
   local db_name = config.sqlite and config.sqlite.database or "lapis.sqlite"
   active_connection = assert(sqlite3.open(db_name))

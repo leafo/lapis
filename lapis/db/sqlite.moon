@@ -48,7 +48,7 @@ connect = ->
     active_connection\close!
     active_connection = nil
 
-  lsqlite3 = require "lsqlite3"
+  sqlite3 = require "lsqlite3"
   config =  require("lapis.config").get!
   db_name = config.sqlite and config.sqlite.database or "lapis.sqlite"
   active_connection = assert sqlite3.open db_name

@@ -89,4 +89,4 @@ types = {
 }, __index: (key) =>
   error "Don't know column type `#{key}`"
 
-{:types, :create_table, :delete_table}
+{:types, :create_table, :drop_table}
