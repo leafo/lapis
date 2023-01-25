@@ -80,7 +80,7 @@ connect = function()
   end
   local lsqlite3 = require("lsqlite3")
   local config = require("lapis.config").get()
-  local db_name = config.sqlite and config.sqlite.database or "lapis.sqlite3"
+  local db_name = config.sqlite and config.sqlite.database or "lapis.sqlite"
   active_connection = assert(sqlite3.open(db_name))
 end
 local query
