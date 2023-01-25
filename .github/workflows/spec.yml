@@ -45,6 +45,7 @@ jobs:
         luarocks install busted
         luarocks install moonscript
         luarocks install tableshape
+        luarocks install lsqlite3
         luarocks make
 
     - name: test
