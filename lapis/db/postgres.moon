@@ -3,7 +3,6 @@ import type, tostring, pairs, select from _G
 unpack = unpack or table.unpack
 
 local raw_query, raw_disconnect
-local logger
 
 import
   FALSE
@@ -19,6 +18,8 @@ import
   clause
   is_encodable
   from require "lapis.db.base"
+
+logger = require "lapis.logging"
 
 array = (t) ->
   import PostgresArray from require "pgmoon.arrays"
@@ -126,12 +127,6 @@ set_raw_query = (fn) ->
 get_raw_query = ->
   raw_query
 
-init_logger = ->
-  logger = require "lapis.logging"
-
-set_logger = (_logger) -> logger = _logger
-get_logger = -> logger
-
 init_db = ->
   config = require("lapis.config").get!
   backend = config.postgres and config.postgres.backend
@@ -184,7 +179,6 @@ append_all = (t, ...) ->
 -- NOTE: this doesn't actually connect, it just configures the backend. This
 -- should be renamed and the interface changed
 connect = ->
-  init_logger!
   init_db! -- replaces raw_query to default backend
 
 disconnect = ->
@@ -326,14 +320,9 @@ encode_case = (exp, t, on_else) ->
   :encode_clause, :interpolate_query, :format_date,
   :encode_case
 
-  :init_logger
-
   :set_backend
   :set_raw_query
   :get_raw_query
-
-  :get_logger
-  :set_logger
 
   parse_clause: require "lapis.db.postgres.parse_clause"
 

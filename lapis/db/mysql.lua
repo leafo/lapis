@@ -11,8 +11,9 @@ do
   local _obj_0 = require("lapis.db.base")
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_encodable, clause, is_clause = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_encodable, _obj_0.clause, _obj_0.is_clause
 end
-local conn, logger
-local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_logger, set_logger, get_logger, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
+local logger = require("lapis.logging")
+local conn
+local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
 BACKENDS = {
   raw = function(fn)
     return fn
@@ -226,15 +227,6 @@ escape_identifier = function(ident)
   ident = tostring(ident)
   return '`' .. (ident:gsub('`', '``')) .. '`'
 end
-init_logger = function()
-  logger = require("lapis.logging")
-end
-set_logger = function(_logger)
-  logger = _logger
-end
-get_logger = function()
-  return logger
-end
 init_db = function()
   local config = require("lapis.config").get()
   local backend = config.mysql and config.mysql.backend
@@ -248,7 +240,6 @@ init_db = function()
   return set_backend(backend)
 end
 connect = function()
-  init_logger()
   return init_db()
 end
 raw_query = function(...)
@@ -333,12 +324,9 @@ return {
   escape_literal = escape_literal,
   escape_identifier = escape_identifier,
   format_date = format_date,
-  init_logger = init_logger,
   set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
-  get_logger = get_logger,
-  set_logger = set_logger,
   parse_clause = function()
     return error("MySQL does not support a clause parser")
   end,

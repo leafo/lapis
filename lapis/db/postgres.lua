@@ -7,12 +7,12 @@ do
 end
 local unpack = unpack or table.unpack
 local raw_query, raw_disconnect
-local logger
 local FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_clause, clause, is_encodable
 do
   local _obj_0 = require("lapis.db.base")
   FALSE, NULL, TRUE, build_helpers, format_date, is_raw, raw, is_list, list, is_clause, clause, is_encodable = _obj_0.FALSE, _obj_0.NULL, _obj_0.TRUE, _obj_0.build_helpers, _obj_0.format_date, _obj_0.is_raw, _obj_0.raw, _obj_0.is_list, _obj_0.list, _obj_0.is_clause, _obj_0.clause, _obj_0.is_encodable
 end
+local logger = require("lapis.logging")
 local array
 array = function(t)
   local PostgresArray
@@ -140,18 +140,6 @@ local get_raw_query
 get_raw_query = function()
   return raw_query
 end
-local init_logger
-init_logger = function()
-  logger = require("lapis.logging")
-end
-local set_logger
-set_logger = function(_logger)
-  logger = _logger
-end
-local get_logger
-get_logger = function()
-  return logger
-end
 local init_db
 init_db = function()
   local config = require("lapis.config").get()
@@ -235,7 +223,6 @@ append_all = function(t, ...)
 end
 local connect
 connect = function()
-  init_logger()
   return init_db()
 end
 local disconnect
@@ -400,12 +387,9 @@ return {
   interpolate_query = interpolate_query,
   format_date = format_date,
   encode_case = encode_case,
-  init_logger = init_logger,
   set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
-  get_logger = get_logger,
-  set_logger = set_logger,
   parse_clause = require("lapis.db.postgres.parse_clause"),
   select = _select,
   insert = _insert,

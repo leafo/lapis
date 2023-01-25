@@ -19,7 +19,9 @@ import
   is_clause
   from require "lapis.db.base"
 
-local conn, logger
+logger = require "lapis.logging"
+
+local conn
 local *
 
 BACKENDS = {
@@ -187,12 +189,6 @@ escape_identifier = (ident) ->
   ident = tostring ident
   '`' ..  (ident\gsub '`', '``') .. '`'
 
-init_logger = ->
-  logger = require "lapis.logging"
-
-set_logger = (_logger) -> logger = _logger
-get_logger = -> logger
-
 init_db = ->
   config = require("lapis.config").get!
   backend = config.mysql and config.mysql.backend
@@ -205,7 +201,6 @@ init_db = ->
   set_backend backend
 
 connect = ->
-  init_logger!
   init_db! -- replaces raw_query to default backend
 
 raw_query = (...) ->
@@ -299,14 +294,10 @@ _truncate = (table) ->
   :escape_identifier
 
   :format_date
-  :init_logger
 
   :set_backend
   :set_raw_query
   :get_raw_query
-
-  :get_logger
-  :set_logger
 
   parse_clause: -> error "MySQL does not support a clause parser"
 
