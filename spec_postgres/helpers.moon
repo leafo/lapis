@@ -1,6 +1,6 @@
 
 import push, pop from require "lapis.environment"
-import set_backend, init_logger from require "lapis.db.postgres"
+import set_backend from require "lapis.db.postgres"
 
 setup_db = (opts) ->
   push "test", {
@@ -11,7 +11,6 @@ setup_db = (opts) ->
   }
 
   set_backend "pgmoon"
-  init_logger!
 
 teardown_db = ->
   pop!
