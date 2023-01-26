@@ -1,4 +1,5 @@
 
+unpack = unpack or table.unpack
 db = require "lapis.db.sqlite"
 
 -- https://www.sqlite.org/lang_createtable.html

@@ -1,3 +1,4 @@
+local unpack = unpack or table.unpack
 local db = require("lapis.db.sqlite")
 local create_table
 create_table = function(name, columns, opts)
