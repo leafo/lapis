@@ -307,7 +307,7 @@ do
       self.err = err
       self.trace = trace
       return {
-        status = 500,
+        status = self.status,
         layout = false,
         render = self.app.error_page
       }

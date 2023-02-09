@@ -1,4 +1,17 @@
 html = require "lapis.html"
+
+accept_json = =>
+  if accept = @req.headers.accept
+    switch type accept
+      when "string"
+        return true if accept\lower!\match "application/json"
+      when "table"
+        for v in *accept
+          return true if v\lower!\match "application/json"
+
+  false
+
+
 class ErrorPage extends html.Widget
   style: =>
     style type: "text/css", ->
@@ -35,6 +48,22 @@ class ErrorPage extends html.Widget
       ]]
 
   content: =>
+    -- why do we render json object in widget? @app.error_page should be the
+    -- only entry point to displaying an error so the end-user can easily
+    -- overwrite it and not worry about leaking any data outside of this
+    -- default error page
+    if accept_json @
+      import to_json from require "lapis.util"
+      @res.headers["Content-Type"] = "application/json"
+      raw to_json {
+        error: @err
+        traceback: @trace
+        lapis: {
+          version: require "lapis.version"
+        }
+      }
+      return
+
     html_5 ->
       head ->
         meta charset: "UTF-8"
@@ -52,6 +81,4 @@ class ErrorPage extends html.Widget
 
         version = require "lapis.version"
         div class: "footer", "lapis #{version}"
-
-
 

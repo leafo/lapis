@@ -354,7 +354,7 @@ class Application
     @trace = trace
 
     {
-      status: 500
+      status: @status
       layout: false
       render: @app.error_page
     }

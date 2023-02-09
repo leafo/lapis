@@ -1,4 +1,26 @@
 local html = require("lapis.html")
+local accept_json
+accept_json = function(self)
+  do
+    local accept = self.req.headers.accept
+    if accept then
+      local _exp_0 = type(accept)
+      if "string" == _exp_0 then
+        if accept:lower():match("application/json") then
+          return true
+        end
+      elseif "table" == _exp_0 then
+        for _index_0 = 1, #accept do
+          local v = accept[_index_0]
+          if v:lower():match("application/json") then
+            return true
+          end
+        end
+      end
+    end
+  end
+  return false
+end
 local ErrorPage
 do
   local _class_0
@@ -41,6 +63,19 @@ do
       end)
     end,
     content = function(self)
+      if accept_json(self) then
+        local to_json
+        to_json = require("lapis.util").to_json
+        self.res.headers["Content-Type"] = "application/json"
+        raw(to_json({
+          error = self.err,
+          traceback = self.trace,
+          lapis = {
+            version = require("lapis.version")
+          }
+        }))
+        return 
+      end
       return html_5(function()
         head(function()
           meta({
