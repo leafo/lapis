@@ -173,7 +173,13 @@ mock_request = (app_cls, url, opts={}) ->
         out
 
       get_post_args: ->
-        opts.post or {}
+        if opts.post
+          opts.post
+        elseif opts.body and headers["Content-type"] == "application/x-www-form-urlencoded"
+          {k,v for k,v in pairs parse_query_string(opts.body) when type(k) == "string"}
+        else
+          {}
+
     }
   }
 
