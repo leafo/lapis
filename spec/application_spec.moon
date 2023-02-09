@@ -773,6 +773,26 @@ describe "lapis.application", ->
       -- only set on test env
       assert.truthy h["X-Lapis-Error"]
 
+    it "renders default error page as json", ->
+      status, body, h = mock_request ErrorApp, "/", {
+        allow_error: true
+        expect: "json"
+        headers: {
+          accept: "application/json"
+        }
+      }
+      assert.same 500, status
+
+      assert.truthy body.error
+      assert body.error\match "I am an error"
+
+      assert.truthy body.traceback
+      assert.truthy body.lapis
+
+      -- only set on test env
+      assert.truthy h["X-Lapis-Error"]
+
+
     it "raises error in spec by default", ->
       assert.has_error ->
         mock_request ErrorApp, "/"
