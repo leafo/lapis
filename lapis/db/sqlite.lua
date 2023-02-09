@@ -8,8 +8,14 @@ end
 local unpack = unpack or table.unpack
 local base_db = require("lapis.db.base")
 local logger = require("lapis.logging")
-local NULL, is_list, is_raw
-NULL, is_list, is_raw = base_db.NULL, base_db.is_list, base_db.is_raw
+local NULL, is_list, is_raw, raw
+NULL, is_list, is_raw, raw = base_db.NULL, base_db.is_list, base_db.is_raw, base_db.raw
+local append_all
+append_all = function(t, ...)
+  for i = 1, select("#", ...) do
+    t[#t + 1] = select(i, ...)
+  end
+end
 local active_connection
 local escape_identifier
 escape_identifier = function(ident)
@@ -102,6 +108,20 @@ query = function(str, ...)
   end
   return _accum_0
 end
+local add_returning
+add_returning = function(buff, first, cur, following, ...)
+  if not (cur) then
+    return 
+  end
+  if first then
+    append_all(buff, " RETURNING ")
+  end
+  append_all(buff, escape_identifier(cur))
+  if following then
+    append_all(buff, ", ")
+    return add_returning(buff, false, following, ...)
+  end
+end
 local insert
 insert = function(tbl, values, opts, ...)
   local buff = {
@@ -110,7 +130,46 @@ insert = function(tbl, values, opts, ...)
     " "
   }
   encode_values(values, buff)
+  local opts_type = type(opts)
+  if opts_type == "string" or opts_type == "table" and is_raw(opts) then
+    add_returning(buff, true, opts, ...)
+  elseif opts_type == "table" then
+    if opts.on_conflict then
+      if opts.on_conflict == "do_nothing" then
+        append_all(buff, " ON CONFLICT DO NOTHING")
+      else
+        error("db.insert: unsupported value for on_conflict option: " .. tostring(tostring(opts.on_conflict)))
+      end
+    end
+    do
+      local r = opts.returning
+      if r then
+        if r == "*" then
+          add_returning(buff, true, raw("*"))
+        else
+          assert(type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array")
+          add_returning(buff, true, unpack(r))
+        end
+      end
+    end
+  end
   return query(concat(buff))
+end
+local _select
+_select = function()
+  return error("not yet")
+end
+local update
+update = function()
+  return error("not yet")
+end
+local delete
+delete = function()
+  return error("not yet")
+end
+local truncate
+truncate = function()
+  return error("not yet")
 end
 return setmetatable({
   query = query,

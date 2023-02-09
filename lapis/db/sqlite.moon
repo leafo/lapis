@@ -7,7 +7,11 @@ base_db = require "lapis.db.base"
 
 logger = require "lapis.logging"
 
-import NULL, is_list, is_raw from base_db
+import NULL, is_list, is_raw, raw from base_db
+
+append_all = (t, ...) ->
+  for i=1, select "#", ...
+    t[#t + 1] = select i, ...
  
 local active_connection
 
@@ -66,6 +70,26 @@ query = (str, ...) ->
 
   return [row for row in active_connection\nrows str]
 
+-- Appends a list of column names as past of a returning clause via
+-- tail recursion
+-- buff: string fragment buffer to append to
+-- first: is the the first call in series of recursive calls (initial caller should always set this to true
+-- The calling varargs are split into the remaining arguments:
+-- cur: the current value in varags
+-- following: the next value in varargs
+-- ...: remaining arguments
+add_returning = (buff, first, cur, following, ...) ->
+  return unless cur
+
+  if first
+    append_all buff, " RETURNING "
+
+  append_all buff, escape_identifier cur
+
+  if following
+    append_all buff, ", "
+    add_returning buff, false, following, ...
+
 insert = (tbl, values, opts, ...) ->
   buff = {
     "INSERT INTO "
@@ -73,7 +97,33 @@ insert = (tbl, values, opts, ...) ->
     " "
   }
   encode_values values, buff
+
+  opts_type = type(opts)
+
+  if opts_type == "string" or opts_type == "table" and is_raw(opts)
+    add_returning buff, true, opts, ...
+  elseif opts_type == "table"
+    if opts.on_conflict
+      if opts.on_conflict == "do_nothing"
+        append_all buff, " ON CONFLICT DO NOTHING"
+      else
+        error "db.insert: unsupported value for on_conflict option: #{tostring opts.on_conflict}"
+
+    if r = opts.returning
+      if r == "*"
+        add_returning buff, true, raw "*"
+      else
+        assert type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array"
+        add_returning buff, true, unpack r
+
   query concat buff
+
+
+_select = -> error "not yet"
+update = -> error "not yet"
+delete = -> error "not yet"
+truncate = -> error "not yet"
+
 
 setmetatable {
   :query

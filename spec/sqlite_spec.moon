@@ -103,6 +103,60 @@ describe "lapis.db.sqlite", ->
       [[select 100 as cool]]
       [[select TRUE a, FALSE b, 'good''s dog' c]]
     }, query_log
+
+  it "db.insert", ->
+    res = schema.create_table "my table", {
+      {"id", schema.types.integer}
+      {"name", schema.types.text default: "Hello World"}
+      "PRIMARY KEY (id)"
+    }, strict: true, without_rowid: true
+
+
+    query_log = {}
+
+    -- plain insert
+    db.insert "my table", {
+      id: 1
+      name: "poppy"
+    }
+
+    -- returning by name
+    assert.same {
+      {
+        id: 5
+        name: "Hello World"
+      }
+    }, db.insert "my table", {
+      id: 5
+    }, "id", "name"
+
+    -- aborting with conflict
+    assert.has_error(
+      -> db.insert "my table", { id: 5 }
+      "UNIQUE constraint failed: my table.id"
+    )
+
+    -- ignoring conflict
+    db.insert "my table", { id: 5 }, on_conflict: "do_nothing"
+
+    -- returning and ignoring conflict
+    assert.same {
+      {
+        id: 6
+        name: "Hello World"
+      }
+    }, db.insert "my table", { id: 6 }, on_conflict: "do_nothing", returning: "*"
+
+    assert.same {}, db.insert "my table", { id: 6 }, on_conflict: "do_nothing", returning: "*"
+
+    assert.same {
+      [[INSERT INTO "my table" ("id", "name") VALUES (1, 'poppy')]]
+      [[INSERT INTO "my table" ("id") VALUES (5) RETURNING "id", "name"]]
+      [[INSERT INTO "my table" ("id") VALUES (5)]]
+      [[INSERT INTO "my table" ("id") VALUES (5) ON CONFLICT DO NOTHING]]
+      [[INSERT INTO "my table" ("id") VALUES (6) ON CONFLICT DO NOTHING RETURNING *]]
+      [[INSERT INTO "my table" ("id") VALUES (6) ON CONFLICT DO NOTHING RETURNING *]]
+    }, query_log
   
   describe "lapis.db.sqlite.schema", ->
     it "creates and drops table", ->
