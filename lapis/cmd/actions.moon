@@ -277,6 +277,7 @@ COMMANDS = {
           \option("--host", "Set the host header of request")
           \option("--scheme", "Override default scheme (eg. https, http)")
           \flag("--json", "Set accept header to application/json")
+          \flag("--csrf", "Set generated CSRF header and parameter for form requests")
         )
 
         \group("Display options"
@@ -297,7 +298,7 @@ COMMANDS = {
 
       import mock_request from require "lapis.spec.request"
 
-      local input_headers
+      local input_headers, input_cookies
 
       if args.json
         input_headers or= {}
@@ -306,11 +307,21 @@ COMMANDS = {
       if args.body == "-"
         args.body = io.stdin\read "*a"
 
+      if args.csrf
+        import generate_token from require "lapis.csrf"
+        args.form or= {}
+        input_cookies or= {}
+        import encode_query_string from require "lapis.util"
+        table.insert args.form, encode_query_string {
+          csrf_token:  generate_token { cookies: input_cookies }
+        }
+
       if args.form and next args.form
         input_headers or= {}
         input_headers["Content-Type"] = "application/x-www-form-urlencoded"
         args.method = "POST" if args.method == "GET"
         args.body = table.concat args.form, "&"
+
 
       if args.header and next args.header
         for row in *args.header
@@ -324,6 +335,7 @@ COMMANDS = {
         host: args.host
         body: args.body
         headers: input_headers
+        cookies: input_cookies
         scheme: args.scheme
       }
 

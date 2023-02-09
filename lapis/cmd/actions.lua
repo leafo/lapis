@@ -301,7 +301,7 @@ local COMMANDS = {
           "OPTIONS",
           "HEAD",
           "PATCH"
-        }):default("GET"), _with_0:option("--body", "Body of request, - for stdin"), _with_0:option("--form -F", "Set method to POST if unset, content type to application/x-www-form-urlencoded, and body to value of this option"):count("*"), _with_0:option("--header -H", "Append an input header, can be used multiple times (can overwrite set headers from other options"):count("*"), _with_0:option("--host", "Set the host header of request"), _with_0:option("--scheme", "Override default scheme (eg. https, http)"), _with_0:flag("--json", "Set accept header to application/json"))
+        }):default("GET"), _with_0:option("--body", "Body of request, - for stdin"), _with_0:option("--form -F", "Set method to POST if unset, content type to application/x-www-form-urlencoded, and body to value of this option"):count("*"), _with_0:option("--header -H", "Append an input header, can be used multiple times (can overwrite set headers from other options"):count("*"), _with_0:option("--host", "Set the host header of request"), _with_0:option("--scheme", "Override default scheme (eg. https, http)"), _with_0:flag("--json", "Set accept header to application/json"), _with_0:flag("--csrf", "Set generated CSRF header and parameter for form requests"))
         _with_0:group("Display options", _with_0:flag("--print-headers", "Print only the headers as JSON"), _with_0:flag("--print-json", "Print the entire response as JSON"))
         return _with_0
       end
@@ -318,13 +318,27 @@ local COMMANDS = {
       local app_cls = require(app_module or config.app_class)
       local mock_request
       mock_request = require("lapis.spec.request").mock_request
-      local input_headers
+      local input_headers, input_cookies
       if args.json then
         input_headers = input_headers or { }
         input_headers["Accept"] = "application/json"
       end
       if args.body == "-" then
         args.body = io.stdin:read("*a")
+      end
+      if args.csrf then
+        local generate_token
+        generate_token = require("lapis.csrf").generate_token
+        args.form = args.form or { }
+        input_cookies = input_cookies or { }
+        local encode_query_string
+        encode_query_string = require("lapis.util").encode_query_string
+        table.insert(args.form, encode_query_string({
+          csrf_token = generate_token({
+            cookies = input_cookies
+          })
+        }))
+        require("moon").p(input_cookies)
       end
       if args.form and next(args.form) then
         input_headers = input_headers or { }
@@ -359,6 +373,7 @@ local COMMANDS = {
         host = args.host,
         body = args.body,
         headers = input_headers,
+        cookies = input_cookies,
         scheme = args.scheme
       }
       local status, response, headers = mock_request(app_cls, args.path, request_options)
