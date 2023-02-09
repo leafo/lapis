@@ -285,6 +285,118 @@ local COMMANDS = {
     end
   },
   {
+    name = "simulate",
+    help = "Execute a mock HTTP request to your application code without any server involved",
+    argparse = function(command)
+      do
+        local _with_0 = command
+        _with_0:argument("path", "Path to request, may include query parameters (eg. /)")
+        _with_0:option("--app-class", "Override default app class module name")
+        _with_0:option("--helper", "Module name to require before loading app")
+        _with_0:group("Request control", _with_0:option("--method", "HTTP method"):choices({
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "OPTIONS",
+          "HEAD",
+          "PATCH"
+        }):default("GET"), _with_0:option("--body", "Body of request, - for stdin"), _with_0:option("--form -F", "Set method to POST if unset, content type to application/x-www-form-urlencoded, and body to value of this option"):count("*"), _with_0:option("--header -H", "Append an input header, can be used multiple times (can overwrite set headers from other options"):count("*"), _with_0:option("--host", "Set the host header of request"), _with_0:option("--scheme", "Override default scheme (eg. https, http)"), _with_0:flag("--json", "Set accept header to application/json"))
+        _with_0:group("Display options", _with_0:flag("--print-headers", "Print only the headers as JSON"), _with_0:flag("--print-json", "Print the entire response as JSON"))
+        return _with_0
+      end
+    end,
+    function(self, args)
+      local set_default_environment
+      set_default_environment = require("lapis.environment").set_default_environment
+      set_default_environment(args.environment)
+      if args.helper then
+        require(args.helper)
+      end
+      local config = require("lapis.config").get()
+      local app_module = args.app_class or config.app_class or "app"
+      local app_cls = require(app_module or config.app_class)
+      local mock_request
+      mock_request = require("lapis.spec.request").mock_request
+      local input_headers
+      if args.json then
+        input_headers = input_headers or { }
+        input_headers["Accept"] = "application/json"
+      end
+      if args.body == "-" then
+        args.body = io.stdin:read("*a")
+      end
+      if args.form and next(args.form) then
+        input_headers = input_headers or { }
+        input_headers["Content-Type"] = "application/x-www-form-urlencoded"
+        if args.method == "GET" then
+          args.method = "POST"
+        end
+        args.body = table.concat(args.form, "&")
+      end
+      if args.header and next(args.header) then
+        local _list_0 = args.header
+        for _index_0 = 1, #_list_0 do
+          local _continue_0 = false
+          repeat
+            local row = _list_0[_index_0]
+            local name, value = row:match("([^:]+):%s*(.+)")
+            if not (name) then
+              _continue_0 = true
+              break
+            end
+            input_headers = input_headers or { }
+            input_headers[name] = value
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
+          end
+        end
+      end
+      local request_options = {
+        method = args.method,
+        host = args.host,
+        body = args.body,
+        headers = input_headers,
+        scheme = args.scheme
+      }
+      local status, response, headers = mock_request(app_cls, args.path, request_options)
+      if args.print_json then
+        local to_json
+        to_json = require("lapis.util").to_json
+        return print(to_json({
+          status = status,
+          response = response,
+          headers = headers
+        }))
+      elseif args.print_headers then
+        local to_json
+        to_json = require("lapis.util").to_json
+        return print(to_json(headers))
+      else
+        colors = require("ansicolors")
+        io.stderr:write(colors("%{green}Status%{reset}: " .. tostring(status) .. "\n"))
+        local header_names
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for k in pairs(headers) do
+            _accum_0[_len_0] = k
+            _len_0 = _len_0 + 1
+          end
+          header_names = _accum_0
+        end
+        table.sort(header_names)
+        for _index_0 = 1, #header_names do
+          local h = header_names[_index_0]
+          io.stderr:write(colors("%{yellow}" .. tostring(h) .. "%{reset}: " .. tostring(headers[h]) .. "\n"))
+        end
+        return print(response)
+      end
+    end
+  },
+  {
     name = "_",
     hidden = true,
     help = "Excute third-party command from module lapis.cmd.actions._",

@@ -260,6 +260,97 @@ COMMANDS = {
   }
 
   {
+    name: "simulate"
+    help: "Execute a mock HTTP request to your application code without any server involved"
+
+    argparse: (command) ->
+      with command
+        \argument "path", "Path to request, may include query parameters (eg. /)"
+        \option("--app-class", "Override default app class module name")
+        \option("--helper", "Module name to require before loading app")
+
+        \group("Request control"
+          \option("--method", "HTTP method")\choices({"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"})\default "GET"
+          \option("--body", "Body of request, - for stdin")
+          \option("--form -F", "Set method to POST if unset, content type to application/x-www-form-urlencoded, and body to value of this option")\count "*"
+          \option("--header -H", "Append an input header, can be used multiple times (can overwrite set headers from other options")\count "*"
+          \option("--host", "Set the host header of request")
+          \option("--scheme", "Override default scheme (eg. https, http)")
+          \flag("--json", "Set accept header to application/json")
+        )
+
+        \group("Display options"
+          \flag "--print-headers", "Print only the headers as JSON"
+          \flag "--print-json", "Print the entire response as JSON"
+        )
+
+    (args) =>
+      import set_default_environment from require "lapis.environment"
+      set_default_environment args.environment
+
+      if args.helper
+        require args.helper
+
+      config = require("lapis.config").get!
+      app_module = args.app_class or config.app_class or "app"
+      app_cls = require app_module or config.app_class
+
+      import mock_request from require "lapis.spec.request"
+
+      local input_headers
+
+      if args.json
+        input_headers or= {}
+        input_headers["Accept"] = "application/json"
+
+      if args.body == "-"
+        args.body = io.stdin\read "*a"
+
+      if args.form and next args.form
+        input_headers or= {}
+        input_headers["Content-Type"] = "application/x-www-form-urlencoded"
+        args.method = "POST" if args.method == "GET"
+        args.body = table.concat args.form, "&"
+
+      if args.header and next args.header
+        for row in *args.header
+          name, value = row\match "([^:]+):%s*(.+)"
+          continue unless name
+          input_headers or= {}
+          input_headers[name] = value
+
+      request_options = {
+        method: args.method
+        host: args.host
+        body: args.body
+        headers: input_headers
+        scheme: args.scheme
+      }
+
+      status, response, headers = mock_request app_cls, args.path, request_options
+
+      if args.print_json
+        import to_json from require "lapis.util"
+        print to_json {
+          :status, :response, :headers
+        }
+      elseif args.print_headers
+        import to_json from require "lapis.util"
+        print to_json headers
+      else
+        colors = require "ansicolors"
+        io.stderr\write colors "%{green}Status%{reset}: #{status}\n"
+
+        header_names = [k for k in pairs headers]
+        table.sort header_names
+
+        for h in *header_names
+          io.stderr\write colors "%{yellow}#{h}%{reset}: #{headers[h]}\n"
+
+        print response
+  }
+
+  {
     name: "_"
     hidden: true
     help: "Excute third-party command from module lapis.cmd.actions._"
@@ -332,6 +423,8 @@ COMMANDS = {
 
     (args) => args
   }
+
+
 }
 
 class CommandRunner
