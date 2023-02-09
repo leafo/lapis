@@ -33,6 +33,28 @@ add_cookie = function(headers, name, val)
     end
   end
 end
+local extract_cookies
+extract_cookies = function(response_headers)
+  local set_cookies = response_headers.set_cookie
+  if not (set_cookies) then
+    return 
+  end
+  if type(set_cookies) == "string" then
+    set_cookies = {
+      set_cookies
+    }
+  end
+  local parsed_cookies = { }
+  for _index_0 = 1, #set_cookies do
+    local cookie_header = set_cookies[_index_0]
+    local parse_cookie_string
+    parse_cookie_string = require("lapis.util").parse_cookie_string
+    local tmp = parse_cookie_string(cookie_header)
+    local set_name = cookie_header:match("[^=]+")
+    parsed_cookies[set_name] = tmp[set_name]
+  end
+  return parsed_cookies
+end
 local mock_request
 mock_request = function(app_cls, url, opts)
   if opts == nil then
@@ -415,5 +437,6 @@ return {
   assert_request = assert_request,
   normalize_headers = normalize_headers,
   mock_action = mock_action,
-  stub_request = stub_request
+  stub_request = stub_request,
+  extract_cookies = extract_cookies
 }

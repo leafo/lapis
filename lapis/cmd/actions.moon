@@ -322,7 +322,6 @@ COMMANDS = {
         args.method = "POST" if args.method == "GET"
         args.body = table.concat args.form, "&"
 
-
       if args.header and next args.header
         for row in *args.header
           name, value = row\match "([^:]+):%s*(.+)"
@@ -339,12 +338,21 @@ COMMANDS = {
         scheme: args.scheme
       }
 
-      status, response, headers = mock_request app_cls, args.path, request_options
+      status, response, headers = assert mock_request app_cls, args.path, request_options
 
       if args.print_json
         import to_json from require "lapis.util"
+
+        -- look for a session set in the cookies to decode
+        import extract_cookies from require "lapis.spec.request"
+        session = if response_cookies = extract_cookies headers
+          import get_session from require "lapis.session"
+          get_session {
+            cookies: response_cookies
+          }
+
         print to_json {
-          :status, :response, :headers
+          :status, :response, :headers, :session
         }
       elseif args.print_headers
         import to_json from require "lapis.util"
@@ -357,7 +365,12 @@ COMMANDS = {
         table.sort header_names
 
         for h in *header_names
-          io.stderr\write colors "%{yellow}#{h}%{reset}: #{headers[h]}\n"
+          h_value = headers[h]
+          if type(h_value) == "string"
+            h_value = { h_value }
+
+          for v in *h_value
+            io.stderr\write colors "%{yellow}#{h}%{reset}: #{v}\n"
 
         print response
   }

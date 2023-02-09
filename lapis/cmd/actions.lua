@@ -338,7 +338,6 @@ local COMMANDS = {
             cookies = input_cookies
           })
         }))
-        require("moon").p(input_cookies)
       end
       if args.form and next(args.form) then
         input_headers = input_headers or { }
@@ -376,14 +375,28 @@ local COMMANDS = {
         cookies = input_cookies,
         scheme = args.scheme
       }
-      local status, response, headers = mock_request(app_cls, args.path, request_options)
+      local status, response, headers = assert(mock_request(app_cls, args.path, request_options))
       if args.print_json then
         local to_json
         to_json = require("lapis.util").to_json
+        local extract_cookies
+        extract_cookies = require("lapis.spec.request").extract_cookies
+        local session
+        do
+          local response_cookies = extract_cookies(headers)
+          if response_cookies then
+            local get_session
+            get_session = require("lapis.session").get_session
+            session = get_session({
+              cookies = response_cookies
+            })
+          end
+        end
         return print(to_json({
           status = status,
           response = response,
-          headers = headers
+          headers = headers,
+          session = session
         }))
       elseif args.print_headers then
         local to_json
@@ -405,7 +418,16 @@ local COMMANDS = {
         table.sort(header_names)
         for _index_0 = 1, #header_names do
           local h = header_names[_index_0]
-          io.stderr:write(colors("%{yellow}" .. tostring(h) .. "%{reset}: " .. tostring(headers[h]) .. "\n"))
+          local h_value = headers[h]
+          if type(h_value) == "string" then
+            h_value = {
+              h_value
+            }
+          end
+          for _index_1 = 1, #h_value do
+            local v = h_value[_index_1]
+            io.stderr:write(colors("%{yellow}" .. tostring(h) .. "%{reset}: " .. tostring(v) .. "\n"))
+          end
         end
         return print(response)
       end
