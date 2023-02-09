@@ -239,17 +239,22 @@ mock_request = function(app_cls, url, opts)
       get_post_args = function()
         if opts.post then
           return opts.post
-        elseif opts.body and headers["Content-type"] == "application/x-www-form-urlencoded" then
-          local _tbl_0 = { }
-          for k, v in pairs(parse_query_string(opts.body)) do
-            if type(k) == "string" then
-              _tbl_0[k] = v
+        end
+        if opts.body and headers["Content-type"] == "application/x-www-form-urlencoded" then
+          do
+            local args = parse_query_string(opts.body)
+            if args then
+              local _tbl_0 = { }
+              for k, v in pairs(args) do
+                if type(k) == "string" then
+                  _tbl_0[k] = v
+                end
+              end
+              return _tbl_0
             end
           end
-          return _tbl_0
-        else
-          return { }
         end
+        return { }
       end
     }
   })
