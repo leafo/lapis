@@ -467,6 +467,34 @@ describe "lapis.request", ->
       status, res = mock_request LayoutApp, "/"
       assert.same "(hello)", res
 
+    it "renders with widget and layout class", ->
+      import Widget from require "lapis.html"
+
+      class Inside extends Widget
+        content: =>
+          div "The inside!"
+
+      local layout_args
+
+      class Layout extends Widget
+        new: (la) =>
+          layout_args = la
+
+        content: =>
+          body ->
+            @content_for "inner"
+
+      class LayoutApp extends lapis.Application
+        layout: "cool_layout"
+        "/": =>
+          render: Inside, layout: Layout
+
+      status, res = mock_request LayoutApp, "/"
+      assert.same "<body><div>The inside!</div></body>", res
+
+      assert layout_args.view_widget, "Expected layout args to receive viewg_widget"
+
+
 -- these seem like an application spec and not a request one
 describe "before filter", ->
   it "should run before filter", ->
