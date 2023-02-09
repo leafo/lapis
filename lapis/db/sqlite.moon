@@ -90,6 +90,9 @@ add_returning = (buff, first, cur, following, ...) ->
     append_all buff, ", "
     add_returning buff, false, following, ...
 
+-- NOTE: this is copied from postgresql as our implementations currently have
+-- perfect overlap. In the future they may not though due to syntax
+-- differences, hence the copy
 insert = (tbl, values, opts, ...) ->
   buff = {
     "INSERT INTO "
@@ -118,8 +121,8 @@ insert = (tbl, values, opts, ...) ->
 
   query concat buff
 
+_select = (str, ...) -> query "SELECT " .. str, ...
 
-_select = -> error "not yet"
 update = -> error "not yet"
 delete = -> error "not yet"
 truncate = -> error "not yet"
@@ -128,6 +131,7 @@ truncate = -> error "not yet"
 setmetatable {
   :query
   :insert
+  select: _select
 
   :connect
 

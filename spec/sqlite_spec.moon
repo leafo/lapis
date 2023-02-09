@@ -104,13 +104,33 @@ describe "lapis.db.sqlite", ->
       [[select TRUE a, FALSE b, 'good''s dog' c]]
     }, query_log
 
-  it "db.insert", ->
+  it "db.select", ->
     res = schema.create_table "my table", {
       {"id", schema.types.integer}
       {"name", schema.types.text default: "Hello World"}
       "PRIMARY KEY (id)"
     }, strict: true, without_rowid: true
 
+    query_log = {}
+
+    db.select '* from "my table" where id = ?', 100
+
+    db.select 'id from "my table" where ?', db.clause {
+      {"id > ?", 23}
+      name: "cool"
+    }
+
+    assert.same {
+      [[SELECT * from "my table" where id = 100]]
+      [[SELECT id from "my table" where (id > 23) AND "name" = 'cool']]
+    }, query_log
+
+  it "db.insert", ->
+    res = schema.create_table "my table", {
+      {"id", schema.types.integer}
+      {"name", schema.types.text default: "Hello World"}
+      "PRIMARY KEY (id)"
+    }, strict: true, without_rowid: true
 
     query_log = {}
 

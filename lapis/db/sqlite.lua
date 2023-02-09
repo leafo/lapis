@@ -156,8 +156,8 @@ insert = function(tbl, values, opts, ...)
   return query(concat(buff))
 end
 local _select
-_select = function()
-  return error("not yet")
+_select = function(str, ...)
+  return query("SELECT " .. str, ...)
 end
 local update
 update = function()
@@ -174,6 +174,7 @@ end
 return setmetatable({
   query = query,
   insert = insert,
+  select = _select,
   connect = connect,
   escape_identifier = escape_identifier,
   escape_literal = escape_literal,
