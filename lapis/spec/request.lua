@@ -174,11 +174,14 @@ mock_request = function(app_cls, url, opts)
     now = function()
       return os.time()
     end,
-    update_time = function(self)
+    update_time = function()
       return os.time()
     end,
     time = function()
       return os.time()
+    end,
+    get_phase = function()
+      return "init"
     end,
     ctx = { },
     var = setmetatable({

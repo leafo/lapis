@@ -128,8 +128,13 @@ mock_request = (app_cls, url, opts={}) ->
 
     now: -> os.time! -- note that the resolution here does not match what nginx generates
 
-    update_time: => os.time!
+    update_time: -> os.time!
     time: -> os.time!
+
+    -- This is a bit hacky: We use the init phase to force pgmoon to default to
+    -- using luasocket for the nginx socket, as we don't support the full
+    -- cosocket protocol here. This should otherwise have no effect on your app
+    get_phase: -> "init"
 
     ctx: { }
 
