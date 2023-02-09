@@ -262,6 +262,28 @@ mock_request = function(app_cls, url, opts)
         end
         return { }
       end
+    },
+    location = {
+      capture = function()
+        return {
+          status = 200,
+          header = { },
+          body = ""
+        }
+      end,
+      capture_multi = function(args)
+        local _accum_0 = { }
+        local _len_0 = 1
+        for i = 1, #args do
+          _accum_0[_len_0] = {
+            status = 200,
+            header = { },
+            body = ""
+          }
+          _len_0 = _len_0 + 1
+        end
+        return _accum_0
+      end
     }
   })
   local app = app_cls.__base and app_cls() or app_cls

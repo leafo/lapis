@@ -39,6 +39,7 @@ mock_request = (app_cls, url, opts={}) ->
   else {}
 
   -- copy in new params
+  -- TODO: rename this to query (for query params), also support old syntax
   if opts.get
     for k,v in pairs opts.get
       if type(k) == "number"
@@ -189,6 +190,13 @@ mock_request = (app_cls, url, opts={}) ->
 
         {}
 
+    }
+
+    -- we can't suppor this api so we just return blank responses
+    location: {
+      capture: -> { status: 200, header: {}, body: "" }
+      capture_multi: (args) ->
+        [{ status: 200, header: {}, body: "" } for i=1,#args]
     }
   }
 
