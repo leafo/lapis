@@ -126,8 +126,10 @@ mock_request = (app_cls, url, opts={}) ->
 
     header: out_headers
 
-    now: -> os.time!
+    now: -> os.time! -- note that the resolution here does not match what nginx generates
+
     update_time: => os.time!
+    time: -> os.time!
 
     ctx: { }
 

@@ -177,6 +177,9 @@ mock_request = function(app_cls, url, opts)
     update_time = function(self)
       return os.time()
     end,
+    time = function()
+      return os.time()
+    end,
     ctx = { },
     var = setmetatable({
       host = host,
