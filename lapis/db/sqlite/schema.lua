@@ -1,5 +1,54 @@
 local unpack = unpack or table.unpack
 local db = require("lapis.db.sqlite")
+local gen_index_name
+gen_index_name = require("lapis.db.base").gen_index_name
+local extract_options
+extract_options = function(cols)
+  local options = { }
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for _index_0 = 1, #cols do
+      local _continue_0 = false
+      repeat
+        local col = cols[_index_0]
+        if type(col) == "table" and not db.is_raw(col) then
+          for k, v in pairs(col) do
+            options[k] = v
+          end
+          _continue_0 = true
+          break
+        end
+        local _value_0 = col
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    cols = _accum_0
+  end
+  return cols, options
+end
+local make_add
+make_add = function(buffer)
+  local fn
+  fn = function(first, ...)
+    if not (first) then
+      return 
+    end
+    table.insert(buffer, first)
+    return fn(...)
+  end
+  return fn
+end
+local entity_exists
+entity_exists = function(name)
+  local res = unpack(db.query("SELECT COUNT(*) as c FROM sqlite_master WHERE name = ?", name))
+  return res and res.c > 0 or false
+end
 local create_table
 create_table = function(name, columns, opts)
   if opts == nil then
@@ -16,14 +65,7 @@ create_table = function(name, columns, opts)
     db.escape_identifier(name),
     " ("
   }
-  local add
-  add = function(first, ...)
-    if not (first) then
-      return 
-    end
-    table.insert(buffer, first)
-    return add(...)
-  end
+  local add = make_add(buffer)
   for i, c in ipairs(columns) do
     add("\n  ")
     if type(c) == "table" then
@@ -56,6 +98,78 @@ end
 local drop_table
 drop_table = function(tname)
   return db.query("DROP TABLE IF EXISTS " .. tostring(db.escape_identifier(tname)))
+end
+local create_index
+create_index = function(tname, ...)
+  local index_name = gen_index_name(tname, ...)
+  local columns, options = extract_options({
+    ...
+  })
+  local prefix
+  if options.unique then
+    prefix = "CREATE UNIQUE INDEX "
+  else
+    prefix = "CREATE INDEX "
+  end
+  local buffer = {
+    prefix
+  }
+  local add = make_add(buffer)
+  if options.if_not_exists then
+    add("IF NOT EXISTS ")
+  end
+  add(db.escape_identifier(index_name), " ON ", db.escape_identifier(tname), " (")
+  for i, col in ipairs(columns) do
+    add(db.escape_identifier(col))
+    if not (i == #columns) then
+      add(", ")
+    end
+  end
+  add(")")
+  if options.where then
+    add(" WHERE ", options.where)
+  end
+  if options.when then
+    error("did you mean create_index `where`?")
+  end
+  return db.query(table.concat(buffer))
+end
+local drop_index
+drop_index = function(...)
+  local index_name = gen_index_name(...)
+  local _, options = extract_options({
+    ...
+  })
+  local buffer = {
+    "DROP INDEX IF EXISTS ",
+    db.escape_identifier(index_name)
+  }
+  return db.query(table.concat(buffer))
+end
+local add_column
+add_column = function(tname, col_name, col_type)
+  tname = db.escape_identifier(tname)
+  col_name = db.escape_identifier(col_name)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " ADD COLUMN " .. tostring(col_name) .. " " .. tostring(col_type))
+end
+local drop_column
+drop_column = function(tname, col_name)
+  tname = db.escape_identifier(tname)
+  col_name = db.escape_identifier(col_name)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " DROP COLUMN " .. tostring(col_name))
+end
+local rename_column
+rename_column = function(tname, col_from, col_to)
+  tname = db.escape_identifier(tname)
+  col_from = db.escape_identifier(col_from)
+  col_to = db.escape_identifier(col_to)
+  return db.query("ALTER TABLE " .. tostring(tname) .. " RENAME COLUMN " .. tostring(col_from) .. " TO " .. tostring(col_to))
+end
+local rename_table
+rename_table = function(tname_from, tname_to)
+  tname_from = db.escape_identifier(tname_from)
+  tname_to = db.escape_identifier(tname_to)
+  return db.query("ALTER TABLE " .. tostring(tname_from) .. " RENAME TO " .. tostring(tname_to))
 end
 local ColumnType
 do
@@ -129,8 +243,8 @@ local types = {
   text = C("TEXT"),
   blob = C("BLOB"),
   real = C("REAL"),
-  numeric = C("NUMERIC"),
-  any = C("ANY")
+  any = C("ANY"),
+  numeric = C("NUMERIC")
 }, {
   __index = function(self, key)
     return error("Don't know column type `" .. tostring(key) .. "`")
@@ -139,5 +253,12 @@ local types = {
 return {
   types = types,
   create_table = create_table,
-  drop_table = drop_table
+  drop_table = drop_table,
+  create_index = create_index,
+  drop_index = drop_index,
+  add_column = add_column,
+  drop_column = drop_column,
+  rename_column = rename_column,
+  rename_table = rename_table,
+  entity_exists = entity_exists
 }

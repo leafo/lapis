@@ -104,39 +104,172 @@ describe "lapis.db.sqlite", ->
       [[select TRUE a, FALSE b, 'good''s dog' c]]
     }, query_log
   
-  it "creates table", ->
-    res = schema.create_table "my table", {
-      {"id", schema.types.integer}
-      {"name", schema.types.text default: "Hello World"}
+  describe "lapis.db.sqlite.schema", ->
+    it "creates and drops table", ->
+      res = schema.create_table "my table", {
+        {"id", schema.types.integer}
+        {"name", schema.types.text default: "Hello World"}
 
-      "PRIMARY KEY (id)"
-    }, strict: true, without_rowid: true
+        "PRIMARY KEY (id)"
+      }, strict: true, without_rowid: true
 
-    assert.same {}, res
+      assert.same {}, res
 
-    res = db.insert "my table", {
-      id: 55
-    }
-
-    assert.same {}, res
-
-    res = db.query [[select * from "my table"]]
-
-    assert.same {
-      {
-        id: 55,
-        name: "Hello World"
+      res = db.insert "my table", {
+        id: 55
       }
-    }, res
 
-    assert.same {
-      [[CREATE TABLE "my table" (
+      assert.same {}, res
+
+      res = db.query [[select * from "my table"]]
+
+      assert.same {
+        {
+          id: 55,
+          name: "Hello World"
+        }
+      }, res
+
+
+      res = db.query [[select * from sqlite_master WHERE type='table']]
+
+      assert.same 1, #res
+      assert.same "my table", res[1].name
+
+      schema.drop_table "my table"
+
+      assert.same {}, db.query [[select * from sqlite_master WHERE type='table']]
+
+      assert.same {
+        [[CREATE TABLE "my table" (
   "id" INTEGER NOT NULL,
   "name" TEXT NOT NULL DEFAULT 'Hello World',
   PRIMARY KEY (id)
 ) STRICT, WITHOUT ROWID]]
-      [[INSERT INTO "my table" ("id") VALUES (55)]]
-      [[select * from "my table"]]
-    }, query_log
+        [[INSERT INTO "my table" ("id") VALUES (55)]]
+        [[select * from "my table"]]
+        [[select * from sqlite_master WHERE type='table']]
+        [[DROP TABLE IF EXISTS "my table"]]
+        [[select * from sqlite_master WHERE type='table']]
+      }, query_log
+
+    it "creates and removes index", ->
+      res = schema.create_table "my table", {
+        {"id", schema.types.integer}
+        {"name", schema.types.text default: "Hello World"}
+        {"height", schema.types.real}
+
+        "PRIMARY KEY (id)"
+      }, strict: true
+
+      schema.create_index "my table", "name", "height", unique: true
+
+      assert.same {
+        [[CREATE TABLE "my table" (
+  "id" INTEGER NOT NULL,
+  "name" TEXT NOT NULL DEFAULT 'Hello World',
+  "height" REAL NOT NULL,
+  PRIMARY KEY (id)
+) STRICT]]
+        [[CREATE UNIQUE INDEX "my table_name_height_idx" ON "my table" ("name", "height")]]
+      }, query_log
+
+      db.insert "my table", {
+        id: 55
+        name: "one"
+        height: 2
+      }
+
+      assert.has_error(
+        ->
+          db.insert "my table", {
+            id: 66
+            name: "one"
+            height: 2
+          }
+        "UNIQUE constraint failed: my table.name, my table.height"
+      )
+
+      assert.true schema.entity_exists "my table"
+      assert.false schema.entity_exists "my_table"
+      assert.true schema.entity_exists "my table_name_height_idx"
+
+
+      schema.drop_index "my table", "name", "height"
+
+      assert.false schema.entity_exists "my table_name_height_idx"
+
+    it "adds and removes column", ->
+      schema.create_table "some table", {
+        {"id", schema.types.integer}
+      }
+
+      schema.add_column "some table", "name", schema.types.text default: "woop"
+      schema.add_column "some table", "count", schema.types.numeric
+
+      assert.has_error(
+        -> schema.add_column "umm", "count", schema.types.numeric
+        "no such table: umm"
+      )
+
+      db.insert "some table", {
+        id: 12
+        name: "yes"
+        count: 55
+      }
+
+      assert.same {
+        {
+          id: 12
+          name: "yes"
+          count: 55
+        }
+      }, db.query 'select * from "some table"'
+
+
+      schema.drop_column "some table", "count"
+
+      assert.same {
+        {
+          id: 12
+          name: "yes"
+        }
+      }, db.query 'select * from "some table"'
+
+
+      assert.same {
+        [[CREATE TABLE "some table" (
+  "id" INTEGER NOT NULL
+)]]
+        [[ALTER TABLE "some table" ADD COLUMN "name" TEXT NOT NULL DEFAULT 'woop']]
+        [[ALTER TABLE "some table" ADD COLUMN "count" NUMERIC NOT NULL]]
+        [[ALTER TABLE "umm" ADD COLUMN "count" NUMERIC NOT NULL]]
+        [[INSERT INTO "some table" ("id", "name", "count") VALUES (12, 'yes', 55)]]
+        [[select * from "some table"]]
+        [[ALTER TABLE "some table" DROP COLUMN "count"]]
+        [[select * from "some table"]]
+      }, query_log
+
+    it "renames column and table", ->
+      schema.create_table "some table", {
+        {"id", schema.types.integer}
+      }
+
+      query_log = {}
+
+      schema.rename_column "some table", "id", "the_id"
+      schema.rename_table "some table", "the table"
+
+      assert.same {
+        [[ALTER TABLE "some table" RENAME COLUMN "id" TO "the_id"]]
+        [[ALTER TABLE "some table" RENAME TO "the table"]]
+      }, query_log
+
+      definition = unpack db.query [[select * from sqlite_master WHERE type='table']]
+
+      assert.same [[CREATE TABLE "the table" (
+  "the_id" INTEGER NOT NULL
+)]], definition.sql
+
 
 
