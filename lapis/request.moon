@@ -33,6 +33,23 @@ class Request
       parsed.query = nil
       parsed
 
+    append_content_for: (name, value) =>
+      import CONTENT_FOR_PREFIX from require "lapis.html"
+
+      full_name = CONTENT_FOR_PREFIX .. name
+
+      existing = @[full_name]
+      switch type existing
+        when "nil"
+          @[full_name] = value
+        when "table"
+          table.insert @[full_name], value
+        else
+          @[full_name] = {existing, value}
+
+      return
+
+
     load_cookies: =>
       @cookies = auto_table ->
         cookie = @req.headers.cookie
@@ -89,32 +106,30 @@ class Request
       else
         @app.layout
 
-      @layout_opts = if layout
-        { _content_for_inner: nil }
-
-      widget = @options.render
-      widget = @route_name if widget == true
+      widget_cls = @options.render
+      widget_cls = @route_name if widget_cls == true
 
       config = lapis_config.get!
 
-      if widget
-        if type(widget) == "string"
-          widget = require "#{@app.views_prefix}.#{widget}"
+      local view_widget
+      if widget_cls
+        if type(widget_cls) == "string"
+          widget_cls = require "#{@app.views_prefix}.#{widget_cls}"
 
         start_time = if config.measure_performance
           get_time config
 
-        view = widget!
-        @layout_opts.view_widget = view if @layout_opts
-        view\include_helper @
-        @write view
+        view_widget = widget_cls!
+        view_widget\include_helper @
+        @write view_widget
 
         if start_time
           t = get_time config
           increment_perf "view_time", t - start_time
 
       if layout
-        inner = @buffer
+        @_content_for_inner = @buffer
+        -- create a new buffer for the final result
         @buffer = {}
 
         layout_cls = if type(layout) == "string"
@@ -125,9 +140,10 @@ class Request
         start_time = if config.measure_performance
           get_time config
 
-        @layout_opts._content_for_inner or= -> raw inner
+        layout = layout_cls {
+          :view_widget
+        }
 
-        layout = layout_cls @layout_opts
         layout\include_helper @
         layout\render @buffer
 
@@ -238,6 +254,11 @@ class Request
         parsed[k] = v
 
     build_url parsed
+
+  -- This will enable you to get a reference to
+  -- the request object when it's part of a
+  -- helper chain
+  get_request: => @
 
   write: (thing, ...) =>
     t = type(thing)

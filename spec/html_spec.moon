@@ -241,20 +241,34 @@ describe "lapis.html", ->
 
       assert.same {"1", "20", "30", "40", "500"}, buff
 
-    it "should set layout opt", ->
+    it "sets content_for on request helper", ->
+      Request = require "lapis.request"
       class TheWidget extends Widget
         content: =>
           @content_for "title", -> div "hello world"
           @content_for "another", "yeah"
 
       widget = TheWidget!
-      helper = { layout_opts: {} }
+      helper = setmetatable { }, __index: Request.__base
       widget\include_helper helper
       out = render_widget widget
 
-      assert.same { _content_for_another: "yeah", _content_for_title: "<div>hello world</div>" }, helper.layout_opts
+      assert.same { _content_for_another: "yeah", _content_for_title: "<div>hello world</div>" }, helper
 
-    it "should render content for", ->
+    it "fails to set content_for if there is no request helper", ->
+      class TheWidget extends Widget
+        content: =>
+          @content_for "title", -> div "hello world"
+          @content_for "another", "yeah"
+
+      assert.has_error(
+        -> render_widget TheWidget!
+        "content_for called on a widget without a Request in the helper chain. content_for is only available in a request lifecycle"
+      )
+
+    it "renders content_for", ->
+      Request = require "lapis.request"
+
       class TheLayout extends Widget
         content: =>
           assert @has_content_for("title"), "should have title content_for"
@@ -275,36 +289,66 @@ describe "lapis.html", ->
           div "what the heck?"
 
 
-      layout_opts = {}
+      request = setmetatable {
+        _content_for_inner: {}
+      }, __index: Request.__base
 
-      inner = {}
       view = TheWidget!
-      view\include_helper { :layout_opts }
-      view inner
+      view\include_helper request
+      view request._content_for_inner
 
-      layout_opts._content_for_inner = -> raw inner
+      layout = TheLayout!
+      layout\include_helper request
 
-      assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget TheLayout layout_opts
+      assert.same [[<div class="title"><div>hello world</div></div><div>what the heck?</div>The&#039;s footer]], render_widget layout
 
-    it "should append multiple content for", ->
+    it "appends multiple content for", ->
+      Request = require "lapis.request"
+
       class TheLayout extends Widget
         content: =>
+          -- layout should also be able to write to content for
+          @content_for "deep", "Sure"
+          @content_for "item", "999"
+
           element "content-for", ->
             @content_for "things"
+
+          @content_for "deep"
+          @content_for "item"
+
+      class Child extends Widget
+        content: =>
+          @content_for "deep", "Very Deep!"
+          text "Yup"
 
       class TheWidget extends Widget
         content: =>
           @content_for "things", -> div "hello world"
           @content_for "things", "dual world"
+          widget Child!
 
-      layout_opts = {}
+      request = setmetatable {
+        _content_for_inner: {}
+      }, __index: Request.__base
 
-      inner = {}
       view = TheWidget!
-      view\include_helper { :layout_opts }
-      view inner
+      view\include_helper request
+      view request._content_for_inner
 
-      assert.same [[<content-for><div>hello world</div>dual world</content-for>]], render_widget TheLayout layout_opts
+      layout = TheLayout!
+      layout\include_helper request
+
+      assert.same {
+        _content_for_deep: "Very Deep!",
+        _content_for_inner: { "Yup" }
+        _content_for_things: {
+          "<div>hello world</div>"
+          "dual world"
+        }
+      }, request
+
+      assert.same [[<content-for><div>hello world</div>dual world</content-for>Very Deep!Sure999]], render_widget layout
 
     it "should instantiate widget class when passed to widget helper", ->
       class SomeWidget extends Widget

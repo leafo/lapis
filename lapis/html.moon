@@ -370,32 +370,31 @@ class Widget
     nil
 
   content_for: (name, val) =>
-    full_name = CONTENT_FOR_PREFIX .. name
-    return @_buffer\write @[full_name] unless val
+    request = @.get_request and @get_request!
+    unless request
+      error "content_for called on a widget without a Request in the helper chain. content_for is only available in a request lifecycle"
 
-    -- TODO: this is bad form, the first helper is assumed to be some kind of
-    -- request object that has layout_opts on it, this is tightly coupled the
-    -- the Request write method
-    if helper = @_get_helper_chain![1]
-      layout_opts = helper.layout_opts
+    if val == nil
+      -- No value provided, write the current value to the buffer
+      @_buffer\write request[CONTENT_FOR_PREFIX .. name]
+      return
 
-      val = if type(val) == "string"
+    -- evaluate value to string
+    val = switch type(val)
+      when "string"
         escape val
-      else
+      when "function"
         getfenv(val).capture val
+      else
+        error "Got unknown type for content_for value: #{type val}"
 
-      existing = layout_opts[full_name]
-      switch type existing
-        when "nil"
-          layout_opts[full_name] = val
-        when "table"
-          table.insert layout_opts[full_name], val
-        else
-          layout_opts[full_name] = {existing, val}
+    request.__class.support.append_content_for request, name, val
+    return
 
   has_content_for: (name) =>
-    full_name = CONTENT_FOR_PREFIX .. name
-    not not @[full_name]
+    request = @.get_request and @get_request!
+    return false unless request
+    not not request[CONTENT_FOR_PREFIX .. name]
 
   content: => -- implement me
 

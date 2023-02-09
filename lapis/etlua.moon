@@ -1,7 +1,7 @@
 
 import Parser, Compiler from require "etlua"
 
-import Widget, Buffer, element, CONTENT_FOR_PREFIX from require "lapis.html"
+import Widget, Buffer, element, escape, CONTENT_FOR_PREFIX from require "lapis.html"
 import locked_fn, release_fn from require "lapis.util.functions"
 
 parser = Parser!
@@ -20,6 +20,8 @@ class BufferCompiler extends Compiler
     @push "_b_buffer[_b_i] = ", ...
     @push "\n" if ...
 
+-- NOTE: The EtluaWidget class does not run in helper scope during render,
+-- only the template is run in that scope
 class EtluaWidget extends Widget
   @load: (code) =>
     lua_code, err = parser\compile_to_lua code, BufferCompiler
@@ -35,12 +37,34 @@ class EtluaWidget extends Widget
   _tpl_fn: nil -- set by superclass
 
   content_for: (name, val) =>
-    if val
-      super name, val
-    else
-      if val = @[CONTENT_FOR_PREFIX .. name]
-        @_buffer\write val
-        ""
+    fn = @_find_helper "get_request"
+    request = fn and fn!
+
+    unless request
+      error "content_for called on a widget without a Request in the helper chain. content_for is only available in a request lifecycle"
+
+
+    if val == nil
+      -- No value provided, write the current value to the buffer
+      @_buffer\write request[CONTENT_FOR_PREFIX .. name]
+      return ""
+
+    val = switch type(val)
+      when "string"
+        escape val
+      when "function"
+        val
+      else
+        error "Got unknown type for content_for value: #{type val}"
+
+    request.__class.support.append_content_for request, name, val
+    return
+
+  has_content_for: (name) =>
+    fn = @_find_helper "get_request"
+    request = fn and fn!
+    return false unless request
+    not not request[CONTENT_FOR_PREFIX .. name]
 
   _find_helper: (name) =>
     switch name

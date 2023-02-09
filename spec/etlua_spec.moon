@@ -39,13 +39,18 @@ describe "lapis.etlua", ->
 
     assert.same "-id: 10-", w\render_to_string!
 
-  it "should render content for", ->
+  it "renders content for", ->
+    Request = require "lapis.request"
+
     w_cls = EtluaWidget\load([[before <% content_for("thing") %>, <% content_for("other_thing")%> after]])
 
-    w = w_cls {
+    request = setmetatable {
       _content_for_thing: -> div class: "big", "Hello"
       _content_for_other_thing: "<div class='small'>yeah</div>"
-    }
+    }, __index: Request.__base
+
+    w = w_cls!
+    w\include_helper request
 
     assert.same [[before <div class="big">Hello</div>, <div class='small'>yeah</div> after]], w\render_to_string!
 

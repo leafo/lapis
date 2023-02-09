@@ -3,10 +3,10 @@ do
   local _obj_0 = require("etlua")
   Parser, Compiler = _obj_0.Parser, _obj_0.Compiler
 end
-local Widget, Buffer, element, CONTENT_FOR_PREFIX
+local Widget, Buffer, element, escape, CONTENT_FOR_PREFIX
 do
   local _obj_0 = require("lapis.html")
-  Widget, Buffer, element, CONTENT_FOR_PREFIX = _obj_0.Widget, _obj_0.Buffer, _obj_0.element, _obj_0.CONTENT_FOR_PREFIX
+  Widget, Buffer, element, escape, CONTENT_FOR_PREFIX = _obj_0.Widget, _obj_0.Buffer, _obj_0.element, _obj_0.escape, _obj_0.CONTENT_FOR_PREFIX
 end
 local locked_fn, release_fn
 do
@@ -73,17 +73,32 @@ do
   local _base_0 = {
     _tpl_fn = nil,
     content_for = function(self, name, val)
-      if val then
-        return _class_0.__parent.__base.content_for(self, name, val)
-      else
-        do
-          val = self[CONTENT_FOR_PREFIX .. name]
-          if val then
-            self._buffer:write(val)
-            return ""
-          end
-        end
+      local fn = self:_find_helper("get_request")
+      local request = fn and fn()
+      if not (request) then
+        error("content_for called on a widget without a Request in the helper chain. content_for is only available in a request lifecycle")
       end
+      if val == nil then
+        self._buffer:write(request[CONTENT_FOR_PREFIX .. name])
+        return ""
+      end
+      local _exp_0 = type(val)
+      if "string" == _exp_0 then
+        val = escape(val)
+      elseif "function" == _exp_0 then
+        val = val
+      else
+        val = error("Got unknown type for content_for value: " .. tostring(type(val)))
+      end
+      request.__class.support.append_content_for(request, name, val)
+    end,
+    has_content_for = function(self, name)
+      local fn = self:_find_helper("get_request")
+      local request = fn and fn()
+      if not (request) then
+        return false
+      end
+      return not not request[CONTENT_FOR_PREFIX .. name]
     end,
     _find_helper = function(self, name)
       local _exp_0 = name

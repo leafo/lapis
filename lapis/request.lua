@@ -67,6 +67,9 @@ do
       end
       return build_url(parsed)
     end,
+    get_request = function(self)
+      return self
+    end,
     write = function(self, thing, ...)
       local t = type(thing)
       if t == "table" then
@@ -146,6 +149,23 @@ do
       parsed.query = nil
       return parsed
     end,
+    append_content_for = function(self, name, value)
+      local CONTENT_FOR_PREFIX
+      CONTENT_FOR_PREFIX = require("lapis.html").CONTENT_FOR_PREFIX
+      local full_name = CONTENT_FOR_PREFIX .. name
+      local existing = self[full_name]
+      local _exp_0 = type(existing)
+      if "nil" == _exp_0 then
+        self[full_name] = value
+      elseif "table" == _exp_0 then
+        table.insert(self[full_name], value)
+      else
+        self[full_name] = {
+          existing,
+          value
+        }
+      end
+    end,
     load_cookies = function(self)
       self.cookies = auto_table(function()
         local cookie = self.req.headers.cookie
@@ -211,37 +231,30 @@ do
       else
         layout = self.app.layout
       end
-      if layout then
-        self.layout_opts = {
-          _content_for_inner = nil
-        }
-      end
-      local widget = self.options.render
-      if widget == true then
-        widget = self.route_name
+      local widget_cls = self.options.render
+      if widget_cls == true then
+        widget_cls = self.route_name
       end
       local config = lapis_config.get()
-      if widget then
-        if type(widget) == "string" then
-          widget = require(tostring(self.app.views_prefix) .. "." .. tostring(widget))
+      local view_widget
+      if widget_cls then
+        if type(widget_cls) == "string" then
+          widget_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(widget_cls))
         end
         local start_time
         if config.measure_performance then
           start_time = get_time(config)
         end
-        local view = widget()
-        if self.layout_opts then
-          self.layout_opts.view_widget = view
-        end
-        view:include_helper(self)
-        self:write(view)
+        view_widget = widget_cls()
+        view_widget:include_helper(self)
+        self:write(view_widget)
         if start_time then
           local t = get_time(config)
           increment_perf("view_time", t - start_time)
         end
       end
       if layout then
-        local inner = self.buffer
+        self._content_for_inner = self.buffer
         self.buffer = { }
         local layout_cls
         if type(layout) == "string" then
@@ -253,10 +266,9 @@ do
         if config.measure_performance then
           start_time = get_time(config)
         end
-        self.layout_opts._content_for_inner = self.layout_opts._content_for_inner or function()
-          return raw(inner)
-        end
-        layout = layout_cls(self.layout_opts)
+        layout = layout_cls({
+          view_widget = view_widget
+        })
         layout:include_helper(self)
         layout:render(self.buffer)
         if start_time then

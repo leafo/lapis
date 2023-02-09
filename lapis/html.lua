@@ -467,37 +467,30 @@ do
       return nil
     end,
     content_for = function(self, name, val)
-      local full_name = CONTENT_FOR_PREFIX .. name
-      if not (val) then
-        return self._buffer:write(self[full_name])
+      local request = self.get_request and self:get_request()
+      if not (request) then
+        error("content_for called on a widget without a Request in the helper chain. content_for is only available in a request lifecycle")
       end
-      do
-        local helper = self:_get_helper_chain()[1]
-        if helper then
-          local layout_opts = helper.layout_opts
-          if type(val) == "string" then
-            val = escape(val)
-          else
-            val = getfenv(val).capture(val)
-          end
-          local existing = layout_opts[full_name]
-          local _exp_0 = type(existing)
-          if "nil" == _exp_0 then
-            layout_opts[full_name] = val
-          elseif "table" == _exp_0 then
-            return table.insert(layout_opts[full_name], val)
-          else
-            layout_opts[full_name] = {
-              existing,
-              val
-            }
-          end
-        end
+      if val == nil then
+        self._buffer:write(request[CONTENT_FOR_PREFIX .. name])
+        return 
       end
+      local _exp_0 = type(val)
+      if "string" == _exp_0 then
+        val = escape(val)
+      elseif "function" == _exp_0 then
+        val = getfenv(val).capture(val)
+      else
+        val = error("Got unknown type for content_for value: " .. tostring(type(val)))
+      end
+      request.__class.support.append_content_for(request, name, val)
     end,
     has_content_for = function(self, name)
-      local full_name = CONTENT_FOR_PREFIX .. name
-      return not not self[full_name]
+      local request = self.get_request and self:get_request()
+      if not (request) then
+        return false
+      end
+      return not not request[CONTENT_FOR_PREFIX .. name]
     end,
     content = function(self) end,
     render_to_string = function(self, ...)
