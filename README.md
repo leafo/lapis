@@ -76,7 +76,7 @@ should be a quick operation since dependency installation is cached.
 
 ## License (MIT)
 
-Copyright (C) 2022 by Leaf Corcoran
+Copyright (C) 2023 by Leaf Corcoran
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
