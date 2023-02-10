@@ -42,7 +42,7 @@ do
   local self = _class_0
   self.db = db
   self.columns = function(self)
-    local columns = self.db.query("PRAGMA table_info(?)", "my table")
+    local columns = self.db.query("PRAGMA table_info(?)", self:table_name())
     self.columns = function()
       return columns
     end

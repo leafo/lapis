@@ -7,7 +7,7 @@ class Model extends BaseModel
   @db: db
 
   @columns: =>
-    columns = @db.query "PRAGMA table_info(?)", "my table"
+    columns = @db.query "PRAGMA table_info(?)", @table_name!
     @columns = -> columns
     columns
 

@@ -63,8 +63,11 @@ describe "lapis.db.sqlite", ->
       }
     }
 
+    -- wipe out the modules to ensure we have fresh connection
+    -- object
     package.loaded["lapis.db.sqlite"] = nil
     package.loaded["lapis.db.sqlite.schema"] = nil
+    package.loaded["lapis.db.sqlite.model"] = nil
 
     db = require "lapis.db.sqlite"
     db\connect!
@@ -528,4 +531,239 @@ describe "lapis.db.sqlite", ->
 )]], definition.sql
 
 
+  describe "lapis.db.sqlite.model", ->
+    local MyNames, DualKeys, Model
+    DEFAULT_DATE = "2023-02-10 21:27:00"
+
+    before_each ->
+      schema.create_table "my_names", {
+        {"id", schema.types.integer}
+
+        {"created_at", schema.types.text}
+        {"updated_at", schema.types.text}
+
+        {"name", schema.types.text default: "Hello World"}
+        "PRIMARY KEY (id)"
+      }, strict: true
+
+      schema.create_table "dual_keys", {
+        {"a", schema.types.text}
+        {"b", schema.types.text}
+
+        {"name", schema.types.text}
+        "PRIMARY KEY (a,b)"
+      }, strict: true
+
+      query_log = {} -- reset log
+
+      import Model from require "lapis.db.sqlite.model"
+
+      stub(db, "format_date").invokes => DEFAULT_DATE
+
+      class MyNames extends Model
+        @timestamp: true
+
+      class DualKeys extends Model
+        @primary_key: {"a", "b"}
+
+    it "Model:columns", ->
+      assert.same {
+        {
+          cid: 0
+          name: "id"
+          notnull: 1
+          pk: 1
+          type: "INTEGER"
+        }
+        {
+          cid: 1,
+          name: "created_at",
+          notnull: 1,
+          pk: 0
+          type: "TEXT"
+        }
+        {
+          cid: 2,
+          name: "updated_at",
+          notnull: 1,
+          pk: 0,
+          type: "TEXT"
+        },
+        {
+          cid: 3,
+          dflt_value: "'Hello World'",
+          name: "name",
+          notnull: 1,
+          pk: 0,
+          type: "TEXT"
+        }
+      }, MyNames\columns!
+
+    it "Model:create", ->
+      m1 = MyNames\create {
+        name: "Crumbles"
+      }
+
+      assert.same {
+        created_at: DEFAULT_DATE
+        updated_at: DEFAULT_DATE
+
+        id: 1
+        name: "Crumbles"
+      }, m1
+
+      m2 = MyNames\create {
+        name: db.raw "'Nanette' || 2"
+      }, returning: "*"
+
+      assert.same {
+        created_at: DEFAULT_DATE
+        updated_at: DEFAULT_DATE
+
+        id: 2
+        name: "Nanette2"
+      }, m2
+
+      assert.same {
+        [[INSERT INTO "my_names" ("updated_at", "created_at", "name") VALUES ('2023-02-10 21:27:00', '2023-02-10 21:27:00', 'Crumbles') RETURNING "id"]]
+        [[INSERT INTO "my_names" ("updated_at", "created_at", "name") VALUES ('2023-02-10 21:27:00', '2023-02-10 21:27:00', 'Nanette' || 2) RETURNING *]]
+      }, query_log
+
+    it "Model:update", ->
+      -- handles when model no longer has record
+      missing = MyNames\load { id: 99, name: "CowCat" }
+
+      assert.same {
+        false
+        { affected_rows: 0 }
+      }, {
+        missing\update {
+          name: "CowThree"
+        }
+      }
+
+      dk = DualKeys\create {
+        a: "first"
+        b: "second"
+        name: "Deep"
+      }
+
+      assert.same {
+        true
+        {
+          affected_rows: 1
+        }
+      }, { dk\update "name" }
+
+      assert.same {
+        true
+        {
+          {
+            name: "100"
+          }
+          affected_rows: 1
+        }
+      }, { dk\update {
+        name: db.raw "99 + 1"
+      }}
+
+      assert.same {
+        a: "first"
+        b: "second"
+        name: "100"
+      }, dk
+
+      assert.same {
+        true
+        {
+          affected_rows: 1
+        }
+      }, {
+        dk\update {
+          name: "Lastly..."
+        }, where: db.clause { name: "100" }
+      }
+
+      assert.same {
+        [[UPDATE "my_names" SET "name" = 'CowThree', "updated_at" = '2023-02-10 21:27:00' WHERE "id" = 99]]
+        [[INSERT INTO "dual_keys" ("a", "name", "b") VALUES ('first', 'Deep', 'second') RETURNING "a", "b"]]
+        [[UPDATE "dual_keys" SET "name" = 'Deep' WHERE "a" = 'first' AND "b" = 'second']]
+        [[UPDATE "dual_keys" SET "name" = 99 + 1 WHERE "a" = 'first' AND "b" = 'second' RETURNING "name"]]
+        [[UPDATE "dual_keys" SET "name" = 'Lastly...' WHERE "a" = 'first' AND "b" = 'second' AND "name" = '100']]
+      }, query_log
+
+    it "Model:delete", ->
+      dk = DualKeys\create {
+        a: "first"
+        b: "second"
+        name: "Deep"
+      }
+
+      roo = MyNames\create {
+        name: "Roo"
+      }
+
+      assert.same {
+        false
+        {
+          affected_rows: 0
+        }
+      }, { dk\delete db.clause {
+        name: "Reep"
+      }}
+
+      assert.same {
+        true
+        {
+          affected_rows: 1
+        }
+      }, { dk\delete! }
+
+
+      assert.same {
+        false
+        {
+          affected_rows: 0
+        }
+      }, { dk\delete! }
+
+      assert.same {
+        true
+        {
+          affected_rows: 1
+          { name: "Roo" }
+        }
+      }, { roo\delete "name" }
+
+      assert.same {
+        [[INSERT INTO "dual_keys" ("a", "name", "b") VALUES ('first', 'Deep', 'second') RETURNING "a", "b"]]
+        [[INSERT INTO "my_names" ("updated_at", "created_at", "name") VALUES ('2023-02-10 21:27:00', '2023-02-10 21:27:00', 'Roo') RETURNING "id"]]
+        [[DELETE FROM "dual_keys" WHERE "a" = 'first' AND "b" = 'second' AND "name" = 'Reep']]
+        [[DELETE FROM "dual_keys" WHERE "a" = 'first' AND "b" = 'second']]
+        [[DELETE FROM "dual_keys" WHERE "a" = 'first' AND "b" = 'second']]
+        [[DELETE FROM "my_names" WHERE "id" = 1 RETURNING "name"]]
+      }, query_log
+
+    it "Model:refresh", ->
+      db.insert "my_names", {
+        id: 99
+        name: "Very Fresh"
+        created_at: DEFAULT_DATE
+        updated_at: DEFAULT_DATE
+      }
+
+      unfresh = MyNames\load { id: 99 }
+      assert unfresh\refresh!
+      assert.same {
+        id: 99
+        name: "Very Fresh"
+        created_at: DEFAULT_DATE
+        updated_at: DEFAULT_DATE
+      }, unfresh
+
+      invalid = MyNames\load { id: 100 }
+      assert.has_error(
+        -> invalid\refresh!
+        "my_names failed to find row to refresh from, did the primary key change?"
+      )
 
