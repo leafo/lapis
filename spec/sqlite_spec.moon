@@ -767,3 +767,33 @@ describe "lapis.db.sqlite", ->
         "my_names failed to find row to refresh from, did the primary key change?"
       )
 
+      assert.same {
+        [[INSERT INTO "my_names" ("id", "updated_at", "name", "created_at") VALUES (99, '2023-02-10 21:27:00', 'Very Fresh', '2023-02-10 21:27:00')]]
+        [[SELECT * from "my_names" where "id" = 99]]
+        [[SELECT * from "my_names" where "id" = 100]]
+      }, query_log
+
+
+    it "Model:paginated", ->
+      pager = MyNames\paginated!
+      pager\get_page 1
+
+      pager2 = MyNames\paginated db.clause {
+        {"id > 5"}
+      }
+      pager2\get_page 1
+
+      assert.same 0, pager2\num_pages!
+
+      assert.false pager2\has_items!
+      assert.false pager\has_items!
+
+      assert.same {
+        [[SELECT * FROM "my_names"  LIMIT 10 OFFSET 0]]
+        [[SELECT * FROM "my_names" WHERE (id > 5) LIMIT 10 OFFSET 0]]
+        [[SELECT COUNT(*) AS c FROM "my_names" WHERE (id > 5)]]
+        [[SELECT 1 FROM "my_names" WHERE (id > 5) LIMIT 1]]
+        [[SELECT 1 FROM "my_names"  LIMIT 1]]
+      }, query_log
+
+
