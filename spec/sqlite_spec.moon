@@ -1,5 +1,7 @@
 unpack = unpack or table.unpack
 
+import sorted_pairs from require "spec.helpers"
+
 TESTS = {
   -- lapis.db.postgres
   {
@@ -47,6 +49,8 @@ TESTS = {
 
 
 describe "lapis.db.sqlite", ->
+  sorted_pairs!
+
   local snapshot
 
   local db, schema
@@ -503,7 +507,7 @@ describe "lapis.db.sqlite", ->
         [[ALTER TABLE "some table" ADD COLUMN "name" TEXT NOT NULL DEFAULT 'woop']]
         [[ALTER TABLE "some table" ADD COLUMN "count" NUMERIC NOT NULL]]
         [[ALTER TABLE "umm" ADD COLUMN "count" NUMERIC NOT NULL]]
-        [[INSERT INTO "some table" ("id", "name", "count") VALUES (12, 'yes', 55)]]
+        [[INSERT INTO "some table" ("count", "id", "name") VALUES (55, 12, 'yes')]]
         [[select * from "some table"]]
         [[ALTER TABLE "some table" DROP COLUMN "count"]]
         [[select * from "some table"]]
@@ -625,8 +629,8 @@ describe "lapis.db.sqlite", ->
       }, m2
 
       assert.same {
-        [[INSERT INTO "my_names" ("updated_at", "created_at", "name") VALUES ('2023-02-10 21:27:00', '2023-02-10 21:27:00', 'Crumbles') RETURNING "id"]]
-        [[INSERT INTO "my_names" ("updated_at", "created_at", "name") VALUES ('2023-02-10 21:27:00', '2023-02-10 21:27:00', 'Nanette' || 2) RETURNING *]]
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'Crumbles', '2023-02-10 21:27:00') RETURNING "id"]]
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'Nanette' || 2, '2023-02-10 21:27:00') RETURNING *]]
       }, query_log
 
     it "Model:update", ->
@@ -686,7 +690,7 @@ describe "lapis.db.sqlite", ->
 
       assert.same {
         [[UPDATE "my_names" SET "name" = 'CowThree', "updated_at" = '2023-02-10 21:27:00' WHERE "id" = 99]]
-        [[INSERT INTO "dual_keys" ("a", "name", "b") VALUES ('first', 'Deep', 'second') RETURNING "a", "b"]]
+        [[INSERT INTO "dual_keys" ("a", "b", "name") VALUES ('first', 'second', 'Deep') RETURNING "a", "b"]]
         [[UPDATE "dual_keys" SET "name" = 'Deep' WHERE "a" = 'first' AND "b" = 'second']]
         [[UPDATE "dual_keys" SET "name" = 99 + 1 WHERE "a" = 'first' AND "b" = 'second' RETURNING "name"]]
         [[UPDATE "dual_keys" SET "name" = 'Lastly...' WHERE "a" = 'first' AND "b" = 'second' AND "name" = '100']]
@@ -736,8 +740,8 @@ describe "lapis.db.sqlite", ->
       }, { roo\delete "name" }
 
       assert.same {
-        [[INSERT INTO "dual_keys" ("a", "name", "b") VALUES ('first', 'Deep', 'second') RETURNING "a", "b"]]
-        [[INSERT INTO "my_names" ("updated_at", "created_at", "name") VALUES ('2023-02-10 21:27:00', '2023-02-10 21:27:00', 'Roo') RETURNING "id"]]
+        [[INSERT INTO "dual_keys" ("a", "b", "name") VALUES ('first', 'second', 'Deep') RETURNING "a", "b"]]
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'Roo', '2023-02-10 21:27:00') RETURNING "id"]]
         [[DELETE FROM "dual_keys" WHERE "a" = 'first' AND "b" = 'second' AND "name" = 'Reep']]
         [[DELETE FROM "dual_keys" WHERE "a" = 'first' AND "b" = 'second']]
         [[DELETE FROM "dual_keys" WHERE "a" = 'first' AND "b" = 'second']]
@@ -768,7 +772,7 @@ describe "lapis.db.sqlite", ->
       )
 
       assert.same {
-        [[INSERT INTO "my_names" ("id", "updated_at", "name", "created_at") VALUES (99, '2023-02-10 21:27:00', 'Very Fresh', '2023-02-10 21:27:00')]]
+        [[INSERT INTO "my_names" ("created_at", "id", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 99, 'Very Fresh', '2023-02-10 21:27:00')]]
         [[SELECT * from "my_names" where "id" = 99]]
         [[SELECT * from "my_names" where "id" = 100]]
       }, query_log
