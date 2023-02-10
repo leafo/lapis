@@ -122,6 +122,16 @@ add_returning = function(buff, first, cur, following, ...)
     return add_returning(buff, false, following, ...)
   end
 end
+local add_cond
+add_cond = function(buffer, cond, ...)
+  append_all(buffer, " WHERE ")
+  local _exp_0 = type(cond)
+  if "table" == _exp_0 then
+    return encode_clause(cond, buffer)
+  elseif "string" == _exp_0 then
+    return append_all(buffer, interpolate_query(cond, ...))
+  end
+end
 local insert
 insert = function(tbl, values, opts, ...)
   local buff = {
@@ -153,15 +163,31 @@ insert = function(tbl, values, opts, ...)
       end
     end
   end
-  return query(concat(buff))
+  local res = query(concat(buff))
+  res.affected_rows = active_connection:changes()
+  return res
 end
 local _select
 _select = function(str, ...)
   return query("SELECT " .. str, ...)
 end
 local update
-update = function()
-  return error("not yet")
+update = function(table, values, cond, ...)
+  local buff = {
+    "UPDATE ",
+    escape_identifier(table),
+    " SET "
+  }
+  encode_assigns(values, buff)
+  if cond then
+    add_cond(buff, cond, ...)
+  end
+  if type(cond) == "table" then
+    add_returning(buff, true, ...)
+  end
+  local res = query(concat(buff))
+  res.affected_rows = active_connection:changes()
+  return res
 end
 local delete
 delete = function()
@@ -175,6 +201,7 @@ return setmetatable({
   query = query,
   insert = insert,
   select = _select,
+  update = update,
   connect = connect,
   escape_identifier = escape_identifier,
   escape_literal = escape_literal,

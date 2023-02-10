@@ -135,13 +135,16 @@ describe "lapis.db.sqlite", ->
     query_log = {}
 
     -- plain insert
-    db.insert "my table", {
+    assert.same {
+      affected_rows: 1
+    }, db.insert "my table", {
       id: 1
       name: "poppy"
     }
 
     -- returning by name
     assert.same {
+      affected_rows: 1
       {
         id: 5
         name: "Hello World"
@@ -157,17 +160,20 @@ describe "lapis.db.sqlite", ->
     )
 
     -- ignoring conflict
-    db.insert "my table", { id: 5 }, on_conflict: "do_nothing"
+    assert.same {
+      affected_rows: 0
+    }, db.insert "my table", { id: 5 }, on_conflict: "do_nothing"
 
     -- returning and ignoring conflict
     assert.same {
+      affected_rows: 1
       {
         id: 6
         name: "Hello World"
       }
     }, db.insert "my table", { id: 6 }, on_conflict: "do_nothing", returning: "*"
 
-    assert.same {}, db.insert "my table", { id: 6 }, on_conflict: "do_nothing", returning: "*"
+    assert.same {affected_rows: 0}, db.insert "my table", { id: 6 }, on_conflict: "do_nothing", returning: "*"
 
     assert.same {
       [[INSERT INTO "my table" ("id", "name") VALUES (1, 'poppy')]]
@@ -177,7 +183,96 @@ describe "lapis.db.sqlite", ->
       [[INSERT INTO "my table" ("id") VALUES (6) ON CONFLICT DO NOTHING RETURNING *]]
       [[INSERT INTO "my table" ("id") VALUES (6) ON CONFLICT DO NOTHING RETURNING *]]
     }, query_log
-  
+
+  it "db.update", ->
+    res = schema.create_table "my table", {
+      {"id", schema.types.integer}
+      {"name", schema.types.text default: "Hello World"}
+      "PRIMARY KEY (id)"
+    }, strict: true, without_rowid: true
+
+    assert.same {
+      affected_rows: 1
+    }, db.insert "my table", {
+      id: 1
+      name: "poppy"
+    }
+
+    assert.same {
+      affected_rows: 1
+    }, db.insert "my table", {
+      id: 2
+      name: "pappy"
+    }
+
+    query_log = {}
+
+    -- update every row with no clause
+    assert.same {
+      affected_rows: 2
+    }, db.update "my table", {
+      name: "cool"
+    }
+
+    -- update by query fragment
+    assert.same {
+      affected_rows: 1
+    }, db.update "my table", {
+      name: "cool"
+    }, "id in (?)", 1, "id" -- this last value is ignored since we can't do returning with this syntax format
+
+    -- update by clause object
+    assert.same {
+      affected_rows: 1
+    }, db.update "my table", {
+      name: "wassup"
+    }, id: 2
+
+    -- update with returning
+    assert.same {
+      affected_rows: 1
+      {
+        id: 1
+        name: "cool"
+      }
+    }, db.update "my table", {
+      name: "cool"
+    }, { id: 1 }, "id", "name"
+
+    -- update with returning but no matches
+    assert.same {
+      affected_rows: 0
+    }, db.update "my table", {
+      name: "cool"
+    }, { id: 88 }, "id", "name"
+
+
+    -- update multiple with returning
+    assert.same {
+      affected_rows: 2
+      {
+        id: 1
+        name: "id:1"
+      }
+      {
+        id: 2
+        name: "id:2"
+      }
+    }, db.update "my table", {
+      name: db.raw db.interpolate_query "? || id", "id:"
+    }, db.clause({
+      {"id in ?", db.list {1,2}}
+    }), db.raw "*"
+
+    assert.same {
+      [[UPDATE "my table" SET "name" = 'cool']]
+      [[UPDATE "my table" SET "name" = 'cool' WHERE id in (1)]]
+      [[UPDATE "my table" SET "name" = 'wassup' WHERE "id" = 2]]
+      [[UPDATE "my table" SET "name" = 'cool' WHERE "id" = 1 RETURNING "id", "name"]]
+      [[UPDATE "my table" SET "name" = 'cool' WHERE "id" = 88 RETURNING "id", "name"]]
+      [[UPDATE "my table" SET "name" = 'id:' || id WHERE (id in (1, 2)) RETURNING *]]
+    }, query_log
+
   describe "lapis.db.sqlite.schema", ->
     it "creates and drops table", ->
       res = schema.create_table "my table", {
@@ -193,7 +288,9 @@ describe "lapis.db.sqlite", ->
         id: 55
       }
 
-      assert.same {}, res
+      assert.same {
+        affected_rows: 1
+      }, res
 
       res = db.query [[select * from "my table"]]
 
@@ -204,11 +301,13 @@ describe "lapis.db.sqlite", ->
         }
       }, res
 
+      res = db.query [[select name from sqlite_master WHERE type='table']]
 
-      res = db.query [[select * from sqlite_master WHERE type='table']]
-
-      assert.same 1, #res
-      assert.same "my table", res[1].name
+      assert.same {
+        {
+          name: "my table"
+        }
+      }, res
 
       schema.drop_table "my table"
 
@@ -222,7 +321,7 @@ describe "lapis.db.sqlite", ->
 ) STRICT, WITHOUT ROWID]]
         [[INSERT INTO "my table" ("id") VALUES (55)]]
         [[select * from "my table"]]
-        [[select * from sqlite_master WHERE type='table']]
+        [[select name from sqlite_master WHERE type='table']]
         [[DROP TABLE IF EXISTS "my table"]]
         [[select * from sqlite_master WHERE type='table']]
       }, query_log

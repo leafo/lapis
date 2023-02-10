@@ -90,6 +90,15 @@ add_returning = (buff, first, cur, following, ...) ->
     append_all buff, ", "
     add_returning buff, false, following, ...
 
+add_cond = (buffer, cond, ...) ->
+  append_all buffer, " WHERE "
+  switch type cond
+    when "table"
+      encode_clause cond, buffer
+    when "string"
+      append_all buffer, interpolate_query cond, ...
+
+
 -- NOTE: this is copied from postgresql as our implementations currently have
 -- perfect overlap. In the future they may not though due to syntax
 -- differences, hence the copy
@@ -119,11 +128,31 @@ insert = (tbl, values, opts, ...) ->
         assert type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array"
         add_returning buff, true, unpack r
 
-  query concat buff
+  res = query concat buff
+  res.affected_rows = active_connection\changes!
+  res
 
 _select = (str, ...) -> query "SELECT " .. str, ...
 
-update = -> error "not yet"
+update = (table, values, cond, ...) ->
+  buff = {
+    "UPDATE "
+    escape_identifier(table)
+    " SET "
+  }
+
+  encode_assigns values, buff
+
+  if cond
+    add_cond buff, cond, ...
+
+  if type(cond) == "table"
+    add_returning buff, true, ...
+
+  res = query concat buff
+  res.affected_rows = active_connection\changes!
+  res
+
 delete = -> error "not yet"
 truncate = -> error "not yet"
 
@@ -132,6 +161,7 @@ setmetatable {
   :query
   :insert
   select: _select
+  update: update
 
   :connect
 
