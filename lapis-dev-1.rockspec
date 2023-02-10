@@ -78,6 +78,7 @@ build = {
     ["lapis.db.postgres.schema"] = "lapis/db/postgres/schema.lua",
     ["lapis.db.schema"] = "lapis/db/schema.lua",
     ["lapis.db.sqlite"] = "lapis/db/sqlite.lua",
+    ["lapis.db.sqlite.model"] = "lapis/db/sqlite/model.lua",
     ["lapis.db.sqlite.schema"] = "lapis/db/sqlite/schema.lua",
     ["lapis.environment"] = "lapis/environment.lua",
     ["lapis.etlua"] = "lapis/etlua.lua",
