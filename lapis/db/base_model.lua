@@ -197,7 +197,99 @@ do
       return (res.affected_rows or 0) > 0, res
     end,
     update = function(self, first, ...)
-      return error("subclass responsibility")
+      local cond = self:_primary_cond()
+      local columns
+      if type(first) == "table" then
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for k, v in pairs(first) do
+            if type(k) == "number" then
+              _accum_0[_len_0] = v
+            else
+              self[k] = v
+              _accum_0[_len_0] = k
+            end
+            _len_0 = _len_0 + 1
+          end
+          columns = _accum_0
+        end
+      else
+        columns = {
+          first,
+          ...
+        }
+      end
+      if next(columns) == nil then
+        return nil, "nothing to update"
+      end
+      if self.__class.constraints then
+        for _, column in pairs(columns) do
+          do
+            local err = self.__class:_check_constraint(column, self[column], self)
+            if err then
+              return nil, err
+            end
+          end
+        end
+      end
+      local values
+      do
+        local _tbl_0 = { }
+        for _index_0 = 1, #columns do
+          local col = columns[_index_0]
+          _tbl_0[col] = self[col]
+        end
+        values = _tbl_0
+      end
+      local nargs = select("#", ...)
+      local last = nargs > 0 and select(nargs, ...)
+      local opts
+      if type(last) == "table" then
+        opts = last
+      end
+      if self.__class.timestamp and not (opts and opts.timestamp == false) then
+        local time = self.__class.db.format_date()
+        values.updated_at = values.updated_at or time
+      end
+      if opts and opts.where then
+        assert(type(opts.where) == "table", "Model.update: where condition must be a table or db.clause")
+        local where
+        if self.__class.db.is_clause(opts.where) then
+          where = opts.where
+        else
+          where = self.__class.db.encode_clause(opts.where)
+        end
+        cond = self.__class.db.clause({
+          self.__class.db.clause(cond),
+          where
+        })
+      end
+      local returning
+      for k, v in pairs(values) do
+        if v == self.__class.db.NULL then
+          self[k] = nil
+        elseif self.__class.db.is_raw(v) then
+          returning = returning or { }
+          table.insert(returning, k)
+        end
+      end
+      local res
+      if returning then
+        res = self.__class.db.update(self.__class:table_name(), values, cond, unpack(returning))
+        do
+          local update = unpack(res)
+          if update then
+            for _index_0 = 1, #returning do
+              local k = returning[_index_0]
+              self[k] = update[k]
+            end
+          end
+        end
+      else
+        res = self.__class.db.update(self.__class:table_name(), values, cond)
+      end
+      return (res.affected_rows or 0) > 0, res
     end,
     refresh = function(self, fields, ...)
       if fields == nil then
@@ -375,15 +467,6 @@ do
   end
   self.singular_name = function(self)
     return singularize(self:table_name())
-  end
-  self.columns = function(self)
-    local columns = self.db.query([[      select column_name, data_type
-      from information_schema.columns
-      where table_name = ?]], self:table_name())
-    self.columns = function()
-      return columns
-    end
-    return columns
   end
   self.load = function(self, tbl)
     for k, v in pairs(tbl) do
@@ -766,7 +849,84 @@ do
     end
   end
   self.create = function(self, values, opts)
-    return error("subclass responsibility")
+    if self.constraints then
+      for key in pairs(self.constraints) do
+        do
+          local err = self:_check_constraint(key, values and values[key], values)
+          if err then
+            return nil, err
+          end
+        end
+      end
+    end
+    if self.timestamp then
+      local time = self.db.format_date()
+      values.created_at = values.created_at or time
+      values.updated_at = values.updated_at or time
+    end
+    local returning, return_all, nil_fields
+    if opts and opts.returning then
+      if opts.returning == "*" then
+        return_all = true
+        returning = {
+          self.db.raw("*")
+        }
+      else
+        returning = {
+          self:primary_keys()
+        }
+        local _list_0 = opts.returning
+        for _index_0 = 1, #_list_0 do
+          local field = _list_0[_index_0]
+          table.insert(returning, field)
+        end
+      end
+    end
+    for k, v in pairs(values) do
+      local _continue_0 = false
+      repeat
+        if v == self.db.NULL then
+          nil_fields = nil_fields or { }
+          nil_fields[k] = true
+          _continue_0 = true
+          break
+        elseif not return_all and self.db.is_raw(v) then
+          returning = returning or {
+            self:primary_keys()
+          }
+          table.insert(returning, k)
+        end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    local res
+    if returning then
+      res = self.db.insert(self:table_name(), values, unpack(returning))
+    else
+      res = self.db.insert(self:table_name(), values, self:primary_keys())
+    end
+    if res then
+      if returning and not return_all then
+        for _index_0 = 1, #returning do
+          local k = returning[_index_0]
+          values[k] = res[1][k]
+        end
+      end
+      for k, v in pairs(res[1]) do
+        values[k] = v
+      end
+      if nil_fields then
+        for k in pairs(nil_fields) do
+          values[k] = nil
+        end
+      end
+      return self:load(values)
+    else
+      return nil, "Failed to create " .. tostring(self.__name)
+    end
   end
   self.check_unique_constraint = function(self, name, value)
     local t
