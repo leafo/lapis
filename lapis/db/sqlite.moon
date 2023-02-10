@@ -108,7 +108,11 @@ insert = (tbl, values, opts, ...) ->
     escape_identifier(tbl)
     " "
   }
-  encode_values values, buff
+
+  if next values
+    encode_values values, buff
+  else
+    append_all buff, "DEFAULT VALUES"
 
   opts_type = type(opts)
 
@@ -153,15 +157,40 @@ update = (table, values, cond, ...) ->
   res.affected_rows = active_connection\changes!
   res
 
-delete = -> error "not yet"
-truncate = -> error "not yet"
+delete = (table, cond, ...) ->
+  buff = {
+    "DELETE FROM "
+    escape_identifier(table)
+  }
 
+  unless cond and next cond
+    error "Blocking call to db.delete with no conditions. Use db.truncate"
+
+  if cond
+    add_cond buff, cond, ...
+
+  if type(cond) == "table"
+    add_returning buff, true, ...
+
+  res = query concat buff
+  res.affected_rows = active_connection\changes!
+  res
+
+truncate = (...) ->
+  changes = 0
+  for table in *{...}
+    query "DELETE FROM #{escape_identifier table}"
+    changes += active_connection\changes!
+
+  { affected_rows: changes }
 
 setmetatable {
   :query
   :insert
   select: _select
-  update: update
+  :update
+  :delete
+  :truncate
 
   :connect
 

@@ -246,7 +246,6 @@ describe "lapis.db.sqlite", ->
       name: "cool"
     }, { id: 88 }, "id", "name"
 
-
     -- update multiple with returning
     assert.same {
       affected_rows: 2
@@ -271,6 +270,90 @@ describe "lapis.db.sqlite", ->
       [[UPDATE "my table" SET "name" = 'cool' WHERE "id" = 1 RETURNING "id", "name"]]
       [[UPDATE "my table" SET "name" = 'cool' WHERE "id" = 88 RETURNING "id", "name"]]
       [[UPDATE "my table" SET "name" = 'id:' || id WHERE (id in (1, 2)) RETURNING *]]
+    }, query_log
+
+  it "db.delete", ->
+    res = schema.create_table "my table", {
+      {"id", schema.types.integer}
+      {"name", schema.types.text default: "Hello World"}
+      "PRIMARY KEY (id)"
+    }, strict: true, without_rowid: true
+
+    assert.same {
+      affected_rows: 1
+    }, db.insert "my table", {
+      id: 1
+      name: "poppy"
+    }
+
+    assert.same {
+      affected_rows: 1
+    }, db.insert "my table", {
+      id: 2
+      name: "pappy"
+    }
+
+    query_log = {}
+
+    assert.same {
+      affected_rows: 1
+    }, db.delete "my table", {
+      id: 1
+    }
+
+    assert.same {
+      affected_rows: 0
+    }, db.delete "my table", {
+      id: 1
+    }, "id"
+
+
+    assert.same {
+      affected_rows: 0
+    }, db.delete "my table", db.clause {
+      {"id > ?", 500}
+    }
+
+    assert.has_error(
+      -> db.delete "my table"
+      "Blocking call to db.delete with no conditions. Use db.truncate"
+    )
+
+    assert.same {
+      [[DELETE FROM "my table" WHERE "id" = 1]]
+      [[DELETE FROM "my table" WHERE "id" = 1 RETURNING "id"]]
+      [[DELETE FROM "my table" WHERE (id > 500)]]
+    }, query_log
+
+  it "db.truncate", ->
+    schema.create_table "first", {
+      {"id", schema.types.integer}
+      "PRIMARY KEY (id)"
+    }
+
+    schema.create_table "second", {
+      {"id", schema.types.integer}
+      "PRIMARY KEY (id)"
+    }
+
+    query_log = {}
+
+    db.insert "first", {}
+    db.insert "first", {}
+    db.insert "first", {}
+    db.insert "second", {}
+
+    assert.same {
+      affected_rows: 4
+    }, db.truncate "first", "second"
+
+    assert.same {
+      [[INSERT INTO "first" DEFAULT VALUES]]
+      [[INSERT INTO "first" DEFAULT VALUES]]
+      [[INSERT INTO "first" DEFAULT VALUES]]
+      [[INSERT INTO "second" DEFAULT VALUES]]
+      [[DELETE FROM "first"]]
+      [[DELETE FROM "second"]]
     }, query_log
 
   describe "lapis.db.sqlite.schema", ->

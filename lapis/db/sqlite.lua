@@ -139,7 +139,11 @@ insert = function(tbl, values, opts, ...)
     escape_identifier(tbl),
     " "
   }
-  encode_values(values, buff)
+  if next(values) then
+    encode_values(values, buff)
+  else
+    append_all(buff, "DEFAULT VALUES")
+  end
   local opts_type = type(opts)
   if opts_type == "string" or opts_type == "table" and is_raw(opts) then
     add_returning(buff, true, opts, ...)
@@ -190,18 +194,46 @@ update = function(table, values, cond, ...)
   return res
 end
 local delete
-delete = function()
-  return error("not yet")
+delete = function(table, cond, ...)
+  local buff = {
+    "DELETE FROM ",
+    escape_identifier(table)
+  }
+  if not (cond and next(cond)) then
+    error("Blocking call to db.delete with no conditions. Use db.truncate")
+  end
+  if cond then
+    add_cond(buff, cond, ...)
+  end
+  if type(cond) == "table" then
+    add_returning(buff, true, ...)
+  end
+  local res = query(concat(buff))
+  res.affected_rows = active_connection:changes()
+  return res
 end
 local truncate
-truncate = function()
-  return error("not yet")
+truncate = function(...)
+  local changes = 0
+  local _list_0 = {
+    ...
+  }
+  for _index_0 = 1, #_list_0 do
+    local table = _list_0[_index_0]
+    query("DELETE FROM " .. tostring(escape_identifier(table)))
+    changes = changes + active_connection:changes()
+  end
+  return {
+    affected_rows = changes
+  }
 end
 return setmetatable({
   query = query,
   insert = insert,
   select = _select,
   update = update,
+  delete = delete,
+  truncate = truncate,
   connect = connect,
   escape_identifier = escape_identifier,
   escape_literal = escape_literal,
