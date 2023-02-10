@@ -171,26 +171,36 @@ do
       return math.ceil(self:total_items() / self.per_page)
     end,
     has_items = function(self)
-      local parsed = self.db.parse_clause(self._clause)
-      parsed.limit = "1"
-      parsed.offset = nil
-      parsed.order = nil
       local tbl_name = self.db.escape_identifier(self.model:table_name())
-      local res = self.db.query("SELECT 1 FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed)))
+      local res
+      if self.db.parse_clause then
+        local parsed = self.db.parse_clause(self._clause)
+        parsed.limit = "1"
+        parsed.offset = nil
+        parsed.order = nil
+        res = self.db.query("SELECT 1 FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed)))
+      else
+        res = self.db.select("1 FROM " .. tostring(tbl_name) .. " " .. tostring(self._clause) .. " LIMIT 1")
+      end
       return not not unpack(res)
     end,
     total_items = function(self)
       if not (self._count) then
-        local parsed = self.db.parse_clause(self._clause)
-        parsed.limit = nil
-        parsed.offset = nil
-        parsed.order = nil
-        if parsed.group then
-          error("OffsetPaginator: can't calculate total items in a query with group by")
-        end
         local tbl_name = self.db.escape_identifier(self.model:table_name())
-        local query = "COUNT(*) AS c FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
-        self._count = unpack(self.db.select(query)).c
+        if self.db.parse_clause then
+          local parsed = self.db.parse_clause(self._clause)
+          parsed.limit = nil
+          parsed.offset = nil
+          parsed.order = nil
+          if parsed.group then
+            error("OffsetPaginator: can't calculate total items in a query with group by")
+          end
+          local query = "COUNT(*) AS c FROM " .. tostring(tbl_name) .. " " .. tostring(rebuild_query_clause(parsed))
+          self._count = unpack(self.db.select(query)).c
+        else
+          local query = "COUNT(*) AS c FROM " .. tostring(tbl_name) .. " " .. tostring(self._clause)
+          self._count = unpack(self.db.select(query)).c
+        end
       end
       return self._count
     end

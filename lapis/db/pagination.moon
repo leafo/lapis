@@ -102,30 +102,41 @@ class OffsetPaginator extends Paginator
     math.ceil @total_items! / @per_page
 
   has_items: =>
-    parsed = @db.parse_clause(@_clause)
-    parsed.limit = "1"
-    parsed.offset = nil
-    parsed.order = nil
-
     tbl_name = @db.escape_identifier @model\table_name!
-    res = @db.query "SELECT 1 FROM #{tbl_name} #{rebuild_query_clause parsed}"
+
+    res = if @db.parse_clause
+      parsed = @db.parse_clause(@_clause)
+      parsed.limit = "1"
+      parsed.offset = nil
+      parsed.order = nil
+
+      @db.query "SELECT 1 FROM #{tbl_name} #{rebuild_query_clause parsed}"
+    else
+      -- don't have clause parser available, fallback to assuming clause is simple where statement
+      @db.select "1 FROM #{tbl_name} #{@_clause} LIMIT 1"
 
     not not unpack res
 
   total_items: =>
     unless @_count
-      parsed = @db.parse_clause(@_clause)
-
-      parsed.limit = nil
-      parsed.offset = nil
-      parsed.order = nil
-
-      if parsed.group
-        error "OffsetPaginator: can't calculate total items in a query with group by"
-
       tbl_name = @db.escape_identifier @model\table_name!
-      query = "COUNT(*) AS c FROM #{tbl_name} #{rebuild_query_clause parsed}"
-      @_count = unpack(@db.select query).c
+
+      if @db.parse_clause
+        parsed = @db.parse_clause(@_clause)
+
+        parsed.limit = nil
+        parsed.offset = nil
+        parsed.order = nil
+
+        if parsed.group
+          error "OffsetPaginator: can't calculate total items in a query with group by"
+
+        query = "COUNT(*) AS c FROM #{tbl_name} #{rebuild_query_clause parsed}"
+        @_count = unpack(@db.select query).c
+      else
+        -- don't have clause parser available, fallback to assuming clause is simple where statement
+        query = "COUNT(*) AS c FROM #{tbl_name} #{@_clause}"
+        @_count = unpack(@db.select query).c
 
     @_count
 
