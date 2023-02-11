@@ -3,5 +3,7 @@ if config.postgres
   require "lapis.db.postgres"
 elseif config.mysql
   require "lapis.db.mysql"
+elseif config.sqlite
+  require "lapis.db.sqlite"
 else
-  error "You have to configure either postgres or mysql"
+  error "Databse type could not be determined from configuration (postgres, mysql, sqlite)"

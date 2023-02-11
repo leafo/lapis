@@ -3,6 +3,8 @@ if config.postgres then
   return require("lapis.db.postgres.schema")
 elseif config.mysql then
   return require("lapis.db.mysql.schema")
+elseif config.sqlite then
+  return require("lapis.db.sqlite.schema")
 else
-  return error("You have to configure either postgres or mysql")
+  return error("Databse type could not be determined from configuration (postgres, mysql, sqlite)")
 end
