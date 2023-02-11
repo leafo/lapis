@@ -348,8 +348,8 @@ SELECT COUNT(*) "users" where username like '%' || 'leafo' || '%'
 The `create` class method is used to create new rows. It takes a table of
 column values to create the row with. It returns an instance of the model. The
 create query fetches the values of the primary keys and sets them on the
-instance using the PostgreSQL `RETURNING` statement. This is useful for getting
-the value of an auto-incrementing key from the insert statement.
+instance using SQL `RETURNING` clause. This is useful for getting the value of
+an auto-incrementing key from the insert statement.
 
 > In MySQL the *last insert id* is used to get the id of the row since the
 > `RETURNING` statement is not available.
@@ -399,8 +399,7 @@ VALUES ((select coalesce(max(position) + 1, 0) from users))
 RETURNING "id", "position"
 ```
 
-> Since `RETURNING` is not available in MySQL, this functionality is PostgreSQL
-> specific.
+> `RETURNING` is not available in MySQL
 
 If your model has any [constraints](#constraints) they will be checked before trying to create
 a new row. If a constraint fails then `nil` and the error message are returned
@@ -465,7 +464,8 @@ The output might look like this:
 }
 ```
 
-> MySQL will return a slightly different format, but will contain the same information.
+> This example is pulled from PostgreSQL. The format from MySQL and SQLite will
+> be slightly different
 
 ### `Model:table_name()`
 

@@ -972,6 +972,13 @@ Returns a new function that implements the buffer writer interface for
 rendering the contents of `fn` as an HTML scoped function. Suitable for
 returning from an action.
 
+### `request:get_request()`
+
+This function returns `self`. This method is useful in scenarios where the
+request object is being proxied, and you wish to get a direct access to the
+instance of the request object for mutation. Examples include within flows and
+within widgets where the request object is embedded into the *helper chain*.
+
 ## Render Options
 
 Render options are set by explicit calls to `write` or by the return value of

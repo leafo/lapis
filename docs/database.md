@@ -5,29 +5,34 @@
 
 Lapis comes with a set of classes and functions for working with either
 [PostgreSQL](http://www.postgresql.org/), [MySQL](https://www.mysql.com/) or
-[SQLite](http://https://sqlite.org/index.html). In the future other databases
-will be directly supported. In the meantime, you're free to use other OpenResty
-database drivers, you just won't have access to Lapis' query API.
+[SQLite](http://https://sqlite.org/index.html).
 
 In the supported environments, queries are performed asynchronously (eg.
-[OpenResty cosocket API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp)).
-A request will yield and resume automatically so there's no need to code with
-callbacks, queries can be written sequentially as if they were in a synchronous
-environment. Additionally connections to the server are automatically pooled
-for optimal performance.
+[OpenResty cosocket API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp))
+to allow for high throughput under heavy load. A request will yield and resume
+automatically when issuing queries so there's no need to code with callbacks,
+queries can be written sequentially as if they were in a synchronous
+environment.
 
-> Note: Since SQL is embedded into your application, all queries are blocking.
+In supported environments, connection pooling will be used to ensure an optimal
+number of connections are opened to depending on the concurrent load to your
+application.
 
-Depending on which database you use, a different library is used:
+> Since SQL is embedded into your application, all queries are blocking and no connection pooling is used.
 
-* PostgreSQL: [pgmoon](https://github.com/leafo/pgmoon) is the driver used to run
-PostgreSQL queries. It has the advantage of being able to be used within
-OpenResty's cosocket API in addition to on the command line using LuaSocket's
-synchronous API.
-* MySQL: When in the context of the OpenResty,
-[lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) is used
-otherwise [LuaSQL](http://keplerproject.github.io/luasql/doc/us/).
-* SQLite: [LuaSQLite3](http://lua.sqlite.org/index.cgi/home)
+Depending on which database you use, a different library is used. You may need
+to install these libraries manually if you wish the use the associated
+database. (It is recommended to add supplemental dependencies of your
+application to a local [rockspec
+file](https://github.com/luarocks/luarocks/wiki/Rockspec-format).)
+
+* **PostgreSQL:** [pgmoon](https://github.com/leafo/pgmoon). Supports a wide
+  range of environments like OpenResty's cosocket API in addition LuaSocket and
+  cqueues
+* **MySQL:** When in the context of the OpenResty,
+  [lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) is used
+  otherwise [LuaSQL-MySQL](https://lunarmodules.github.io/luasql/)
+* **SQLite:** [LuaSQLite3](http://lua.sqlite.org/index.cgi/home)
 
 ## Database Modules
 
@@ -37,14 +42,18 @@ appropriate database specific module based on your application's configuration:
 
 * `require("lapis.db")` -- Manages connection, `query`, `insert`, etc. functions
 * `require("lapis.db.model")` -- The base class for Model classes backed by database tables & rows
-* `require("lapis.db.schema")` -- Functions for changed your database's schema, eg. creating tables, indexes, renaming, etc.
+* `require("lapis.db.schema")` -- Changing your database's schema, eg. creating tables, indexes, renaming, etc.
 
-As an example, if your application is configured to postgres, then the
+As an example, if your application is configured to PostgreSQL, then the
 following three require statements above will actually load the following
 modules: `lapis.db.postgres`, `lapis.db.postgres.model` and
 `lapis.db.postgres.schema`.
 
-Additionally the `lapis.db.migrations` module manages a table that keeps track
+The precedence for selecting a datbase is PostgreSQL, MySQL, SQLite. If you
+have multiple database configurations then you will need to manually require
+the module for the database you wish to use.
+
+Additionally, the `lapis.db.migrations` module manages a table that keeps track
 of schema changes (aka Migrations). This module will utilize the generic
 `lapis.db` module, meaning it will use whatever database takes precedence in
 your application's configuration. Learn more about [Database
@@ -126,8 +135,7 @@ config("development", {
     database = "my_database"
   }
 })
-]],
-}
+]]}
 
 ### SQLite
 
@@ -156,6 +164,8 @@ config("development", {
 ]]
 }
 
+> You can use the specially named `":memory:"` database to have a temporary
+> database that lives only for the duration of your apps runtime.
 
 ## Making a Query
 
@@ -198,7 +208,19 @@ return app
 And here's how you would accomplish something similar using `Model` class to
 represent rows in a table:
 
-```lua
+$dual_code{
+moon=[[
+lapis = require "lapis"
+import Model from require "lapis.db.model"
+
+class MyTable extends Model
+
+class extends lapis.Application
+  "/": =>
+    row = MyTable\find 10
+    "ok!"
+]],
+lua=[[
 local lapis = require("lapis")
 local Model = require("lapis.db.model").Model
 
@@ -212,19 +234,7 @@ app:match("/", function()
 end)
 
 return app
-```
-
-```moon
-lapis = require "lapis"
-import Model from require "lapis.db.model"
-
-class MyTable extends Model
-
-class extends lapis.Application
-  "/": =>
-    row = MyTable\find 10
-    "ok!"
-```
+]]}
 
 
 By default all queries will log to the Nginx notice log. You'll be able to see
@@ -240,13 +250,13 @@ be loaded.
 
 ## Query Interface
 
-```lua
-local db = require("lapis.db")
-```
-
-```moon
+$dual_code{
+moon=[[
 db = require "lapis.db"
-```
+]],
+lua=[[
+local db = require("lapis.db")
+]]}
 
 The `db` module provides the following functions:
 
@@ -1107,7 +1117,19 @@ We define migrations in our code as a table of functions where the key of each
 function in the table is the name of the migration. You are free to name the
 migrations anything but it's suggested to give them Unix timestamps as names:
 
-```lua
+$dual_code{
+moon=[[
+import add_column, create_index, types from require "lapis.db.schema"
+
+{
+  [1368686109]: =>
+    add_column "my_table", "hello", types.integer
+
+  [1368686843]: =>
+    create_index "my_table", "hello"
+}
+]],
+lua=[[
 local schema = require("lapis.db.schema")
 
 return {
@@ -1119,19 +1141,7 @@ return {
     schema.create_index("my_table", "hello")
   end
 }
-```
-
-```moon
-import add_column, create_index, types from require "lapis.db.schema"
-
-{
-  [1368686109]: =>
-    add_column "my_table", "hello", types.integer
-
-  [1368686843]: =>
-    create_index "my_table", "hello"
-}
-```
+]]}
 
 A migration function is a plain function. Generally they will call the
 schema functions described above, but they don't have to.

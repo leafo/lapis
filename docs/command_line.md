@@ -11,7 +11,7 @@ a summary of what it can do, along with information about the installation, eg.
            [--trace] <command> ...
 
     Control & create web applications written with Lapis
-    Lapis: 1.12.0
+    Lapis: 1.13.0
     Default environment: development
     OpenResty: /usr/local/openresty/nginx/sbin/nginx
     cqueues: 20200726 lua-http: 0.4
@@ -27,11 +27,13 @@ a summary of what it can do, along with information about the installation, eg.
        help                  Show help for commands.
        new                   Create a new Lapis project in the current directory
        server, serve         Start the server from the current directory
-       build                 Rebuild configuration and send a reload signal (server: nginx)
+       build                 Rebuild configuration and send a reload signal to running server (server: nginx)
        term                  Sends TERM signal to shut down a running server (server: nginx)
        exec, execute         Execute Lua on the server (server: nginx)
        migrate               Run any outstanding migrations
        generate              Generates a new file in the current directory from template
+       simulate              Execute a mock HTTP request to your application code without any server involved
+
 
 Note that some commands are only available for certain server types, eg. `lapis
 term` is only available for OpenResty/nginx.
@@ -215,3 +217,72 @@ to start Nginx as a daemon. If you are running the server in the foreground you
 can stop it using Ctrl-C.
 
 It works by sending a TERM signal to the Nginx master process.
+
+### `lapis simulate`
+
+    Usage: lapis simulate [-h] [--app-class <app_class>]
+           [--helper <helper>]
+           [--method {GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH}]
+           [--body <body>] [--form <form>] [--header <header>]
+           [--host <host>] [--scheme <scheme>] [--json] [--csrf]
+           [--print-headers] [--print-json] <path>
+
+    Execute a mock HTTP request to your application code without any server involved
+
+    Arguments:
+       path                  Path to request, may include query parameters (eg. /)
+
+    Request control:
+       --method {GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH}
+                             HTTP method (default: GET)
+       --body <body>         Body of request, - for stdin
+       --form <form>,        Set method to POST if unset, content type to application/x-www-form-urlencoded, and body to value of this option
+           -F <form>
+       --header <header>,    Append an input header, can be used multiple times (can overwrite set headers from other options
+             -H <header>
+       --host <host>         Set the host header of request
+       --scheme <scheme>     Override default scheme (eg. https, http)
+       --json                Set accept header to application/json
+       --csrf                Set generated CSRF header and parameter for form requests
+
+    Display options:
+       --print-headers       Print only the headers as JSON
+       --print-json          Print the entire response as JSON
+
+    Other options:
+       -h, --help            Show this help message and exit.
+       --app-class <app_class>
+                             Override default app class module name
+       --helper <helper>     Module name to require before loading app
+
+
+
+Examples:
+
+```bash
+# Request the root page with a GET request
+lapis simulate /
+
+# Request the login page with form data in a POST request, output response as JSON
+lapis simulate /login --csrf --print-json -F username=bart -F password=cool
+```
+
+This command will load up your application in the current Lua run time, stub a
+request object, and simulate a HTTP request to your application. (The request
+is stubbed as if requested through the OpenResty server)
+
+This command will execute the request in either the default environment or the
+specified one. This is important to note if your request makes changes to the
+database. The simulate commannd **does not** run in the *test* environment
+unless explicitly specified.
+
+By default the command will print information about the response, like the
+status code and headers, to *stderr*, and the response body to *stdout*. The
+output can be configured with flags like `--print-json` or `--print-headers`
+
+When using the `--print-json` format option, if a session is set by the
+request, it will be decoded into the json object for easy viewing.
+
+
+
+
