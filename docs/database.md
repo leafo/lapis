@@ -4,28 +4,51 @@
 # Database Access
 
 Lapis comes with a set of classes and functions for working with either
-[PostgreSQL](http://www.postgresql.org/) or [MySQL](https://www.mysql.com/). In
-the future other databases will be directly supported. In the meantime, you're
-free to use other OpenResty database drivers, you just won't have access to
-Lapis' query API.
+[PostgreSQL](http://www.postgresql.org/), [MySQL](https://www.mysql.com/) or
+[SQLite](http://https://sqlite.org/index.html). In the future other databases
+will be directly supported. In the meantime, you're free to use other OpenResty
+database drivers, you just won't have access to Lapis' query API.
 
-Every query is performed asynchronously through the [OpenResty cosocket
-API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp). A request will yield
-and resume automatically so there's no need to code with callbacks, queries can
-be written sequentially as if they were in a synchronous environment. Additionally
-connections to the server are automatically pooled for optimal performance.
+In the supported environments, queries are performed asynchronously (eg.
+[OpenResty cosocket API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp)).
+A request will yield and resume automatically so there's no need to code with
+callbacks, queries can be written sequentially as if they were in a synchronous
+environment. Additionally connections to the server are automatically pooled
+for optimal performance.
+
+> Note: Since SQL is embedded into your application, all queries are blocking.
 
 Depending on which database you use, a different library is used:
 
-[pgmoon](https://github.com/leafo/pgmoon) is the driver used to run
+* PostgreSQL: [pgmoon](https://github.com/leafo/pgmoon) is the driver used to run
 PostgreSQL queries. It has the advantage of being able to be used within
 OpenResty's cosocket API in addition to on the command line using LuaSocket's
 synchronous API.
+* MySQL: When in the context of the OpenResty,
+[lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) is used
+otherwise [LuaSQL](http://keplerproject.github.io/luasql/doc/us/).
+* SQLite: [LuaSQLite3](http://lua.sqlite.org/index.cgi/home)
 
-When in the context of the server,
-[lua-resty-mysql](https://github.com/openresty/lua-resty-mysql) is the driver
-used to run MySQL queries. When on the command line,
-[LuaSQL](http://keplerproject.github.io/luasql/doc/us/) with MySQL is used.
+## Database Modules
+
+Lapis provides a collection of Lua modules for performing operations against
+your database. The generic named modules will automatically select the
+appropriate database specific module based on your application's configuration:
+
+* `require("lapis.db")` -- Manages connection, `query`, `insert`, etc. functions
+* `require("lapis.db.model")` -- The base class for Model classes backed by database tables & rows
+* `require("lapis.db.schema")` -- Functions for changed your database's schema, eg. creating tables, indexes, renaming, etc.
+
+As an example, if your application is configured to postgres, then the
+following three require statements above will actually load the following
+modules: `lapis.db.postgres`, `lapis.db.postgres.model` and
+`lapis.db.postgres.schema`.
+
+Additionally the `lapis.db.migrations` module manages a table that keeps track
+of schema changes (aka Migrations). This module will utilize the generic
+`lapis.db` module, meaning it will use whatever database takes precedence in
+your application's configuration. Learn more about [Database
+Migrations](#database-migrations)
 
 ## Establishing A Connection
 
@@ -45,7 +68,18 @@ To use PostgreSQL create a `postgres` block in the <span
 class="for_moon">`config.moon`</span><span class="for_lua">`config.lua`</span>
 file.
 
-```lua
+$dual_code{
+moon=[[
+-- config.moon
+import config from require "lapis.config"
+config "development", ->
+  postgres ->
+    host "127.0.0.1"
+    user "pg_user"
+    password "the_password"
+    database "my_database"
+]],
+lua=[[
 -- config.lua
 local config = require("lapis.config")
 config("development", {
@@ -56,18 +90,7 @@ config("development", {
     database = "my_database"
   }
 })
-```
-
-```moon
--- config.moon
-import config from require "lapis.config"
-config "development", ->
-  postgres ->
-    host "127.0.0.1"
-    user "pg_user"
-    password "the_password"
-    database "my_database"
-```
+]]}
 
 `host` defaults to `127.0.0.1` and `user` defaults to `postgres`, so you can
 leave those fields out if they aren't different from the defaults. If a
@@ -80,7 +103,19 @@ To use MySQL create a `mysql` block in the <span
 class="for_moon">`config.moon`</span><span class="for_lua">`config.lua`</span>
 file.
 
-```lua
+
+$dual_code{
+moon=[[
+-- config.moon
+import config from require "lapis.config"
+config "development", ->
+  mysql ->
+    host "127.0.0.1"
+    user "mysql_user"
+    password "the_password"
+    database "my_database"
+]],
+lua=[[
 -- config.lua
 local config = require("lapis.config")
 config("development", {
@@ -91,20 +126,36 @@ config("development", {
     database = "my_database"
   }
 })
-```
+]],
+}
 
-```moon
+### SQLite
+
+If you use the `lapis.db.sqlite` module then a database named
+`lapis.sqlite` will be created in the working directory by default.
+You can configure what database file to use like so:
+
+$dual_code{
+moon=[[
 -- config.moon
 import config from require "lapis.config"
 config "development", ->
-  mysql ->
-    host "127.0.0.1"
-    user "mysql_user"
-    password "the_password"
-    database "my_database"
-```
+  sqlite ->
+    database "my_database.sqlite"
+    -- open_flags ...
+]],
+lua=[[
+-- config.lua
+local config = require("lapis.config")
+config("development", {
+  sqlite = {
+    database = "my_database.sqlite",
+    -- open_flags = ...
+  }
+})
+]]
+}
 
-You're now ready to start making queries.
 
 ## Making a Query
 
@@ -120,7 +171,17 @@ queries from the `lapis.db` module should preferred for achieving things the
 Here's an example of how you might use the `query` function in the `lapis.db`
 module to issue a query to the database:
 
-```lua
+$dual_code{
+moon=[[
+lapis = require "lapis"
+db = require "lapis.db"
+
+class extends lapis.Application
+  "/": =>
+    res = db.query "select * from my_table where id = ?", 10
+    "ok!"
+]],
+lua=[[
 local lapis = require("lapis")
 local db = require("lapis.db")
 
@@ -132,17 +193,7 @@ app:match("/", function()
 end)
 
 return app
-```
-
-```moon
-lapis = require "lapis"
-db = require "lapis.db"
-
-class extends lapis.Application
-  "/": =>
-    res = db.query "select * from my_table where id = ?", 10
-    "ok!"
-```
+]]}
 
 And here's how you would accomplish something similar using `Model` class to
 represent rows in a table:

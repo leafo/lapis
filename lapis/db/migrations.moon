@@ -1,5 +1,7 @@
 
 logger = require "lapis.logging"
+
+-- Note: Keep in mind this createst the model for the default database configuration
 import Model from require "lapis.db.model"
 
 class LapisMigrations extends Model
