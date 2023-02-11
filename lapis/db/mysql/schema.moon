@@ -26,8 +26,7 @@ entity_exists = (name) ->
   mysql_config = assert config.mysql, "missing mysql configuration"
   database = escape_literal assert mysql_config.database
   name = escape_literal name
-  res = unpack db.select "COUNT(*) as c from information_schema.tables where
-    table_schema = #{database} and table_name = #{name} LIMIT 1"
+  res = unpack db.select "COUNT(*) AS c FROM information_schema.tables WHERE table_schema = #{database} AND table_name = #{name} LIMIT 1"
   tonumber(res.c) > 0
 
 create_table = (name, columns, opts={}) ->

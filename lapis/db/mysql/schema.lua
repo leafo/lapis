@@ -48,7 +48,7 @@ entity_exists = function(name)
   local mysql_config = assert(config.mysql, "missing mysql configuration")
   local database = escape_literal(assert(mysql_config.database))
   name = escape_literal(name)
-  local res = unpack(db.select("COUNT(*) as c from information_schema.tables where\n    table_schema = " .. tostring(database) .. " and table_name = " .. tostring(name) .. " LIMIT 1"))
+  local res = unpack(db.select("COUNT(*) AS c FROM information_schema.tables WHERE table_schema = " .. tostring(database) .. " AND table_name = " .. tostring(name) .. " LIMIT 1"))
   return tonumber(res.c) > 0
 end
 local create_table
