@@ -365,6 +365,7 @@ encode_case = function(exp, t, on_else)
   return concat(buff)
 end
 return {
+  __type = "postgres",
   connect = connect,
   disconnect = disconnect,
   query = query,

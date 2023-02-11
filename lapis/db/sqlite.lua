@@ -229,6 +229,7 @@ truncate = function(...)
   }
 end
 return setmetatable({
+  __type = "sqlite",
   query = query,
   insert = insert,
   select = _select,

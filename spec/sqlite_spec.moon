@@ -53,7 +53,7 @@ describe "lapis.db.sqlite", ->
 
   local snapshot
 
-  local db, schema
+  local db, schema, logger
   local query_log
 
   before_each ->
@@ -800,4 +800,48 @@ describe "lapis.db.sqlite", ->
         [[SELECT 1 FROM "my_names"  LIMIT 1]]
       }, query_log
 
+
+  describe "lapis.db.migrations #ddd", ->
+    local migrations
+
+    before_each ->
+      package.loaded["lapis.db.migrations"] = nil
+      migrations = require("lapis.db.migrations")
+      stub(logger, "migration").invokes ->
+      stub(logger, "migration_summary").invokes ->
+
+    it "creates migrations table", ->
+      migrations.create_migrations_table!
+      assert.true schema.entity_exists "lapis_migrations"
+
+    it "runs migrations on empty database", ->
+      m = {
+        ->
+          schema.create_table "first", {
+            {"id", schema.types.integer}
+            "PRIMARY KEY (id)"
+          }
+
+      }
+
+      migrations.run_migrations m
+      -- this does nothing
+      migrations.run_migrations m
+
+      assert.same {
+        { name: "1" }
+      }, migrations.LapisMigrations\select!
+
+
+    it "runs migrations on empty database with transaction", ->
+      m = {
+        ->
+          schema.create_table "first", {
+            {"id", schema.types.integer}
+            "PRIMARY KEY (id)"
+          }
+
+      }
+
+      migrations.run_migrations m, nil, transaction: "global"
 

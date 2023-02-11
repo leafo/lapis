@@ -60,7 +60,7 @@ create_migrations_table = function(table_name)
   return create_table(table_name, {
     {
       "name",
-      types.varchar
+      types.varchar or types.text
     },
     "PRIMARY KEY(name)"
   })
@@ -68,10 +68,11 @@ end
 local start_transaction
 start_transaction = function()
   local db = require("lapis.db")
-  if db == require("lapis.db.postgres") then
-    return db.query("BEGIN")
-  else
+  local _exp_0 = db.__type
+  if "mysql" == _exp_0 then
     return db.query("START TRANSACTION")
+  else
+    return db.query("BEGIN")
   end
 end
 local commit_transaction

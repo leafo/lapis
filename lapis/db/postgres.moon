@@ -305,6 +305,8 @@ encode_case = (exp, t, on_else) ->
   concat buff
 
 {
+  __type: "postgres"
+
   :connect
   :disconnect
   :query

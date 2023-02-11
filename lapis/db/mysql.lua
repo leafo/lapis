@@ -305,6 +305,7 @@ _truncate = function(table)
   return raw_query("TRUNCATE " .. escape_identifier(table))
 end
 return {
+  __type = "mysql",
   connect = connect,
   NULL = NULL,
   TRUE = TRUE,

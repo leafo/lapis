@@ -17,7 +17,7 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
   schema = require "lapis.db.schema"
   import create_table, types, entity_exists from schema
   create_table table_name, {
-    { "name", types.varchar }
+    { "name", types.varchar or types.text }
     "PRIMARY KEY(name)"
   }
 
@@ -25,10 +25,11 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
 -- transactions are run in a polled connection context
 start_transaction = ->
   db = require "lapis.db"
-  if db == require "lapis.db.postgres"
-    db.query "BEGIN"
-  else
-    db.query "START TRANSACTION"
+  switch db.__type
+    when "mysql"
+      db.query "START TRANSACTION"
+    else
+      db.query "BEGIN"
 
 commit_transaction = ->
   db = require "lapis.db"

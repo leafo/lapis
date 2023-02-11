@@ -275,6 +275,8 @@ _truncate = (table) ->
 -- }
 
 {
+  __type: "mysql"
+
   :connect
   :NULL, :TRUE, :FALSE
 

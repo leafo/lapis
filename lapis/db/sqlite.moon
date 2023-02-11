@@ -187,6 +187,8 @@ truncate = (...) ->
   { affected_rows: changes }
 
 setmetatable {
+  __type: "sqlite"
+
   :query
   :insert
   select: _select
