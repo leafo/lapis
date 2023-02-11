@@ -55,7 +55,9 @@ connect = ->
   sqlite3 = require "lsqlite3"
   config =  require("lapis.config").get!
   db_name = config.sqlite and config.sqlite.database or "lapis.sqlite"
-  active_connection = assert sqlite3.open db_name
+  open_flags = config.sqlite and config.sqlite.open_flags
+
+  active_connection = assert sqlite3.open db_name, open_flags
 
 -- auto-connecting query
 query = (str, ...) ->
