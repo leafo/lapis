@@ -1,6 +1,4 @@
-
 import push, pop from require "lapis.environment"
-
 import before_each, after_each, setup, teardown, stub, assert from require "busted"
 
 configure_postgres = ->

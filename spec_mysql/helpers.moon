@@ -1,6 +1,4 @@
 import push, pop from require "lapis.environment"
-import set_backend from require "lapis.db.mysql"
-
 import before_each, after_each, setup, teardown, stub, assert from require "busted"
 
 configure_mysql = ->
@@ -16,8 +14,6 @@ configure_mysql = ->
         database: "lapis_test"
       }
     }
-
-    set_backend "luasql"
 
   teardown ->
     pop!
