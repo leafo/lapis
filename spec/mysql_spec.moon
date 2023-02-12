@@ -1,16 +1,19 @@
 require "spec.helpers" -- for one_of
 
+
 db = require "lapis.db.mysql"
 schema = require "lapis.db.mysql.schema"
 
 unpack = unpack or table.unpack
+
+import sorted_pairs from require "spec.helpers"
 
 -- TODO: we can't test escape_literal with strings here because we need a
 -- connection for escape function
 
 value_table = { hello: db.FALSE, age: 34 }
 
-tests = {
+TESTS = {
   -- lapis.db.mysql
   {
     -> db.escape_identifier "dad"
@@ -248,13 +251,19 @@ tests = {
 
 local old_query_fn
 describe "lapis.db.mysql", ->
-  setup ->
-    old_query_fn = db.set_backend "raw", (q) -> q
+  sorted_pairs!
+  local snapshot
 
-  teardown ->
-    db.set_backend "raw", old_query_fn
+  before_each ->
+    snapshot = assert\snapshot!
+    -- make the query function just return the query so we can test what is
+    -- generated
+    stub(db.BACKENDS, "luasql").returns (q) -> q
 
-  for group in *tests
+  after_each ->
+    snapshot\revert!
+
+  for group in *TESTS
     name = "should match"
     if group.name
       name ..= " #{group.name}"

@@ -126,8 +126,6 @@ local get_raw_query
 get_raw_query = function()
   return raw_query
 end
-local init_db
-init_db = function() end
 local escape_identifier
 escape_identifier = function(ident)
   if is_raw(ident) then

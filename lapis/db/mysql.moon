@@ -25,10 +25,6 @@ local conn
 local *
 
 BACKENDS = {
-  -- the raw backend is a debug backend that lets you specify the function that
-  -- handles the query
-  raw: (fn) -> fn
-
   luasql: ->
     config = require("lapis.config").get!
     mysql_config = assert config.mysql, "missing mysql configuration"
@@ -38,6 +34,7 @@ BACKENDS = {
     if mysql_config.host
       table.insert conn_opts, mysql_config.host
       if mysql_config.port then table.insert conn_opts, mysql_config.port
+
     conn = assert luasql\connect unpack(conn_opts)
 
     (q) ->
@@ -144,13 +141,6 @@ BACKENDS = {
       result
 }
 
-set_backend = (name, ...) ->
-  backend = BACKENDS[name]
-  unless backend
-    error "Failed to find MySQL backend: #{name}"
-
-  raw_query = backend ...
-
 set_raw_query = (fn) ->
   raw_query = fn
 
@@ -189,19 +179,23 @@ escape_identifier = (ident) ->
   ident = tostring ident
   '`' ..  (ident\gsub '`', '``') .. '`'
 
-init_db = ->
+connect = ->
   config = require("lapis.config").get!
-  backend = config.mysql and config.mysql.backend
-  unless backend
-    backend = if ngx
+  backend_name = config.mysql and config.mysql.backend
+
+  use_nginx = ngx and ngx.ctx and ngx.socket
+
+  unless backend_name
+    backend_name = if use_nginx
       "resty_mysql"
     else
       "luasql"
 
-  set_backend backend
+  backend = BACKENDS[backend_name]
+  unless backend
+    error "Failed to find MySQL backend: #{backend_name}"
 
-connect = ->
-  init_db! -- replaces raw_query to default backend
+  raw_query = backend!
 
 raw_query = (...) ->
   connect!
@@ -297,7 +291,6 @@ _truncate = (table) ->
 
   :format_date
 
-  :set_backend
   :set_raw_query
   :get_raw_query
 
@@ -308,4 +301,6 @@ _truncate = (table) ->
   update: _update
   delete: _delete
   truncate: _truncate
+
+  :BACKENDS
 }

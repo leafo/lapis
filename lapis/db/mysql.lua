@@ -13,11 +13,8 @@ do
 end
 local logger = require("lapis.logging")
 local conn
-local BACKENDS, set_backend, set_raw_query, get_raw_query, escape_literal, escape_identifier, init_db, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
+local BACKENDS, set_raw_query, get_raw_query, escape_literal, escape_identifier, connect, raw_query, interpolate_query, encode_values, encode_assigns, encode_clause, append_all, add_cond, query, _select, _insert, _update, _delete, _truncate
 BACKENDS = {
-  raw = function(fn)
-    return fn
-  end,
   luasql = function()
     local config = require("lapis.config").get()
     local mysql_config = assert(config.mysql, "missing mysql configuration")
@@ -159,13 +156,6 @@ BACKENDS = {
     end
   end
 }
-set_backend = function(name, ...)
-  local backend = BACKENDS[name]
-  if not (backend) then
-    error("Failed to find MySQL backend: " .. tostring(name))
-  end
-  raw_query = backend(...)
-end
 set_raw_query = function(fn)
   raw_query = fn
 end
@@ -223,20 +213,22 @@ escape_identifier = function(ident)
   ident = tostring(ident)
   return '`' .. (ident:gsub('`', '``')) .. '`'
 end
-init_db = function()
+connect = function()
   local config = require("lapis.config").get()
-  local backend = config.mysql and config.mysql.backend
-  if not (backend) then
-    if ngx then
-      backend = "resty_mysql"
+  local backend_name = config.mysql and config.mysql.backend
+  local use_nginx = ngx and ngx.ctx and ngx.socket
+  if not (backend_name) then
+    if use_nginx then
+      backend_name = "resty_mysql"
     else
-      backend = "luasql"
+      backend_name = "luasql"
     end
   end
-  return set_backend(backend)
-end
-connect = function()
-  return init_db()
+  local backend = BACKENDS[backend_name]
+  if not (backend) then
+    error("Failed to find MySQL backend: " .. tostring(backend_name))
+  end
+  raw_query = backend()
 end
 raw_query = function(...)
   connect()
@@ -321,7 +313,6 @@ return {
   escape_literal = escape_literal,
   escape_identifier = escape_identifier,
   format_date = format_date,
-  set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
   parse_clause = function()
@@ -331,5 +322,6 @@ return {
   insert = _insert,
   update = _update,
   delete = _delete,
-  truncate = _truncate
+  truncate = _truncate,
+  BACKENDS = BACKENDS
 }

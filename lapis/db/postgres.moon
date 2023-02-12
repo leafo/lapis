@@ -118,8 +118,6 @@ set_raw_query = (fn) ->
 get_raw_query = ->
   raw_query
 
-init_db = ->
-
 escape_identifier = (ident) ->
   return ident[1] if is_raw ident
   if is_list ident
