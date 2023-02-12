@@ -18,7 +18,7 @@ assert_same_rows = (a, b) ->
   assert.same a, b
 
 (models) ->
-  import it, describe, before_each, after_each, stub from require "busted"
+  import it, describe, before_each, after_each, stub, assert from require "busted"
   import Users, Posts, Likes from models
 
   local snapshot, query_log

@@ -48,6 +48,26 @@ TESTS = {
 }
 
 
+-- Note: core model specs depend on same reference to lapis.db so we have to
+-- run it in separate block
+describe "sqlite core model specs", ->
+  setup ->
+    env = require "lapis.environment"
+    env.push {
+      _name: "test"
+      sqlite: {
+        database: ":memory:"
+      }
+    }
+
+  teardown ->
+    env = require "lapis.environment"
+    env.pop!
+
+  import Users, Posts, Likes from require "spec.sqlite_models"
+  build = require "spec.core_model_specs"
+  build { :Users, :Posts, :Likes }
+
 describe "lapis.db.sqlite", ->
   sorted_pairs!
 
@@ -534,7 +554,6 @@ describe "lapis.db.sqlite", ->
   "the_id" INTEGER NOT NULL
 )]], definition.sql
 
-
   describe "lapis.db.sqlite.model", ->
     local MyNames, DualKeys, Model
     DEFAULT_DATE = "2023-02-10 21:27:00"
@@ -801,7 +820,7 @@ describe "lapis.db.sqlite", ->
       }, query_log
 
 
-  describe "lapis.db.migrations #ddd", ->
+  describe "lapis.db.migrations", ->
     local migrations
 
     before_each ->
