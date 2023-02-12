@@ -7,12 +7,12 @@ server = SpecServer runner
 
 import Users, Posts, Likes from require "spec_mysql.models"
 
-import setup_db, teardown_db from require "spec_mysql.helpers"
+import configure_mysql from require "spec_mysql.helpers"
 
 describe "resty", ->
-  setup ->
-    setup_db!
+  configure_mysql!
 
+  setup ->
     Users\create_table!
     Posts\create_table!
     Likes\create_table!
@@ -21,7 +21,6 @@ describe "resty", ->
 
   teardown ->
     server\close_test_server!
-    teardown_db!
 
   it "should run a query", ->
     status, res = server\request "/", expect: "json"
