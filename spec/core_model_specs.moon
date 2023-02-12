@@ -21,7 +21,13 @@ assert_same_rows = (a, b) ->
   import it, describe, before_each, after_each, stub from require "busted"
   import Users, Posts, Likes from models
 
-  local query_log
+  local snapshot, query_log
+
+  before_each ->
+    snapshot = assert\snapshot!
+
+  after_each ->
+    snapshot\revert!
 
   before_each ->
     logger = require "lapis.logging"
