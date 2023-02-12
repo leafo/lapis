@@ -10,6 +10,8 @@ local base_db = require("lapis.db.base")
 local logger = require("lapis.logging")
 local NULL, is_list, is_raw, raw
 NULL, is_list, is_raw, raw = base_db.NULL, base_db.is_list, base_db.is_raw, base_db.raw
+local measure_performance = false
+local gettime
 local append_all
 append_all = function(t, ...)
   for i = 1, select("#", ...) do
@@ -88,6 +90,10 @@ connect = function()
   local config = require("lapis.config").get()
   local db_name = config.sqlite and config.sqlite.database or "lapis.sqlite"
   local open_flags = config.sqlite and config.sqlite.open_flags
+  measure_performance = config.measure_performance
+  if measure_performance then
+    gettime = require("socket").gettime
+  end
   active_connection = assert(sqlite3.open(db_name, open_flags))
 end
 local query
@@ -98,16 +104,27 @@ query = function(str, ...)
   if select("#", ...) > 0 then
     str = interpolate_query(str, ...)
   end
-  if logger then
+  local start_time
+  if measure_performance then
+    start_time = gettime()
+  else
     logger.query(str)
   end
-  local _accum_0 = { }
-  local _len_0 = 1
-  for row in active_connection:nrows(str) do
-    _accum_0[_len_0] = row
-    _len_0 = _len_0 + 1
+  local result
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for row in active_connection:nrows(str) do
+      _accum_0[_len_0] = row
+      _len_0 = _len_0 + 1
+    end
+    result = _accum_0
   end
-  return _accum_0
+  if start_time then
+    local dt = gettime() - start_time
+    logger.query(str, dt)
+  end
+  return result
 end
 local add_returning
 add_returning = function(buff, first, cur, following, ...)

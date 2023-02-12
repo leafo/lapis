@@ -78,6 +78,11 @@ describe "lapis.db.sqlite", ->
   setup ->
     env = require "lapis.environment"
     env.push "test", {
+      -- NOTE: the logging order changes when performance measurement is
+      -- enabled. Queries that fail will *not* be logged with measurement
+      -- enabled
+      -- measure_performance: true
+
       sqlite: {
         database: ":memory:"
       }
@@ -92,7 +97,10 @@ describe "lapis.db.sqlite", ->
 
     schema = require "lapis.db.sqlite.schema"
     logger = require "lapis.logging"
-    stub(logger, "query").invokes (query) ->
+
+    original_logger = logger.query
+    stub(logger, "query").invokes (query, ...) ->
+      -- original_logger query, ...
       table.insert query_log, query
 
   after_each ->

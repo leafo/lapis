@@ -96,9 +96,9 @@ BACKENDS = {
         dt = gettime! - start_time
         increment_perf "db_time", dt
         increment_perf "db_count", 1
-        logger.query str, dt if logger
+        logger.query str, dt
       else
-        logger.query str if logger
+        logger.query str
 
       if not res and err
         error "#{str}\n#{err}"

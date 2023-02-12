@@ -99,13 +99,9 @@ local BACKENDS = {
         local dt = gettime() - start_time
         increment_perf("db_time", dt)
         increment_perf("db_count", 1)
-        if logger then
-          logger.query(str, dt)
-        end
+        logger.query(str, dt)
       else
-        if logger then
-          logger.query(str)
-        end
+        logger.query(str)
       end
       if not res and err then
         error(tostring(str) .. "\n" .. tostring(err))

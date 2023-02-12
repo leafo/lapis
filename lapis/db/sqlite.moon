@@ -9,6 +9,9 @@ logger = require "lapis.logging"
 
 import NULL, is_list, is_raw, raw from base_db
 
+measure_performance = false
+local gettime
+
 append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
@@ -47,6 +50,7 @@ escape_literal = (val) ->
 
 interpolate_query, encode_values, encode_assigns, encode_clause = base_db.build_helpers escape_literal, escape_identifier
 
+-- loads the active configuration and creates the active connection
 connect = ->
   if active_connection
     active_connection\close!
@@ -56,10 +60,14 @@ connect = ->
   config =  require("lapis.config").get!
   db_name = config.sqlite and config.sqlite.database or "lapis.sqlite"
   open_flags = config.sqlite and config.sqlite.open_flags
+  measure_performance = config.measure_performance
+
+  if measure_performance
+    gettime = require("socket").gettime
 
   active_connection = assert sqlite3.open db_name, open_flags
 
--- auto-connecting query
+-- run a query to the active_connection, create connection if it doesn't exist
 query = (str, ...) ->
   unless active_connection
     connect!
@@ -67,10 +75,21 @@ query = (str, ...) ->
   if select("#", ...) > 0
     str = interpolate_query str, ...
 
-  if logger
+  local start_time
+  if measure_performance
+    start_time = gettime!
+  else
+   -- log up front when we aren't collecting timing
     logger.query str
 
-  return [row for row in active_connection\nrows str]
+  result = [row for row in active_connection\nrows str]
+
+  if start_time
+    dt = gettime! - start_time
+    logger.query str, dt
+
+
+  result
 
 -- Appends a list of column names as past of a returning clause via
 -- tail recursion
