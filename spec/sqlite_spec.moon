@@ -53,8 +53,7 @@ TESTS = {
 describe "sqlite core model specs", ->
   setup ->
     env = require "lapis.environment"
-    env.push {
-      _name: "test"
+    env.push "test", {
       sqlite: {
         database: ":memory:"
       }
@@ -76,25 +75,20 @@ describe "lapis.db.sqlite", ->
   local db, schema, logger
   local query_log
 
-  before_each ->
-    query_log = {}
-    snapshot = assert\snapshot!
-
+  setup ->
     env = require "lapis.environment"
-    env.push {
+    env.push "test", {
       sqlite: {
         database: ":memory:"
       }
     }
 
-    -- wipe out the modules to ensure we have fresh connection
-    -- object
-    package.loaded["lapis.db.sqlite"] = nil
-    package.loaded["lapis.db.sqlite.schema"] = nil
-    package.loaded["lapis.db.sqlite.model"] = nil
+  before_each ->
+    query_log = {}
+    snapshot = assert\snapshot!
 
     db = require "lapis.db.sqlite"
-    db\connect!
+    db\connect! -- this forces an empty db for every test
 
     schema = require "lapis.db.sqlite.schema"
     logger = require "lapis.logging"
@@ -824,10 +818,12 @@ describe "lapis.db.sqlite", ->
     local migrations
 
     before_each ->
-      package.loaded["lapis.db.migrations"] = nil
       migrations = require("lapis.db.migrations")
+
+      -- silence logging
       stub(logger, "migration").invokes ->
       stub(logger, "migration_summary").invokes ->
+      stub(logger, "notice").invokes ->
 
     it "creates migrations table", ->
       migrations.create_migrations_table!
