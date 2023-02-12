@@ -37,10 +37,6 @@ _is_encodable = (item) ->
 local gettime
 
 BACKENDS = {
-  -- the raw backend is a debug backend that lets you specify the function that
-  -- handles the query
-  raw: (fn) -> fn
-
   pgmoon: ->
     import after_dispatch, increment_perf, set_perf from require "lapis.nginx.context"
 
@@ -48,6 +44,11 @@ BACKENDS = {
     pg_config = assert config.postgres, "missing postgres configuration"
 
     local pgmoon_conn
+
+    measure_performance = not not config.measure_performance
+
+    if measure_performance
+      gettime = require("socket").gettime
 
     _query = (str) ->
       -- cache the connection in the nginx context if true, otherwise it there
@@ -71,7 +72,7 @@ BACKENDS = {
         unless success
           error "postgres failed to connect: #{connect_err}"
 
-        if config.measure_performance
+        if measure_performance
           switch pgmoon.sock_type
             when "nginx"
               set_perf "pgmoon_conn", "nginx.#{pgmoon.sock\getreusedtimes! > 0 and "reuse" or "new"}"
@@ -84,10 +85,7 @@ BACKENDS = {
         else
           pgmoon_conn = pgmoon
 
-      start_time = if config.measure_performance
-        unless gettime
-          gettime = require("socket").gettime
-
+      start_time = if measure_performance
         gettime!
 
       res, err = pgmoon\query str

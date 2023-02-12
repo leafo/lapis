@@ -37,9 +37,6 @@ _is_encodable = function(item)
 end
 local gettime
 local BACKENDS = {
-  raw = function(fn)
-    return fn
-  end,
   pgmoon = function()
     local after_dispatch, increment_perf, set_perf
     do
@@ -49,6 +46,10 @@ local BACKENDS = {
     local config = require("lapis.config").get()
     local pg_config = assert(config.postgres, "missing postgres configuration")
     local pgmoon_conn
+    local measure_performance = not not config.measure_performance
+    if measure_performance then
+      gettime = require("socket").gettime
+    end
     local _query
     _query = function(str)
       local use_nginx = ngx and ngx.ctx and ngx.socket
@@ -70,7 +71,7 @@ local BACKENDS = {
         if not (success) then
           error("postgres failed to connect: " .. tostring(connect_err))
         end
-        if config.measure_performance then
+        if measure_performance then
           local _exp_0 = pgmoon.sock_type
           if "nginx" == _exp_0 then
             set_perf("pgmoon_conn", "nginx." .. tostring(pgmoon.sock:getreusedtimes() > 0 and "reuse" or "new"))
@@ -88,10 +89,7 @@ local BACKENDS = {
         end
       end
       local start_time
-      if config.measure_performance then
-        if not (gettime) then
-          gettime = require("socket").gettime
-        end
+      if measure_performance then
         start_time = gettime()
       end
       local res, err = pgmoon:query(str)
