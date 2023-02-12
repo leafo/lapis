@@ -41,7 +41,7 @@ BACKENDS = {
     conn = assert luasql\connect unpack(conn_opts)
 
     (q) ->
-      logger.query q if logger
+      logger.query q
       cur = assert conn\execute q
       has_rows = type(cur) != "number"
 
@@ -94,7 +94,7 @@ BACKENDS = {
     mysql = require "resty.mysql"
 
     (q) ->
-      logger.query q if logger
+      logger.query q
 
       db = ngx and ngx.ctx.resty_mysql_db
       unless db

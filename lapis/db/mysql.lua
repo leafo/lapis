@@ -35,9 +35,7 @@ BACKENDS = {
     end
     conn = assert(luasql:connect(unpack(conn_opts)))
     return function(q)
-      if logger then
-        logger.query(q)
-      end
+      logger.query(q)
       local cur = assert(conn:execute(q))
       local has_rows = type(cur) ~= "number"
       local result = {
@@ -102,9 +100,7 @@ BACKENDS = {
     local pool_size = mysql_config.pool_size or 100
     local mysql = require("resty.mysql")
     return function(q)
-      if logger then
-        logger.query(q)
-      end
+      logger.query(q)
       local db = ngx and ngx.ctx.resty_mysql_db
       if not (db) then
         local err
