@@ -73,6 +73,8 @@ class HasArrays extends Model
     }
 
 describe "lapis.db.model", ->
+  DEFAULT_DATE = "2023-02-10 21:27:00"
+
   sorted_pairs!
   configure_postgres!
 
@@ -81,6 +83,7 @@ describe "lapis.db.model", ->
 
   before_each ->
     query_log = {}
+    stub(db, "format_date").invokes => DEFAULT_DATE
 
   describe "core model", ->
     build = require "spec.core_model_specs"
@@ -88,6 +91,7 @@ describe "lapis.db.model", ->
 
   it "Model:columns", ->
     Users\create_table!
+    query_log = {}
     assert.same {
       {
         data_type: "integer"
@@ -99,6 +103,10 @@ describe "lapis.db.model", ->
       }
     }, Users\columns!
 
+    assert.same {
+      [[SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users']]
+    }, query_log
+
   it "fail to create without required types", ->
     Posts\create_table!
     assert.has_error -> Posts\create {}
@@ -108,11 +116,16 @@ describe "lapis.db.model", ->
       Posts\create_table!
 
     it "creates a new post", ->
+      query_log = {}
       post = Posts\create {
         title: "yo"
         body: "okay!"
         user_id: db.NULL
       }
+
+      assert.same {
+        [[INSERT INTO "posts" ("body", "created_at", "title", "updated_at", "user_id") VALUES ('okay!', '2023-02-10 21:27:00', 'yo', '2023-02-10 21:27:00', NULL) RETURNING "id"]]
+      }, query_log
 
       assert.same "yo", post.title
       assert.same nil, post.user_id
@@ -146,10 +159,16 @@ describe "lapis.db.model", ->
       }
 
     it "does a basic update", ->
+      query_log = {}
+
       post\update {
         title: "sure"
         user_id: 234
       }
+
+      assert.same {
+        [[UPDATE "posts" SET "title" = 'sure', "updated_at" = '2023-02-10 21:27:00', "user_id" = 234 WHERE "id" = 1]]
+      }, query_log
 
       assert.same "sure", post.title
       assert.same 234, post.user_id
@@ -183,7 +202,7 @@ describe "lapis.db.model", ->
       assert.same nil, post.user_id
 
   describe "returning", ->
-    it "should create with returning", ->
+    it "creates with returning", ->
       Likes\create_table!
       like = Likes\create {
         user_id: db.raw "1 + 1"
@@ -195,7 +214,7 @@ describe "lapis.db.model", ->
       assert.same 2, like.user_id
       assert.same 4, like.post_id
 
-    it "should create with returning all", ->
+    it "creates with returning all", ->
       Likes\create_table!
       like = Likes\create {
         user_id: 9
@@ -206,7 +225,7 @@ describe "lapis.db.model", ->
       assert.same 9, like.user_id
       assert.same 4, like.post_id
 
-    it "should create with returning specified column", ->
+    it "creates with returning specified column", ->
       Likes\create_table!
       like = Likes\create {
         user_id: 2
@@ -217,7 +236,7 @@ describe "lapis.db.model", ->
       assert.same 2, like.user_id
       assert.same 18, like.post_id
 
-    it "should create with returning null", ->
+    it "creates with returning null", ->
       Posts\create_table!
       post = Posts\create {
         title: db.raw "'hi'"
@@ -229,7 +248,7 @@ describe "lapis.db.model", ->
       assert.same "okay!", post.body
       assert.falsy post.user_id
 
-    it "should update with returning", ->
+    it "updates with returning", ->
       Likes\create_table!
       like = Likes\create {
         user_id: 1
@@ -247,7 +266,7 @@ describe "lapis.db.model", ->
       assert.same 123, like.post_id
       assert.same 1, like.user_id
 
-    it "should update with returning null", ->
+    it "updates with returning null", ->
       Posts\create_table!
       post = Posts\create {
         title: "hi"

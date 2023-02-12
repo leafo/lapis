@@ -11,10 +11,7 @@ class Model extends BaseModel
   @db: db
 
   @columns: =>
-    columns = @db.query [[
-      select column_name, data_type
-      from information_schema.columns
-      where table_name = ?]], @table_name!
+    columns = @db.query [[SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ?]], @table_name!
 
     @columns = -> columns
     columns

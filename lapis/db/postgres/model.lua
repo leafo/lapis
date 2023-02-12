@@ -50,9 +50,7 @@ do
   local self = _class_0
   self.db = db
   self.columns = function(self)
-    local columns = self.db.query([[      select column_name, data_type
-      from information_schema.columns
-      where table_name = ?]], self:table_name())
+    local columns = self.db.query([[SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ?]], self:table_name())
     self.columns = function()
       return columns
     end
