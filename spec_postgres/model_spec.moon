@@ -1,6 +1,6 @@
 
-import setup_db, teardown_db from require "spec_postgres.helpers"
-
+import sorted_pairs from require "spec.helpers"
+import configure_postgres, bind_query_log from require "spec_postgres.helpers"
 import drop_tables, truncate_tables from require "lapis.spec.db"
 
 unpack = unpack or table.unpack
@@ -72,18 +72,21 @@ class HasArrays extends Model
       "PRIMARY KEY (id)"
     }
 
-describe "model", ->
-  setup ->
-    setup_db!
+describe "lapis.db.model", ->
+  sorted_pairs!
+  configure_postgres!
 
-  teardown ->
-    teardown_db!
+  local query_log
+  bind_query_log -> query_log
+
+  before_each ->
+    query_log = {}
 
   describe "core model", ->
     build = require "spec.core_model_specs"
     build { :Users, :Posts, :Likes }
 
-  it "should get columns of model", ->
+  it "Model:columns", ->
     Users\create_table!
     assert.same {
       {
@@ -96,10 +99,9 @@ describe "model", ->
       }
     }, Users\columns!
 
-  it "should fail to create without required types", ->
+  it "fail to create without required types", ->
     Posts\create_table!
-    assert.has_error ->
-      Posts\create {}
+    assert.has_error -> Posts\create {}
 
   describe "create", ->
     before_each ->
