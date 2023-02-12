@@ -120,14 +120,6 @@ local BACKENDS = {
     return _query, _disconnect
   end
 }
-local set_backend
-set_backend = function(name, ...)
-  local backend = BACKENDS[name]
-  if not (backend) then
-    error("Failed to find PostgreSQL backend: " .. tostring(name))
-  end
-  raw_query, raw_disconnect = backend(...)
-end
 local set_raw_query
 set_raw_query = function(fn)
   raw_query = fn
@@ -137,14 +129,7 @@ get_raw_query = function()
   return raw_query
 end
 local init_db
-init_db = function()
-  local config = require("lapis.config").get()
-  local backend = config.postgres and config.postgres.backend
-  if not (backend) then
-    backend = "pgmoon"
-  end
-  return set_backend(backend)
-end
+init_db = function() end
 local escape_identifier
 escape_identifier = function(ident)
   if is_raw(ident) then
@@ -219,7 +204,16 @@ append_all = function(t, ...)
 end
 local connect
 connect = function()
-  return init_db()
+  local config = require("lapis.config").get()
+  local backend_name = config.postgres and config.postgres.backend
+  if not (backend_name) then
+    backend_name = "pgmoon"
+  end
+  local backend = BACKENDS[backend_name]
+  if not (backend) then
+    error("Failed to find PostgreSQL backend: " .. tostring(backend_name))
+  end
+  raw_query, raw_disconnect = backend()
 end
 local disconnect
 disconnect = function()
@@ -384,7 +378,6 @@ return {
   interpolate_query = interpolate_query,
   format_date = format_date,
   encode_case = encode_case,
-  set_backend = set_backend,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
   parse_clause = require("lapis.db.postgres.parse_clause"),
@@ -393,5 +386,6 @@ return {
   update = _update,
   delete = _delete,
   truncate = _truncate,
-  is_encodable = _is_encodable
+  is_encodable = _is_encodable,
+  BACKENDS = BACKENDS
 }

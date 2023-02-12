@@ -9,7 +9,7 @@ value_table = { hello: "world", age: 34 }
 
 import sorted_pairs from require "spec.helpers"
 
-tests = {
+TESTS = {
   -- lapis.db.postgres
   {
     -> db.escape_identifier "dad"
@@ -828,21 +828,24 @@ END]]
 local old_query_fn
 describe "lapis.db.postgres", ->
   sorted_pairs!
+  local snapshot
 
-  setup ->
-    old_query_fn = db.set_backend "raw", (q) -> q
+  before_each ->
+    snapshot = assert\snapshot!
+    -- make the query function just return the query so we can test what is
+    -- generated
+    stub(db.BACKENDS, "pgmoon").returns (q) -> q
 
-  teardown ->
-    db.set_backend "raw", old_query_fn
+  after_each ->
+    snapshot\revert!
 
-  for group in *tests
+  for idx, group in ipairs TESTS
     it "should match", ->
       output = group[1]!
       if #group > 2
         assert.one_of output, { unpack group, 2 }
       else
         assert.same group[2], output
-
 
   describe "db.clause", ->
     it "fails to create clause from object with a metatable", ->

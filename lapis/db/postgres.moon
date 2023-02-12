@@ -114,13 +114,6 @@ BACKENDS = {
     _query, _disconnect
 }
 
-set_backend = (name, ...) ->
-  backend = BACKENDS[name]
-  unless backend
-    error "Failed to find PostgreSQL backend: #{name}"
-
-  raw_query, raw_disconnect = backend ...
-
 set_raw_query = (fn) ->
   raw_query = fn
 
@@ -128,13 +121,6 @@ get_raw_query = ->
   raw_query
 
 init_db = ->
-  config = require("lapis.config").get!
-  backend = config.postgres and config.postgres.backend
-
-  unless backend
-    backend = "pgmoon"
-
-  set_backend backend
 
 escape_identifier = (ident) ->
   return ident[1] if is_raw ident
@@ -176,10 +162,20 @@ append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
 
--- NOTE: this doesn't actually connect, it just configures the backend. This
--- should be renamed and the interface changed
+-- NOTE: this doesn't actually connect, sets up config for lazy connection on
+-- next query
 connect = ->
-  init_db! -- replaces raw_query to default backend
+  config = require("lapis.config").get!
+  backend_name = config.postgres and config.postgres.backend
+
+  unless backend_name
+    backend_name = "pgmoon"
+
+  backend = BACKENDS[backend_name]
+  unless backend
+    error "Failed to find PostgreSQL backend: #{backend_name}"
+
+  raw_query, raw_disconnect = backend!
 
 disconnect = ->
   assert raw_disconnect, "no active connection"
@@ -322,7 +318,6 @@ encode_case = (exp, t, on_else) ->
   :encode_clause, :interpolate_query, :format_date,
   :encode_case
 
-  :set_backend
   :set_raw_query
   :get_raw_query
 
@@ -334,4 +329,6 @@ encode_case = (exp, t, on_else) ->
   delete: _delete
   truncate: _truncate
   is_encodable: _is_encodable
+
+  :BACKENDS
 }
