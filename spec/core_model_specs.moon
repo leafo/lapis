@@ -18,12 +18,21 @@ assert_same_rows = (a, b) ->
   assert.same a, b
 
 (models) ->
-  import it, describe, before_each, after_each from require "busted"
+  import it, describe, before_each, after_each, stub from require "busted"
   import Users, Posts, Likes from models
+
+  local query_log
+
+  before_each ->
+    logger = require "lapis.logging"
+    query_log = {}
+    stub(logger, "query").invokes (query) ->
+      table.insert query_log, query
 
   describe "basic model", ->
     before_each ->
       Users\create_table!
+      query_log = {}
 
     it "should find on empty table", ->
       nothing = Users\find 1
@@ -80,6 +89,7 @@ assert_same_rows = (a, b) ->
   describe "timestamp model", ->
     before_each ->
       Posts\create_table!
+      query_log = {}
 
     it "should create model", ->
       post = Posts\create {
@@ -124,6 +134,7 @@ assert_same_rows = (a, b) ->
   describe "primary key model", ->
     before_each ->
       Likes\create_table!
+      query_log = {}
 
     it "should find empty result by primary key", ->
       assert.falsy (Likes\find 1,2)
@@ -181,29 +192,15 @@ assert_same_rows = (a, b) ->
 
 
   describe "relations", ->
-    local query_log, query_fn
-
     before_each ->
       Users\create_table!
       Posts\create_table!
       Likes\create_table!
+      query_log = {}
 
       package.loaded.models = {
         :Users, :Posts, :Likes
       }
-
-      query_log = {}
-      db = require "lapis.db"
-
-      query_fn = db.get_raw_query!
-      db.set_raw_query (q) ->
-        table.insert query_log, q
-        query_fn q
-
-    after_each ->
-      package.loaded.models = nil
-      db = require "lapis.db"
-      db.set_raw_query query_fn
 
     it "should fetch relation", ->
       user = Users\create { name: "yeah" }
@@ -233,7 +230,7 @@ assert_same_rows = (a, b) ->
       assert.same user.id, like\get_user!.id
 
       -- The insert x 2 and select
-      assert.same 3, #query_log
+      assert.same 3, #query_log, "Queries run"
 
     it "does not query multiple times for unfilled relations", ->
       like = Likes\create {
@@ -245,7 +242,7 @@ assert_same_rows = (a, b) ->
       like\get_user!
 
       -- The insert and select
-      assert.same 2, #query_log
+      assert.same 2, #query_log, "Queries run"
 
     it "lets you manually fill a relation", ->
       like = Likes\create {
@@ -255,7 +252,7 @@ assert_same_rows = (a, b) ->
 
       like.user = "Hello world!"
       assert.same "Hello world!", like\get_user!
-      assert.same 1, #query_log
+      assert.same 1, #query_log, "Queries run"
 
     it "lets a preload fill a relation", ->
       post = Posts\create {
@@ -270,13 +267,14 @@ assert_same_rows = (a, b) ->
 
       Posts\include_in {like}, "post_id"
       assert.truthy like\get_post!
-      assert.same 3, #query_log
+      assert.same 3, #query_log, "Queries run"
 
   describe "include_in", ->
     before_each ->
       Users\create_table!
       Posts\create_table!
       Likes\create_table!
+      query_log = {}
 
     before_each ->
       for i=1,2
