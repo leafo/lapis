@@ -1,5 +1,5 @@
--- these same specs are run on both mysql and postgres driver outside of
--- nginx
+-- The "core model specs" are a set of tests using Model objects from all of
+-- the available database providers.
 
 assert = require "luassert"
 
