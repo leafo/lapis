@@ -9,7 +9,6 @@ describe "lapis.db.migrations", ->
   local query_log
   bind_query_log -> query_log
 
-  -- before bind query log to prevent recording this
   before_each ->
     import LapisMigrations from require "lapis.db.migrations"
     drop_tables LapisMigrations\table_name!

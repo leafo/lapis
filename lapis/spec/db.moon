@@ -1,4 +1,7 @@
 
+-- NOTE: do not require lapis.db, etc. on the top level as it will try to bind
+-- to the connection type to the closure.
+
 import assert_env from require "lapis.environment"
 
 unpack = unpack or table.unpack
