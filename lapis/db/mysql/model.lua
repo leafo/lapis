@@ -136,11 +136,9 @@ do
     end
     local res = db.insert(self:table_name(), values)
     if res then
-      if type(self.primary_key) == "string" then
-        local new_id = res.last_auto_id or res.insert_id
-        if not values[self.primary_key] and new_id and new_id ~= 0 then
-          values[self.primary_key] = new_id
-        end
+      local new_id = res.last_auto_id or res.insert_id
+      if not values[self.primary_key] and new_id and new_id ~= 0 then
+        values[self.primary_key] = new_id
       end
       return self:load(values)
     else

@@ -29,13 +29,13 @@ class Model extends BaseModel
     res = db.insert @table_name!, values
 
     if res
-      -- NOTE: Due to limitation of mysql bindings, we can't handle setting
-      -- auto-incrementing id if it's part of a composite primary key.
+      -- NOTE: Due to limitation of mysql bindings, we don't know how to set
+      -- the autoincrementing id to the correct column name on composite keys.
+      -- Developer will have to manually read the id out and assign it
       -- Recommendation: use mariadb which supports RETURNING syntax
-      if type(@primary_key) == "string"
-        new_id = res.last_auto_id or res.insert_id
-        if not values[@primary_key] and new_id and new_id != 0
-          values[@primary_key] = new_id
+      new_id = res.last_auto_id or res.insert_id
+      if not values[@primary_key] and new_id and new_id != 0
+        values[@primary_key] = new_id
       @load values
     else
       nil, "Failed to create #{@__name}"
