@@ -342,8 +342,36 @@ TESTS = {
   }
 
   {
+    -> db.update "cats", { color: "green" }
+    [[UPDATE "cats" SET "color" = 'green']]
+  }
+
+  {
+    ->
+      assert.has_error(
+        -> db.update "cats", { color: "blue" }, {}
+        "db.encode_clause: passed an empty table"
+      )
+
+      true
+
+    true
+  }
+
+  {
     -> db.delete "cats"
     [[DELETE FROM "cats"]]
+  }
+
+  {
+    ->
+      assert.has_error(
+        -> db.delete "cats", {}
+        "db.encode_clause: passed an empty table"
+      )
+      true
+
+    true
   }
 
   {
