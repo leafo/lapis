@@ -5,24 +5,19 @@ import concat from table
 unpack = unpack or table.unpack
 
 import
-  FALSE
   NULL
-  TRUE
   build_helpers
-  format_date
   is_raw
-  raw
   is_list
-  list
-  is_encodable
-  clause
-  is_clause
   from require "lapis.db.base"
 
 logger = require "lapis.logging"
 
-local conn
-local *
+-- NOTE: active connection only stored in local with luasql, otherwise request
+-- context is used to store connection
+local active_connection
+
+local connect, raw_query
 
 BACKENDS = {
   luasql: ->
@@ -35,16 +30,20 @@ BACKENDS = {
       table.insert conn_opts, mysql_config.host
       if mysql_config.port then table.insert conn_opts, mysql_config.port
 
-    conn = assert luasql\connect unpack(conn_opts)
+    -- Note that connection is established up front. This is
+    -- necessary since connection is used for escaping literal when
+    -- using lua sql. This is distinct from ngx mode which lazily
+    -- establishes connection on first query
+    active_connection = assert luasql\connect unpack(conn_opts)
 
     (q) ->
       logger.query q
-      cur = assert conn\execute q
+      cur = assert active_connection\execute q
       has_rows = type(cur) != "number"
 
       result = {
         affected_rows: has_rows and cur\numrows! or cur
-        last_auto_id: conn\getlastautoid!
+        last_auto_id: active_connection\getlastautoid!
       }
 
       if has_rows
@@ -152,8 +151,8 @@ escape_literal = (val) ->
     when "number"
       return tostring val
     when "string"
-      if conn
-        return "'#{conn\escape val}'"
+      if active_connection
+        return "'#{active_connection\escape val}'"
       else if ngx
         return ngx.quote_sql_str(val)
       else
@@ -268,17 +267,17 @@ _truncate = (table) ->
 -- 
 -- }
 
-{
+setmetatable {
   __type: "mysql"
 
   :connect
-  :NULL, :TRUE, :FALSE
 
-  :raw, :is_raw
-  :list, :is_list
-  :clause, :is_clause
-
-  :is_encodable
+  -- :NULL, :TRUE, :FALSE
+  -- :raw, :is_raw
+  -- :list, :is_list
+  -- :clause, :is_clause
+  -- :format_date
+  -- :is_encodable
 
   :encode_values
   :encode_assigns
@@ -288,8 +287,6 @@ _truncate = (table) ->
   :query
   :escape_literal
   :escape_identifier
-
-  :format_date
 
   :set_raw_query
   :get_raw_query
@@ -303,4 +300,5 @@ _truncate = (table) ->
   truncate: _truncate
 
   :BACKENDS
-}
+}, __index: require "lapis.db.base"
+

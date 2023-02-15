@@ -12,6 +12,10 @@ import sorted_pairs from require "spec.helpers"
 TESTS = {
   -- lapis.db.postgres
   {
+    -> db.format_date 0
+    "1970-01-01 00:00:00"
+  }
+  {
     -> db.escape_identifier "dad"
     '"dad"'
   }

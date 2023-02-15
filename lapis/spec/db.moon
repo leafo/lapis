@@ -1,6 +1,6 @@
 
--- NOTE: do not require lapis.db, etc. on the top level as it will try to bind
--- to the connection type to the closure.
+-- NOTE: do not require config dependent modules on the top level here, eg.
+-- lapis.db
 
 import assert_env from require "lapis.environment"
 
