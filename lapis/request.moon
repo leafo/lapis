@@ -105,12 +105,13 @@ class Request
 
       -- set default layout if none is specified
       if @options.layout == nil
+        @options.layout = @app.layout
+
+      if @options.layout
         -- NOTE: @layout_opts is a legacy undocumented field, it should be eventually
         -- be removed now that @options can communicate the layout being used
         -- during view rendering
         @layout_opts = {}
-
-        @options.layout = @app.layout
 
       widget_cls = @options.render
       widget_cls = @route_name if widget_cls == true

@@ -228,8 +228,10 @@ do
         end
       end
       if self.options.layout == nil then
-        self.layout_opts = { }
         self.options.layout = self.app.layout
+      end
+      if self.options.layout then
+        self.layout_opts = { }
       end
       local widget_cls = self.options.render
       if widget_cls == true then
