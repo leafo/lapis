@@ -196,6 +196,10 @@ $config_table{
     name = "mysql",
     description = "MySQL connection settings",
     default = "[*See MySQL docs*](database.html)"
+  },
+  {
+    name = "sqlite",
+    description = "SQLite connection settings"
   }
 }
 
