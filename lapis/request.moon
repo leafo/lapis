@@ -85,6 +85,7 @@ class Request
       if @options.json != nil
         @res.headers["Content-Type"] = @options.content_type or "application/json"
         @res.content = to_json @options.json
+        @options.layout = false
         return
 
       if ct = @options.content_type
@@ -99,12 +100,17 @@ class Request
 
         @res\add_header "Location", redirect_url
         @res.status or= 302
+        @options.layout = false
         return
 
-      layout = if @options.layout != nil
-        @options.layout
-      else
-        @app.layout
+      -- set default layout if none is specified
+      if @options.layout == nil
+        -- NOTE: @layout_opts is a legacy undocumented field, it should be eventually
+        -- be removed now that @options can communicate the layout being used
+        -- during view rendering
+        @layout_opts = {}
+
+        @options.layout = @app.layout
 
       widget_cls = @options.render
       widget_cls = @route_name if widget_cls == true
@@ -123,11 +129,14 @@ class Request
         view_widget\include_helper @
         @write view_widget
 
+        if @layout_opts
+          @layout_opts.view_widget = view_widget
+
         if start_time
           t = get_time config
           increment_perf "view_time", t - start_time
 
-      if layout
+      if layout = @options.layout
         @_content_for_inner = @buffer
         -- create a new buffer for the final result
         @buffer = {}
@@ -140,9 +149,7 @@ class Request
         start_time = if config.measure_performance
           get_time config
 
-        layout = layout_cls {
-          :view_widget
-        }
+        layout = layout_cls @layout_opts
 
         layout\include_helper @
         layout\render @buffer

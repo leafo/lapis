@@ -203,6 +203,7 @@ do
       if self.options.json ~= nil then
         self.res.headers["Content-Type"] = self.options.content_type or "application/json"
         self.res.content = to_json(self.options.json)
+        self.options.layout = false
         return 
       end
       do
@@ -222,14 +223,13 @@ do
           end
           self.res:add_header("Location", redirect_url)
           self.res.status = self.res.status or 302
+          self.options.layout = false
           return 
         end
       end
-      local layout
-      if self.options.layout ~= nil then
-        layout = self.options.layout
-      else
-        layout = self.app.layout
+      if self.options.layout == nil then
+        self.layout_opts = { }
+        self.options.layout = self.app.layout
       end
       local widget_cls = self.options.render
       if widget_cls == true then
@@ -248,32 +248,36 @@ do
         view_widget = widget_cls()
         view_widget:include_helper(self)
         self:write(view_widget)
+        if self.layout_opts then
+          self.layout_opts.view_widget = view_widget
+        end
         if start_time then
           local t = get_time(config)
           increment_perf("view_time", t - start_time)
         end
       end
-      if layout then
-        self._content_for_inner = self.buffer
-        self.buffer = { }
-        local layout_cls
-        if type(layout) == "string" then
-          layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(layout))
-        else
-          layout_cls = layout
-        end
-        local start_time
-        if config.measure_performance then
-          start_time = get_time(config)
-        end
-        layout = layout_cls({
-          view_widget = view_widget
-        })
-        layout:include_helper(self)
-        layout:render(self.buffer)
-        if start_time then
-          local t = get_time(config)
-          increment_perf("layout_time", t - start_time)
+      do
+        local layout = self.options.layout
+        if layout then
+          self._content_for_inner = self.buffer
+          self.buffer = { }
+          local layout_cls
+          if type(layout) == "string" then
+            layout_cls = require(tostring(self.app.views_prefix) .. "." .. tostring(layout))
+          else
+            layout_cls = layout
+          end
+          local start_time
+          if config.measure_performance then
+            start_time = get_time(config)
+          end
+          layout = layout_cls(self.layout_opts)
+          layout:include_helper(self)
+          layout:render(self.buffer)
+          if start_time then
+            local t = get_time(config)
+            increment_perf("layout_time", t - start_time)
+          end
         end
       end
       if next(self.buffer) then
