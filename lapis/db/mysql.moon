@@ -261,23 +261,10 @@ _delete = (table, cond, ...) ->
 _truncate = (table) ->
   raw_query "TRUNCATE " .. escape_identifier table
 
--- To be implemented
--- {
---   :parse_clause
--- 
--- }
-
 setmetatable {
   __type: "mysql"
 
   :connect
-
-  -- :NULL, :TRUE, :FALSE
-  -- :raw, :is_raw
-  -- :list, :is_list
-  -- :clause, :is_clause
-  -- :format_date
-  -- :is_encodable
 
   :encode_values
   :encode_assigns
@@ -290,8 +277,6 @@ setmetatable {
 
   :set_raw_query
   :get_raw_query
-
-  parse_clause: -> error "MySQL does not support a clause parser"
 
   select: _select
   insert: _insert

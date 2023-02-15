@@ -25,7 +25,7 @@ make_add = (buffer) ->
 
 
 entity_exists = (name) ->
-  res = unpack db.query "SELECT COUNT(*) as c FROM sqlite_master WHERE name = ?", name
+  res = unpack db.query "SELECT COUNT(*) AS c FROM sqlite_master WHERE name = ?", name
   res and res.c > 0 or false
 
 -- https://www.sqlite.org/lang_createtable.html

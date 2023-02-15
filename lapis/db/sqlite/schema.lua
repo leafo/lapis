@@ -46,7 +46,7 @@ make_add = function(buffer)
 end
 local entity_exists
 entity_exists = function(name)
-  local res = unpack(db.query("SELECT COUNT(*) as c FROM sqlite_master WHERE name = ?", name))
+  local res = unpack(db.query("SELECT COUNT(*) AS c FROM sqlite_master WHERE name = ?", name))
   return res and res.c > 0 or false
 end
 local create_table

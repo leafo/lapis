@@ -316,9 +316,6 @@ return setmetatable({
   escape_identifier = escape_identifier,
   set_raw_query = set_raw_query,
   get_raw_query = get_raw_query,
-  parse_clause = function()
-    return error("MySQL does not support a clause parser")
-  end,
   select = _select,
   insert = _insert,
   update = _update,

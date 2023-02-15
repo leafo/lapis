@@ -15,7 +15,7 @@ local gettime
 append_all = (t, ...) ->
   for i=1, select "#", ...
     t[#t + 1] = select i, ...
- 
+
 local active_connection
 
 escape_identifier = (ident) ->
