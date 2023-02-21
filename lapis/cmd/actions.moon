@@ -366,8 +366,8 @@ COMMANDS = {
 
         for h in *header_names
           h_value = headers[h]
-          if type(h_value) == "string"
-            h_value = { h_value }
+          if type(h_value) != "table"
+            h_value = { tostring h_value }
 
           for v in *h_value
             io.stderr\write colors "%{yellow}#{h}%{reset}: #{v}\n"

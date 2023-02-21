@@ -419,9 +419,9 @@ local COMMANDS = {
         for _index_0 = 1, #header_names do
           local h = header_names[_index_0]
           local h_value = headers[h]
-          if type(h_value) == "string" then
+          if type(h_value) ~= "table" then
             h_value = {
-              h_value
+              tostring(h_value)
             }
           end
           for _index_1 = 1, #h_value do
