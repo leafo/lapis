@@ -720,7 +720,7 @@ $options_table{
       set this field to `true` in order to allow for the empty clause to be
       encoded into a query.
     ]],
-    example = dual_code{[[
+    example = dual_code{moon=[[
       some_object = { the_id: 1 }
 
       -- This will throw an error to prevent you from accidentally deleting all
@@ -728,6 +728,42 @@ $options_table{
       db.delete "users", db.clause {
         user_id: something.id -- oops, used the wrong field name and set this to nil
       }
+    ]], lua=[[
+      local some_object = { the_id = 1 }
+
+      -- This will throw an error to prevent you from accidentally deleting all
+      -- rows because of an empty clause created by a nil value
+      db.delete("users", db.clause({
+        user_id = something.id -- oops, used the wrong field name and set this to nil
+      }))
+    ]]}
+  },{
+    name = "prefix"
+    description = [[
+      Will append the string provied (separated by a space) to the front of the
+      encoded result only if there is something in the table to be encoded.
+      This can be combined with `allow_empty` to easily build optional `WHERE`
+      clauses for queries
+
+      > The string is inserted into the query fragment directly, avoid
+      > untrusted input to avoid SQL injection.
+    ]],
+    example = dual_code{moon=[[
+      db.encode_clause(db.clause({}, {prefix: "WHERE", allow_empty: true"}) --> ""
+      db.encode_clause(db.clause({id: 5}, {prefix: "WHERE", allow_empty: true"}) --> [[WHERE "id" = 5]]
+
+      db.query "SELECT FROM users ?", db.clause {
+        -- if params.id is nil, then the clause will be encoded to empty string
+        id: params.id 
+      }, prefix: "WHERE", allow_empty: true
+    ]], lua=[[
+      db.encode_clause(db.clause({}, {prefix = "WHERE", allow_empty = true"})) --> ""
+      db.encode_clause(db.clause({id: 5}, {prefix = "WHERE", allow_empty = true"})) --> [[WHERE "id" = 5]]
+
+      db.query("SELECT FROM users ?", db.clause({
+        -- if params.id is nil, then the clause will be encoded to empty string
+        id = params.id
+      }, { prefix = "WHERE", allow_empty = true }))
     ]]}
   }
 }
