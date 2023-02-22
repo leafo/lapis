@@ -114,6 +114,16 @@ TESTS = {
   }
 
   {
+    -> db.encode_clause db.clause { }, allow_empty: true, prefix: "WHERE"
+    ""
+  }
+
+  {
+    -> db.encode_clause db.clause { id: 10 }, allow_empty: true, prefix: "WHERE"
+    [[WHERE "id" = 10]]
+  }
+
+  {
     -> db.encode_clause db.clause {
       a: "two"
       b: true

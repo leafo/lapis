@@ -135,6 +135,13 @@ build_helpers = (escape_literal, escape_identifier) ->
       unless opts and opts.allow_empty
         assert next(obj) != nil, "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)"
 
+      local reset_pos, starting_pos
+
+      if opts and opts.prefix
+        reset_pos = #buffer
+        append_all buffer, opts.prefix, " "
+        starting_pos = #buffer
+
       operator = t\get_operator!
 
       isolate_precedence = operator and operator != ","
@@ -202,6 +209,11 @@ build_helpers = (escape_literal, escape_identifier) ->
                 append_all buffer, ")"
           else
             error "db.encode_clause: invalid key type in clause"
+
+      -- didn't output anything, strip the prefix
+      if reset_pos and starting_pos == #buffer
+        for kk=#buffer,reset_pos,-1
+          buffer[kk] = nil
 
     else -- no clause object, just copy over all the table fields directly
       assert next(t) != nil, "db.encode_clause: passed an empty table"

@@ -240,6 +240,12 @@ build_helpers = function(escape_literal, escape_identifier)
       if not (opts and opts.allow_empty) then
         assert(next(obj) ~= nil, "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)")
       end
+      local reset_pos, starting_pos
+      if opts and opts.prefix then
+        reset_pos = #buffer
+        append_all(buffer, opts.prefix, " ")
+        starting_pos = #buffer
+      end
       local operator = t:get_operator()
       local isolate_precedence = operator and operator ~= ","
       local idx = 0
@@ -318,6 +324,11 @@ build_helpers = function(escape_literal, escape_identifier)
         until true
         if not _continue_0 then
           break
+        end
+      end
+      if reset_pos and starting_pos == #buffer then
+        for kk = #buffer, reset_pos, -1 do
+          buffer[kk] = nil
         end
       end
     else
