@@ -2063,7 +2063,7 @@ import Model from require "lapis.db.model"
 class Posts extends Model
   @relations: {
     {"user", polymorphic_belongs_to: {
-      [1]: "Users"
+      [1]: "VideoGames"
       [2]: "Books"
     }}
   }
@@ -2074,7 +2074,7 @@ local Model = require("lapis.db.model").Model
 local Purchases = Model:extend("purchases", {
   relations = {
     {"object", polymorphic_belongs_to = {
-      [1] = "Users",
+      [1] = "VideoGames",
       [2] = "Books",
     }}
   }
@@ -2088,7 +2088,7 @@ uses the table names, instead of the class names. It is equivalent to:
 $dual_code{
 moon = [[
 Purchases.object_types = enum {
-  users: 1
+  video_games: 1
   books: 2
 }
 ]]
