@@ -1,10 +1,25 @@
+
+
+-- package.path is restored for things like etlua, that install a loader by
+-- mutating the package.path
 module_reset = ->
   keep = {k, true for k in pairs package.loaded}
+  original_path = package.path
+  original_cpath = package.cpath
+  original_searchers = package.searchers
+  original_loaders = package.loaders
+
   ->
     count = 0
     for mod in *[k for k in pairs package.loaded when not keep[k]]
       count += 1
       package.loaded[mod] = nil
+
+    package.path = original_path
+    package.cpath = original_cpath
+
+    package.searchers = original_searchers
+    package.loaders = original_loaders
 
     true, count
 

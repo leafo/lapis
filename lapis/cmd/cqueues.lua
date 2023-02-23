@@ -8,6 +8,10 @@ module_reset = function()
     end
     keep = _tbl_0
   end
+  local original_path = package.path
+  local original_cpath = package.cpath
+  local original_searchers = package.searchers
+  local original_loaders = package.loaders
   return function()
     local count = 0
     local _list_0
@@ -27,6 +31,10 @@ module_reset = function()
       count = count + 1
       package.loaded[mod] = nil
     end
+    package.path = original_path
+    package.cpath = original_cpath
+    package.searchers = original_searchers
+    package.loaders = original_loaders
     return true, count
   end
 end
