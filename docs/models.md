@@ -326,17 +326,21 @@ SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) an
 
 ### `Model:count(clause, ...)`
 
-Counts the number of records in the table that match the clause.
+Counts the number of records in the table that match the clause. The `clause`
+arugment can either be a string, or a `db.clause` object. If a string is
+passed, then it will be automatically prepended with the substring `"WHERE "`,
+and will be interpolated with `db.interpolate_query` with the remaining
+arguments.
 
-```lua
-local total = Users:count()
-local count = Users:count("username like '%' || ? || '%'", "leafo")
-```
+If `clause` is not providsed (or is `nil`), then every row in the table will be
+counted.
 
-```moon
+$dual_code{
+moon=[[
 total = Users\count!
 count = Users\count "username like '%' || ? || '%'", "leafo"
-```
+]]}
+
 
 ```sql
 SELECT COUNT(*) "users"
