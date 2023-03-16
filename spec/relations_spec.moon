@@ -864,14 +864,11 @@ describe "lapis.db.model.relations", ->
         'SELECT * FROM "bazs" WHERE "id" = 99 LIMIT 1'
       }
 
+    it "preloads with empty object list", ->
+      assert_queries { }, ->
+        Items\preload_relation {}, "object"
 
-    it "should call preload with empty", ->
-      Items\preload_objects {}
-
-      assert_queries {
-      }
-
-    it "should call preload", ->
+    it "preloads", ->
       k = 0
       n = ->
         k += 1
@@ -899,14 +896,14 @@ describe "lapis.db.model.relations", ->
         }
       }
 
-      Items\preload_objects items
+      Items\preload_relation items, "object"
 
       assert_queries {
         'SELECT * FROM "foos" WHERE "id" IN (1, 3, 4)'
         'SELECT * FROM "bars" WHERE "frog_index" IN (2)'
       }
 
-    it "preloads with fields", ->
+    it "preloads with options (fields)", ->
       items = {
         Items\load {
           object_type: 1
@@ -924,7 +921,7 @@ describe "lapis.db.model.relations", ->
         }
       }
 
-      Items\preload_objects items, fields: {
+      Items\preload_relation items, "object", fields: {
         bar: "a, b"
         baz: "c, d"
       }
@@ -1055,21 +1052,51 @@ describe "lapis.db.model.relations", ->
 
       assert.same, before_count, #get_queries!
 
-    it "preloads has_many with order and fields", ->
+    it "preloads has_many with preload_opts (order, fields, where)", ->
       models.Tags = class Tags extends Model
 
       class Posts extends Model
         @relations: {
           {"tags", has_many: "Tags", order: "a desc"}
+          {"good_tags", has_many: "Tags", order: "a desc", where: {
+            good: true
+          }}
         }
 
-      Posts\preload_relation {Posts\load id: 123}, "tags", {
-        fields: "a,b"
-        order: "b asc"
-      }
       assert_queries {
-        [[SELECT a,b FROM "tags" WHERE "post_id" IN (123) ORDER BY b asc]]
-      }
+        [[SELECT a,b FROM "tags" WHERE "post_id" IN (123) AND (count > 1) ORDER BY a desc]]
+        [[SELECT a,b FROM "tags" WHERE "post_id" IN (123) AND (count > 2) ORDER BY b asc]]
+      }, ->
+        Posts\preload_relation {Posts\load id: 123}, "tags", {
+          fields: "a,b"
+          where: db.clause {
+            "count > 1"
+          }
+        }
+
+        Posts\preload_relation {Posts\load id: 123}, "tags", {
+          fields: "a,b"
+          order: "b asc"
+          where: db.clause {
+            "count > 2"
+          }
+        }
+
+      assert_queries {
+        [[SELECT name FROM "tags" WHERE "post_id" IN (123) AND "good" ORDER BY a desc]]
+        [[SELECT name FROM "tags" WHERE "post_id" IN (123) AND (count > 200) ORDER BY a desc]]
+      }, ->
+        Posts\preload_relation {Posts\load id: 123}, "good_tags", {
+          fields: "name"
+        }
+
+        -- it completely replaces the relation where clause
+        Posts\preload_relation {Posts\load id: 123}, "good_tags", {
+          fields: "name"
+          where: db.clause {
+            "count > 200"
+          }
+        }
 
     it "preloads has_many with composite key", ->
       mock_query "SELECT", {
@@ -1231,6 +1258,63 @@ describe "lapis.db.model.relations", ->
         }
       }, user_pages
 
+    it "preloads has_one with preload opts", ->
+      mock_query "SELECT", {
+        { id: 101, user_id: 99, page_id: 234 }
+        { id: 102, user_id: 99, page_id: 234 }
+        { id: 103, user_id: 100, page_id: 234 }
+      }
+
+      models.UserPageData = class extends Model
+
+      models.UserPage = class UserPage extends Model
+        @relations: {
+          {"data", has_one: "UserPageData", key: {
+            "user_id", "page_id"
+          }}
+          {"real_data", has_one: "UserPageData", key: {
+            "user_id", "page_id"
+          }, where: { real: "yes" }}
+        }
+
+      user_pages = {
+        UserPage\load {
+          user_id: 99
+          page_id: 234
+        }
+        UserPage\load {
+          user_id: 100
+          page_id: 234
+        }
+      }
+
+      assert_queries {
+        [[SELECT id FROM "user_page_data" WHERE ("user_id", "page_id") IN ((99, 234), (100, 234))]]
+        [[SELECT * FROM "user_page_data" WHERE ("user_id", "page_id") IN ((99, 234), (100, 234)) AND "deleted"]]
+      }, ->
+        UserPage\preload_relation user_pages, "data", {
+          fields: "id"
+        }
+
+        UserPage\preload_relation user_pages, "data", {
+          where: db.clause {
+            deleted: true
+          }
+        }
+
+      assert_queries {
+        [[SELECT id FROM "user_page_data" WHERE ("user_id", "page_id") IN ((99, 234), (100, 234)) AND "real" = 'yes']]
+        [[SELECT * FROM "user_page_data" WHERE ("user_id", "page_id") IN ((99, 234), (100, 234)) AND "deleted"]]
+      }, ->
+        UserPage\preload_relation user_pages, "real_data", {
+          fields: "id"
+        }
+
+        UserPage\preload_relation user_pages, "real_data", {
+          where: db.clause {
+            deleted: true
+          }
+        }
 
     it "preloads has_many with order and name", ->
       mock_query "SELECT", {
@@ -1301,6 +1385,38 @@ describe "lapis.db.model.relations", ->
       }, cat\get_topic!, cat.topic
 
       assert.same 3, #get_queries!
+
+    it "preloads belongs_to with preload opts", ->
+      mock_query "SELECT", {
+        { id: 1, name: "last" }
+        { id: 2, name: "first" }
+        { id: 3, name: "default" }
+      }
+
+      models.Topics = class Topics extends Model
+
+      class Categories extends Model
+        @relations: {
+          {"topic", belongs_to: "Topics"}
+        }
+
+      categories = {
+        Categories\load {
+          id: 1243
+          topic_id: 3
+        }
+        Categories\load {
+          id: 1243
+          topic_id: 2
+        }
+      }
+
+      assert_queries {
+        [[SELECT id, name FROM "topics" WHERE "id" IN (3, 2)]]
+      }, ->
+        Categories\preload_relation categories, "topic", {
+          fields: "id, name"
+        }
 
     it "preloads has_one with correct name", ->
       mock_query "SELECT", {

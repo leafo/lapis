@@ -354,10 +354,16 @@ belongs_to = function(self, name, opts)
   end
   self.relation_preloaders[name] = function(self, objects, preload_opts)
     local model = assert_model(self.__class, source)
-    preload_opts = preload_opts or { }
-    preload_opts.as = name
-    preload_opts.for_relation = name
-    return model:include_in(objects, column_name, preload_opts)
+    local include_opts = {
+      as = name,
+      for_relation = name
+    }
+    if preload_opts then
+      for k, v in pairs(preload_opts) do
+        include_opts[k] = v
+      end
+    end
+    return model:include_in(objects, column_name, include_opts)
   end
 end
 local has_one
@@ -438,11 +444,17 @@ has_one = function(self, name, opts)
         [opts.key or tostring(self.__class:singular_name()) .. "_id"] = local_key
       }
     end
-    preload_opts = preload_opts or { }
-    preload_opts.for_relation = name
-    preload_opts.as = name
-    preload_opts.where = preload_opts.where or opts.where
-    return model:include_in(objects, key, preload_opts)
+    local include_opts = {
+      for_relation = name,
+      as = name,
+      where = opts.where
+    }
+    if preload_opts then
+      for k, v in pairs(preload_opts) do
+        include_opts[k] = v
+      end
+    end
+    return model:include_in(objects, key, include_opts)
   end
 end
 local has_many
@@ -569,17 +581,21 @@ has_many = function(self, name, opts)
     if not (composite_key) then
       local_key = opts.local_key or self.__class:primary_keys()
     end
-    preload_opts = preload_opts or { }
-    if not (composite_key) then
-      preload_opts.flip = true
+    local include_opts = {
+      many = true,
+      for_relation = name,
+      as = name,
+      local_key = local_key,
+      flip = not composite_key,
+      order = opts.order,
+      where = opts.where
+    }
+    if preload_opts then
+      for k, v in pairs(preload_opts) do
+        include_opts[k] = v
+      end
     end
-    preload_opts.many = true
-    preload_opts.for_relation = name
-    preload_opts.as = name
-    preload_opts.local_key = local_key
-    preload_opts.order = preload_opts.order or opts.order
-    preload_opts.where = preload_opts.where or opts.where
-    return model:include_in(objects, foreign_key, preload_opts)
+    return model:include_in(objects, foreign_key, include_opts)
   end
 end
 local polymorphic_belongs_to

@@ -255,13 +255,18 @@ belongs_to = (name, opts) =>
     with obj = model\find @[column_name]
       @[name] = obj
 
-  -- TODO: don't mutate preload opts, just copy them into the preloader
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
-    preload_opts or= {}
-    preload_opts.as = name
-    preload_opts.for_relation = name
-    model\include_in objects, column_name, preload_opts
+    include_opts = {
+      as: name
+      for_relation: name
+    }
+
+    if preload_opts
+      for k,v in pairs preload_opts
+        include_opts[k] = v
+
+    model\include_in objects, column_name, include_opts
 
 has_one = (name, opts) =>
   source = opts.has_one
@@ -332,13 +337,17 @@ has_one = (name, opts) =>
         [opts.key or "#{@@singular_name!}_id"]: local_key
       }
 
-    preload_opts or= {}
+    include_opts = {
+      for_relation: name
+      as: name
+      where: opts.where
+    }
 
-    preload_opts.for_relation = name
-    preload_opts.as = name
-    preload_opts.where or= opts.where
+    if preload_opts
+      for k,v in pairs preload_opts
+        include_opts[k] = v
 
-    model\include_in objects, key, preload_opts
+    model\include_in objects, key, include_opts
 
 has_many = (name, opts) =>
   source = opts.has_many
@@ -450,20 +459,22 @@ has_many = (name, opts) =>
     local_key = unless composite_key
       opts.local_key or @@primary_keys!
 
-    preload_opts or= {}
+    include_opts = {
+      many: true
+      for_relation: name
+      as: name
+      local_key: local_key
+      flip: not composite_key
 
-    unless composite_key
-      preload_opts.flip = true
+      order: opts.order
+      where: opts.where
+    }
 
-    preload_opts.many = true
-    preload_opts.for_relation = name
-    preload_opts.as = name
-    preload_opts.local_key = local_key
+    if preload_opts
+      for k,v in pairs preload_opts
+        include_opts[k] = v
 
-    preload_opts.order or= opts.order
-    preload_opts.where or= opts.where -- NOTE: this allows preload_opts to replace relation's where
-
-    model\include_in objects, foreign_key, preload_opts
+    model\include_in objects, foreign_key, include_opts
 
 polymorphic_belongs_to = (name, opts) =>
   import enum from require "lapis.db.model"
@@ -497,7 +508,7 @@ polymorphic_belongs_to = (name, opts) =>
 
     objs
 
-  -- TODO: deprecate this for the new `preload_relations` method
+  -- TODO: deprecate this for use of `preload` or `Model:preload_relation` method
   @["preload_#{name}s"] = @relation_preloaders[name]
 
   @[model_for_type_method] = (t) =>
