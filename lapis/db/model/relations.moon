@@ -25,15 +25,9 @@ local preload
 -- name: the name of the relation to preload
 -- ...: options passed to preloader
 preload_relation = (objects, name, ...) =>
-  -- relations prefixed with ? are optional loads, we can skip it if it doesn't exist
-  optional = if type(name) == "string" and name\sub(1,1) == "?"
-    name = name\sub 2
-    true
-
   preloader = @relation_preloaders and @relation_preloaders[name]
 
   unless preloader
-    return false if optional
     error "Model #{@__name} doesn't have preloader for #{name}"
 
   preloader @, objects, ...
@@ -49,60 +43,93 @@ preload_relations = (objects, name, ...) =>
   else
     true
 
--- this is used to preload a list of model instances, `objects`, that are all
--- the same type, `model`.
--- * `front` -- name of the relation to preload, it can either be a table
---   description or a single relation name
--- * `sub_relations` will hold the outlist list of models that have been loaded
---   indexed by any subsequent relations to load
-preload_homogeneous = (sub_relations, model, objects, front, ...) ->
-  import to_json from require "lapis.util"
-  return unless front
-
-  if type(front) == "table"
-    for key, val in pairs front
-      val_type = type val
-      key_type = type key
-
-      relation = key_type == "string" and key or val
-
-      -- this lets you set pass preload opts by using the reference to the
-      -- preload function as a special key
-      preload_opts = val_type == "table" and val[preload] or nil
-
-      preload_relation model, objects, relation, preload_opts
-
-      -- are there sub-relations to preload?
-      -- { parent: "child" }
-      -- { parent: {"child1", "child2"} }
-      if key_type == "string" and (val_type == "string" or val_type == "table")
-        optional, relation_name = if key\sub(1,1) == "?"
-          true, key\sub 2
-        else
-          false, key
-
-        r = find_relation model, relation_name
-
-        unless r
-          continue if optional
-          error "Model #{model.__name} doesn't have preloader for #{relation_name}"
-
-        sub_relations or= {}
-        sub_relations[val] or= {}
-        loaded_objects = sub_relations[val]
-
-        if r.has_many or r.fetch and r.many
-          for obj in *objects
-            continue unless obj[relation_name] -- if the preloader didn't insert array then just skip
-            for fetched in *obj[relation_name]
-              table.insert loaded_objects, fetched
-        else
-          for obj in *objects
-            table.insert loaded_objects, obj[relation_name]
+-- return real relation name, and any settings extracted from the name
+-- "hello" --> "hello", false
+-- "?hello" --> "hello", true
+parse_relation_name = (name) ->
+  optional, final_name = if name\sub(1,1) == "?"
+    true, name\sub 2
   else
-    preload_relation model, objects, front
+    false, name
 
-  if ...
+  final_name, optional
+
+
+-- This is used to preload a list of model instances, `objects`, that are all
+-- the same type, `model`. Preload calls this after splitting apart the models
+-- * `preload_spec` either the name of the relation to preload, or an object
+-- describing a collection of relations to preload, with optional nested
+-- relations specified. Relation's value can be a function to trigger a
+-- callback with the collected objects, instead of recursing on the preload
+-- * `sub_relations` holds the outlist list of models that are to be loaded for
+-- nested preload, table indexed by any subsequent relations to load. It will
+-- be returned by this function, so subsequent calls should pass through that
+-- return value
+preload_homogeneous = (sub_relations, model, objects, preload_spec, ...) ->
+  switch type preload_spec
+    when "nil"
+      nil -- noop, this is to skip nil arugments, in case further arguments contain more
+    when "table"
+      -- Possible formats (they can be combined):
+      -- { "relation1", "relation2", ... } -- array of relation names
+      -- { "relation1": {"child_relation1", "child_relation2", ...}, ... } -- nested relation specification
+      -- { "relation1": { [preload]: {opts...} } -- specify preload options to relation1
+      -- { "relation1": (objects) -> ... }
+      for key, val in pairs preload_spec
+        switch type key
+          when "number" -- array entry for a single relation to load, recurse
+            sub_relations = preload_homogeneous sub_relations, model, objects, val
+          when "string" -- hash table entry for relation
+            -- relations set to false are ignored
+            if val == false
+              continue
+
+            relation_name, optional = parse_relation_name key
+
+            r = find_relation model, relation_name
+
+            if optional and not r
+              continue -- ignore missing relation
+
+            val_type = type val
+            preload_opts = switch val_type
+              when "table"
+                val[preload]
+              when "function"
+                { loaded_items_callback: val }
+
+            preload_relation model, objects, relation_name, preload_opts
+
+            -- Add any nested relations to the sub_relations object by
+            -- accumulating the fetched objects. Accumulation instead of
+            -- recursion is done here to load relations breadth first, instead
+            -- of depth first.
+            -- Ignore the val_types that we know can not contain nested relations
+            unless val_type == "boolean" or val_type == "function"
+              sub_relations or= {}
+              sub_relations[val] or= {}
+              loaded_objects = sub_relations[val]
+
+              -- grab all the loaded objects to process
+              if r.has_many or r.fetch and r.many
+                for obj in *objects
+                  continue unless obj[relation_name] -- if the preloader didn't insert array then just skip
+                  for fetched in *obj[relation_name]
+                    table.insert loaded_objects, fetched
+              else
+                for obj in *objects
+                  table.insert loaded_objects, obj[relation_name]
+
+    when "string"
+      -- preload_spec is simply the name of the relation to preload
+      relation_name, optional = parse_relation_name preload_spec
+      unless optional and not find_relation model, relation_name
+        preload_relation model, objects, relation_name
+    else
+      error "preload: requested relation is an unknown type: #{type(preload_spec)}. Expected string, table or nil"
+
+  -- continue preloading for additional arguments
+  if select("#",...) > 0
     preload_homogeneous sub_relations, model, objects, ...
   else
     sub_relations
@@ -228,6 +255,7 @@ belongs_to = (name, opts) =>
     with obj = model\find @[column_name]
       @[name] = obj
 
+  -- TODO: don't mutate preload opts, just copy them into the preloader
   @relation_preloaders[name] = (objects, preload_opts) =>
     model = assert_model @@, source
     preload_opts or= {}

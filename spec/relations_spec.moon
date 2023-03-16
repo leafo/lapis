@@ -1406,20 +1406,118 @@ describe "lapis.db.model.relations", ->
       models.Accounts = class Accounts extends Model
       models.Images = class Images extends Model
 
-    it "preloads basic relations", ->
-      user = models.Users 10
-      user.account_id = 99
+    it "preloads basic relations with no data", ->
+      users = {
+        models.Users\load {
+          id: 10
+          account_id: 99
+        }
 
-      preload { user }, "tags", "user_data", "account"
-
-      assert_queries {
-        [[SELECT * FROM "tags" WHERE "user_id" IN (10)]]
-        [[SELECT * FROM "user_data" WHERE "user_id" IN (10)]]
-        [[SELECT * FROM "accounts" WHERE "id" IN (99)]]
+        models.Users\load {
+          id: 12
+          account_id: 15
+        }
       }
 
+      assert_queries {
+        [[SELECT * FROM "tags" WHERE "user_id" IN (10, 12)]]
+        [[SELECT * FROM "user_data" WHERE "user_id" IN (10, 12)]]
+        [[SELECT * FROM "accounts" WHERE "id" IN (99, 15)]]
+      }, ->
+        preload users, "tags", "user_data", "account"
+
+
+      assert_queries { }, ->
+        preload users, tags: false -- this causes relation not to load, no query
+
+
+      assert_queries {
+        [[SELECT * FROM "tags" WHERE "user_id" IN (10, 12)]]
+        [[SELECT * FROM "user_data" WHERE "user_id" IN (10, 12)]]
+        [[SELECT * FROM "accounts" WHERE "id" IN (99, 15)]]
+      }, ->
+        -- support options and multiple args
+        preload users, {"tags", "user_data"}, "account"
+
+      assert_queries {
+        [[SELECT * FROM "user_data" WHERE "user_id" IN (10, 12)]]
+        [[SELECT * FROM "accounts" WHERE "id" IN (99, 15)]]
+        [[SELECT * FROM "tags" WHERE "user_id" IN (10, 12)]]
+      }, ->
+        -- support multiple formats, empty tables
+        preload users, {tags: true, {"user_data", "account", {}}, {}}
+
+    it "handles error cases", ->
+      user = models.Users\load {
+        id: 10
+        account_id: 99
+      }
+
+      mock_query [[SELECT %* FROM "tags"]], {
+        models.Tags\load { user_id: 10, tag: "first" }
+        models.Tags\load { user_id: 10, tag: "second" }
+      }
+
+      assert.has_error(
+        -> preload { user }, true
+        "preload: requested relation is an unknown type: boolean. Expected string, table or nil"
+      )
+
+      assert.has_error(
+        -> preload { user }, "tags", false
+        "preload: requested relation is an unknown type: boolean. Expected string, table or nil"
+      )
+
+      assert.has_error(
+        -> preload { user }, nil, -> "uhh"
+        "preload: requested relation is an unknown type: function. Expected string, table or nil"
+      )
+
+      assert.has_error(
+        -> preload { user }, tags: { true }
+        "preload: requested relation is an unknown type: boolean. Expected string, table or nil"
+      )
+
+      assert.has_error(
+        -> preload { user }, tags: 5
+        "preload: requested relation is an unknown type: number. Expected string, table or nil"
+      )
+
+      assert.has_error(
+        -> preload { user }, { "what" }
+        "Model Users doesn't have preloader for what"
+      )
+
+      assert.has_error(
+        -> preload { user }, "what"
+        "Model Users doesn't have preloader for what"
+      )
+
+      assert.has_error(
+        -> preload { user }, {{{"what"}}}
+        "Model Users doesn't have preloader for what"
+      )
+
+    it "preloads with loaded callback", ->
+      users = {
+        models.Users\load {
+          id: 10
+          account_id: 99
+        }
+      }
+
+      mock_query [[SELECT %* FROM "tags"]], {
+        models.Tags\load { user_id: 10, tag: "first" }
+        models.Tags\load { user_id: 10, tag: "second" }
+      }
+
+      preload users, tags: (tags) ->
+        print "hi"
+
+      pending "finish implementation"
+
     it "preloads nested relations", ->
-      mock_query 'FROM "tags"', {
+      mock_query [[SELECT %* FROM "tags"]], {
         models.Tags\load {
           id: 252
           user_id: 10
@@ -1430,7 +1528,7 @@ describe "lapis.db.model.relations", ->
         }
       }
 
-      mock_query 'FROM "user_data"', {
+      mock_query [[SELECT %* FROM "user_data"]], {
         models.UserData\load {
           id: 32
           user_id: 10

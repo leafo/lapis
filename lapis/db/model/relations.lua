@@ -44,16 +44,8 @@ end
 local preload
 local preload_relation
 preload_relation = function(self, objects, name, ...)
-  local optional
-  if type(name) == "string" and name:sub(1, 1) == "?" then
-    name = name:sub(2)
-    optional = true
-  end
   local preloader = self.relation_preloaders and self.relation_preloaders[name]
   if not (preloader) then
-    if optional then
-      return false
-    end
     error("Model " .. tostring(self.__name) .. " doesn't have preloader for " .. tostring(name))
   end
   preloader(self, objects, ...)
@@ -68,65 +60,80 @@ preload_relations = function(self, objects, name, ...)
     return true
   end
 end
-local preload_homogeneous
-preload_homogeneous = function(sub_relations, model, objects, front, ...)
-  local to_json
-  to_json = require("lapis.util").to_json
-  if not (front) then
-    return 
+local parse_relation_name
+parse_relation_name = function(name)
+  local optional, final_name
+  if name:sub(1, 1) == "?" then
+    optional, final_name = true, name:sub(2)
+  else
+    optional, final_name = false, name
   end
-  if type(front) == "table" then
-    for key, val in pairs(front) do
+  return final_name, optional
+end
+local preload_homogeneous
+preload_homogeneous = function(sub_relations, model, objects, preload_spec, ...)
+  local _exp_0 = type(preload_spec)
+  if "nil" == _exp_0 then
+    local _ = nil
+  elseif "table" == _exp_0 then
+    for key, val in pairs(preload_spec) do
       local _continue_0 = false
       repeat
-        local val_type = type(val)
-        local key_type = type(key)
-        local relation = key_type == "string" and key or val
-        local preload_opts = val_type == "table" and val[preload] or nil
-        preload_relation(model, objects, relation, preload_opts)
-        if key_type == "string" and (val_type == "string" or val_type == "table") then
-          local optional, relation_name
-          if key:sub(1, 1) == "?" then
-            optional, relation_name = true, key:sub(2)
-          else
-            optional, relation_name = false, key
+        local _exp_1 = type(key)
+        if "number" == _exp_1 then
+          sub_relations = preload_homogeneous(sub_relations, model, objects, val)
+        elseif "string" == _exp_1 then
+          if val == false then
+            _continue_0 = true
+            break
           end
+          local relation_name, optional = parse_relation_name(key)
           local r = find_relation(model, relation_name)
-          if not (r) then
-            if optional then
-              _continue_0 = true
-              break
-            end
-            error("Model " .. tostring(model.__name) .. " doesn't have preloader for " .. tostring(relation_name))
+          if optional and not r then
+            _continue_0 = true
+            break
           end
-          sub_relations = sub_relations or { }
-          local _update_0 = val
-          sub_relations[_update_0] = sub_relations[_update_0] or { }
-          local loaded_objects = sub_relations[val]
-          if r.has_many or r.fetch and r.many then
-            for _index_0 = 1, #objects do
-              local _continue_1 = false
-              repeat
-                local obj = objects[_index_0]
-                if not (obj[relation_name]) then
+          local val_type = type(val)
+          local preload_opts
+          local _exp_2 = val_type
+          if "table" == _exp_2 then
+            preload_opts = val[preload]
+          elseif "function" == _exp_2 then
+            preload_opts = {
+              loaded_items_callback = val
+            }
+          end
+          preload_relation(model, objects, relation_name, preload_opts)
+          if not (val_type == "boolean" or val_type == "function") then
+            sub_relations = sub_relations or { }
+            local _update_0 = val
+            sub_relations[_update_0] = sub_relations[_update_0] or { }
+            local loaded_objects = sub_relations[val]
+            if r.has_many or r.fetch and r.many then
+              for _index_0 = 1, #objects do
+                local _continue_1 = false
+                repeat
+                  local obj = objects[_index_0]
+                  if not (obj[relation_name]) then
+                    _continue_1 = true
+                    break
+                  end
+                  local _list_0 = obj[relation_name]
+                  for _index_1 = 1, #_list_0 do
+                    local fetched = _list_0[_index_1]
+                    table.insert(loaded_objects, fetched)
+                  end
                   _continue_1 = true
+                until true
+                if not _continue_1 then
                   break
                 end
-                local _list_0 = obj[relation_name]
-                for _index_1 = 1, #_list_0 do
-                  local fetched = _list_0[_index_1]
-                  table.insert(loaded_objects, fetched)
-                end
-                _continue_1 = true
-              until true
-              if not _continue_1 then
-                break
               end
-            end
-          else
-            for _index_0 = 1, #objects do
-              local obj = objects[_index_0]
-              table.insert(loaded_objects, obj[relation_name])
+            else
+              for _index_0 = 1, #objects do
+                local obj = objects[_index_0]
+                table.insert(loaded_objects, obj[relation_name])
+              end
             end
           end
         end
@@ -136,10 +143,15 @@ preload_homogeneous = function(sub_relations, model, objects, front, ...)
         break
       end
     end
+  elseif "string" == _exp_0 then
+    local relation_name, optional = parse_relation_name(preload_spec)
+    if not (optional and not find_relation(model, relation_name)) then
+      preload_relation(model, objects, relation_name)
+    end
   else
-    preload_relation(model, objects, front)
+    error("preload: requested relation is an unknown type: " .. tostring(type(preload_spec)) .. ". Expected string, table or nil")
   end
-  if ... then
+  if select("#", ...) > 0 then
     return preload_homogeneous(sub_relations, model, objects, ...)
   else
     return sub_relations
