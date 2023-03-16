@@ -130,12 +130,12 @@ preload = (objects, ...) ->
 
   true
 
-mark_loaded_relations = (items, name) ->
+mark_loaded_relations = (items, name, value=true) ->
   for item in *items
     if loaded = item[LOADED_KEY]
-      loaded[name] = true
+      loaded[name] = value
     else
-      item[LOADED_KEY] = { [name]: true }
+      item[LOADED_KEY] = { [name]: value }
 
 clear_loaded_relation = (item, name) ->
   item[name] = nil

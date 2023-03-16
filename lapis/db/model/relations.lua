@@ -169,16 +169,19 @@ preload = function(objects, ...)
   return true
 end
 local mark_loaded_relations
-mark_loaded_relations = function(items, name)
+mark_loaded_relations = function(items, name, value)
+  if value == nil then
+    value = true
+  end
   for _index_0 = 1, #items do
     local item = items[_index_0]
     do
       local loaded = item[LOADED_KEY]
       if loaded then
-        loaded[name] = true
+        loaded[name] = value
       else
         item[LOADED_KEY] = {
-          [name] = true
+          [name] = value
         }
       end
     end
