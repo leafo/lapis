@@ -1520,6 +1520,10 @@ describe "lapis.db.model.relations", ->
         }
 
       models.Accounts = class Accounts extends Model
+        @relations: {
+          {"image", belongs_to: "Images"}
+        }
+
       models.Images = class Images extends Model
 
     it "preloads basic relations with no data", ->
@@ -1645,18 +1649,18 @@ describe "lapis.db.model.relations", ->
 
     it "preloads nested relations", ->
       mock_query [[SELECT %* FROM "tags"]], {
-        models.Tags\load {
+        {
           id: 252
           user_id: 10
         }
-        models.Tags\load {
+        {
           id: 311
           user_id: 10
         }
       }
 
       mock_query [[SELECT %* FROM "user_data"]], {
-        models.UserData\load {
+        {
           id: 32
           user_id: 10
         }
@@ -1677,6 +1681,48 @@ describe "lapis.db.model.relations", ->
         [[SELECT * FROM "user_data" WHERE "user_id" IN (10)]]
         [[SELECT * FROM "users" WHERE "tag_id" IN (252, 311)]]
       }, sorted: true
+
+
+    it "preloads with overlapping rows", ->
+      mock_query [[SELECT %* FROM "accounts"]], {
+        {
+          id: 10
+          image_id: 88
+        }
+        {
+          id: 11
+          image_id: 99
+        }
+      }
+
+      mock_query [[SELECT %* FROM "images"]], {
+        {
+          id: 88
+          filename: "cool.png"
+        }
+      }
+
+      -- man users point to same account
+      users = {
+        models.Users\load { id: 1, account_id: 10 }
+        models.Users\load { id: 2, account_id: 10 }
+        models.Users\load { id: 3, account_id: 10 }
+        models.Users\load { id: 4, account_id: 10 }
+        models.Users\load { id: 5, account_id: 10 }
+      }
+
+      -- this is testing to prevent writing q query that repeats the row ids
+      -- many times
+      assert_queries {
+        'SELECT * FROM "accounts" WHERE "id" IN (10)'
+        'SELECT * FROM "images" WHERE "id" IN (88)'
+      }, ->
+        preload users, account: "image"
+
+      for user in *users
+        assert user.account, "user should have account"
+        assert users[1].account == user.account, "accont is same object"
+        assert user.account.image, "account should have image"
 
 
     it "preloads nested fetch relations", ->
