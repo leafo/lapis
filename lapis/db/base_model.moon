@@ -46,6 +46,16 @@ _fields = (t, names, k=1, len=#names) ->
   else
     t[names[k]], _fields(t, names, k + 1, len)
 
+filter_duplicate_lists = (db, lists) ->
+  seen = {}
+  out = for list in *lists
+    flat = db.escape_literal list
+    continue if seen[flat]
+    seen[flat] = true
+    list
+
+  out
+
 class Enum
   debug = =>
     "(contains: #{concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
@@ -284,7 +294,9 @@ class BaseModel
           continue unless id
 
     if next include_ids
-      unless composite_foreign_key
+      if composite_foreign_key
+        include_ids = filter_duplicate_lists @db, include_ids
+      else
         include_ids = uniquify include_ids
 
       find_by_fields = if composite_foreign_key

@@ -76,6 +76,36 @@ _fields = function(t, names, k, len)
     return t[names[k]], _fields(t, names, k + 1, len)
   end
 end
+local filter_duplicate_lists
+filter_duplicate_lists = function(db, lists)
+  local seen = { }
+  local out
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for _index_0 = 1, #lists do
+      local _continue_0 = false
+      repeat
+        local list = lists[_index_0]
+        local flat = db.escape_literal(list)
+        if seen[flat] then
+          _continue_0 = true
+          break
+        end
+        seen[flat] = true
+        local _value_0 = list
+        _accum_0[_len_0] = _value_0
+        _len_0 = _len_0 + 1
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
+      end
+    end
+    out = _accum_0
+  end
+  return out
+end
 local Enum
 do
   local _class_0
@@ -656,7 +686,9 @@ do
       end
     end
     if next(include_ids) then
-      if not (composite_foreign_key) then
+      if composite_foreign_key then
+        include_ids = filter_duplicate_lists(self.db, include_ids)
+      else
         include_ids = uniquify(include_ids)
       end
       local find_by_fields
