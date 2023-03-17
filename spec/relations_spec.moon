@@ -1725,6 +1725,36 @@ describe "lapis.db.model.relations", ->
         assert user.account.image, "account should have image"
 
 
+    it "preloads with overlapping rows", ->
+      mock_query "SELECT", {
+        { id: 101, user_id: 1, page_id: 10 }
+        { id: 102, user_id: 1, page_id: 12 }
+        { id: 103, user_id: 1, page_id: 33 }
+      }
+
+      models.UserPageData = class extends Model
+
+      models.UserPage = class UserPage extends Model
+        @relations: {
+          {"data", has_many: "UserPageData", key: {
+            "user_id", "page_id"
+          }}
+        }
+
+      -- man users point to same account
+      pages = {
+        models.UserPage\load { user_id: 1, page_id: 10 }
+        models.UserPage\load { user_id: 1, page_id: 10 }
+        models.UserPage\load { user_id: 1, page_id: 10 }
+        models.UserPage\load { user_id: 1, page_id: 12 }
+        models.UserPage\load { user_id: 1, page_id: 12 }
+      }
+
+      assert_queries {
+        [[SELECT * FROM "user_page_data" WHERE ("user_id", "page_id") IN ((1, 10), (1, 12))]]
+      }, ->
+        preload pages, "data"
+
     it "preloads nested fetch relations", ->
       models.Collections = class Collection extends Model
         @relations: {
