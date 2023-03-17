@@ -780,6 +780,12 @@ do
               mark_loaded_relations(other_records, for_relation)
             end
           end
+          do
+            local callback = opts and opts.loaded_results_callback
+            if callback then
+              callback(res)
+            end
+          end
         end
       end
     end

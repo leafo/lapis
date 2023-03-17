@@ -1623,14 +1623,25 @@ describe "lapis.db.model.relations", ->
       }
 
       mock_query [[SELECT %* FROM "tags"]], {
-        models.Tags\load { user_id: 10, tag: "first" }
-        models.Tags\load { user_id: 10, tag: "second" }
+        { user_id: 10, tag: "first" }
+        { user_id: 10, tag: "second" }
       }
 
-      preload users, tags: (tags) ->
-        print "hi"
+      run = false
 
-      pending "finish implementation"
+      preload users, tags: (tags) ->
+        assert.same {
+          { user_id: 10, tag: "first" }
+          { user_id: 10, tag: "second" }
+        }, tags
+
+        -- objects should be passed after loading
+        for o in *tags
+          assert models.Tags.__base == getmetatable(o), "object should be tags instance"
+
+        run = true
+
+      assert run, "expected callback to run"
 
     it "preloads nested relations", ->
       mock_query [[SELECT %* FROM "tags"]], {

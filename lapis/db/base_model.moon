@@ -396,6 +396,9 @@ class BaseModel
         if for_relation = opts and opts.for_relation
           mark_loaded_relations other_records, for_relation
 
+        if callback = opts and opts.loaded_results_callback
+          callback res
+
     other_records
 
   @find_all: (ids, by_key=@primary_key) =>

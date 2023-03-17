@@ -96,7 +96,7 @@ preload_homogeneous = (sub_relations, model, objects, preload_spec, ...) ->
               when "table"
                 val[preload]
               when "function"
-                { loaded_items_callback: val }
+                { loaded_results_callback: val }
 
             preload_relation model, objects, relation_name, preload_opts
 

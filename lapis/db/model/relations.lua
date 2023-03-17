@@ -100,7 +100,7 @@ preload_homogeneous = function(sub_relations, model, objects, preload_spec, ...)
             preload_opts = val[preload]
           elseif "function" == _exp_2 then
             preload_opts = {
-              loaded_items_callback = val
+              loaded_results_callback = val
             }
           end
           preload_relation(model, objects, relation_name, preload_opts)
