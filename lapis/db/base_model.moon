@@ -7,7 +7,7 @@ unpack = unpack or table.unpack
 
 cjson = require "cjson"
 
-import add_relations, mark_loaded_relations from require "lapis.db.model.relations"
+import add_relations, mark_loaded_relations, relation_is_loaded from require "lapis.db.model.relations"
 
 _all_same = (array, val) ->
   for item in *array
@@ -210,7 +210,7 @@ class BaseModel
 
     unpack(@db.select query).c
 
-
+  -- NOTE: flip & local_key are deprecated
   -- include references to this model in a list of records based on a foreign
   -- key
   -- Examples:
@@ -238,6 +238,8 @@ class BaseModel
     many = opts and opts.many
     value_fn = opts and opts.value
     load_rows = if opts and opts.load == false then false else true
+    skip_included = opts and opts.skip_included
+    for_relation = opts and opts.for_relation
 
     -- source_key fields on the model to fetch
     -- dest_key fields on the records we have (other_records)
@@ -273,6 +275,19 @@ class BaseModel
 
         @primary_key
 
+    -- the field name on the other_records to set the associated object to
+    field_name = if opts and opts.as
+      opts.as
+    elseif flip or name_from_table
+      if many
+        @table_name!
+      else
+        @singular_name!
+    elseif type(@primary_key) == "string"
+      foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
+
+    assert field_name, "Model.include_in: failed to infer field name, provide one with `as`"
+
     composite_foreign_key = if type(source_key) == "table"
       if #source_key == 1 and #dest_key == 1
         source_key = source_key[1]
@@ -283,13 +298,18 @@ class BaseModel
     else
       false
 
-    include_ids = if composite_foreign_key
-      for record in *other_records
+    include_ids = for record in *other_records
+      if skip_included
+        if for_relation
+          continue if relation_is_loaded record, for_relation
+        else
+          continue if record[field_name] != nil
+
+      if composite_foreign_key
         tuple = [record[k] or @db.NULL for k in *source_key]
         continue if _all_same tuple, @db.NULL
         @db.list tuple
-    else
-      for record in *other_records
+      else
         with id = record[source_key]
           continue unless id
 
@@ -306,6 +326,7 @@ class BaseModel
 
       tbl_name = @db.escape_identifier @table_name!
 
+      -- the list of objects to find
       clause = {
         [find_by_fields]: @db.list include_ids
       }
@@ -379,17 +400,6 @@ class BaseModel
             else
               records[t[dest_key]] = row
 
-        field_name = if opts and opts.as
-          opts.as
-        elseif flip or name_from_table
-          if many
-            @table_name!
-          else
-            @singular_name!
-        elseif type(@primary_key) == "string"
-          foreign_key\match "^(.*)_#{escape_pattern(@primary_key)}$"
-
-        assert field_name, "Model.include_in: failed to infer field name, provide one with `as`"
 
         -- load the rows into we feteched into the models
         if composite_foreign_key
@@ -405,7 +415,7 @@ class BaseModel
             if many and not other[field_name]
               other[field_name] = {}
 
-        if for_relation = opts and opts.for_relation
+        if for_relation
           mark_loaded_relations other_records, for_relation
 
         if callback = opts and opts.loaded_results_callback

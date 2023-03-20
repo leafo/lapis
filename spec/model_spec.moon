@@ -706,6 +706,17 @@ describe "lapis.db.model", ->
         [[SELECT * FROM "thing_items" WHERE "id" IN (101, 102, 103, 104, 105)]]
       }
 
+    it "with skip_included", ->
+      things[1].thing = { id: 101, name: "leaf" }
+      things[4].thing = { id: 104, name: "leaf" }
+
+      ThingItems\include_in things, "thing_id", skip_included: true
+
+      assert_queries {
+        [[SELECT * FROM "thing_items" WHERE "id" IN (102, 103, 105)]]
+      }
+
+
     it "with flip", ->
       ThingItems\include_in things, "thing_id", flip: true
 
@@ -783,6 +794,20 @@ describe "lapis.db.model", ->
       import LOADED_KEY from require "lapis.db.model.relations"
       for thing in *things
         assert.same thing[LOADED_KEY], { yeahs: true }
+
+    it "skip_included with relation", ->
+      import mark_loaded_relations from require "lapis.db.model.relations"
+
+      mark_loaded_relations {things[1], things[2]}, "yeahs"
+
+      ThingItems\include_in things, "thing_id", {
+        for_relation: "yeahs"
+        skip_included: true
+      }
+
+      assert_queries {
+        [[SELECT * FROM "thing_items" WHERE "id" IN (103, 104, 105)]]
+      }
 
     it "combines many options", ->
       ThingItems\include_in things, "thing_id", {

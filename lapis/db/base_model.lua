@@ -15,10 +15,10 @@ do
 end
 local unpack = unpack or table.unpack
 local cjson = require("cjson")
-local add_relations, mark_loaded_relations
+local add_relations, mark_loaded_relations, relation_is_loaded
 do
   local _obj_0 = require("lapis.db.model.relations")
-  add_relations, mark_loaded_relations = _obj_0.add_relations, _obj_0.mark_loaded_relations
+  add_relations, mark_loaded_relations, relation_is_loaded = _obj_0.add_relations, _obj_0.mark_loaded_relations, _obj_0.relation_is_loaded
 end
 local _all_same
 _all_same = function(array, val)
@@ -584,6 +584,8 @@ do
     else
       load_rows = true
     end
+    local skip_included = opts and opts.skip_included
+    local for_relation = opts and opts.for_relation
     local source_key, dest_key
     local name_from_table = false
     if type(foreign_key) == "table" then
@@ -612,6 +614,19 @@ do
         dest_key = self.primary_key
       end
     end
+    local field_name
+    if opts and opts.as then
+      field_name = opts.as
+    elseif flip or name_from_table then
+      if many then
+        field_name = self:table_name()
+      else
+        field_name = self:singular_name()
+      end
+    elseif type(self.primary_key) == "string" then
+      field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
+    end
+    assert(field_name, "Model.include_in: failed to infer field name, provide one with `as`")
     local composite_foreign_key
     if type(source_key) == "table" then
       if #source_key == 1 and #dest_key == 1 then
@@ -625,14 +640,28 @@ do
       composite_foreign_key = false
     end
     local include_ids
-    if composite_foreign_key then
-      do
-        local _accum_0 = { }
-        local _len_0 = 1
-        for _index_0 = 1, #other_records do
-          local _continue_0 = false
-          repeat
-            local record = other_records[_index_0]
+    do
+      local _accum_0 = { }
+      local _len_0 = 1
+      for _index_0 = 1, #other_records do
+        local _continue_0 = false
+        repeat
+          local record = other_records[_index_0]
+          if skip_included then
+            if for_relation then
+              if relation_is_loaded(record, for_relation) then
+                _continue_0 = true
+                break
+              end
+            else
+              if record[field_name] ~= nil then
+                _continue_0 = true
+                break
+              end
+            end
+          end
+          local _value_0
+          if composite_foreign_key then
             local tuple
             do
               local _accum_1 = { }
@@ -648,42 +677,26 @@ do
               _continue_0 = true
               break
             end
-            local _value_0 = self.db.list(tuple)
-            _accum_0[_len_0] = _value_0
-            _len_0 = _len_0 + 1
-            _continue_0 = true
-          until true
-          if not _continue_0 then
-            break
-          end
-        end
-        include_ids = _accum_0
-      end
-    else
-      do
-        local _accum_0 = { }
-        local _len_0 = 1
-        for _index_0 = 1, #other_records do
-          local _continue_0 = false
-          repeat
-            local record = other_records[_index_0]
+            _value_0 = self.db.list(tuple)
+          else
             do
               local id = record[source_key]
               if not (id) then
                 _continue_0 = true
                 break
               end
-              _accum_0[_len_0] = id
+              _value_0 = id
             end
-            _len_0 = _len_0 + 1
-            _continue_0 = true
-          until true
-          if not _continue_0 then
-            break
           end
+          _accum_0[_len_0] = _value_0
+          _len_0 = _len_0 + 1
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
         end
-        include_ids = _accum_0
       end
+      include_ids = _accum_0
     end
     if next(include_ids) then
       if composite_foreign_key then
@@ -776,19 +789,6 @@ do
               end
             end
           end
-          local field_name
-          if opts and opts.as then
-            field_name = opts.as
-          elseif flip or name_from_table then
-            if many then
-              field_name = self:table_name()
-            else
-              field_name = self:singular_name()
-            end
-          elseif type(self.primary_key) == "string" then
-            field_name = foreign_key:match("^(.*)_" .. tostring(escape_pattern(self.primary_key)) .. "$")
-          end
-          assert(field_name, "Model.include_in: failed to infer field name, provide one with `as`")
           if composite_foreign_key then
             for _index_0 = 1, #other_records do
               local other = other_records[_index_0]
@@ -806,11 +806,8 @@ do
               end
             end
           end
-          do
-            local for_relation = opts and opts.for_relation
-            if for_relation then
-              mark_loaded_relations(other_records, for_relation)
-            end
+          if for_relation then
+            mark_loaded_relations(other_records, for_relation)
           end
           do
             local callback = opts and opts.loaded_results_callback
