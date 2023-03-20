@@ -738,7 +738,7 @@ $options_table{
       }))
     ]]}
   },{
-    name = "prefix"
+    name = "prefix",
     description = [[
       Will append the string provied (separated by a space) to the front of the
       encoded result only if there is something in the table to be encoded.
@@ -749,16 +749,16 @@ $options_table{
       > untrusted input to avoid SQL injection.
     ]],
     example = dual_code{moon=[[
-      db.encode_clause(db.clause({}, {prefix: "WHERE", allow_empty: true"}) --> ""
-      db.encode_clause(db.clause({id: 5}, {prefix: "WHERE", allow_empty: true"}) --> [[WHERE "id" = 5]]
+      db.encode_clause(db.clause({}, {prefix: "WHERE", allow_empty: true}) --> ""
+      db.encode_clause(db.clause({id: 5}, {prefix: "WHERE", allow_empty: true}) --> [[WHERE "id" = 5]]
 
       db.query "SELECT FROM users ?", db.clause {
         -- if params.id is nil, then the clause will be encoded to empty string
         id: params.id 
       }, prefix: "WHERE", allow_empty: true
     ]], lua=[[
-      db.encode_clause(db.clause({}, {prefix = "WHERE", allow_empty = true"})) --> ""
-      db.encode_clause(db.clause({id: 5}, {prefix = "WHERE", allow_empty = true"})) --> [[WHERE "id" = 5]]
+      db.encode_clause(db.clause({}, {prefix = "WHERE", allow_empty = true})) --> ""
+      db.encode_clause(db.clause({id = 5}, {prefix = "WHERE", allow_empty = true})) --> [[WHERE "id" = 5]]
 
       db.query("SELECT FROM users ?", db.clause({
         -- if params.id is nil, then the clause will be encoded to empty string
