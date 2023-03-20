@@ -214,29 +214,39 @@ tags = Tags\select "where tag = ?", "merchant"
 SELECT * from "tags" where tag = 'merchant'
 ```
 
-Instead of a single instance, an array table of instances is returned. If there
-are no matching rows an empty table is returned.
+The `query` argument can also be a `db.clause` object.
 
-If you want to restrict which columns are selected, you can pass in a table as
-the last argument with the `fields` key set:
+Returns a plain Lua array table of model instances for each row returned from
+the query. If there are no matching rows an empty table is returned.
 
-$dual_code{[[
-tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
-]]}
+The final argument can optionally be a plain Lua table which can contain the
+following options:
 
-```sql
-SELECT created_at as c from "tags" where tag = 'merchant'
-```
+$options_table{
+  {
+    name = "fields",
+    description = "A SQL fragment used for the list of fields to return from
+    the query. Do not use untrusted strings otherwise you may be vulnerable to
+    SQL injection. Use
+    [`db.escape_identifier`](database.html#query-interface/escape_identifier)
+    to escape column names.",
+    default = [["`"*"`]],
+    example = [[
+      $dual_code{[[
+      tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
+      ]]}
 
-The `fields` option is inserted into the SQL statement as is, so do not use
-untrusted strings otherwise you may be vulnerable to SQL injection. Use
-[`db.escape_identifier`](database.html#query-interface/escape_identifier) to
-escape column names.
-
-You can use the `load` option to change what model each result of the query is
-loaded as. By default it will convert each row to an instance of the model that
-is calling the `select` method. Passing `false` to load will return the results
-unaffected, as plain Lua tables.
+      ```sql
+      SELECT created_at as c from "tags" where tag = 'merchant'
+      ```
+    ]]
+  },
+  {
+    name = "load",
+    description = "Override the model to load each selected row as, Passing
+    `false` to load will return the results unaffected, as plain Lua tables."
+  }
+}
 
 ### `Model:find_all(primary_keys)`
 
