@@ -462,14 +462,47 @@ get_fields = function(obj, key, ...)
   end
   return obj[key], get_fields(obj, ...)
 end
-singularize = function(name)
-  local out = name:gsub("ies$", "y"):gsub("oes$", "o")
-  if out:sub(-4, -1) == "sses" then
-    out = out:gsub("sses$", "ss")
-  else
-    out = out:gsub("s$", "")
+do
+  local irregulars = {
+    children = "child",
+    vertices = "vertex",
+    matrices = "matrix",
+    indices = "index",
+    statuses = "status",
+    people = "person",
+    leaves = "leaf",
+    lives = "life"
+  }
+  local _list_0
+  do
+    local _accum_0 = { }
+    local _len_0 = 1
+    for k in pairs(irregulars) do
+      _accum_0[_len_0] = k
+      _len_0 = _len_0 + 1
+    end
+    _list_0 = _accum_0
   end
-  return out
+  for _index_0 = 1, #_list_0 do
+    local k = _list_0[_index_0]
+    irregulars[k:upper()] = irregulars[k]:upper()
+  end
+  singularize = function(name)
+    local out = name:gsub("(%w+)$", irregulars)
+    if out ~= name then
+      return out
+    end
+    out = name:gsub("[iI][eE]([sS])$", {
+      s = "y",
+      S = "Y"
+    }):gsub("([oO])[eE][sS]$", "%1")
+    if out:sub(-4, -1) == "sses" then
+      out = out:gsub("([sS][sS])[eE][sS]$", "%1")
+    else
+      out = out:gsub("[sS]$", "")
+    end
+    return out
+  end
 end
 return {
   unescape = unescape,

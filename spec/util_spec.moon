@@ -425,10 +425,20 @@ describe "lapis.util", ->
       {"addresses", "address"}
       {"responses", "response"}
 
-      -- these will never work
+      {"statuses", "status"}
+      {"object_statuses", "object_status"}
+      {"leaves", "leaf"}
+
+      {"BANKS", "BANK"}
+      {"INDUSTRIES", "INDUSTRY"}
+      {"LADIES", "LADY"}
+      {"OBJECT_STATUSES", "OBJECT_STATUS"}
+
+      -- these may never work, since this is supposed to be fallback function
+      -- for when specific name is not specified
       -- {"halves", "half"}
-      -- {"leaves", "leaf"}
       -- {"wives", "wife"}
+      -- {"Statuses", "Status"}
     }
 
     for {plural, single} in *words

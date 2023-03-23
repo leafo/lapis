@@ -326,17 +326,37 @@ get_fields = (obj, key, ...) ->
   return unless key
   obj[key], get_fields obj, ...
 
-singularize = (name) ->
-  -- TODO: not very good
-  out = name\gsub("ies$", "y")\gsub("oes$", "o")
+-- NOTE: this is not designed to be comprehensive, but a quick helper for cases
+-- for names of this are not explicitly specified
+singularize = do
+  irregulars = {
+    children: "child"
+    vertices: "vertex"
+    matrices: "matrix"
+    indices: "index"
+    statuses: "status"
+    people: "person"
+    leaves: "leaf"
+    lives: "life"
+  }
 
-  out = if out\sub(-4, -1) == "sses"
-    out\gsub("sses$", "ss")
-  else
-    out\gsub("s$", "")
+  -- NOTE: this does not support mixed case
+  for k in *[k for k in pairs irregulars]
+    irregulars[k\upper!] = irregulars[k]\upper!
 
-  out
+  (name) ->
+    out = name\gsub "(%w+)$", irregulars
+    if out != name
+      return out
 
+    out = name\gsub("[iI][eE]([sS])$", {s: "y", S: "Y"})\gsub("([oO])[eE][sS]$", "%1")
+
+    out = if out\sub(-4, -1) == "sses"
+      out\gsub("([sS][sS])[eE][sS]$", "%1")
+    else
+      out\gsub("[sS]$", "")
+
+    out
 
 
 { :unescape, :escape, :escape_pattern, :parse_query_string,
