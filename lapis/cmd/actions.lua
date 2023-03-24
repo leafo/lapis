@@ -447,11 +447,31 @@ local COMMANDS = {
       end
     end,
     function(self, args)
+      local _exp_0 = args.sub_command
+      if "--help" == _exp_0 or "-h" == _exp_0 then
+        return self:execute({
+          "help",
+          "_"
+        })
+      end
       local action = require("lapis.cmd.actions." .. tostring(args.sub_command))
-      parse_flags = require("lapis.cmd.util").parse_flags
-      local flags, rest = parse_flags(args.sub_command_args)
-      flags.environment = flags.environment or args.environment
-      return action[1](self, flags, unpack(rest))
+      local command_args
+      if action.argparser then
+        local parse_args = action.argparser()
+        command_args = {
+          parse_args:parse(args.sub_command_args),
+          args
+        }
+      else
+        parse_flags = require("lapis.cmd.util").parse_flags
+        local flags, rest = parse_flags(args.sub_command_args)
+        flags.environment = flags.environment or args.environment
+        command_args = {
+          flags,
+          unpack(rest)
+        }
+      end
+      return action[1](self, unpack(command_args))
     end
   },
   {
