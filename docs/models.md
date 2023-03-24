@@ -234,9 +234,9 @@ $options_table{
     ]],
     default = [[`"*"`]],
     example = [[
-      $dual_code{[==[
+      ``moon
       tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
-      ]==]}
+      ```
 
       ```sql
       SELECT created_at as c from "tags" where tag = 'merchant'
