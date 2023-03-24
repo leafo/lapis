@@ -438,13 +438,14 @@ COMMANDS = {
 
     argparse: (command) ->
       with command
-        \argument("files", "Paths to model classes to annotate (eg. models/first.moon models/second.moon ...)")\args "+"
-        \option("--preload-module", "Module to require before annotating a model")\argname "<name>"
+        \handle_options false
+        \argument("sub_command_args", "Arguments to command")\argname("<args>")\args("*")
 
     (args) =>
       action = require "lapis.cmd.actions.annotate"
-      args["preload-module"] = args.preload_module
-      action[1] @, args, unpack args.files
+      assert action.argparser, "Your lapis-annotate module is too out of date for this version of Lapis, please update it"
+      parse_args = action.argparser!
+      action[1] @, parse_args\parse(args.sub_command_args), args
   }
 
   {
