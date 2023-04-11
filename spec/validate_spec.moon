@@ -390,7 +390,17 @@ params type {
             two: "-no-"
           }
         }
-      }, { test_object\transform { optional: { confirm: "true", junk: "yes"}, alpha: "one", two: {1,2,3, for: true, one: "yes", two: "no"}} }
+
+        {
+          one: "yes"
+        }
+      }, {
+        test_object\transform {
+          optional: { confirm: "true", junk: "yes"}
+          alpha: "one"
+          two: {1,2,3, for: true, one: "yes", two: "no"}
+        }
+      }
 
 
     describe "multi_params", ->
