@@ -393,6 +393,153 @@ params type {
       }, { test_object\transform { optional: { confirm: "true", junk: "yes"}, alpha: "one", two: {1,2,3, for: true, one: "yes", two: "no"}} }
 
 
+    describe "multi_params", ->
+      types = require "lapis.validate.types"
+
+      it "tests two params objects", ->
+        t = types.multi_params {
+          types.params_shape {
+            {"id", types.db_id}
+          }
+          types.params_shape {
+            {"name", types.valid_text}
+          }
+        }
+
+        assert.same {
+          nil, {[[params: expected type "table", got "nil"]]}
+        }, { t\transform nil }
+
+        assert.same {
+          nil, {[[params: expected type "table", got "string"]]}
+        }, { t\transform "hello" }
+
+        assert.same {
+          nil, {
+            "id: expected database ID integer"
+            "name: expected valid text"
+          }
+        }, { t\transform {} }
+
+        assert.same {
+          nil, {
+            "name: expected valid text"
+          }
+        }, { t\transform {id: 234} }
+
+        assert.same {
+          nil, {
+            "id: expected database ID integer"
+          }
+        }, { t\transform {name: "hello"} }
+
+        assert.same {
+          {
+            id: 12
+            name: "hello"
+          }
+        }, { t\transform {name: "hello", thing: "ff", id: 12} }
+
+
+      it "tests multi params objects with conditional", ->
+        t = types.multi_params {
+          types.params_shape {
+            {"id", types.db_id}
+          }
+          types.params_shape({
+            {"type", types.literal "a"}
+            {"name", types.valid_text}
+          }) + types.params_shape {
+            {"type", types.literal "b"}
+            {"label", types.valid_text}
+          }
+        }
+
+        -- this is hideous, but it's a lot of work to determine how to show the
+        -- error message in an ideal way
+        assert.same {
+          nil, {
+            [[id: expected database ID integer]]
+            [[expected params type {
+  type: "a"
+  name: valid text
+}, or params type {
+  type: "b"
+  label: valid text
+}]]
+          }
+        }, { t\transform {} }
+
+        assert.same {
+          nil, {
+            [[expected params type {
+  type: "a"
+  name: valid text
+}, or params type {
+  type: "b"
+  label: valid text
+}]]
+          }
+        }, { t\transform {
+          id: "23"
+        } }
+
+        assert.same {
+          nil, {
+            [[expected params type {
+  type: "a"
+  name: valid text
+}, or params type {
+  type: "b"
+  label: valid text
+}]]
+          }
+        }, { t\transform {
+          type: "b"
+          name: "fart"
+          id: "23"
+        } }
+
+        assert.same {
+          nil, {
+            [[expected params type {
+  type: "a"
+  name: valid text
+}, or params type {
+  type: "b"
+  label: valid text
+}]]
+          }
+        }, { t\transform {
+          type: "a"
+          label: "sum"
+          id: "23"
+        } }
+
+        assert.same {
+          {
+            id: 23
+            type: "a"
+            name: "nem"
+          }
+        }, { t\transform {
+          id: "23"
+          type: "a"
+          name: "nem"
+        } }
+
+        assert.same {
+          {
+            id: 99
+            type: "b"
+            label: "cool"
+          }
+        }, { t\transform {
+          id: "99"
+          type: "b"
+          label: "cool"
+        } }
+
     describe "empty", ->
       types = require "lapis.validate.types"
 

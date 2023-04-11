@@ -64,9 +64,12 @@ class ParamsShapeType extends BaseType
       -- NOTE: must always return table of errors, different from tableshape
       return FailedTransform, {"#{@error_prefix or "params"}: #{err}"}
 
+    -- NOTE: it's important that out always return a fresh object,
+    -- and that it doesn't pass through the object even if it
+    -- perfectly matches the spec. This is well defined in the API
     out = {}
 
-    local errors, state
+    local errors
 
     for validation in *@params_spec
       result, state_or_err = validation.type\_transform value[validation.field], state
@@ -107,6 +110,54 @@ class ParamsShapeType extends BaseType
       "params type {\n  #{table.concat rows, "\n  "}\n}"
 
 
+-- Combines multiple params_shapes into a single result. Each params object is
+-- tested in order, and the entire result set is joined into a final object.
+-- All of them must pass. the joint error message is returned. receives an
+-- array of params types
+-- eg.
+-- s = types.multi_params {
+--   types.params_shape { id: types.int }
+--   types.params_shape { name: types.string }
+-- }
+class MultiParamsType extends BaseType
+  is_params_type = instance_of ParamsShapeType
+
+  new: (@params_shapes={}) =>
+
+  _transform: (value, state) =>
+    local out, errors
+
+    for params in *@params_shapes
+      res, new_state = params\_transform value, state
+
+      if res == FailedTransform
+        errors or= {}
+
+        switch type(new_state)
+          -- append all errors
+          when "table"
+            for err in *new_state
+              table.insert errors, err
+          when "string"
+            table.insert errors, new_state
+
+        -- we terminate early if the input value is the wrong type
+        unless types.table value
+          return FailedTransform, errors
+      else
+        state = new_state
+        -- we should only merge res if we are sure it came from a safe object for output ?
+
+        if out
+          for k,v in pairs res
+            out[k] = v
+        else
+          out = res
+
+    if errors
+      return FailedTransform, errors
+
+    out, state
 
 import printable_character, trim from require "lapis.util.utf8"
 
@@ -182,6 +233,7 @@ file_upload = types.partial({
 
 setmetatable {
   params_shape: ParamsShapeType
+  multi_params: MultiParamsType
   assert_error: AssertErrorType
 
   :cleaned_text

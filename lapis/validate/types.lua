@@ -97,7 +97,7 @@ do
         }
       end
       local out = { }
-      local errors, state
+      local errors
       local _list_0 = self.params_spec
       for _index_0 = 1, #_list_0 do
         local validation = _list_0[_index_0]
@@ -213,6 +213,87 @@ do
   end
   ParamsShapeType = _class_0
 end
+local MultiParamsType
+do
+  local _class_0
+  local is_params_type
+  local _parent_0 = BaseType
+  local _base_0 = {
+    _transform = function(self, value, state)
+      local out, errors
+      local _list_0 = self.params_shapes
+      for _index_0 = 1, #_list_0 do
+        local params = _list_0[_index_0]
+        local res, new_state = params:_transform(value, state)
+        if res == FailedTransform then
+          errors = errors or { }
+          local _exp_0 = type(new_state)
+          if "table" == _exp_0 then
+            for _index_1 = 1, #new_state do
+              local err = new_state[_index_1]
+              table.insert(errors, err)
+            end
+          elseif "string" == _exp_0 then
+            table.insert(errors, new_state)
+          end
+          if not (types.table(value)) then
+            return FailedTransform, errors
+          end
+        else
+          state = new_state
+          if out then
+            for k, v in pairs(res) do
+              out[k] = v
+            end
+          else
+            out = res
+          end
+        end
+      end
+      if errors then
+        return FailedTransform, errors
+      end
+      return out, state
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, params_shapes)
+      if params_shapes == nil then
+        params_shapes = { }
+      end
+      self.params_shapes = params_shapes
+    end,
+    __base = _base_0,
+    __name = "MultiParamsType",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  local self = _class_0
+  is_params_type = instance_of(ParamsShapeType)
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  MultiParamsType = _class_0
+end
 local printable_character, trim
 do
   local _obj_0 = require("lapis.util.utf8")
@@ -319,6 +400,7 @@ local file_upload = types.partial({
 }):describe("file upload")
 return setmetatable({
   params_shape = ParamsShapeType,
+  multi_params = MultiParamsType,
   assert_error = AssertErrorType,
   cleaned_text = cleaned_text,
   valid_text = valid_text,
