@@ -22,6 +22,25 @@ add_environment_argument = (command, summary) ->
           error "You tried to set the environment twice. Use either --environment or the environment argument, not both"
         args.environment = val
 
+-- custom_action provides a top level command for triggered a third-party
+-- action, eg for lapis-annotate and lapis-systemd
+custom_action = (t) ->
+  t.test_available = ->
+    pcall -> require "lapis.cmd.actions.#{t.name}"
+
+  t.argparse = (command) ->
+    with command
+      \handle_options false
+      \argument("sub_command_args", "Arguments to command")\argname("<args>")\args("*")
+
+  t[1] = (args) =>
+    action = require "lapis.cmd.actions.#{t.name}"
+    assert action.argparser, "Your lapis-#{t.name} module is too out of date for this version of Lapis, please update it"
+    parse_args = action.argparser!
+    action[1] @, parse_args\parse(args.sub_command_args), args
+
+  t
+
 COMMANDS = {
   {
     name: "new"
@@ -409,43 +428,19 @@ COMMANDS = {
       action[1] @, unpack command_args
   }
 
-  -- NOTE: to simplify migration to argparse we are currently including the arg
-  -- spec for these modules within lapis directly, even though they are
-  -- separate installs
-
-  {
+  custom_action {
     name: "systemd"
     help: "Generate systemd service file"
-    test_available: ->
-      pcall -> require "lapis.cmd.actions.systemd"
-
-    argparse: (command) ->
-      with command
-        \argument("sub_command", "Sub command to execute")\choices {"service"}
-        add_environment_argument command, "Environment to create service file for"
-        \flag "--install", "Installs the service file to the system, requires sudo permission"
-
-    (args) =>
-      action = require "lapis.cmd.actions.systemd"
-      action[1] @, args, args.sub_command, args.environment
   }
 
-  {
+  custom_action {
     name: "annotate"
     help: "Annotate model files with schema information"
-    test_available: ->
-      pcall -> require "lapis.cmd.actions.annotate"
+  }
 
-    argparse: (command) ->
-      with command
-        \handle_options false
-        \argument("sub_command_args", "Arguments to command")\argname("<args>")\args("*")
-
-    (args) =>
-      action = require "lapis.cmd.actions.annotate"
-      assert action.argparser, "Your lapis-annotate module is too out of date for this version of Lapis, please update it"
-      parse_args = action.argparser!
-      action[1] @, parse_args\parse(args.sub_command_args), args
+  custom_action {
+    name: "eswidget"
+    help: "Widget asset compilation and build generation"
   }
 
   {

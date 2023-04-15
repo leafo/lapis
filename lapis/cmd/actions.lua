@@ -31,6 +31,29 @@ add_environment_argument = function(command, summary)
     return _with_0
   end
 end
+local custom_action
+custom_action = function(t)
+  t.test_available = function()
+    return pcall(function()
+      return require("lapis.cmd.actions." .. tostring(t.name))
+    end)
+  end
+  t.argparse = function(command)
+    do
+      local _with_0 = command
+      _with_0:handle_options(false)
+      _with_0:argument("sub_command_args", "Arguments to command"):argname("<args>"):args("*")
+      return _with_0
+    end
+  end
+  t[1] = function(self, args)
+    local action = require("lapis.cmd.actions." .. tostring(t.name))
+    assert(action.argparser, "Your lapis-" .. tostring(t.name) .. " module is too out of date for this version of Lapis, please update it")
+    local parse_args = action.argparser()
+    return action[1](self, parse_args:parse(args.sub_command_args), args)
+  end
+  return t
+end
 local COMMANDS = {
   {
     name = "new",
@@ -474,53 +497,18 @@ local COMMANDS = {
       return action[1](self, unpack(command_args))
     end
   },
-  {
+  custom_action({
     name = "systemd",
-    help = "Generate systemd service file",
-    test_available = function()
-      return pcall(function()
-        return require("lapis.cmd.actions.systemd")
-      end)
-    end,
-    argparse = function(command)
-      do
-        local _with_0 = command
-        _with_0:argument("sub_command", "Sub command to execute"):choices({
-          "service"
-        })
-        add_environment_argument(command, "Environment to create service file for")
-        _with_0:flag("--install", "Installs the service file to the system, requires sudo permission")
-        return _with_0
-      end
-    end,
-    function(self, args)
-      local action = require("lapis.cmd.actions.systemd")
-      return action[1](self, args, args.sub_command, args.environment)
-    end
-  },
-  {
+    help = "Generate systemd service file"
+  }),
+  custom_action({
     name = "annotate",
-    help = "Annotate model files with schema information",
-    test_available = function()
-      return pcall(function()
-        return require("lapis.cmd.actions.annotate")
-      end)
-    end,
-    argparse = function(command)
-      do
-        local _with_0 = command
-        _with_0:handle_options(false)
-        _with_0:argument("sub_command_args", "Arguments to command"):argname("<args>"):args("*")
-        return _with_0
-      end
-    end,
-    function(self, args)
-      local action = require("lapis.cmd.actions.annotate")
-      assert(action.argparser, "Your lapis-annotate module is too out of date for this version of Lapis, please update it")
-      local parse_args = action.argparser()
-      return action[1](self, parse_args:parse(args.sub_command_args), args)
-    end
-  },
+    help = "Annotate model files with schema information"
+  }),
+  custom_action({
+    name = "eswidget",
+    help = "Widget asset compilation and build generation"
+  }),
   {
     name = "debug",
     hidden = true,
