@@ -5,6 +5,7 @@
 argparser = ->
   with require("argparse") "lapis generate migration", "Create a slot for a new empty migration, or generate a new one"
     \option("--counter", "Naming convention for new migration")\choices({"timestamp"})\default "timestamp"
+    \option("--migrations-module", "The module name of the migrations file")\default "migrations"
 
     \mutex(
       \flag "--lua", "Force editing/creating Lua file"
@@ -38,11 +39,13 @@ write = (args) =>
   else
     @default_language
 
+  module_base_path = @mod_to_path args.migrations_module
+
   output_fname = switch output_language
     when "lua"
-      "migrations.lua"
+      "#{module_base_path}.lua"
     when "moonscript"
-      "migrations.moon"
+      "#{module_base_path}.moon"
 
   have_file = @command_runner.path.exists output_fname
   if have_file

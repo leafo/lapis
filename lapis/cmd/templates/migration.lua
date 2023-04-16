@@ -5,6 +5,7 @@ argparser = function()
     _with_0:option("--counter", "Naming convention for new migration"):choices({
       "timestamp"
     }):default("timestamp")
+    _with_0:option("--migrations-module", "The module name of the migrations file"):default("migrations")
     _with_0:mutex(_with_0:flag("--lua", "Force editing/creating Lua file"), _with_0:flag("--moonscript --moon", "Force editing/creating MoonScript file"))
     return _with_0
   end
@@ -34,12 +35,13 @@ write = function(self, args)
   else
     output_language = self.default_language
   end
+  local module_base_path = self:mod_to_path(args.migrations_module)
   local output_fname
   local _exp_0 = output_language
   if "lua" == _exp_0 then
-    output_fname = "migrations.lua"
+    output_fname = tostring(module_base_path) .. ".lua"
   elseif "moonscript" == _exp_0 then
-    output_fname = "migrations.moon"
+    output_fname = tostring(module_base_path) .. ".moon"
   end
   local have_file = self.command_runner.path.exists(output_fname)
   if have_file then
