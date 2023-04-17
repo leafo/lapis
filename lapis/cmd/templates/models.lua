@@ -7,7 +7,7 @@ return autoload("models")
 local argparser
 argparser = function()
   do
-    local _with_0 = require("argparse")("lapis generate application", "Generate a models loader class")
+    local _with_0 = require("argparse")("lapis generate application", "Generate a models loader module")
     _with_0:option("--models-module --module", "The module name of the generated application"):default("models")
     _with_0:mutex(_with_0:flag("--lua", "Force output to be Lua"), _with_0:flag("--moonscript --moon", "Force output to be MoonScript"))
     return _with_0
