@@ -53,6 +53,7 @@ build = {
     ["lapis.cmd.templates.app_lua"] = "lapis/cmd/templates/app_lua.lua",
     ["lapis.cmd.templates.flow"] = "lapis/cmd/templates/flow.lua",
     ["lapis.cmd.templates.gitignore"] = "lapis/cmd/templates/gitignore.lua",
+    ["lapis.cmd.templates.migration"] = "lapis/cmd/templates/migration.lua",
     ["lapis.cmd.templates.model"] = "lapis/cmd/templates/model.lua",
     ["lapis.cmd.templates.models"] = "lapis/cmd/templates/models.lua",
     ["lapis.cmd.templates.models_lua"] = "lapis/cmd/templates/models_lua.lua",
