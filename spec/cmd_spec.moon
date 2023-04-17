@@ -268,6 +268,22 @@ describe "lapis.cmd.actions.execute", ->
       cmd.execute { "generate", "spec", "models.things", "--moonscript" }
       assert_files { "spec/models/things_spec.moon" }
 
+    it "lapis generate migration in lua", ->
+      cmd.execute { "generate", "migration", "--lua" }
+      cmd.execute { "generate", "migration", "--lua" } -- appends a new migration
+      assert_files { "migrations.lua" }
+
+      -- load the file to ensure it's valid Lua syntax
+      assert loadfile("migrations.lua")
+
+    it "lapis generate migration in lua", ->
+      cmd.execute { "generate", "migration", "--moon" }
+      cmd.execute { "generate", "migration", "--moon" } -- appends a new migration
+      assert_files { "migrations.moon" }
+
+      -- load file to ensure it's valid moonscript -> lua syntax
+      assert require("moonscript.base").loadfile "migrations.moon"
+
 
 describe "lapis.cmd.util", ->
   it "columnizes", ->
