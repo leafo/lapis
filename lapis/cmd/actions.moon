@@ -92,9 +92,7 @@ COMMANDS = {
         @execute {"generate", "gitignore", unpack gitignore_flags }
 
       if args.tup
-        tup_files = require "lapis.cmd.templates.tup"
-        for fname, content in pairs tup_files
-          @write_file_safe fname, content
+        @execute {"generate", "tupfile" }
   }
 
   {
@@ -548,8 +546,7 @@ class CommandRunner
       print colors "%{bright}%{red}Aborting:%{reset} " .. msg
       os.exit 1
 
-
-  -- scope used for template objects
+  -- self object used for generator templates
   make_template_writer: =>
     {
       command_runner: @

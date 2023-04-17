@@ -115,10 +115,10 @@ local COMMANDS = {
         })
       end
       if args.tup then
-        local tup_files = require("lapis.cmd.templates.tup")
-        for fname, content in pairs(tup_files) do
-          self:write_file_safe(fname, content)
-        end
+        return self:execute({
+          "generate",
+          "tupfile"
+        })
       end
     end
   },
