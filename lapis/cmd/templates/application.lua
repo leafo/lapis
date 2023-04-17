@@ -1,3 +1,12 @@
+local argparser
+argparser = function()
+  do
+    local _with_0 = require("argparse")("lapis generate application", "Generate an empty lapis application module")
+    _with_0:option("--app-module --module", "The module name of the generated application"):default("app")
+    _with_0:mutex(_with_0:flag("--lua", "Force output to be Lua"), _with_0:flag("--moonscript --moon", "Force output to be MoonScript"))
+    return _with_0
+  end
+end
 local initial_moon = [[lapis = require "lapis"
 
 class extends lapis.Application
@@ -13,15 +22,6 @@ end)
 
 return app
 ]]
-local argparser
-argparser = function()
-  do
-    local _with_0 = require("argparse")("lapis generate application", "Generate an empty lapis application module")
-    _with_0:option("--app-module --module", "The module name of the generated application"):default("app")
-    _with_0:mutex(_with_0:flag("--lua", "Force output to be Lua"), _with_0:flag("--moonscript --moon", "Force output to be MoonScript"))
-    return _with_0
-  end
-end
 local write
 write = function(self, args)
   local output_language

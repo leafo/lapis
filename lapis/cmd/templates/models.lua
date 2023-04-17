@@ -1,9 +1,3 @@
-local initial_moon = [[import autoload from require "lapis.util"
-autoload "models"
-]]
-local initial_lua = [[local autoload = require("lapis.util").autoload
-return autoload("models")
-]]
 local argparser
 argparser = function()
   do
@@ -13,6 +7,12 @@ argparser = function()
     return _with_0
   end
 end
+local initial_moon = [[import autoload from require "lapis.util"
+autoload "models"
+]]
+local initial_lua = [[local autoload = require("lapis.util").autoload
+return autoload("models")
+]]
 local write
 write = function(self, args)
   local output_language

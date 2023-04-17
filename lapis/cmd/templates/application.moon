@@ -1,3 +1,12 @@
+argparser = ->
+  with require("argparse") "lapis generate application", "Generate an empty lapis application module"
+    \option("--app-module --module", "The module name of the generated application")\default "app"
+
+    \mutex(
+      \flag "--lua", "Force output to be Lua"
+      \flag "--moonscript --moon", "Force output to be MoonScript"
+    )
+
 initial_moon = [[
 lapis = require "lapis"
 
@@ -16,15 +25,6 @@ end)
 
 return app
 ]]
-
-argparser = ->
-  with require("argparse") "lapis generate application", "Generate an empty lapis application module"
-    \option("--app-module --module", "The module name of the generated application")\default "app"
-
-    \mutex(
-      \flag "--lua", "Force output to be Lua"
-      \flag "--moonscript --moon", "Force output to be MoonScript"
-    )
 
 write = (args) =>
   output_language = if args.lua

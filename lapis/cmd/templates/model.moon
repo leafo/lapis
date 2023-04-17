@@ -1,4 +1,3 @@
-
 argparser = ->
   with require("argparse") "lapis generate model", "Generates an empty model and places it in models_dir"
     \argument("model_name", "The name of the model (eg. users, posts, daily_views)")\convert (name) ->

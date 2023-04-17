@@ -1,3 +1,12 @@
+argparser = ->
+  with require("argparse") "lapis generate application", "Generate a models loader module"
+    \option("--models-module --module", "The module name of the generated application")\default "models"
+
+    \mutex(
+      \flag "--lua", "Force output to be Lua"
+      \flag "--moonscript --moon", "Force output to be MoonScript"
+    )
+
 initial_moon = [[
 import autoload from require "lapis.util"
 autoload "models"
@@ -7,15 +16,6 @@ initial_lua = [[
 local autoload = require("lapis.util").autoload
 return autoload("models")
 ]]
-
-argparser = ->
-  with require("argparse") "lapis generate application", "Generate a models loader module"
-    \option("--models-module --module", "The module name of the generated application")\default "models"
-
-    \mutex(
-      \flag "--lua", "Force output to be Lua"
-      \flag "--moonscript --moon", "Force output to be MoonScript"
-    )
 
 write = (args) =>
   output_language = if args.lua
