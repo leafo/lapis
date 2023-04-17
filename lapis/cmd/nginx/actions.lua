@@ -12,20 +12,15 @@ return {
       "--nginx",
       unpack(template_flags)
     })
-    local config_path, config_path_etlua
-    do
-      local _obj_0 = require("lapis.cmd.nginx").nginx_runner
-      config_path, config_path_etlua = _obj_0.config_path, _obj_0.config_path_etlua
-    end
-    if self.path.exists(config_path) or self.path.exists(config_path_etlua) then
-      self:fail_with_message("nginx.conf already exists")
-    end
-    if args.etlua_config then
-      self:write_file_safe(config_path_etlua, require("lapis.cmd.nginx.templates.config_etlua"))
-    else
-      self:write_file_safe(config_path, require("lapis.cmd.nginx.templates.config"))
-    end
-    return self:write_file_safe("mime.types", require("lapis.cmd.nginx.templates.mime_types"))
+    self:execute({
+      "generate",
+      "nginx.config",
+      args.etlua_config and "--etlua" or nil
+    })
+    return self:execute({
+      "generate",
+      "nginx.mime_types"
+    })
   end,
   server = function(self, args)
     local find_nginx, start_nginx, write_config_for
