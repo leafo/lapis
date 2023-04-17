@@ -1,16 +1,34 @@
 import insert, concat from table
 
-(flags={}) ->
+argparser = ->
+  with require("argparse") "lapis generate gitignore", "Generate a .gitignore file"
+    \flag "--tup"
+
+    \mutex(
+      \flag "--cqueues"
+      \flag "--nginx"
+    )
+
+    \mutex(
+      \flag "--lua"
+      \flag "--moonscript --moon"
+    )
+
+write = (args) =>
   lines = {}
 
-  if flags.server != "cqueues"
+  if args.nginx
     insert lines, "logs/"
     insert lines, "nginx.conf.compiled"
 
-  if flags.moonscript
+  if args.moonscript
     insert lines, "*.lua"
 
-  if flags.tup
+  if args.tup
     insert lines, ".tup"
 
-  concat(lines, "\n") .. "\n"
+  output = concat(lines, "\n") .. "\n"
+
+  @write ".gitignore", output
+
+{:argparser, :write}

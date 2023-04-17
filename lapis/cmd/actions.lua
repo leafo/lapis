@@ -71,12 +71,13 @@ local COMMANDS = {
       end
     end,
     function(self, args)
-      local server_actions
+      local server
       if args.cqueues then
-        server_actions = require("lapis.cmd.cqueues.actions")
+        server = "cqueues"
       else
-        server_actions = require("lapis.cmd.nginx.actions")
+        server = "nginx"
       end
+      local server_actions = require("lapis.cmd." .. tostring(server) .. ".actions")
       local language
       if args.lua then
         language = "lua"
@@ -100,7 +101,18 @@ local COMMANDS = {
         unpack(template_flags)
       })
       if args.git then
-        self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(args))
+        local gitignore_flags = {
+          "--" .. tostring(language),
+          "--" .. tostring(server)
+        }
+        if args.tup then
+          table.insert(gitignore_flags, "--tup")
+        end
+        self:execute({
+          "generate",
+          "gitignore",
+          unpack(gitignore_flags)
+        })
       end
       if args.tup then
         local tup_files = require("lapis.cmd.templates.tup")

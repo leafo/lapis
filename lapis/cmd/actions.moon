@@ -63,10 +63,12 @@ COMMANDS = {
         \flag "--force", "Bypass errors when detecting functional server environment"
 
     (args) =>
-      server_actions = if args.cqueues
-        require "lapis.cmd.cqueues.actions"
+      server = if args.cqueues
+        "cqueues"
       else
-        require "lapis.cmd.nginx.actions"
+        "nginx"
+
+      server_actions = require "lapis.cmd.#{server}.actions"
 
       language = if args.lua
         "lua"
@@ -82,7 +84,12 @@ COMMANDS = {
       @execute {"generate", "models", unpack template_flags }
 
       if args.git
-        @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") args
+        gitignore_flags = { "--#{language}", "--#{server}" }
+
+        if args.tup
+          table.insert gitignore_flags, "--tup"
+
+        @execute {"generate", "gitignore", unpack gitignore_flags }
 
       if args.tup
         tup_files = require "lapis.cmd.templates.tup"
