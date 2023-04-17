@@ -6,7 +6,7 @@ argparser = function()
       "timestamp",
       "increment"
     }):default("timestamp")
-    _with_0:option("--migrations-module", "The module name of the migrations file"):default("migrations")
+    _with_0:option("--migrations-module --module", "The module name of the migrations file"):default("migrations")
     _with_0:mutex(_with_0:flag("--lua", "Force editing/creating Lua file"), _with_0:flag("--moonscript --moon", "Force editing/creating MoonScript file"))
     return _with_0
   end

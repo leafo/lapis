@@ -5,7 +5,7 @@
 argparser = ->
   with require("argparse") "lapis generate migration", "Create a slot for a new empty migration, or generate a new one"
     \option("--counter", "Naming convention for new migration")\choices({"timestamp", "increment"})\default "timestamp"
-    \option("--migrations-module", "The module name of the migrations file")\default "migrations"
+    \option("--migrations-module --module", "The module name of the migrations file")\default "migrations"
 
     \mutex(
       \flag "--lua", "Force editing/creating Lua file"
