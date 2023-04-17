@@ -88,10 +88,18 @@ local COMMANDS = {
       end
       local _exp_0 = language
       if "lua" == _exp_0 then
-        self:write_file_safe("app.lua", require("lapis.cmd.templates.app_lua"))
+        self:execute({
+          "generate",
+          "application",
+          "--lua"
+        })
         self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
       elseif "moonscript" == _exp_0 then
-        self:write_file_safe("app.moon", require("lapis.cmd.templates.app"))
+        self:execute({
+          "generate",
+          "application",
+          "--moon"
+        })
         self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
       end
       if args.git then
@@ -648,6 +656,7 @@ do
       if self.path.exists(file) then
         return nil, "file already exists: " .. tostring(file)
       end
+      assert(type(content) == "string", "content must be a string")
       do
         local prefix = file:match("^(.+)/[^/]+$")
         if prefix then

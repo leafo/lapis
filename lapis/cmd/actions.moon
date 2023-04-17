@@ -79,10 +79,10 @@ COMMANDS = {
 
       switch language
         when "lua"
-          @write_file_safe "app.lua", require "lapis.cmd.templates.app_lua"
+          @execute {"generate", "application", "--lua"}
           @write_file_safe "models.lua", require "lapis.cmd.templates.models_lua"
         when "moonscript"
-          @write_file_safe "app.moon", require "lapis.cmd.templates.app"
+          @execute {"generate", "application", "--moon"}
           @write_file_safe "models.moon", require "lapis.cmd.templates.models"
 
       if args.git
@@ -561,6 +561,7 @@ class CommandRunner
 
   write_file_safe: (file, content) =>
     return nil, "file already exists: #{file}" if @path.exists file
+    assert type(content) == "string", "content must be a string"
 
     if prefix = file\match "^(.+)/[^/]+$"
       @path.mkdir prefix unless @path.exists prefix
