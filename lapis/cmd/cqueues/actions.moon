@@ -1,3 +1,5 @@
+unpack = unpack or table.unpack
+
 {
   new: (args, template_flags) =>
     valid_install = pcall ->

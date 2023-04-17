@@ -1,3 +1,4 @@
+local unpack = unpack or table.unpack
 return {
   new = function(self, args, template_flags)
     local find_nginx
