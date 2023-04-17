@@ -36,8 +36,6 @@ import config from require "lapis.config"
 
 config "development", ->
   server "cqueues"
-  code_cache "off"
-  num_workers "1"
 ]]
 
 initial_lua_cqueues = [[

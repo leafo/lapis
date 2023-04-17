@@ -27,8 +27,6 @@ local initial_moon_cqueues = [[import config from require "lapis.config"
 
 config "development", ->
   server "cqueues"
-  code_cache "off"
-  num_workers "1"
 ]]
 local initial_lua_cqueues = [[local config = require("lapis.config")
 
