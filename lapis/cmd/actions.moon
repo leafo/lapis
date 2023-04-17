@@ -555,13 +555,26 @@ class CommandRunner
         unless success
           @fail_with_message err
 
-      mod_to_path: (mod) => mod\gsub "%.", "/"
+      mod_to_path: (mod, lang) =>
+        p = mod\gsub "%.", "/"
+
+        switch lang
+          when "lua"
+            "#{p}.lua"
+          when "moonscript"
+            "#{p}.moon"
+          when nil
+            p
+          else
+            error "Got unknown language for mod_to_path: #{lang}"
+
+
       default_language: default_language!
     }
 
   write_file_safe: (file, content) =>
     return nil, "file already exists: #{file}" if @path.exists file
-    assert type(content) == "string", "content must be a string"
+    assert type(content) == "string", "write_file_safe: content must be a string, got #{type content}"
 
     if prefix = file\match "^(.+)/[^/]+$"
       @path.mkdir prefix unless @path.exists prefix

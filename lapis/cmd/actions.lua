@@ -654,8 +654,18 @@ do
             return self:fail_with_message(err)
           end
         end,
-        mod_to_path = function(self, mod)
-          return mod:gsub("%.", "/")
+        mod_to_path = function(self, mod, lang)
+          local p = mod:gsub("%.", "/")
+          local _exp_0 = lang
+          if "lua" == _exp_0 then
+            return tostring(p) .. ".lua"
+          elseif "moonscript" == _exp_0 then
+            return tostring(p) .. ".moon"
+          elseif nil == _exp_0 then
+            return p
+          else
+            return error("Got unknown language for mod_to_path: " .. tostring(lang))
+          end
         end,
         default_language = default_language()
       }
@@ -664,7 +674,7 @@ do
       if self.path.exists(file) then
         return nil, "file already exists: " .. tostring(file)
       end
-      assert(type(content) == "string", "content must be a string")
+      assert(type(content) == "string", "write_file_safe: content must be a string, got " .. tostring(type(content)))
       do
         local prefix = file:match("^(.+)/[^/]+$")
         if prefix then
