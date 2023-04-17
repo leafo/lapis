@@ -68,8 +68,6 @@ COMMANDS = {
       else
         require "lapis.cmd.nginx.actions"
 
-      server_actions.new @, args
-
       language = if args.lua
         "lua"
       elseif args.moonscript
@@ -77,13 +75,11 @@ COMMANDS = {
       else
         default_language!
 
-      switch language
-        when "lua"
-          @execute {"generate", "application", "--lua"}
-          @execute {"generate", "models", "--lua"}
-        when "moonscript"
-          @execute {"generate", "application", "--moon"}
-          @execute {"generate", "models", "--moon"}
+      template_flags = { "--#{language}" }
+
+      server_actions.new @, args, template_flags
+      @execute {"generate", "application", unpack template_flags }
+      @execute {"generate", "models", unpack template_flags }
 
       if args.git
         @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") args

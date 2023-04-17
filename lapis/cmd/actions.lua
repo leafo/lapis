@@ -77,7 +77,6 @@ local COMMANDS = {
       else
         server_actions = require("lapis.cmd.nginx.actions")
       end
-      server_actions.new(self, args)
       local language
       if args.lua then
         language = "lua"
@@ -86,30 +85,20 @@ local COMMANDS = {
       else
         language = default_language()
       end
-      local _exp_0 = language
-      if "lua" == _exp_0 then
-        self:execute({
-          "generate",
-          "application",
-          "--lua"
-        })
-        self:execute({
-          "generate",
-          "models",
-          "--lua"
-        })
-      elseif "moonscript" == _exp_0 then
-        self:execute({
-          "generate",
-          "application",
-          "--moon"
-        })
-        self:execute({
-          "generate",
-          "models",
-          "--moon"
-        })
-      end
+      local template_flags = {
+        "--" .. tostring(language)
+      }
+      server_actions.new(self, args, template_flags)
+      self:execute({
+        "generate",
+        "application",
+        unpack(template_flags)
+      })
+      self:execute({
+        "generate",
+        "models",
+        unpack(template_flags)
+      })
       if args.git then
         self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(args))
       end

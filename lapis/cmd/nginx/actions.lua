@@ -1,11 +1,17 @@
 return {
-  new = function(self, args)
+  new = function(self, args, template_flags)
     local find_nginx
     find_nginx = require("lapis.cmd.nginx").find_nginx
     local nginx = find_nginx()
     if not nginx and not args.force then
       self:fail_with_message("Unable to find an OpenResty installation on your system. You can bypass this error with --force or use LAPIS_OPENRESTY environment variable to directly specify the path of the OpenResty binary")
     end
+    self:execute({
+      "generate",
+      "config",
+      "--nginx",
+      unpack(template_flags)
+    })
     local config_path, config_path_etlua
     do
       local _obj_0 = require("lapis.cmd.nginx").nginx_runner
@@ -19,14 +25,7 @@ return {
     else
       self:write_file_safe(config_path, require("lapis.cmd.nginx.templates.config"))
     end
-    self:write_file_safe("mime.types", require("lapis.cmd.nginx.templates.mime_types"))
-    local writer = self:make_template_writer()
-    local config_tpl = require("lapis.cmd.cqueues.templates.config")
-    return config_tpl.write(writer, setmetatable({
-      server = "nginx"
-    }, {
-      __index = args
-    }))
+    return self:write_file_safe("mime.types", require("lapis.cmd.nginx.templates.mime_types"))
   end,
   server = function(self, args)
     local find_nginx, start_nginx, write_config_for
