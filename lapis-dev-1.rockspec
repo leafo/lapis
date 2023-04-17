@@ -55,7 +55,6 @@ build = {
     ["lapis.cmd.templates.migration"] = "lapis/cmd/templates/migration.lua",
     ["lapis.cmd.templates.model"] = "lapis/cmd/templates/model.lua",
     ["lapis.cmd.templates.models"] = "lapis/cmd/templates/models.lua",
-    ["lapis.cmd.templates.models_lua"] = "lapis/cmd/templates/models_lua.lua",
     ["lapis.cmd.templates.spec"] = "lapis/cmd/templates/spec.lua",
     ["lapis.cmd.templates.tup"] = "lapis/cmd/templates/tup.lua",
     ["lapis.cmd.util"] = "lapis/cmd/util.lua",

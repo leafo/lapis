@@ -93,14 +93,22 @@ local COMMANDS = {
           "application",
           "--lua"
         })
-        self:write_file_safe("models.lua", require("lapis.cmd.templates.models_lua"))
+        self:execute({
+          "generate",
+          "models",
+          "--lua"
+        })
       elseif "moonscript" == _exp_0 then
         self:execute({
           "generate",
           "application",
           "--moon"
         })
-        self:write_file_safe("models.moon", require("lapis.cmd.templates.models"))
+        self:execute({
+          "generate",
+          "models",
+          "--moon"
+        })
       end
       if args.git then
         self:write_file_safe(".gitignore", require("lapis.cmd.templates.gitignore")(args))

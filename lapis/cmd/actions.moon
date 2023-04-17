@@ -80,10 +80,10 @@ COMMANDS = {
       switch language
         when "lua"
           @execute {"generate", "application", "--lua"}
-          @write_file_safe "models.lua", require "lapis.cmd.templates.models_lua"
+          @execute {"generate", "models", "--lua"}
         when "moonscript"
           @execute {"generate", "application", "--moon"}
-          @write_file_safe "models.moon", require "lapis.cmd.templates.models"
+          @execute {"generate", "models", "--moon"}
 
       if args.git
         @write_file_safe ".gitignore", require("lapis.cmd.templates.gitignore") args
