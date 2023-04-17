@@ -6,5 +6,5 @@ elseif config.mysql then
 elseif config.sqlite then
   return require("lapis.db.sqlite.schema")
 else
-  return error("Databse type could not be determined from configuration (postgres, mysql, sqlite)")
+  return error("Database type could not be determined from configuration (postgres, mysql, sqlite)")
 end

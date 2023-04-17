@@ -6,4 +6,4 @@ elseif config.mysql
 elseif config.sqlite
   require "lapis.db.sqlite.schema"
 else
-  error "Databse type could not be determined from configuration (postgres, mysql, sqlite)"
+  error "Database type could not be determined from configuration (postgres, mysql, sqlite)"
