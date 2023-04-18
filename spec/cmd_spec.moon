@@ -284,6 +284,18 @@ describe "lapis.cmd.actions.execute", ->
       -- load file to ensure it's valid moonscript -> lua syntax
       assert require("moonscript.base").loadfile "migrations.moon"
 
+    it "lapis generate rockspec", ->
+      cmd.execute { "generate", "rockspec" }
+      cmd.execute { "generate", "rockspec", "--moon", "--sqlite", "--version-name=dev-2", "--app-name=lapis-thing" }
+
+      assert_files {
+        "lapis-thing-dev-2.rockspec"
+        "spec-tmp-app-dev-1.rockspec"
+      }
+
+      -- verify that they are valid lua
+      assert loadfile("lapis-thing-dev-2.rockspec")
+      assert loadfile("spec-tmp-app-dev-1.rockspec")
 
 describe "lapis.cmd.util", ->
   it "columnizes", ->
