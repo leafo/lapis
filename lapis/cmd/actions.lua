@@ -66,6 +66,7 @@ local COMMANDS = {
         _with_0:flag("--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)")
         _with_0:flag("--git", "Generate default .gitignore file")
         _with_0:flag("--tup", "Generate default Tupfile")
+        _with_0:flag("--rockspec", "Generate a rockspec file for managing dependencies")
         _with_0:flag("--force", "Bypass errors when detecting functional server environment")
         return _with_0
       end
@@ -115,9 +116,15 @@ local COMMANDS = {
         })
       end
       if args.tup then
-        return self:execute({
+        self:execute({
           "generate",
           "tupfile"
+        })
+      end
+      if args.rockspec then
+        return self:execute({
+          "generate",
+          "rockspec"
         })
       end
     end

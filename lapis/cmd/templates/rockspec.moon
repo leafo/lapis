@@ -64,7 +64,8 @@ write = (args) =>
   out_file = "#{app_name}-#{args.version_name}.rockspec"
 
   dependencies = {
-    "lua ~> 5.1"
+    "lua ~> 5.1",
+    "lapis == #{require("lapis.version")}"
   }
 
   if args.moonscript

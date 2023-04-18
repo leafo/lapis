@@ -65,7 +65,8 @@ write = function(self, args)
   local source_url = detect_repository_url()
   local out_file = tostring(app_name) .. "-" .. tostring(args.version_name) .. ".rockspec"
   local dependencies = {
-    "lua ~> 5.1"
+    "lua ~> 5.1",
+    "lapis == " .. tostring(require("lapis.version"))
   }
   if args.moonscript then
     table.insert(dependencies, "moonscript")

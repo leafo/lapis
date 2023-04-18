@@ -60,6 +60,8 @@ COMMANDS = {
         \flag "--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)"
         \flag "--git", "Generate default .gitignore file"
         \flag "--tup", "Generate default Tupfile"
+        \flag "--rockspec", "Generate a rockspec file for managing dependencies"
+
         \flag "--force", "Bypass errors when detecting functional server environment"
 
     (args) =>
@@ -93,6 +95,9 @@ COMMANDS = {
 
       if args.tup
         @execute {"generate", "tupfile" }
+
+      if args.rockspec
+        @execute {"generate", "rockspec" }
   }
 
   {
