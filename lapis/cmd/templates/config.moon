@@ -72,7 +72,7 @@ config("development", {
           initial_moon_cqueues
       else
         error "Unknown language: #{output_language}"
-    
+
     assert output, "lapis generate requires a server to be selected to generate config, see lapis generate config --help"
     @write output_fname, output
 }
