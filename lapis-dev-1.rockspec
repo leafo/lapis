@@ -27,10 +27,10 @@ dependencies = {
   "pgmoon",
 }
 
-test_dependencies = {
-  "busted",
-  "luafilesystem"
-}
+-- test_dependencies = {
+--   "busted",
+--   "luafilesystem"
+-- }
 
 build = {
   type = "builtin",
