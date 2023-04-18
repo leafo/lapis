@@ -54,6 +54,7 @@ build = {
     ["lapis.cmd.templates.models"] = "lapis/cmd/templates/models.lua",
     ["lapis.cmd.templates.nginx.config"] = "lapis/cmd/templates/nginx/config.lua",
     ["lapis.cmd.templates.nginx.mime_types"] = "lapis/cmd/templates/nginx/mime_types.lua",
+    ["lapis.cmd.templates.rockspec"] = "lapis/cmd/templates/rockspec.lua",
     ["lapis.cmd.templates.spec"] = "lapis/cmd/templates/spec.lua",
     ["lapis.cmd.templates.tupfile"] = "lapis/cmd/templates/tupfile.lua",
     ["lapis.cmd.util"] = "lapis/cmd/util.lua",
