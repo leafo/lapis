@@ -233,15 +233,9 @@ $options_table{
       to escape column names.
     ]],
     default = [[`"*"`]],
-    example = [[
-      ``moon
+    example = $dual_code{[[
       tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
-      ```
-
-      ```sql
-      SELECT created_at as c from "tags" where tag = 'merchant'
-      ```
-    ]]
+    ]]}
   },
   {
     name = "load",

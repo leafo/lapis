@@ -11,7 +11,7 @@ a summary of what it can do, along with information about the installation, eg.
            [--trace] <command> ...
 
     Control & create web applications written with Lapis
-    Lapis: 1.13.0
+    Lapis: 1.14.0
     Default environment: development
     OpenResty: /usr/local/openresty/nginx/sbin/nginx
     cqueues: 20200726 lua-http: 0.4
@@ -64,7 +64,7 @@ Learn more about environments on the [Configuration](configuration.html) guide.
 ### `lapis new`
 
     Usage: lapis new ([--nginx] | [--cqueues]) ([--lua] | [--moonscript])
-           [-h] [--etlua-config] [--git] [--tup]
+           [-h] [--etlua-config] [--git] [--tup] [--rockspec] [--force]
 
     Create a new Lapis project in the current directory
 
@@ -77,6 +77,9 @@ Learn more about environments on the [Configuration](configuration.html) guide.
        --etlua-config        Use etlua for templated configuration files (eg. nginx.conf)
        --git                 Generate default .gitignore file
        --tup                 Generate default Tupfile
+       --rockspec            Generate a rockspec file for managing dependencies
+       --force               Bypass errors when detecting functional server environment
+
 
 The `new` command will create a blank Lapis project in the current directory by
 writing some starter files. Note that it is not necessary to use `lapis new` to
@@ -93,6 +96,10 @@ By default it creates the following files for a OpenResty server:
 
 The generated files are only starting points, you are encouraged to read, and
 customize them.
+
+The `--rockspec` flag can be used to generated a blank rockspec for managing
+your app's dependencies. If you need to configure the rockspec file then you
+can instead use `lapis generate rockspec` after creating your app.
 
 ### `lapis server`
 
@@ -283,6 +290,99 @@ output can be configured with flags like `--print-json` or `--print-headers`
 When using the `--print-json` format option, if a session is set by the
 request, it will be decoded into the json object for easy viewing.
 
+### `lapis generate`
+
+    Usage: lapis generate [-h] <template_name> [<args>] ...
+
+    Generates a new file in the current directory from template
+
+    Arguments:
+       template_name         Which template to load (eg. model, flow, spec)
+       template_args         Template arguments
+
+    Options:
+       -h, --help            Show this help message and exit.
+
+
+The `generate` command can be used to create files in the current directory
+based on templates that lapis includes. This can help simplify setting up an
+initial app. The `lapis new` command internally calls a series of generators to
+create the initial project.
+
+#### `lapis generate rockspec`
+
+Creates a LuaRocks rockspec file that can be used to manage the dependencies of the app.
+
+    Usage: lapis generate rockspec [-h] [--app-name <app_name>]
+           [--version-name <version_name>] [--moonscript] [--sqlite]
+           [--postgresql] [--mysql]
+
+    Generate a LuaRocks rockspec file for managing dependencies
+
+    Dependencies:
+       --moonscript, --moon  Include MoonScript as dependency
+       --sqlite              Include SQLite dependencies
+       --postgresql, --postgres
+                             Include PostgreSQL dependencies
+       --mysql               Include MySQL dependency
+
+    Other options:
+       -h, --help            Show this help message and exit.
+       --app-name <app_name> The name of the app to use for the rockspec. Defaults to name of current directory
+       --version-name <version_name>
+                             Version of rockspec file to generate (default: dev-1)
+
+
+As an example, to set up your app for using sqlite and MoonScript, you might run:
+
+```bash
+$ lapis generate rockspec --moonscript --sqlite
+```
+
+This wil create a new `.rockspec` file in the current directory, named after
+the current directory. (You can rename name of the rockspec with `--app-name`)
+
+You can then use LuaRocks to install the necessary dependencies, something like:
+
+```bash
+$ luarocks --local --lua-version=5.1 build --only-deps
+```
+
+If desired, you can lock your dependencies by version for the current project
+by running something like:
+
+```bash
+$ luarocks --local --lua-version=5.1 build --only-deps --pin
+```
+
+> When pinning dependencies, a luarocks.lock file is created in the current
+> directory. This should be checked into the repository. [Learn more about
+> pinning versions with
+> LuaRocks](https://github.com/luarocks/luarocks/wiki/Pinning-versions-with-a-lock-file)
+
+
+#### `lapis generate migration`
+
+    Usage: lapis generate migration ([--lua] | [--moonscript]) [-h]
+           [--counter {timestamp,increment}]
+           [--migrations-module <migrations_module>]
+
+    Generate a migrations file if necessary, and append a new migration to the file
+
+    Options:
+       -h, --help            Show this help message and exit.
+       --counter {timestamp,increment}
+                             Naming convention for new migration (default: timestamp)
+       --migrations-module <migrations_module>,
+                  --module <migrations_module>
+                             The module name of the migrations file (default: migrations)
+       --lua                 Force editing/creating Lua file
+       --moonscript, --moon  Force editing/creating MoonScript file
+
+
+If a migrations file does not exist, `lapis generate migration` will create a
+new migration file. It will then append a slot for a new migration to the end
+of the file. By default, the new migration will be named with a unix timestamp.
 
 
 
