@@ -23,9 +23,13 @@ dependencies = {
   "lpeg",
   "lua-cjson",
   "luaossl",
-  "luafilesystem",
   "luasocket",
   "pgmoon",
+}
+
+test_dependencies = {
+  "busted",
+  "luafilesystem"
 }
 
 build = {
