@@ -3,7 +3,7 @@
 -- detected, create a blank one and insert the first migration
 
 argparser = ->
-  with require("argparse") "lapis generate migration", "Create a slot for a new empty migration, or generate a new one"
+  with require("argparse") "lapis generate migration", "Generate a migrations file if necessary, and append a new migration to the file"
     \option("--counter", "Naming convention for new migration")\choices({"timestamp", "increment"})\default "timestamp"
     \option("--migrations-module --module", "The module name of the migrations file")\default "migrations"
 

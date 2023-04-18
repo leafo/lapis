@@ -122,9 +122,17 @@ local COMMANDS = {
         })
       end
       if args.rockspec then
+        local rockspec_flags = { }
+        if language == "moonscript" then
+          table.insert(rockspec_flags, "--moonscript")
+        end
+        if server == "cqueues" then
+          table.insert(rockspec_flags, "--cqueues")
+        end
         return self:execute({
           "generate",
-          "rockspec"
+          "rockspec",
+          unpack(rockspec_flags)
         })
       end
     end

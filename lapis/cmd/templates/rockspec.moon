@@ -4,6 +4,7 @@ argparser = ->
     \option("--version-name", "Version of rockspec file to generate")\default "dev-1"
 
     \group("Dependencies"
+      \flag "--cqueues", "Include dependencies for cqueues server support"
       \flag "--moonscript --moon", "Include MoonScript as dependency"
       \flag "--sqlite", "Include SQLite dependencies"
       \flag "--postgresql --postgres", "Include PostgreSQL dependencies"
@@ -67,6 +68,10 @@ write = (args) =>
     "lua ~> 5.1",
     "lapis == #{require("lapis.version")}"
   }
+
+  if args.cqueues
+    table.insert dependencies, "cqueues"
+    table.insert dependencies, "http"
 
   if args.moonscript
     table.insert dependencies, "moonscript"

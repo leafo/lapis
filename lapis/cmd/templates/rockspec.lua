@@ -4,7 +4,7 @@ argparser = function()
     local _with_0 = require("argparse")("lapis generate rockspec", "Generate a LuaRocks rockspec file for managing dependencies")
     _with_0:option("--app-name", "The name of the app to use for the rockspec. Defaults to name of current directory")
     _with_0:option("--version-name", "Version of rockspec file to generate"):default("dev-1")
-    _with_0:group("Dependencies", _with_0:flag("--moonscript --moon", "Include MoonScript as dependency"), _with_0:flag("--sqlite", "Include SQLite dependencies"), _with_0:flag("--postgresql --postgres", "Include PostgreSQL dependencies"), _with_0:flag("--mysql", "Include MySQL dependency"))
+    _with_0:group("Dependencies", _with_0:flag("--cqueues", "Include dependencies for cqueues server support"), _with_0:flag("--moonscript --moon", "Include MoonScript as dependency"), _with_0:flag("--sqlite", "Include SQLite dependencies"), _with_0:flag("--postgresql --postgres", "Include PostgreSQL dependencies"), _with_0:flag("--mysql", "Include MySQL dependency"))
     return _with_0
   end
 end
@@ -68,6 +68,10 @@ write = function(self, args)
     "lua ~> 5.1",
     "lapis == " .. tostring(require("lapis.version"))
   }
+  if args.cqueues then
+    table.insert(dependencies, "cqueues")
+    table.insert(dependencies, "http")
+  end
   if args.moonscript then
     table.insert(dependencies, "moonscript")
   end

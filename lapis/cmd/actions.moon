@@ -97,7 +97,14 @@ COMMANDS = {
         @execute {"generate", "tupfile" }
 
       if args.rockspec
-        @execute {"generate", "rockspec" }
+        rockspec_flags = {}
+        if language == "moonscript"
+          table.insert rockspec_flags, "--moonscript"
+
+        if server == "cqueues"
+          table.insert rockspec_flags, "--cqueues"
+
+        @execute {"generate", "rockspec", unpack rockspec_flags }
   }
 
   {
