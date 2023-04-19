@@ -91,7 +91,12 @@ run_migrations = function(migrations, prefix, options)
     options = { }
   end
   assert(type(migrations) == "table", "expecting a table of migrations for run_migrations")
-  if options.transaction == "global" then
+  local dry_run, transaction
+  dry_run, transaction = options.dry_run, options.transaction
+  if dry_run then
+    transaction = transaction or "global"
+  end
+  if transaction == "global" then
     start_transaction()
   end
   local entity_exists
@@ -136,20 +141,28 @@ run_migrations = function(migrations, prefix, options)
     end
     if not (exists[tostring(name)]) then
       logger.migration(name)
-      if options.transaction == "individual" then
+      if transaction == "individual" then
         start_transaction()
       end
       fn(name)
       LapisMigrations:create(name)
-      if options.transaction == "individual" then
-        commit_transaction()
+      if transaction == "individual" then
+        if dry_run then
+          rollback_transaction()
+        else
+          commit_transaction()
+        end
       end
       count = count + 1
     end
   end
   logger.migration_summary(count)
-  if options.transaction == "global" then
-    commit_transaction()
+  if transaction == "global" then
+    if dry_run then
+      rollback_transaction()
+    else
+      commit_transaction()
+    end
   end
 end
 return {

@@ -42,7 +42,12 @@ rollback_transaction = ->
 run_migrations = (migrations, prefix, options={}) ->
   assert type(migrations) == "table", "expecting a table of migrations for run_migrations"
 
-  if options.transaction == "global"
+  {:dry_run, :transaction} = options
+
+  if dry_run
+    transaction or= "global"
+
+  if transaction == "global"
     start_transaction!
 
   import entity_exists from require "lapis.db.schema"
@@ -64,21 +69,27 @@ run_migrations = (migrations, prefix, options={}) ->
     unless exists[tostring name]
       logger.migration name
 
-      if options.transaction == "individual"
+      if transaction == "individual"
         start_transaction!
 
       fn name
       LapisMigrations\create name
 
-      if options.transaction == "individual"
-        commit_transaction!
+      if transaction == "individual"
+        if dry_run
+          rollback_transaction!
+        else
+          commit_transaction!
 
       count += 1
 
   logger.migration_summary count
 
-  if options.transaction == "global"
-    commit_transaction!
+  if transaction == "global"
+    if dry_run
+      rollback_transaction!
+    else
+      commit_transaction!
 
   return
 

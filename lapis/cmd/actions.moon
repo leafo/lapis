@@ -221,6 +221,7 @@ COMMANDS = {
       add_environment_argument command
       with command
         \option("--migrations-module", "Module to load for migrations")\argname("<module>")\default "migrations"
+        \flag("--dry-run", "Immediately roll back after appyling migrations. Forces migrations to run in a transaction")
         \option("--transaction")\args("?")\choices({"global", "individual"})\action (args, name, val) ->
           -- flatten the table that's created from args("?")
           args[name] = val[next(val)] or "global"
@@ -234,6 +235,7 @@ COMMANDS = {
       migrations = require "lapis.db.migrations"
       migrations.run_migrations require(args.migrations_module), nil, {
         transaction: args.transaction
+        dry_run: args.dry_run
       }
 
       env.pop!

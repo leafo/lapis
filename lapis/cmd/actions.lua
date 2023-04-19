@@ -268,6 +268,7 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:option("--migrations-module", "Module to load for migrations"):argname("<module>"):default("migrations")
+        _with_0:flag("--dry-run", "Immediately roll back after appyling migrations. Forces migrations to run in a transaction")
         _with_0:option("--transaction"):args("?"):choices({
           "global",
           "individual"
@@ -285,7 +286,8 @@ local COMMANDS = {
       print(colors("%{bright yellow}Running migrations for environment:%{reset} " .. tostring(args.environment)))
       local migrations = require("lapis.db.migrations")
       migrations.run_migrations(require(args.migrations_module), nil, {
-        transaction = args.transaction
+        transaction = args.transaction,
+        dry_run = args.dry_run
       })
       return env.pop()
     end
