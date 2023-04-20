@@ -320,6 +320,9 @@ types.trimmed_text:transform(" wor ld \t ") --> "wor ld"
 ]]
 }
 
+This type is equivalent to the following: `types.valid_text / trim`, where
+`trim` is implemented using the pattern in `lapis.util.utf8`
+
 #### `types.truncated_text(len)`
 
 Matches a string that is valid UTF8, and transforms it such that it is `len`
