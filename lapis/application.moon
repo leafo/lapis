@@ -2,6 +2,8 @@
 logger = require "lapis.logging"
 lapis_config = require "lapis.config"
 
+coroutine = require "lapis.coroutine"
+
 import Router from require "lapis.router"
 
 import insert from table

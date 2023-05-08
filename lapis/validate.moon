@@ -6,6 +6,8 @@ import insert from table
 
 unpack = unpack or table.unpack
 
+coroutine = require "lapis.coroutine"
+
 validate_functions = {
   exists: (input) ->
     input and input != "", "%s must be provided"

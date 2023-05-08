@@ -1,6 +1,7 @@
 local insert
 insert = table.insert
 local unpack = unpack or table.unpack
+local coroutine = require("lapis.coroutine")
 local validate_functions = {
   exists = function(input)
     return input and input ~= "", "%s must be provided"

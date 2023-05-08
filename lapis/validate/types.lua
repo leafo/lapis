@@ -7,6 +7,7 @@ local instance_of
 instance_of = require("tableshape.moonscript").instance_of
 local yield_error
 yield_error = require("lapis.application").yield_error
+local coroutine = require("lapis.coroutine")
 local unpack = unpack or table.unpack
 local indent
 indent = function(str)

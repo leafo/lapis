@@ -118,6 +118,7 @@ each_route = function(obj, scan_metatable, callback)
     end
   end
 end
+local coroutine = require("lapis.coroutine")
 local each_route_iter
 each_route_iter = function(obj, scan_metatable)
   return coroutine.wrap(function()

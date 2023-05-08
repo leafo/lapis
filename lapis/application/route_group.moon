@@ -139,6 +139,7 @@ each_route = (obj, scan_metatable=false, callback) ->
     if obj_mt and type(obj_mt.__index) == "table"
       each_route obj_mt.__index, scan_metatable, callback
 
+coroutine = require "lapis.coroutine"
 each_route_iter = (obj, scan_metatable) ->
   coroutine.wrap ->
     each_route obj, scan_metatable, coroutine.yield

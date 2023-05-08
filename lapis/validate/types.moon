@@ -4,6 +4,8 @@ import instance_of from require "tableshape.moonscript"
 
 import yield_error from require "lapis.application"
 
+coroutine = require "lapis.coroutine"
+
 unpack = unpack or table.unpack
 
 indent = (str) ->

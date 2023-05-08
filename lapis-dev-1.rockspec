@@ -63,6 +63,7 @@ build = {
     ["lapis.cmd.templates.tupfile"] = "lapis/cmd/templates/tupfile.lua",
     ["lapis.cmd.util"] = "lapis/cmd/util.lua",
     ["lapis.config"] = "lapis/config.lua",
+    ["lapis.coroutine"] = "lapis/coroutine.lua",
     ["lapis.cqueues"] = "lapis/cqueues.lua",
     ["lapis.csrf"] = "lapis/csrf.lua",
     ["lapis.db"] = "lapis/db.lua",
