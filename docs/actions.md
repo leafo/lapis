@@ -573,10 +573,11 @@ following sources:
 * Body parameters -- For request methods that support a body, like `POST` and `PUT`, the body will automatically be parsed if the content type is `application/x-www-form-urlencoded` or `multipart/form-data`
 * Query parameters -- Parameters included at the end of a request URL following the `?`. `/users?filter=blue` will create a parameter called filter with the value `"blue"`
 
-The `@params` object is a concatenation of all the default loaded parameters
-listed above. URL parameters have the highest precedence, followed by body
-parameters, then query parameters. This means that an `:id` URL parameters will
-not be overwritten by an `?id=` query parameter.
+The <span class="for_moon">`@params`</span><span class="for_lua">`self.params`</span>
+object is a concatenation of all the default loaded parameters listed above.
+URL parameters have the highest precedence, followed by body parameters,
+then query parameters. This means that an `:id` URL parameters will not
+be overwritten by an `?id=` query parameter.
 
 > Headers and cookies are also accessible on the request object but they are
 > not included in the parameters object.
@@ -861,9 +862,9 @@ user = Users\find 1
 
 #### Using the `url_key` method
 
-The value of any parameter in `params` is a string then it is inserted into the
-generated path as is. If the value is a table, then the `url_key` method is
-called on it, and the return value is inserted into the path.
+If the value of any parameter in `params` is a string, then it is inserted
+into the generated path as is. If the value is a table, then the `url_key`
+method is called on it, and the return value is inserted into the path.
 
 For example, consider a `Users` model which we've generated a `url_key` method
 for:
@@ -1316,12 +1317,12 @@ or overriding the appropriate fields.
 ### `application:match([route_name], route_patch, action_fn)`
 
 Adds a new route to the route group contained by the application. See above for
-more information on registering actions. Note that routes are inheritance by
-the inheritance change of the application object.
+more information on registering actions. Note that routes are inherited by
+the inheritance chain of the application object.
 
 You can overwrite a route by re-using the same route name, or path, and that
 route will take precedence over one defined further up in the inheritance
-change.
+chain.
 
 Class approach:
 
