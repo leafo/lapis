@@ -27,6 +27,7 @@ Enum	lapis/db/base_model.moon	/^class Enum$/;"	c	language:moon
 ErrorPage	lapis/views/error.moon	/^class ErrorPage extends html.Widget$/;"	c	language:moon
 EtluaWidget	lapis/etlua.moon	/^class EtluaWidget extends Widget$/;"	c	language:moon
 Flow	lapis/flow.moon	/^class Flow$/;"	c	language:moon
+LOADED_KEY	lapis/db/model/relations.moon	/^LOADED_KEY = setmetatable {}, __tostring: => "::loaded_relations::"$/;"	f	language:moon
 LapisMigrations	lapis/db/migrations.moon	/^class LapisMigrations extends Model$/;"	c	language:moon
 Model	lapis/db/mysql/model.moon	/^class Model extends BaseModel$/;"	c	language:moon
 Model	lapis/db/postgres/model.moon	/^class Model extends BaseModel$/;"	c	language:moon
@@ -70,27 +71,63 @@ _transform	lapis/moonscript/widget_optimizer.moon	/^  _transform: (...) => @.fn!
 _transform	lapis/validate/types.moon	/^  _transform: (value, state) =>$/;"	f	language:moon class:MultiParamsType
 _transform	lapis/validate/types.moon	/^  _transform: (value, state) =>$/;"	f	language:moon class:ParamsShapeType
 add	lapis/spec/shared.moon	/^  add: (key, ...) =>$/;"	f	language:moon class:Dict
+add_before_filter	lapis/application/route_group.moon	/^add_before_filter = (obj, fn) ->$/;"	f	language:moon
+add_column	lapis/db/mysql/schema.moon	/^add_column = (tname, col_name, col_type) ->$/;"	f	language:moon
+add_column	lapis/db/postgres/schema.moon	/^add_column = (tname, col_name, col_type) ->$/;"	f	language:moon
+add_column	lapis/db/sqlite/schema.moon	/^add_column = (tname, col_name, col_type) ->$/;"	f	language:moon
 add_config_header	lapis/cmd/nginx/config.moon	/^  add_config_header: (compiled, env) =>$/;"	f	language:moon class:ConfigCompiler
+add_relations	lapis/db/model/relations.moon	/^add_relations = (relations) =>$/;"	f	language:moon
+add_route	lapis/application/route_group.moon	/^add_route = (obj, route_name, path, handler) ->$/;"	f	language:moon
 add_route	lapis/router.moon	/^  add_route: (route, responder) =>$/;"	f	language:moon class:Router
+add_route_verb	lapis/application/route_group.moon	/^add_route_verb = (obj, respond_to, method, route_name, path, handler) ->$/;"	f	language:moon
 after	lapis/db/pagination.moon	/^  after: (...) =>$/;"	f	language:moon class:OrderedPaginator
+argparser	lapis/cmd/templates/application.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/flow.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/gitignore.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/migration.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/model.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/models.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/nginx/config.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/rockspec.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/spec.moon	/^argparser = ->$/;"	f	language:moon
+argparser	lapis/cmd/templates/tupfile.moon	/^argparser = ->$/;"	f	language:moon
+array	lapis/db/postgres.moon	/^array = (t) ->$/;"	f	language:moon
+assert_env	lapis/environment.moon	/^assert_env = (env, opts={}) ->$/;"	f	language:moon
+assert_error	lapis/application.moon	/^assert_error = (thing, msg, ...) ->$/;"	f	language:moon
 assert_errors	lapis/validate/types.moon	/^  assert_errors: =>$/;"	f	language:moon class:ParamsShapeType
+assert_request	lapis/spec/request.moon	/^assert_request = (...) ->$/;"	f	language:moon
+assert_token	lapis/csrf.moon	/^assert_token = (...) ->$/;"	f	language:moon
+assert_valid	lapis/validate.moon	/^assert_valid = (object, validations) ->$/;"	f	language:moon
 assign	lapis/etlua.moon	/^  assign: (...) =>$/;"	f	language:moon class:BufferCompiler
 attach_server	lapis/cmd/cqueues.moon	/^  attach_server: (env, overrides) =>$/;"	f	language:moon class:Runner
 attach_server	lapis/cmd/nginx.moon	/^  attach_server: (environment, env_overrides) =>$/;"	f	language:moon class:NginxRunner
+auto_table	lapis/util.moon	/^auto_table = (fn) ->$/;"	f	language:moon
 before	lapis/db/pagination.moon	/^  before: (...) =>$/;"	f	language:moon class:OrderedPaginator
 before_filter	lapis/application.moon	/^  before_filter: (fn) =>$/;"	f	language:moon class:Application
 build	lapis/router.moon	/^  build: =>$/;"	f	language:moon class:Router
 build_grammar	lapis/router.moon	/^  build_grammar: =>$/;"	f	language:moon class:RouteParser
+build_helpers	lapis/db/base.moon	/^build_helpers = (escape_literal, escape_identifier) ->$/;"	f	language:moon
 build_parser	lapis/cmd/actions.moon	/^  build_parser: =>$/;"	f	language:moon class:CommandRunner
+build_request	lapis/nginx.moon	/^build_request = (unlazy=false) ->$/;"	f	language:moon
+build_response	lapis/nginx.moon	/^build_response = ->$/;"	f	language:moon
 build_route	lapis/router.moon	/^  build_route: (path, responder, name) =>$/;"	f	language:moon class:Router
 build_router	lapis/application.moon	/^  build_router: =>$/;"	f	language:moon class:Application
 build_url	lapis/request.moon	/^  build_url: (path, options) =>$/;"	f	language:moon class:Request
+build_url	lapis/util.moon	/^build_url = (parts) ->$/;"	f	language:moon
+cache_key	lapis/nginx/cache.moon	/^cache_key = (path, params, r) ->$/;"	f	language:moon
+cached	lapis/nginx/cache.moon	/^cached = (fn_or_tbl) ->$/;"	f	language:moon
 call	lapis/html.moon	/^  call: (fn, ...) =>$/;"	f	language:moon class:Buffer
+capture_errors	lapis/application.moon	/^capture_errors = (fn, error_response=default_error_response) ->$/;"	f	language:moon
+capture_errors_json	lapis/application.moon	/^capture_errors_json = (fn) ->$/;"	f	language:moon
 check_binary_is_openresty	lapis/cmd/nginx.moon	/^  check_binary_is_openresty: (path) =>$/;"	f	language:moon class:NginxRunner
 check_context	lapis/cmd/actions.moon	/^  check_context: (environment, contexts) =>$/;"	f	language:moon class:CommandRunner
 check_unique_constraint	lapis/db/base_model.moon	/^  @check_unique_constraint: (name, value) =>$/;"	f	language:moon class:BaseModel
 check_value	lapis/moonscript/widget_optimizer.moon	/^  check_value: (...) => @.fn!\\check_value ...$/;"	f	language:moon class:Proxy
+classnames	lapis/html.moon	/^classnames = (t) ->$/;"	f	language:moon
+clause	lapis/db/base.moon	/^clause = (clause, opts) ->$/;"	f	language:moon
+clear_loaded_relation	lapis/db/model/relations.moon	/^clear_loaded_relation = (item, name) ->$/;"	f	language:moon
 close_test_server	lapis/spec/server.moon	/^  close_test_server: =>$/;"	f	language:moon class:SpecServer
+columnize	lapis/cmd/util.moon	/^columnize = (rows, indent=2, padding=4, wrap=true) ->$/;"	f	language:moon
 columns	lapis/db/mysql/model.moon	/^  @columns: =>$/;"	f	language:moon class:Model
 columns	lapis/db/postgres/model.moon	/^  @columns: =>$/;"	f	language:moon class:Model
 columns	lapis/db/sqlite/model.moon	/^  @columns: =>$/;"	f	language:moon class:Model
@@ -99,6 +136,7 @@ compile_chunks	lapis/router.moon	/^  compile_chunks: (chunks, exclude=nil) =>$/;
 compile_config	lapis/cmd/nginx/config.moon	/^  compile_config: (config, env={}, opts={}) =>$/;"	f	language:moon class:ConfigCompiler
 compile_etlua_config	lapis/cmd/nginx/config.moon	/^  compile_etlua_config: (config, env={}, opts={}) =>$/;"	f	language:moon class:ConfigCompiler
 compile_exclude	lapis/router.moon	/^  compile_exclude: (current_p, chunks, k=1) =>$/;"	f	language:moon class:RouteParser
+connect	lapis/db/postgres.moon	/^connect = ->$/;"	f	language:moon
 content	lapis/html.moon	/^  content: => -- implement me$/;"	f	language:moon class:Widget
 content	lapis/views/error.moon	/^  content: =>$/;"	f	language:moon class:ErrorPage
 content	lapis/views/layout.moon	/^  content: =>$/;"	f	language:moon class:Default
@@ -109,22 +147,64 @@ count	lapis/db/base_model.moon	/^  @count: (clause, ...) =>$/;"	f	language:moon 
 create	lapis/db/base_model.moon	/^  @create: (values, opts) =>$/;"	f	language:moon class:BaseModel
 create	lapis/db/migrations.moon	/^  @create: (name) =>$/;"	f	language:moon class:LapisMigrations
 create	lapis/db/mysql/model.moon	/^  @create: (values, opts) =>$/;"	f	language:moon class:Model
+create_index	lapis/db/mysql/schema.moon	/^create_index = (tname, ...) ->$/;"	f	language:moon
+create_index	lapis/db/postgres/schema.moon	/^create_index = (tname, ...) ->$/;"	f	language:moon
+create_index	lapis/db/sqlite/schema.moon	/^create_index = (tname, ...) ->$/;"	f	language:moon
+create_migrations_table	lapis/db/migrations.moon	/^create_migrations_table = (table_name=LapisMigrations\\table_name!) ->$/;"	f	language:moon
+create_server	lapis/cmd/cqueues.moon	/^create_server = (app_module, environment) ->$/;"	f	language:moon
+create_table	lapis/db/mysql/schema.moon	/^create_table = (name, columns, opts={}) ->$/;"	f	language:moon
+create_table	lapis/db/postgres/schema.moon	/^create_table = (name, columns, opts={}) ->$/;"	f	language:moon
+create_table	lapis/db/sqlite/schema.moon	/^create_table = (name, columns, opts={}) ->$/;"	f	language:moon
+current	lapis/server.moon	/^current = ->$/;"	f	language:moon
+date_diff	lapis/util.moon	/^date_diff = (later, sooner) ->$/;"	f	language:moon
+decode_with_secret	lapis/util/encoding.moon	/^decode_with_secret = (msg_and_sig, secret=config.secret, sep="%.") ->$/;"	f	language:moon
+default_environment	lapis/environment.moon	/^default_environment = ->$/;"	f	language:moon
 default_route	lapis/application.moon	/^  default_route: =>$/;"	f	language:moon class:Application
 default_route	lapis/router.moon	/^  default_route: (route) =>$/;"	f	language:moon class:Router
 delete	lapis/db/base_model.moon	/^  delete: (...) =>$/;"	f	language:moon class:BaseModel
+delete	lapis/nginx/cache.moon	/^delete = (key, dict_name="page_cache") ->$/;"	f	language:moon
 delete	lapis/spec/shared.moon	/^  delete: (key) =>$/;"	f	language:moon class:Dict
+delete_all	lapis/nginx/cache.moon	/^delete_all = (dict_name="page_cache") ->$/;"	f	language:moon
+delete_path	lapis/nginx/cache.moon	/^delete_path = (path, dict_name="page_cache") ->$/;"	f	language:moon
 describe	lapis/moonscript/widget_optimizer.moon	/^  describe: => @.fn!\\describe!$/;"	f	language:moon class:Proxy
 detach	lapis/cmd/attached_server.moon	/^  detach: =>$/;"	f	language:moon class:AttachedServer
 detach	lapis/cmd/cqueues/attached_server.moon	/^  detach: =>$/;"	f	language:moon class:CqueuesAttachedServer
 detach	lapis/cmd/nginx/attached_server.moon	/^  detach: =>$/;"	f	language:moon class:NginxAttachedServer
 detach_server	lapis/cmd/cqueues.moon	/^  detach_server: =>$/;"	f	language:moon class:Runner
 detach_server	lapis/cmd/nginx.moon	/^  detach_server: =>$/;"	f	language:moon class:NginxRunner
+disconnect	lapis/db/postgres.moon	/^disconnect = ->$/;"	f	language:moon
 dispatch	lapis/application.moon	/^  dispatch: (req, res) =>$/;"	f	language:moon class:Application
+dispatch	lapis/cqueues.moon	/^dispatch = (app, server, stream) ->$/;"	f	language:moon
+dispatch	lapis/nginx.moon	/^dispatch = (app) ->$/;"	f	language:moon
+drop_column	lapis/db/mysql/schema.moon	/^drop_column = (tname, col_name) ->$/;"	f	language:moon
+drop_column	lapis/db/postgres/schema.moon	/^drop_column = (tname, col_name) ->$/;"	f	language:moon
+drop_column	lapis/db/sqlite/schema.moon	/^drop_column = (tname, col_name) ->$/;"	f	language:moon
+drop_index	lapis/db/mysql/schema.moon	/^drop_index = (tname, ...) ->$/;"	f	language:moon
+drop_index	lapis/db/postgres/schema.moon	/^drop_index = (...) ->$/;"	f	language:moon
+drop_index	lapis/db/sqlite/schema.moon	/^drop_index = (...) ->$/;"	f	language:moon
+drop_table	lapis/db/mysql/schema.moon	/^drop_table = (tname) ->$/;"	f	language:moon
+drop_table	lapis/db/postgres/schema.moon	/^drop_table = (tname) ->$/;"	f	language:moon
+drop_table	lapis/db/sqlite/schema.moon	/^drop_table = (tname) ->$/;"	f	language:moon
+drop_tables	lapis/spec/db.moon	/^drop_tables = (...) ->$/;"	f	language:moon
 each_item	lapis/db/pagination.moon	/^  each_item: =>$/;"	f	language:moon class:Paginator
 each_page	lapis/db/pagination.moon	/^  each_page: (page=1) =>$/;"	f	language:moon class:OffsetPaginator
 each_page	lapis/db/pagination.moon	/^  each_page: =>$/;"	f	language:moon class:OrderedPaginator
+each_route	lapis/application/route_group.moon	/^each_route = (obj, scan_metatable=false, callback) ->$/;"	f	language:moon
+each_route_iter	lapis/application/route_group.moon	/^each_route_iter = (obj, scan_metatable) ->$/;"	f	language:moon
+element	lapis/html.moon	/^element = (buffer, name, attrs, ...) ->$/;"	f	language:moon
 enable	lapis/application.moon	/^  enable: (feature) =>$/;"	f	language:moon class:Application
+encode_case	lapis/db/postgres.moon	/^encode_case = (exp, t, on_else) ->$/;"	f	language:moon
 encode_key	lapis/db/base_model.moon	/^  @encode_key: (...) =>$/;"	f	language:moon class:BaseModel
+encode_query_string	lapis/util.moon	/^encode_query_string = (t, sep="&") ->$/;"	f	language:moon
+encode_session	lapis/session.moon	/^encode_session = (tbl, secret=config.secret) ->$/;"	f	language:moon
+encode_with_secret	lapis/util/encoding.moon	/^encode_with_secret = (object, secret=config.secret, sep=".") ->$/;"	f	language:moon
+entity_exists	lapis/db/mysql/schema.moon	/^entity_exists = (name) ->$/;"	f	language:moon
+entity_exists	lapis/db/postgres/schema.moon	/^entity_exists = (name) ->$/;"	f	language:moon
+entity_exists	lapis/db/sqlite/schema.moon	/^entity_exists = (name) ->$/;"	f	language:moon
+enum	lapis/db/base_model.moon	/^enum = (tbl) ->$/;"	f	language:moon
+escape	lapis/html.moon	/^escape = (text) ->$/;"	f	language:moon
+escape_identifier	lapis/db/postgres.moon	/^escape_identifier = (ident) ->$/;"	f	language:moon
+escape_literal	lapis/db/postgres.moon	/^escape_literal = (val) ->$/;"	f	language:moon
 exec	lapis/cmd/nginx.moon	/^  exec: (cmd) =>$/;"	f	language:moon class:NginxRunner
 exec	lapis/cmd/nginx/attached_server.moon	/^  exec: (lua_code) =>$/;"	f	language:moon class:NginxAttachedServer
 execute	lapis/cmd/actions.moon	/^  execute: (args) =>$/;"	f	language:moon class:CommandRunner
@@ -137,53 +217,88 @@ extend	lapis/html.moon	/^  @extend: (name, tbl) =>$/;"	f	language:moon class:Wid
 extends	lapis/cmd/templates/application.moon	/^class extends lapis.Application$/;"	c	language:moon
 extends	lapis/db/base_model.moon	/^    class extends base_model$/;"	c	language:moon
 extends	lapis/lua.moon	/^    class extends extend$/;"	c	language:moon
+extract_cookies	lapis/spec/request.moon	/^extract_cookies = (response_headers) ->$/;"	f	language:moon
 fail_with_message	lapis/cmd/actions.moon	/^  fail_with_message: (msg) =>$/;"	f	language:moon class:CommandRunner
 find	lapis/db/base_model.moon	/^  @find: (...) =>$/;"	f	language:moon class:BaseModel
 find_action	lapis/application.moon	/^  find_action: (name, resolve=true) =>$/;"	f	language:moon class:Application
 find_all	lapis/db/base_model.moon	/^  @find_all: (ids, by_key=@primary_key) =>$/;"	f	language:moon class:BaseModel
 find_all	lapis/db/mysql/model.moon	/^  @find_all: (...) =>$/;"	f	language:moon class:Model
 find_nginx	lapis/cmd/nginx.moon	/^  find_nginx: =>$/;"	f	language:moon class:NginxRunner
+find_relation	lapis/db/model/relations.moon	/^find_relation = (model, name) ->$/;"	f	language:moon
+flatten_params	lapis/logging.moon	/^flatten_params = (params) ->$/;"	f	language:moon
+flatten_session	lapis/session.moon	/^flatten_session = (sess) ->$/;"	f	language:moon
 flow	lapis/request.moon	/^  flow: (flow) =>$/;"	f	language:moon class:Request
 flush_all	lapis/spec/shared.moon	/^  flush_all: =>$/;"	f	language:moon class:Dict
 for_db	lapis/db/base_model.moon	/^  for_db: (key) =>$/;"	f	language:moon class:Enum
+format_date	lapis/db/base.moon	/^format_date = (time) ->$/;"	f	language:moon
 format_error	lapis/cmd/actions.moon	/^  format_error: (msg) =>$/;"	f	language:moon class:CommandRunner
+from_json	lapis/util.moon	/^from_json = (obj) -> json.decode obj$/;"	f	language:moon
+gen_index_name	lapis/db/base.moon	/^gen_index_name = (...) ->$/;"	f	language:moon
+generate_token	lapis/csrf.moon	/^generate_token = (req, data) ->$/;"	f	language:moon
 get	lapis/spec/shared.moon	/^  get: (key) =>$/;"	f	language:moon class:Dict
 get_all	lapis/db/pagination.moon	/^  get_all: =>$/;"	f	language:moon class:OffsetPaginator
 get_command	lapis/cmd/actions.moon	/^  get_command: (name) =>$/;"	f	language:moon class:CommandRunner
 get_config	lapis/cmd/actions.moon	/^  get_config: (environment) =>$/;"	f	language:moon class:CommandRunner
 get_current_server	lapis/spec/server.moon	/^  get_current_server: =>$/;"	f	language:moon class:SpecServer
+get_fields	lapis/util.moon	/^get_fields = (obj, key, ...) ->$/;"	f	language:moon
+get_free_port	lapis/cmd/util.moon	/^get_free_port = ->$/;"	f	language:moon
 get_keys	lapis/spec/shared.moon	/^  get_keys: =>$/;"	f	language:moon class:Dict
 get_operator	lapis/db/base.moon	/^  get_operator: =>$/;"	f	language:moon class:DBClause
 get_ordered	lapis/db/pagination.moon	/^  get_ordered: (order, ...) =>$/;"	f	language:moon class:OrderedPaginator
 get_page	lapis/db/pagination.moon	/^  get_page: (...) =>$/;"	f	language:moon class:OrderedPaginator
 get_page	lapis/db/pagination.moon	/^  get_page: (page) =>$/;"	f	language:moon class:OffsetPaginator
 get_pid	lapis/cmd/nginx.moon	/^  get_pid: =>$/;"	f	language:moon class:NginxRunner
+get_raw_query	lapis/db/postgres.moon	/^get_raw_query = ->$/;"	f	language:moon
 get_relation_model	lapis/db/base_model.moon	/^  @get_relation_model: (model_name) =>$/;"	f	language:moon class:BaseModel
+get_relations_class	lapis/db/model/relations.moon	/^get_relations_class = (model) ->$/;"	f	language:moon
 get_request	lapis/request.moon	/^  get_request: => @$/;"	f	language:moon class:Request
 get_server_actions	lapis/cmd/actions.moon	/^  get_server_actions: (environment) =>$/;"	f	language:moon class:CommandRunner
 get_server_module	lapis/cmd/actions.moon	/^  get_server_module: (environment) =>$/;"	f	language:moon class:CommandRunner
 get_server_type	lapis/cmd/actions.moon	/^  get_server_type: (environment) =>$/;"	f	language:moon class:CommandRunner
+get_session	lapis/session.moon	/^get_session = (req_or_cookie, secret=config.secret) ->$/;"	f	language:moon
+getfenv	lapis/util/fenv.moon	/^getfenv = getfenv or (fn) ->$/;"	f	language:moon
 handle_404	lapis/application.moon	/^  handle_404: =>$/;"	f	language:moon class:Application
 handle_error	lapis/application.moon	/^  handle_error: (err, trace) =>$/;"	f	language:moon class:Application
 has_content_for	lapis/etlua.moon	/^  has_content_for: (name) =>$/;"	f	language:moon class:EtluaWidget
 has_content_for	lapis/html.moon	/^  has_content_for: (name) =>$/;"	f	language:moon class:Widget
 has_items	lapis/db/pagination.moon	/^  has_items: =>$/;"	f	language:moon class:OffsetPaginator
 header	lapis/etlua.moon	/^  header: =>$/;"	f	language:moon class:BufferCompiler
+hmac_sha256	lapis/util/encoding.moon	/^hmac_sha256 = (secret, str) ->$/;"	f	language:moon
 html	lapis/request.moon	/^  html: (fn) => html_writer fn$/;"	f	language:moon class:Request
+html_writer	lapis/html.moon	/^html_writer = (fn) ->$/;"	f	language:moon
 include	lapis/application.moon	/^  include: (other_app, opts) =>$/;"	f	language:moon class:Application
 include	lapis/html.moon	/^  @include: (other_cls) =>$/;"	f	language:moon class:Widget
 include_helper	lapis/html.moon	/^  include_helper: (helper) =>$/;"	f	language:moon class:Widget
 include_in	lapis/db/base_model.moon	/^  @include_in: (other_records, foreign_key, opts) =>$/;"	f	language:moon class:BaseModel
 incr	lapis/spec/shared.moon	/^  incr: (key, value) =>$/;"	f	language:moon class:Dict
 increment	lapis/etlua.moon	/^  increment: =>$/;"	f	language:moon class:BufferCompiler
+increment_perf	lapis/nginx/context.moon	/^increment_perf = (key, amount, parent=DEFAULT_PERFORMANCE_KEY) ->$/;"	f	language:moon
+is_array	lapis/db/postgres.moon	/^is_array = (v) ->$/;"	f	language:moon
+is_clause	lapis/db/base.moon	/^is_clause = (val) -> getmetatable(val) == DBClause.__base$/;"	f	language:moon
+is_encodable	lapis/db/base.moon	/^is_encodable = (item) ->$/;"	f	language:moon
+is_flow	lapis/flow.moon	/^is_flow = (cls) ->$/;"	f	language:moon
+is_list	lapis/db/base.moon	/^is_list = (val) -> getmetatable(val) == DBList.__base$/;"	f	language:moon
+is_mixins_class	lapis/html.moon	/^is_mixins_class = (cls) ->$/;"	f	language:moon
+is_raw	lapis/db/base.moon	/^is_raw = (val) -> getmetatable(val) == DBRaw.__base$/;"	f	language:moon
+json_encodable	lapis/util.moon	/^json_encodable = (obj, seen={}) ->$/;"	f	language:moon
+json_params	lapis/application.moon	/^json_params = (fn) ->$/;"	f	language:moon
+key_filter	lapis/util.moon	/^key_filter = (tbl, ...) ->$/;"	f	language:moon
+list	lapis/db/base.moon	/^list = (items) -> setmetatable {items}, DBList.__base$/;"	f	language:moon
 load	lapis/db/base_model.moon	/^  @load: (tbl) =>$/;"	f	language:moon class:BaseModel
 load	lapis/etlua.moon	/^  @load: (code) =>$/;"	f	language:moon class:EtluaWidget
 load_all	lapis/db/base_model.moon	/^  @load_all: (tbls) =>$/;"	f	language:moon class:BaseModel
 load_test_server	lapis/spec/server.moon	/^  load_test_server: (overrides) =>$/;"	f	language:moon class:SpecServer
+locked_fn	lapis/util/functions.moon	/^locked_fn = (fn) ->$/;"	f	language:moon
 make_scope	lapis/html.moon	/^  make_scope: =>$/;"	f	language:moon class:Buffer
+make_shared	lapis/spec/shared.moon	/^make_shared = ->$/;"	f	language:moon
 make_template_writer	lapis/cmd/actions.moon	/^  make_template_writer: =>$/;"	f	language:moon class:CommandRunner
+mark_loaded_relations	lapis/db/model/relations.moon	/^mark_loaded_relations = (items, name, value=true) ->$/;"	f	language:moon
 match	lapis/application.moon	/^  match: (route_name, path, handler) =>$/;"	f	language:moon class:Application
 match	lapis/router.moon	/^  match: (route) =>$/;"	f	language:moon class:Router
+methods	lapis/nginx/http.moon	/^methods = setmetatable {}, __index: (name) =>$/;"	f	language:moon
+migration_summary	lapis/logging.moon	/^migration_summary = (count) ->$/;"	f	language:moon
+mock_action	lapis/spec/request.moon	/^mock_action = (app_cls, url, opts, fn) ->$/;"	f	language:moon
+mock_request	lapis/spec/request.moon	/^mock_request = (app_cls, url, opts={}) ->$/;"	f	language:moon
 new	lapis/application.moon	/^  new: => @build_router!$/;"	f	language:moon class:Application
 new	lapis/cmd/actions.moon	/^  new: =>$/;"	f	language:moon class:CommandRunner
 new	lapis/cmd/cqueues.moon	/^  new: (@server_opts, @config) =>$/;"	f	language:moon class:Server
@@ -205,61 +320,130 @@ new	lapis/spec/server.moon	/^  new: (@runner) =>$/;"	f	language:moon class:SpecS
 new	lapis/spec/shared.moon	/^  new: =>$/;"	f	language:moon class:Dict
 new	lapis/validate/types.moon	/^  new: (@params_shapes={}) =>$/;"	f	language:moon class:MultiParamsType
 new	lapis/validate/types.moon	/^  new: (params_spec, opts) =>$/;"	f	language:moon class:ParamsShapeType
+ngx_replace_headers	lapis/nginx/http.moon	/^ngx_replace_headers = (new_headers=nil) ->$/;"	f	language:moon
 num_pages	lapis/db/pagination.moon	/^  num_pages: =>$/;"	f	language:moon class:OffsetPaginator
 paginated	lapis/db/base_model.moon	/^  @paginated: (...) =>$/;"	f	language:moon class:BaseModel
 parse	lapis/router.moon	/^  parse: (route) =>$/;"	f	language:moon class:RouteParser
 parse_args	lapis/cmd/actions.moon	/^  parse_args: (args) =>$/;"	f	language:moon class:CommandRunner
+parse_cookie_string	lapis/util.moon	/^parse_cookie_string = (str) ->$/;"	f	language:moon
+parse_flags	lapis/cmd/util.moon	/^parse_flags = (input) ->$/;"	f	language:moon
+pop	lapis/environment.moon	/^pop = ->$/;"	f	language:moon
+pop	lapis/spec/stack.moon	/^pop = ->$/;"	f	language:moon
+preload	lapis/db/model/relations.moon	/^preload = (objects, ...) ->$/;"	f	language:moon
 prepare_results	lapis/db/pagination.moon	/^  prepare_results: (items) =>$/;"	f	language:moon class:Paginator
 primary_keys	lapis/db/base_model.moon	/^  @primary_keys: =>$/;"	f	language:moon class:BaseModel
 process_config	lapis/cmd/nginx/attached_server.moon	/^  process_config: (cfg) =>$/;"	f	language:moon class:NginxAttachedServer
+protected_call	lapis/cqueues.moon	/^protected_call = (stream, fn)->$/;"	f	language:moon
+push	lapis/environment.moon	/^push = (name_or_env, overrides) ->$/;"	f	language:moon
+push	lapis/spec/stack.moon	/^push = (new_ngx) ->$/;"	f	language:moon
+query	lapis/db/postgres.moon	/^query = (str, ...) ->$/;"	f	language:moon
+raw	lapis/db/base.moon	/^raw = (val) -> setmetatable {tostring val}, DBRaw.__base$/;"	f	language:moon
 refresh	lapis/db/base_model.moon	/^  refresh: (fields="*", ...) =>$/;"	f	language:moon class:BaseModel
+relation_is_loaded	lapis/db/model/relations.moon	/^relation_is_loaded = (item, name) ->$/;"	f	language:moon
+release_fn	lapis/util/functions.moon	/^release_fn = (fn) ->$/;"	f	language:moon
+rename_column	lapis/db/mysql/schema.moon	/^rename_column = (tname, col_from, col_to, col_type)->$/;"	f	language:moon
+rename_column	lapis/db/postgres/schema.moon	/^rename_column = (tname, col_from, col_to) ->$/;"	f	language:moon
+rename_column	lapis/db/sqlite/schema.moon	/^rename_column = (tname, col_from, col_to) ->$/;"	f	language:moon
+rename_table	lapis/db/mysql/schema.moon	/^rename_table = (tname_from, tname_to) ->$/;"	f	language:moon
+rename_table	lapis/db/postgres/schema.moon	/^rename_table = (tname_from, tname_to) ->$/;"	f	language:moon
+rename_table	lapis/db/sqlite/schema.moon	/^rename_table = (tname_from, tname_to) ->$/;"	f	language:moon
 render	lapis/etlua.moon	/^  render: (buffer) =>$/;"	f	language:moon class:EtluaWidget
 render	lapis/html.moon	/^  render: (buffer, ...) =>$/;"	f	language:moon class:Widget
 render	lapis/html.moon	/^  render: (mod_name, ...) =>$/;"	f	language:moon class:Buffer
 render_error_request	lapis/application.moon	/^  render_error_request: (r, err, trace) =>$/;"	f	language:moon class:Application
+render_html	lapis/html.moon	/^render_html = (fn) ->$/;"	f	language:moon
 render_request	lapis/application.moon	/^  render_request: (r) =>$/;"	f	language:moon class:Application
 render_to_file	lapis/html.moon	/^  render_to_file: (file, ...) =>$/;"	f	language:moon class:Widget
 render_to_string	lapis/html.moon	/^  render_to_string: (...) =>$/;"	f	language:moon class:Widget
 render_widget	lapis/html.moon	/^  render_widget: (w) =>$/;"	f	language:moon class:Buffer
 replace	lapis/spec/shared.moon	/^  replace: (key, ...) =>$/;"	f	language:moon class:Dict
+request	lapis/logging.moon	/^request = (r) ->$/;"	f	language:moon
+request	lapis/nginx/http.moon	/^request = (url, str_body) ->$/;"	f	language:moon
 request	lapis/spec/server.moon	/^  request: (path="", opts={}) =>$/;"	f	language:moon class:SpecServer
 resolve	lapis/router.moon	/^  resolve: (route, ...) =>$/;"	f	language:moon class:Router
 route_precedence	lapis/router.moon	/^  route_precedence: (flags) =>$/;"	f	language:moon class:Router
+run_migrations	lapis/db/migrations.moon	/^run_migrations = (migrations, prefix, options={}) ->$/;"	f	language:moon
+running_in_test	lapis/spec.moon	/^running_in_test = ->$/;"	f	language:moon
 select	lapis/db/base_model.moon	/^  @select: (query="", ...) =>$/;"	f	language:moon class:BaseModel
 select	lapis/db/pagination.moon	/^  select: (...) =>$/;"	f	language:moon class:Paginator
 send_hup	lapis/cmd/nginx.moon	/^  send_hup: =>$/;"	f	language:moon class:NginxRunner
 send_signal	lapis/cmd/nginx.moon	/^  send_signal: (signal) =>$/;"	f	language:moon class:NginxRunner
 send_term	lapis/cmd/nginx.moon	/^  send_term: =>$/;"	f	language:moon class:NginxRunner
+serve	lapis/init.moon	/^serve = (app_cls) ->$/;"	f	language:moon
 set	lapis/spec/shared.moon	/^  set: (key, value, exp, flags) =>$/;"	f	language:moon class:Dict
 set_base_path	lapis/cmd/nginx.moon	/^  set_base_path: (p="") =>$/;"	f	language:moon class:NginxRunner
+set_default_environment	lapis/environment.moon	/^set_default_environment = (name) ->$/;"	f	language:moon
+set_hmac	lapis/util/encoding.moon	/^set_hmac = (fn) -> default_hmac = fn$/;"	f	language:moon
+set_perf	lapis/nginx/context.moon	/^set_perf = (key, value, parent=DEFAULT_PERFORMANCE_KEY) ->$/;"	f	language:moon
+set_print	lapis/logging.moon	/^set_print = (p) ->$/;"	f	language:moon
+set_proxy_location	lapis/nginx/http.moon	/^set_proxy_location = (loc) -> proxy_location = loc$/;"	f	language:moon
+set_raw_query	lapis/db/postgres.moon	/^set_raw_query = (fn) ->$/;"	f	language:moon
+setfenv	lapis/util/fenv.moon	/^setfenv = setfenv or (fn, env) ->$/;"	f	language:moon
+setup	lapis/spec/shared.moon	/^setup = ->$/;"	f	language:moon
+simple	lapis/nginx/http.moon	/^simple = (req, body) ->$/;"	f	language:moon
 singular_name	lapis/db/base_model.moon	/^      @singular_name: =>$/;"	f	language:moon class:extends
 singular_name	lapis/db/base_model.moon	/^  @singular_name: =>$/;"	f	language:moon class:BaseModel
+slugify	lapis/util.moon	/^slugify = (str) ->$/;"	f	language:moon
+split	lapis/cmd/util.moon	/^split = (str, delim using escape_pattern) ->$/;"	f	language:moon
 start	lapis/cmd/attached_server.moon	/^  start: (env, env_overrides) =>$/;"	f	language:moon class:AttachedServer
 start	lapis/cmd/cqueues.moon	/^  start: =>$/;"	f	language:moon class:Server
 start	lapis/cmd/cqueues/attached_server.moon	/^  start: (env, overrides) =>$/;"	f	language:moon class:CqueuesAttachedServer
 start	lapis/cmd/nginx/attached_server.moon	/^  start: (environment, env_overrides) =>$/;"	f	language:moon class:NginxAttachedServer
 start_nginx	lapis/cmd/nginx.moon	/^  start_nginx: (background=false) =>$/;"	f	language:moon class:NginxRunner
+start_server	lapis/cmd/cqueues.moon	/^start_server =  (...) ->$/;"	f	language:moon
+start_server	lapis/logging.moon	/^start_server = (port, environment_name) ->$/;"	f	language:moon
 status_tick	lapis/cmd/attached_server.moon	/^  status_tick: =>$/;"	f	language:moon class:AttachedServer
 status_tick	lapis/cmd/cqueues/attached_server.moon	/^  status_tick: =>$/;"	f	language:moon class:CqueuesAttachedServer
 stop	lapis/cmd/cqueues.moon	/^  stop: =>$/;"	f	language:moon class:Server
+string_length	lapis/util/utf8.moon	/^string_length = (str) ->$/;"	f	language:moon
+stub_request	lapis/spec/request.moon	/^stub_request = (app_cls, url="\/", opts={}) ->$/;"	f	language:moon
 style	lapis/views/error.moon	/^  style: =>$/;"	f	language:moon class:ErrorPage
 table_name	lapis/db/base_model.moon	/^      @table_name: =>$/;"	f	language:moon class:extends
 table_name	lapis/db/base_model.moon	/^  @table_name: =>$/;"	f	language:moon class:BaseModel
+teardown	lapis/spec/shared.moon	/^teardown = ->$/;"	f	language:moon
+test_input	lapis/validate.moon	/^test_input = (input, func, args) ->$/;"	f	language:moon
+time_ago	lapis/util.moon	/^time_ago = (time) ->$/;"	f	language:moon
+title_case	lapis/util.moon	/^title_case = (str) ->$/;"	f	language:moon
+to_json	lapis/util.moon	/^to_json = (obj) -> json.encode json_encodable obj$/;"	f	language:moon
 to_name	lapis/db/base_model.moon	/^  to_name: (val) =>$/;"	f	language:moon class:Enum
 total_items	lapis/db/pagination.moon	/^  total_items: =>$/;"	f	language:moon class:OffsetPaginator
+trim	lapis/util.moon	/^trim = (str) ->$/;"	f	language:moon
+trim_all	lapis/util.moon	/^trim_all = (tbl) ->$/;"	f	language:moon
+trim_filter	lapis/util.moon	/^trim_filter = (tbl, keys, empty_val) ->$/;"	f	language:moon
+truncate_tables	lapis/spec/db.moon	/^truncate_tables = (...) ->$/;"	f	language:moon
+underscore	lapis/util.moon	/^underscore = (str) ->$/;"	f	language:moon
+unescape	lapis/html.moon	/^unescape = (text) ->$/;"	f	language:moon
+uniquify	lapis/util.moon	/^uniquify = (list) ->$/;"	f	language:moon
 update	lapis/db/base_model.moon	/^  update: (first, ...) =>$/;"	f	language:moon class:BaseModel
 update	lapis/db/mysql/model.moon	/^  update: (first, ...) =>$/;"	f	language:moon class:Model
 url_for	lapis/request.moon	/^  url_for: (first, ...) =>$/;"	f	language:moon class:Request
 url_for	lapis/router.moon	/^  url_for: (name, params, query) =>$/;"	f	language:moon class:Router
 url_key	lapis/db/base_model.moon	/^  url_key: => concat [@[key] for key in *{@@primary_keys!}], "-"$/;"	f	language:moon class:BaseModel
+use_test_env	lapis/spec.moon	/^use_test_env = (env_name="test") ->$/;"	f	language:moon
+use_test_server	lapis/spec.moon	/^use_test_server = ->$/;"	f	language:moon
+validate	lapis/validate.moon	/^validate = (object, validations, opts={}) ->$/;"	f	language:moon
+validate_token	lapis/csrf.moon	/^validate_token = (req, callback) ->$/;"	f	language:moon
 wait_until	lapis/cmd/attached_server.moon	/^  wait_until: (server_status="open") =>$/;"	f	language:moon class:AttachedServer
 wait_until_closed	lapis/cmd/attached_server.moon	/^  wait_until_closed: => @wait_until "close"$/;"	f	language:moon class:AttachedServer
 wait_until_ready	lapis/cmd/attached_server.moon	/^  wait_until_ready: => @wait_until "open"$/;"	f	language:moon class:AttachedServer
+with_params	lapis/validate.moon	/^with_params = (params_spec, fn) ->$/;"	f	language:moon
 with_temp	lapis/html.moon	/^  with_temp: (fn) =>$/;"	f	language:moon class:Buffer
 wrap_environment	lapis/cmd/nginx/config.moon	/^  wrap_environment: (env) =>$/;"	f	language:moon class:ConfigCompiler
 wrap_handler	lapis/application.moon	/^  wrap_handler: (handler) =>$/;"	f	language:moon class:Application
+write	lapis/cmd/templates/application.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/flow.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/gitignore.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/migration.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/model.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/models.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/nginx/config.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/rockspec.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/spec.moon	/^write = (args) =>$/;"	f	language:moon
+write	lapis/cmd/templates/tupfile.moon	/^write = (args) =>$/;"	f	language:moon
 write	lapis/html.moon	/^  write: (thing, next_thing, ...) =>$/;"	f	language:moon class:Buffer
 write	lapis/request.moon	/^  write: (thing, ...) =>$/;"	f	language:moon class:Request
 write_config_for	lapis/cmd/nginx.moon	/^  write_config_for: (environment, process_fn, ...) =>$/;"	f	language:moon class:NginxRunner
 write_escaped	lapis/html.moon	/^  write_escaped: (thing, next_thing, ...) =>$/;"	f	language:moon class:Buffer
 write_file_safe	lapis/cmd/actions.moon	/^  write_file_safe: (file, content) =>$/;"	f	language:moon class:CommandRunner
+write_session	lapis/session.moon	/^write_session = (r) ->$/;"	f	language:moon
+yield_error	lapis/application.moon	/^yield_error = (msg="unknown error") ->$/;"	f	language:moon
