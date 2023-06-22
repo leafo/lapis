@@ -7,6 +7,10 @@ test:
 	busted spec_mysql
 	busted spec_openresty
 
+
+tags::
+	moon-tags $$(git ls-files lapis | grep -i '\.moon$$') > $@
+
 local: build
 	luarocks --lua-version=5.1 make --force --local lapis-dev-1.rockspec
 
