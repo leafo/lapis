@@ -188,7 +188,7 @@ limited_text = (max_len, min_len=1) ->
   out\describe "text between #{min_len} and #{max_len} characters"
 
 truncated_text = (len) ->
-  assert len, "missing length for shapes.truncated_text"
+  assert len, "missing length for types.truncated_text"
 
   trimmed_text * types.one_of({
     types.string\length 0, len
@@ -211,7 +211,7 @@ db_id = (types.one_of({
 }) * types.range(0, 2147483647))\describe "database ID integer"
 
 db_enum = (e) ->
-  assert e, "missing enum for shapes.db_enum"
+  assert e, "missing enum for types.db_enum"
   for_db = e\for_db
 
   names = { unpack e }

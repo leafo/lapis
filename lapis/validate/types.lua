@@ -346,7 +346,7 @@ limited_text = function(max_len, min_len)
 end
 local truncated_text
 truncated_text = function(len)
-  assert(len, "missing length for shapes.truncated_text")
+  assert(len, "missing length for types.truncated_text")
   return trimmed_text * types.one_of({
     types.string:length(0, len),
     types.string / function(s)
@@ -372,7 +372,7 @@ local db_id = (types.one_of({
 }) * types.range(0, 2147483647)):describe("database ID integer")
 local db_enum
 db_enum = function(e)
-  assert(e, "missing enum for shapes.db_enum")
+  assert(e, "missing enum for types.db_enum")
   local for_db
   do
     local _base_0 = e
