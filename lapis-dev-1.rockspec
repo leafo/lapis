@@ -24,7 +24,7 @@ dependencies = {
   "lua-cjson",
   "luaossl",
   "luasocket",
-  "pgmoon",
+  "kong-pgmoon",
 }
 
 -- test_dependencies = {
