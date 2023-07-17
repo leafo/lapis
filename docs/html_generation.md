@@ -171,7 +171,8 @@ example, if it was loading the widget for the name `"index"` it would try to
 load the module `views.index`, and the result of that module should be the
 widget.
 
-This is what a widget looks like:
+The `Widget` class implements the class based `extend` interface that is seen
+on other base classes exposed by Lapis. This is what a widget might look like:
 
 $dual_code{
 moon = [[
@@ -204,6 +205,33 @@ lua = [[
 > The name of the widget class is insignificant, but it's worth making one
 > because some systems can auto-generate encapsulating HTML named after the
 > class.
+
+
+And here's the most minimal way to declare a widget, for cases when the entire
+widget is a single function:
+
+$dual_code{
+moon = [[
+  -- views/index.moon
+  import Widget from require "lapis.html"
+
+  Widget\extend =>
+    h1 class: "header", "Hello"
+    div class: "body", ->
+      text "Welcome to my site!"
+]],
+lua = [[
+  -- views/index.lua
+  local Widget = require("lapis.html").Widget
+
+  return Widget:extend(function(self)
+    h1({class = "header"}, "Hello")
+    div({class = "body"}, function()
+      text "Welcome to my site!"
+    end)
+  end)
+]]
+}
 
 ### Rendering A Widget From An Action
 
@@ -267,11 +295,57 @@ lua = [[
 ]]
 }
 
+### Rendering A Widget From a Widget
+
+Rendering a widget from another widget can be done via the `widget` function.
+It is available in any place the [HTML builder functions](#html-builder-syntax/helper-functions) are available.
+
+The `widget` function can either take a widget instance, or a widget class. If
+a class is passed, then it is instantiated with no arguments.
+
+$dual_code{
+moon = [[
+  import Widget from require "lapis.html"
+
+  class Button extends Widget
+    content: =>
+      button { class: "my-button" }, @label
+
+  class MyPage extends Widget
+    content: =>
+      p "Here are my buttons:"
+      for i=1,5
+        widget Button label: "button #{i}
+]],
+lua = [[
+  local Widget = require("lapis.html").Widget
+
+  local Button = Widget:extend(function(self)
+    button({ class = "my-button" }, self.label)
+  end)
+
+  local MyPage = Widget:extend(function(self)
+    p("Here are my buttons:")
+    for i=1,5 do
+      widget(Button{ label = "button" .. i })
+    end
+  end)
+]]
+}
+
+Parameters to the sub-widgets are passed as a table to the widget's
+constructor. Any values provided are copied onto the widget instance as
+instance fields, meaning you can reference them on `self`
+
 
 ### Passing Data To A Widget
 
-Any $self_ref{""} variables set in the action can be accessed in the widget. Additionally
-any of the helper functions like $self_ref{"url_for"} are also accessible.
+When a widget is rendered by a Lapis application request action, it
+automatically will have access to any fields on the request object. Any
+$self_ref{""} variables set in the action can be accessed in the widget.
+Additionally any of the helper functions like $self_ref{"url_for"} are also
+accessible. Lastly, sub-widgets rendered with `widget` will also inherit access
+to the request object.
 
 $dual_code{
 moon = [[
