@@ -1,4 +1,4 @@
-FROM ghcr.io/leafo/lapis-archlinux
+FROM ghcr.io/leafo/lapis-archlinux:2023-7-20
 MAINTAINER leaf corcoran <leafot@gmail.com>
 
 WORKDIR /site/lapis
