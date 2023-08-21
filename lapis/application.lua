@@ -348,7 +348,9 @@ do
     "get",
     "post",
     "delete",
-    "put"
+    "put",
+    "patch",
+    "head"
   }
   for _index_0 = 1, #_list_0 do
     local meth = _list_0[_index_0]
