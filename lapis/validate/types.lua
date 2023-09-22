@@ -269,7 +269,6 @@ end
 local MultiParamsType
 do
   local _class_0
-  local is_params_type
   local _parent_0 = BaseType
   local _base_0 = {
     _transform = function(self, value, state)
@@ -340,8 +339,6 @@ do
     end
   })
   _base_0.__class = _class_0
-  local self = _class_0
-  is_params_type = instance_of(ParamsShapeType)
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end

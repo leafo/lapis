@@ -139,8 +139,6 @@ class FlattenErrors extends BaseType
 --   types.params_shape { name: types.string }
 -- }
 class MultiParamsType extends BaseType
-  is_params_type = instance_of ParamsShapeType
-
   new: (@params_shapes={}) =>
 
   _transform: (value, state) =>
