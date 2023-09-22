@@ -112,6 +112,23 @@ class ParamsShapeType extends BaseType
       "params type {\n  #{table.concat rows, "\n  "}\n}"
 
 
+-- convert the array-like error message to a single string error messag
+class FlattenErrors extends BaseType
+  new: (@type) =>
+
+  _transform: (value, state) =>
+    value, state_or_err = @type\_transform value, state
+
+    if value == FailedTransform
+      switch type(state_or_err)
+        -- append all errors
+        when "table"
+          return FailedTransform, table.concat state_or_err, ", "
+        when "string"
+          FailedTransform, state_or_err
+
+    value, state_or_err
+
 -- Combines multiple params_shapes into a single result. Each params object is
 -- tested in order, and the entire result set is joined into a final object.
 -- All of them must pass. the joint error message is returned. receives an
@@ -235,6 +252,8 @@ file_upload = types.partial({
 
 setmetatable {
   params_shape: ParamsShapeType
+  flatten_errors: FlattenErrors
+
   multi_params: MultiParamsType
   assert_error: AssertErrorType
 

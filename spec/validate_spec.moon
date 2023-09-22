@@ -402,6 +402,38 @@ params type {
         }
       }
 
+    describe "flatten_errors", ->
+      types = require "lapis.validate.types"
+
+      it "flattens errors", ->
+        t = types.flatten_errors types.params_shape {
+          {"id", types.string}
+          {"name", types.string}
+        }
+
+        assert.same {nil, [[params: expected type "table", got "boolean"]]}, { t\transform true}
+
+        assert.same {nil, [[id: expected type "string", got "nil", name: expected type "string", got "nil"]]}, { t\transform {}}
+
+        assert.same {nil, [[name: expected type "string", got "nil"]]}, { t\transform {
+          id: "hello"
+        }}
+
+        assert.same {
+          {
+            id: "hello"
+            name: "world"
+          }
+        }, { t\transform {
+          id: "hello"
+          name: "world"
+        }}
+
+      it "passes flat errors through", ->
+        t = types.flatten_errors types.string + types.number
+
+        assert.same {nil, [[expected type "string", or type "number"]]}, {t\transform true}
+        assert.same {nil, [[expected type "string", or type "number"]]}, {t\transform true}
 
     describe "multi_params", ->
       types = require "lapis.validate.types"

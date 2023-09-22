@@ -214,6 +214,58 @@ do
   end
   ParamsShapeType = _class_0
 end
+local FlattenErrors
+do
+  local _class_0
+  local _parent_0 = BaseType
+  local _base_0 = {
+    _transform = function(self, value, state)
+      local state_or_err
+      value, state_or_err = self.type:_transform(value, state)
+      if value == FailedTransform then
+        local _exp_0 = type(state_or_err)
+        if "table" == _exp_0 then
+          return FailedTransform, table.concat(state_or_err, ", ")
+        elseif "string" == _exp_0 then
+          local _ = FailedTransform, state_or_err
+        end
+      end
+      return value, state_or_err
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, type)
+      self.type = type
+    end,
+    __base = _base_0,
+    __name = "FlattenErrors",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  FlattenErrors = _class_0
+end
 local MultiParamsType
 do
   local _class_0
@@ -401,6 +453,7 @@ local file_upload = types.partial({
 }):describe("file upload")
 return setmetatable({
   params_shape = ParamsShapeType,
+  flatten_errors = FlattenErrors,
   multi_params = MultiParamsType,
   assert_error = AssertErrorType,
   cleaned_text = cleaned_text,
