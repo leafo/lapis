@@ -402,6 +402,132 @@ params type {
         }
       }
 
+    describe "params_array", ->
+      types = require "lapis.validate.types"
+
+      it "empty object", ->
+        shape = types.params_array(types.string)
+        assert.same {}, shape\transform {}
+        assert.same {
+          nil, {[[params array: expected type "table", got "boolean"]]}
+        }, { shape\transform true }
+
+      it "array with simple type", ->
+        shape = types.params_array(types.string)
+        assert.same {"hello", "world"}, shape\transform {"hello", "world"}
+
+        assert.same {
+          nil, {[[item 1: expected type "string", got "boolean"]]}
+        }, { shape\transform {true} }
+
+        assert.same {
+          nil, {
+            [[item 1: expected type "string", got "number"]]
+            [[item 3: expected type "string", got "boolean"]]
+          }
+        }, { shape\transform {7, "true", false} }
+
+      it "contains params_shape", ->
+        t = types.params_array types.params_shape {
+          {"name", types.string}
+          {"age", types.number}
+        }
+
+        assert.same { }, t\transform { }
+
+        input = {
+          {name: "John", age: 30}
+          {name: "Jane", age: 28}
+        }
+        output = t\transform input
+
+        assert.same input, output
+        assert input != output, "Input and output should be distinct objects"
+
+        assert.same {
+          nil, {
+            [[item 1: name: expected type "string", got "nil"]]
+            [[item 3: age: expected type "number", got "string"]]
+            [[item 4: name: expected type "string", got "nil"]]
+            [[item 4: age: expected type "number", got "nil"]]
+          }
+        }, {
+          t\transform {
+            {name: nil, age: 30}
+            {name: "Dane", age: 2389}
+            {name: "Jane", age: "cool"}
+            {}
+          }
+        }
+
+      it "very nested object", ->
+        t = types.params_array types.params_shape {
+          {"id", types.number}
+          {"tags", types.params_array types.params_shape {
+            {"name", types.string}
+          }}
+        }
+
+        assert.same {}, t\transform {}
+
+        assert.same {
+          nil, {
+            [[item 1: id: expected type "number", got "nil"]]
+            -- this is not ideal (params: )
+            [[item 1: tags: params array: expected type "table", got "boolean"]]
+          }
+        }, {
+          t\transform {
+            { tags: false }
+          }
+        }
+
+        assert.same {
+          nil, {
+            [[item 2: tags: item 1: params: expected type "table", got "boolean"]]
+            [[item 3: tags: item 1: params: expected type "table", got "string"]]
+            [[item 3: tags: item 2: params: expected type "table", got "function"]]
+          }
+        }, {
+          t\transform {
+            { id: 1, tags: {} }
+            { id: 2, tags: { false } }
+            { id: 3, tags: { "true", -> } }
+          }
+        }
+
+        -- valid object
+        assert.same {
+          {
+            {
+              id: 1234
+              tags: {
+                {name: "hello"}
+              }
+            }
+
+          }
+        }, {
+          t\transform {
+            {
+              id: 1234
+              tags: {
+                { name: "hello" }
+              }
+            }
+          }
+        }
+
+      it "params_array length type", ->
+        t = types.params_array types.params_shape({
+          {"name", types.string}
+        }), length: types.range(5,6)
+
+        assert.same {
+          nil
+          {"params array length: not in range from 5 to 6"}
+        }, { t\transform {} }
+
     describe "flatten_errors", ->
       types = require "lapis.validate.types"
 

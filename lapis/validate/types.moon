@@ -112,6 +112,61 @@ class ParamsShapeType extends BaseType
       "params type {\n  #{table.concat rows, "\n  "}\n}"
 
 
+
+-- applies a params_shape to each item of array. This is necessary because
+-- params_shape returns a special errors object
+class ParamsArray extends BaseType
+  test_input_type = types.table
+
+  iter: ipairs
+  item_prefix: "item"
+
+  new: (@item_shape, opts) =>
+    if opts
+      @item_prefix = opts.item_prefix
+      @iter = opts.iter
+      @join_error = opts.join_error
+      @length_type = opts.length
+
+  join_error: (err, idx, item) =>
+    "#{@item_prefix} #{idx}: #{err}"
+
+  _transform: (value, state) =>
+    pass, err = test_input_type value
+    unless pass
+      return FailedTransform, {"params array: #{err}"}
+
+    if @length_type
+      len = #value
+      res, state = @length_type\_transform len, state
+      if res == FailedTransform
+        return FailedTransform, {"params array length: #{state}"}
+
+    local errors
+
+    out = for idx, item in @.iter value
+      result, state_or_err = @item_shape\_transform item, state
+
+      if result == FailedTransform
+        errors = {} unless errors
+
+        switch type(state_or_err)
+          -- append all errors
+          when "table"
+            for err in *state_or_err
+              table.insert errors, @join_error err, idx, item
+          when "string"
+            table.insert errors, @join_error state_or_err, idx, item
+        continue
+      else
+        state = state_or_err
+        result
+
+    if errors
+      return FailedTransform, errors
+
+    out
+
 -- convert the array-like error message to a single string error messag
 class FlattenErrors extends BaseType
   new: (@type) =>
@@ -248,8 +303,10 @@ file_upload = types.partial({
   content: -types.literal("")
 })\describe "file upload"
 
+
 setmetatable {
   params_shape: ParamsShapeType
+  params_array: ParamsArray
   flatten_errors: FlattenErrors
 
   multi_params: MultiParamsType

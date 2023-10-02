@@ -214,6 +214,120 @@ do
   end
   ParamsShapeType = _class_0
 end
+local ParamsArray
+do
+  local _class_0
+  local test_input_type
+  local _parent_0 = BaseType
+  local _base_0 = {
+    iter = ipairs,
+    item_prefix = "item",
+    join_error = function(self, err, idx, item)
+      return tostring(self.item_prefix) .. " " .. tostring(idx) .. ": " .. tostring(err)
+    end,
+    _transform = function(self, value, state)
+      local pass, err = test_input_type(value)
+      if not (pass) then
+        return FailedTransform, {
+          "params array: " .. tostring(err)
+        }
+      end
+      if self.length_type then
+        local len = #value
+        local res
+        res, state = self.length_type:_transform(len, state)
+        if res == FailedTransform then
+          return FailedTransform, {
+            "params array length: " .. tostring(state)
+          }
+        end
+      end
+      local errors
+      local out
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        for idx, item in self.iter(value) do
+          local _continue_0 = false
+          repeat
+            local result, state_or_err = self.item_shape:_transform(item, state)
+            local _value_0
+            if result == FailedTransform then
+              if not (errors) then
+                errors = { }
+              end
+              local _exp_0 = type(state_or_err)
+              if "table" == _exp_0 then
+                for _index_0 = 1, #state_or_err do
+                  local err = state_or_err[_index_0]
+                  table.insert(errors, self:join_error(err, idx, item))
+                end
+              elseif "string" == _exp_0 then
+                table.insert(errors, self:join_error(state_or_err, idx, item))
+              end
+              _continue_0 = true
+              break
+            else
+              state = state_or_err
+              _value_0 = result
+            end
+            _accum_0[_len_0] = _value_0
+            _len_0 = _len_0 + 1
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
+          end
+        end
+        out = _accum_0
+      end
+      if errors then
+        return FailedTransform, errors
+      end
+      return out
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, item_shape, opts)
+      self.item_shape = item_shape
+      if opts then
+        self.item_prefix = opts.item_prefix
+        self.iter = opts.iter
+        self.join_error = opts.join_error
+        self.length_type = opts.length
+      end
+    end,
+    __base = _base_0,
+    __name = "ParamsArray",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  local self = _class_0
+  test_input_type = types.table
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  ParamsArray = _class_0
+end
 local FlattenErrors
 do
   local _class_0
@@ -450,6 +564,7 @@ local file_upload = types.partial({
 }):describe("file upload")
 return setmetatable({
   params_shape = ParamsShapeType,
+  params_array = ParamsArray,
   flatten_errors = FlattenErrors,
   multi_params = MultiParamsType,
   assert_error = AssertErrorType,
