@@ -402,6 +402,33 @@ params type {
         }
       }
 
+    it "numeric indicies", ->
+      t = types.params_shape {
+        {1, types.string}
+        {2, types.number}
+      }
+
+      assert.same {"tuple", 200}, (t\transform { "tuple", 200 })
+      assert.same {"tuple", 200}, (t\transform { "tuple", 200, "extra", things: "true" })
+
+      assert.same {
+        nil, {
+          [[2: expected type "number", got "string"]]
+        }
+      }, {
+        t\transform { "one", "two" }
+      }
+
+      assert.same {
+        nil, {
+          [[1: expected type "string", got "boolean"]]
+          [[2: expected type "number", got "boolean"]]
+        }
+      }, {
+        t\transform { false, true, "give" }
+      }
+
+
   describe "params_array", ->
     types = require "lapis.validate.types"
 

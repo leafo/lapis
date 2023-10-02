@@ -37,7 +37,7 @@ class ParamsShapeType extends BaseType
   is_base_type = instance_of BaseType
 
   param_validator_spec = types.annotate types.shape({
-    types.string\tag "field"
+    (types.string + types.number)\tag "field"
 
      -- TODO: AssertErrorType should be unwrapped so we don't yield error when processing nested object
     is_base_type\describe("tableshape type")\tag "type"
