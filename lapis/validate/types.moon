@@ -140,7 +140,7 @@ class ParamsArray extends BaseType
       len = #value
       res, state = @length_type\_transform len, state
       if res == FailedTransform
-        return FailedTransform, {"params array length: #{state}"}
+        return FailedTransform, {"length expected #{@length_type}"}
 
     local errors
 

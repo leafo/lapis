@@ -238,7 +238,7 @@ do
         res, state = self.length_type:_transform(len, state)
         if res == FailedTransform then
           return FailedTransform, {
-            "params array length: " .. tostring(state)
+            "length expected " .. tostring(self.length_type)
           }
         end
       end

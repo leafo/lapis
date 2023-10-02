@@ -402,6 +402,8 @@ params type {
         }
       }
 
+    it "operates on tableshape type", ->
+
     describe "params_array", ->
       types = require "lapis.validate.types"
 
