@@ -298,6 +298,8 @@ class BaseModel
     else
       false
 
+    computed_source_key = type(source_key) == "function"
+
     include_ids = for record in *other_records
       if skip_included
         if for_relation
@@ -310,8 +312,12 @@ class BaseModel
         continue if _all_same tuple, @db.NULL
         @db.list tuple
       else
-        with id = record[source_key]
-          continue unless id
+        id = if computed_source_key
+          source_key record
+        else
+          record[source_key]
+        continue unless id
+        id
 
     if next include_ids
       if composite_foreign_key
@@ -410,7 +416,12 @@ class BaseModel
               other[field_name] = {}
         else
           for other in *other_records
-            other[field_name] = records[other[source_key]]
+            ref_value = if computed_source_key
+              source_key other
+            else
+              other[source_key]
+
+            other[field_name] = records[ref_value]
 
             if many and not other[field_name]
               other[field_name] = {}

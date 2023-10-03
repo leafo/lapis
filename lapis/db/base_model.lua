@@ -639,6 +639,7 @@ do
     else
       composite_foreign_key = false
     end
+    local computed_source_key = type(source_key) == "function"
     local include_ids
     do
       local _accum_0 = { }
@@ -679,14 +680,17 @@ do
             end
             _value_0 = self.db.list(tuple)
           else
-            do
-              local id = record[source_key]
-              if not (id) then
-                _continue_0 = true
-                break
-              end
-              _value_0 = id
+            local id
+            if computed_source_key then
+              id = source_key(record)
+            else
+              id = record[source_key]
             end
+            if not (id) then
+              _continue_0 = true
+              break
+            end
+            _value_0 = id
           end
           _accum_0[_len_0] = _value_0
           _len_0 = _len_0 + 1
@@ -800,7 +804,13 @@ do
           else
             for _index_0 = 1, #other_records do
               local other = other_records[_index_0]
-              other[field_name] = records[other[source_key]]
+              local ref_value
+              if computed_source_key then
+                ref_value = source_key(other)
+              else
+                ref_value = other[source_key]
+              end
+              other[field_name] = records[ref_value]
               if many and not other[field_name] then
                 other[field_name] = { }
               end

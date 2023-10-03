@@ -858,6 +858,86 @@ describe "lapis.db.model", ->
 
       assert.same {}, things[2].thing_items
 
+    it "fetches by singular computed key", ->
+      mock_query "SELECT", {
+        {thing_id: "a", name: "one"}
+        {thing_id: "b", count: "two"}
+      }
+
+      things = {things[1], things[2]}
+      things[1].fake_key = "a"
+      things[2].fake_key = "b"
+
+      ThingItems\include_in things, {
+        thing_id: (thing) -> thing.fake_key
+      }
+
+      assert_queries {
+        [[SELECT * FROM "thing_items" WHERE "thing_id" IN ('a', 'b')]]
+      }
+
+      assert.same {
+        {
+          fake_key: "a"
+          id: 1
+          other_id: 16
+          thing_id: 101
+          thing_item: {
+            name: "one"
+            thing_id: "a"
+          }
+        }
+
+        {
+          fake_key: "b"
+          id: 2
+          other_id: 18
+          thing_id: 102
+          thing_item: {
+            count: "two"
+            thing_id: "b"
+          }
+        }
+      }, things
+
+    it "singular computed key resolves to same value", ->
+      mock_query "SELECT", {
+        {thing_id: "a", name: "one"}
+        {thing_id: "b", count: "two"}
+      }
+
+      things = {things[1], things[2]}
+
+      ThingItems\include_in things, {
+        thing_id: (thing) -> "a"
+      }
+
+      assert_queries {
+        [[SELECT * FROM "thing_items" WHERE "thing_id" IN ('a')]]
+      }
+
+      assert.same {
+        {
+          id: 1
+          other_id: 16
+          thing_id: 101
+          thing_item: {
+            name: "one"
+            thing_id: "a"
+          }
+        }
+
+        {
+          id: 2
+          other_id: 18
+          thing_id: 102
+          thing_item: {
+            name: "one"
+            thing_id: "a"
+          }
+        }
+      }, things
+
   describe "include_in with composite keys", ->
     local Things, ThingItems, things
 
