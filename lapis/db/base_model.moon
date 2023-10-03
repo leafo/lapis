@@ -324,6 +324,12 @@ class BaseModel
         dest_key = dest_key[1]
         false
       else
+        -- memoize all computed source keys
+        source_key = for k in *source_key
+          if type(k) == "function"
+            _memoize1 k
+          else
+            k
         true
     else
       false

@@ -673,6 +673,20 @@ do
         dest_key = dest_key[1]
         composite_foreign_key = false
       else
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for _index_0 = 1, #source_key do
+            local k = source_key[_index_0]
+            if type(k) == "function" then
+              _accum_0[_len_0] = _memoize1(k)
+            else
+              _accum_0[_len_0] = k
+            end
+            _len_0 = _len_0 + 1
+          end
+          source_key = _accum_0
+        end
         composite_foreign_key = true
       end
     else

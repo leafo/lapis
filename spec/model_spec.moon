@@ -1117,10 +1117,21 @@ describe "lapis.db.model", ->
 
       mock_query "SELECT", thing_items
 
+      called_count_a = 0
+      called_count_b = 0
+
       ThingItems\include_in things, {
-        aid: (t) -> t.alpha_id
-        bid: (t) -> t.beta_id
+        aid: (t) ->
+          called_count_a += 1
+          t.alpha_id
+
+        bid: (t) ->
+          called_count_b += 1
+          t.beta_id
       }
+
+      assert.same 5, called_count_a
+      assert.same 5, called_count_b
 
       assert_queries {
         {
