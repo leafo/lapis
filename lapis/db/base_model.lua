@@ -70,10 +70,17 @@ _fields = function(t, names, k, len)
   if len == nil then
     len = #names
   end
-  if k == len then
-    return t[names[k]]
+  local n = names[k]
+  local v
+  if type(n) == "function" then
+    v = n(t)
   else
-    return t[names[k]], _fields(t, names, k + 1, len)
+    v = t[n]
+  end
+  if k == len then
+    return v
+  else
+    return v, _fields(t, names, k + 1, len)
   end
 end
 local filter_duplicate_lists
@@ -705,7 +712,11 @@ do
               local _len_1 = 1
               for _index_1 = 1, #source_key do
                 local k = source_key[_index_1]
-                _accum_1[_len_1] = record[k] or self.db.NULL
+                if type(k) == "function" then
+                  _accum_1[_len_1] = k(record) or self.db.NULL
+                else
+                  _accum_1[_len_1] = record[k] or self.db.NULL
+                end
                 _len_1 = _len_1 + 1
               end
               tuple = _accum_1

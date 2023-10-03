@@ -40,11 +40,18 @@ _put = (t, value, front, ...) ->
     _put obj, value, ...
 
 -- _fields obj, {"a", "b", "c"} --> obj.a, obj.b, obj.c
+-- NOTE: names value can also be a function to apply to the object
 _fields = (t, names, k=1, len=#names) ->
-  if k == len
-    t[names[k]]
+  n = names[k]
+  v = if type(n) == "function"
+    n t
   else
-    t[names[k]], _fields(t, names, k + 1, len)
+    t[n]
+
+  if k == len
+    v
+  else
+    v, _fields(t, names, k + 1, len)
 
 filter_duplicate_lists = (db, lists) ->
   seen = {}
@@ -333,7 +340,12 @@ class BaseModel
           continue if record[field_name] != nil
 
       if composite_foreign_key
-        tuple = [record[k] or @db.NULL for k in *source_key]
+        tuple = for k in *source_key
+          if type(k) == "function"
+            k(record) or @db.NULL
+          else
+            record[k] or @db.NULL
+
         continue if _all_same tuple, @db.NULL
         @db.list tuple
       else

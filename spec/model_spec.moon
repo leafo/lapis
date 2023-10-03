@@ -1107,6 +1107,33 @@ describe "lapis.db.model", ->
       }, things[4].thing_items
       assert.same {}, things[5].thing_items
 
+    it "computed composite keys", ->
+      thing_items = {
+        { id: 1, aid: 101, bid: 202 }
+        { id: 2, aid: 101, bid: 203 }
+        { id: 3, aid: 102, bid: 204 }
+        { id: 4, aid: 100, bid: 201 }
+      }
+
+      mock_query "SELECT", thing_items
+
+      ThingItems\include_in things, {
+        aid: (t) -> t.alpha_id
+        bid: (t) -> t.beta_id
+      }
+
+      assert_queries {
+        {
+          [[SELECT * FROM "thing_items" WHERE ("aid", "bid") IN ((100, 201), (101, 202), (101, 203), (102, 204), (102, 205))]]
+          [[SELECT * FROM "thing_items" WHERE ("bid", "aid") IN ((201, 100), (202, 101), (203, 101), (204, 102), (205, 102))]]
+        }
+      }
+
+      assert.same thing_items[4], things[1].thing_item
+      assert.same thing_items[1], things[2].thing_item
+      assert.same thing_items[2], things[3].thing_item
+      assert.same thing_items[3], things[4].thing_item
+      assert.same nil, things[5].thing_item
 
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
