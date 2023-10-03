@@ -106,6 +106,38 @@ filter_duplicate_lists = function(db, lists)
   end
   return out
 end
+local _memoize1
+_memoize1 = function(fn)
+  local NIL = { }
+  local cache = setmetatable({ }, {
+    __mode = "k"
+  })
+  return function(self, arg, more)
+    if more then
+      error("memoize1 function received second argument")
+    end
+    local key
+    if arg == nil then
+      key = NIL
+    else
+      key = arg
+    end
+    local cache_value = cache[self] and cache[self][key]
+    if cache_value then
+      return unpack(cache_value)
+    end
+    local res = {
+      fn(self, arg)
+    }
+    if not (cache[self]) then
+      cache[self] = setmetatable({ }, {
+        __mode = "k"
+      })
+    end
+    cache[self][key] = res
+    return unpack(res)
+  end
+end
 local Enum
 do
   local _class_0
@@ -639,7 +671,11 @@ do
     else
       composite_foreign_key = false
     end
-    local computed_source_key = type(source_key) == "function"
+    local computed_source_key
+    if type(source_key) == "function" then
+      source_key = _memoize1(source_key)
+      computed_source_key = true
+    end
     local include_ids
     do
       local _accum_0 = { }

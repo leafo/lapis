@@ -56,6 +56,28 @@ filter_duplicate_lists = (db, lists) ->
 
   out
 
+_memoize1 = (fn) ->
+  NIL = {}
+  cache = setmetatable {}, __mode: "k"
+
+  (arg, more) =>
+    error "memoize1 function received second argument" if more
+    key = if arg == nil then NIL else arg
+
+    cache_value = cache[@] and cache[@][key]
+
+    if cache_value
+      return unpack cache_value
+
+    res = { fn @, arg }
+
+    unless cache[@]
+      cache[@] = setmetatable {}, __mode: "k"
+
+    cache[@][key] = res
+
+    unpack res
+
 class Enum
   debug = =>
     "(contains: #{concat ["#{i}:#{v}" for i, v in ipairs @], ", "})"
@@ -225,6 +247,7 @@ class BaseModel
   --
   -- -- Have users, get games (be careful of many to one, only one will be
   -- -- assigned but all will be fetched)
+  -- NOTE: flip is deprecated
   -- users = Users\select!
   -- Games\include_in users, "user_id", flip: true
   --
@@ -298,7 +321,9 @@ class BaseModel
     else
       false
 
-    computed_source_key = type(source_key) == "function"
+    computed_source_key = if type(source_key) == "function"
+      source_key = _memoize1 source_key
+      true
 
     include_ids = for record in *other_records
       if skip_included

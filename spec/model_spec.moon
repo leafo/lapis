@@ -868,13 +868,19 @@ describe "lapis.db.model", ->
       things[1].fake_key = "a"
       things[2].fake_key = "b"
 
+      total_calls = 0
+
       ThingItems\include_in things, {
-        thing_id: (thing) -> thing.fake_key
+        thing_id: (thing) ->
+          total_calls += 1
+          thing.fake_key
       }
 
       assert_queries {
         [[SELECT * FROM "thing_items" WHERE "thing_id" IN ('a', 'b')]]
       }
+
+      assert.same 2, total_calls
 
       assert.same {
         {
