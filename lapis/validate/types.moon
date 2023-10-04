@@ -115,7 +115,7 @@ class ParamsShapeType extends BaseType
 
 -- applies a params_shape to each item of array. This is necessary because
 -- params_shape returns a special errors object
-class ParamsArray extends BaseType
+class ParamsArrayType extends BaseType
   test_input_type = types.table
 
   iter: ipairs
@@ -306,7 +306,7 @@ file_upload = types.partial({
 
 setmetatable {
   params_shape: ParamsShapeType
-  params_array: ParamsArray
+  params_array: ParamsArrayType
   flatten_errors: FlattenErrors
 
   multi_params: MultiParamsType

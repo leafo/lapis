@@ -214,7 +214,7 @@ do
   end
   ParamsShapeType = _class_0
 end
-local ParamsArray
+local ParamsArrayType
 do
   local _class_0
   local test_input_type
@@ -300,7 +300,7 @@ do
       end
     end,
     __base = _base_0,
-    __name = "ParamsArray",
+    __name = "ParamsArrayType",
     __parent = _parent_0
   }, {
     __index = function(cls, name)
@@ -326,7 +326,7 @@ do
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
-  ParamsArray = _class_0
+  ParamsArrayType = _class_0
 end
 local FlattenErrors
 do
@@ -564,7 +564,7 @@ local file_upload = types.partial({
 }):describe("file upload")
 return setmetatable({
   params_shape = ParamsShapeType,
-  params_array = ParamsArray,
+  params_array = ParamsArrayType,
   flatten_errors = FlattenErrors,
   multi_params = MultiParamsType,
   assert_error = AssertErrorType,
