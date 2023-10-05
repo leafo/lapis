@@ -238,7 +238,7 @@ belongs_to = (name, opts) =>
   column_name = opts.key or "#{name}_id"
 
   assert type(column_name) == "string",
-    "`belongs_to` relation doesn't support composite key, use `has_one` instead"
+    "`belongs_to` relation doesn't support composite key or computed key, use `has_one` instead"
 
   @__base[get_method] = =>
     return nil unless @[column_name]
@@ -297,7 +297,10 @@ has_one = (name, opts) =>
         else
           k,v
 
-        out[key] = @[local_key] or @@db.NULL
+        out[key] = if type(local_key) == "function"
+          assert local_key @
+        else
+          @[local_key] or @@db.NULL
 
       out
     else
@@ -367,7 +370,10 @@ has_many = (name, opts) =>
         else
           k, v
 
-        out[key] = @[local_key] or @@db.NULL
+        out[key] = if type(local_key) == "function"
+          assert local_key @
+        else
+          @[local_key] or @@db.NULL
 
       out
     else

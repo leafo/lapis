@@ -2016,3 +2016,78 @@ describe "lapis.db.model.relations", ->
             assert.truthy the_thing.friend
             assert.equal the_thing, the_thing.friend.parent
 
+  describe "computed keys", ->
+    it "belongs_to fails on use of computed keys", ->
+      import preload from require "lapis.db.model"
+      assert.has_error(
+        ->
+          models.UserGroups = class UserGroups extends Model
+          models.Users = class Users extends Model
+            @relations: {
+              {"user_group", belongs_to: "UserGroup", key: {
+                group_id: (user) -> "group-#{user.name}"
+              }}
+            }
+
+        "`belongs_to` relation doesn't support composite key or computed key, use `has_one` instead"
+      )
+
+    it "has_one with computed key", ->
+      import preload from require "lapis.db.model"
+      models.Users = class Users extends Model
+        @relations: {
+          {"user_profile", has_one: "UserProfiles", key: {
+            user_id: (user) -> "uid-#{user.id}"
+          }}
+        }
+
+      models.UserProfiles = class UserProfiles extends Model
+
+      do
+        user = Users!
+        user.id = 123
+        user\get_user_profile!
+
+      do
+        u1 = Users!
+        u1.id = 123
+        u2 = Users!
+        u2.id = 999
+
+        preload {u1, u2}, "user_profile"
+
+      assert_queries {
+        [[SELECT * FROM "user_profiles" WHERE "user_id" = 'uid-123' LIMIT 1]]
+        [[SELECT * FROM "user_profiles" WHERE "user_id" IN ('uid-123', 'uid-999')]]
+      }
+
+    it "has_many with computed key", ->
+      import preload from require "lapis.db.model"
+      models.Users = class Users extends Model
+        @relations: {
+          {"tags", has_many: "UserTags", key: {
+            user_id: (user) -> "uid-#{user.id}"
+          }}
+        }
+
+      models.UserTags = class UserTags extends Model
+
+      do
+        user = Users!
+        user.id = 123
+        user\get_tags!
+
+      do
+        u1 = Users!
+        u1.id = 123
+        u2 = Users!
+        u2.id = 999
+
+        preload {u1, u2}, "tags"
+
+      assert_queries {
+        [[SELECT * FROM "user_tags" WHERE "user_id" = 'uid-123']]
+        [[SELECT * FROM "user_tags" WHERE "user_id" IN ('uid-123', 'uid-999')]]
+      }
+
+

@@ -328,7 +328,7 @@ belongs_to = function(self, name, opts)
   assert(type(source) == "string", "Expecting model name for `belongs_to` relation")
   local get_method = opts.as or "get_" .. tostring(name)
   local column_name = opts.key or tostring(name) .. "_id"
-  assert(type(column_name) == "string", "`belongs_to` relation doesn't support composite key, use `has_one` instead")
+  assert(type(column_name) == "string", "`belongs_to` relation doesn't support composite key or computed key, use `has_one` instead")
   self.__base[get_method] = function(self)
     if not (self[column_name]) then
       return nil
@@ -396,7 +396,11 @@ has_one = function(self, name, opts)
         else
           key, local_key = k, v
         end
-        out[key] = self[local_key] or self.__class.db.NULL
+        if type(local_key) == "function" then
+          out[key] = assert(local_key(self))
+        else
+          out[key] = self[local_key] or self.__class.db.NULL
+        end
       end
       clause = out
     else
@@ -476,7 +480,11 @@ has_many = function(self, name, opts)
         else
           key, local_key = k, v
         end
-        out[key] = self[local_key] or self.__class.db.NULL
+        if type(local_key) == "function" then
+          out[key] = assert(local_key(self))
+        else
+          out[key] = self[local_key] or self.__class.db.NULL
+        end
       end
       join_clause = out
     else
