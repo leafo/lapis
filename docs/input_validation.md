@@ -216,7 +216,7 @@ processes the input:
 $options_table{
   {
     name = "length",
-    description = "A type checker, typically `types.range`, that is used to verify the length of the array before checking individual items. The length is computed with the `#` operator. If length check fails then no other checks are done, and a single failure message is returned",
+    description = "A type checker, typically `types.range`, that is used to verify the length of the array before checking individual items. The length is computed with the `#` operator. If length check fails then no other checks are done, and a single failure message is returned"
   },
   {
     name = "item_prefix",
