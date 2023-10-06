@@ -557,7 +557,7 @@ Possible values for `key` argument:
 * **string** -- for each object, the value `object[key]` is used to lookup instances of the model by the model's primary key. The model is assumed to have a singular primary key, and will error otherwise
   * with `flip` enabled: `key` is used as the foreign key column name, and `object[opts.local_key or "id"]` is used to pull the values
 * **array of string** -- for each object, a composite key is created by individually mapping each field of the key array via `object[key]` to the composite primary key of the model
-* **column mapping table** -- explicitly specify the mapping of fields to columns. The *key* of the table will be used as the column name, and the value in the table will be used as the field name referenced from the `objects` argument
+* **column mapping table** -- explicitly specify the mapping of fields to columns. The *key* of the table will be used as the column name, and the value in the table will be used as the field name referenced from the `objects` argument. If the value is a function, then the function will be called for each object to dynamically calculate the foreign key value.
 
 `include_in` supports the following options (via the optional `opts` argument):
 
