@@ -574,25 +574,25 @@ config "development", ->
 
 ## Request Parameters
 
-The request object contains a few fields to help you access the user-supplies
-parameters sent with the request. Parameters are loaded by default from the
-following sources:
+The request object contains several fields that facilitate access to
+user-supplied parameters sent with the request. These parameters are
+automatically loaded from the following sources:
 
-* URL parameters -- When using a route that has a named variable. A route `/users/:id` will create a parameters named `id`
-* Body parameters -- For request methods that support a body, like `POST` and `PUT`, the body will automatically be parsed if the content type is `application/x-www-form-urlencoded` or `multipart/form-data`
-* Query parameters -- Parameters included at the end of a request URL following the `?`. `/users?filter=blue` will create a parameter called filter with the value `"blue"`
+* URL parameters - These are created when using a route that has a named variable. For instance, a route `/users/:id` will create a parameter named `id`.
+* Body parameters - For request methods that support a body, such as `POST` and `PUT`, the body will be automatically parsed if the content type is `application/x-www-form-urlencoded` or `multipart/form-data`.
+* Query parameters - These are parameters included at the end of a request URL following the `?`. For example, `/users?filter=blue` will create a parameter called `filter` with the value `"blue"`.
 
-The `@params` object is a concatenation of all the default loaded parameters
-listed above. URL parameters have the highest precedence, followed by body
-parameters, then query parameters. This means that an `:id` URL parameters will
-not be overwritten by an `?id=` query parameter.
+The $self_ref{"params"} object is a combination of all the default loaded
+parameters listed above. URL parameters have the highest precedence, followed
+by body parameters, and then query parameters. This means that an `:id` URL
+parameter will not be overwritten by an `?id=` query parameter.
 
-> Headers and cookies are also accessible on the request object but they are
+> Headers and cookies can also be accessed on the request object, but they are
 > not included in the parameters object.
 
 The body of the request is only parsed if the content type is
 `application/x-www-form-urlencoded` or `multipart/form-data`. For requests that
-use another content type, like `json`, you can use the `json_params` helper
+use another content type, such as `json`, you can use the `json_params` helper
 function to parse the body.
 
 See [How can I read JSON HTTP body?]($root/reference/quick_reference.html#how-can-i-read-json-http-body).
@@ -627,58 +627,57 @@ key, value objects:
 
 ### Parameters Types & Limits
 
-The value of a parameter can either be a string, `true`, or a simple table. No complex
-parsing or validation is done on parameters, it's the responsibility of the
-application creator to verify and sanitize any parameters. For example, if you're
-expecting a number, you will need to convert the value to a number using
-something like the Lua builtin `tonumber`.
+The value of a parameter can either be a string, `true`, or a simple table. No
+complex parsing or validation is performed on parameters; it is the
+responsibility of the application creator to verify and sanitize any
+parameters. For instance, if you're expecting a number, you will need to
+convert the value to a number using something like the Lua built-in `tonumber`.
 
 Lapis provides a [validation module]($root/reference/input_validation.html) to
-help with verifying that user supplied data matches a set of constraints that
+assist with verifying that user-supplied data matches a set of constraints that
 you provide.
 
-Duplicate parameter names are overwritten by subsequent values. Note that due
-to hash table ordering, the final value may not be consistent so we recommend
-avoid setting the same parameters multiple times.
+Duplicate parameter names are overwritten by subsequent values. Due to hash
+table ordering, the final value may not be consistent, so we recommend against
+setting the same parameters multiple times.
 
-When using Nginx, a default limit of 100 parameters are parsed by default from
+When using Nginx, a default limit of 100 parameters is parsed by default from
 the body and query. This is to prevent malicious users from overloading your
 server with a large amount of data.
 
-> Storing or processing user input as a string? We highly recommend adding
-> limits on the max length of the string and trimming whitespace from the
-> sides. Additionally, verifying that the data is a valid Unicode string can
-> prevent any processing errors by your database.
+> Are you storing or processing user input as a string? We highly recommend
+> adding limits on the maximum length of the string and trimming whitespace
+> from the sides. Additionally, verifying that the data is a valid Unicode
+> string can help prevent any processing errors by your database.
 
 ## Request Object Methods
 
 ### `request:write(things...)`
 
-Writes all of the arguments to the output buffer or options table. A different
-action is done depending on the type of each argument.
+Appends all of the arguments to the output buffer or options table. The action
+performed varies depending on the type of each argument:
 
-* `string` -- String is appended to output buffer
-* `function` (or callable table) -- Function is called with the output buffer, result is recursively passed to `write`
-* `table` -- key/value pairs are assigned into $self_ref{"options"}, all other values are recursively passed to `write`
+* `string` -- The string is appended to the output buffer.
+* `function` (or callable table) -- The function is called with the output buffer, and the result is recursively passed to `write`.
+* `table` -- Key/value pairs are assigned into the $self_ref{"options"}, while all other values are recursively passed to `write`.
 
-In most circumstances it is unnecessary to call write as the return value of an
-action is automatically passed to write. In before filters, write has the dual
-purpose of writing to the output and cancelling any further actions from
-running.
+Under most circumstances, it is unnecessary to call `write` because the return
+value of an action is automatically passed to it. In before filters, `write`
+serves a dual purpose: it writes to the output and cancels any further actions
+from running.
+
 
 ### `request:url_for(name_or_obj, params, query_params=nil, ...)`
 
 Generates a URL for `name_or_obj`.
 
-> `url_for` is a bit of a misnomer since it typically generates a path to the
-> requested page. If you want to get the entire URL you can combine this
-> function with `build_url`.
+> The function `url_for` is somewhat misleadingly named as it typically generates a path to the requested page. To obtain the complete URL, you can combine this function with `build_url`.
 
-If `name_or_obj` is a string, then the route of that name is looked up and
-filled using the values in params. If no route exists then an error is thrown.
+If `name_or_obj` is a string, the route of that name is looked up and populated
+using the values in `params`. If no named route exists that matches, then an
+error is thrown.
 
 Given the following routes:
-
 
 $dual_code{
 lua = [[
