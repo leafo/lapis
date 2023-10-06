@@ -56,22 +56,22 @@ must match the entire path of the request. That means a request to
 You can specify a named parameter with a `:` followed immediately by the name.
 The parameter will match all characters excluding `/` (in the general case):
 
-
-```lua
+$dual_code{
+lua = [[
 app:match("/page/:page", function(self)
   print(self.params.page)
 end)
 
 app:match("/post/:post_id/:post_name", function(self) end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
   "/page/:page": => print @params.page
   "/post/:post_id/:post_name": =>
-```
+]]
+}
 
 > In the example above we called `print` to debug. When running inside
 > OpenResty, the output of `print` is sent to the Nginx notice log.
@@ -84,16 +84,16 @@ A splat is another kind of pattern that will match as much as it can, including
 any `/` characters.  The splat is stored in a `splat`  named parameter in the
 `params` table of the request object. It's just a single `*`
 
-```lua
+$dual_code{
+lua = [[
 app:match("/browse/*", function(self)
   print(self.params.splat)
 end)
 app:match("/user/:name/file/*", function(self)
   print(self.params.name, self.params.splat)
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
@@ -102,7 +102,8 @@ class App extends lapis.Application
 
   "/user/:name/file/*": =>
     print @params.name, @params.splat
-```
+]]
+}
 
 If you put any text directly after the splat or the named parameter it will not
 be included in the named parameter. For example you can match URLs that end in
@@ -158,7 +159,8 @@ MoonScript gives us convenient syntax for representing this:</span><span
 class="for_lua">Every method on the application that defines a new route has a
 second form that takes the name of the route as the first argument:</span>
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 
@@ -169,9 +171,8 @@ end)
 app:match("user_profile", "/user/:name", function(self)
   return "Hello " .. self.params.name .. ", go home: " .. self:url_for("index")
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class extends lapis.Application
@@ -180,7 +181,8 @@ class extends lapis.Application
 
   [user_profile: "/user/:name"]: =>
     "Hello #{@params.name}, go home: #{@url_for "index"}"
-```
+]]
+}
 
 We can generate the paths to various actions using <span
 class="for_moon">`@url_for`</span><span
@@ -198,7 +200,8 @@ verb. Lapis comes with some helpers to make writing these actions simple.
 `respond_to` takes a table indexed by HTTP verb with a value of the function to
 perform when the action receives that verb.
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local respond_to = require("lapis.application").respond_to
 local app = lapis.Application()
@@ -212,9 +215,8 @@ app:match("create_account", "/create-account", respond_to({
     return { redirect_to = self:url_for("index") }
   end
 }))
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 import respond_to from require "lapis.application"
 
@@ -226,7 +228,8 @@ class App extends lapis.Application
       do_something @params
       redirect_to: @url_for "index"
   }
-```
+]]
+}
 
 `respond_to` can also take a before filter of its own that will run before the
 corresponding HTTP verb action. We do this by specifying a `before` function.
@@ -235,7 +238,8 @@ The same semantics of [before filters](#before-filters) apply, so if you call
 class="for_lua">`self:write()`</span> then the rest of the action will not get
 run.
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local respond_to = require("lapis.application").respond_to
 local app = lapis.Application()
@@ -255,9 +259,8 @@ app:match("edit_user", "/edit-user/:id", respond_to({
     return { redirect_to = self:url_for("index") }
   end
 }))
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 import respond_to from require "lapis.application"
 
@@ -274,8 +277,8 @@ class App extends lapis.Application
       @user\update @params.user
       redirect_to: @url_for "index"
   }
-
-```
+]]
+}
 
 On any `POST` request, regardless of whether `respond_to` is used or not, if
 the `Content-type` header is set to `application/x-www-form-urlencoded` then
@@ -306,7 +309,8 @@ Sometimes you want a piece of code to run before every action. A good example
 of this is setting up the user session. We can declare a before filter, or a
 function that runs before every action, like so:
 
-```lua
+$dual_code{
+lua = [[
 local app = lapis.Application()
 
 app:before_filter(function(self)
@@ -318,9 +322,8 @@ end)
 app:match("/", function(self)
   return "current user is: " .. tostring(self.current_user)
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
@@ -330,7 +333,8 @@ class App extends lapis.Application
 
   "/": =>
     "current user is: #{@current_user}"
-```
+]]
+}
 
 You are free to add as many as you like by calling <span
 class="for_moon">`@before_filter`</span><span
@@ -342,7 +346,8 @@ class="for_lua">`self:write()`</span> method then the action will be cancelled.
 For example we can cancel the action and redirect to another page if some
 condition is not met:
 
-```lua
+$dual_code{
+lua = [[
 local app = lapis.Application()
 
 app:before_filter(function(self)
@@ -354,9 +359,8 @@ end)
 app:match("login", "/login", function(self)
   -- ...
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
@@ -365,7 +369,8 @@ class App extends lapis.Application
       @write redirect_to: @url_for "login"
 
   [login: "/login"]: => ...
-```
+]]
+}
 
 > <span class="for_moon">`@write`</span><span
 > class="for_lua">`self:write()`</span> is what processes the return value of a
@@ -461,25 +466,25 @@ cookies by writing them to the table. When iterating, the cookies object will
 always appear as an empty table. The initial cookies are stored in the
 `__index` of the metatable.
 
-```lua
+$dual_code{
+lua = [[
 app:match("/reads-cookie", function(self)
   print(self.cookies.foo)
 end)
 
-
 app:match("/sets-cookie", function(self)
   self.cookies.foo = "bar"
 end)
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   "/reads-cookie": =>
     print @cookies.foo
 
   "/sets-cookie": =>
     @cookies.foo = "bar"
-```
+]]
+}
 
 All new cookies created are given the default attributes `Path=/; HttpOnly`
 (know as a [*session
@@ -488,16 +493,8 @@ configure a cookie's settings by overriding the the `cookie_attributes` method
 on your application. Here's an example that adds an expiration date to cookies
 to make them persist:
 
-```moon
-date = require "date"
-
-class App extends lapis.Application
-  cookie_attributes: (name, value) =>
-    expires = date(true)\adddays(365)\fmt "${http}"
-    "Expires=#{expires}; Path=/; HttpOnly"
-```
-
-```lua
+$dual_code{
+lua = [[
 local date = require("date")
 local app = lapis.Application()
 
@@ -505,7 +502,16 @@ app.cookie_attributes = function(self)
   local expires = date(true):adddays(365):fmt("${http}")
   return "Expires=" .. expires .. "; Path=/; HttpOnly"
 end
-```
+]],
+moon = [[
+date = require "date"
+
+class App extends lapis.Application
+  cookie_attributes: (name, value) =>
+    expires = date(true)\adddays(365)\fmt "${http}"
+    "Expires=#{expires}; Path=/; HttpOnly"
+]]
+}
 
 The `cookie_attributes` method takes the request object as the first argument
 (`self`) and then the name and value of the cookie being processed.
@@ -525,19 +531,20 @@ an empty table.
 
 The session object can be manipulated the same way as the cookies object:
 
-```lua
+$dual_code{
+lua = [[
 app.match("/", function(self)
   if not self.session.current_user then
     self.session.current_user = "Adam"
   end
 end)
-```
-
-```moon
+]],
+moon = [[
 "/": =>
   unless @session.current_user
     @session.current_user = "Adam"
-```
+]]
+}
 
 By default the session is stored in a cookie called `lapis_session`. You can
 overwrite the name of the session using the `session_name` [configuration
@@ -545,7 +552,8 @@ variable](configuration.html). Sessions are signed with your
 application secret, which is stored in the configuration value `secret`. It is
 highly recommended to change this from the default.
 
-```lua
+$dual_code{
+lua = [[
 -- config.lua
 local config = require("lapis.config").config
 
@@ -553,16 +561,16 @@ config("development", {
   session_name = "my_app_session",
   secret = "this is my secret string 123456"
 })
-```
-
-```moon
+]],
+moon = [[
 -- config.moon
 import config from require "lapis.config"
 
 config "development", ->
   session_name "my_app_session"
   secret "this is my secret string 123456"
-```
+]]
+}
 
 ## Request Parameters
 
@@ -672,7 +680,8 @@ filled using the values in params. If no route exists then an error is thrown.
 Given the following routes:
 
 
-```lua
+$dual_code{
+lua = [[
 app:match("index", "/", function()
   -- ...
 end)
@@ -680,52 +689,54 @@ end)
 app:match("user_data", "/data/:user_id/:data_field", function()
   -- ...
 end)
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   [index: "/"]: => -- ..
   [user_data: "/data/:user_id/:data_field"]: => -- ...
-```
+]]
+}
 
 URLs to the pages can be generated like this:
 
-```lua
+$dual_code{
+lua = [[
 -- returns: /
 self:url_for("index")
 
 -- returns: /data/123/height
 self:url_for("user_data", { user_id = 123, data_field = "height"})
-```
-
-```moon
+]],
+moon = [[
 -- returns: /
 @url_for "index"
 
 -- returns: /data/123/height
 @url_for "user_data", user_id: 123, data_field: "height"
-```
+]]
+}
 
 If the third argument, `query_params`, is supplied, it will be converted into
 query parameters and appended to the end of the generated URL. If the route
 doesn't take  any parameters in the URL then `nil`, or empty object, must be
 passed as the second argument:
 
-```lua
+$dual_code{
+lua = [[
 -- returns: /data/123/height?sort=asc
 self:url_for("user_data", { user_id = 123, data_field = "height"}, { sort = "asc" })
 
 -- returns: /?layout=new
 self:url_for("index", nil, {layout = "new"})
-```
-
-```moon
+]],
+moon = [[
 -- returns: /data/123/height?sort=asc
 @url_for "user_data", { user_id: 123, data_field: "height"}, sort: "asc"
 
 -- returns: /?layout=new
 @url_for "index", nil, layout: "new"
-```
+]]
+}
 
 Any optional components of the route will only be included if all of the
 enclosed parameters are provided. If the optional component does not have any
@@ -733,20 +744,22 @@ parameters then it will never be included.
 
 Given the following route:
 
-```lua
+$dual_code{
+lua = [[
 app:match("user_page", "/user/:username(/:page)(.:format)", function(self)
   -- ...
 end)
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   [user_page: "/user/:username(/:page)(.:format)"]: => -- ...
-```
+]]
+}
 
 The following URLs can be generated:
 
-```lua
+$dual_code{
+lua = [[
 -- returns: /user/leafo
 self:url_for("user_page", { username = "leafo" })
 
@@ -758,9 +771,8 @@ self:url_for("user_page", { username = "leafo", format = "json" })
 
 -- returns: /user/leafo/code.json
 self:url_for("user_page", { username = "leafo", page = "code", format = "json" })
-```
-
-```moon
+]],
+moon = [[
 -- returns: /user/leafo
 @url_for "user_page", username: "leafo"
 
@@ -772,37 +784,40 @@ self:url_for("user_page", { username = "leafo", page = "code", format = "json" }
 
 -- returns: /user/leafo/code.json
 @url_for "user_page", username: "leafo", page: "code", format: "json"
-```
+]]
+}
 
 If a route contains a splat, the value can be provided via the parameter named
 `splat`:
 
-```lua
+$dual_code{
+lua = [[
 app:match("browse", "/browse(/*)", function(self)
   -- ...
 end)
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   [browse: "/browse(/*)"]: => -- ...
-```
+]]
+}
 
-```lua
+$dual_code{
+lua = [[
 -- returns: /browse
 self:url_for("browse")
 
 -- returns: /browse/games/recent
 self:url_for("browse", { splat = "games/recent" })
-```
-
-```moon
+]],
+moon = [[
 -- returns: /browse
 @url_for "browse"
 
 -- returns: /browse/games/recent
 @url_for "browse", splat: "games/recent"
-```
+]]
+}
 
 #### Passing an object to `url_for`
 
@@ -816,49 +831,52 @@ It's common to implement `url_params` on models, giving them the ability to
 define what page they represent. For example, consider a `Users` model that
 defines a `url_params` method, which goes to the profile page of the user:
 
-```lua
+$dual_code{
+lua = [[
 local Users = Model:extend("users", {
   url_params = function(self, req, ...)
     return "user_profile", { id = self.id }, ...
   end
 })
-```
-
-```moon
+]],
+moon = [[
 class Users extends Model
   url_params: (req, ...) =>
     "user_profile", { id: @id }, ...
-```
+]]
+}
 
 We can now just pass an instance of `Users` directly to `url_for` and the path
 for the `user_profile` route is returned:
 
-```lua
+$dual_code{
+lua = [[
 local user = Users:find(100)
 self:url_for(user)
 -- could return: /user-profile/100
-```
-
-```moon
+]],
+moon = [[
 user = Users\find 100
 @url_for user
 -- could return: /user-profile/100
-```
+]]
+}
 
 You might notice we passed `...` through the `url_params` method to the return
 value. This allows the third `query_params` argument to still function:
 
-```lua
+$dual_code{
+lua = [[
 local user = Users:find(1)
 self:url_for(user, { page = "likes" })
 -- could return: /user-profile/100?page=likes
-```
-
-```moon
+]],
+moon = [[
 user = Users\find 1
 @url_for user, page: "likes"
 -- could return: /user-profile/100?page=likes
-```
+]]
+}
 
 #### Using the `url_key` method
 
@@ -869,44 +887,47 @@ called on it, and the return value is inserted into the path.
 For example, consider a `Users` model which we've generated a `url_key` method
 for:
 
-```lua
+$dual_code{
+lua = [[
 local Users = Model:extend("users", {
   url_key = function(self, route_name)
     return self.id
   end
 })
-```
-
-```moon
+]],
+moon = [[
 class Users extends Model
   url_key: (route_name) => @id
-```
+]]
+}
 
 If we wanted to generate a path to the user profile we might normally write
 something like this:
 
-```lua
+$dual_code{
+lua = [[
 local user = Users:find(1)
 self:url_for("user_profile", {id = user.id})
-```
-
-```moon
+]],
+moon = [[
 user = Users\find 1
 @url_for "user_profile", id: user.id
-```
+]]
+}
 
 The `url_key` method we've defined lets us pass the `User` object directly as
 the `id` parameter and it will be converted to the id:
 
-```lua
+$dual_code{
+lua = [[
 local user = Users:find(1)
 self:url_for("user_profile", {id = user})
-```
-
-```moon
+]],
+moon = [[
 user = Users\find 1
 @url_for "user_profile", id: user
-```
+]]
+}
 
 > The `url_key` method takes the name of the path as the first argument, so we
 > could change what we return based on which route is being handled.
@@ -919,20 +940,20 @@ the URL.
 For example, if we are running our server on `localhost:8080`:
 
 
-```lua
+$dual_code{
+lua = [[
 self:build_url() --> http://localhost:8080
 self:build_url("hello") --> http://localhost:8080/hello
 
 self:build_url("world", { host = "leafo.net", port = 2000 }) --> http://leafo.net:2000/world
-```
-
-```moon
+]],
+moon = [[
 @build_url! --> http://localhost:8080
 @build_url "hello" --> http://localhost:8080/hello
 
 @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
-```
-
+]]
+}
 
 The following options are supported:
 
@@ -993,15 +1014,17 @@ to set the HTTP status response code, and specify a view by name to be used to
 generate the response body.
 
 
-```lua
+$dual_code{
+lua = [[
 app:match("/", function(self)
   return { render = "error", status = 404}
 end)
-```
-
-```moon
-"/": => render: "error", status: 404
-```
+]],
+moon = [[
+class extends lapis.Application
+  "/": => render: "error", status: 404
+]]
+}
 
 Here are the options that can used to control the how the response is generated:
 
@@ -1078,18 +1101,18 @@ $options_table{
 When rendering JSON make sure to use the `json` render option. It will
 automatically set the correct content type and disable the layout:
 
-```lua
+$dual_code{
+lua = [[
 app:match("/hello", function(self)
   return { json = { hello = "world" } }
 end)
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   "/hello": =>
     json: { hello: "world!" }
-```
-
+]]
+}
 
 ## Application Configuration
 
@@ -1163,7 +1186,8 @@ When a request does not match any of the routes you've defined, the
 
 A default implementation is provided:
 
-```lua
+$dual_code{
+lua = [[
 function app:default_route()
   -- strip trailing /
   if self.req.parsed_url.path:match("./$") then
@@ -1178,9 +1202,8 @@ function app:default_route()
     self.app.handle_404(self)
   end
 end
-```
-
-```moon
+]],
+moon = [[
 default_route: =>
   -- strip trailing /
   if @req.parsed_url.path\match "./$"
@@ -1188,7 +1211,8 @@ default_route: =>
     redirect_to: @build_url(stripped, query: @req.parsed_url.query), status: 301
   else
     @app.handle_404 @
-```
+]]
+}
 
 The default implementation will check for excess trailing `/` on the end of the
 URL it will attempt to redirect to a version without the trailing slash.
@@ -1197,22 +1221,22 @@ Otherwise it will call the `handle_404` method on the application.
 This method, `default_route`, is a normal method of your application. You can
 override it to do whatever you like. For example, this adds logging:
 
-```lua
+$dual_code{
+lua = [[
 function app:default_route()
   ngx.log(ngx.NOTICE, "User hit unknown path " .. self.req.parsed_url.path)
 
   -- call the original implementaiton to preserve the functionality it provides
   return lapis.Application.default_route(self)
 end
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   default_route: =>
     ngx.log ngx.NOTICE, "User hit unknown path #{@req.parsed_url.path}"
     super!
-```
-
+]]
+}
 
 #### `application:handle_404()`
 
@@ -1221,16 +1245,18 @@ of the request did not match any routes.
 
 A default implementation is provided:
 
-```lua
+$dual_code{
+lua = [[
 function app:handle_404()
   error("Failed to find route: " .. self.req.request_uri)
 end
-```
-
-```moon
-handle_404: =>
-  error "Failed to find route: #{@req.request_uri}"
-```
+]],
+moon = [[
+class extends lapis.Application
+  handle_404: =>
+    error "Failed to find route: #{@req.request_uri}"
+]]
+}
 
 This will trigger a 500 error and a stack trace on every invalid request. If
 you want to make a proper 404 page this is where you would do it.
@@ -1240,17 +1266,18 @@ create a custom 404 page while still keeping the trailing slash removal code.
 
 Here's a simple 404 handler that just prints the text `"Not Found!"`
 
-```lua
+$dual_code{
+lua = [[
 function app:handle_404()
   return { status = 404, layout = false, "Not Found!" }
 end
-```
-
-```moon
+]],
+moon = [[
 class extends lapis.Application
   handle_404: =>
     status: 404, layout: false, "Not Found!"
-```
+]]
+}
 
 #### `application:handle_error(err, trace)`
 
@@ -1269,7 +1296,8 @@ contains a stack trace and the error message.
 If you want to have your own error handling logic you can override the method
 `handle_error`:
 
-```lua
+$dual_code{
+lua = [[
 -- config.custom_error_page is made up for this example
 function app:handle_error(err, trace)
   if config.custom_error_page then
@@ -1278,9 +1306,8 @@ function app:handle_error(err, trace)
     return lapis.Application.handle_error(self, err, trace)
   end
 end
-```
-
-```moon
+]],
+moon = [[
 -- config.custom_error_page is made up for this example
 class App extends lapis.Application
   handle_error: (err, trace) =>
@@ -1288,7 +1315,8 @@ class App extends lapis.Application
       { render: "my_custom_error_page" }
     else
       super err, trace
-```
+]]
+}
 
 The request object, or `self`, passed to the error handler is not the one that
 was created for the request that failed. Lapis provides a new one since the
@@ -1326,18 +1354,19 @@ change.
 
 Class approach:
 
-```lua
+$dual_code{
+lua = [[
 local app = lapis.Application:extend()
 
 app:match("index", "/index", function(self) return "Hello world!" end)
 app:match("/about", function(self) return "My site is cool" end)
-```
-
-```moon
+]],
+moon = [[
 class extends lapis.Application
   @match "index", "/index", => "Hello world!"
   @match "/about", => "My site is cool"
-```
+]]
+}
 
 Instance approach:
 
