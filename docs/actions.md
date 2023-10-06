@@ -451,6 +451,7 @@ by the underlying server. The format of this data may be server specific, but
 generally will contain the following common fields:
 
 $options_table{
+  show_default = false,
   {
     name = $self_ref{"req.headers"},
     description = "Request headers table"
