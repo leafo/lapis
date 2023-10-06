@@ -4,49 +4,50 @@
 # Requests and Actions
 
 Every HTTP request that is handled by Lapis follows the same basic flow after
-being handed off from processing server. The first step is routing. A *route*
-is a pattern that a URL must match. When you define a route you also include an
-*action*. An action is a regular Lua/MoonScript function that will be called if
-the associated route matches.
+being handed off from processing server. The first step is routing. The path of
+an incoming request is matched against the routes defined in your application
+to look up the corresponding *action function*. An action is a regular
+Lua/MoonScript function that will be called if the associated route matches.
 
-All actions are invoked with one argument, a [*request
-object*](#request-object). The request object is where you'll store all the
-data you want to share between your actions and views. Additionally, the
-request object is your interface to the webserver on how the result is sent to
-the client.
+An *action function* is invoked with one argument, a [*request
+object*](#request-object), when processing a request. The request object is
+where you'll store all the data you want to share between your actions and
+views. Additionally, the request object is your interface to the webserver on
+how the result is sent to the client.
 
-The return value of the action is used to render the output. A string return
-value will be rendered to the browser directly. A table return value will be
-used as the [*render options*](#render-options). If there is more than one
-return value, all of them are merged into the final result. You can return both
-strings and tables to control the output.
+The return value of the action is used to control how the output is rendered. A
+string return value will be rendered to the browser directly. A table return
+value will be used as the [*render options*](#render-options). If there is more
+than one return value, all of them are merged into the final result. You can
+return both strings and tables to control the output.
 
 If there is no route that matches the request then the default route handler is
-executed, read more in [*application callbacks*](#application-configuration/callbacks).
+executed, read more in [*application
+callbacks*](#application-configuration/callbacks).
 
 ## Routes & URL Patterns
 
 Route patterns use a special syntax to define dynamic parameters of the URL and
 assign a name to them. The simplest routes have no parameters though:
 
-
-```lua
-local lapis = require("lapis")
-local app = lapis.Application()
-
-app:match("/", function(self) end)
-app:match("/hello", function(self) end)
-app:match("/users/all", function(self) end)
-```
-
-```moon
+$dual_code{
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
   "/": =>
   "/hello": =>
   "/users/all": =>
-```
+]],
+lua = [[
+local lapis = require("lapis")
+local app = lapis.Application()
+
+app:match("/", function(self) end)
+app:match("/hello", function(self) end)
+app:match("/users/all", function(self) end)
+]]
+}
 
 These routes match the URLs verbatim. The leading `/` is required. The route
 must match the entire path of the request. That means a request to
