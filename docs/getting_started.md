@@ -12,9 +12,9 @@ OpenResty. Lua's coroutines allow you to write synchronous looking code that is
 event driven behind the scenes.
 
 The web framework comes with a environment based configuration, URL routing,
-HTML templating, CSRF and session support, a PostgreSQL or MySQL active record
-system for working with models and a handful of other useful functions needed
-for developing websites and more
+HTML templating, CSRF and session support, a relational database object
+relational mapper for working with models and a handful of other useful
+functions needed for developing websites and more
 
 This introduction guide functions as both a tutorial and a reference.
 
