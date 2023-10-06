@@ -754,7 +754,7 @@ $options_table{
 
       db.query "SELECT FROM users ?", db.clause {
         -- if params.id is nil, then the clause will be encoded to empty string
-        id: params.id 
+        id: params.id
       }, prefix: "WHERE", allow_empty: true
     ]], lua=[[
       db.encode_clause(db.clause({}, {prefix = "WHERE", allow_empty = true})) --> ""
