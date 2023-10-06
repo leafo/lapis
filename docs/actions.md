@@ -453,19 +453,19 @@ generally will contain the following common fields:
 $options_table{
   {
     name = $self_ref{"req.headers"},
-    description = "Request headers table",
+    description = "Request headers table"
   },
   {
     name = $self_ref{"req.parsed_url"},
-    description = "A table generated containing all the components of the requesting URL. Contains fields like `scheme`, `path`, `host`, `port`, and `query`",
+    description = "A table generated containing all the components of the requesting URL. Contains fields like `scheme`, `path`, `host`, `port`, and `query`"
   },
   {
     name = $self_ref{"req.params_get"},
-    description = "Unprocessed table of parameters from the query string of the requesting URL",
+    description = "Unprocessed table of parameters from the query string of the requesting URL"
   },
   {
     name = $self_ref{"req.params_post"},
-    description = "Unprocessed table of parameters from the body of the request",
+    description = "Unprocessed table of parameters from the body of the request"
   }
 }
 
