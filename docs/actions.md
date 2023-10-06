@@ -447,18 +447,31 @@ $options_table{
 ### `request.req`
 
 The raw request table $self_ref{"req"} contains data from the request provided
-by the underlying server. The format of this data may be server specific.
+by the underlying server. The format of this data may be server specific, but
+generally will contain the following common fields:
 
-* $self_ref{"headers"} -- Request headers table
-* $self_ref{"parsed_url"} -- A table generated containing all the components of the requesting URL. Contains fields like `scheme`, `path`, `host`, `port`, and `query`
-* $self_ref{"params_get"} -- Unprocessed table of parameters from the query string of the requesting URL
-* $self_ref{"params_post"} -- Unprocessed table of parameters from the body of the request
+$options_table{
+  {
+    name = $self_ref{"req.headers"},
+    description = "Request headers table",
+  },
+  {
+    name = $self_ref{"req.parsed_url"},
+    description = "A table generated containing all the components of the requesting URL. Contains fields like `scheme`, `path`, `host`, `port`, and `query`",
+  },
+  {
+    name = $self_ref{"req.params_get"},
+    description = "Unprocessed table of parameters from the query string of the requesting URL",
+  },
+  {
+    name = $self_ref{"req.params_post"},
+    description = "Unprocessed table of parameters from the body of the request",
+  }
+}
 
 ### Cookies
 
-The <span class="for_moon">`@cookies`</span><span
-class="for_lua">`self.cookies`</span> table in the request lets you read and
-write cookies.
+The $self_ref{"cookies"} table in the request lets you read and write cookies.
 
 The cookies object, $self_ref{"cookies"}, is a proxy object. It supports
 reading existing cookies by indexing the object by name, and writing new
