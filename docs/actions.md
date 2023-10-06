@@ -1284,20 +1284,21 @@ class extends lapis.Application
 
 #### `application:handle_error(err, trace)`
 
-Every action executed by Lapis is wrapped by [`xpcall`][1]. This ensures fatal
-errors can be captured and a meaningful error page can be generated instead of
-the server's default error page, which may not be useful.
+Every action executed by Lapis is called through [`xpcall`][1]. This ensures
+that fatal errors can be captured and a meaningful error page can be produced
+instead of the server's default error page.
 
-The error handler should only be used to capture fatal and unexpected errors,
-expected errors are discussed in the [Exception Handling
-guide]($root/reference/exception_handling.html)
+The error handler should only be utilized to capture fatal and unexpected
+errors. Expected errors are discussed in the [Exception Handling
+guide]($root/reference/exception_handling.html).
 
-Lapis comes with an error handler pre-defined that extracts information about
-the error and renders the template specified by `application.error_page`. This error page
-contains a stack trace and the error message.
+Lapis comes with a pre-defined error handler that extracts information about
+the error and renders it into the template specified by
+`application.error_page`. This error page includes a stack trace and the error
+message.
 
-If you want to have your own error handling logic you can override the method
-`handle_error`:
+If you wish to implement your own error handling logic, you can override the
+`handle_error` method.
 
 $dual_code{
 lua = [[
@@ -1321,23 +1322,22 @@ class App extends lapis.Application
 ]]
 }
 
-The request object, or `self`, passed to the error handler is not the one that
-was created for the request that failed. Lapis provides a new one since the
-existing one maybe have been partially written to when it failed.
+The request object, or `self`, that is passed to the error handler is not the
+one that was created for the request that failed, as it may have been tainted
+by the failed request via a partial write. Lapis generates an empty request
+object for rendering the error page.
 
-You can access the original request object with <span
-class="for_moon">`@original_request`</span><span
-class="for_lua">`self.original_request`</span>
+If you need to inspect the original request object to extract information about
+why the error occurred, you can access it through
+$self_ref{"original_request"}.
 
-Lapis' default error page shows an entire stack trace, so it's recommended to
-replace it with a custom one in your production environments, and log the
-exception in the background.
+Lapis' default error page displays a full stack trace. Therefore, it is
+recommended to replace it with a custom one in your production environments and
+log the exception in the background to prevent leaking file pathes and function
+names related to your application.
 
 The [`lapis-exceptions`][2] module augments the error handler to records errors
 in a database. It can also email you when there's an exception.
-
-
-
 
 ## Application Methods
 
