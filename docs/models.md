@@ -2098,7 +2098,7 @@ import Model from require "lapis.db.model"
 
 class Posts extends Model
   @relations: {
-    {"user", polymorphic_belongs_to: {
+    {"object", polymorphic_belongs_to: {
       [1]: "VideoGames"
       [2]: "Books"
     }}
