@@ -984,32 +984,32 @@ $options_table{
 ### `request:flow(module_name)`
 
 Loads a flow by `module_name` with the `flows_prefix` on the current request
-object. If the flow with that name had been previously loaded, then the
-existing flow instance is returned.
+object. If the flow with that name has been previously loaded, the existing
+flow instance is returned.
 
 ### `request:html(fn)`
 
 Returns a new function that implements the buffer writer interface for
-rendering the contents of `fn` as an HTML scoped function. Suitable for
+rendering the contents of `fn` as an HTML scoped function. This is suitable for
 returning from an action.
 
 ### `request:get_request()`
 
-This function returns `self`. This method is useful in scenarios where the
-request object is being proxied, and you wish to get a direct access to the
-instance of the request object for mutation. Examples include within flows and
-within widgets where the request object is embedded into the *helper chain*.
+Returns `self`. This method is useful in scenarios where the request object is
+being proxied, and you need direct access to the instance of the request object
+for mutation. Examples include accessing the request object in a flow or in a
+widget where the request object is embedded into the *helper chain*.
 
 ## Render Options
 
 Render options are set by explicit calls to `write` or by the return value of
 the action function. They are accumulated in the $self_ref{"options"} field of
-the request object. Typically an action function does not generate the response
-directly, but sets the options to be used by Lapis during the rendering phase
-of the request which happens immediately after executing the action.
+the request object. Typically, an action function does not generate the
+response directly but sets the options to be used by Lapis during the rendering
+phase of the request, which happens immediately after executing the action.
 
-For example, in the following action the `render` and `status` fields are used
-to set the HTTP status response code, and specify a view by name to be used to
+For example, in the following action, the `render` and `status` fields are used
+to set the HTTP status response code and specify a view by name to be used to
 generate the response body.
 
 
@@ -1115,59 +1115,60 @@ class App extends lapis.Application
 
 ## Application Configuration
 
-These fields are designed to be overwritten by the application creator to
-configure how the application functions. These fields can either be overwridden
-on the instance, of by setting the instance fields when creating a new
-Application class.
+The following fields on the application object are designed to be overwritten
+by the application creator to configure how the application processes a
+request. These fields can either be overwritten on the instance or by setting
+the instance fields when creating a new Application class.
 
 ### `application.layout`
 
-Specifies a view that will be used to wrap the content of the results response
-in. A layout is always rendered around the result of the action's render unless
-`layout` is set to false, or a renderer with a separate content type is used
-(eg. `json`)
+This specifies a default view that will be used to wrap the content of the
+results response. A layout is always rendered around the result of the action's
+render unless `layout` is set to `false`, or a renderer with a separate content
+type is used (e.g., `json`).
 
-Can either be an instance of a view or a string. When a string is provided, the
-layout is loaded as a module via the `require` using the module name
+It can either be an instance of a view or a string. When a string is provided,
+the layout is loaded as a module via the `require` using the module name
 `{views_prefix}.{layout_name}`.
 
 Default `require "lapis.views.layout"`
 
 ### `application.error_page`
 
-View used to render an unrecoverable error in the [default
-`handle_error`](#application-configuration/callbacks/handle_error) callback.
-The value of this field is passed directly to Render Option `render`, enabling
-the use of specifying the page by view name or directly by a widget or
-template.
+This is the view used to render an unrecoverable error in the default
+`handle_error` callback. The value of this field is passed directly to Render
+Option `render`, enabling the use of specifying the page by view name or
+directly by a widget or template.
 
 Default `require "lapis.views.error"`
 
 ### `application.views_prefix`
 
-A prefix appended to the view name (joined by `.`) whenever a view is
+This is a prefix appended to the view name (joined by `.`) whenever a view is
 specified by string to determine the full module name to require.
 
 Default `"views"`
 
 ### `application.actions_prefix`
 
-A prefix appended to the action name (joined by `.`) whenever an action is
-specified by string to determine the full module name to require.
+This is a prefix appended to the action name (joined by `.`) whenever an action
+is specified by string to determine the full module name to require.
 
 Default `"actions"`
 
 ### `application.flows_prefix`
 
-A prefix appended to the flow name (joined by `.`) whenever a flow is specified
-by string to determine the full module name to require.
+This is a prefix appended to the flow name (joined by `.`) whenever a flow is
+specified by string to determine the full module name to require.
 
 Default `"flows"`
 
 ### `application.Request`
 
-The class that will be used to instantiate new request objects when dispatching
-a request. Default `require "lapis.request"`
+This is the class that will be used to instantiate new request objects when
+dispatching a request.
+
+Default `require "lapis.request"`
 
 ### Callbacks
 
@@ -1257,13 +1258,16 @@ class extends lapis.Application
 ]]
 }
 
-This will trigger a 500 error and a stack trace on every invalid request. If
-you want to make a proper 404 page this is where you would do it.
+This handler will cause a 500 error and a stack trace for every invalid
+request. If you wish to create a suitable 404 page, this is where you would do
+it.
 
-Overriding the `handle_404` method instead of `default_route` allows us to
-create a custom 404 page while still keeping the trailing slash removal code.
+By overriding the `handle_404` method instead of the `default_route`, we can
+create a custom 404 page while maintaining the code for removing the trailing
+slash.
 
-Here's a simple 404 handler that just prints the text `"Not Found!"`
+Here's a straightforward 404 handler that merely displays the text `"Not
+Found!"`:
 
 $dual_code{
 lua = [[
@@ -1472,6 +1476,6 @@ end
 -- note that `match` is a class method, so MyApp_mt is not used here
 MyApp:match("home", "/", function(self) return "Hello world!" end)
 ```
- 
+
 [1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
