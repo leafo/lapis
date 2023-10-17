@@ -165,7 +165,7 @@ class ParamsArrayType extends BaseType
     if errors
       return FailedTransform, errors
 
-    out
+    out, state
 
 -- convert the array-like error message to a single string error messag
 class FlattenErrors extends BaseType

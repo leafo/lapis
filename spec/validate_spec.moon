@@ -582,6 +582,30 @@ params type {
         }
       }
 
+    it "captures state", ->
+      t = types.params_array types.partial({
+        title: types.string\tag "things[]"
+      }) + types.string\tag("things[]") / (o) -> {title: o}
+
+      res, state = assert t\transform {
+        { title: "cool" }
+        { title: "zone", age: 5 }
+        "whazt"
+      }
+
+      assert.same {
+        things: {
+          "cool", "zone", "whazt"
+        }
+      }, state
+
+      assert.same {
+        { title: "cool" }
+        { title: "zone", age: 5 }
+        { title: "whazt"}
+      }, res
+
+
   describe "flatten_errors", ->
     types = require "lapis.validate.types"
 

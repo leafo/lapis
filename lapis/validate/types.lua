@@ -284,7 +284,7 @@ do
       if errors then
         return FailedTransform, errors
       end
-      return out
+      return out, state
     end
   }
   _base_0.__index = _base_0
