@@ -428,6 +428,182 @@ params type {
         t\transform { false, true, "give" }
       }
 
+  describe "params_map", ->
+    types = require "lapis.validate.types"
+
+    it "tests empty object", ->
+      map_t = types.params_map types.db_id, types.table
+      result, err = map_t\transform {}
+      assert.same {}, result
+      assert.falsy err
+
+    it "tests invalid input type", ->
+      params_t = types.params_map(types.db_id, types.table)
+      assert.same {nil, {[[params map: expected type "table", got "string"]]}}, { params_t\transform("not a table") }
+
+    it "tests simple map", ->
+      map_t = types.params_map types.db_id\tag("keys[]"), types.params_shape {
+        {"name", types.string\tag("names[]")}
+      }
+
+      res, state = map_t\transform {
+        "55": {name: "hello", exlude: 12}
+        "99": {name: "world"}
+      }
+
+      assert.same {
+        [55]: {name: "hello"}
+        [99]: {name: "world"}
+      }, res
+
+      assert.same 2, #state.names
+      assert.same 2, #state.keys
+
+      assert.same {
+        [55]: true
+        [99]: true
+      }, {k, true for k in *state.keys}
+
+      assert.same {
+        ["hello"]: true
+        ["world"]: true
+      }, {k, true for k in *state.names}
+
+    -- default iterator if there is only one error
+    it "single failure cases", ->
+      map_t = types.params_map types.db_id\tag("keys[]"), types.params_shape {
+        {"name", types.string\tag("names[]")}
+        {"custom", types.boolean + types.nil}
+      }
+
+      assert.same {
+        nil
+        { [[item key: expected database ID integer]] }
+      }, {
+        map_t\transform {
+          "hello": { name: false } -- value not tested
+          "23": {name: "world"}
+        }
+      }
+
+      assert.same {
+        nil
+        {
+          [[item 99: name: expected type "string", got "boolean"]]
+          [[item 99: custom: expected type "boolean", or type "nil"]]
+        }
+      }, {
+        map_t\transform {
+          "99": { name: false, custom: 239 }
+          "23": { name: "world" }
+        }
+      }
+
+
+    it "custom join_error", ->
+      map_t = types.params_map types.db_id\tag("keys[]"), types.params_shape({
+        {"name", types.string\tag("names[]")}
+        {"custom", types.boolean + types.nil}
+      }), {
+        join_error: (err, key, value, error_type) =>
+          "map[#{error_type}]: #{key} #{err}"
+      }
+
+      assert.same {
+        nil
+        { [[map[key]: hello expected database ID integer]] }
+      }, {
+        map_t\transform {
+          "hello": { name: false } -- value not tested
+          "23": {name: "world"}
+        }
+      }
+
+      assert.same {
+        nil
+        {
+          [[map[value]: 99 name: expected type "string", got "boolean"]]
+          [[map[value]: 99 custom: expected type "boolean", or type "nil"]]
+        }
+      }, {
+        map_t\transform {
+          "99": { name: false, custom: 239 }
+          "23": { name: "world" }
+        }
+      }
+
+    it "ordered_pairs", ->
+      map_t = types.params_map types.db_id\tag("keys[]"), types.params_shape({
+        {"name", types.string\tag("names[]")}
+        {"custom", types.boolean + types.nil}
+      }), {
+        iter: types.params_map.ordered_pairs
+      }
+
+      res, state = map_t\transform {
+        "55": {name: "hello", exlude: 12}
+        "99": {name: "world"}
+      }
+
+      assert.same {
+        keys: {55, 99}
+        names: {"hello", "world"}
+      }, state
+
+    -- we use custom iterator to ensure that order is consistent
+    it "multiple failure cases", ->
+      map_t = types.params_map types.db_id\tag("keys[]"), types.params_shape({
+        {"name", types.string\tag("names[]")}
+        {"custom", types.boolean + types.nil}
+      }), {
+        iter: types.params_map.ordered_pairs
+      }
+
+      assert.same {
+        nil
+        {
+          [[item 99: name: expected type "string", got "boolean"]]
+          [[item 99: custom: expected type "boolean", or type "nil"]]
+          [[item key: expected database ID integer]]
+        }
+      }, {
+        map_t\transform {
+          "hello": { name: false } -- value not tested
+          "23": {name: "world"}
+          "99": { name: false, custom: 239 }
+        }
+      }
+
+    it "transforms key and value", ->
+      change_key = types.string / (s) -> "*#{s}*"
+      change_value = types.table * types.clone / (t) ->
+        t.visited = true
+        t
+
+      map_t = types.params_map change_key, change_value
+
+      og_object = {
+        one: {thing: "zing"}
+      }
+
+      assert.same {
+        "*one*": {thing: "zing", visited: true}
+      }, map_t\transform og_object
+
+      assert.same {
+        one: {thing: "zing"}
+      }, og_object
+
+    it "strips tuples that transform to nil", ->
+      map_t = types.params_map types.string + types.number / nil, types.string + types.number / nil
+
+      assert.same {
+        hello: "world"
+      }, map_t\transform {
+        hello: "world"
+        [55]: "zone"
+        song: 404
+      }
 
   describe "params_array", ->
     types = require "lapis.validate.types"

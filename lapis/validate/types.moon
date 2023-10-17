@@ -112,6 +112,87 @@ class ParamsShapeType extends BaseType
       "params type {\n  #{table.concat rows, "\n  "}\n}"
 
 
+-- tests every key, value pair in the table
+-- types.params_map(types.db_id, types.params_shape {...})
+class ParamsMapType extends BaseType
+  @ordered_pairs: (obj) ->
+    coroutine.wrap ->
+      keys = {}
+      for k in pairs obj
+        table.insert keys, k
+
+      table.sort keys
+
+      for k in *keys
+        coroutine.yield k, obj[k]
+
+  test_input_type = types.table
+
+  iter: pairs
+  item_prefix: "item"
+
+  new: (@key_type, @value_type, opts) =>
+    if opts
+      @item_prefix = opts.item_prefix
+      @iter = opts.iter
+      @join_error = opts.join_error
+
+  join_error: (err, key, value, error_type) =>
+    switch error_type
+      when "key"
+        "#{@item_prefix} key: #{err}"
+      else
+        "#{@item_prefix} #{key}: #{err}"
+
+  _transform: (input_value, state) =>
+    pass, err = test_input_type input_value
+    unless pass
+      return FailedTransform, {"params map: #{err}"}
+
+    local errors
+
+    push_error = (err, ...) ->
+      errors or= {}
+
+      switch type(err)
+        -- append all errors
+        when "table"
+          for e in *err
+            table.insert errors, @join_error e, ...
+        when "string"
+          table.insert errors, @join_error err, ...
+
+    out = {}
+
+    for key, value in @.iter input_value
+      pair_state = state
+
+      -- test if key validates
+      new_key, state_or_err = @key_type\_transform key, pair_state
+      if new_key == FailedTransform
+        push_error state_or_err, key, value, "key"
+        -- Note that if the key fails, we bypass the value test
+        continue
+      else
+        pair_state = state_or_err
+
+      -- test if value validates
+      new_value, state_or_err = @value_type\_transform value, pair_state
+      if new_value == FailedTransform
+        push_error state_or_err, key, value, "value"
+        continue
+      else
+        pair_state = state_or_err
+
+      if new_key != nil and new_value != nil
+        out[new_key] = new_value
+
+      state = pair_state
+
+    if errors
+      return FailedTransform, errors
+
+    out, state
 
 -- applies a params_shape to each item of array. This is necessary because
 -- params_shape returns a special errors object
@@ -307,6 +388,7 @@ file_upload = types.partial({
 setmetatable {
   params_shape: ParamsShapeType
   params_array: ParamsArrayType
+  params_map: ParamsMapType
   flatten_errors: FlattenErrors
 
   multi_params: MultiParamsType

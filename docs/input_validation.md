@@ -219,15 +219,58 @@ $options_table{
   },
   {
     name = "item_prefix",
-    description = "A string that prefixed before each collected error to identify the kind of object being checked",
+    description = "A string that is prefixed before each collected error to identify the kind of object being checked",
     default = [["item"]]
   },
   {
     name = "iter",
-    description = "Function used as iterator to visit each item in the table",
+    description = "Function used as an iterator to visit each item in the table",
     default = "ipairs"
+  },
+  {
+    name = "join_error",
+    description = "A function that formats the error message. It takes the error, the index of the item, and the item itself as arguments and returns a formatted string",
   }
 }
+
+#### `types.params_map(key_t, value_t, [opts])`
+
+Creates a type checker that extracts key-value pairs from a table. Every key
+must match type `key_t` and every value must match type `value_t`, otherwise
+the checker will fail. If either `key_t` or `value_t` transform to `nil`, the
+corresponding key-value pair is stripped from the final output. A new table is
+always returned in the transformed output, even if no changes have been made to
+any of the key or values.
+
+Similar to `params_shape`, every pair is tested and all errors are accumulated
+into an array object. `key_t` is tested before `value_t`, if the `key_t` type
+fails then the `value_t` will not be tested, and only a single failure message
+for the key is generated.
+
+The `opts` argument is a table of options that control how the type checker
+processes the input:
+
+$options_table{
+  {
+    name = "join_error",
+    description = "A function that takes an error message, a key, a value, and an error type, and returns a string. This is used to construct the error message when a key-value pair fails to match the expected types"
+  },
+  {
+    name = "item_prefix",
+    description = "A string that is prefixed before each collected error to identify the kind of object being checked",
+    default = [["item"]]
+  },
+  {
+    name = "iter",
+    description = "Function used as iterator to visit each item in the table. This can be used to control the order in which items are visited",
+    default = "pairs"
+  }
+}
+
+> The `types.params_map.ordered_pairs` can be used for the `iter` option to
+> ensure the key-value pairs are visited in a sorted order. This can be useful
+> in cases where the order of error message output matters, such as in a test
+> suite.
 
 #### `types.assert_error(t)`
 

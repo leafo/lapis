@@ -214,6 +214,134 @@ do
   end
   ParamsShapeType = _class_0
 end
+local ParamsMapType
+do
+  local _class_0
+  local test_input_type
+  local _parent_0 = BaseType
+  local _base_0 = {
+    iter = pairs,
+    item_prefix = "item",
+    join_error = function(self, err, key, value, error_type)
+      local _exp_0 = error_type
+      if "key" == _exp_0 then
+        return tostring(self.item_prefix) .. " key: " .. tostring(err)
+      else
+        return tostring(self.item_prefix) .. " " .. tostring(key) .. ": " .. tostring(err)
+      end
+    end,
+    _transform = function(self, input_value, state)
+      local pass, err = test_input_type(input_value)
+      if not (pass) then
+        return FailedTransform, {
+          "params map: " .. tostring(err)
+        }
+      end
+      local errors
+      local push_error
+      push_error = function(err, ...)
+        errors = errors or { }
+        local _exp_0 = type(err)
+        if "table" == _exp_0 then
+          for _index_0 = 1, #err do
+            local e = err[_index_0]
+            table.insert(errors, self:join_error(e, ...))
+          end
+        elseif "string" == _exp_0 then
+          return table.insert(errors, self:join_error(err, ...))
+        end
+      end
+      local out = { }
+      for key, value in self.iter(input_value) do
+        local _continue_0 = false
+        repeat
+          local pair_state = state
+          local new_key, state_or_err = self.key_type:_transform(key, pair_state)
+          if new_key == FailedTransform then
+            push_error(state_or_err, key, value, "key")
+            _continue_0 = true
+            break
+          else
+            pair_state = state_or_err
+          end
+          local new_value
+          new_value, state_or_err = self.value_type:_transform(value, pair_state)
+          if new_value == FailedTransform then
+            push_error(state_or_err, key, value, "value")
+            _continue_0 = true
+            break
+          else
+            pair_state = state_or_err
+          end
+          if new_key ~= nil and new_value ~= nil then
+            out[new_key] = new_value
+          end
+          state = pair_state
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
+      end
+      if errors then
+        return FailedTransform, errors
+      end
+      return out, state
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, key_type, value_type, opts)
+      self.key_type, self.value_type = key_type, value_type
+      if opts then
+        self.item_prefix = opts.item_prefix
+        self.iter = opts.iter
+        self.join_error = opts.join_error
+      end
+    end,
+    __base = _base_0,
+    __name = "ParamsMapType",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  local self = _class_0
+  self.ordered_pairs = function(obj)
+    return coroutine.wrap(function()
+      local keys = { }
+      for k in pairs(obj) do
+        table.insert(keys, k)
+      end
+      table.sort(keys)
+      for _index_0 = 1, #keys do
+        local k = keys[_index_0]
+        coroutine.yield(k, obj[k])
+      end
+    end)
+  end
+  test_input_type = types.table
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  ParamsMapType = _class_0
+end
 local ParamsArrayType
 do
   local _class_0
@@ -565,6 +693,7 @@ local file_upload = types.partial({
 return setmetatable({
   params_shape = ParamsShapeType,
   params_array = ParamsArrayType,
+  params_map = ParamsMapType,
   flatten_errors = FlattenErrors,
   multi_params = MultiParamsType,
   assert_error = AssertErrorType,
