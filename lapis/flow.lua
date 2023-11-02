@@ -1,7 +1,7 @@
-local type, getmetatable, setmetatable, rawset
+local type, getmetatable, setmetatable, rawset, rawget
 do
   local _obj_0 = _G
-  type, getmetatable, setmetatable, rawset = _obj_0.type, _obj_0.getmetatable, _obj_0.setmetatable, _obj_0.rawset
+  type, getmetatable, setmetatable, rawset, rawget = _obj_0.type, _obj_0.getmetatable, _obj_0.setmetatable, _obj_0.rawset, _obj_0.rawget
 end
 local Flow
 local is_flow
@@ -13,6 +13,27 @@ is_flow = function(cls)
     return true
   end
   return is_flow(cls.__parent)
+end
+local MEMO_KEY = setmetatable({ }, {
+  __tostring = function()
+    return "::memo_key::"
+  end
+})
+local memo
+memo = function(fn)
+  return function(self, ...)
+    local cache = rawget(self, MEMO_KEY)
+    if not (cache) then
+      cache = { }
+      rawset(self, MEMO_KEY, cache)
+    end
+    if not (cache[fn]) then
+      cache[fn] = {
+        fn(self, ...)
+      }
+    end
+    return unpack(cache[fn])
+  end
 end
 do
   local _class_0
@@ -105,5 +126,7 @@ do
 end
 return {
   Flow = Flow,
-  is_flow = is_flow
+  is_flow = is_flow,
+  MEMO_KEY = MEMO_KEY,
+  memo = memo
 }

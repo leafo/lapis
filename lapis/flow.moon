@@ -1,5 +1,5 @@
 
-import type, getmetatable, setmetatable, rawset from _G
+import type, getmetatable, setmetatable, rawset, rawget from _G
 
 local Flow
 
@@ -8,7 +8,26 @@ is_flow = (cls) ->
   return true if cls == Flow
   is_flow cls.__parent
 
--- a mediator for encapsulating logic between multiple models and a request
+MEMO_KEY = setmetatable {}, __tostring: -> "::memo_key::"
+
+-- make method cached on the instance so that it's not called multiple times
+-- FIXME: if expose assigns is enabled, don't write memo to exposed request
+memo = (fn) ->
+  (...) =>
+    cache = rawget @, MEMO_KEY
+
+    unless cache
+      cache = {}
+      rawset @, MEMO_KEY, cache
+
+    unless cache[fn]
+      cache[fn] = {fn @, ...}
+
+    unpack cache[fn]
+
+-- A flow is a object that forwards all methods and property access that don't
+-- exist on the flow to the wrapped object. This allows you to encapsulate
+-- functionality within the scope of the Flow class
 class Flow
   expose_assigns: false
 
@@ -68,4 +87,4 @@ class Flow
     setmetatable @, mt
 
 
-{ :Flow, :is_flow }
+{ :Flow, :is_flow, :MEMO_KEY, :memo }
