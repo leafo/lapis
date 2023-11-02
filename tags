@@ -30,6 +30,7 @@ FlattenErrors	lapis/validate/types.moon	/^class FlattenErrors extends BaseType$/
 Flow	lapis/flow.moon	/^class Flow$/;"	c	language:moon
 LOADED_KEY	lapis/db/model/relations.moon	/^LOADED_KEY = setmetatable {}, __tostring: =>/;"	f	language:moon
 LapisMigrations	lapis/db/migrations.moon	/^class LapisMigrations extends Model$/;"	c	language:moon
+MEMO_KEY	lapis/flow.moon	/^MEMO_KEY = setmetatable {}, __tostring: ->/;"	f	language:moon
 Model	lapis/db/mysql/model.moon	/^class Model extends BaseModel$/;"	c	language:moon
 Model	lapis/db/postgres/model.moon	/^class Model extends BaseModel$/;"	c	language:moon
 Model	lapis/db/sqlite/model.moon	/^class Model extends BaseModel$/;"	c	language:moon
@@ -39,7 +40,8 @@ NginxRunner	lapis/cmd/nginx.moon	/^class NginxRunner$/;"	c	language:moon
 OffsetPaginator	lapis/db/pagination.moon	/^class OffsetPaginator extends Paginator$/;"	c	language:moon
 OrderedPaginator	lapis/db/pagination.moon	/^class OrderedPaginator extends Paginator$/;"	c	language:moon
 Paginator	lapis/db/pagination.moon	/^class Paginator$/;"	c	language:moon
-ParamsArray	lapis/validate/types.moon	/^class ParamsArray extends BaseType$/;"	c	language:moon
+ParamsArrayType	lapis/validate/types.moon	/^class ParamsArrayType extends BaseType$/;"	c	language:moon
+ParamsMapType	lapis/validate/types.moon	/^class ParamsMapType extends BaseType$/;"	c	language:moon
 ParamsShapeType	lapis/validate/types.moon	/^class ParamsShapeType extends BaseType$/;"	c	language:moon
 Proxy	lapis/moonscript/widget_optimizer.moon	/^class Proxy extends BaseType$/;"	c	language:moon
 Request	lapis/request.moon	/^class Request$/;"	c	language:moon
@@ -69,9 +71,10 @@ _inherit_helpers	lapis/html.moon	/^  _inherit_helpers: (other) =>/;"	f	language:
 _primary_cond	lapis/db/base_model.moon	/^  _primary_cond: =>/;"	f	language:moon class:BaseModel
 _set_helper_chain	lapis/html.moon	/^  _set_helper_chain: (chain) =>/;"	f	language:moon class:Widget
 _transform	lapis/moonscript/widget_optimizer.moon	/^  _transform: (\.\.\.) =>/;"	f	language:moon class:Proxy
+_transform	lapis/validate/types.moon	/^  _transform: (input_value, state) =>/;"	f	language:moon class:ParamsMapType
 _transform	lapis/validate/types.moon	/^  _transform: (value, state) =>/;"	f	language:moon class:FlattenErrors
 _transform	lapis/validate/types.moon	/^  _transform: (value, state) =>/;"	f	language:moon class:MultiParamsType
-_transform	lapis/validate/types.moon	/^  _transform: (value, state) =>/;"	f	language:moon class:ParamsArray
+_transform	lapis/validate/types.moon	/^  _transform: (value, state) =>/;"	f	language:moon class:ParamsArrayType
 add	lapis/spec/shared.moon	/^  add: (key, \.\.\.) =>/;"	f	language:moon class:Dict
 add_before_filter	lapis/application/route_group.moon	/^add_before_filter = (obj, fn) ->/;"	f	language:moon
 add_column	lapis/db/mysql/schema.moon	/^add_column = (tname, col_name, col_type) ->/;"	f	language:moon
@@ -281,7 +284,8 @@ is_flow	lapis/flow.moon	/^is_flow = (cls) ->/;"	f	language:moon
 is_list	lapis/db/base.moon	/^is_list = (val) ->/;"	f	language:moon
 is_mixins_class	lapis/html.moon	/^is_mixins_class = (cls) ->/;"	f	language:moon
 is_raw	lapis/db/base.moon	/^is_raw = (val) ->/;"	f	language:moon
-join_error	lapis/validate/types.moon	/^  join_error: (err, idx, item) =>/;"	f	language:moon class:ParamsArray
+join_error	lapis/validate/types.moon	/^  join_error: (err, idx, item) =>/;"	f	language:moon class:ParamsArrayType
+join_error	lapis/validate/types.moon	/^  join_error: (err, key, value, error_type) =>/;"	f	language:moon class:ParamsMapType
 json_encodable	lapis/util.moon	/^json_encodable = (obj, seen={}) ->/;"	f	language:moon
 json_params	lapis/application.moon	/^json_params = (fn) ->/;"	f	language:moon
 key_filter	lapis/util.moon	/^key_filter = (tbl, \.\.\.) ->/;"	f	language:moon
@@ -297,6 +301,7 @@ make_template_writer	lapis/cmd/actions.moon	/^  make_template_writer: =>/;"	f	la
 mark_loaded_relations	lapis/db/model/relations.moon	/^mark_loaded_relations = (items, name, value=true) ->/;"	f	language:moon
 match	lapis/application.moon	/^  match: (route_name, path, handler) =>/;"	f	language:moon class:Application
 match	lapis/router.moon	/^  match: (route) =>/;"	f	language:moon class:Router
+memo	lapis/flow.moon	/^memo = (fn) ->/;"	f	language:moon
 methods	lapis/nginx/http.moon	/^methods = setmetatable {}, __index: (name) =>/;"	f	language:moon
 migration_summary	lapis/logging.moon	/^migration_summary = (count) ->/;"	f	language:moon
 mock_action	lapis/spec/request.moon	/^mock_action = (app_cls, url, opts, fn) ->/;"	f	language:moon
@@ -320,7 +325,8 @@ new	lapis/router.moon	/^  new: =>/;"	f	language:moon class:RouteParser
 new	lapis/router.moon	/^  new: =>/;"	f	language:moon class:Router
 new	lapis/spec/server.moon	/^  new: (@runner) =>/;"	f	language:moon class:SpecServer
 new	lapis/spec/shared.moon	/^  new: =>/;"	f	language:moon class:Dict
-new	lapis/validate/types.moon	/^  new: (@item_shape, opts) =>/;"	f	language:moon class:ParamsArray
+new	lapis/validate/types.moon	/^  new: (@item_shape, opts) =>/;"	f	language:moon class:ParamsArrayType
+new	lapis/validate/types.moon	/^  new: (@key_type, @value_type, opts) =>/;"	f	language:moon class:ParamsMapType
 new	lapis/validate/types.moon	/^  new: (@params_shapes={}) =>/;"	f	language:moon class:MultiParamsType
 new	lapis/validate/types.moon	/^  new: (@type) =>/;"	f	language:moon class:FlattenErrors
 ngx_replace_headers	lapis/nginx/http.moon	/^ngx_replace_headers = (new_headers=nil) ->/;"	f	language:moon
