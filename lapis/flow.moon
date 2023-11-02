@@ -10,8 +10,8 @@ is_flow = (cls) ->
 
 MEMO_KEY = setmetatable {}, __tostring: -> "::memo_key::"
 
--- make method cached on the instance so that it's not called multiple times
--- FIXME: if expose assigns is enabled, don't write memo to exposed request
+-- cache the result of a method after first invocation. Arguments for
+-- subsequent calls are ignored
 memo = (fn) ->
   (...) =>
     cache = rawget @, MEMO_KEY

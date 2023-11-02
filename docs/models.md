@@ -101,29 +101,31 @@ By default all models expect the table to have a primary key called`"id"`. This
 can be changed by setting the $self_ref{"primary_key"} field on the class.
 
 
-```lua
+$dual_code{
+lua = [[
 local Users = Model:extend("users", {
   primary_key = "login"
 })
-```
-
-```moon
+]],
+moon = [[
 class Users extends Model
   @primary_key: "login"
-```
+]]
+}
 
 If there are multiple primary keys then an array table can be used:
 
-```lua
+$dual_code{
+lua = [[
 local Followings = Model:extend("followings", {
   primary_key = { "user_id", "followed_user_id" }
 })
-```
-
-```moon
+]],
+moon = [[
 class Followings extends Model
   @primary_key: { "user_id", "followed_user_id" }
-```
+]]
+}
 
 A unique primary key is needed for every row in order to `update` and `delete`
 rows without affecting other rows unintentially.
@@ -135,7 +137,8 @@ fetching data about the underlying table.
 
 For the following examples assume we have the following models:
 
-```lua
+$dual_code{
+lua = [[
 local Model = require("lapis.db.model").Model
 
 local Users = Model:extend("users")
@@ -143,16 +146,16 @@ local Users = Model:extend("users")
 local Tags = Model:extend("tags", {
   primary_key = {"user_id", "tag"}
 })
-```
-
-```moon
+]],
+moon = [[
 import Model from require "lapis.db.model"
 
 class Users extends Model
 
 class Tags extends Model
   @primary_key: {"user_id", "tag"}
-```
+]]
+}
 
 ### `Model:find(...)`
 
@@ -308,7 +311,8 @@ $options_table{
 
 For example:
 
-```lua
+$dual_code{
+lua = [[
 local users = UserProfile:find_all({1,2,3,4}, {
   key = "user_id",
   fields = "user_id, twitter_account",
@@ -316,9 +320,8 @@ local users = UserProfile:find_all({1,2,3,4}, {
     public = true
   }
 })
-```
-
-```moon
+]],
+moon = [[
 users = UserProfile\find_all {1,2,3,4}, {
   key: "user_id"
   fields: "user_id, twitter_account"
@@ -326,7 +329,8 @@ users = UserProfile\find_all {1,2,3,4}, {
     public: true
   }
 }
-```
+]]
+}
 
 ```sql
 SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
@@ -366,19 +370,20 @@ an auto-incrementing key from the insert statement.
 > In MySQL the *last insert id* is used to get the id of the row since the
 > `RETURNING` statement is not available.
 
-```lua
+$dual_code{
+lua = [[
 local user = Users:create({
   login = "superuser",
   password = "1234"
 })
-```
-
-```moon
+]],
+moon = [[
 user = Users\create {
   login: "superuser"
   password: "1234"
 }
-```
+]]
+}
 
 ```sql
 INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING "id"
@@ -393,17 +398,18 @@ For example, we might create a new row in a table with a `position` column set
 to the next highest number:
 
 
-```lua
+$dual_code{
+lua = [[
 local user = Users:create({
   position = db.raw("(select coalesce(max(position) + 1, 0) from users)")
 })
-```
-
-```moon
+]],
+moon = [[
 user = Users\create {
   position: db.raw "(select coalesce(max(position) + 1, 0) from users)"
 }
-```
+]]
+}
 
 ```sql
 INSERT INTO "users" (position)
@@ -483,38 +489,42 @@ The output might look like this:
 
 Returns the name of the table backed by the model.
 
-```lua
+$dual_code{
+lua = [[
 Model:extend("users"):table_name() --> "users"
 Model:extend("user_posts"):table_name() --> "user_posts"
-```
-
-```moon
+]],
+moon = [[
 (class Users extends Model)\table_name! --> "users"
 (class UserPosts extends Model)\table_name! --> "user_posts"
-```
+]]
+}
 
-<p class="for_moon">
+<div class="for_moon">
+
 This class method can be overridden to change what table a model uses:
-</p>
 
 ```moon
 class Users extends Model
   @table_name: => "active_users"
 ```
 
+</div>
+
 ### `Model:singular_name()`
 
 Returns the singular name of the table.
 
-```lua
+$dual_code{
+lua = [[
 Model:extend("users"):singular_name() --> "user"
 Model:extend("user_posts"):singular_name() --> "user_post"
-```
-
-```moon
+]],
+moon = [[
 (class Users extends Model)\singular_name! --> "user"
 (class UserPosts extends Model)\singular_name! --> "user_post"
-```
+]]
+}
 
 The singular name is used internally by Lapis when calculating what the name of
 the field is when loading rows with `include_in`. It's also used when
@@ -554,10 +564,10 @@ automatically chosen.
 
 Possible values for `key` argument:
 
-* **string** -- for each object, the value `object[key]` is used to lookup instances of the model by the model's primary key. The model is assumed to have a singular primary key, and will error otherwise
-  * with `flip` enabled: `key` is used as the foreign key column name, and `object[opts.local_key or "id"]` is used to pull the values
-* **array of string** -- for each object, a composite key is created by individually mapping each field of the key array via `object[key]` to the composite primary key of the model
-* **column mapping table** -- explicitly specify the mapping of fields to columns. The *key* of the table will be used as the column name, and the value in the table will be used as the field name referenced from the `objects` argument. If the value is a function, then the function will be called for each object to dynamically calculate the foreign key value.
+* **String** -- For each object, the value `object[key]` is used to look up instances of the model by the model's primary key. It's assumed that the model has a singular primary key; otherwise, an error will occur.
+  * With `flip` enabled: `key` is used as the foreign key column name, and `object[opts.local_key or "id"]` is used to retrieve the values.
+* **Array of Strings** -- For each object, a composite key is created by mapping each field of the key array individually via `object[key]` to the composite primary key of the model.
+* **Column Mapping Table** -- This allows for the explicit specification of the mapping of fields to columns. The *key* of the table is used as the column name, while the value in the table is used as the field name referenced from the `objects` argument. If the value is a function, this function will be called for each object to dynamically calculate the foreign key value.
 
 `include_in` supports the following options (via the optional `opts` argument):
 
@@ -692,20 +702,21 @@ foreign key on the array of model instances that points to the rows we are
 preloading. By default, the value of the foreign key is mapped to the primary
 key of the model that is being loaded.
 
-```lua
+$dual_code{
+lua = [[
 local posts = Posts:select() -- this gets all the posts
 Users:include_in(posts, "user_id")
 
 print(posts[1].user.name) -- print the fetched data
-```
-
-```moon
+]],
+moon = [[
 posts = Posts\select! -- this gets all the posts
 
 Users\include_in posts, "user_id"
 
 print posts[1].user.name -- print the fetched data
-```
+]]
+}
 
 ```sql
 SELECT * from "posts"
@@ -727,7 +738,8 @@ In this next example a column mapping table is used to explicitly specify what
 fields in our object array match to the columns in our query. Here are the
 relevant models:
 
-```lua
+$dual_code{
+lua = [[
 local Model = require("lapis.db.model").Model
 
 -- table with columns: id, name
@@ -735,10 +747,8 @@ local Users = Model:extend("users")
 
 -- table with columns: user_id, twitter_account, facebook_username
 local UserData = Model:extend("user_data")
-
-```
-
-```moon
+]],
+moon = [[
 import Model from require "lapis.db.model"
 
 -- columns: id, name
@@ -746,7 +756,8 @@ class Users extends Model
 
 -- columns: user_id, twitter_account, facebook_username
 class UserData extends Model
-```
+]]
+}
 
 Now let's say we have an array of users and we want to fetch the associated
 user data.

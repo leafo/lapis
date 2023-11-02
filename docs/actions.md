@@ -6,14 +6,17 @@
 Every HTTP request that is handled by Lapis follows the same basic flow after
 being handed off from processing server. The first step is routing. The path of
 an incoming request is matched against the routes defined in your application
-to look up the corresponding *action function*. An action is a regular
-Lua/MoonScript function that will be called if the associated route matches.
+to look up the corresponding *action function*. An action is a regular Lua
+function that will be called if the associated route matches.
 
 An *action function* is invoked with one argument, a [*request
-object*](#request-object), when processing a request. The request object is
-where you'll store all the data you want to share between your actions and
-views. Additionally, the request object is your interface to the webserver on
-how the result is sent to the client.
+object*](#request-object), when processing a request. This object contains
+properties and methods that allow you to access data bout the request, like
+form paramters and URL parameters.
+
+The request object is mutable, it's a place where you can store any data you
+want to share between your actions and views. Additionally, the request object
+is your interface to the webserver on how the result is sent to the client.
 
 The return value of the action is used to control how the output is rendered. A
 string return value will be rendered to the browser directly. A table return
@@ -24,6 +27,48 @@ return both strings and tables to control the output.
 If there is no route that matches the request then the default route handler is
 executed, read more in [*application
 callbacks*](#application-configuration/callbacks).
+
+## Defining an action
+
+To define an action, you minimally need two components: a URL path pattern and
+an action function. Optionally, you can assign a name to the action, which can
+be referenced when generating URLs in other sections of your app.
+
+$dual_code{
+moon = [[
+lapis = require "lapis"
+
+class App extends lapis.Application
+  -- an unnamed action
+  "/": => "hello"
+
+  -- an action with a name
+  [logout: "/logout"]: => status: 404
+
+  -- a named action with a path parameter that loads the action function by
+  -- module name
+  [profile: "/profile/:username"]: "user_profile"
+]],
+lua = [[
+local lapis = require("lapis")
+local app = lapis.Application()
+
+-- an unnamed action
+app:match("/", function(self) return "hello" end)
+
+-- an action with a name
+app:match("logout", "/logout", function(self) return {status = 404} end)
+
+-- a named action with a path parameter that loads the action function by
+-- module name
+app:match("profile", "/profile/:username", "user_profile")
+]]
+}
+
+> Instead of directly providing a function value to the action definition, you
+> can supply a string. The action will then be lazily loaded by the module name
+> upon its first execution. The `actions_prefix` is prepended to the beginning
+> of the module name, with the default being `"actions."`.
 
 ## Routes & URL Patterns
 
@@ -49,12 +94,15 @@ app:match("/users/all", function(self) end)
 ]]
 }
 
-These routes match the URLs verbatim. The leading `/` is required. The route
-must match the entire path of the request. That means a request to
-`/hello/world` will not match the route `/hello`.
+The simplest route patterns match the path verbatim with no variables or
+wildcards. For any route pattern, the leading `/` is mandatory. A route pattern
+always matches the entire path, from start to finish. A request to
+`/hello/world` will not match `/hello`, and will instead fail with a not found
+error.
 
-You can specify a named parameter with a `:` followed immediately by the name.
-The parameter will match all characters excluding `/` (in the general case):
+You can specify a named parameter by using a `:` immediately followed by the
+name. This parameter will match as many characters as possible excluding the
+`/` character:
 
 $dual_code{
 lua = [[
@@ -62,7 +110,9 @@ app:match("/page/:page", function(self)
   print(self.params.page)
 end)
 
-app:match("/post/:post_id/:post_name", function(self) end)
+app:match("/post/:post_id/:post_name", function(self)
+  -- ...
+end)
 ]],
 moon = [[
 lapis = require "lapis"
@@ -80,16 +130,19 @@ The captured values of the route parameters are saved in the `params` field of
 the request object by their name. A named parameter must contain at least 1
 character, and will fail to match otherwise.
 
-A splat is another kind of pattern that will match as much as it can, including
-any `/` characters.  The splat is stored in a `splat`  named parameter in the
-`params` table of the request object. It's just a single `*`
+A splat, `*`, is a special pattern that matches as much as it can, including
+any `/` characters. This splat is stored as the `splat` named parameter in the
+`params` table of the request object. If the splat is the last character in the
+route, it will match until the end of the provided path. However, if there is
+any text following the splat in the pattern, it will match as much as possible
+up until any text that matches the remaining part of the pattern.
 
 $dual_code{
 lua = [[
 app:match("/browse/*", function(self)
   print(self.params.splat)
 end)
-app:match("/user/:name/file/*", function(self)
+app:match("/user/:name/file/*/download", function(self)
   print(self.params.name, self.params.splat)
 end)
 ]],
@@ -100,7 +153,7 @@ class App extends lapis.Application
   "/browse/*": =>
     print @params.splat
 
-  "/user/:name/file/*": =>
+  "/user/:name/file/*/download": =>
     print @params.name, @params.splat
 ]]
 }
