@@ -942,7 +942,7 @@ $options_table{
   {
     name = "returning",
     default = "`nil`",
-    description = "Manually specify a list of columns to be returned from the query when issuing the update. These values will be assigned to the model instance object if the query completes successfully. Note that any updated fields that use `db.raw` will automatically use `returning` and it is not necessary to manually specify. A special value of `"*"` can be provided to cause every field to be returned with the update."
+    description = [[Manually specify a list of columns to be returned from the query when issuing the update. These values will be assigned to the model instance object if the query completes successfully. Note that any updated fields that use `db.raw` will automatically use `returning` and it is not necessary to manually specify. A special value of `"*"` can be provided to cause every field to be returned with the update.]]
   },
   {
     name = "where",
