@@ -137,3 +137,51 @@ describe "lapis.flow", ->
     f = CallableFlow { cool: "zone" }
     assert.same "zone", f "cool"
 
+
+  describe "memo", ->
+    import memo, MEMO_KEY from require "lapis.flow"
+
+    it "memos the result of method for flow", ->
+      add = (a, b) => a + b
+
+      class MemoFlow extends Flow
+        calculate: memo add
+
+      obj = {}
+
+      f = MemoFlow obj
+      assert.same 3, f\calculate(1, 2)
+      assert.same 3, f\calculate(5, 2) -- always returns same URL
+
+      assert.same {}, obj
+      assert.same {[add]: {3}}, f[MEMO_KEY]
+
+    it "tests memo and expose_assigns", ->
+      add = (a, b) => a + b
+      class ExposeFlow extends Flow
+        expose_assigns: true
+        calculate: memo add
+
+      obj = {}
+      f = ExposeFlow obj
+      assert.same 4, f\calculate(2, 2)
+      assert.same 4, f\calculate(9, 99)
+      f.hello = "world"
+
+      assert.same {hello: "world"}, obj --- this is the failing test
+      assert.same {[add]: {4}}, f[MEMO_KEY]
+
+    it "tests multiple return values from memo", ->
+      multiple = (a, b) => a, b
+
+      class MultiFlow extends Flow
+        get_values: memo multiple
+
+      obj = {}
+
+      f = MultiFlow obj
+      assert.same {1, 2}, {f\get_values(1, 2)}
+      assert.same {1, 2}, {f\get_values(3, 4)} -- always returns same values
+
+      assert.same {}, obj
+      assert.same {[multiple]: {1, 2}}, f[MEMO_KEY]
