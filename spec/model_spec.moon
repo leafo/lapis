@@ -467,16 +467,24 @@ describe "lapis.db.model", ->
 
     thing = Things\load { id: 12 }
 
-    -- no query is mocked
+    -- no query is mocked, update is considered not applied
     assert.same {
       false, {}
     }, {
       thing\update color: "green", height: 100
     }
 
-    assert.same { height: 100, color: "green", id: 12 }, thing
+    assert.same { id: 12 }, thing -- no change to model instance due to failed update
 
     mock_query ".", { affected_rows: 1 }
+
+    -- query completes now, update is applied
+    assert.same {
+      true, {affected_rows: 1}
+    }, {
+      thing\update color: "green", height: 100
+    }
+    assert.same { height: 100, color: "green", id: 12 }, thing
 
     thing2 = Things\load { age: 2000, sprit: true }
     assert.same {
@@ -507,11 +515,83 @@ describe "lapis.db.model", ->
 
     assert_queries {
       [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12]]
+      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12]]
 
       [[UPDATE "things" SET "age" = 2000 WHERE "id" IS NULL]]
       [[UPDATE "timed_things" SET "great" = TRUE, "updated_at" = '2013-08-13 06:56:40' WHERE "a" = 2 AND "b" = 3]]
       [[UPDATE "timed_things" SET "hello" = 'world' WHERE "a" = 2 AND "b" = 3]]
       [[UPDATE "timed_things" SET "cat" = 'dog' WHERE "a" = 2 AND "b" = 3]]
+    }
+
+  it "updates with db.null and db.raw", ->
+    mock_query ".", { affected_rows: 1, {
+      banned: false
+    }}
+
+    class Whoa extends Model
+
+    thing = Whoa\load { id: 92, color: "blue", banned: true }
+
+    assert.same {
+      true, {
+        affected_rows: 1
+        { banned: false }
+      }
+    }, {
+      thing\update {
+        color: db.NULL
+        banned: db.raw "created_at < now()"
+      }
+    }
+
+    assert_queries {
+      [[UPDATE "whoa" SET "banned" = created_at < now(), "color" = NULL WHERE "id" = 92 RETURNING "banned"]]
+    }
+
+    assert.same {
+      id: 92
+      banned: false
+    }, thing
+
+  it "updates with returning #ddd", ->
+    class Returnster extends Model
+
+    mock_query ".", { affected_rows: 1, {
+      height: 4000
+      ignore: "me"
+    }}
+
+    r = Returnster\load { id: 17 }
+
+    assert.true (r\update {
+      color: "blue"
+    }, returning: {"height"})
+
+    assert.same {
+      id: 17
+      height: 4000
+      color: "blue"
+    }, r
+
+    r2 = Returnster\load { id: 18, zoot: "100", zat: "200" }
+    r2\update {
+      one: "two"
+      height: 300
+      zoot: db.NULL
+      zat: db.raw "NULL"
+    }, returning: "*"
+
+    assert.same {
+      id: 18
+      one: "two"
+      height: 4000
+      ignore: "me"
+    }, r2
+
+
+    assert_queries {
+      [[UPDATE "returnster" SET "color" = 'blue' WHERE "id" = 17 RETURNING "height"]]
+      [[UPDATE "returnster" SET "height" = 300, "one" = 'two', "zat" = NULL, "zoot" = NULL WHERE "id" = 18 RETURNING *, "zat"]]
     }
 
   it "updates model with conditional", ->
@@ -547,10 +627,14 @@ describe "lapis.db.model", ->
       update_id: db.NULL
     }
 
+    -- updated_at set because timestamp: true
+    assert type(thing2.updated_at) == "string"
+
     assert.same {
       a: 2
       b: 4
       actor: "good"
+      updated_at: thing2.updated_at
     }, thing2
 
     thing2\update {
@@ -603,6 +687,26 @@ describe "lapis.db.model", ->
       [[UPDATE "timed_things" SET "updated_at" = '2013-08-13 06:56:40', "yes" = 'no' WHERE "a" = 2 AND "b" = 4 AND ("deleted" OR "status" = 'deleted')]]
       [[UPDATE "things" SET "count" = count + 1 WHERE "id" = 12 AND ("count" = 0) RETURNING "count"]]
       [[UPDATE "timed_things" SET "color" = 'green' WHERE "a" = 2 AND "b" IS NULL AND ("age" = '10')]]
+    }
+
+  it "updates model with conditional doesn't store on no update", ->
+    mock_query ".", { affected_rows: 0 }
+
+    class Things extends Model
+    thing = Things\load { id: 12 }
+
+    assert.same {
+      false, { affected_rows: 0 }
+    }, {
+      thing\update { color: "green", height: 100}, where: { color: "blue"}
+    }
+
+    assert.same {
+      id: 12
+    }, thing
+
+    assert_queries {
+      [[UPDATE "things" SET "color" = 'green', "height" = 100 WHERE "id" = 12 AND ("color" = 'blue')]]
     }
 
   it "deletes model", ->
@@ -1171,20 +1275,37 @@ describe "lapis.db.model", ->
 
       assert.same { nil, "missing `name`"}, { Things\create! }
 
-    it "should allow to update values on create and on update", ->
+    -- NOTE: Previously, there was undocumented support to modify the object
+    -- argument of the constraint in order to influence the update query. As of
+    -- version 1.16, this feature is no longer supported for the update method.
+    it "DEPRECATED: update values in constraint is undefined", ->
       mock_query "INSERT", { { id: 101 } }
+      mock_query "UPDATE", { affected_rows: 1 }
 
       class Things extends Model
         @constraints: {
-          name: (val, column, values) => values.name = 'changed from ' .. val
+          name: (val, column, values) =>
+            values.name = 'changed from ' .. val
+            nil
         }
 
       thing = Things\create name: 'create'
+
+      assert.same {
+        id: 101
+        name: "changed from create"
+      }, thing
+
       thing\update name: 'update'
+
+      assert.same {
+        id: 101
+        name: "update"
+      }, thing
 
       assert_queries {
         [[INSERT INTO "things" ("name") VALUES ('changed from create') RETURNING "id"]]
-        [[UPDATE "things" SET "name" = 'changed from update' WHERE "id" = 101]]
+        [[UPDATE "things" SET "name" = 'update' WHERE "id" = 101]]
       }
 
   describe "inheritance", ->

@@ -671,27 +671,32 @@ class BaseModel
   --   col3: "Hello"
   -- }
   -- NOTE: this implementation depends on support for RETURNING sql synax
+  -- TODO: update by field name should be deprecated
   update: (first, ...) =>
     cond = @_primary_cond!
 
-    columns = if type(first) == "table"
-      for k,v in pairs first
+    update_fields = {} -- the columns and their new values to update
+    local columns
+
+    if type(first) == "table"
+      columns = for k,v in pairs first
         if type(k) == "number"
+          update_fields[v] = @[v]
           v
         else
-          @[k] = v
+          update_fields[k] = v
           k
     else
-      {first, ...}
+      columns = {first, ...}
+      for c in *columns
+        update_fields[c] = @[c]
 
     return nil, "nothing to update" if next(columns) == nil
 
     if @@constraints
-      for _, column in pairs columns
-        if err = @@_check_constraint column, @[column], @
+      for column in *columns
+        if err = @@_check_constraint column, update_fields[column], @
           return nil, err
-
-    values = { col, @[col] for col in *columns }
 
     -- update options
     nargs = select "#", ...
@@ -701,7 +706,7 @@ class BaseModel
 
     if @@timestamp and not (opts and opts.timestamp == false)
       time = @@db.format_date!
-      values.updated_at or= time
+      update_fields.updated_at or= time
 
     if opts and opts.where
       assert type(opts.where) == "table", "Model.update: where condition must be a table or db.clause"
@@ -716,26 +721,51 @@ class BaseModel
         where
       }
 
-    local returning
-    for k, v in pairs values
-      if v == @@db.NULL
-        @[k] = nil
-      elseif @@db.is_raw(v)
+    local returning, return_all -- TODO: verify that returning * works
+
+    if opts and opts.returning
+      if opts.returning == "*"
+        return_all = true
+        returning = {@@db.raw "*"}
+      else
+        returning = {unpack opts.returning}
+
+    for k, v in pairs update_fields
+      continue if v == @@db.NULL -- NULL is raw but handled specially
+      if @@db.is_raw v
         returning or= {}
         table.insert returning, k
 
-    local res
-
-    if returning
-      res = @@db.update @@table_name!, values, cond, unpack returning
-      if update = unpack res
-        for k in *returning
-          @[k] = update[k]
+    res = if returning
+      @@db.update @@table_name!, update_fields, cond, unpack returning
     else
-      res = @@db.update @@table_name!, values, cond
+      @@db.update @@table_name!, update_fields, cond
 
-    (res.affected_rows or 0) > 0, res
+    did_update = (res.affected_rows or 0) > 0
 
+    -- if the update completed, store the values into self
+    if did_update
+      -- NOTE: this is redundant if the column name variant is used to issue an update
+      for k, v in pairs update_fields
+        if v == @@db.NULL
+          @[k] = nil
+        else
+          @[k] = v
+
+      if returning
+        if result_row = unpack res
+          if return_all
+            for k, v in pairs result_row
+              @[k] = v
+
+          -- we still have to iterate over the name list to ensure that we nil
+          -- out explicitly requested fields, since db.NULL is not returned in
+          -- the result set
+          for k in *returning
+            continue unless type(k) == "string"
+            @[k] = result_row[k]
+
+    did_update, res
 
   -- reload fields on the instance
   refresh: (fields="*", ...) =>
