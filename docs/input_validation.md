@@ -229,7 +229,7 @@ $options_table{
   },
   {
     name = "join_error",
-    description = "A function that formats the error message. It takes the error, the index of the item, and the item itself as arguments and returns a formatted string",
+    description = "A function that formats the error message. It takes the error, the index of the item, and the item itself as arguments and returns a formatted string"
   }
 }
 

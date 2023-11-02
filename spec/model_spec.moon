@@ -553,7 +553,7 @@ describe "lapis.db.model", ->
       banned: false
     }, thing
 
-  it "updates with returning #ddd", ->
+  it "updates with returning", ->
     class Returnster extends Model
 
     mock_query ".", { affected_rows: 1, {

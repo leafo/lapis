@@ -846,9 +846,10 @@ built in methods to avoid unexpected issues.
 
 ### `model:update(..., opts={})`
 
-Generate and issue a query to update the row backed by the instance of the
-model. The values of the primary keys specified by the model's class are used
-to uniquely identify the row for updating.
+Issue a query to update the row backed by the instance of the model. The values
+of the primary keys, as specified by the model's class, are used to uniquely
+identify the row for updating. The `updated_at` timestamp field will also be
+set if the model has timestamps enabled.
 
 This method returns two values:
 
@@ -861,7 +862,6 @@ the database before the update was issued, or a conditional update is being used
 > incompatible with `assert` when trying to throw an error if the update didn't
 > take place
 
-
 The arguments to this method come in two forms:
 
 1. Update table
@@ -869,7 +869,7 @@ The arguments to this method come in two forms:
 
 In the first form we simply pass a table mapping column names to the updated
 values. The values in the table will be merged into the instance of the model
-to reflect the update:
+to reflect the update if the update is able to complete successfully.
 
 $dual_code{[[
 user = Users\find 1
@@ -885,7 +885,6 @@ assert user.login == "uberuser"
 ```sql
 UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id" = 1
 ```
-
 
 The second form takes a list of field or column names to synchronize from the
 model instance to the database. With this approach first edit the model
@@ -933,12 +932,17 @@ $options_table{
   {
     name = "timestamp",
     default = "`true`",
-    description = "The `updated_at` field will be updated to the current time if the model has timestamps. Note that if the update itself contains `updated_at` then that will take precedence over the auto-update.",
+    description = "The `updated_at` field will be updated to the current time if the model has timestamps enabled. Note that if the update itself contains `updated_at` then that will take precedence over the auto-update.",
     example = dual_code{[[
       user\update {
         views_count: db.raw "views_count + 1"
       }, timestamp: false
     ]]}
+  },
+  {
+    name = "returning",
+    default = "`nil`",
+    description = "Manually specify a list of columns to be returned from the query when issuing the update. These values will be assigned to the model instance object if the query completes successfully. Note that any updated fields that use `db.raw` will automatically use `returning` and it is not necessary to manually specify. A special value of `"*"` can be provided to cause every field to be returned with the update."
   },
   {
     name = "where",

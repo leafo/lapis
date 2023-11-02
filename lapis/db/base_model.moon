@@ -721,7 +721,7 @@ class BaseModel
         where
       }
 
-    local returning, return_all -- TODO: verify that returning * works
+    local returning, return_all
 
     if opts and opts.returning
       if opts.returning == "*"
