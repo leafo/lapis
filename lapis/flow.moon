@@ -1,6 +1,8 @@
 
 import type, getmetatable, setmetatable, rawset, rawget from _G
 
+unpack = table.unpack or unpack
+
 local Flow
 
 is_flow = (cls) ->

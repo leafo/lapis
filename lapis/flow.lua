@@ -3,6 +3,7 @@ do
   local _obj_0 = _G
   type, getmetatable, setmetatable, rawset, rawget = _obj_0.type, _obj_0.getmetatable, _obj_0.setmetatable, _obj_0.rawset, _obj_0.rawget
 end
+local unpack = table.unpack or unpack
 local Flow
 local is_flow
 is_flow = function(cls)
