@@ -18,7 +18,7 @@ In supported environments, connection pooling will be used to ensure an optimal
 number of connections are opened to depending on the concurrent load to your
 application.
 
-> Since SQL is embedded into your application, all queries are blocking and no connection pooling is used.
+> Since SQLite is embedded into your application, all queries are blocking and no connection pooling is used.
 
 Depending on which database you use, a different library is used. You may need
 to install these libraries manually if you wish the use the associated
