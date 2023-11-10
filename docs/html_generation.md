@@ -14,7 +14,7 @@ Moonscript, but it can also be used in Lua code.
 ## HTML Builder Syntax
 
 HTML templates can be written directly as MoonScript (or Lua) code. This is a
-very powerful feature (inspired by [Erector](http://erector.rubyforge.org/))
+very powerful feature (inspired by [Erector](http://erector.github.io/erector/))
 that gives us the ability to write templates with high composability and also
 all the features of MoonScript or Lua. No need to learn a separate templating
 language, you can use the full power of the language you're already using.
