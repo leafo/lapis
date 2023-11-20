@@ -533,34 +533,33 @@ relation.
 
 ### `Model:include_in(objects, key, opts={})`
 
-Bulk load rows of the model into an array of objects (often the array of
+Bulk load rows of the model into an array of objects (often this array of
 objects is an array of instances of another model). This is used to preload
-associations in a single query in order to avoid the [n+1 queries
+associations in a single query to avoid the [n+1 queries
 problem](https://leafo.net/guides/postgresql-preloading.html).
 
-It works my mutating the objects in the array by inserting a new field into
-each item where the query returned a result. The name of this new field is
-either derived from the model's table name, or manually specified via an
-option.
+It works by mutating the objects in the array, inserting a new field into each
+item where the query returned a result. The name of this new field is either
+derived from the model's table name, or manually specified via an option.
 
 Returns the `objects` array table.
 
-> It's possible for `include_in` to assign the same reference to different
-> items in `objects.` The query will fetch only unique rows that meet the
-> requirement. As an example, if you are preloading the `author` for many
+> `include_in` can assign the same reference to different
+> items in `objects`. The query will fetch only unique rows that meet the
+> requirement. For instance, if you are preloading the `author` for numerous
 > `posts`, and they all share the same `author_id`, then only one `author` will
 > be fetched, and the same reference will be assigned to every `post`.
 
-This is a lower level interface for preloading data on models. In general we
-recommend [using relations](#relations) if possible. A relation
-will internally generate a call to `include_in` based on how you have
-configured the relation.
+This is a lower-level interface for preloading data on models. Generally, it's
+recommended to [use relations](#relations) if possible. A relation will
+internally generate a call to `include_in` based on how you have configured the
+relation.
 
 The `key` argument controls the mapping from the fields in each object of the
 objects array to the column name used in the query. It can be a string, an
 array of strings, or a string*(column)* → string*(field)* table mapping. When
-using a string or array of strings then the corresponding associated key is
-automatically chosen.
+using a string or an array of strings, the corresponding associated key is
+automatically selected.
 
 Possible values for `key` argument:
 
