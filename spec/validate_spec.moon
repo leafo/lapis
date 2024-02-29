@@ -323,6 +323,37 @@ describe "lapis.validate.types", ->
     it "tests object with state", ->
       -- TODO:
 
+    it "test labels", ->
+      t = types.params_shape {
+        {"name", label: false, types.string}
+        {"inner", label: false, types.params_shape {
+          {"one", label: false, types.string}
+          {"two", types.string}
+        }}
+      }
+
+      _, errors = t\transform { }
+
+      assert.same {
+        [[expected type "string", got "nil"]]
+        [[params: expected type "table", got "nil"]]
+      }, errors
+
+      _, errors = t\transform {
+        name: false
+        inner: {
+          one: 23892
+          two: 23892
+        }
+      }
+
+      assert.same {
+        [[expected type "string", got "boolean"]]
+        [[expected type "string", got "number"]]
+        [[two: expected type "string", got "number"]]
+      }, errors
+
+
     it "test nested validate", ->
       test_object = types.params_shape {
         {"alpha", types.one_of {"one", "two"} }

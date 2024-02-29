@@ -110,7 +110,12 @@ do
           if validation.error then
             table.insert(errors, validation.error)
           else
-            local error_prefix = tostring(validation.label or validation.field) .. ": "
+            local error_prefix
+            if validation.label == false then
+              error_prefix = ""
+            else
+              error_prefix = tostring(validation.label or validation.field) .. ": "
+            end
             if self.error_prefix then
               error_prefix = tostring(self.error_prefix) .. ": " .. tostring(error_prefix)
             end
@@ -202,7 +207,7 @@ do
     (types.string + types.number):tag("field"),
     is_base_type:describe("tableshape type"):tag("type"),
     error = types["nil"] + types.string:tag("error"),
-    label = types["nil"] + types.string:tag("label"),
+    label = types["nil"] + (types.string + types.literal(false)):tag("label"),
     as = types["nil"] + types.string:tag("as")
   }), {
     format_error = function(self, val, err)

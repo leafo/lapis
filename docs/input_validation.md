@@ -191,7 +191,7 @@ $options_table{
   },
   {
     name = "label",
-    description = "A prefix to be used in place of the field name when generating an error message"
+    description = "A prefix to be used in place of the field name when generating an error message. If `false` is provided, then the error will not be prefixed by the field name."
   },
   {
     name = "as",

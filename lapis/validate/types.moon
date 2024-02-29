@@ -43,7 +43,7 @@ class ParamsShapeType extends BaseType
     is_base_type\describe("tableshape type")\tag "type"
 
     error: types.nil + types.string\tag "error"
-    label: types.nil + types.string\tag "label"
+    label: types.nil + (types.string + types.literal(false))\tag "label"
     as: types.nil + types.string\tag "as"
   }), format_error: (val, err) => "params_shape: Invalid validation specification object: #{err}"
 
@@ -82,7 +82,11 @@ class ParamsShapeType extends BaseType
         if validation.error -- override error message
           table.insert errors, validation.error
         else
-          error_prefix = "#{validation.label or validation.field}: "
+          error_prefix = if validation.label == false
+            ""
+          else
+            "#{validation.label or validation.field}: "
+
           if @error_prefix
             error_prefix = "#{@error_prefix}: #{error_prefix}"
 
