@@ -89,7 +89,7 @@ if you have a variable named `div` and you want to make a `<div>` tag you'll
 need to call `element "div"`.
 
 > If you want to create a `<table>` or `<select>` tag you'll need to use
-> `element` because Lua uses those names in the built-in modules.
+> `element` because Lua uses those names in the default global environment.
 
 All strings passed to the HTML builder functions (attribute names, values, or
 tag contents) are escaped automatically. You never have to worry about
