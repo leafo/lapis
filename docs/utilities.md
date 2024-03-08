@@ -7,65 +7,253 @@
 
 Utility functions are found in:
 
-```lua
-local util = require("lapis.util")
-```
-
-```moon
+$dual_code{[[
 util = require "lapis.util"
-```
+]]}
 
 ### `unescape(str)`
 
-URL unescapes string
+URL unescapes string, returning the resulting string.
+
+$dual_code{
+lua = [[
+  local util = require "lapis.util"
+  local original_string = "Hello%2C%20World%21"
+  local unescaped_string = util.unescape(original_string)
+
+  print(unescaped_string)  -- Output: "Hello, World!"
+]],
+moon = [[
+  util = require "lapis.util"
+  original_string = "Hello%2C%20World%21"
+  unescaped_string = util.unescape original_string
+
+  print unescaped_string  -- Output: "Hello, World!"
+]]
+}
 
 ### `escape(str)`
 
-URL escapes string
+URL escapes string, returning the resulting string.
+
+$dual_code{
+lua = [[
+  local util = require "lapis.util"
+  local original_string = "Hello, World!"
+  local escaped_string = util.escape(original_string)
+
+  print(escaped_string)  -- Output: "Hello%2C%20World%21"
+]],
+moon = [[
+  util = require "lapis.util"
+  original_string = "Hello, World!"
+  escaped_string = util.escape original_string
+
+  print escaped_string  -- Output: "Hello%2C%20World%21"
+]]
+}
 
 ### `escape_pattern(str)`
 
-Escapes string for use in Lua pattern
+Escapes string for use in Lua pattern. This function is useful for instances
+where you want to use a string as a pattern in Lua's string matching functions,
+but the string may contain special characters that have special meanings in Lua
+patterns.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local pattern = util.escape_pattern("[special]")
+  print(pattern)  -- Output: "%[special%]"
+]],
+moon = [[
+  util = require "lapis.util"
+  pattern = util.escape_pattern "[special]"
+  print pattern  -- Output: "%[special%]"
+]]
+}
 
 ### `parse_query_string(str)`
 
-Parses query string into a table
+Parses a query string into a table. Note that if query keys do not include a
+value, their value will be set to `true` in the table. Each parsed tuple is
+inserted into the table in two ways: first as a `[key] = value`, which overwrites any
+existing keys, and secondly, it is appended to the end of the array portion of the table
+as `{key, value}`.
+
+> Note: The query string being parsed should not start with a '?'. The function
+> only processes the key-value pairs and does not handle the '?' character
+> typically used at the start of query strings in URLs.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local query_table = util.parse_query_string("key1=value1&key2&key=value2")
+  print(query_table["key1"])  -- "value2"
+  print(query_table["key2"])  -- true
+
+  -- numeric indicies showing duplicates
+  print(unpack(query_table[1]))  -- "key1", "value1"
+  print(unpack(query_table[2]))  -- "key2", true
+  print(unpack(query_table[3]))  -- "key1", "value2"
+]],
+moon = [[
+  util = require "lapis.util"
+  query_table = util.parse_query_string "key1=value1&key2"
+  print query_table["key1"]  -- Output: "value2"
+  print query_table["key2"]  -- Output: true
+
+  -- numeric indicies showing duplicates
+  print unpack query_table[1]  -- "key1", "value1"
+  print unpack query_table[2]  -- "key2"
+  print unpack query_table[1]  -- "key1", "value2"
+]]
+}
 
 ### `encode_query_string(tbl)`
 
-Converts a key,value table into a query string
+Converts a key-value table into a query string. For ordered query strings, the
+numeric indices of the table can also be a table in the form `{key, value}`.
+The two formats can be mixed into the same table and all parameters will be encoded.
+
+> The output of `parse_query_string`, if passed directly into encode, will
+> cause duplicates due to the parsing structure. To re-encode, either strip the
+> hash table parts or strip the numeric indices.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local example1 = util.encode_query_string({key1 = "value1", key2 = true})
+  print(example1)  -- Output: "key1=value1&key2"
+
+  -- example with numeric indices pairs that guarantees output order
+  local example2 = util.encode_query_string({{key1 = "value1"}, {key2 = true}})
+  print(example2)  -- Output: "key1=value1&key2"
+]],
+moon = [[
+  util = require "lapis.util"
+  example1 = util.encode_query_string {key1: "value1", key2: true}
+  print example1  -- Output: "key1=value1&key2"
+
+  -- example with numeric indices pairs that guarantees output order
+  example2 = util.encode_query_string {{"key1", "value1"}, {"key2", true}}
+  print example2  -- Output: "key1=value1&key2"
+]]
+}
+
 
 ### `underscore(str)`
 
-Convert CamelCase to camel_case.
+Convert CamelCase to camel_case. This is used in various parts of Lapis, such as
+handling the automatic translation of elements like converting a class name to a
+database table name.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local underscored = util.underscore("CamelCase")
+  print(underscored)  -- Output: "camel_case"
+]],
+moon = [[
+  util = require "lapis.util"
+  underscored = util.underscore "CamelCase"
+  print underscored  -- Output: "camel_case"
+]]
+}
 
 ### `slugify(str)`
 
 Converts a string to a slug suitable for a URL. Removes all whitespace and
 symbols and replaces them with `-`.
 
+> It might be worthwhile to check if the output is an empty string, to ensure
+> that a slug could be generated from the input string. For example, a string
+> composed entirely of symbols will be converted into an empty string.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local slug = util.slugify("Hello World!")
+  print(slug)  -- Output: "hello-world"
+
+  local slug2 = util.slugify("!!!@@@###$$$")
+  print(slug2)  -- Output: ""
+]],
+moon = [[
+  util = require "lapis.util"
+  slug = util.slugify "Hello World!"
+  print slug  -- Output: "hello-world"
+
+  slug2 = util.slugify "!!!@@@###$$$"
+  print slug2  -- Output: ""
+]]
+}
+
 ### `uniquify(tbl)`
 
-Iterates over array table `tbl` appending all unique values into a new array
-table, then returns the new one.
+Iterates over the array table `tbl`, appending all unique values into a new
+array table, and then returns this new table. The original table is not
+modified; a new table is always returned.
 
-###  `trim(str)`
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local unique_table = util.uniquify({1, 2, 2, 3, 3, 3})
+  print(unpack(unique_table))  -- Output: 1, 2, 3
+]],
+moon = [[
+  util = require "lapis.util"
+  unique_table = util.uniquify {1, 2, 2, 3, 3, 3}
+  print unpack unique_table  -- Output: 1, 2, 3
+]]
+}
 
-Trims the whitespace off of both sides of a string. Note that this function is
-only aware of ASCII whitepsace characters, such as space, newline, tab, etc.
-For full Unicode/UTF8 support see the `lapis.util.utf8` module
+### `trim(str)`
+
+Trims the whitespace from both sides of a string. Note that this function is
+only aware of ASCII whitespace characters, such as space, newline, tab, etc.
+For full Unicode/UTF8 support, see the `lapis.util.utf8` module.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local trimmed = util.trim("   Hello World!   ")
+  print(trimmed)  -- Output: "Hello World!"
+]],
+moon = [[
+  util = require "lapis.util"
+  trimmed = util.trim "   Hello World!   "
+  print trimmed  -- Output: "Hello World!"
+]]
+}
 
 ### `trim_all(tbl)`
 
-Trims the whitespace off of all values in a table. Uses `pairs` to traverse
-every key in the table.
+Trims the whitespace from all values in a table. It uses `pairs` to traverse
+every key in the table. Trimming is performed with the `trim` function provided in
+the `lapis.util` module.
 
 The table is modified in place.
+
+$dual_code{
+lua = [[
+  local util = require("lapis.util")
+  local trimmed_table = {key1 = "   value1   ", key2 = "   value2   "}
+  util.trim_all(trimmed_table)
+  for k, v in pairs(trimmed_table) do print(k, v) end  -- Output: key1 value1, key2 value2
+]],
+moon = [[
+  util = require "lapis.util"
+  trimmed_table = {key1: "   value1   ", key2: "   value2   "}
+  util.trim_all trimmed_table
+  for k, v in pairs(trimmed_table) do print(k, v) end  -- Output: key1 value1, key2 value2
+]]
+}
 
 ### `trim_filter(tbl, [{keys ...}], [empty_val=nil])`
 
 Trims the whitespace off of all values in a table. The entry is removed from
-the table if the result is an empty string.
+the table if the trimmed value is an empty string.
 
 If an array table `keys` is supplied then any other keys not in that list are
 removed (with `nil`, not the `empty_val`)
@@ -75,7 +263,8 @@ that value instead of `nil`
 
 The table is modified in place.
 
-```lua
+$dual_code{
+lua = [[
 local db = require("lapis.db")
 local trim_filter = require("lapis.util").trim_filter
 
@@ -92,10 +281,8 @@ trim_filter(unknown_input, {"username", "description"}, db.NULL)
 --   username = "hello",
 --   description = db.NULL
 -- }
-
-```
-
-```moon
+]],
+moon = [[
 db = require "lapis.db"
 import trim_filter from require "lapis.util"
 
@@ -112,11 +299,33 @@ trim_filter unknown_input, {"username", "description"}, db.NULL
 --   username: "hello"
 --   description: db.NULL
 -- }
-```
+]]
+}
 
 ### `to_json(obj)`
 
-Converts `obj` to JSON. Will strip recursion and things that can not be encoded.
+Converts `obj` to JSON. This process removes recursion and elements that cannot
+be encoded, thus preventing infinite recursion. The following types are
+stripped: userdata, function, thread.
+
+$dual_code{
+lua = [[
+  local util = require "lapis.util"
+  local example1 = util.to_json({1,2,3})
+  print(example1)  -- Output: "[1,2,3]"
+
+  local example2 = util.to_json({hello = "world"})
+  print(example2)  -- Output: '{"hello":"world"}'
+]],
+moon = [[
+  util = require "lapis.util"
+  example1 = util.to_json {1,2,3}
+  print example1  -- Output: "[1,2,3]"
+
+  example2 = util.to_json {hello: "world"}
+  print example2  -- Output: '{"hello":"world"}'
+]]
+}
 
 ###  `from_json(str)`
 
@@ -173,19 +382,20 @@ Overwrites `__index` metamethod. The result of the require is stored in the
 table.
 
 
-```lua
+$dual_code{
+lua = [[
 local models = autoload("models")
 
 local _ = models.HelloWorld --> will require "models.hello_world"
 local _ = models.foo_bar --> will require "models.foo_bar"
-```
-
-```moon
+]],
+moon = [[
 models = autoload("models")
 
 models.HelloWorld --> will require "models.hello_world"
 models.foo_bar --> will require "models.foo_bar"
-```
+]]
+}
 
 ## CSRF Protection
 
@@ -207,27 +417,28 @@ application's secret. This is a string that only the application knows about.
 If your application is open source it's worthwhile to not commit this secret.
 The secret is set in [your configuration](#configuration-and-environments) like so:
 
-```lua
+$dual_code{
+lua = [[
 local config = require("lapis.config")
 
 config("development", {
   secret = "this is my secret string 123456"
 })
-
-```
-
-```moon
+]],
+moon = [[
 config = require "lapis.config"
 
 config "development", ->
   secret "this is my secret string 123456"
-```
+]]
+}
 
 Now that you have the secret configured, we might create a CSRF protected form
 like so:
 
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local csrf = require("lapis.csrf")
 
@@ -249,9 +460,8 @@ app:post("form", "/form", capture_errors(function(self)
   csrf.assert_token(self)
   return "The form is valid!"
 end))
-```
-
-```moon
+]],
+moon = [[
 csrf = require "lapis.csrf"
 
 class extends lapis.Application
@@ -267,22 +477,19 @@ class extends lapis.Application
       csrf.assert_token @
       "The form is valid!"
   }
-```
+]]
+}
 
 > If you're using CSRF protection in a lot of actions then it might be helpful
 > to create a before filter that generates the token automatically.
 
 The following functions are part of the CSRF module:
 
-```lua
-local csrf = require("lapis.csrf")
-```
-
-```moon
+$dual_code{[[
 csrf = require "lapis.csrf"
-```
+]]}
 
-###  `csrf.generate_token(req, data=nil)`
+### `csrf.generate_token(req, data=nil)`
 
 Generates a token for the current session. If a random string has not been set
 in the cookie yet, then it will be generated. You can optionally pass in data
@@ -292,7 +499,7 @@ to have it encoded into the token. You can then use the `callback` parameter of
 The random string is stored in a cookie named as your session name with
 `_token` appended to the end.
 
-###  `csrf.validate_token(req, callback=nil)`
+### `csrf.validate_token(req, callback=nil)`
 
 Validates the CSRF token located in `req.params.csrf_token`. For any endpoints
 you validation the token on you must pass the query or form parameter
@@ -305,7 +512,8 @@ data with the second argument of `generate_token`.
 
 Here's an example of adding an expiration date using the token data:
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local csrf = require("lapis.csrf")
 
@@ -332,9 +540,8 @@ app:post("form", "/form", capture_errors(function(self)
 
   return "The request is valid!"
 end))
-```
-
-```moon
+]],
+moon = [[
 csrf = require "lapis.csrf"
 
 class extends lapis.Application
@@ -354,13 +561,13 @@ class extends lapis.Application
 
       "The form is valid!"
   }
-```
+]]
+}
 
 ###  `csrf.assert_token(...)`
 
 First calls `validate_token` with same arguments, then calls `assert_error` if
 validation fails.
-
 
 ## Making HTTP Requests
 
@@ -900,6 +1107,14 @@ utf8 = requrie("lapis.util.utf8")
 A pattern that will trim all invisible characters from either side of the
 matched string. (Utilizes the `whitespace` pattern described below)
 
+$dual_code{[[
+utf8 = require "lapis.util.utf8"
+original_string = "    Hello, World!    "
+trimmed_string = utf8.trim\match(original_string)
+
+print(trimmed_string)  -- Output: "Hello, World!"
+]]}
+
 ### `utf8.printable_character`
 
 A pattern that matches a single printable character. Note that printable
@@ -910,6 +1125,20 @@ control characters.
 
 An optimal pattern that matches any unicode codepoints that are classified as
 whitespace.
+
+### `utf8.string_length`
+
+Calculates the length of a string, counting each printable character. It takes
+a string as an argument and returns the number of printable characters in the
+string. This is aware of multi-byte characters:
+
+$dual_code{[[
+utf8 = require "lapis.util.utf8"
+multi_byte_string = "こんにちは世界"
+string_length = utf8.string_length(multi_byte_string)
+
+print(string_length)  -- Output: 7
+]]}
 
 
 [0]: exception_handling.html
