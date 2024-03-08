@@ -1,6 +1,6 @@
 if ngx then
   return require("lapis.nginx.http")
-elseif pcall(require, "http.compat.socket") then
+elseif package.loaded["lapis.running_server"] == "cqueues" then
   return require("http.compat.socket")
 else
   return require("socket.http")
