@@ -81,14 +81,14 @@ inserted into the table in two ways: first as a `[key] = value`, which overwrite
 existing keys, and secondly, it is appended to the end of the array portion of the table
 as `{key, value}`.
 
-> Note: The query string being parsed should not start with a '?'. The function
-> only processes the key-value pairs and does not handle the '?' character
-> typically used at the start of query strings in URLs.
+> The query string being parsed should not start with a '?'. The function only
+> processes the key-value pairs and does not handle the '?' character typically
+> used at the start of query strings in URLs.
 
 $dual_code{
 lua = [[
   local util = require("lapis.util")
-  local query_table = util.parse_query_string("key1=value1&key2&key=value2")
+  local query_table = util.parse_query_string("key1=value1&key2&key1=value2")
   print(query_table["key1"])  -- "value2"
   print(query_table["key2"])  -- true
 
@@ -99,9 +99,9 @@ lua = [[
 ]],
 moon = [[
   util = require "lapis.util"
-  query_table = util.parse_query_string "key1=value1&key2"
-  print query_table["key1"]  -- Output: "value2"
-  print query_table["key2"]  -- Output: true
+  query_table = util.parse_query_string "key1=value1&key2&key1=value2"
+  print query_table["key1"]  -- "value2"
+  print query_table["key2"]  -- true
 
   -- numeric indicies showing duplicates
   print unpack query_table[1]  -- "key1", "value1"
