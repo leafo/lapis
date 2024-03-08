@@ -519,6 +519,7 @@ parameters of LuaSocket's request function.
 **Returns:**
 
 The function returns three values:
+
 1. `body`: The string result of the request. If a `sink` is provided, then the body is returned as the number value `1`
 2. `status`: The HTTP status code of the response.
 3. `headers`: A table of headers from the response.
