@@ -364,41 +364,101 @@ validation fails.
 
 ## Making HTTP Requests
 
-Lapis comes with a built-in module for making asynchronous HTTP requests. The
-way it works is by using the Nginx `proxy_pass` directive on an internal
-action. Because of this, before you can make any requests you need to modify
-your Nginx configuration.
+The `lapis.http` module will attempt to select an HTTP client that works in the
+current server/environment. All of these modules should implement LuaSocket's
+`request` function interface. See: <https://lunarmodules.github.io/luasocket/http.html#request>
+
+* When using Nginx: `lapis.nginx.http`
+* When using Cqueues/lua-http: `http.compat.socket`
+* Default: LuaSocket's `socket.http` (Note: `luasec` is required to perform HTTPS requests)
+
+$dual_code{
+lua = [[
+  local http = require("lapis.http")
+  local ltn12 = require("ltn12")
+
+  -- a simple GET request
+  local body, status_code, headers = http.request("http://leafo.net")
+
+  -- a simple POST request
+  local out = {}
+  local _, status_code, headers = http.request({
+    url = "http://leafo.net",
+    method = "POST",
+    headers = { ["Content-type"] = "application/x-www-form-urlencoded" },
+    source = ltn12.source.string("param1=value1&param2=value2"),
+    sink = ltn12.sink.table(out)
+  })
+
+  local body = table.concat(out)
+]],
+moon = [[
+  http = require "lapis.http"
+  ltn12 = require "ltn12"
+
+  -- a simple GET request
+  body, status_code, headers = http.request "http://leafo.net"
+
+
+  out = {}
+  _, status_code, headers = http.request {
+    url: "http://leafo.net",
+    method: "POST",
+    headers: { ["Content-type"] = "application/x-www-form-urlencoded" }
+    source: ltn12.source.string "param1=value1&param2=value2"
+    sink ltn12.sink.table(out)
+  }
+
+  body = table.concat out
+]]
+}
+
+
+For OpenResty, Lapis will use nginx's `proxy_pass` directive as an HTTP client.
+In our tests, this has been the most reliable solution available that is fully
+asynchronous and will not block your workers. Before you can make any requests,
+you must modify your Nginx configuration to add a special `location` block that will facilitate the HTTP request.
 
 Add the following to your server block:
 
 ```nginx
 location /proxy {
-    internal;
-    rewrite_by_lua "
-      local req = ngx.req
+  internal;
+  rewrite_by_lua "
+    local req = ngx.req
 
-      for k,v in pairs(req.get_headers()) do
-        if k ~= 'content-length' then
-          req.clear_header(k)
-        end
+    for k,v in pairs(req.get_headers()) do
+      if k ~= 'content-length' then
+        req.clear_header(k)
       end
+    end
 
-      if ngx.ctx.headers then
-        for k,v in pairs(ngx.ctx.headers) do
-          req.set_header(k, v)
-        end
+    if ngx.ctx.headers then
+      for k,v in pairs(ngx.ctx.headers) do
+        req.set_header(k, v)
       end
-    ";
+    end
+  ";
 
-    resolver 8.8.8.8;
-    proxy_http_version 1.1;
-    proxy_pass $_url;
+  resolver 8.8.8.8;
+  proxy_http_version 1.1;
+  proxy_pass $_url;
 }
 ```
 
-> This code ensures that the correct headers are set for the new request. The
-> `$_url` variable is used to store the target URL. It must be defined using
-> `set $_url ""` directive in your default location.
+> This code ensures that the correct headers are set for the subrequest that is
+> created.
+
+Additionally, in the nginx `location` that processes your Lapis requests, you
+need to define the `$_url` variable, which will hold the request URL.
+
+```nginx
+location / {
+  set $_url ""; # Add this line
+  content_by_lua "require('lapis').serve('app')";
+  # ...
+}
+```
 
 Now we can use the `lapis.nginx.http` module. There are two methods. `request`
 and `simple`. `request` implements the Lua Socket HTTP request API (complete
@@ -406,64 +466,71 @@ with LTN12).
 
 `simple` is a simplified API with no LTN12:
 
-```lua
-local http = require("lapis.nginx.http")
+$dual_code{
+lua = [[
+local http = require("lapis.http")
 
 local app = lapis.Application()
 
 app:get("/", function(self)
   -- a simple GET request
-  local body, status_code, headers = http.simple("http://leafo.net")
-
-  -- a post request, data table is form encoded and content-type is set to
-  -- application/x-www-form-urlencoded
-  http.simple("http://leafo.net/", {
-    name = "leafo"
-  })
-
-  -- manual invocation of the above request
-  http.simple({
-    url = "http://leafo.net",
-    method = "POST",
-    headers = {
-      ["content-type"] = "application/x-www-form-urlencoded"
-    },
-    body = {
-      name = "leafo"
-    }
-  })
+  local body, status_code, headers = http.request("http://leafo.net")
 end)
-```
-
-
-```moon
+]],
+moon = [[
 http = require "lapis.nginx.http"
 
 class extends lapis.Application
   "/": =>
     -- a simple GET request
-    body, status_code, headers = http.simple "http://leafo.net"
+    body, status_code, headers = http.request "http://leafo.net"
+]]
+}
 
-    -- a post request, data table is form encoded and content-type is set to
-    -- application/x-www-form-urlencoded
-    http.simple "http://leafo.net/", {
-      name: "leafo"
-    }
 
-    -- manual invocation of the above request
-    http.simple {
-      url: "http://leafo.net"
-      method: "POST"
-      headers: {
-        "content-type": "application/x-www-form-urlencoded"
-      }
-      body: {
-        name: "leafo"
-      }
-    }
-```
+### `http.request(url_or_table, body)`
+
+This is documentation for the Lapis Nginx-specific implementation of the
+[LuaSocket request
+function](https://lunarmodules.github.io/luasocket/http.html#request). Although
+this function attempts to cover the most common calling cases, it is not a
+perfect replacement.
+
+When used in Nginx, this function is non-blocking. The function does not
+support streaming responses, which means large request responses will be
+buffered entirely into memory. The result cannot be read until the full request
+completes. Also, it does not support `proxy`, `create`, `step`, or `redirect`
+parameters of LuaSocket's request function.
+
+> If you are looking for a more flexible HTTP client that is specific to Nginx,
+> look at <https://github.com/ledgetech/lua-resty-http>
+
+
+**Parameters:**
+
+- `url_or_table`: This can either be a string specifying the URL for a GET request, or a table for more complex requests. If a table, the following keys can be used:
+  - `url`: The URL to request.
+  - `method`: The HTTP method to use, for example: `"GET"`, `"POST"`, `"PUT"`, etc.
+  - `source`: The body of the request. If this is provided, the method defaults to `"POST"`.
+  - `headers`: A table of headers to add to the request.
+  - `sink`: A sink function to handle the response body.
+- `body`: This is an optional parameter. If provided, it is used as the body for a POST request.
+
+**Returns:**
+
+The function returns three values:
+1. `body`: The string result of the request. If a `sink` is provided, then the body is returned as the number value `1`
+2. `status`: The HTTP status code of the response.
+3. `headers`: A table of headers from the response.
+
+Every successful HTTP request increments the following performance metrics in the Nginx context:
+
+- `http_count`: This metric counts the total number of HTTP requests.
+- `http_time`: This metric measures the total time taken for HTTP requests. It is calculated as the difference between the current time and the start time of the request.
 
 ### `http.simple(req, body)`
+
+**NOTE:** This function is now deprecated. We recommend using the http.request interface, which is compatible with multiple HTTP clients.
 
 Performs an HTTP request using the internal `/proxy` location.
 
@@ -485,13 +552,6 @@ parameters. It takes the following keys:
  * `body` -- string or table which is encoded
  * `headers` -- a table of request headers to set
 
-
-### `http.request(url_or_table, body)`
-
-Implements a subset of [Lua Socket's
-`http.request`](http://w3.impa.br/~diego/software/luasocket/http.html#request).
-
-Does not support `proxy`, `create`, `step`, or `redirect`.
 
 ## Caching
 

@@ -143,7 +143,6 @@ request = (url, str_body) ->
     ngx.update_time!
     increment_perf "http_count", 1
     increment_perf "http_time", ngx.now! - start_time
-
   out, res.status, res.header
 
 ngx_replace_headers = (new_headers=nil) ->
