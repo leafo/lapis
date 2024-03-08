@@ -502,26 +502,28 @@ buffered entirely into memory. The result cannot be read until the full request
 completes. Also, it does not support `proxy`, `create`, `step`, or `redirect`
 parameters of LuaSocket's request function.
 
+The `/proxy` location described above must exist in the same server block that
+is handling the original request for this function to work.
+
 > If you are looking for a more flexible HTTP client that is specific to Nginx,
 > look at <https://github.com/ledgetech/lua-resty-http>
 
-
 **Parameters:**
 
-- `url_or_table`: This can either be a string specifying the URL for a GET request, or a table for more complex requests. If a table, the following keys can be used:
-  - `url`: The URL to request.
+- `url_or_table`: This can either be a string specifying the URL for a simple GET/POST request, or a table for more complex requests. If a table, the following keys can be used:
+  - `url`: The URL to request.  (Required)
   - `method`: The HTTP method to use, for example: `"GET"`, `"POST"`, `"PUT"`, etc.
-  - `source`: The body of the request. If this is provided, the method defaults to `"POST"`.
-  - `headers`: A table of headers to add to the request.
-  - `sink`: A sink function to handle the response body.
-- `body`: This is an optional parameter. If provided, it is used as the body for a POST request.
+  - `source`: An `ltn12` source that generates the body of the request.
+  - `headers`: A plain table of headers to include in the request.
+  - `sink`: An `ltn12` sink that will receive the output of the request.
+- `body`: This arugment is only used if `url_or_table` is provided as a string. Converts the request to a POST request and adds the `"Content-type: application/x-www-form-urlencoded"` header pair
 
 **Returns:**
 
 The function returns three values:
 
-1. `body`: The string result of the request. If a `sink` is provided, then the body is returned as the number value `1`
-2. `status`: The HTTP status code of the response.
+1. `body`: The string result of the request. If a `sink` is provided, then the body is returned as the number value `1`, and the body should be read from the sink.
+2. `status`: The HTTP status code of the response, as a number.
 3. `headers`: A table of headers from the response.
 
 Every successful HTTP request increments the following performance metrics in the Nginx context:
@@ -531,7 +533,8 @@ Every successful HTTP request increments the following performance metrics in th
 
 ### `http.simple(req, body)`
 
-**NOTE:** This function is now deprecated. We recommend using the http.request interface, which is compatible with multiple HTTP clients.
+> This function is now deprecated. We recommend using the `http.request`
+> interface, which is compatible with multiple HTTP clients.
 
 Performs an HTTP request using the internal `/proxy` location.
 
@@ -555,6 +558,11 @@ parameters. It takes the following keys:
 
 
 ## Caching
+
+> The caching functionality here is very rudimentary. If you are looking for
+> more robust caching, look into the `proxy_cache` directive that is part of
+> the Nginx HTTP proxy module:
+> <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache>
 
 Lapis comes with a simple memory cache for caching the entire result of an
 action keyed on the parameters it receives. This is useful for speeding up the
