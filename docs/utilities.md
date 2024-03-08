@@ -116,9 +116,9 @@ Converts a key-value table into a query string. For ordered query strings, the
 numeric indices of the table can also be a table in the form `{key, value}`.
 The two formats can be mixed into the same table and all parameters will be encoded.
 
-> The output of `parse_query_string`, if passed directly into encode, will
-> cause duplicates due to the parsing structure. To re-encode, either strip the
-> hash table parts or strip the numeric indices.
+> The output of `parse_query_string`, if passed directly into
+> `encode_query_string`, will cause duplicates due to the parsing structure. To
+> re-encode, either strip the hash table parts or strip the numeric indices.
 
 $dual_code{
 lua = [[
@@ -144,9 +144,9 @@ moon = [[
 
 ### `underscore(str)`
 
-Convert CamelCase to camel_case. This is used in various parts of Lapis, such as
-handling the automatic translation of elements like converting a class name to a
-database table name.
+Convert CamelCase to camel_case. This is used in various parts of Lapis, such
+as handling the automatic translation of names like converting a class name to
+a database table name.
 
 $dual_code{
 lua = [[
@@ -338,6 +338,43 @@ Returns a string in the format "1 day ago".
 `parts` allows you to add more words. With `parts=2`, the string
 returned would be in the format `1 day, 4 hours ago`.
 
+### `autoload(prefix, tbl={})`
+
+Modifies `tbl` such that accessing an unset value in `tbl` will run a `require`
+to search for the value. This is useful for autoloading components split across
+many files. It overwrites the `__index` metamethod. The result of the require
+is cached in the table, so the loading process only happens once. Returns the
+`tbl` value.
+
+> By default, a new empty table is created for the 'tbl' argument, so it's not
+> necessary to provide one if you intend to create a new autoloading table.
+
+The following is the list of search patterns tried in order when requesting an
+unloaded field:
+
+1. `require("#{prefix}.#{field}")`
+2. `require("#{prefix}.#{util.underscore(field)}")`
+
+If a module is not able to be located, an error is thrown.
+
+$dual_code{
+lua = [[
+local util = require("lapis.util")
+local models = util.autoload("models")
+
+local _ = models.HelloWorld --> will require "models.hello_world"
+local _ = models.foo_bar --> will require "models.foo_bar"
+]],
+moon = [[
+util = require("lapis.util")
+models = autoload("models")
+
+models.HelloWorld --> will require "models.hello_world"
+models.foo_bar --> will require "models.foo_bar"
+]]
+}
+
+
 ## Encoding Methods
 
 Encoding functions are found in:
@@ -374,28 +411,6 @@ Decodes a string created by `encode_with_secret`. The decoded object is only
 returned if the signature is correct. Otherwise returns `nil` and an error
 message. The secret must match what was used with `encode_with_secret`.
 
-### `autoload(prefix, tbl={})`
-
-Makes it so accessing an unset value in `tbl` will run a `require` to search
-for the value. Useful for autoloading components split across many files.
-Overwrites `__index` metamethod. The result of the require is stored in the
-table.
-
-
-$dual_code{
-lua = [[
-local models = autoload("models")
-
-local _ = models.HelloWorld --> will require "models.hello_world"
-local _ = models.foo_bar --> will require "models.foo_bar"
-]],
-moon = [[
-models = autoload("models")
-
-models.HelloWorld --> will require "models.hello_world"
-models.foo_bar --> will require "models.foo_bar"
-]]
-}
 
 ## CSRF Protection
 
