@@ -509,7 +509,11 @@ has_many = function(self, name, opts)
           table.insert(additional_clause, where)
         else
           for k, v in pairs(where) do
-            additional_clause[k] = v
+            if type(k) == "number" then
+              table.insert(additional_clause, v)
+            else
+              additional_clause[k] = v
+            end
           end
         end
       end
@@ -526,7 +530,11 @@ has_many = function(self, name, opts)
           table.insert(additional_clause, more_where)
         else
           for k, v in pairs(more_where) do
-            additional_clause[k] = v
+            if type(k) == "number" then
+              table.insert(additional_clause, v)
+            else
+              additional_clause[k] = v
+            end
           end
         end
       end

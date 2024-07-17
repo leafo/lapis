@@ -400,7 +400,10 @@ has_many = (name, opts) =>
         table.insert additional_clause, where
       else
         for k,v in pairs where
-          additional_clause[k] = v
+          if type(k) == "number" -- append array clauses
+            table.insert additional_clause, v
+          else
+            additional_clause[k] = v
 
     if more_where = calling_opts and calling_opts.where
       additional_clause = { @@db.clause clause } unless additional_clause
@@ -409,7 +412,10 @@ has_many = (name, opts) =>
         table.insert additional_clause, more_where
       else
         for k,v in pairs more_where
-          additional_clause[k] = v
+          if type(k) == "number" -- append array clauses
+            table.insert additional_clause, v
+          else
+            additional_clause[k] = v
 
     if additional_clause and next additional_clause
       clause = @@db.clause additional_clause

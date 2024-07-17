@@ -536,18 +536,27 @@ describe "lapis.db.model.relations", ->
 
   it "make has_many getter", ->
     models.Posts = class extends Model
+    models.Things = class extends Model
+
     models.Users = class extends Model
       @relations: {
         {"posts", has_many: "Posts"}
         {"more_posts", has_many: "Posts", where: {color: "blue"}}
         {"fresh_posts", has_many: "Posts", order: "id desc"}
-      }
 
+        {"with_key", has_many: "Things", key: "object_id", order: "id desc"}
+
+        {"with_key_where", has_many: "Things", key: "object_id", where: {
+          {"object_type = ?", 1}
+        }, order: "id desc"}
+      }
 
     assert_queries {
       [[SELECT * FROM "posts" WHERE "user_id" = 1234]]
       [[SELECT * FROM "posts" WHERE "user_id" = 1234 AND "color" = 'blue']]
       [[SELECT * FROM "posts" WHERE "user_id" = 1234 ORDER BY id desc]]
+      [[SELECT * FROM "things" WHERE "object_id" = 1234 ORDER BY id desc]]
+      [[SELECT * FROM "things" WHERE "object_id" = 1234 AND (object_type = 1) ORDER BY id desc]]
     }, ->
       user = models.Users\load id: 1234
 
@@ -556,6 +565,9 @@ describe "lapis.db.model.relations", ->
 
       user\get_more_posts!
       user\get_fresh_posts!
+
+      user\get_with_key!
+      user\get_with_key_where!
 
   it "makes has many with db.clause", ->
     models.Posts = class extends Model
