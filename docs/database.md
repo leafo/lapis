@@ -537,12 +537,18 @@ using `pairs`,and converted to an SQL fragment similar to
 `db.escape_identifier(key) = db.escape_literal(value)`, then concatenated with
 the `AND` SQL operator.
 
-$dual_code{[[
+$dual_code{lua=[[
+print(db.encode_clause({
+  name = "Garf",
+  color = db.list({"orange", "ginger"}),
+  processed_at = db.NULL
+})) -- "color" IN ('orange', 'ginger') AND "processed_at" IS NULL AND "name" = 'Garf'
+]], moon=[[
 print db.encode_clause {
   name: "Garf"
   color: db.list {"orange", "ginger"}
   processed_at: db.NULL
-} --> "color" IN ('orange', 'ginger') AND "processed_at" IS NULL AND "name" = 'Garf'
+} -- "color" IN ('orange', 'ginger') AND "processed_at" IS NULL AND "name" = 'Garf'
 ]]}
 
 
@@ -553,6 +559,27 @@ See the documentation for [`db.clause`](#database-primitives/clause)
 the mistake of accidentally providing `nil` in place of a value of `db.NULL`
 that results in generating a clause that matches a much wider range of data
 than desired.
+
+$dual_code{lua=[[
+-- Example of incorrect usage that leads to an error
+local clause = {
+  age = nil  -- Mistakenly using nil instead of db.NULL, resulting in empty object
+}
+
+-- This will throw an error because 'age' is nil, and the clause is an empty object
+local sql_fragment = db.encode_clause(clause)
+]], moon=[[
+-- Example of incorrect usage that leads to an error
+clause = {
+  age: nil  -- Mistakenly using nil instead of db.NULL, resulting in empty object
+}
+
+-- This will throw an error because 'age' is nil, and the clause is an empty object
+sql_fragment = db.encode_clause clause
+]]}
+
+
+
 
 ## Database Primitives
 
@@ -1146,30 +1173,47 @@ defaults of 0 and boolean false.
 When a type is called like a function it takes one argument, a table of
 options. The options include:
 
-* `default: value` -- sets default value
-* `null: boolean` -- determines if the column is `NOT NULL`
-* `unique: boolean` -- determines if the column has a unique index
-* `primary_key: boolean` -- determines if the column is the primary key
-* `array: bool|number` -- makes the type an array (PostgreSQL Only), pass number to set how many dimensions the array is, `true` == `1`
+$options_table{
+  {
+    name = "default",
+    description = "Sets default value. Use `db.NULL` to set a `NULL` default."
+  }, {
+    name = "null",
+    description = "Determines if the column is `NOT NULL`.",
+    default = '`false`'
+  }, {
+    name = "unique",
+    description = "Determines if the column has a unique index.",
+    default = '`false`'
+  }, {
+    name = "primary_key",
+    description = "Determines if the column is the primary key."
+  }, {
+    name = "array",
+    description = [[
+      Makes the type an array (PostgreSQL Only), pass number to set how many dimensions the array is, or set to `true` to make a 1 dimensional array.
+    ]]
+  }
+}
 
 Here are some examples:
 
-```lua
+$dual_code{
+lua=[[
 types.integer({ default = 1, null = true })  --> integer DEFAULT 1
 types.integer({ primary_key = true })        --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text({ null = true })                  --> text
 types.varchar({ primary_key = true })        --> character varying(255) NOT NULL PRIMARY KEY
 types.real({ array = true })                 --> real[]
-```
-
-```moon
+]],
+moon=[[
 types.integer default: 1, null: true  --> integer DEFAULT 1
 types.integer primary_key: true       --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text null: true                 --> text
 types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMARY KEY
 types.real array: true                --> real[]
 types.text array: 2                   --> text[][]
-```
+]]}
 
 > MySQL has a complete different type set than PostgreSQL, see [MySQL types](https://github.com/leafo/lapis/blob/master/lapis/db/mysql/schema.moon#L162)
 
@@ -1182,6 +1226,7 @@ database.
 We define migrations in our code as a table of functions where the key of each
 function in the table is the name of the migration. You are free to name the
 migrations anything but it's suggested to give them Unix timestamps as names:
+
 
 $dual_code{
 moon=[[
@@ -1228,7 +1273,8 @@ migrations in the format described above.
 
 Let's create this file with a single migration as an example.
 
-```lua
+$dual_code{
+lua=[[
 -- migrations.lua
 
 local schema = require("lapis.db.schema")
@@ -1245,9 +1291,8 @@ return {
     })
   end
 }
-```
-
-```moon
+]],
+moon=[[
 -- migrations.moon
 
 import create_table, types from require "lapis.db.schema"
@@ -1262,7 +1307,7 @@ import create_table, types from require "lapis.db.schema"
       "PRIMARY KEY (id)"
     }
 }
-```
+]]}
 
 After creating the file, ensure that it is compiled to Lua and run `lapis
 migrate`. The command will first create the migrations table if it doesn't
@@ -1274,15 +1319,15 @@ Read more about [the migrate command](command_line.html#command-reference/lapis-
 
 We can manually create the migrations table using the following code:
 
-```lua
+$dual_code{
+lua=[[
 local migrations = require("lapis.db.migrations")
 migrations.create_migrations_table()
-```
-
-```moon
+]],
+moon=[[
 migrations = require "lapis.db.migrations"
 migrations.create_migrations_table!
-```
+]]}
 
 It will execute the following SQL:
 
@@ -1296,15 +1341,15 @@ CREATE TABLE IF NOT EXISTS "lapis_migrations" (
 Then we can manually run migrations with the following code:
 
 
-```lua
+$dual_code{
+lua=[[
 local migrations = require("lapis.db.migrations")
 migrations.run_migrations(require("migrations"))
-```
-
-```moon
+]],
+moon=[[
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
-```
+]]}
 
 ## Database Helpers
 
@@ -1316,7 +1361,6 @@ aren't directly related to the query interface.
 Returns a date string formatted properly for insertion in the database.
 
 The `time` argument is optional, will default to the current UTC time.
-
 
 $dual_code{[[
 date = db.format_date!
