@@ -934,7 +934,7 @@ $options_table{
       A clause string that specifies conditions for the index. This string will be used literally in the query and is used to create partial indexes.
     ]],
     example = dual_code{[[
-      create_index("example_table", "example_column", { where = "some_column is not null" })
+      create_index("example_table", "example_column", { where: "some_column is not null" })
     ]]}
   }, {
     name = "index_name",
