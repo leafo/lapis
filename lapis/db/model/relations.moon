@@ -107,18 +107,23 @@ preload_homogeneous = (sub_relations, model, objects, preload_spec, ...) ->
             -- Ignore the val_types that we know can not contain nested relations
             unless val_type == "boolean" or val_type == "function"
               sub_relations or= {}
-              sub_relations[val] or= {}
-              loaded_objects = sub_relations[val]
+              loaded_objects = sub_relations[val] or {}
 
               -- grab all the loaded objects to process
               if r.has_many or r.fetch and r.many
                 for obj in *objects
                   continue unless obj[relation_name] -- if the preloader didn't insert array then just skip
                   for fetched in *obj[relation_name]
+                    continue unless type(fetched) == "table"
                     table.insert loaded_objects, fetched
               else
                 for obj in *objects
-                  table.insert loaded_objects, obj[relation_name]
+                  fetched = obj[relation_name]
+                  continue unless type(fetched) == "table"
+                  table.insert loaded_objects, fetched
+
+              if next(loaded_objects) and not sub_relations[val]
+                sub_relations[val] = loaded_objects
 
     when "string"
       -- preload_spec is simply the name of the relation to preload

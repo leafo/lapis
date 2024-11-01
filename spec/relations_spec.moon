@@ -1816,6 +1816,32 @@ describe "lapis.db.model.relations", ->
         [[SELECT * FROM "user_data" WHERE "user_id" IN (11, 12)]]
       }, sorted: true
 
+    it "preloads a fetch that returns basic value", ->
+      class Items extends Model
+        @relations: {
+          {"things",
+            many: true
+            fetch: => error "should not be called"
+            preload: (items, ...) ->
+              for item in *items
+                item.things = {true, true, false}
+          }
+
+
+          {"thing",
+            fetch: => error "should not be called"
+            preload: (items, ...) ->
+              for item in *items
+                item.thing = true -- store a boolean
+          }
+        }
+
+      items = {Items!}
+      preload items, things: {}, thing: {}
+      assert.same {true, true, false}, items[1].things
+      assert.same true, items[1].thing
+
+
     it "passes preload opts to fetch relation", ->
       local preload_objects, preload_opts
 
@@ -1823,7 +1849,7 @@ describe "lapis.db.model.relations", ->
         @relations: {
           {"things",
             many: true
-            fetch: => error "no fetch me"
+            fetch: => error "should not be called"
             preload: (...) ->
               preload_objects, preload_opts = ...
           }
@@ -1846,7 +1872,7 @@ describe "lapis.db.model.relations", ->
         random: "option"
       }, preload_opts
 
-    it "with skip_included preload option", ->
+    it "with skip_included preload option #ddd", ->
       models.Items = class Items extends Model
         @relations: {
           {"parents", has_many: "Items", key: "parent_id"}

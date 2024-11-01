@@ -106,9 +106,7 @@ preload_homogeneous = function(sub_relations, model, objects, preload_spec, ...)
           preload_relation(model, objects, relation_name, preload_opts)
           if not (val_type == "boolean" or val_type == "function") then
             sub_relations = sub_relations or { }
-            local _update_0 = val
-            sub_relations[_update_0] = sub_relations[_update_0] or { }
-            local loaded_objects = sub_relations[val]
+            local loaded_objects = sub_relations[val] or { }
             if r.has_many or r.fetch and r.many then
               for _index_0 = 1, #objects do
                 local _continue_1 = false
@@ -120,8 +118,19 @@ preload_homogeneous = function(sub_relations, model, objects, preload_spec, ...)
                   end
                   local _list_0 = obj[relation_name]
                   for _index_1 = 1, #_list_0 do
-                    local fetched = _list_0[_index_1]
-                    table.insert(loaded_objects, fetched)
+                    local _continue_2 = false
+                    repeat
+                      local fetched = _list_0[_index_1]
+                      if not (type(fetched) == "table") then
+                        _continue_2 = true
+                        break
+                      end
+                      table.insert(loaded_objects, fetched)
+                      _continue_2 = true
+                    until true
+                    if not _continue_2 then
+                      break
+                    end
                   end
                   _continue_1 = true
                 until true
@@ -131,9 +140,24 @@ preload_homogeneous = function(sub_relations, model, objects, preload_spec, ...)
               end
             else
               for _index_0 = 1, #objects do
-                local obj = objects[_index_0]
-                table.insert(loaded_objects, obj[relation_name])
+                local _continue_1 = false
+                repeat
+                  local obj = objects[_index_0]
+                  local fetched = obj[relation_name]
+                  if not (type(fetched) == "table") then
+                    _continue_1 = true
+                    break
+                  end
+                  table.insert(loaded_objects, fetched)
+                  _continue_1 = true
+                until true
+                if not _continue_1 then
+                  break
+                end
               end
+            end
+            if next(loaded_objects) and not sub_relations[val] then
+              sub_relations[val] = loaded_objects
             end
           end
         end
