@@ -1816,7 +1816,7 @@ describe "lapis.db.model.relations", ->
         [[SELECT * FROM "user_data" WHERE "user_id" IN (11, 12)]]
       }, sorted: true
 
-    it "passes preload opts", ->
+    it "passes preload opts to fetch relation", ->
       local preload_objects, preload_opts
 
       class Item extends Model
@@ -1834,6 +1834,7 @@ describe "lapis.db.model.relations", ->
       preload items, things: {
         [preload]: {
           fields: "blue"
+          random: "option"
         }
       }
 
@@ -1842,7 +1843,27 @@ describe "lapis.db.model.relations", ->
 
       assert.same {
         fields: "blue"
+        random: "option"
       }, preload_opts
+
+    it "with skip_included preload option", ->
+      models.Items = class Items extends Model
+        @relations: {
+          {"parents", has_many: "Items", key: "parent_id"}
+        }
+
+      items = {
+        Items\load { id: 123, parents: {} } -- this one already has it
+        Items\load { id: 234 }
+      }
+
+      preload items, parents: {
+        [preload]: { fields: "what", skip_included: true }
+      }
+
+      assert_queries {
+        [[SELECT what FROM "items" WHERE "parent_id" IN (234)]]
+      }
 
     describe "optional relations", ->
       it "single optional relation", ->
