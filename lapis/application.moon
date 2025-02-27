@@ -92,8 +92,6 @@ class Application
       tbl = name
       name = nil
 
-    class_fields = { }
-
     cls = lua.class name or "ExtendedApplication", tbl, @
     cls, cls.__base
 

@@ -119,7 +119,6 @@ do
       tbl = name
       name = nil
     end
-    local class_fields = { }
     local cls = lua.class(name or "ExtendedFlow", tbl, self)
     return cls, cls.__base
   end

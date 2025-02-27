@@ -40,8 +40,6 @@ class Flow
       tbl = name
       name = nil
 
-    class_fields = { }
-
     cls = lua.class name or "ExtendedFlow", tbl, @
     cls, cls.__base
 
