@@ -1,6 +1,5 @@
 -- csrf protection
 
-json = require "cjson"
 import encode_base64, encode_with_secret, decode_with_secret from require "lapis.util.encoding"
 openssl_rand = require "openssl.rand"
 

@@ -297,8 +297,6 @@ class Widget
     if type(tbl) == "function"
       tbl = { content: tbl }
 
-    class_fields = { }
-
     cls = lua.class name or "ExtendedWidget", tbl, @
     cls, cls.__base
 

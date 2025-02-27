@@ -661,7 +661,6 @@ do
         content = tbl
       }
     end
-    local class_fields = { }
     local cls = lua.class(name or "ExtendedWidget", tbl, self)
     return cls, cls.__base
   end
