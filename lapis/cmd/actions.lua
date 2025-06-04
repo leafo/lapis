@@ -62,7 +62,7 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:mutex(_with_0:flag("--nginx", "Generate config for nginx server (default)"), _with_0:flag("--cqueues", "Generate config for cqueues server"))
-        _with_0:mutex(_with_0:flag("--lua", "Generate app template file in Lua (defaul)"), _with_0:flag("--moonscript --moon", "Generate app template file in MoonScript"))
+        _with_0:mutex(_with_0:flag("--lua", "Generate app template file in Lua (default)"), _with_0:flag("--moonscript --moon", "Generate app template file in MoonScript"))
         _with_0:flag("--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)")
         _with_0:flag("--git", "Generate default .gitignore file")
         _with_0:flag("--tup", "Generate default Tupfile")
