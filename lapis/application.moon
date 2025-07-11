@@ -85,6 +85,11 @@ class Application
 
   new: => @build_router!
 
+  ---Create a new Application subclass
+  ---@param name? string|table Class name or table of methods if name is omitted
+  ---@param tbl? table Table of methods and properties for the new class
+  ---@return table class New Application subclass
+  ---@return table base Base table for the new class
   @extend: (name, tbl) =>
     lua = require "lapis.lua"
 
@@ -96,7 +101,11 @@ class Application
     cls, cls.__base
 
 
-  -- search the route group hierarchy for the action handler that matches the route name
+  ---Search the route group hierarchy for the action handler that matches the route name
+  ---@param name string Route name to search for
+  ---@param resolve? boolean Whether to resolve lazy-loaded actions (default: true)
+  ---@return function|any action The action handler function or lazy-loaded action
+  ---@return any route The route configuration
   -- NOTE: this is a special method that can be called on either the class or the instance
   find_action: (name, resolve=true) =>
     route_group = get_target_route_group @
@@ -125,6 +134,8 @@ class Application
 
     action, route
 
+  ---Enable a feature for this application
+  ---@param feature string Feature name to enable
   -- NOTE: this is a special method that can be called on either the class or the instance
   enable: (feature) =>
     assert @ != Application, "You tried to enable a feature on the read-only class lapis.Application. You must sub-class it before enabling features"
@@ -133,7 +144,10 @@ class Application
     if test_callable fn
       fn @
 
-  -- add new route to the set of routes
+  ---Add a new route to the application
+  ---@param route_name string|table Route name or route configuration
+  ---@param path string URL path pattern
+  ---@param handler function|string|boolean Route handler function or action name
   -- NOTE: this is a special method that can be called on either the class or the instance
   match: (route_name, path, handler) =>
     route_group = get_target_route_group(@)
@@ -162,7 +176,8 @@ class Application
       if route_group == @
         @router = nil
 
-  -- Add before filter `fn` to __base
+  ---Add a before filter to run before route handlers
+  ---@param fn function Filter function that receives the request object
   before_filter: (fn) =>
     route_group = get_target_route_group(@)
     import add_before_filter from require "lapis.application.route_group"
@@ -245,6 +260,11 @@ class Application
     logger.request r
 
 
+  ---Dispatch a request through the application
+  ---@param req table HTTP request object
+  ---@param res table HTTP response object
+  ---@return boolean success Whether the request was handled successfully
+  ---@return table request The processed request object
   dispatch: (req, res) =>
     local err, trace, r
 
@@ -272,7 +292,11 @@ class Application
 
     success, r
 
-  -- copies all actions into this application, preserves before filters
+  ---Include routes (with before filters) from another application or module into the current one by copying
+  ---@param other_app table|string Application instance or module name to include
+  ---@param opts? table Options for including routes
+  ---@param opts.path? string Path prefix for included routes
+  ---@param opts.name? string Name prefix for included routes
   -- other app can just be a plain table, doesn't have to be another application
   -- @include other_app, path: "/hello", name: "hello_"
   include: (other_app, opts) =>
@@ -362,6 +386,17 @@ class Application
   cookie_attributes: (name, value) =>
     "Path=/; HttpOnly"
 
+---Create a handler that responds to different HTTP methods
+---@param tbl table Table mapping HTTP methods to handler functions
+---@param tbl.GET? function Handler for GET requests
+---@param tbl.POST? function Handler for POST requests
+---@param tbl.PUT? function Handler for PUT requests
+---@param tbl.DELETE? function Handler for DELETE requests
+---@param tbl.HEAD? function Handler for HEAD requests (defaults to empty response)
+---@param tbl.before? function Before filter to run before method handlers
+---@param tbl.on_error? function Error handler for capturing errors
+---@param tbl.on_invalid_method? function Handler for unsupported HTTP methods
+---@return function handler Request handler function
 respond_to = do
   default_head = -> layout: false -- render nothing
   on_invalid_method = => error "don't know how to respond to #{@req.method}"
@@ -384,6 +419,11 @@ respond_to = do
     out
 
 default_error_response = -> { render: true }
+
+---Wrap a function to capture and handle errors gracefully
+---@param fn function|table Function to wrap, or table with function and error handler
+---@param error_response? function Error response handler (default: renders error page)
+---@return function wrapped_fn Function that captures errors and calls error handler
 capture_errors = (fn, error_response=default_error_response) ->
   if type(fn) == "table"
     error_response = fn.on_error or error_response
@@ -406,19 +446,32 @@ capture_errors = (fn, error_response=default_error_response) ->
       else
         return unpack out, 2
 
+---Wrap a function to capture errors and return JSON error response
+---@param fn function Function to wrap
+---@return function wrapped_fn Function that returns JSON errors
 capture_errors_json = (fn) ->
   capture_errors fn, => {
     json: { errors: @errors }
   }
 
+---Yield an error from within a captured error context
+---@param msg? string Error message (default: "unknown error")
 yield_error = (msg="unknown error") ->
   coroutine.yield "error", {msg}
 
+---Assert a condition or yield an error if false
+---@param thing any Condition to test
+---@param msg string Error message to yield/assert
+---@param ... any Additional arguments for assert
+---@return any thing Returns the condition if truthy
 assert_error = (thing, msg, ...) ->
   yield_error msg unless thing
   -- assert in case the enclosing function can't capture yeilded error, so we trigger hard failure
   assert thing, msg, ...
 
+---Decorator to automatically parse JSON request body into parameters
+---@param fn function Handler function to wrap
+---@return function wrapped_fn Function that parses JSON body before calling handler
 json_params = (fn) ->
   (...) =>
     if content_type = @req.headers["content-type"]
