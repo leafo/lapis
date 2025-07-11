@@ -10,23 +10,38 @@ date = require "date"
 
 local *
 
+---URL decoding function
+---@param str string The URL-encoded string to decode
+---@return string
 -- todo: consider renaming to url_escape/url_unescape
 unescape = do
   u = url.unescape
   (str) -> (u str)
 
+---URL encoding function
+---@param str string The string to URL-encode
+---@return string
 escape = do
   e = url.escape
   (str) -> (e str)
 
+---Escape special pattern characters in a string for use in Lua patterns
+---@param str string The string containing pattern characters to escape
+---@return string
 escape_pattern = do
   punct = "[%^$()%.%[%]*+%-?%%]"
   (str) -> (str\gsub punct, (p) -> "%"..p)
 
+---Convert array of tuples to a table with key-value pairs
+---@param tbl table[] Array of tuples where each tuple is {key, value}
+---@return table
 inject_tuples = (tbl) ->
   for tuple in *tbl
     tbl[tuple[1]] = tuple[2] or true
 
+---Parse a URL query string into a table
+---@param str string The query string to parse (with or without leading ? or #)
+---@return table|nil
 parse_query_string = do
   import C, P, S, Ct from require "lpeg"
 
@@ -42,6 +57,10 @@ parse_query_string = do
     with out = query\match str
       inject_tuples out if out
 
+---Encode a table as a query string
+---@param t table Table with key-value pairs or array of tuples
+---@param sep? string Separator between parameters (default: "&")
+---@return string
 -- todo: handle nested tables
 -- takes either { hello: "world"} or { {"hello", "world"} }
 encode_query_string = (t, sep="&") ->
@@ -70,6 +89,9 @@ encode_query_string = (t, sep="&") ->
   buf[i] = nil
   concat buf
 
+---Parse HTTP Content-Disposition header
+---@param str string The Content-Disposition header value
+---@return table|nil
 parse_content_disposition = do
   import C, R, P, S, Ct, Cg from require "lpeg"
 
@@ -85,23 +107,38 @@ parse_content_disposition = do
     with out = patt\match str
       inject_tuples out if out
 
+---Parse HTTP Cookie header string
+---@param str string|nil The cookie header string
+---@return table cookies Empty table if str is nil
 parse_cookie_string = (str) ->
   return {} unless str
   {unescape(key), unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
 
+---Convert a string to a URL-friendly slug
+---@param str string The string to slugify
+---@return string slug Lowercase, hyphens for spaces/underscores
 slugify = (str) ->
   (str\gsub("[%s_]+", "-")\gsub("[^%w%-]+", "")\gsub("-+", "-"))\lower!
 
+---Convert a string to underscore_case
+---@param str string The string to convert
+---@return string
 -- TODO: make this not suck
 underscore = (str) ->
   words = [word\lower! for word in str\gmatch "%L*%l+"]
   concat words, "_"
 
+---Convert a string to CamelCase
+---@param str string The string to camelize (typically underscore_case)
+---@return string
 camelize = do
   patt = "[^#{escape_pattern"_"}]+"
   (str) ->
     concat [part\sub(1,1)\upper! .. part\sub(2) for part in str\gmatch patt]
 
+---Remove duplicate items from a list
+---@param list any[] The list to remove duplicates from
+---@return any[] unique_list New list with duplicates removed
 uniquify = (list) ->
   seen = {}
   return for item in *list
@@ -109,6 +146,9 @@ uniquify = (list) ->
     seen[item] = true
     item
 
+---Remove leading and trailing whitespace from a string
+---@param str string|number The string to trim (will be converted to string)
+---@return string
 trim = (str) ->
   str = tostring str
 
@@ -117,12 +157,20 @@ trim = (str) ->
   else
     str\match "^%s*(.-)%s*$"
 
+---Trim all string values in a table
+---@param tbl table The table to trim string values in
+---@return table trimmed Same table with string values trimmed
 trim_all = (tbl) ->
   for k,v in pairs tbl
     if type(v) == "string"
       tbl[k] = trim v
   tbl
 
+---Trim and filter empty string values from a table
+---@param tbl table The table to process
+---@param keys? string[] Optional key filter to apply first
+---@param empty_val? any Value to replace empty strings with (default: nil)
+---@return table filtered Same table with trimmed/filtered values
 -- remove empty string (all whitespace) values from table
 -- optionally apply a key filter with second arg
 -- set the value to replace empty strings with empty_val
@@ -136,6 +184,10 @@ trim_filter = (tbl, keys, empty_val) ->
 
   tbl
 
+---Remove all keys from table except those specified
+---@param tbl table The table to filter
+---@param ... string The keys to keep
+---@return table filtered Same table with only specified keys
 -- remove all keys except those passed in
 key_filter = (tbl, ...) ->
   set = {val, true for val in *{...}}
@@ -150,6 +202,10 @@ encodable_userdata = {
 if json.empty_array
   encodable_userdata[json.empty_array] = true
 
+---Convert an object to a JSON-encodable format
+---@param obj any The object to make JSON-encodable
+---@param seen? table Internal table to track circular references
+---@return any
 json_encodable = (obj, seen={}) ->
   switch type obj
     when "table"
@@ -163,9 +219,25 @@ json_encodable = (obj, seen={}) ->
     else
       obj
 
+---Convert an object to JSON string
+---@param obj any The object to encode as JSON
+---@return string
 to_json = (obj) -> json.encode json_encodable obj
+
+---Parse a JSON string to Lua object
+---@param obj string The JSON string to parse
+---@return any
 from_json = (obj) -> json.decode obj
 
+---Build a URL from component parts
+---@param parts table URL components table
+---@param parts.path? string URL path
+---@param parts.query? string Query string
+---@param parts.fragment? string URL fragment
+---@param parts.host? string Host name
+---@param parts.port? string|number Port number
+---@param parts.scheme? string URL scheme (http, https, etc.)
+---@return string
 -- {
 --     [path] = "/test"
 --     [scheme] = "http"
@@ -195,6 +267,11 @@ build_url = (parts) ->
 
   out
 
+---Calculate the difference between two dates
+---@param later userdata|string Later date object or string
+---@param sooner userdata|string Earlier date object or string
+---@return table time_diff Time units (years, days, hours, minutes, seconds)
+---@return boolean success Always true
 date_diff = (later, sooner) ->
   if later < sooner
     sooner, later = later, sooner
@@ -242,9 +319,18 @@ date_diff = (later, sooner) ->
 
   times, true
 
+---Calculate time elapsed since a given time
+---@param time userdata|string|number The time to compare against (date object, string, or timestamp)
+---@return table time_diff Time units elapsed since the given time
+---@return boolean success Always true
 time_ago = (time) ->
   date_diff date(true), date(time)
 
+---Convert time difference to human-readable words
+---@param time table|userdata|string|number Time difference table or time to compare
+---@param parts? number Number of time units to include (default: 1)
+---@param suffix? string Suffix to append (default: "ago")
+---@return string
 time_ago_in_words = do
   singular = {
     years: "year"
@@ -275,10 +361,16 @@ time_ago_in_words = do
     else
       out
 
+---Convert a string to Title Case
+---@param str string The string to convert
+---@return string
 title_case = (str) ->
   (str\gsub "%S+", (chunk) ->
     chunk\gsub "^.", string.upper)
 
+---Create an autoloading table that requires modules on demand
+---@param ... string|table Module prefixes to search, optionally ending with existing table
+---@return table autoloader Loads modules on first access
 autoload = do
   try_require = (mod_name) ->
     local mod
@@ -315,17 +407,30 @@ autoload = do
       @[mod_name] = mod
       mod
 
+---Create a table that auto-generates its content using a function
+---@param fn function Function to call to generate the table content
+---@return table auto_table Generates content on first access
 auto_table = (fn) ->
   setmetatable {}, __index: (name) =>
     result = fn!
     getmetatable(@).__index = result
     result[name]
 
+---Get multiple fields from an object
+---@param obj table|nil The object to get fields from
+---@param key string|nil The first key to get
+---@param ... string Additional keys to get
+---@return any ...
 get_fields = (obj, key, ...) ->
   return unless obj
   return unless key
   obj[key], get_fields obj, ...
 
+-- NOTE: this is not designed to be comprehensive, but a quick helper for cases
+-- for names of this are not explicitly specified
+---Convert plural word to singular form (basic implementation)
+---@param name string The plural word to singularize
+---@return string
 -- NOTE: this is not designed to be comprehensive, but a quick helper for cases
 -- for names of this are not explicitly specified
 singularize = do
