@@ -543,6 +543,10 @@ local COMMANDS = {
     name = "eswidget",
     help = "Widget asset compilation and build generation"
   }),
+  custom_action({
+    name = "mcp",
+    help = "Lapis MCP server runtime"
+  }),
   {
     name = "debug",
     hidden = true,
@@ -616,6 +620,7 @@ do
       parser:add_help_command()
       parser:option("--environment", "Override the environment name"):argname("<name>")
       parser:option("--config-module", "Override module name to require configuration from (default: config)"):argname("<name>")
+      parser:option("--dir", "Set the working directory for lapis command (requires luafilesystem)")
       parser:flag("--trace", "Show full error trace if lapis command fails")
       for _index_0 = 1, #COMMANDS do
         local _continue_0 = false
@@ -726,6 +731,10 @@ do
       args = self:parse_args(args)
       local action = self:get_command(args.command)
       assert(action, "Failed to find command: " .. tostring(args.command))
+      if args.dir then
+        local lfs = require("lfs")
+        lfs.chdir(args.dir)
+      end
       if args.config_module then
         package.loaded["lapis.config_module_name"] = args.config_module
       end
