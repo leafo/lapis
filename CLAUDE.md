@@ -149,3 +149,71 @@ The `lapis-dev-1.rockspec` file defines the LuaRocks package specification for L
 The `build.modules` section must be manually maintained to include all `.lua` files that should be installed with the package. When adding new MoonScript files that compile to Lua, the corresponding `.lua` file path must be added to this section.
 
 When making changes, ensure all test suites pass before committing.
+
+## Code Documentation Style
+
+### LuaCATS Annotations
+
+When adding type annotations to the codebase, follow these conventions consistent with the existing patterns in `lapis/util.moon`:
+
+**Function Annotations:**
+- Use `---` prefix for all annotation lines
+- Place annotations directly above the function definition
+- Include brief function description on first line
+- Use `@param` for parameters with type and description
+- Use `@return` for return values with type and optional description
+- Mark unused return values with `@nodiscard` if appropriate
+
+```moonscript
+---URL decode a string
+---@param str string
+---@return string
+unescape = (str) -> url.unescape str
+```
+
+**Parameter Types:**
+- Use basic Lua types: `string`, `number`, `boolean`, `table`, `function`, `nil`
+- Use `string|number` for union types
+- Use `string?` for optional parameters
+- Use `table[]` for arrays
+- Use `any` for untyped values
+- Use `userdata` for external objects (like date objects)
+
+**Table Parameters:**
+- For complex table parameters, document fields with nested `@param` entries
+- Use descriptive field names in the format `@param parts.field type description`
+
+```moonscript
+---Build a URL from component parts
+---@param parts table URL components table
+---@param parts.path? string URL path
+---@param parts.query? string Query string
+---@param parts.fragment? string URL fragment
+---@param parts.host? string Host name
+---@param parts.port? string|number Port number
+---@param parts.scheme? string URL scheme (http, https, etc.)
+---@return string
+build_url = (parts) ->
+```
+
+**Return Values:**
+- Document all return values, including success/failure booleans
+- Use `table|nil` for functions that may return nil
+- For multiple return values, document each on separate `@return` lines
+
+```moonscript
+---Calculate the difference between two dates
+---@param later userdata|string Later date object or string
+---@param sooner userdata|string Earlier date object or string
+---@return table time_diff Time units (years, days, hours, minutes, seconds)
+---@return boolean success Always true
+date_diff = (later, sooner) ->
+```
+
+**Style Guidelines:**
+- Keep descriptions concise but informative
+- Use consistent terminology throughout the codebase
+- Include units or formats in descriptions when relevant
+- Document default values in parameter descriptions
+- Use present tense for function descriptions
+- Avoid redundant information in descriptions
