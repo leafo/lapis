@@ -38,6 +38,8 @@ jobs:
         luaVersion: ${{ matrix.luaVersion }}
 
     - uses: leafo/gh-actions-luarocks@master
+      with:
+        luarocksVersion: "3.12.2"
 
     - name: build
       run: |
