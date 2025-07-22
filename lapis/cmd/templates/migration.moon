@@ -105,6 +105,7 @@ write = (args) =>
     assert edited_contents, "Failed to edit the contents of the current migration file. Please ensure it's valid Lua/MoonScript code with a trailing } character"
 
     @command_runner.path.write_file output_fname, edited_contents
+    print "Created migration: #{next_name}"
   else
     next_name = get_next_name args.counter
 
@@ -113,5 +114,7 @@ write = (args) =>
         @write output_fname, initial_lua\format next_name
       when "moonscript"
         @write output_fname, initial_moon\format next_name
+
+    print "Created migration: #{next_name}"
 
 {:write, :argparser}

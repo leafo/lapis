@@ -103,15 +103,17 @@ write = function(self, args)
       edited_contents = insert_end_moon(current_contents, (empty_moon:format(next_name)))
     end
     assert(edited_contents, "Failed to edit the contents of the current migration file. Please ensure it's valid Lua/MoonScript code with a trailing } character")
-    return self.command_runner.path.write_file(output_fname, edited_contents)
+    self.command_runner.path.write_file(output_fname, edited_contents)
+    return print("Created migration: " .. tostring(next_name))
   else
     local next_name = get_next_name(args.counter)
     local _exp_1 = output_language
     if "lua" == _exp_1 then
-      return self:write(output_fname, initial_lua:format(next_name))
+      self:write(output_fname, initial_lua:format(next_name))
     elseif "moonscript" == _exp_1 then
-      return self:write(output_fname, initial_moon:format(next_name))
+      self:write(output_fname, initial_moon:format(next_name))
     end
+    return print("Created migration: " .. tostring(next_name))
   end
 end
 return {
