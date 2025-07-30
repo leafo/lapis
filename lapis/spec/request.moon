@@ -43,6 +43,7 @@ extract_cookies = (response_headers) ->
 -- mock_request App, "/hello", { host: "leafo.net" }
 mock_request = (app_cls, url, opts={}) ->
   stack = require "lapis.spec.stack"
+  start_time = os.time!
 
   import parse_query_string, encode_query_string from require "lapis.util"
   import insert, concat from table
@@ -149,6 +150,7 @@ mock_request = (app_cls, url, opts={}) ->
     header: out_headers
 
     now: -> os.time! -- note that the resolution here does not match what nginx generates
+    start_time: -> start_time
 
     update_time: -> os.time!
     time: -> os.time!
