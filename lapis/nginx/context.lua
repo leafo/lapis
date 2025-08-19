@@ -35,43 +35,42 @@ make_callback = function(name)
   return add, run
 end
 local after_dispatch, run_after_dispatch = make_callback("after_dispatch")
-local increment_perf
-increment_perf = function(key, amount, parent)
-  if parent == nil then
-    parent = DEFAULT_PERFORMANCE_KEY
-  end
-  if not (ngx and ngx.ctx) then
-    return 
-  end
-  local p = ngx.ctx[parent]
-  if not (p) then
-    p = { }
-    ngx.ctx[parent] = p
-  end
-  do
-    local old = p[key]
-    if old then
-      p[key] = old + amount
-    else
-      p[key] = amount
+local make_counter
+make_counter = function(name)
+  local increment
+  increment = function(key, amount)
+    if not (ngx and ngx.ctx) then
+      return 
+    end
+    local p = ngx.ctx[name]
+    if not (p) then
+      p = { }
+      ngx.ctx[name] = p
+    end
+    do
+      local old = p[key]
+      if old then
+        p[key] = old + amount
+      else
+        p[key] = amount
+      end
     end
   end
+  local set
+  set = function(key, value)
+    if not (ngx and ngx.ctx) then
+      return 
+    end
+    local p = ngx.ctx[name]
+    if not (p) then
+      p = { }
+      ngx.ctx[name] = p
+    end
+    p[key] = value
+  end
+  return increment, set
 end
-local set_perf
-set_perf = function(key, value, parent)
-  if parent == nil then
-    parent = DEFAULT_PERFORMANCE_KEY
-  end
-  if not (ngx and ngx.ctx) then
-    return 
-  end
-  local p = ngx.ctx[parent]
-  if not (p) then
-    p = { }
-    ngx.ctx[parent] = p
-  end
-  p[key] = value
-end
+local increment_perf, set_perf = make_counter(DEFAULT_PERFORMANCE_KEY)
 return {
   after_dispatch = after_dispatch,
   run_after_dispatch = run_after_dispatch,

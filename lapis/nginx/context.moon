@@ -1,6 +1,7 @@
 -- functions that interact with the request's context
 import insert from table
 
+DEFAULT_AFTER_DISPATCH_KEY = "after_dispatch"
 DEFAULT_PERFORMANCE_KEY = "performance"
 
 -- this stores a list of callbacks functions stored in the ngx.ctx
@@ -30,35 +31,41 @@ make_callback = (name) ->
 
   add, run
 
+
+-- creates increment and set functions for a named counter
+make_counter = (name) ->
+  increment = (key, amount) ->
+    return unless ngx and ngx.ctx
+
+    p = ngx.ctx[name]
+    unless p
+      p = {}
+      ngx.ctx[name] = p
+
+    if old = p[key]
+      p[key] = old + amount
+    else
+      p[key] = amount
+
+  set = (key, value) ->
+    return unless ngx and ngx.ctx
+
+    p = ngx.ctx[name]
+    unless p
+      p = {}
+      ngx.ctx[name] = p
+
+    p[key] = value
+
+  increment, set
+
 -- after_dispatch is called after the request processing is completed
 -- this is typically used for cleaning up of resources opened during the
 -- request or relinquishing sockets back to the socket pool
-after_dispatch, run_after_dispatch = make_callback "after_dispatch"
+after_dispatch, run_after_dispatch = make_callback DEFAULT_AFTER_DISPATCH_KEY
 
 -- for performance tracking
-increment_perf = (key, amount, parent=DEFAULT_PERFORMANCE_KEY) ->
-  return unless ngx and ngx.ctx
-
-  p = ngx.ctx[parent]
-  unless p
-    p = {}
-    ngx.ctx[parent] = p
-
-  if old = p[key]
-    p[key] = old + amount
-  else
-    p[key] = amount
-
-set_perf = (key, value, parent=DEFAULT_PERFORMANCE_KEY) ->
-  return unless ngx and ngx.ctx
-
-  p = ngx.ctx[parent]
-  unless p
-    p = {}
-    ngx.ctx[parent] = p
-
-  p[key] = value
-
+increment_perf, set_perf = make_counter DEFAULT_PERFORMANCE_KEY
 
 {
   :after_dispatch, :run_after_dispatch, :increment_perf, :set_perf
