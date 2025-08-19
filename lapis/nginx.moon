@@ -165,9 +165,13 @@ dispatch = (app) ->
 
 -- wraps ngx.timer.at to ensure that after dispatch is called
 timer_at = (delay, fn, ...) ->
-  callback = (fn, ...) ->
-    pcall fn, ...
+  callback = (_premature, fn, ...) ->
+    success, err = pcall fn, _premature, ...
     run_after_dispatch!
+
+    if not success
+      error err
+
     return
 
   ngx.timer.at delay, callback, fn, ...

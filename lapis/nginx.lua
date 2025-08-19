@@ -241,9 +241,12 @@ end
 local timer_at
 timer_at = function(delay, fn, ...)
   local callback
-  callback = function(fn, ...)
-    pcall(fn, ...)
+  callback = function(_premature, fn, ...)
+    local success, err = pcall(fn, _premature, ...)
     run_after_dispatch()
+    if not success then
+      error(err)
+    end
   end
   return ngx.timer.at(delay, callback, fn, ...)
 end
