@@ -3,6 +3,7 @@ import insert from table
 
 DEFAULT_PERFORMANCE_KEY = "performance"
 
+-- this manages a list of callbacks stored in the ngx.ctx
 make_callback = (name) ->
   add = (callback) ->
     current = ngx.ctx[name]
@@ -26,6 +27,9 @@ make_callback = (name) ->
 
   add, run
 
+-- after_dispatch is called after the request processing is completed
+-- this is typically used for cleaning up of resources opened during the
+-- request or relinquishing sockets back to the socket pool
 after_dispatch, run_after_dispatch = make_callback "after_dispatch"
 
 -- for performance tracking

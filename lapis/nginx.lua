@@ -238,8 +238,18 @@ dispatch = function(app)
   run_after_dispatch()
   return res
 end
+local timer_at
+timer_at = function(delay, fn, ...)
+  local callback
+  callback = function(fn, ...)
+    pcall(fn, ...)
+    run_after_dispatch()
+  end
+  return ngx.timer.at(delay, callback, fn, ...)
+end
 return {
   build_request = build_request,
   build_response = build_response,
-  dispatch = dispatch
+  dispatch = dispatch,
+  timer_at = timer_at
 }
