@@ -6,8 +6,7 @@ make_callback = function(name)
   local add
   add = function(callback)
     local current = ngx.ctx[name]
-    local t = type(current)
-    local _exp_0 = t
+    local _exp_0 = type(current)
     if "nil" == _exp_0 then
       ngx.ctx[name] = callback
     elseif "function" == _exp_0 then
@@ -29,8 +28,9 @@ make_callback = function(name)
         fn(...)
       end
     elseif "function" == _exp_0 then
-      return callbacks(...)
+      callbacks(...)
     end
+    ngx.ctx[name] = nil
   end
   return add, run
 end

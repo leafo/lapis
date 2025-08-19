@@ -3,12 +3,12 @@ import insert from table
 
 DEFAULT_PERFORMANCE_KEY = "performance"
 
--- this manages a list of callbacks stored in the ngx.ctx
+-- this stores a list of callbacks functions stored in the ngx.ctx
+-- and provides a method to call them
 make_callback = (name) ->
   add = (callback) ->
     current = ngx.ctx[name]
-    t = type current
-    switch t
+    switch type current
       when "nil"
         ngx.ctx[name] = callback
       when "function"
@@ -24,6 +24,9 @@ make_callback = (name) ->
           fn ...
       when "function"
         callbacks ...
+
+    -- clear out callbacks so they can't be double triggered
+    ngx.ctx[name] = nil
 
   add, run
 
