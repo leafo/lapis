@@ -1,10 +1,15 @@
 local insert
 insert = table.insert
+local DEFAULT_AFTER_DISPATCH_KEY = "after_dispatch"
 local DEFAULT_PERFORMANCE_KEY = "performance"
 local make_callback
 make_callback = function(name)
+  local running = false
   local add
   add = function(callback)
+    if running then
+      error("you tried add to " .. tostring(name) .. " while running a callback")
+    end
     local current = ngx.ctx[name]
     local _exp_0 = type(current)
     if "nil" == _exp_0 then
@@ -20,7 +25,9 @@ make_callback = function(name)
   end
   local run
   run = function(...)
+    running = true
     local callbacks = ngx.ctx[name]
+    ngx.ctx[name] = nil
     local _exp_0 = type(callbacks)
     if "table" == _exp_0 then
       for _index_0 = 1, #callbacks do
@@ -30,11 +37,10 @@ make_callback = function(name)
     elseif "function" == _exp_0 then
       callbacks(...)
     end
-    ngx.ctx[name] = nil
+    running = false
   end
   return add, run
 end
-local after_dispatch, run_after_dispatch = make_callback("after_dispatch")
 local make_counter
 make_counter = function(name)
   local increment
@@ -70,6 +76,7 @@ make_counter = function(name)
   end
   return increment, set
 end
+local after_dispatch, run_after_dispatch = make_callback(DEFAULT_AFTER_DISPATCH_KEY)
 local increment_perf, set_perf = make_counter(DEFAULT_PERFORMANCE_KEY)
 return {
   after_dispatch = after_dispatch,

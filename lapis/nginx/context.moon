@@ -7,7 +7,12 @@ DEFAULT_PERFORMANCE_KEY = "performance"
 -- this stores a list of callbacks functions stored in the ngx.ctx
 -- and provides a method to call them
 make_callback = (name) ->
+  running = false
+
   add = (callback) ->
+    if running
+      error "you tried add to #{name} while running a callback"
+
     current = ngx.ctx[name]
     switch type current
       when "nil"
@@ -18,7 +23,12 @@ make_callback = (name) ->
         insert current, callback
 
   run = (...) ->
+    running = true
     callbacks = ngx.ctx[name]
+
+    -- clear out callbacks so they can't be double triggered
+    ngx.ctx[name] = nil
+
     switch type callbacks
       when "table"
         for fn in *callbacks
@@ -26,8 +36,7 @@ make_callback = (name) ->
       when "function"
         callbacks ...
 
-    -- clear out callbacks so they can't be double triggered
-    ngx.ctx[name] = nil
+    running = false
 
   add, run
 

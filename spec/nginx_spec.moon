@@ -60,6 +60,19 @@ describe "nginx.context", ->
     assert.same true, first
     assert.same true, second
 
+  it "should prevent adding callbacks while running", ->
+    import after_dispatch, run_after_dispatch from require "lapis.nginx.context"
+
+    after_dispatch ->
+      -- Try to add another callback while running
+      assert.has_error(
+        ->
+          after_dispatch -> "this should not work"
+        "you tried add to after_dispatch while running a callback"
+      )
+
+    run_after_dispatch!
+
   describe "increment_perf", ->
     it "should increment a new key", ->
       import increment_perf from require "lapis.nginx.context"
