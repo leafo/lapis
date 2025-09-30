@@ -881,7 +881,7 @@ schema.create_table("users", {
 
   "PRIMARY KEY (id)"
 })
-````
+```
 
 ```moon
 schema = require "lapis.db.schema"
