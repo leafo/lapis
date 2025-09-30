@@ -865,7 +865,7 @@ of the `lapis.db.schema` module.
 
 ### Creating and Dropping Tables
 
-#### `create_table(table_name, { table_declarations... })`
+#### `create_table(table_name, { table_declarations... }, [options])`
 
 The first argument to `create_table` is the name of the table and the second
 argument is an array table that describes the table.
@@ -881,7 +881,7 @@ schema.create_table("users", {
 
   "PRIMARY KEY (id)"
 })
-```
+````
 
 ```moon
 schema = require "lapis.db.schema"
@@ -902,7 +902,7 @@ create_table "users", {
 This will generate the following SQL:
 
 ```sql
-CREATE TABLE IF NOT EXISTS "users" (
+CREATE TABLE "users" (
   "id" serial NOT NULL,
   "username" character varying(255) NOT NULL,
   PRIMARY KEY (id)
@@ -912,7 +912,9 @@ CREATE TABLE IF NOT EXISTS "users" (
 The items in the second argument to `create_table` can either be a table, or a
 string. When the value is a table it is treated as a column/type tuple:
 
-    { column_name, column_type }
+```
+{ column_name, column_type }
+```
 
 They are both plain strings. The column name will be escaped automatically.
 The column type will be inserted verbatim after it is passed through
@@ -922,6 +924,73 @@ NULL`. See more about types below.
 
 If the value to the second argument is a string then it is inserted directly
 into the `CREATE TABLE` statement, that's how we create the primary key above.
+
+A third, optional argument can be provided to control extra features. Currently
+the options are:
+
+$options_table{
+  {
+    name = "if_not_exists",
+    description = [[
+      Appends `IF NOT EXISTS` to the SQL, ensuring the table will only be
+      created if it doesn't already exist.
+    ]]
+  }, 
+  {
+    name = "strict",
+    description = [[
+      Appends "STRICT" to the SQL, enabling strict mode, `false` by default. 
+      (Only in SQLite)
+    ]]
+  },
+  {
+    name = "without_rowid",
+    description = [[
+       Disables row ID, `false` by default. (Only in SQLite)
+    ]]
+  },
+  {
+    name = "engine",
+    description = [[
+      The engine to use for this table. (Only in MySQL)
+    ]]
+  },
+  {
+    name = "charset",
+    description = [[
+      The character set to use, `UTF8` by default. (Only in MySQL)
+    ]]
+  }
+}
+
+### Supported SQL types
+
+All supported SQL types, as defined by `lapis.db.schema`'s `types` 
+are:
+| Type        | SQLite | PostgreSQL | MySQL |
+|-------------|--------|------------|-------|
+| id / serial |        | X          | X     |
+| integer     | X      | X          | X     |
+| bigint      |        | X          | X     |
+| smallint    |        | X          | X     |
+| mediumint   |        |            | X     |
+| tinyint     |        |            | X     |
+| numeric     | X      | X          | X     |
+| real        | X      | X          | X     |
+| double      |        | X          | X     |
+| float       |        |            | X     |
+| text        | X      | X          | X     |
+| varchar     |        | X          | X     |
+| char        |        | X          | X     |
+| blob        | X      |            | X     |
+| boolean     |        | X          | X     |
+| enum        |        | X          | X     |
+| date        |        | X          | X     |
+| time        |        | X          | X     |
+| datetime    |        |            | X     |
+| timestamp   |        | X          | X     |
+| foreign_key |        | X          | X     |
+| any         | X      |            |       |
 
 #### `drop_table(table_name)`
 
