@@ -1,5 +1,6 @@
 unpack = unpack or table.unpack
 
+
 normalize_headers = do
   normalize = (header) ->
     header\lower!\gsub "-", "_"
@@ -43,7 +44,9 @@ extract_cookies = (response_headers) ->
 -- mock_request App, "/hello", { host: "leafo.net" }
 mock_request = (app_cls, url, opts={}) ->
   stack = require "lapis.spec.stack"
-  start_time = os.time!
+  import gettime from require("socket")
+
+  start_time = gettime!
 
   import parse_query_string, encode_query_string from require "lapis.util"
   import insert, concat from table
@@ -149,10 +152,10 @@ mock_request = (app_cls, url, opts={}) ->
 
     header: out_headers
 
-    now: -> os.time! -- note that the resolution here does not match what nginx generates
+    now: -> gettime!
 
-    update_time: -> os.time!
-    time: -> os.time!
+    update_time: -> gettime!
+    time: -> gettime!
 
     -- This is a bit hacky: We use the init phase to force pgmoon to default to
     -- using luasocket for the nginx socket, as we don't support the full
@@ -180,6 +183,7 @@ mock_request = (app_cls, url, opts={}) ->
 
     req: {
       start_time: -> start_time
+
       read_body: ->
       get_body_data: -> opts.body or opts.post and encode_query_string(opts.post) or nil
       get_headers: -> headers

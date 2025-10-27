@@ -61,7 +61,9 @@ mock_request = function(app_cls, url, opts)
     opts = { }
   end
   local stack = require("lapis.spec.stack")
-  local start_time = os.time()
+  local gettime
+  gettime = require("socket").gettime
+  local start_time = gettime()
   local parse_query_string, encode_query_string
   do
     local _obj_0 = require("lapis.util")
@@ -195,13 +197,13 @@ mock_request = function(app_cls, url, opts)
     end,
     header = out_headers,
     now = function()
-      return os.time()
+      return gettime()
     end,
     update_time = function()
-      return os.time()
+      return gettime()
     end,
     time = function()
-      return os.time()
+      return gettime()
     end,
     get_phase = function()
       return "init"
