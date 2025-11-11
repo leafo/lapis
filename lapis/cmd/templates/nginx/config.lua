@@ -6,7 +6,7 @@ argparser = function()
     return _with_0
   end
 end
-local initial_nginx = [[worker_processes ${{NUM_WORKERS}};
+local initial_nginx = [[worker_processes ${{num_workers}};
 error_log stderr notice;
 daemon off;
 pid logs/nginx.pid;
@@ -23,8 +23,8 @@ http {
   }
 
   server {
-    listen ${{PORT}};
-    lua_code_cache ${{CODE_CACHE}};
+    listen ${{port}};
+    lua_code_cache ${{code_cache}};
 
     location / {
       default_type text/html;
