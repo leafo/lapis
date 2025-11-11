@@ -197,9 +197,6 @@ mock_request = function(app_cls, url, opts)
     now = function()
       return os.time()
     end,
-    start_time = function()
-      return start_time
-    end,
     update_time = function()
       return os.time()
     end,
@@ -232,6 +229,9 @@ mock_request = function(app_cls, url, opts)
       end
     }),
     req = {
+      start_time = function()
+        return start_time
+      end,
       read_body = function() end,
       get_body_data = function()
         return opts.body or opts.post and encode_query_string(opts.post) or nil

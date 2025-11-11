@@ -150,7 +150,6 @@ mock_request = (app_cls, url, opts={}) ->
     header: out_headers
 
     now: -> os.time! -- note that the resolution here does not match what nginx generates
-    start_time: -> start_time
 
     update_time: -> os.time!
     time: -> os.time!
@@ -180,6 +179,7 @@ mock_request = (app_cls, url, opts={}) ->
         return headers[header_name]
 
     req: {
+      start_time: -> start_time
       read_body: ->
       get_body_data: -> opts.body or opts.post and encode_query_string(opts.post) or nil
       get_headers: -> headers
