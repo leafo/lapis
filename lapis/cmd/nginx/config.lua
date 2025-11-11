@@ -29,6 +29,19 @@ do
         end
       })
     end,
+    lookup_value = function(self, env, name)
+      if not (name and #name > 0) then
+        return nil
+      end
+      local current = env
+      for segment in name:gmatch("[^%.]+") do
+        if type(current) ~= "table" then
+          return nil
+        end
+        current = current[segment]
+      end
+      return current
+    end,
     add_config_header = function(self, compiled, env)
       local header
       do
@@ -48,27 +61,23 @@ do
       if opts == nil then
         opts = { }
       end
-      local wrapped = opts.os_env == false and env or self:wrap_environment(env)
-      local out = config:gsub("(${%b{}})", function(w)
-        local name = w:sub(4, -3)
+      local wrapped_env = opts.os_env == false and env or self:wrap_environment(env)
+      local out = config:gsub("(${%b{}})", function(variable_exp)
+        local name = variable_exp:sub(4, -3)
         local filter_name, filter_arg = name:match("^(%S+)%s+(.+)$")
+        local value
         do
           local filter = self.filters[filter_name]
           if filter then
-            local value = wrapped[filter_arg]
-            if value == nil then
-              return w
-            else
-              return filter(value)
-            end
+            value = filter(self:lookup_value(wrapped_env, filter_arg))
           else
-            local value = wrapped[name]
-            if value == nil then
-              return w
-            else
-              return value
-            end
+            value = self:lookup_value(wrapped_env, name)
           end
+        end
+        if value == nil then
+          return variable_exp
+        else
+          return tostring(value)
         end
       end)
       if opts.header == false then

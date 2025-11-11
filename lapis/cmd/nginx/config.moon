@@ -19,6 +19,19 @@ class ConfigCompiler
       return v if v != nil
       env[key\lower!]
 
+  lookup_value: (env, name) =>
+    return nil unless name and #name > 0
+    current = env
+
+    for segment in name\gmatch "[^%.]+"
+      if type(current) != "table"
+        -- attempting to index filed on non table type, ignore
+        return nil
+
+      current = current[segment]
+
+    current
+
   add_config_header: (compiled, env) =>
     header = if name = env._name
       "env LAPIS_ENVIRONMENT=#{name};\n"
@@ -28,17 +41,22 @@ class ConfigCompiler
     header .. compiled
 
   compile_config: (config, env={}, opts={}) =>
-    wrapped = opts.os_env == false and env or @wrap_environment(env)
+    wrapped_env = opts.os_env == false and env or @wrap_environment(env)
 
-    out = config\gsub "(${%b{}})", (w) ->
-      name = w\sub 4, -3
+    out = config\gsub "(${%b{}})", (variable_exp) ->
+      name = variable_exp\sub 4, -3
       filter_name, filter_arg = name\match "^(%S+)%s+(.+)$"
-      if filter = @filters[filter_name]
-        value = wrapped[filter_arg]
-        if value == nil then w else filter value
+      value = if filter = @filters[filter_name]
+        filter @lookup_value wrapped_env, filter_arg
       else
-        value = wrapped[name]
-        if value == nil then w else value
+        @lookup_value wrapped_env, name
+
+      if value == nil
+        -- just return the original without trying to rewrite it
+        variable_exp
+
+      else
+        tostring value
 
     if opts.header == false
       out
@@ -50,6 +68,7 @@ class ConfigCompiler
     wrapped = opts.os_env == false and env or @wrap_environment(env)
 
     template = assert etlua.compile config
+
     out = template wrapped
 
     if opts.header == false

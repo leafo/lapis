@@ -23,6 +23,16 @@ hello: ${{some_var}}]]
 env LAPIS_ENVIRONMENT;
 hello: what's up]], compiled
 
+  it "looks up nested config values with dot syntax", ->
+    tpl = [[
+nested: ${{outer.inner}}]]
+
+    compiled = nginx.compile_config tpl, { outer: { inner: "value" } }
+
+    assert.same [[
+env LAPIS_ENVIRONMENT;
+nested: value]], compiled
+
   it "compies config with variable that doesn't exist", ->
     tpl = [[
 hello: ${{oops_var}}]]
@@ -328,5 +338,4 @@ describe "lapis.cmd.util", ->
       "new"
       "dad"
     }, args
-
 
