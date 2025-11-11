@@ -1315,6 +1315,26 @@ exist yet then it will run every migration that hasn't been executed yet.
 
 Read more about [the migrate command](command_line.html#command-reference/lapis-migrate).
 
+### Generating Migration Stubs
+
+The CLI can scaffold (or extend) the migrations module for you via `lapis
+generate migration`. The command appends a new keyed function to the end of
+your migrations table, creating the module first if it is missing.
+
+```bash
+$ lapis generate migration --moonscript
+Created migration: 1694285420
+```
+
+By default, migrations are named with the current Unix timestamp. Pass
+`--counter=increment` to instead use sequential integers (useful when the
+module is version-controlled and you want deterministic names). The file is
+written next to the module you specify with `--module`/`--migrations-module`
+(`migrations` by default), and you can force a Lua or MoonScript target via
+`--lua` or `--moonscript`. The command only manipulates the source file; if
+you are maintaining MoonScript migrations remember to re-run `make build`
+before executing `lapis migrate`.
+
 ### Manually Running Migrations
 
 We can manually create the migrations table using the following code:
@@ -1366,4 +1386,3 @@ $dual_code{[[
 date = db.format_date!
 db.query "update things set published_at = ?", date
 ]]}
-
