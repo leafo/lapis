@@ -1,8 +1,11 @@
+
 import concat from table
 import type, tostring, pairs, select from _G
 unpack = unpack or table.unpack
 
-local raw_query, raw_disconnect
+POOL_PREFIX = "pgmoon_"
+
+local configure
 
 import
   FALSE
@@ -19,7 +22,10 @@ import
   is_encodable
   from require "lapis.db.base"
 
-logger = require "lapis.logging"
+
+append_all = (t, ...) ->
+  for i=1, select "#", ...
+    t[#t + 1] = select i, ...
 
 array = (t) ->
   import PostgresArray from require "pgmoon.arrays"
@@ -30,93 +36,7 @@ is_array = (v) ->
   getmetatable(v) == PostgresArray.__base
 
 _is_encodable = (item) ->
-  return true if is_encodable item
-  return true if is_array item
-  false
-
-local gettime
-
-BACKENDS = {
-  pgmoon: ->
-    import after_dispatch, increment_perf, set_perf from require "lapis.nginx.context"
-
-    config = require("lapis.config").get!
-    pg_config = assert config.postgres, "missing postgres configuration"
-
-    local pgmoon_conn
-
-    measure_performance = not not config.measure_performance
-
-    if measure_performance
-      gettime = require("socket").gettime
-
-    _query = (str) ->
-      -- cache the connection in the nginx context if true, otherwise it there
-      -- is one global connection cached for the instantiated backend
-      use_nginx = ngx and ngx.ctx and ngx.socket
-
-      pgmoon = if use_nginx
-        ngx.ctx.pgmoon
-      else
-        pgmoon_conn
-
-      unless pgmoon
-        import Postgres from require "pgmoon"
-        pgmoon = Postgres pg_config
-
-        if pg_config.timeout
-          pg_timeout = assert tonumber(pg_config.timeout), "timeout must be a number (ms)"
-          pgmoon\settimeout pg_timeout
-
-        success, connect_err = pgmoon\connect!
-        unless success
-          error "postgres failed to connect: #{connect_err}"
-
-        if measure_performance
-          switch pgmoon.sock_type
-            when "nginx"
-              set_perf "pgmoon_conn", "nginx.#{pgmoon.sock\getreusedtimes! > 0 and "reuse" or "new"}"
-            else
-              set_perf "pgmoon_conn", "#{pgmoon.sock_type}.new"
-
-        if use_nginx
-          ngx.ctx.pgmoon = pgmoon
-          after_dispatch -> pgmoon\keepalive!
-        else
-          pgmoon_conn = pgmoon
-
-      start_time = if measure_performance
-        gettime!
-
-      res, err = pgmoon\query str
-
-      if start_time
-        dt = gettime! - start_time
-        increment_perf "db_time", dt
-        increment_perf "db_count", 1
-        logger.query str, dt
-      else
-        logger.query str
-
-      if not res and err
-        error "#{str}\n#{err}"
-      res
-
-    _disconnect = ->
-      return unless pgmoon_conn
-
-      pgmoon_conn\disconnect!
-      pgmoon_conn = nil
-      true
-
-    _query, _disconnect
-}
-
-set_raw_query = (fn) ->
-  raw_query = fn
-
-get_raw_query = ->
-  raw_query
+  is_encodable(item) or is_array(item) or false
 
 escape_identifier = (ident) ->
   return ident[1] if is_raw ident
@@ -154,41 +74,41 @@ escape_literal = (val) ->
 
 interpolate_query, encode_values, encode_assigns, encode_clause = build_helpers escape_literal, escape_identifier
 
-append_all = (t, ...) ->
-  for i=1, select "#", ...
-    t[#t + 1] = select i, ...
+encode_case = (exp, t, on_else) ->
+  buff = {
+    "CASE ", exp
+  }
 
--- NOTE: this doesn't actually connect, sets up config for lazy connection on
--- next query
-connect = ->
-  config = require("lapis.config").get!
-  backend_name = config.postgres and config.postgres.backend
+  for k,v in pairs t
+    append_all buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v)
 
-  unless backend_name
-    backend_name = "pgmoon"
+  if on_else != nil
+    append_all buff, "\nELSE ", escape_literal on_else
 
-  backend = BACKENDS[backend_name]
-  unless backend
-    error "Failed to find PostgreSQL backend: #{backend_name}"
+  append_all buff, "\nEND"
+  concat buff
 
-  raw_query, raw_disconnect = backend!
+PG_DB_T = {
+  __index: {
+    __type: "postgres"
 
-disconnect = ->
-  assert raw_disconnect, "no active connection"
-  raw_disconnect!
+    :raw, :is_raw
+    :list, :is_list
+    :array, :is_array
+    :clause, :is_clause
 
--- this default implementation is replaced when the connection is established
-raw_query = (...) ->
-  connect!
-  raw_query ...
+    :NULL, :TRUE, :FALSE
 
-query = (str, ...) ->
-  if select("#", ...) > 0
-    str = interpolate_query str, ...
-  raw_query str
+    :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
+    :encode_clause, :interpolate_query, :format_date,
+    :encode_case
 
-_select = (str, ...) ->
-  query "SELECT " .. str, ...
+    is_encodable: _is_encodable
+
+    parse_clause: require "lapis.db.postgres.parse_clause"
+  }
+}
+
 
 -- Appends a list of column names as past of a returning clause via
 -- tail recursion
@@ -210,34 +130,6 @@ add_returning = (buff, first, cur, following, ...) ->
     append_all buff, ", "
     add_returning buff, false, following, ...
 
-_insert = (tbl, values, opts, ...) ->
-  buff = {
-    "INSERT INTO "
-    escape_identifier(tbl)
-    " "
-  }
-  encode_values values, buff
-
-  opts_type = type(opts)
-
-  if opts_type == "string" or opts_type == "table" and is_raw(opts)
-    add_returning buff, true, opts, ...
-  elseif opts_type == "table"
-    if opts.on_conflict
-      if opts.on_conflict == "do_nothing"
-        append_all buff, " ON CONFLICT DO NOTHING"
-      else
-        error "db.insert: unsupported value for on_conflict option: #{tostring opts.on_conflict}"
-
-    if r = opts.returning
-      if r == "*"
-        add_returning buff, true, raw "*"
-      else
-        assert type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array"
-        add_returning buff, true, unpack r
-
-  raw_query concat buff
-
 add_cond = (buffer, cond, ...) ->
   append_all buffer, " WHERE "
   switch type cond
@@ -246,85 +138,278 @@ add_cond = (buffer, cond, ...) ->
     when "string"
       append_all buffer, interpolate_query cond, ...
 
-_update = (table, values, cond, ...) ->
-  buff = {
-    "UPDATE "
-    escape_identifier(table)
-    " SET "
-  }
 
-  encode_assigns values, buff
+-- creates a new postgres db object with independent connection pool
+-- pool_name: unique name for connection pool storage in ngx.ctx
+-- config: postgres configuration table (overrides default config)
+configure = (pool_name, config) ->
+  local db -- the db module that will be created
+  assert type(config) == "table", "configure: config must be a table"
 
-  if cond
-    add_cond buff, cond, ...
+  local ctx_name
 
-  if type(cond) == "table"
-    add_returning buff, true, ...
+  if pool_name
+    ctx_name = "#{POOL_PREFIX}#{pool_name}"
 
-  raw_query concat buff
+    -- bake the pool name into the config instead of using the default
+    -- generated one by pgmoon
+    config = {k,v for k,v in pairs config}
+    config.pool_name or= ctx_name
 
-_delete = (table, cond, ...) ->
-  buff = {
-    "DELETE FROM "
-    escape_identifier(table)
-  }
+  is_default_pool = pool_name == "default"
 
-  if cond
-    add_cond buff, cond, ...
+  import increment_perf from require "lapis.nginx.context"
 
-  if type(cond) == "table"
-    add_returning buff, true, ...
+  global_config = require("lapis.config").get!
+  measure_performance = not not global_config.measure_performance
 
-  raw_query concat buff
+  gettime = if measure_performance
+    require("socket").gettime
 
--- truncate many tables
-_truncate = (...) ->
-  tables = concat [escape_identifier t for t in *{...}], ", "
-  raw_query "TRUNCATE " .. tables .. " RESTART IDENTITY"
+  -- the active connection when not stored in request context
+  local pgmoon_conn, use_nginx
 
-encode_case = (exp, t, on_else) ->
-  buff = {
-    "CASE ", exp
-  }
+  connect = ->
+    use_nginx = ngx and ngx.ctx and ngx.socket
 
-  for k,v in pairs t
-    append_all buff, "\nWHEN ", escape_literal(k), " THEN ", escape_literal(v)
+    if use_nginx and ctx_name
+      if ngx.ctx[ctx_name]
+        return nil, "already connected"
+    else
+      if pgmoon_conn
+        return nil, "already connected"
 
-  if on_else != nil
-    append_all buff, "\nELSE ", escape_literal on_else
+    import Postgres from require "pgmoon"
+    pgmoon = Postgres config
 
-  append_all buff, "\nEND"
-  concat buff
+    if config.timeout
+      pg_timeout = assert tonumber(config.timeout), "timeout must be a number (ms)"
+      pgmoon\settimeout pg_timeout
 
-{
-  __type: "postgres"
+    success, connect_err = pgmoon\connect!
 
-  :connect
-  :disconnect
-  :query
+    if logger = db.logger
+      if logger.db_connection
+        logger.db_connection db, pgmoon, success, connect_err
 
-  :raw, :is_raw
-  :list, :is_list
-  :array, :is_array
-  :clause, :is_clause
+    unless success
+      error "postgres (#{pool_name}) failed to connect: #{connect_err}"
 
-  :NULL, :TRUE, :FALSE
+    -- NOTE: these are legacy metrics that have been removed in favor of the
+    -- logging callback since they can innacurate if you have multiple
+    -- connections happening per request
+    -- if measure_performance
+    --   switch pgmoon.sock_type
+    --     when "nginx"
+    --       set_perf "pgmoon_conn_#{pool_name}", "nginx.#{pgmoon.sock\getreusedtimes! > 0 and "reuse" or "new"}"
+    --     else
+    --       set_perf "pgmoon_conn_#{pool_name}", "#{pgmoon.sock_type}.new"
 
-  :escape_literal, :escape_identifier, :encode_values, :encode_assigns,
-  :encode_clause, :interpolate_query, :format_date,
-  :encode_case
+    if use_nginx
+      import after_dispatch from require "lapis.nginx.context"
 
-  :set_raw_query
-  :get_raw_query
+      if ctx_name
+        ngx.ctx[ctx_name] = pgmoon
+      else
+        pgmoon_conn = pgmoon
 
-  parse_clause: require "lapis.db.postgres.parse_clause"
+      after_dispatch ->
+        pgmoon\keepalive!
+    else
+      pgmoon_conn = pgmoon
 
-  select: _select
-  insert: _insert
-  update: _update
-  delete: _delete
-  truncate: _truncate
-  is_encodable: _is_encodable
+    pgmoon
 
-  :BACKENDS
-}
+  connection_raw_query = (str) ->
+    pgmoon = if use_nginx
+      ngx.ctx[ctx_name]
+    else
+      pgmoon_conn
+
+    unless pgmoon
+      pgmoon = connect!
+
+    start_time = if measure_performance
+      gettime!
+
+    res, err = pgmoon\query str
+
+    query_time = if start_time
+      with dt = gettime! - start_time
+        -- TODO: consider moving performance callbacks into the logger
+        increment_perf "db_time", dt
+        increment_perf "db_count", 1
+
+    -- TODO: consider a different naming convention here
+    if logger = db.logger
+      if logger.query
+        if is_default_pool and ctx_name
+          logger.query str, query_time
+        else
+          logger.query "#{pool_name}: #{str}", query_time
+
+    if not res and err
+      error "#{str}\n#{err}"
+    res
+
+  connection_raw_disconnect = ->
+    return unless pgmoon_conn
+
+    if use_nginx
+      pgmoon_conn\keepalive!
+    else
+      pgmoon_conn\disconnect!
+
+    pgmoon_conn = nil
+    true
+
+  -- create connection-specific query functions
+  connection_query = (str, ...) ->
+    if select("#", ...) > 0
+      str = interpolate_query str, ...
+    connection_raw_query str
+
+  connection_select = (str, ...) ->
+    connection_query "SELECT " .. str, ...
+
+  connection_insert = (tbl, values, opts, ...) ->
+    buff = {
+      "INSERT INTO "
+      escape_identifier(tbl)
+      " "
+    }
+    encode_values values, buff
+
+    opts_type = type(opts)
+
+    if opts_type == "string" or opts_type == "table" and is_raw(opts)
+      add_returning buff, true, opts, ...
+    elseif opts_type == "table"
+      if opts.on_conflict
+        if opts.on_conflict == "do_nothing"
+          append_all buff, " ON CONFLICT DO NOTHING"
+        else
+          error "db.insert: unsupported value for on_conflict option: #{tostring opts.on_conflict}"
+
+      if r = opts.returning
+        if r == "*"
+          add_returning buff, true, raw "*"
+        else
+          assert type(r) == "table" and not is_raw(r), "db.insert: returning option must be a table array"
+          add_returning buff, true, unpack r
+
+    connection_raw_query concat buff
+
+  connection_update = (table, values, cond, ...) ->
+    buff = {
+      "UPDATE "
+      escape_identifier(table)
+      " SET "
+    }
+
+    encode_assigns values, buff
+
+    if cond
+      add_cond buff, cond, ...
+
+    if type(cond) == "table"
+      add_returning buff, true, ...
+
+    connection_raw_query concat buff
+
+  connection_delete = (table, cond, ...) ->
+    buff = {
+      "DELETE FROM "
+      escape_identifier(table)
+    }
+
+    if cond
+      add_cond buff, cond, ...
+
+    if type(cond) == "table"
+      add_returning buff, true, ...
+
+    connection_raw_query concat buff
+
+  connection_truncate = (...) ->
+    tables = concat [escape_identifier t for t in *{...}], ", "
+    connection_raw_query "TRUNCATE " .. tables .. " RESTART IDENTITY"
+
+  connection_connect = ->
+    connect!
+
+  connection_disconnect = ->
+    connection_raw_disconnect! if connection_raw_disconnect
+
+  db = setmetatable {
+    __pool_name: pool_name
+    logger: require "lapis.logging"
+
+    connect: connection_connect
+    disconnect: connection_disconnect
+    query: connection_query
+
+    set_raw_query: (fn) ->
+      connection_raw_query = fn
+
+    get_raw_query: ->
+      connection_raw_query
+
+    select: connection_select
+    insert: connection_insert
+    update: connection_update
+    delete: connection_delete
+    truncate: connection_truncate
+  }, PG_DB_T
+
+  db
+
+-- default connection when using lapis.db.postgres module directly, looks at
+-- the configuration stored in config.postgres
+local default_connection
+
+get_default_connection = ->
+  unless default_connection
+    config = require("lapis.config").get!
+    pg_config = assert config.postgres, "missing postgres configuration"
+    default_connection = configure "default", pg_config
+  default_connection
+
+setmetatable {
+  :configure
+
+  set_default_connection: (db) ->
+    default_connection = db
+
+  -- proxy methods to the underlying default connection
+  connect: ->
+    get_default_connection!.connect!
+
+  disconnect: ->
+    get_default_connection!.disconnect!
+
+  query: (str, ...) ->
+    get_default_connection!.query str, ...
+
+  set_raw_query: (fn) ->
+    get_default_connection!.set_raw_query fn
+
+  get_raw_query: ->
+    get_default_connection!.get_raw_query!
+
+  select: (str, ...) ->
+    get_default_connection!.select str, ...
+
+  insert: (tbl, values, opts, ...) ->
+    get_default_connection!.insert tbl, values, opts, ...
+
+  update: (table, values, cond, ...) ->
+    get_default_connection!.update table, values, cond, ...
+
+  delete: (table, cond, ...) ->
+    get_default_connection!.delete table, cond, ...
+
+  truncate: (...) ->
+    get_default_connection!.truncate ...
+
+}, PG_DB_T

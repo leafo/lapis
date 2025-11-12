@@ -1,3 +1,6 @@
+-- TODO: this is hard coded to the default connection via lapis.db.postgres, we
+-- should have a constructor to build bound schema module
+
 db = require "lapis.db.postgres"
 
 import gen_index_name from require "lapis.db.base"

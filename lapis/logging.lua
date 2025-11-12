@@ -16,7 +16,7 @@ local colors = require("ansicolors")
 local insert
 insert = table.insert
 local config = require("lapis.config").get()
-local flatten_params_helper, flatten_params, query, request, migration, notice, migration_summary, start_server
+local flatten_params_helper, flatten_params, query, db_connection, request, migration, notice, migration_summary, start_server
 flatten_params_helper = function(params, out, sep)
   if out == nil then
     out = { }
@@ -73,6 +73,7 @@ do
     end
   end
 end
+db_connection = function(db, pgmoon, success, connect_err) end
 request = function(r)
   local l = config.logging
   if not (l and l.requests) then
@@ -133,6 +134,7 @@ end
 return {
   request = request,
   query = query,
+  db_connection = db_connection,
   migration = migration,
   migration_summary = migration_summary,
   notice = notice,

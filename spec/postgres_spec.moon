@@ -1,7 +1,7 @@
 require "spec.helpers" -- for one_of
 
-db = require "lapis.db.postgres"
-schema = require "lapis.db.postgres.schema"
+
+local db, schema
 
 unpack = unpack or table.unpack
 
@@ -15,6 +15,7 @@ TESTS = {
     -> db.format_date 0
     "1970-01-01 00:00:00"
   }
+
   {
     -> db.escape_identifier "dad"
     '"dad"'
@@ -874,15 +875,20 @@ describe "lapis.db.postgres", ->
 
   before_each ->
     snapshot = assert\snapshot!
-    -- make the query function just return the query so we can test what is
-    -- generated
-    stub(db.BACKENDS, "pgmoon").returns (q) -> q
+
+    pg = require("lapis.db.postgres")
+    db = pg.configure nil, {}
+
+    db.set_raw_query (q) -> q
+    pg.set_default_connection db
+
+    schema = require "lapis.db.postgres.schema"
 
   after_each ->
     snapshot\revert!
 
   for idx, group in ipairs TESTS
-    it "should match", ->
+    it "should match: #{group[2]}", ->
       output = group[1]!
       if #group > 2
         assert.one_of output, { unpack group, 2 }

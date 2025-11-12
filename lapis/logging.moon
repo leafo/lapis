@@ -55,6 +55,9 @@ query = do
     else
       _print log_tpl\format prefix, query
 
+db_connection = (db, pgmoon, success, connect_err) ->
+  -- this is designed to be overwritten to add logging on new db connections
+
 request = (r) ->
   l = config.logging
   return unless l and l.requests
@@ -102,6 +105,10 @@ start_server = (port, environment_name) ->
   if environment_name
     print colors("%{bright}%{yellow}Environment: #{environment_name}%{reset}")
 
-{ :request, :query, :migration, :migration_summary, :notice, :flatten_params,
-  :start_server, :set_print }
+{
+  :request
+  :query, :db_connection, :migration, :migration_summary, :notice
+
+  :flatten_params, :start_server, :set_print
+}
 
