@@ -37,7 +37,7 @@ describe "lapis.db.migrations", ->
     migrations.run_migrations {}
 
     assert.same {
-      [[SELECT COUNT(*) as c from pg_class where relname = 'lapis_migrations']]
+      [[SELECT COUNT(*) AS c FROM pg_class WHERE relname = 'lapis_migrations']]
       [[CREATE TABLE "lapis_migrations" (
   "name" character varying(255) NOT NULL,
   PRIMARY KEY(name)
@@ -56,7 +56,7 @@ describe "lapis.db.migrations", ->
     assert.same 1, count, "Migrations run"
 
     assert.same {
-      [[SELECT COUNT(*) as c from pg_class where relname = 'lapis_migrations']]
+      [[SELECT COUNT(*) AS c FROM pg_class WHERE relname = 'lapis_migrations']]
       [[CREATE TABLE "lapis_migrations" (
   "name" character varying(255) NOT NULL,
   PRIMARY KEY(name)
@@ -66,7 +66,7 @@ describe "lapis.db.migrations", ->
       [[INSERT INTO "lapis_migrations" ("name") VALUES ('1') RETURNING "name"]]
       [[COMMIT]]
       [[BEGIN]]
-      [[SELECT COUNT(*) as c from pg_class where relname = 'lapis_migrations']]
+      [[SELECT COUNT(*) AS c FROM pg_class WHERE relname = 'lapis_migrations']]
       [[SELECT * FROM "lapis_migrations" ]]
       [[COMMIT]]
     }, query_log
