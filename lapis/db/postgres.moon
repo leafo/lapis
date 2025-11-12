@@ -186,6 +186,9 @@ configure = (pool_name, config) ->
       pg_timeout = assert tonumber(config.timeout), "timeout must be a number (ms)"
       pgmoon\settimeout pg_timeout
 
+    -- TODO: is it possible two requests at the same time will initiate two
+    -- connections and overwrite each other during yield from connect? This is
+    -- safe since both will have their cleanup methods registered
     success, connect_err = pgmoon\connect!
 
     if logger = db.logger
@@ -205,6 +208,7 @@ configure = (pool_name, config) ->
     --     else
     --       set_perf "pgmoon_conn_#{pool_name}", "#{pgmoon.sock_type}.new"
 
+    -- store the connection for user in query
     if use_nginx
       import after_dispatch from require "lapis.nginx.context"
 
@@ -221,13 +225,16 @@ configure = (pool_name, config) ->
     pgmoon
 
   connection_raw_query = (str) ->
-    pgmoon = if use_nginx
+    pgmoon = if use_nginx and ctx_name
       ngx.ctx[ctx_name]
     else
       pgmoon_conn
 
     unless pgmoon
       pgmoon = connect!
+
+    unless pgmoon
+      error "pgmoon: connect passed nil result, this should not be possible"
 
     start_time = if measure_performance
       gettime!

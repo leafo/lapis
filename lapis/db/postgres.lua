@@ -241,13 +241,16 @@ configure = function(pool_name, config)
   local connection_raw_query
   connection_raw_query = function(str)
     local pgmoon
-    if use_nginx then
+    if use_nginx and ctx_name then
       pgmoon = ngx.ctx[ctx_name]
     else
       pgmoon = pgmoon_conn
     end
     if not (pgmoon) then
       pgmoon = connect()
+    end
+    if not (pgmoon) then
+      error("pgmoon: connect passed nil result, this should not be possible")
     end
     local start_time
     if measure_performance then
