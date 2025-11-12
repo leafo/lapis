@@ -196,7 +196,7 @@ configure = (pool_name, config) ->
       error "postgres (#{pool_name}) failed to connect: #{connect_err}"
 
     -- NOTE: these are legacy metrics that have been removed in favor of the
-    -- logging callback since they can innacurate if you have multiple
+    -- logging callback since they can inaccurate if you have multiple
     -- connections happening per request
     -- if measure_performance
     --   switch pgmoon.sock_type

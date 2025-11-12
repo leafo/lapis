@@ -45,7 +45,7 @@ end
 local entity_exists
 entity_exists = function(name)
   name = escape_literal(name)
-  local res = unpack(db.select("COUNT(*) as c from pg_class where relname = " .. tostring(name)))
+  local res = unpack(db.select("COUNT(*) AS c FROM pg_class WHERE relname = " .. tostring(name)))
   return res.c > 0
 end
 local create_table
@@ -249,7 +249,7 @@ do
     __call = function(self, opts)
       local base = self.base
       if opts.timezone then
-        self.base = base .. " with time zone"
+        self.base = base .. " WITH TIME ZONE"
       end
       do
         local _with_0 = ColumnType.__call(self, opts)

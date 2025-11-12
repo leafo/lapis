@@ -25,7 +25,7 @@ extract_options = (cols) ->
 
 entity_exists = (name) ->
   name = escape_literal name
-  res = unpack db.select "COUNT(*) as c from pg_class where relname = #{name}"
+  res = unpack db.select "COUNT(*) AS c FROM pg_class WHERE relname = #{name}"
   res.c > 0
 
 create_table = (name, columns, opts={}) ->
@@ -165,7 +165,7 @@ class TimeType extends ColumnType
 
   __call: (opts) =>
     base = @base
-    @base = base .. " with time zone" if opts.timezone
+    @base = base .. " WITH TIME ZONE" if opts.timezone
 
     with ColumnType.__call @, opts
       @base = base
