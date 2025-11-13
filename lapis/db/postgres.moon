@@ -225,7 +225,7 @@ configure = (pool_name, config) ->
       else
         pgmoon\disconnect!
 
-      if ctx_name
+      if use_nginx and ctx_name
         ngx.ctx[ctx_name] = nil
       else
         pgmoon_conn = nil
@@ -270,7 +270,6 @@ configure = (pool_name, config) ->
         increment_perf "db_time", dt
         increment_perf "db_count", 1
 
-    -- TODO: consider a different naming convention here
     if logger = db.logger
       if logger.query
         if is_default_pool and ctx_name

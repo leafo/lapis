@@ -237,7 +237,7 @@ configure = function(pool_name, config)
       else
         pgmoon:disconnect()
       end
-      if ctx_name then
+      if use_nginx and ctx_name then
         ngx.ctx[ctx_name] = nil
       else
         pgmoon_conn = nil

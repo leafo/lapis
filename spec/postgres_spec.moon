@@ -1017,7 +1017,6 @@ describe "lapis.db.postgres", ->
           }
         }
 
-
       connect_count = 0
       disconnect_count = 0
       connect_logs = {}
@@ -1043,13 +1042,81 @@ describe "lapis.db.postgres", ->
         {@opts.application_name, q}
 
       stub(Postgres.__base, "disconnect").invokes =>
-        error "no disconnect should happen"
+        @state = "disconnected"
+        disconnect_count += 1
 
       -- no logging needed
       stub(require("lapis.logging"), "query").invokes ->
 
       stub(require("lapis.logging"), "db_connection").invokes (...) ->
         table.insert connect_logs, {...}
+
+    describe "outside nginx", ->
+      it "connects and disconnects", ->
+        conn = assert require("lapis.db.postgres").connect!
+        assert.same {nil, "already connected"}, { require("lapis.db.postgres").connect! }
+        assert require("lapis.db.postgres").disconnect!
+
+        assert.same {
+          opts: {
+            application_name: "config_default"
+            pool_name: "pgmoon_default" -- this has no effect when not in nginx
+          }
+          state: "disconnected"
+        }, conn
+
+      it "connects from query", ->
+        assert.same {
+          "config_default"
+          "hello"
+        }, assert require("lapis.db.postgres").query "hello"
+
+        assert.same {
+          "config_default"
+          "world"
+        }, assert require("lapis.db.postgres").query "world"
+
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
+
+        require("lapis.db.postgres").disconnect!
+
+        assert.same {
+          "config_default"
+          "flarp"
+        }, assert require("lapis.db.postgres").query "flarp"
+
+        assert.same 2, connect_count
+        assert.same 1, disconnect_count
+
+        assert.same 2, #connect_logs
+
+      it "creates anonymous connection", ->
+        db = require("lapis.db.postgres").configure {
+          application_name: "anonymous"
+        }
+
+        conn = db.connect!
+
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
+
+        assert.same {
+          state: "connected"
+          opts: { application_name: "anonymous" }
+        }, conn
+
+        db.disconnect!
+
+        assert.same 1, connect_count
+        assert.same 1, disconnect_count
+
+        assert.same {
+          state: "disconnected"
+          opts: { application_name: "anonymous" }
+        }, conn
+
+
 
     describe "in ngx", ->
       local ngx
@@ -1277,3 +1344,30 @@ describe "lapis.db.postgres", ->
       it "disconnect before connect is safe", ->
         db = require("lapis.db.postgres").configure { application_name: "test" }
         assert.nil (db.disconnect!)
+
+      -- connection with pool name
+      it "creates anonymous connection", ->
+        db =  require("lapis.db.postgres").configure {
+          application_name: "anonymous"
+        }
+
+        conn = db.connect!
+
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
+
+        assert.same {
+          state: "connected"
+          opts: { application_name: "anonymous" }
+        }, conn
+
+
+        run_after_dispatch!
+
+        assert.same 1, connect_count
+        assert.same 1, disconnect_count
+
+        assert.same {
+          state: "keepalive"
+          opts: { application_name: "anonymous" }
+        }, conn
