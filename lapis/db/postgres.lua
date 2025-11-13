@@ -168,6 +168,10 @@ add_cond = function(buffer, cond, ...)
 end
 configure = function(pool_name, config)
   local db
+  if type(pool_name) == "table" and type(config) == "nil" then
+    config = pool_name
+    pool_name = nil
+  end
   assert(type(config) == "table", "configure: config must be a table")
   local ctx_name
   if pool_name then
@@ -190,7 +194,7 @@ configure = function(pool_name, config)
   if measure_performance then
     gettime = require("socket").gettime
   end
-  local pgmoon_conn, use_nginx
+  local pgmoon_conn, use_nginx, disconnect
   local connect
   connect = function()
     use_nginx = ngx and ngx.ctx and ngx.socket
@@ -222,6 +226,24 @@ configure = function(pool_name, config)
     if not (success) then
       error("postgres (" .. tostring(pool_name) .. ") failed to connect: " .. tostring(connect_err))
     end
+    local disconnected = false
+    disconnect = function()
+      if disconnected then
+        return nil, "already disconnected"
+      end
+      disconnected = true
+      if use_nginx then
+        pgmoon:keepalive()
+      else
+        pgmoon:disconnect()
+      end
+      if ctx_name then
+        ngx.ctx[ctx_name] = nil
+      else
+        pgmoon_conn = nil
+      end
+      return true
+    end
     if use_nginx then
       local after_dispatch
       after_dispatch = require("lapis.nginx.context").after_dispatch
@@ -230,9 +252,7 @@ configure = function(pool_name, config)
       else
         pgmoon_conn = pgmoon
       end
-      after_dispatch(function()
-        return pgmoon:keepalive()
-      end)
+      after_dispatch(disconnect)
     else
       pgmoon_conn = pgmoon
     end
@@ -282,19 +302,6 @@ configure = function(pool_name, config)
       error(tostring(str) .. "\n" .. tostring(err))
     end
     return res
-  end
-  local connection_raw_disconnect
-  connection_raw_disconnect = function()
-    if not (pgmoon_conn) then
-      return 
-    end
-    if use_nginx then
-      pgmoon_conn:keepalive()
-    else
-      pgmoon_conn:disconnect()
-    end
-    pgmoon_conn = nil
-    return true
   end
   local connection_query
   connection_query = function(str, ...)
@@ -387,21 +394,15 @@ configure = function(pool_name, config)
     end)(...), ", ")
     return connection_raw_query("TRUNCATE " .. tables .. " RESTART IDENTITY")
   end
-  local connection_connect
-  connection_connect = function()
-    return connect()
-  end
-  local connection_disconnect
-  connection_disconnect = function()
-    if connection_raw_disconnect then
-      return connection_raw_disconnect()
-    end
-  end
   db = setmetatable({
     __pool_name = pool_name,
     logger = require("lapis.logging"),
-    connect = connection_connect,
-    disconnect = connection_disconnect,
+    connect = connect,
+    disconnect = function()
+      if disconnect then
+        return disconnect()
+      end
+    end,
     query = connection_query,
     set_raw_query = function(fn)
       connection_raw_query = fn

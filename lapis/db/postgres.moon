@@ -139,11 +139,16 @@ add_cond = (buffer, cond, ...) ->
       append_all buffer, interpolate_query cond, ...
 
 
--- creates a new postgres db object with independent connection pool
+-- creates a configured postgres db object
 -- pool_name: unique name for connection pool storage in ngx.ctx
 -- config: postgres configuration table (overrides default config)
 configure = (pool_name, config) ->
   local db -- the db module that will be created
+
+  if type(pool_name) == "table" and type(config) == "nil"
+    config = pool_name
+    pool_name = nil
+
   assert type(config) == "table", "configure: config must be a table"
 
   local ctx_name
@@ -167,7 +172,7 @@ configure = (pool_name, config) ->
     require("socket").gettime
 
   -- the active connection when not stored in request context
-  local pgmoon_conn, use_nginx
+  local pgmoon_conn, use_nginx, disconnect
 
   connect = ->
     use_nginx = ngx and ngx.ctx and ngx.socket
@@ -208,6 +213,25 @@ configure = (pool_name, config) ->
     --     else
     --       set_perf "pgmoon_conn_#{pool_name}", "#{pgmoon.sock_type}.new"
 
+    -- this closes (or returns) the connection and clears any state about the
+    -- cached connection. Safe to call multiple times
+    disconnected = false
+    disconnect = ->
+      return nil, "already disconnected" if disconnected
+      disconnected = true
+
+      if use_nginx
+        pgmoon\keepalive!
+      else
+        pgmoon\disconnect!
+
+      if ctx_name
+        ngx.ctx[ctx_name] = nil
+      else
+        pgmoon_conn = nil
+
+      true
+
     -- store the connection for user in query
     if use_nginx
       import after_dispatch from require "lapis.nginx.context"
@@ -217,8 +241,7 @@ configure = (pool_name, config) ->
       else
         pgmoon_conn = pgmoon
 
-      after_dispatch ->
-        pgmoon\keepalive!
+      after_dispatch disconnect
     else
       pgmoon_conn = pgmoon
 
@@ -258,17 +281,6 @@ configure = (pool_name, config) ->
     if not res and err
       error "#{str}\n#{err}"
     res
-
-  connection_raw_disconnect = ->
-    return unless pgmoon_conn
-
-    if use_nginx
-      pgmoon_conn\keepalive!
-    else
-      pgmoon_conn\disconnect!
-
-    pgmoon_conn = nil
-    true
 
   -- create connection-specific query functions
   connection_query = (str, ...) ->
@@ -342,18 +354,15 @@ configure = (pool_name, config) ->
     tables = concat [escape_identifier t for t in *{...}], ", "
     connection_raw_query "TRUNCATE " .. tables .. " RESTART IDENTITY"
 
-  connection_connect = ->
-    connect!
-
-  connection_disconnect = ->
-    connection_raw_disconnect! if connection_raw_disconnect
-
   db = setmetatable {
     __pool_name: pool_name
     logger: require "lapis.logging"
 
-    connect: connection_connect
-    disconnect: connection_disconnect
+    :connect
+    disconnect: ->
+      if disconnect
+        disconnect!
+
     query: connection_query
 
     set_raw_query: (fn) ->
