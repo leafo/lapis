@@ -484,6 +484,11 @@ TESTS = {
     [[INSERT INTO "cats" ("profile") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING *]]
   }
 
+  {
+    -> db.insert "cats", { name: "test" }, on_conflict: "do_nothing", returning: {"id", "name"}
+    [[INSERT INTO "cats" ("name") VALUES ('test') ON CONFLICT DO NOTHING RETURNING "id", "name"]]
+  }
+
 
   -- lapis.db.postgres.schema
 
@@ -1116,6 +1121,17 @@ describe "lapis.db.postgres", ->
           opts: { application_name: "anonymous" }
         }, conn
 
+      it "handles connection failure", ->
+        import Postgres from require "pgmoon"
+
+        -- Override the connect stub to simulate failure
+        stub(Postgres.__base, "connect").invokes =>
+          false, "connection refused"
+
+        assert.has_error(
+          -> require("lapis.db.postgres").query "SELECT 1"
+          "postgres (default) failed to connect: connection refused"
+        )
 
 
     describe "in ngx", ->
