@@ -1002,10 +1002,9 @@ describe "lapis.db.postgres", ->
 
       assert.same { "hello" }, buffer
 
-  describe "connection reuse", ->
+  describe "connection lifecycle", ->
     import run_after_dispatch from require "lapis.nginx.context"
 
-    local ngx
     local connect_count, disconnect_count, connect_logs
 
     before_each ->
@@ -1018,13 +1017,6 @@ describe "lapis.db.postgres", ->
           }
         }
 
-      ngx = {
-        ctx: {}
-        socket: true
-        get_phase: -> "content"
-      }
-
-      _G.ngx = ngx
 
       connect_count = 0
       disconnect_count = 0
@@ -1059,217 +1051,229 @@ describe "lapis.db.postgres", ->
       stub(require("lapis.logging"), "db_connection").invokes (...) ->
         table.insert connect_logs, {...}
 
-    after_each ->
-      _G.ngx = nil
+    describe "in ngx", ->
+      local ngx
 
-    it "stores default connection into the context", ->
-      conn = assert require("lapis.db.postgres").connect!
+      before_each ->
+        ngx = {
+          ctx: {}
+          socket: true
+          get_phase: -> "content"
+        }
 
-      assert.same 1, connect_count
-      assert.same 0, disconnect_count
+        _G.ngx = ngx
 
-      assert.same {
-        nil, "already connected"
-      }, { require("lapis.db.postgres").connect! }
+      after_each ->
+        _G.ngx = nil
 
-      assert.same 1, connect_count
-      assert.same 0, disconnect_count
+      it "stores default connection into the context", ->
+        conn = assert require("lapis.db.postgres").connect!
 
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
 
-        pgmoon_default: {
+        assert.same {
+          nil, "already connected"
+        }, { require("lapis.db.postgres").connect! }
+
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
+
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
+
+          pgmoon_default: {
+            opts: {
+              application_name: "config_default"
+              pool_name: "pgmoon_default"
+            }
+            state: "connected"
+          }
+        }, ngx.ctx
+
+        -- trigger a query from the default connection
+        assert.same {
+          "config_default"
+          "hello!"
+        }, require("lapis.db.postgres").query "hello!"
+
+        -- now trigger the after dispatch to close out the connection
+        run_after_dispatch!
+
+        assert.same 1, connect_count
+        assert.same 1, disconnect_count
+
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
+
+          -- the connection is removed removed
+        }, ngx.ctx
+
+        -- confirm connection has closed
+        assert.same {
           opts: {
             application_name: "config_default"
             pool_name: "pgmoon_default"
           }
-          state: "connected"
-        }
-      }, ngx.ctx
-
-      -- trigger a query from the default connection
-      assert.same {
-        "config_default"
-        "hello!"
-      }, require("lapis.db.postgres").query "hello!"
-
-      -- now trigger the after dispatch to close out the connection
-      run_after_dispatch!
-
-      assert.same 1, connect_count
-      assert.same 1, disconnect_count
-
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
-
-        -- the connection is removed removed
-      }, ngx.ctx
-
-      -- confirm connection has closed
-      assert.same {
-        opts: {
-          application_name: "config_default"
-          pool_name: "pgmoon_default"
-        }
-        state: "keepalive"
-      }, conn
+          state: "keepalive"
+        }, conn
 
 
-      -- no-op, connection already closed
-      require("lapis.db.postgres").disconnect!
+        -- no-op, connection already closed
+        require("lapis.db.postgres").disconnect!
 
-      -- no-op, no after dispatch should be left
-      run_after_dispatch!
+        -- no-op, no after dispatch should be left
+        run_after_dispatch!
 
-      assert.same 1, #connect_logs
+        assert.same 1, #connect_logs
 
-      -- assert nil == connect_logs[1][1] -- this is the default connection, which we don't have access to
+        -- assert nil == connect_logs[1][1] -- this is the default connection, which we don't have access to
 
-      assert conn == connect_logs[1][2]
-      assert.true connect_logs[1][3]
+        assert conn == connect_logs[1][2]
+        assert.true connect_logs[1][3]
 
-    it "after dispatch doesn't fail if connection is manually cosed", ->
-      c = assert require("lapis.db.postgres").connect!
-      assert require("lapis.db.postgres").disconnect!
+      it "after dispatch doesn't fail if connection is manually cosed", ->
+        c = assert require("lapis.db.postgres").connect!
+        assert require("lapis.db.postgres").disconnect!
 
-      assert.same 1, connect_count
-      assert.same 1, disconnect_count
+        assert.same 1, connect_count
+        assert.same 1, disconnect_count
 
-      assert.not.nil ngx.ctx.after_dispatch
+        assert.not.nil ngx.ctx.after_dispatch
 
-      run_after_dispatch!
+        run_after_dispatch!
 
-    it "connects from query", ->
-      assert.same {
-        "config_default"
-        "hello!"
-      }, require("lapis.db.postgres").query "hello!"
+      it "connects from query", ->
+        assert.same {
+          "config_default"
+          "hello!"
+        }, require("lapis.db.postgres").query "hello!"
 
-      assert.same 1, connect_count
-      assert.same 0, disconnect_count
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
 
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
 
-        pgmoon_default: {
-          opts: {
-            application_name: "config_default"
-            pool_name: "pgmoon_default"
+          pgmoon_default: {
+            opts: {
+              application_name: "config_default"
+              pool_name: "pgmoon_default"
+            }
+            state: "connected"
           }
-          state: "connected"
-        }
-      }, ngx.ctx
+        }, ngx.ctx
 
-      -- close connection
-      run_after_dispatch!
+        -- close connection
+        run_after_dispatch!
 
-      -- it should re-establish the connection
-      assert.same {
-        "config_default"
-        "another"
-      }, require("lapis.db.postgres").query "another"
+        -- it should re-establish the connection
+        assert.same {
+          "config_default"
+          "another"
+        }, require("lapis.db.postgres").query "another"
 
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
 
-        pgmoon_default: {
-          opts: {
-            application_name: "config_default"
-            pool_name: "pgmoon_default"
+          pgmoon_default: {
+            opts: {
+              application_name: "config_default"
+              pool_name: "pgmoon_default"
+            }
+            state: "connected"
           }
-          state: "connected"
-        }
-      }, ngx.ctx
+        }, ngx.ctx
 
-      assert.same 2, connect_count
-      assert.same 1, disconnect_count
+        assert.same 2, connect_count
+        assert.same 1, disconnect_count
 
-    it "manages custom connection", ->
-      db = require("lapis.db.postgres").configure "alt", {
-        application_name: "alt"
-      }
-
-      alt_conn = assert db.connect!
-
-      assert.same 1, connect_count
-      assert.same 0, disconnect_count
-
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
-
-        pgmoon_alt: {
-          opts: {
-            application_name: "alt"
-            pool_name: "pgmoon_alt"
-          }
-          state: "connected"
-        }
-      }, ngx.ctx
-
-      -- also connect from default connection
-      default_conn = assert require("lapis.db.postgres").connect!
-
-      assert.same 2, connect_count
-      assert.same 0, disconnect_count
-
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
-
-        pgmoon_alt: {
-          opts: {
-            application_name: "alt"
-            pool_name: "pgmoon_alt"
-          }
-          state: "connected"
-        }
-
-        pgmoon_default: {
-          opts: {
-            application_name: "config_default"
-            pool_name: "pgmoon_default"
-          }
-          state: "connected"
-        }
-      }, ngx.ctx
-
-      -- will cause all connections to close
-      run_after_dispatch!
-
-      assert.same 2, connect_count
-      assert.same 2, disconnect_count
-
-      assert.same {
-        -- allow but ignore this value
-        after_dispatch: ngx.ctx.after_dispatch
-
-      }, ngx.ctx
-
-      assert.same {
-        opts: {
+      it "manages custom connection", ->
+        db = require("lapis.db.postgres").configure "alt", {
           application_name: "alt"
-          pool_name: "pgmoon_alt"
         }
-        state: "keepalive"
-      }, alt_conn
 
-      assert.same {
-        opts: {
-          application_name: "config_default"
-          pool_name: "pgmoon_default"
-        }
-        state: "keepalive"
-      }, default_conn
+        alt_conn = assert db.connect!
 
-      assert.same 2, #connect_logs
-      assert alt_conn == connect_logs[1][2]
-      assert default_conn == connect_logs[2][2]
+        assert.same 1, connect_count
+        assert.same 0, disconnect_count
 
-    it "disconnect before connect is safe", ->
-      db = require("lapis.db.postgres").configure { application_name: "test" }
-      assert.nil (db.disconnect!)
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
+
+          pgmoon_alt: {
+            opts: {
+              application_name: "alt"
+              pool_name: "pgmoon_alt"
+            }
+            state: "connected"
+          }
+        }, ngx.ctx
+
+        -- also connect from default connection
+        default_conn = assert require("lapis.db.postgres").connect!
+
+        assert.same 2, connect_count
+        assert.same 0, disconnect_count
+
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
+
+          pgmoon_alt: {
+            opts: {
+              application_name: "alt"
+              pool_name: "pgmoon_alt"
+            }
+            state: "connected"
+          }
+
+          pgmoon_default: {
+            opts: {
+              application_name: "config_default"
+              pool_name: "pgmoon_default"
+            }
+            state: "connected"
+          }
+        }, ngx.ctx
+
+        -- will cause all connections to close
+        run_after_dispatch!
+
+        assert.same 2, connect_count
+        assert.same 2, disconnect_count
+
+        assert.same {
+          -- allow but ignore this value
+          after_dispatch: ngx.ctx.after_dispatch
+
+        }, ngx.ctx
+
+        assert.same {
+          opts: {
+            application_name: "alt"
+            pool_name: "pgmoon_alt"
+          }
+          state: "keepalive"
+        }, alt_conn
+
+        assert.same {
+          opts: {
+            application_name: "config_default"
+            pool_name: "pgmoon_default"
+          }
+          state: "keepalive"
+        }, default_conn
+
+        assert.same 2, #connect_logs
+        assert alt_conn == connect_logs[1][2]
+        assert default_conn == connect_logs[2][2]
+
+      it "disconnect before connect is safe", ->
+        db = require("lapis.db.postgres").configure { application_name: "test" }
+        assert.nil (db.disconnect!)
