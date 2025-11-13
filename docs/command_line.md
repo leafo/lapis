@@ -72,7 +72,7 @@ Learn more about environments on the [Configuration](configuration.html) guide.
        -h, --help            Show this help message and exit.
        --nginx               Generate config for nginx server (default)
        --cqueues             Generate config for cqueues server
-       --lua                 Generate app template file in Lua (defaul)
+       --lua                 Generate app template file in Lua (default)
        --moonscript, --moon  Generate app template file in MoonScript
        --etlua-config        Use etlua for templated configuration files (eg. nginx.conf)
        --git                 Generate default .gitignore file

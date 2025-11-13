@@ -54,7 +54,7 @@ COMMANDS = {
           \flag "--cqueues", "Generate config for cqueues server"
         )
         \mutex(
-          \flag "--lua", "Generate app template file in Lua (defaul)"
+          \flag "--lua", "Generate app template file in Lua (default)"
           \flag "--moonscript --moon", "Generate app template file in MoonScript"
         )
         \flag "--etlua-config", "Use etlua for templated configuration files (eg. nginx.conf)"
