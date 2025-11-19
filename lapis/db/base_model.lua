@@ -744,71 +744,71 @@ do
       source_key = _memoize1(source_key)
       computed_source_key = true
     end
-    local include_ids
-    do
-      local _accum_0 = { }
-      local _len_0 = 1
-      for _index_0 = 1, #other_records do
-        local _continue_0 = false
-        repeat
-          local record = other_records[_index_0]
-          if skip_included then
-            if for_relation then
-              if relation_is_loaded(record, for_relation) then
-                _continue_0 = true
-                break
-              end
-            else
-              if record[field_name] ~= nil then
-                _continue_0 = true
-                break
-              end
-            end
-          end
-          local _value_0
-          if composite_foreign_key then
-            local tuple
-            do
-              local _accum_1 = { }
-              local _len_1 = 1
-              for _index_1 = 1, #source_key do
-                local k = source_key[_index_1]
-                if type(k) == "function" then
-                  _accum_1[_len_1] = k(record) or self.db.NULL
-                else
-                  _accum_1[_len_1] = record[k] or self.db.NULL
-                end
-                _len_1 = _len_1 + 1
-              end
-              tuple = _accum_1
-            end
-            if _all_same(tuple, self.db.NULL) then
+    local include_ids = { }
+    for _index_0 = 1, #other_records do
+      local _continue_0 = false
+      repeat
+        local record = other_records[_index_0]
+        if skip_included then
+          if for_relation then
+            if relation_is_loaded(record, for_relation) then
               _continue_0 = true
               break
             end
-            _value_0 = self.db.list(tuple)
           else
-            local id
-            if computed_source_key then
-              id = source_key(record)
-            else
-              id = record[source_key]
-            end
-            if not (id) then
+            if record[field_name] ~= nil then
               _continue_0 = true
               break
             end
-            _value_0 = id
           end
-          _accum_0[_len_0] = _value_0
-          _len_0 = _len_0 + 1
-          _continue_0 = true
-        until true
-        if not _continue_0 then
-          break
         end
+        if composite_foreign_key then
+          local tuple
+          do
+            local _accum_0 = { }
+            local _len_0 = 1
+            for _index_1 = 1, #source_key do
+              local k = source_key[_index_1]
+              if type(k) == "function" then
+                _accum_0[_len_0] = k(record) or self.db.NULL
+              else
+                _accum_0[_len_0] = record[k] or self.db.NULL
+              end
+              _len_0 = _len_0 + 1
+            end
+            tuple = _accum_0
+          end
+          if _all_same(tuple, self.db.NULL) then
+            _continue_0 = true
+            break
+          end
+          table.insert(include_ids, self.db.list(tuple))
+        else
+          local id
+          if computed_source_key then
+            id = source_key(record)
+          else
+            id = record[source_key]
+          end
+          if not (id) then
+            _continue_0 = true
+            break
+          end
+          if self.db.is_list(id) then
+            local _list_0 = id[1]
+            for _index_1 = 1, #_list_0 do
+              local item = _list_0[_index_1]
+              table.insert(include_ids, item)
+            end
+          else
+            table.insert(include_ids, id)
+          end
+        end
+        _continue_0 = true
+      until true
+      if not _continue_0 then
+        break
       end
-      include_ids = _accum_0
     end
     if next(include_ids) then
       if composite_foreign_key then
@@ -918,7 +918,67 @@ do
               else
                 ref_value = other[source_key]
               end
-              other[field_name] = records[ref_value]
+              if self.db.is_list(ref_value) then
+                local list_value_set
+                do
+                  local _tbl_0 = { }
+                  local _list_0 = ref_value[1]
+                  for _index_1 = 1, #_list_0 do
+                    local k = _list_0[_index_1]
+                    if k ~= nil then
+                      _tbl_0[k] = true
+                    end
+                  end
+                  list_value_set = _tbl_0
+                end
+                if many then
+                  local matched_results
+                  do
+                    local _accum_0 = { }
+                    local _len_0 = 1
+                    for _index_1 = 1, #res do
+                      local _continue_0 = false
+                      repeat
+                        local row = res[_index_1]
+                        if not (list_value_set[row[dest_key]]) then
+                          _continue_0 = true
+                          break
+                        end
+                        local _value_0 = row
+                        _accum_0[_len_0] = _value_0
+                        _len_0 = _len_0 + 1
+                        _continue_0 = true
+                      until true
+                      if not _continue_0 then
+                        break
+                      end
+                    end
+                    matched_results = _accum_0
+                  end
+                  other[field_name] = matched_results
+                else
+                  for _index_1 = 1, #res do
+                    local _continue_0 = false
+                    repeat
+                      do
+                        local row = res[_index_1]
+                        if not (list_value_set[row[dest_key]]) then
+                          _continue_0 = true
+                          break
+                        end
+                        other[field_name] = row
+                        break
+                      end
+                      _continue_0 = true
+                    until true
+                    if not _continue_0 then
+                      break
+                    end
+                  end
+                end
+              else
+                other[field_name] = records[ref_value]
+              end
               if many and not other[field_name] then
                 other[field_name] = { }
               end

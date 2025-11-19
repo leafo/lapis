@@ -1250,6 +1250,259 @@ describe "lapis.db.model", ->
       assert.same thing_items[3], things[4].thing_item
       assert.same nil, things[5].thing_item
 
+  describe "include_in with list keys", ->
+    local Things, Items
+
+    before_each ->
+      class Things extends Model
+      class Items extends Model
+
+    it "with basic list keys", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20, 30} }
+        Things\load { id: 2, item_ids: db.list {20, 40} }
+        Things\load { id: 3, item_ids: db.list {50} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+        { id: 40, name: "Item 40" }
+        { id: 50, name: "Item 50" }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items"
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20, 30, 40, 50)]]
+      }
+
+      -- Check first thing has items 10, 20, 30
+      assert.same {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+      }, things[1].items
+
+      -- Check second thing has items 20, 40
+      assert.same {
+        { id: 20, name: "Item 20" }
+        { id: 40, name: "Item 40" }
+      }, things[2].items
+
+      -- Check third thing has item 50
+      assert.same {
+        { id: 50, name: "Item 50" }
+      }, things[3].items
+
+    it "with empty list", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {} }
+        Things\load { id: 2, item_ids: db.list {10} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items"
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10)]]
+      }
+
+      -- Empty list should get empty array
+      assert.same {}, things[1].items
+      -- Second should have one item
+      assert.same {
+        { id: 10, name: "Item 10" }
+      }, things[2].items
+
+    it "with overlapping IDs between records", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20} }
+        Things\load { id: 2, item_ids: db.list {20, 30} }
+        Things\load { id: 3, item_ids: db.list {10, 30} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items"
+
+      -- Should deduplicate and only query once for each unique ID
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20, 30)]]
+      }
+
+      -- All things should have their respective items
+      assert.same {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+      }, things[1].items
+      assert.same {
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+      }, things[2].items
+      assert.same {
+        { id: 10, name: "Item 10" }
+        { id: 30, name: "Item 30" }
+      }, things[3].items
+
+    -- NOTE: nil in db.list is undefined behavior but we should at least avoid crashing
+    it "with list containing nil values", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, nil, 20, nil, 30} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items"
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20, 30)]]
+      }
+
+      assert.same {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+      }, things[1].items
+
+    it "with mixed list and single values", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20} }
+        Things\load { id: 2, item_ids: 30 }  -- Single value
+        Things\load { id: 3, item_ids: db.list {40} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        { id: 30, name: "Item 30" }
+        { id: 40, name: "Item 40" }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items"
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20, 30, 40)]]
+      }
+
+      assert.same {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+      }, things[1].items
+
+      assert.same {
+        { id: 30, name: "Item 30" }
+      }, things[2].items
+
+      assert.same {
+        { id: 40, name: "Item 40" }
+      }, things[3].items
+
+    it "with where clause", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20, 30} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10", active: true }
+        { id: 30, name: "Item 30", active: true }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items", where: { active: true }
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20, 30) AND "active"]]
+      }
+
+      -- Should only get items that match where clause
+      assert.same {
+        { id: 10, name: "Item 10", active: true }
+        { id: 30, name: "Item 30", active: true }
+      }, things[1].items
+
+    it "with fields option", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items", fields: "id, name"
+
+      assert_queries {
+        [[SELECT id, name FROM "items" WHERE "id" IN (10, 20)]]
+      }
+
+    it "with order option", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20} }
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items", order: "name desc"
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20) ORDER BY name desc]]
+      }
+
+    it "takes first item when not using many", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20} }
+      }
+
+      mock_query "SELECT", {
+        { id: 30, name: "Item 30" }
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+      }
+
+      Items\include_in things, "item_ids", as: "first_item"
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20)]]
+      }
+
+      assert.same {
+       id: 10, name: "Item 10"
+      }, things[1].first_item
+
+    it "with some IDs not found", ->
+      things = {
+        Things\load { id: 1, item_ids: db.list {10, 20, 999} }
+        Things\load { id: 1, item_ids: db.list {344} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+        -- ID 999, 344 not in results
+      }
+
+      Items\include_in things, "item_ids", many: true, as: "items"
+
+      -- Should only include found items
+      assert.same {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+      }, things[1].items
+
+      assert.same {
+      }, things[2].items
+
   describe "constraints", ->
     it "should prevent update/insert for failed constraint", ->
       mock_query "INSERT", { { id: 101 } }

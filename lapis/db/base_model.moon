@@ -338,7 +338,10 @@ class BaseModel
       source_key = _memoize1 source_key
       true
 
-    include_ids = for record in *other_records
+    include_ids = {} -- field value to match on model
+    -- NOTE: when dealing with composite keys, db.list() tuples are put in this array
+
+    for record in *other_records
       if skip_included
         if for_relation
           continue if relation_is_loaded record, for_relation
@@ -353,14 +356,20 @@ class BaseModel
             record[k] or @db.NULL
 
         continue if _all_same tuple, @db.NULL
-        @db.list tuple
+        table.insert include_ids, @db.list tuple
       else
         id = if computed_source_key
           source_key record
         else
           record[source_key]
         continue unless id
-        id
+
+        -- if the value is a list, then we want to select everything that matches
+        if @db.is_list id
+          for item in *id[1]
+            table.insert include_ids, item
+        else
+          table.insert include_ids, id
 
     if next include_ids
       if composite_foreign_key
@@ -464,7 +473,24 @@ class BaseModel
             else
               other[source_key]
 
-            other[field_name] = records[ref_value]
+
+            if @db.is_list ref_value
+              -- NOTE: we iterate through the the whole query result to keep the ordering across multiple values
+              list_value_set = {k, true for k in *ref_value[1] when k != nil}
+              if many
+                matched_results = for row in *res
+                  continue unless list_value_set[row[dest_key]]
+                  row
+
+                other[field_name] = matched_results
+              else
+                -- take the first value found
+                for row in *res
+                  continue unless list_value_set[row[dest_key]]
+                  other[field_name] = row
+                  break
+            else
+              other[field_name] = records[ref_value]
 
             if many and not other[field_name]
               other[field_name] = {}
