@@ -777,6 +777,40 @@ The second argument of `include_in`, called `key`, is a table with the value `{
 in the `id` field from the users array to use as values to look up rows in
 `user_data` table by the `user_id` column.
 
+The table value can also be a function. That function receives the current
+object and should return the foreign-key value that will be placed into the
+`IN` clause. This is known as a *computed foreign key*. The return value must
+be a simple databse value (number, string, `db.NULL`) or nil to ignore loading
+anything for that model
+
+$dual_code{[[
+some_books = Books\select!
+
+-- Will query "authors" table where author_id in (all returned values)
+Authors\include_in some_books, {
+  author_id: (book) ->
+    return false unless book.metadata
+    book.metadata.author_id
+}
+]]}
+
+A *computed foreign key* can also return a
+[`db.list`](database.html#dblistvalues) type to match multiple rows from the
+related table. Keep in mind that unless `many = true` is used, only the first
+row will be assigned to the model instance.
+
+In this example, only the `TagDescriptions` for distinct `tag_name` values are
+efficienctly fetched and assigned to the respective `pages`.
+
+$dual_code{[[
+TagDescriptions\include_in pages, {
+  tag_name: (page) ->
+    db.list page\get_tags!
+}, {
+    many: true
+}
+]]}
+
 The field name that is used to store each result in the users array is derived
 from the name of the included table. In this case, `UserData` →  `user_data`.
 This can be overridden by using the `as` option.
@@ -2373,4 +2407,3 @@ Posts.statuses\to_name 232 -- error
 Posts.statuses\for_db "hello" -- error
 
 ```
-
