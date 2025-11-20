@@ -2149,4 +2149,77 @@ describe "lapis.db.model.relations", ->
         [[SELECT * FROM "user_tags" WHERE "user_id" IN ('uid-123', 'uid-999')]]
       }
 
+    describe "has_many with computed key returning list", ->
+      local Users, UserTags
+
+      before_each ->
+        models.Users = class Users extends Model
+          @relations: {
+            {"tags", has_many: "UserTags", key: {
+              user_id: (user) -> db.list user.tag_owner_ids
+            }}
+          }
+
+        models.UserTags = class UserTags extends Model
+
+
+      it "fetches with getter", ->
+        mock_query "SELECT", {
+          { id: 101, user_id: 10 }
+          { id: 102, user_id: 20 }
+        }
+
+
+        user = Users\load {
+          tag_owner_ids: {10, 20}
+        }
+
+        assert.same {
+          { id: 101, user_id: 10 }
+          { id: 102, user_id: 20 }
+        }, user\get_tags!
+
+        assert_queries {
+          [[SELECT * FROM "user_tags" WHERE "user_id" IN (10, 20)]]
+        }
+
+      it "preloads", ->
+        mock_query "SELECT", {
+          { id: 201, user_id: 20 }
+          { id: 202, user_id: 30 }
+          { id: 203, user_id: 40 }
+        }
+
+        import preload from require "lapis.db.model"
+        users = {
+          Users\load {
+            tag_owner_ids: {20}
+          }
+          Users\load {
+            tag_owner_ids: {30, 40}
+          }
+          Users\load {
+            tag_owner_ids: {10, 20}
+          }
+        }
+
+        preload users, "tags"
+
+        assert_queries {
+          [[SELECT * FROM "user_tags" WHERE "user_id" IN (20, 30, 40, 10)]]
+        }
+
+        assert.same {
+          { id: 201, user_id: 20 }
+        }, users[1].tags
+
+        assert.same {
+          { id: 202, user_id: 30 }
+          { id: 203, user_id: 40 }
+        }, users[2].tags
+
+        assert.same {
+          { id: 201, user_id: 20 }
+        }, users[3].tags
+
 
