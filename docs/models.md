@@ -1643,6 +1643,59 @@ SELECT * from "some_model" where
   order by "some_model"."user_id" ASC, "some_model"."post_id" ASC limit 10
 ```
 
+### `each_page(...)`
+
+Returns an iterator function that can be used to iterate through each page of
+results. Optional arguments can be provided to specify the starting point for
+iteration, using the same cursor values that would be passed to `get_page`.
+
+$dual_code{
+moon = [[
+import OrderedPaginator from require "lapis.db.pagination"
+pager = OrderedPaginator Events, "id", "where user_id = ?", 123
+
+-- iterate through all pages from the beginning
+for page_results in pager\each_page!
+  process page_results
+
+-- iterate starting from id > 500
+for page_results in pager\each_page 500
+  process page_results
+]],
+lua = [[
+local OrderedPaginator = require("lapis.db.pagination").OrderedPaginator
+local pager = OrderedPaginator(Events, "id", "where user_id = ?", 123)
+
+-- iterate through all pages from the beginning
+for page_results in pager:each_page() do
+  process(page_results)
+end
+
+-- iterate starting from id > 500
+for page_results in pager:each_page(500) do
+  process(page_results)
+end
+]]}
+
+For composite ordering with multiple columns, pass multiple arguments:
+
+$dual_code{
+moon = [[
+pager = OrderedPaginator SomeModel, {"user_id", "post_id"}
+
+-- start from (user_id, post_id) > (100, 200)
+for page_results in pager\each_page 100, 200
+  process page_results
+]],
+lua = [[
+local pager = OrderedPaginator(SomeModel, {"user_id", "post_id"})
+
+-- start from (user_id, post_id) > (100, 200)
+for page_results in pager:each_page(100, 200) do
+  process(page_results)
+end
+]]}
+
 ## Relations
 
 Often your models are connected to other models by use of a *foreign_key*. You
