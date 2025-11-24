@@ -156,8 +156,8 @@ class OrderedPaginator extends Paginator
       @order = @opts.order
       @opts.order = nil
 
-  each_page: =>
-    tuple = {}
+  each_page: (...) =>
+    tuple = {nil, ...}
 
     ->
       tuple = { @get_page unpack tuple, 2 }

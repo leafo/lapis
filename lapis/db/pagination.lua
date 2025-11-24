@@ -246,8 +246,11 @@ do
   local _base_0 = {
     order = "ASC",
     per_page = 10,
-    each_page = function(self)
-      local tuple = { }
+    each_page = function(self, ...)
+      local tuple = {
+        nil,
+        ...
+      }
       return function()
         tuple = {
           self:get_page(unpack(tuple, 2))

@@ -344,3 +344,51 @@ describe "lapis.db.pagination", ->
         [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (102, 'a') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
         [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (301, 'e') and (color = blue) order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
       }
+
+    it "iterates through pages with starting point", ->
+      mock_query '"things"."id" > 100', { { id: 101 }, { id: 202 } }
+      mock_query '"things"."id" > 202', { { id: 302 } }
+      mock_query '"things"."id" > 302', { }
+
+      pager = OrderedPaginator Things, "id"
+
+      assert.same {
+        { { id: 101 }, { id: 202 } }
+        { { id: 302 } }
+      }, [page for page in pager\each_page 100]
+
+      assert_queries {
+        [[SELECT * FROM "things" where "things"."id" > 100 order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 202 order by "things"."id" ASC limit 10]]
+        [[SELECT * FROM "things" where "things"."id" > 302 order by "things"."id" ASC limit 10]]
+      }
+
+    it "iterates through pages with starting point and multiple keys", ->
+      mock_query escape_pattern([[> (100, 'start')]]), {
+        { id: 101, updated_at: 'a' }
+        { id: 102, updated_at: 'b' }
+      }
+
+      mock_query escape_pattern([[> (102, 'b')]]), {
+        { id: 201, updated_at: 'c' }
+      }
+
+      mock_query escape_pattern([[> (201, 'c')]]), { }
+
+      pager = OrderedPaginator Things, {"id", "updated_at"}
+
+      assert.same {
+        {
+          { id: 101, updated_at: 'a' }
+          { id: 102, updated_at: 'b' }
+        }
+        {
+          { id: 201, updated_at: 'c' }
+        }
+      }, [page for page in pager\each_page 100, 'start']
+
+      assert_queries {
+        [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (100, 'start') order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (102, 'b') order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+        [[SELECT * FROM "things" where ("things"."id", "things"."updated_at") > (201, 'c') order by "things"."id" ASC, "things"."updated_at" ASC limit 10]]
+      }
