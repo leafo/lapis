@@ -517,11 +517,18 @@ polymorphic_belongs_to = (name, opts) =>
     for {type_name, model_name} in *types
       model = assert_model @@, model_name
       filtered = [o for o in *objs when o[type_col] == @@[enum_name][type_name]]
-      model\include_in filtered, id_col, {
+      include_opts = {
         for_relation: name
         as: name
         fields: fields and fields[type_name]
       }
+
+      if preload_opts
+        for k, v in pairs preload_opts
+          continue if k == "fields"
+          include_opts[k] = v
+
+      model\include_in filtered, id_col, include_opts
 
     objs
 

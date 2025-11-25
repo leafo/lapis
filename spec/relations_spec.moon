@@ -803,9 +803,10 @@ describe "lapis.db.model.relations", ->
     assert.same nil, rawget Child, "get_user"
 
   describe "polymorphic belongs to", ->
-    local Foos, Bars, Bazs, Items
+    local Foos, Bars, Bazs, Items, preload
 
     before_each ->
+      import preload from require "lapis.db.model"
       models.Foos = class Foos extends Model
       models.Bars = class Bars extends Model
         @primary_key: "frog_index"
@@ -943,6 +944,39 @@ describe "lapis.db.model.relations", ->
         'SELECT a, b FROM "bars" WHERE "frog_index" IN (112)'
         'SELECT c, d FROM "bazs" WHERE "id" IN (113)'
       }
+
+    it "preloads with skip_included option", ->
+      foo = models.Foos\load {
+        id: 111
+      }
+
+      items = {
+        Items\load {
+          object_type: 1
+          object_id: 111
+          object: foo
+        }
+
+        Items\load {
+          object_type: 1
+          object_id: 222
+        }
+
+        Items\load {
+          object_type: 2
+          object_id: 333
+        }
+      }
+
+      assert_queries {
+        'SELECT * FROM "foos" WHERE "id" IN (222)'
+        'SELECT * FROM "bars" WHERE "frog_index" IN (333)'
+      }, ->
+        preload items, object: {
+          [preload]: {
+            skip_included: true
+          }
+        }
 
   it "finds relation", ->
     import find_relation from require "lapis.db.model.relations"
@@ -1872,7 +1906,7 @@ describe "lapis.db.model.relations", ->
         random: "option"
       }, preload_opts
 
-    it "with skip_included preload option #ddd", ->
+    it "with skip_included preload option", ->
       models.Items = class Items extends Model
         @relations: {
           {"parents", has_many: "Items", key: "parent_id"}
@@ -2221,5 +2255,4 @@ describe "lapis.db.model.relations", ->
         assert.same {
           { id: 201, user_id: 20 }
         }, users[3].tags
-
 

@@ -678,11 +678,28 @@ polymorphic_belongs_to = function(self, name, opts)
         end
         filtered = _accum_0
       end
-      model:include_in(filtered, id_col, {
+      local include_opts = {
         for_relation = name,
         as = name,
         fields = fields and fields[type_name]
-      })
+      }
+      if preload_opts then
+        for k, v in pairs(preload_opts) do
+          local _continue_0 = false
+          repeat
+            if k == "fields" then
+              _continue_0 = true
+              break
+            end
+            include_opts[k] = v
+            _continue_0 = true
+          until true
+          if not _continue_0 then
+            break
+          end
+        end
+      end
+      model:include_in(filtered, id_col, include_opts)
     end
     return objs
   end
