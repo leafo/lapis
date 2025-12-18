@@ -66,6 +66,6 @@ This results in the following two configurations (default values omitted):
 }
 ```
 
-You can call the `config` function as many time you like on the same
+You can call the `config` function as many times as you like on the same
 configuration names, each time the passed in table is merged into the
 configuration.

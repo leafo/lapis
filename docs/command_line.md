@@ -43,7 +43,7 @@ help migrate`.
 
 ## Default Environment
 
-Lapis will load your Applications's configuration by for an environment before
+Lapis will load your Application's configuration for an environment before
 executing a command. The default environment name in command line `development`
 unless otherwise overwritten.
 
@@ -280,7 +280,7 @@ is stubbed as if requested through the OpenResty server)
 
 This command will execute the request in either the default environment or the
 specified one. This is important to note if your request makes changes to the
-database. The simulate commannd **does not** run in the *test* environment
+database. The simulate command **does not** run in the *test* environment
 unless explicitly specified.
 
 By default the command will print information about the response, like the

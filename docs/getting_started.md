@@ -11,7 +11,7 @@ requests, database queries and other requests using the modules provided with
 OpenResty. Lua's coroutines allow you to write synchronous looking code that is
 event driven behind the scenes.
 
-The web framework comes with a environment based configuration, URL routing,
+The web framework comes with an environment based configuration, URL routing,
 HTML templating, CSRF and session support, a relational database object
 relational mapper for working with models and a handful of other useful
 functions needed for developing websites and more
@@ -182,7 +182,7 @@ to that process if it exists.
 
 Now that you know how to generate a new project and start and stop the server
 you're ready to start writing application code. This guide splits into two for
-Lua & MoonScript MoonScript and Lua.
+Lua and MoonScript.
 
  * [Create an application with Lua][1]
  * [Create an application with MoonScript][2]

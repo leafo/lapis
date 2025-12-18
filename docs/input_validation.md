@@ -358,7 +358,7 @@ if types.empty some_value
 #### `types.valid_text`
 
 Matches a string that is valid UTF8. Invalid characters sequences or
-unprintable characters will cause validation to valid.
+unprintable characters will cause validation to fail.
 
 $dual_code{
 moon = [[

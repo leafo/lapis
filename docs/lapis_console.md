@@ -59,7 +59,7 @@ every environment, or you can name an environment.
 
 ## Tips
 
-The console lets your write and execute a MoonScript program. Multiple lines
+The console lets you write and execute a MoonScript program. Multiple lines
 are supported.
 
 The `print` function has been replaced in the console to print to the debug

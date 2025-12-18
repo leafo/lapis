@@ -21,7 +21,7 @@ The default environment is used when you don't explicitly specify an
 environment. The following conditions are checked in order to determine the
 default environment:
 
-1. When inside a of a test suite (supported environments: [Busted](http://olivinelabs.com/busted/)), the default environment is set to `test`
+1. When inside of a test suite (supported environments: [Busted](http://olivinelabs.com/busted/)), the default environment is set to `test`
 2. When a module named `lapis_environment` exists, the return value of that module is used as the default environment
 3. Otherwise, default environment is set to `development`
 

@@ -131,7 +131,7 @@ environment to one called *`test`*.
 The `test` environment will allow you to write a distinct configuration to be
 used when tests are running. It is highly recommended to set up a distinct
 database for your test suite to ensure that none of your working data is reset
-when running tests, as a copy pattern is to truncate all data from a table
+when running tests, as a common pattern is to truncate all data from a table
 before running any tests that use that table.
 
 You can add a configuration environment with separate database rules by editing

@@ -115,7 +115,7 @@ class App extends lapis.Application
 ```
 
 
-## How to do I render JSON?
+## How do I render JSON?
 
 Use the `json` option of the `write` method, or the action's return value:
 

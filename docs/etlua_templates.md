@@ -37,7 +37,7 @@ responsibility to verify that valid markup is generated** by using the correct
 template tags in the correct locations.
 
 If a malicious user is able to inject JavaScript or other unapproved markup
-into your page then they may be able to comprise your platform for other users,
+into your page then they may be able to compromise your platform for other users,
 including stealing sessions or performing unapproved authenticated actions.
 
 The etlua tag `<%= lua_expression %>` will HTML escape the output such that it
@@ -268,7 +268,7 @@ by Lapis to be used as a view.
 * `element(name, ...)` -- renders an HTML element to the buffer with `name`, supporting the full HTML builder syntax for any nested functions
 
 Note that when a helper renders to the buffer, there will be no return value.
-It is not necessary to use an etlua tag that will take print the output of the
+It is not necessary to use an etlua tag that will print the output of the
 function.
 
 ## `EtluaWidget` reference

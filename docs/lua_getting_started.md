@@ -136,7 +136,7 @@ you must enable it by calling the `enable` method on your application instance.
 
 The `render` parameter of the action's return value instructs Lapis which
 template to use when rendering the page. In this case `"index"` refers to the
-module with the name `views.index`. `etalua` injects itself into Lua's
+module with the name `views.index`. `etlua` injects itself into Lua's
 `require` method and so when the module `views.index` is loaded, an attempt to
 read and parse the file `views/index.etlua` is made.
 

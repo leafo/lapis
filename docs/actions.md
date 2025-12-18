@@ -11,8 +11,8 @@ function that will be called if the associated route matches.
 
 An *action function* is invoked with one argument, a [*request
 object*](#request-object), when processing a request. This object contains
-properties and methods that allow you to access data bout the request, like
-form paramters and URL parameters.
+properties and methods that allow you to access data about the request, like
+form parameters and URL parameters.
 
 The request object is mutable, it's a place where you can store any data you
 want to share between your actions and views. Additionally, the request object
@@ -1293,7 +1293,7 @@ lua = [[
 function app:default_route()
   ngx.log(ngx.NOTICE, "User hit unknown path " .. self.req.parsed_url.path)
 
-  -- call the original implementaiton to preserve the functionality it provides
+  -- call the original implementation to preserve the functionality it provides
   return lapis.Application.default_route(self)
 end
 ]],
@@ -1400,7 +1400,7 @@ $self_ref{"original_request"}.
 
 Lapis' default error page displays a full stack trace. Therefore, it is
 recommended to replace it with a custom one in your production environments and
-log the exception in the background to prevent leaking file pathes and function
+log the exception in the background to prevent leaking file paths and function
 names related to your application.
 
 The [`lapis-exceptions`][2] module augments the error handler to records errors
@@ -1493,7 +1493,7 @@ either an application class or an instance. If there are any before filters in
 `other_app`, every action of `other_app` will be be wrapped in a new function
 that calls those before filters before calling the original function.
 
-Options can either be provided in the arugment `opts`, or will be pulled from
+Options can either be provided in the argument `opts`, or will be pulled from
 `other_app`, with precedence going to the value provided in `opts` if provided.
 
 Note that application instance configuration like `layout` and `views_prefix`
@@ -1502,7 +1502,7 @@ are not kept from the included application.
 $options_table{
   {
     name = "path",
-    description = "If provided, every path copied over will be prefixed with the value of this option. It should start with a `/` and a trailing slash should be inlcuded if desired."
+    description = "If provided, every path copied over will be prefixed with the value of this option. It should start with a `/` and a trailing slash should be included if desired."
   },
   {
     name = "name",
@@ -1525,7 +1525,7 @@ Returns `nil` if no action could be found.
 
 Creates a subclass of the Application class. This method is only available on
 the class object, not the instance. Instance fields can be provided as via the
-`fields` arugment or by mutating the returned metatable object.
+`fields` argument or by mutating the returned metatable object.
 
 This method returns the newly created class object, and the metatable for any
 instances of the class.

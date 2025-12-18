@@ -1136,7 +1136,7 @@ A pattern that matches a single printable character. Note that printable
 characters include whitepace, but don't include invalid unicode codepoints or
 control characters.
 
-### `utf8.whitepace`
+### `utf8.whitespace`
 
 An optimal pattern that matches any unicode codepoints that are classified as
 whitespace.
