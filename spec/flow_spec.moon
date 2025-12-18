@@ -1,5 +1,5 @@
 
-import Flow, is_flow from require "lapis.flow"
+import Flow, is_flow_class from require "lapis.flow"
 
 describe "lapis.flow", ->
   local base_object
@@ -186,39 +186,39 @@ describe "lapis.flow", ->
       assert.same {}, obj
       assert.same {[multiple]: {1, 2}}, f[MEMO_KEY]
 
-  describe "is_flow", ->
+  describe "is_flow_class", ->
     it "returns false for nil", ->
-      assert.false is_flow nil
+      assert.false is_flow_class nil
 
     it "returns false for false", ->
-      assert.false is_flow false
+      assert.false is_flow_class false
 
     it "returns true for Flow class", ->
-      assert.true is_flow Flow
+      assert.true is_flow_class Flow
 
     it "returns true for class extending Flow", ->
       class MyFlow extends Flow
-      assert.true is_flow MyFlow
+      assert.true is_flow_class MyFlow
 
     it "returns true for deeply nested Flow subclass", ->
       class FirstFlow extends Flow
       class SecondFlow extends FirstFlow
       class ThirdFlow extends SecondFlow
 
-      assert.true is_flow SecondFlow
-      assert.true is_flow ThirdFlow
+      assert.true is_flow_class SecondFlow
+      assert.true is_flow_class ThirdFlow
 
     it "returns false for regular table", ->
-      assert.false is_flow {}
+      assert.false is_flow_class {}
 
     it "returns false for regular class", ->
       class BaseClass
       class ChildClass extends BaseClass
 
-      assert.false is_flow BaseClass
-      assert.false is_flow ChildClass
+      assert.false is_flow_class BaseClass
+      assert.false is_flow_class ChildClass
 
     it "returns false when passing a Flow instance directly", ->
       class MyFlow extends Flow
       f = MyFlow {}
-      assert.false is_flow f
+      assert.false is_flow_class f

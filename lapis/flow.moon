@@ -5,10 +5,10 @@ unpack = table.unpack or unpack
 
 local Flow
 
-is_flow = (cls) ->
+is_flow_class = (cls) ->
   return false unless cls
   return true if cls == Flow
-  is_flow cls.__parent
+  is_flow_class cls.__parent
 
 MEMO_KEY = setmetatable {}, __tostring: -> "::memo_key::"
 
@@ -48,7 +48,7 @@ class Flow
     @_req = @_ -- TODO: for legacy flows
 
     -- get the real request if the object passed is another flow
-    if is_flow @_.__class
+    if is_flow_class @_.__class
       @_ = @_._
 
     old_mt = getmetatable @
@@ -87,4 +87,4 @@ class Flow
     setmetatable @, mt
 
 
-{ :Flow, :is_flow, :MEMO_KEY, :memo }
+{ :Flow, :is_flow_class, :MEMO_KEY, :memo }

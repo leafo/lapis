@@ -5,15 +5,15 @@ do
 end
 local unpack = table.unpack or unpack
 local Flow
-local is_flow
-is_flow = function(cls)
+local is_flow_class
+is_flow_class = function(cls)
   if not (cls) then
     return false
   end
   if cls == Flow then
     return true
   end
-  return is_flow(cls.__parent)
+  return is_flow_class(cls.__parent)
 end
 local MEMO_KEY = setmetatable({ }, {
   __tostring = function()
@@ -50,7 +50,7 @@ do
       self._ = _
       assert(self._, "missing flow target")
       self._req = self._
-      if is_flow(self._.__class) then
+      if is_flow_class(self._.__class) then
         self._ = self._._
       end
       local old_mt = getmetatable(self)
@@ -126,7 +126,7 @@ do
 end
 return {
   Flow = Flow,
-  is_flow = is_flow,
+  is_flow_class = is_flow_class,
   MEMO_KEY = MEMO_KEY,
   memo = memo
 }
