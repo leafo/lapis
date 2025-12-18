@@ -39,7 +39,8 @@ scope in which we will capture errors. We do that using the `capture_errors`
 helper. Then we can throw a raw error using `yield_error`.
 
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app_helpers = require("lapis.application")
 
@@ -51,16 +52,16 @@ app:match("/do_something", capture_errors(function(self)
   yield_error("something bad happened")
   return "Hello!"
 end))
-```
-
-```moon
+]],
+moon = [[
 import capture_errors, yield_error from require "lapis.application"
 
 class App extends lapis.Application
   "/do_something": capture_errors =>
     yield_error "something bad happened"
     "Hello!"
-```
+]]
+}
 
 What happens when there is an error? The action will stop executing at the
 first error, and then the error handler is run. The default error handler will
@@ -75,7 +76,8 @@ If you want to have a custom error handler you can invoke `capture_errors` with
 a table: (note that <span class="for_moon">`@errors`</span><span
 class="for_lua">`self.errors`</span> is set before the custom handler)
 
-```lua
+$dual_code{
+lua = [[
 app:match("/do_something", capture_errors({
   on_error = function(self)
     log_errors(self.errors) -- you would supply the log_errors function
@@ -88,9 +90,8 @@ app:match("/do_something", capture_errors({
     return { render = true }
   end
 }))
-```
-
-```moon
+]],
+moon = [[
 class App extends lapis.Application
   "/do_something": capture_errors {
     on_error: =>
@@ -102,7 +103,8 @@ class App extends lapis.Application
         yield_error "something bad happened"
       render: true
   }
-```
+]]
+}
 
 `capture_errors` when called with a table will use the first positional value
 as the action.
@@ -110,7 +112,8 @@ as the action.
 If you're building a JSON API then another method is provided,
 `capture_errors_json`, which renders the errors in a JSON object like so:
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app_helpers = require("lapis.application")
 
@@ -121,15 +124,15 @@ local app = lapis.Application()
 app:match("/", capture_errors_json(function(self)
   yield_error("something bad happened")
 end))
-```
-
-```moon
+]],
+moon = [[
 import capture_errors_json, yield_error from require "lapis.application"
 
 class App extends lapis.Application
   "/": capture_errors_json =>
     yield_error "something bad happened"
-```
+]]
+}
 
 Would render (with the correct content type):
 
@@ -193,7 +196,8 @@ error, otherwise all the arguments are returned from the function unchanged.
 `assert_error` is very handy with database methods, which make use of this
 idiom.
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app_helpers = require("lapis.application")
 
@@ -205,17 +209,16 @@ app:match("/", capture_errors(function(self)
   local user = assert_error(Users:find({id = "leafo"}))
   return "result: " .. user.id
 end))
-
-```
-
-```moon
+]],
+moon = [[
 import capture_errors, assert_error from require "lapis.application"
 
 class App extends lapis.Application
   "/": capture_errors =>
     user = assert_error Users\find id: "leafo"
     "result: #{user.id}"
-```
+]]
+}
 
 If you call this function not within a `capture_errors` context, then a hard
 Lua `error` will be thrown.
