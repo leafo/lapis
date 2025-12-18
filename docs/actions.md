@@ -1415,12 +1415,12 @@ or overriding the appropriate fields.
 ### `application:match([route_name], route_patch, action_fn)`
 
 Adds a new route to the route group contained by the application. See above for
-more information on registering actions. Note that routes are inheritance by
-the inheritance change of the application object.
+more information on registering actions. Note that routes are inherited by
+the inheritance chain of the application object.
 
 You can overwrite a route by re-using the same route name, or path, and that
 route will take precedence over one defined further up in the inheritance
-change.
+chain.
 
 Class approach:
 
