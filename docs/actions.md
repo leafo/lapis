@@ -1050,9 +1050,11 @@ $options_table{
 
 ### `request:flow(module_name)`
 
-Loads a flow by `module_name` with the `flows_prefix` on the current request
-object. If the flow with that name has been previously loaded, the existing
-flow instance is returned.
+Loads a [Flow]($root/reference/flows.html) by `module_name` with the
+`flows_prefix` on the current request object. If the flow with that name has
+been previously loaded, the existing flow instance is returned. See the [Flows
+guide]($root/reference/flows.html) for more information about using flows to
+organize your application.
 
 ### `request:html(fn)`
 
