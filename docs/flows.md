@@ -312,20 +312,26 @@ assert(flow_b._ == my_object)
 
 ### `is_flow(cls)`
 
-The `is_flow` function checks if a class or instance is a Flow:
+The `is_flow` function checks if a class is a Flow:
 
 $dual_code{
 lua = [[
+local Flow = require("lapis.flow").Flow
 local is_flow = require("lapis.flow").is_flow
 
-if is_flow(some_object) then
-  -- handle flow...
-end
+MyFlow = Flow:extend({})
+some_object = {}
+
+is_flow(MyFlow) --> true
+is_flow(some_object) --> false
 ]],
 moon = [[
-import is_flow from require "lapis.flow"
+import Flow, is_flow from require "lapis.flow"
 
-if is_flow some_object
-  -- handle flow...
+class MyFlow extends Flow
+some_object = {}
+
+is_flow MyFlow --> true
+is_flow some_object --> false
 ]]
 }
