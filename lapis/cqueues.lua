@@ -138,7 +138,14 @@ dispatch = function(app, server, stream)
   local res_headers = http_headers.new()
   res_headers:append(":status", res.status and string.format("%d", res.status) or "200")
   for k, v in pairs(res.headers) do
-    res_headers:append(k, v)
+    if type(v) == "table" then
+      for _index_0 = 1, #v do
+        local vv = v[_index_0]
+        res_headers:append(k, tostring(vv))
+      end
+    else
+      res_headers:append(k, tostring(v))
+    end
   end
   stream:write_headers(res_headers, not res.content)
   if res.content then
