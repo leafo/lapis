@@ -40,9 +40,9 @@ extract_cookies = (response_headers) ->
 
 
 -- returns the result of request using app
--- mock_request App, "/hello"
--- mock_request App, "/hello", { host: "leafo.net" }
-mock_request = (app_cls, url, opts={}) ->
+-- simulate_request App, "/hello"
+-- simulate_request App, "/hello", { host: "leafo.net" }
+simulate_request = (app_cls, url, opts={}) ->
   stack = require "lapis.spec.stack"
   import gettime from require("socket")
 
@@ -255,18 +255,18 @@ mock_request = (app_cls, url, opts={}) ->
   response.status or 200, body, out_headers
 
 assert_request = (...) ->
-  res = {mock_request ...}
+  res = {simulate_request ...}
 
   if res[1] == 500
     assert false, "Request failed: " .. res[2]
 
   unpack res
 
--- returns the result of running fn in the context of a mocked request
--- mock_action App, -> "hello"
--- mock_action App, "/path", -> "hello"
--- mock_action App, "/path", { host: "leafo.net"}, -> "hello"
-mock_action = (app_cls, url, opts, fn) ->
+-- returns the result of running fn in the context of a simulated request
+-- simulate_action App, -> "hello"
+-- simulate_action App, "/path", -> "hello"
+-- simulate_action App, "/path", { host: "leafo.net"}, -> "hello"
+simulate_action = (app_cls, url, opts, fn) ->
   if type(url) == "function" and opts == nil
     fn = url
     url = "/"
@@ -309,7 +309,15 @@ stub_request = (app_cls, url="/", opts={}) ->
     stub.req.headers
     stub.req.request_uri
 
-  mock_request app, url, opts
+  simulate_request app, url, opts
   stub
 
-{ :mock_request, :assert_request, :normalize_headers, :mock_action, :stub_request, :extract_cookies }
+{
+  :simulate_request, :simulate_action
+  :assert_request, :stub_request
+  :normalize_headers, :extract_cookies
+
+  -- deprecated aliases for backwards compatibility
+  mock_request: simulate_request
+  mock_action: simulate_action
+}

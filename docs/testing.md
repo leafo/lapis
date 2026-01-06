@@ -82,9 +82,9 @@ config "test", ->
 This section covers functions from `lapis.spec.request` for testing your
 application by simulating requests without a real HTTP server.
 
-### `mock_request(app, url, options)`
+### `simulate_request(app, url, options)`
 
-`mock_request` simulates a complete HTTP request to your application and
+`simulate_request` simulates a complete HTTP request to your application and
 returns the response. It's useful for testing route handlers and verifying the
 output of your application.
 
@@ -98,14 +98,14 @@ for simplicity.
 
 $dual_code{
 lua = [[
-local mock_request = require("lapis.spec.request").mock_request
+local simulate_request = require("lapis.spec.request").simulate_request
 
-local status, body, headers = mock_request(app, url, options)
+local status, body, headers = simulate_request(app, url, options)
 ]],
 moon = [[
-import mock_request from require "lapis.spec.request"
+import simulate_request from require "lapis.spec.request"
 
-status, body, headers = mock_request(app, url, options)
+status, body, headers = simulate_request(app, url, options)
 ]]
 }
 
@@ -114,7 +114,7 @@ For example, to test a basic application with [Busted][] we could do:
 $dual_code{
 lua = [[
 local lapis = require("lapis.application")
-local mock_request = require("lapis.spec.request").mock_request
+local simulate_request = require("lapis.spec.request").simulate_request
 
 local app = lapis.Application()
 
@@ -124,7 +124,7 @@ end)
 
 describe("my application", function()
   it("should make a request", function()
-    local status, body = mock_request(app, "/hello")
+    local status, body = simulate_request(app, "/hello")
 
     assert.same(200, status)
     assert.truthy(body:match("welcome"))
@@ -134,22 +134,22 @@ end)
 moon = [[
 lapis = require "lapis"
 
-import mock_request from require "lapis.spec.request"
+import simulate_request from require "lapis.spec.request"
 
 class App extends lapis.Application
   "/hello": => "welcome to my page"
 
 describe "my application", ->
   it "should make a request", ->
-    status, body = mock_request App, "/hello"
+    status, body = simulate_request App, "/hello"
 
     assert.same 200, status
     assert.truthy body\match "welcome"
 ]]
 }
 
-`mock_request` simulates an `ngx` variable from the Lua Nginx module and
-executes the application. The `options` argument of `mock_request` can be used
+`simulate_request` simulates an `ngx` variable from the Lua Nginx module and
+executes the application. The `options` argument of `simulate_request` can be used
 to control the kind of request that is simulated. It takes the following
 options in a table:
 
@@ -196,7 +196,7 @@ $options_table{
   },
   {
     name = "prev",
-    description = "A table of the response headers from a previous `mock_request`"
+    description = "A table of the response headers from a previous `simulate_request`"
   },
   {
     name = "allow_error",
@@ -211,19 +211,19 @@ headers returned from a previous request.
 
 $dual_code{
 lua = [[
-local r1_status, r1_res, r1_headers = mock_request(my_app, "/first_url")
-local r2_status, r2_res = mock_request(my_app, "/second_url", { prev = r1_headers })
+local r1_status, r1_res, r1_headers = simulate_request(my_app, "/first_url")
+local r2_status, r2_res = simulate_request(my_app, "/second_url", { prev = r1_headers })
 ]],
 moon = [[
-r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
-r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
+r1_status, r1_res, r1_headers = simulate_request MyApp!, "/first_url"
+r2_status, r2_res = simulate_request MyApp!, "/second_url", prev: r1_headers
 ]]
 }
 
 ### `stub_request(app, url, options)`
 
 `stub_request` creates and returns a [Request object]($root/reference/actions.html#request-object) without
-executing the full request cycle. Unlike `mock_request` which returns
+executing the full request cycle. Unlike `simulate_request` which returns
 status/body/headers, `stub_request` gives you direct access to the request
 object itself.
 
@@ -253,7 +253,7 @@ The returned request object has:
 * `url_for`, `build_url` -- Working URL generation methods
 * `req.method`, `req.headers`, `req.parsed_url` -- Request metadata
 
-`stub_request` accepts the same options as `mock_request`, plus one additional option:
+`stub_request` accepts the same options as `simulate_request`, plus one additional option:
 
 $options_table{
   {

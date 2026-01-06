@@ -373,8 +373,8 @@ local COMMANDS = {
       local config = require("lapis.config").get()
       local app_module = args.app_class or config.app_class or "app"
       local app_cls = require(app_module or config.app_class)
-      local mock_request
-      mock_request = require("lapis.spec.request").mock_request
+      local simulate_request
+      simulate_request = require("lapis.spec.request").simulate_request
       local input_headers, input_cookies
       if args.json then
         input_headers = input_headers or { }
@@ -432,7 +432,7 @@ local COMMANDS = {
         cookies = input_cookies,
         scheme = args.scheme
       }
-      local status, response, headers = assert(mock_request(app_cls, args.path, request_options))
+      local status, response, headers = assert(simulate_request(app_cls, args.path, request_options))
       if args.print_json then
         local to_json
         to_json = require("lapis.util").to_json

@@ -330,7 +330,7 @@ COMMANDS = {
       app_module = args.app_class or config.app_class or "app"
       app_cls = require app_module or config.app_class
 
-      import mock_request from require "lapis.spec.request"
+      import simulate_request from require "lapis.spec.request"
 
       local input_headers, input_cookies
 
@@ -372,7 +372,7 @@ COMMANDS = {
         scheme: args.scheme
       }
 
-      status, response, headers = assert mock_request app_cls, args.path, request_options
+      status, response, headers = assert simulate_request app_cls, args.path, request_options
 
       if args.print_json
         import to_json from require "lapis.util"

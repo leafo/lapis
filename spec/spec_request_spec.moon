@@ -1,24 +1,24 @@
 lapis = require "lapis"
 
 import
-  mock_request
-  mock_action
+  simulate_request
+  simulate_action
   assert_request
   stub_request
   from require "lapis.spec.request"
 
 describe "lapis.spec.request", ->
-  describe "mock_request", ->
+  describe "simulate_request", ->
     class App extends lapis.Application
       "/hello": =>
 
     it "should mock a request", ->
-      assert.same 200, (mock_request App, "/hello")
+      assert.same 200, (simulate_request App, "/hello")
       assert.has_error ->
-        mock_request App, "/world"
+        simulate_request App, "/world"
 
     it "should mock a request with double headers", ->
-      mock_request App, "/hello", {
+      simulate_request App, "/hello", {
         method: "POST"
         headers: {
           ["Content-type"]: {
@@ -37,16 +37,16 @@ describe "lapis.spec.request", ->
             height: {1,2,3,4}
           }, flatten_session @session
 
-      mock_request SessionApp, "/test-session", {
+      simulate_request SessionApp, "/test-session", {
         session: {
           color: "hello"
           height: {1,2,3,4}
         }
       }
 
-  describe "mock_action", ->
+  describe "simulate_action", ->
     it "should mock action", ->
-      assert.same "hello", mock_action lapis.Application, "/hello", {}, ->
+      assert.same "hello", simulate_action lapis.Application, "/hello", {}, ->
         "hello"
 
   describe "stub_request", ->

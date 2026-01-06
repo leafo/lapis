@@ -1,10 +1,10 @@
 
 lapis = require "lapis"
 
-import mock_action, mock_request, assert_request from require "lapis.spec.request"
+import simulate_action, simulate_request, assert_request from require "lapis.spec.request"
 
 mock_app = (...) ->
-  mock_action lapis.Application, ...
+  simulate_action lapis.Application, ...
 
 describe "lapis.application", ->
   before_each ->
@@ -53,7 +53,7 @@ describe "lapis.application", ->
 
   describe "dispatch", ->
     describe "lazy loaded actions", ->
-      import mock_request from require "lapis.spec.request"
+      import simulate_request from require "lapis.spec.request"
 
       class BaseApp extends lapis.Application
         [test_route: "/hello/:var"]: true
@@ -66,27 +66,27 @@ describe "lapis.application", ->
         package.loaded["actions.hello_world"] = spy.new ->
 
       it "dispatches action by route name", ->
-        mock_request BaseApp, "/hello/5"
+        simulate_request BaseApp, "/hello/5"
         assert.spy(package.loaded["actions.test_route"]).was.called!
         assert.spy(package.loaded["actions.hello_world"]).was_not.called!
 
       it "dispatches action by string name", ->
-        mock_request BaseApp, "/good-stuff"
+        simulate_request BaseApp, "/good-stuff"
 
         assert.spy(package.loaded["actions.test_route"]).was_not.called!
         assert.spy(package.loaded["actions.hello_world"]).was.called!
 
       it "doesn't call other actions for unrelated route", ->
-        mock_request BaseApp, "/hmm"
+        simulate_request BaseApp, "/hmm"
 
         assert.spy(package.loaded["actions.test_route"]).was_not.called!
         assert.spy(package.loaded["actions.hello_world"]).was_not.called!
 
-        mock_request BaseApp, "/hmm"
+        simulate_request BaseApp, "/hmm"
 
       it "failes to load `true` action with no route name", ->
         assert.has_error ->
-          mock_request BaseApp, "/yo"
+          simulate_request BaseApp, "/yo"
 
   describe "inheritance", ->
     local result
@@ -103,18 +103,18 @@ describe "lapis.application", ->
       "/thing": => result = "child thing"
 
     it "finds route in base app", ->
-      status, buffer, headers = mock_request ChildApp, "/hello/world", {}
+      status, buffer, headers = simulate_request ChildApp, "/hello/world", {}
       assert.same 200, status
       assert.same "base test", result
 
     it "generates url from route in base", ->
-      url = mock_action ChildApp, =>
+      url = simulate_action ChildApp, =>
         @url_for "test_route", var: "foobar"
 
       assert.same url, "/hello/foobar"
 
     it "overrides route in base class", ->
-      status, buffer, headers = mock_request ChildApp, "/yeah", {}
+      status, buffer, headers = simulate_request ChildApp, "/yeah", {}
       assert.same 200, status
       assert.same "child yeah", result
 
@@ -126,12 +126,12 @@ describe "lapis.application", ->
       class ChildApp extends Root
         [test_route: "/zone"]: => "override"
 
-      status, res = mock_request ChildApp, "/zone", {}
+      status, res = simulate_request ChildApp, "/zone", {}
       assert.same {200, "override"}, {status, res}
 
       -- route does not exist, overwritten
       assert.has_error ->
-        mock_request ChildApp, "/hello/world", {}
+        simulate_request ChildApp, "/hello/world", {}
 
       assert.same "/zone", ChildApp!.router\url_for "test_route", var: "whoa"
 
@@ -143,7 +143,7 @@ describe "lapis.application", ->
       class ChildApp extends Root
         [second: "/hello/:cool"]: => "second"
 
-      status, res = mock_request ChildApp, "/hello/yeah", {}
+      status, res = simulate_request ChildApp, "/hello/yeah", {}
       assert.same {200, "second"}, {status, res}
 
       app = ChildApp!
@@ -168,11 +168,11 @@ describe "lapis.application", ->
 
         "/world": => result = "world"
 
-      status, buffer, headers = mock_request App, "/hello", {}
+      status, buffer, headers = simulate_request App, "/hello", {}
       assert.same 200, status
       assert.same "hello", result
 
-      status, buffer, headers = mock_request App, "/world", {}
+      status, buffer, headers = simulate_request App, "/world", {}
       assert.same 200, status
       assert.same "world", result
 
@@ -249,14 +249,14 @@ describe "lapis.application", ->
 
         "/some-dad": => "hi"
 
-      status, buffer, headers = mock_request SomeApp, "/cool-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/cool-dad", {}
 
       assert.same {
         status: 200
         buffer: "action1 #{tostring s}"
       }, { :status, :buffer }
 
-      status, buffer, headers = mock_request SomeApp, "/uncool-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/uncool-dad", {}
 
       assert.same {
         status: 200
@@ -281,14 +281,14 @@ describe "lapis.application", ->
 
         "/some-dad": => "hi"
 
-      status, buffer, headers = mock_request SomeApp, "/cool-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/cool-dad", {}
 
       assert.same {
         status: 200
         buffer: "subapp action1 #{tostring s}"
       }, { :status, :buffer }
 
-      status, buffer, headers = mock_request SomeApp, "/uncool-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/uncool-dad", {}
 
       assert.same {
         status: 200
@@ -314,21 +314,21 @@ describe "lapis.application", ->
 
         "/some-dad": => "hi"
 
-      status, buffer, headers = mock_request SomeApp, "/cool-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/cool-dad", {}
 
       assert.same {
         status: 200
         buffer: "action1 #{s} Before filter has run!"
       }, { :status, :buffer }
 
-      status, buffer, headers = mock_request SomeApp, "/uncool-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/uncool-dad", {}
 
       assert.same {
         status: 200
         buffer: "action2 #{s} Before filter has run!"
       }, { :status, :buffer }
 
-      status, buffer, headers = mock_request SomeApp, "/some-dad", {}
+      status, buffer, headers = simulate_request SomeApp, "/some-dad", {}
 
       assert.same {
         status: 200
@@ -345,8 +345,8 @@ describe "lapis.application", ->
         app2\match "/world", => "world"
         app2\include app1
 
-        assert.same "hello", (select 2, mock_request app2, "/hello")
-        assert.same "world", (select 2, mock_request app2, "/world")
+        assert.same "hello", (select 2, simulate_request app2, "/hello")
+        assert.same "world", (select 2, simulate_request app2, "/world")
 
       it "includes class into instance", ->
         class Things extends lapis.Application
@@ -358,8 +358,8 @@ describe "lapis.application", ->
 
         app\include Things
 
-        assert.same "hello!", (select 2, mock_request app, "/hello")
-        assert.same "world!", (select 2, mock_request app, "/world")
+        assert.same "hello!", (select 2, simulate_request app, "/hello")
+        assert.same "world!", (select 2, simulate_request app, "/world")
 
         app2 = lapis.Application!
         app2.layout = false
@@ -367,8 +367,8 @@ describe "lapis.application", ->
 
         app2\include Things!
 
-        assert.same "hello!", (select 2, mock_request app2, "/hello")
-        assert.same "world!", (select 2, mock_request app2, "/world")
+        assert.same "hello!", (select 2, simulate_request app2, "/hello")
+        assert.same "world!", (select 2, simulate_request app2, "/world")
 
       it "includes an instance into a class", ->
         class Things extends lapis.Application
@@ -382,9 +382,9 @@ describe "lapis.application", ->
           @include things
           [whoa: "/whoa"]: => "whoa!!"
 
-        assert.same "hello!!", (select 2, mock_request Whoa, "/hello")
-        assert.same "world!!", (select 2, mock_request Whoa, "/world")
-        assert.same "whoa!!", (select 2, mock_request Whoa, "/whoa")
+        assert.same "hello!!", (select 2, simulate_request Whoa, "/hello")
+        assert.same "world!!", (select 2, simulate_request Whoa, "/world")
+        assert.same "whoa!!", (select 2, simulate_request Whoa, "/whoa")
 
   describe "default route", ->
     it "hits default route", ->
@@ -395,7 +395,7 @@ describe "lapis.application", ->
         default_route: =>
           res = "bingo!"
 
-      status, body = mock_request App, "/hello", {}
+      status, body = simulate_request App, "/hello", {}
       assert.same 200, status
       assert.same "bingo!", res
 
@@ -766,7 +766,7 @@ describe "lapis.application", ->
         error "I am an error!"
 
     it "renders default error page", ->
-      status, body, h = mock_request ErrorApp, "/", allow_error: true
+      status, body, h = simulate_request ErrorApp, "/", allow_error: true
       assert.same 500, status
       assert.truthy (body\match "I am an error")
 
@@ -774,7 +774,7 @@ describe "lapis.application", ->
       assert.truthy h["X-Lapis-Error"]
 
     it "renders default error page as json", ->
-      status, body, h = mock_request ErrorApp, "/", {
+      status, body, h = simulate_request ErrorApp, "/", {
         allow_error: true
         expect: "json"
         headers: {
@@ -795,7 +795,7 @@ describe "lapis.application", ->
 
     it "raises error in spec by default", ->
       assert.has_error ->
-        mock_request ErrorApp, "/"
+        simulate_request ErrorApp, "/"
 
     it "renders custom error page", ->
       class CustomErrorApp extends lapis.Application
@@ -806,7 +806,7 @@ describe "lapis.application", ->
         "/": =>
           error "I am an error!"
 
-      status, body, h = mock_request CustomErrorApp, "/", allow_error: true
+      status, body, h = simulate_request CustomErrorApp, "/", allow_error: true
       assert.same 444, status
       assert.same "hello world", body
 
@@ -832,7 +832,7 @@ describe "lapis.application", ->
           the_session = @session
           "ok"
 
-      mock_request A, "/"
+      simulate_request A, "/"
       assert.same {"cool"}, the_session
 
   -- should be requrest spec?

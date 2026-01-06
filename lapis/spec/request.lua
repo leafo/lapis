@@ -55,8 +55,8 @@ extract_cookies = function(response_headers)
   end
   return parsed_cookies
 end
-local mock_request
-mock_request = function(app_cls, url, opts)
+local simulate_request
+simulate_request = function(app_cls, url, opts)
   if opts == nil then
     opts = { }
   end
@@ -350,15 +350,15 @@ end
 local assert_request
 assert_request = function(...)
   local res = {
-    mock_request(...)
+    simulate_request(...)
   }
   if res[1] == 500 then
     assert(false, "Request failed: " .. res[2])
   end
   return unpack(res)
 end
-local mock_action
-mock_action = function(app_cls, url, opts, fn)
+local simulate_action
+simulate_action = function(app_cls, url, opts, fn)
   if type(url) == "function" and opts == nil then
     fn = url
     url = "/"
@@ -447,14 +447,16 @@ stub_request = function(app_cls, url, opts)
     _ = stub.req.headers
     return stub.req.request_uri
   end
-  mock_request(app, url, opts)
+  simulate_request(app, url, opts)
   return stub
 end
 return {
-  mock_request = mock_request,
+  simulate_request = simulate_request,
+  simulate_action = simulate_action,
   assert_request = assert_request,
-  normalize_headers = normalize_headers,
-  mock_action = mock_action,
   stub_request = stub_request,
-  extract_cookies = extract_cookies
+  normalize_headers = normalize_headers,
+  extract_cookies = extract_cookies,
+  mock_request = simulate_request,
+  mock_action = simulate_action
 }
