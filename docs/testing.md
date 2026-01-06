@@ -27,102 +27,7 @@ be using [Busted][].
 > responsibility to ensure you have enabled the test environment or you may
 > risk data loss in you development database.
 
-## Mocking a Request
-
-In order to test your application it should be a Lua module that can be
-`require`d without any side effects. Ideally you'll have a separate file for
-each application and you can get the application class just by loading the
-module.
-
-In these examples we'll define the application in the same file as the tests
-for simplicity.
-
-A request can be mocked using the `mock_request` function defined in
-`lapis.spec.request`:
-
-```lua
-local mock_request = require("lapis.spec.request").mock_request
-
-local status, body, headers = mock_request(app, url, options)
-```
-
-```moon
-import mock_request from require "lapis.spec.request"
-
-status, body, headers = mock_request(app, url, options)
-```
-
-For example, to test a basic application with [Busted][] we could do:
-
-```lua
-local lapis = require("lapis.application")
-local mock_request = require("lapis.spec.request").mock_request
-
-local app = lapis.Application()
-
-app:match("/hello", function(self)
-  return "welcome to my page"
-end)
-
-describe("my application", function()
-  it("should make a request", function()
-    local status, body = mock_request(app, "/hello")
-
-    assert.same(200, status)
-    assert.truthy(body:match("welcome"))
-  end)
-end)
-
-```
-
-```moon
-lapis = require "lapis"
-
-import mock_request from require "lapis.spec.request"
-
-class App extends lapis.Application
-  "/hello": => "welcome to my page"
-
-describe "my application", ->
-  it "should make a request", ->
-    status, body = mock_request App, "/hello"
-
-    assert.same 200, status
-    assert.truthy body\match "welcome"
-```
-
-`mock_request` simulates an `ngx` variable from the Lua Nginx module and
-executes the application. The `options` argument of `mock_request` can be used
-to control the kind of request that is simulated. It takes the following
-options in a table:
-
-* `get` --  A table of GET parameters to add to the url
-* `post` -- A table of POST parameters (sets default method to `"POST"`)
-* `method` -- The HTTP method to use (defaults to `"GET"`)
-* `headers` -- Additional HTTP request headers
-* `cookies` -- A table of cookies to insert into headers
-* `session` -- A session table to encode into the cookies
-* `host` -- The host the mocked server (defaults to `"localhost"`)
-* `port` -- The port of the mocked server (defaults to `80`)
-* `scheme` -- The scheme of the mocked server (defaults to `"http"`)
-* `prev` -- A table of the response headers from a previous `mock_request`
-* `allow_error` -- Don't automatically convert 500 server errors into Lua errors (defaults to `false`)
-
-If you want to simulate a series of requests that use persistant data like
-cookies or sessions you can use the `prev` option in the table. It takes the
-headers returned from a previous request.
-
-```lua
-local r1_status, r1_res, r1_headers = mock_request(my_app, "/first_url")
-local r2_status, r2_res = mock_request(my_app, "/second_url", { prev = r1_headers })
-```
-
-```moon
-r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
-r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
-```
-
-### Using the `test` Environment
+## Using the `test` Environment
 
 When using a supported testing tool, like [Busted][], Lapis will automatically
 detect that it is running within a test runner and change the default
@@ -142,7 +47,8 @@ class="for_lua">`config.lua`</span>:
 > Environments guide]($root/reference/configuration.html), and more about
 > setting up a database on the [Database guide]($root/reference/configuration.html).
 
-```lua
+$dual_code{
+lua = [[
 local config = require("lapis.config")
 
 -- other configuration ...
@@ -153,10 +59,8 @@ config("test", {
     database = "myapp_test"
   }
 })
-
-```
-
-```moon
+]],
+moon = [[
 -- config.moon
 config = require "lapis.config"
 
@@ -167,10 +71,148 @@ config "test", ->
     backend: "pgmoon"
     database: "myapp_test"
   }
-```
+]]
+}
 
 > Don't forget to initialize your test database by creating it and its schema
 > before running the tests.
+
+## Mocking a Request
+
+In order to test your application it should be a Lua module that can be
+`require`d without any side effects. Ideally you'll have a separate file for
+each application and you can get the application class just by loading the
+module.
+
+In these examples we'll define the application in the same file as the tests
+for simplicity.
+
+A request can be mocked using the `mock_request` function defined in
+`lapis.spec.request`:
+
+$dual_code{
+lua = [[
+local mock_request = require("lapis.spec.request").mock_request
+
+local status, body, headers = mock_request(app, url, options)
+]],
+moon = [[
+import mock_request from require "lapis.spec.request"
+
+status, body, headers = mock_request(app, url, options)
+]]
+}
+
+For example, to test a basic application with [Busted][] we could do:
+
+$dual_code{
+lua = [[
+local lapis = require("lapis.application")
+local mock_request = require("lapis.spec.request").mock_request
+
+local app = lapis.Application()
+
+app:match("/hello", function(self)
+  return "welcome to my page"
+end)
+
+describe("my application", function()
+  it("should make a request", function()
+    local status, body = mock_request(app, "/hello")
+
+    assert.same(200, status)
+    assert.truthy(body:match("welcome"))
+  end)
+end)
+]],
+moon = [[
+lapis = require "lapis"
+
+import mock_request from require "lapis.spec.request"
+
+class App extends lapis.Application
+  "/hello": => "welcome to my page"
+
+describe "my application", ->
+  it "should make a request", ->
+    status, body = mock_request App, "/hello"
+
+    assert.same 200, status
+    assert.truthy body\match "welcome"
+]]
+}
+
+`mock_request` simulates an `ngx` variable from the Lua Nginx module and
+executes the application. The `options` argument of `mock_request` can be used
+to control the kind of request that is simulated. It takes the following
+options in a table:
+
+$options_table{
+  {
+    name = "get",
+    description = "A table of GET parameters to add to the URL"
+  },
+  {
+    name = "post",
+    description = [[A table of POST parameters (sets default method to `"POST"`)]]
+  },
+  {
+    name = "method",
+    description = "The HTTP method to use",
+    default = [[`"GET"`]]
+  },
+  {
+    name = "headers",
+    description = "Additional HTTP request headers"
+  },
+  {
+    name = "cookies",
+    description = "A table of cookies to insert into headers"
+  },
+  {
+    name = "session",
+    description = "A session table to encode into the cookies"
+  },
+  {
+    name = "host",
+    description = "The host of the mocked server",
+    default = [[`"localhost"`]]
+  },
+  {
+    name = "port",
+    description = "The port of the mocked server",
+    default = "`80`"
+  },
+  {
+    name = "scheme",
+    description = "The scheme of the mocked server",
+    default = [[`"http"`]]
+  },
+  {
+    name = "prev",
+    description = "A table of the response headers from a previous `mock_request`"
+  },
+  {
+    name = "allow_error",
+    description = "Don't automatically convert 500 server errors into Lua errors",
+    default = "`false`"
+  }
+}
+
+If you want to simulate a series of requests that use persistant data like
+cookies or sessions you can use the `prev` option in the table. It takes the
+headers returned from a previous request.
+
+$dual_code{
+lua = [[
+local r1_status, r1_res, r1_headers = mock_request(my_app, "/first_url")
+local r2_status, r2_res = mock_request(my_app, "/second_url", { prev = r1_headers })
+]],
+moon = [[
+r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
+r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
+]]
+}
 
 ## Using the Test Server
 
@@ -202,24 +244,24 @@ change any code running in the server.
 The `use_test_server` function will ensure that the test server is running for
 the duration of the specs within the block:
 
-```lua
+$dual_code{
+lua = [[
 local use_test_server = require("lapis.spec").use_test_server
 
 describe("my site", function()
   use_test_server()
   -- write some tests that use the server here
 end)
-```
-
-
-```moon
+]],
+moon = [[
 import use_test_server from require "lapis.spec"
 
 describe "my_site", ->
   use_test_server!
 
   -- write some tests that use the server here
-```
+]]
+}
 
 The test server will either spawn a new Nginx if one isn't running, or it will
 take over your development server until `close_test_server` is called 
@@ -234,7 +276,8 @@ To make HTTP request to the test server you can use the helper function
 `request` found in `"lapis.spec.server"`. For example we might write a test to
 make sure `/` loads without errors:
 
-```lua
+$dual_code{
+lua = [[
 local request = require("lapis.spec.server").request
 local use_test_server = require("lapis.spec").use_test_server
 
@@ -246,9 +289,8 @@ describe("my site", function()
     assert.same(200, status)
   end)
 end)
-```
-
-```moon
+]],
+moon = [[
 import use_test_server from require "lapis.spec"
 import request from require "lapis.spec.server"
 
@@ -258,8 +300,8 @@ describe "my_site", ->
   it "should load /", ->
     status, body, headers = request "/"
     assert.same 200, status
-
-```
+]]
+}
 
 `path` is either a path or a full URL to request against the test server. If it
 is a full URL then the hostname of the URL is extracted and inserted as the
@@ -291,7 +333,8 @@ server that enables you to execute code within that process.
 The `exec` method will execute Lua code on the server.
 
 
-```lua
+$dual_code{
+lua = [[
 local get_current_server = require("lapis.spec.server").get_current_server
 local use_test_server = require("lapis.spec").use_test_server
 
@@ -305,9 +348,8 @@ describe("my site", function()
     ]])
   end)
 end)
-```
-
-```moon
+]],
+moon = [[
 import use_test_server from require "lapis.spec"
 import get_current_server from require "lapis.spec.server"
 
@@ -319,7 +361,8 @@ describe "my_site", ->
     server\exec [[
       require("myapp").some_variable = 100
     ]]
-```
+]]
+}
 
 ## Test Strategies
 
@@ -347,7 +390,38 @@ Because truncating tables is a common operation, Lapis provides a
 > will only run when the current environment is named `test`
 
 
-```moon
+$dual_code{
+lua = [[
+local truncate_tables = require("lapis.spec.db").truncate_tables
+
+describe("User profiles", function()
+  local Users = require("models").Users
+  local Profiles = require("models").Profiles
+
+  before_each(function()
+    truncate_tables(Users, Profiles)
+  end)
+
+  local user_counter = 0
+  local function user_factory()
+    user_counter = user_counter + 1
+    return Users:create({
+      login = "user-" .. user_counter
+    })
+  end
+
+  it("fetches or creates the user's profile", function()
+    local user1 = user_factory()
+    local user2 = user_factory()
+
+    user1:create_profile_if_necessary()
+
+    assert.truthy(user1:get_profile(), "user1 should have a profile")
+    assert.is_nil(user2:get_profile(), "user2 should not have a profile")
+  end)
+end)
+]],
+moon = [[
 import truncate_tables from require "lapis.spec.db"
 
 describe "User profiles", ->
@@ -372,7 +446,8 @@ describe "User profiles", ->
 
     assert.truthy user1\get_profile!, "user1 should have a profile"
     assert.nil user2\get_profile!, "user2 should not have a profile"
-```
+]]
+}
 
 Because some models might have *unique indexes* on certain fields, like `login`
 on the User model above, we can use the *counter* pattern to ensure that our
@@ -382,6 +457,42 @@ If you have many factories that you re-use across different test files, it can
 be helpful to put it into a separate module that you can `require` into your
 tests as needed.
 
+## Functions
+
+The following functions are available from `lapis.spec`:
+
+$dual_code{[[
+spec = require "lapis.spec"
+]]}
+
+### `running_in_test()`
+
+Returns the name of the test harness if the code is currently running within a
+test environment, otherwise returns `false`. This is used internally by Lapis
+to determine if the default environment should be `test` instead of
+`development`.
+
+Currently supports detection of [Busted][].
+
+$dual_code{
+lua = [[
+local spec = require("lapis.spec")
+
+if spec.running_in_test() then
+  print("Running in test: " .. spec.running_in_test())
+else
+  print("Not running in test")
+end
+]],
+moon = [[
+import running_in_test from require "lapis.spec"
+
+if running_in_test!
+  print "Running in test: #{running_in_test!}"
+else
+  print "Not running in test"
+]]
+}
 
  [Busted]: http://olivinelabs.com/busted/
 
