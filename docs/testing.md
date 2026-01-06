@@ -233,6 +233,13 @@ This is useful for testing code that needs a request object, such as:
 * [Flow objects]($root/reference/flows.html)
 * Methods like `url_for`, `build_url`, or accessing `session`/`cookies`
 
+> **Note on `ngx` availability:** Unlike `simulate_request`, which maintains a
+> mock `ngx` global throughout the request cycle, `stub_request` does not
+> provide an `ngx` global after it returns. The returned request object is
+> fully functional on its own, but any code that directly accesses `ngx.*` APIs
+> will fail. If you need to test code that uses `ngx` directly, use
+> `simulate_request` instead.
+
 $dual_code{
 lua = [[
 local stub_request = require("lapis.spec.request").stub_request
