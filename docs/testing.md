@@ -79,6 +79,15 @@ config "test", ->
 
 ## Mocking a Request
 
+This section covers functions from `lapis.spec.request` for testing your
+application by simulating requests without a real HTTP server.
+
+### `mock_request(app, url, options)`
+
+`mock_request` simulates a complete HTTP request to your application and
+returns the response. It's useful for testing route handlers and verifying the
+output of your application.
+
 In order to test your application it should be a Lua module that can be
 `require`d without any side effects. Ideally you'll have a separate file for
 each application and you can get the application class just by loading the
@@ -86,9 +95,6 @@ module.
 
 In these examples we'll define the application in the same file as the tests
 for simplicity.
-
-A request can be mocked using the `mock_request` function defined in
-`lapis.spec.request`:
 
 $dual_code{
 lua = [[
@@ -211,6 +217,110 @@ local r2_status, r2_res = mock_request(my_app, "/second_url", { prev = r1_header
 moon = [[
 r1_status, r1_res, r1_headers = mock_request MyApp!, "/first_url"
 r2_status, r2_res = mock_request MyApp!, "/second_url", prev: r1_headers
+]]
+}
+
+### `stub_request(app, url, options)`
+
+`stub_request` creates and returns a [Request object]($root/reference/actions.html#request-object) without
+executing the full request cycle. Unlike `mock_request` which returns
+status/body/headers, `stub_request` gives you direct access to the request
+object itself.
+
+This is useful for testing code that needs a request object, such as:
+
+* Helper functions that operate on requests
+* [Flow objects]($root/reference/flows.html)
+* Methods like `url_for`, `build_url`, or accessing `session`/`cookies`
+
+$dual_code{
+lua = [[
+local stub_request = require("lapis.spec.request").stub_request
+
+local req = stub_request(app, url, options)
+]],
+moon = [[
+import stub_request from require "lapis.spec.request"
+
+req = stub_request app, url, options
+]]
+}
+
+The returned request object has:
+
+* `params`, `GET`, `POST` -- Populated from the URL query string and POST body
+* `session`, `cookies` -- Accessible and functional
+* `url_for`, `build_url` -- Working URL generation methods
+* `req.method`, `req.headers`, `req.parsed_url` -- Request metadata
+
+`stub_request` accepts the same options as `mock_request`, plus one additional option:
+
+$options_table{
+  {
+    name = "params",
+    description = "A table of parameters to inject directly into the request's params (merged with GET/POST params)"
+  }
+}
+
+Here's an example of using `stub_request` to test a helper function:
+
+$dual_code{
+lua = [[
+local lapis = require("lapis")
+local stub_request = require("lapis.spec.request").stub_request
+
+local app = lapis.Application()
+
+app:match("user_profile", "/user/:id", function(self) end)
+
+describe("my helper", function()
+  it("generates correct URLs", function()
+    local req = stub_request(app, "/")
+    assert.same("/user/123", req:url_for("user_profile", {id = 123}))
+  end)
+
+  it("has access to params", function()
+    local req = stub_request(app, "/test", {
+      post = {name = "hello"},
+      params = {id = "5"}
+    })
+    assert.same("hello", req.params.name)
+    assert.same("5", req.params.id)
+  end)
+
+  it("has access to session", function()
+    local req = stub_request(app, "/", {
+      session = {user_id = 101}
+    })
+    assert.same(101, req.session.user_id)
+  end)
+end)
+]],
+moon = [[
+lapis = require "lapis"
+import stub_request from require "lapis.spec.request"
+
+class App extends lapis.Application
+  [user_profile: "/user/:id"]: =>
+
+describe "my helper", ->
+  it "generates correct URLs", ->
+    req = stub_request App, "/"
+    assert.same "/user/123", req\url_for "user_profile", id: 123
+
+  it "has access to params", ->
+    req = stub_request App, "/test", {
+      post: {name: "hello"}
+      params: {id: "5"}
+    }
+    assert.same "hello", req.params.name
+    assert.same "5", req.params.id
+
+  it "has access to session", ->
+    req = stub_request App, "/", {
+      session: {user_id: 101}
+    }
+    assert.same 101, req.session.user_id
 ]]
 }
 
