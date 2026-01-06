@@ -288,13 +288,26 @@ mock_action = (app_cls, url, opts, fn) ->
   assert_request A, url, opts
   unpack ret
 
--- creates a reuest object and returns it
+-- creates a request object and returns it
 stub_request = (app_cls, url="/", opts={}) ->
   local stub
 
   app = app_cls!
   app.dispatch = (req, res) =>
     stub = @.Request @, req, res
+    support = stub.__class.support
+    support.add_params stub, stub.req.params_get, "GET"
+    support.add_params stub, stub.req.params_post, "POST"
+    if opts.params
+      support.add_params stub, opts.params
+
+    -- eagerly resolve lazy req fields while ngx mock is still on stack
+    stub.req.parsed_url
+    stub.req.method
+    stub.req.scheme
+    stub.req.port
+    stub.req.headers
+    stub.req.request_uri
 
   mock_request app, url, opts
   stub

@@ -434,6 +434,18 @@ stub_request = function(app_cls, url, opts)
   local app = app_cls()
   app.dispatch = function(self, req, res)
     stub = self.Request(self, req, res)
+    local support = stub.__class.support
+    support.add_params(stub, stub.req.params_get, "GET")
+    support.add_params(stub, stub.req.params_post, "POST")
+    if opts.params then
+      support.add_params(stub, opts.params)
+    end
+    local _ = stub.req.parsed_url
+    _ = stub.req.method
+    _ = stub.req.scheme
+    _ = stub.req.port
+    _ = stub.req.headers
+    return stub.req.request_uri
   end
   mock_request(app, url, opts)
   return stub
