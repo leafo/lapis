@@ -277,6 +277,79 @@ describe "lapis.db.model", ->
       post\update user_id: db.raw "(case when false then 1234 else null end)"
       assert.same nil, post.user_id
 
+  describe "on_conflict", ->
+    it "creates with on_conflict do_nothing", ->
+      Likes\create_table!
+      -- First insert should succeed
+      like1 = Likes\create {
+        user_id: 1
+        post_id: 1
+        count: 5
+      }
+
+      assert.same 1, like1.user_id
+      assert.same 1, like1.post_id
+      assert.same 5, like1.count
+
+      -- Second insert with same primary key should be ignored
+      like2 = Likes\create {
+        user_id: 1
+        post_id: 1
+        count: 99
+      }, on_conflict: "do_nothing"
+
+      -- When conflict occurs, the returned object has the input values
+      -- but nothing was actually inserted
+      assert.same 1, like2.user_id
+      assert.same 1, like2.post_id
+      assert.same 99, like2.count
+
+      -- Verify only one row exists with original count
+      assert.same 1, Likes\count!
+      original = Likes\find 1, 1
+      assert.same 5, original.count
+
+    it "creates with on_conflict and returning *", ->
+      Likes\create_table!
+      -- First insert
+      Likes\create {
+        user_id: 1
+        post_id: 1
+        count: 5
+      }
+
+      -- Conflicting insert with returning * - should return nothing when conflict
+      like2 = Likes\create {
+        user_id: 1
+        post_id: 1
+        count: 99
+      }, on_conflict: "do_nothing", returning: "*"
+
+      -- Values come from input since RETURNING gives nothing on conflict
+      assert.same 1, like2.user_id
+      assert.same 1, like2.post_id
+
+      -- Verify only one row exists
+      assert.same 1, Likes\count!
+
+    it "creates successfully with on_conflict when no conflict", ->
+      Likes\create_table!
+      -- Insert with on_conflict should work normally when no conflict
+      like = Likes\create {
+        user_id: 1
+        post_id: 1
+        count: 10
+      }, on_conflict: "do_nothing"
+
+      assert.same 1, like.user_id
+      assert.same 1, like.post_id
+      assert.same 10, like.count
+
+      -- Verify row was inserted
+      assert.same 1, Likes\count!
+      found = Likes\find 1, 1
+      assert.same 10, found.count
+
   describe "delete", ->
     before_each ->
       Posts\create_table!

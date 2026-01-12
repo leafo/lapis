@@ -654,6 +654,58 @@ describe "lapis.db.sqlite", ->
         [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'Nanette' || 2, '2023-02-10 21:27:00') RETURNING *]]
       }, query_log
 
+    it "Model:create with on_conflict do_nothing", ->
+      -- First insert should succeed
+      m1 = MyNames\create {
+        name: "First"
+      }
+
+      assert.same 1, m1.id
+
+      -- Create a unique index on name for conflict testing
+      schema.create_index "my_names", "name", unique: true
+
+      -- Second insert with same name should be ignored
+      m2 = MyNames\create {
+        name: "First"
+      }, on_conflict: "do_nothing"
+
+      -- Values come from input
+      assert.same "First", m2.name
+
+      -- Only one row should exist
+      assert.same 1, MyNames\count!
+
+      assert.same {
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'First', '2023-02-10 21:27:00') RETURNING "id"]]
+        [[CREATE UNIQUE INDEX "my_names_name_idx" ON "my_names" ("name")]]
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'First', '2023-02-10 21:27:00') ON CONFLICT DO NOTHING RETURNING "id"]]
+        [[SELECT COUNT(*) AS c FROM "my_names" ]]
+      }, query_log
+
+    it "Model:create with on_conflict and returning *", ->
+      -- First insert
+      m1 = MyNames\create {
+        name: "Test"
+      }
+
+      schema.create_index "my_names", "name", unique: true
+
+      -- Conflicting insert with returning *
+      m2 = MyNames\create {
+        name: "Test"
+      }, on_conflict: "do_nothing", returning: "*"
+
+      -- Only one row should exist
+      assert.same 1, MyNames\count!
+
+      assert.same {
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'Test', '2023-02-10 21:27:00') RETURNING "id"]]
+        [[CREATE UNIQUE INDEX "my_names_name_idx" ON "my_names" ("name")]]
+        [[INSERT INTO "my_names" ("created_at", "name", "updated_at") VALUES ('2023-02-10 21:27:00', 'Test', '2023-02-10 21:27:00') ON CONFLICT DO NOTHING RETURNING *]]
+        [[SELECT COUNT(*) AS c FROM "my_names" ]]
+      }, query_log
+
     it "Model:update", ->
       -- handles when model no longer has record
       missing = MyNames\load { id: 99, name: "CowCat" }

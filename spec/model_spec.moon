@@ -424,6 +424,57 @@ describe "lapis.db.model", ->
       id: 101
     }, row1
 
+  it "should create model with on_conflict do_nothing", ->
+    mock_query "INSERT", { { id: 101 } }
+
+    class Things extends Model
+
+    thing = Things\create { color: "blue" }, on_conflict: "do_nothing"
+
+    assert.same { id: 101, color: "blue" }, thing
+
+    assert_queries {
+      [[INSERT INTO "things" ("color") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING "id"]]
+    }
+
+  it "should create model with on_conflict and returning", ->
+    mock_query "INSERT", { { id: 101, height: 55 } }
+
+    class Things extends Model
+
+    thing = Things\create { color: "blue" }, on_conflict: "do_nothing", returning: { "height" }
+
+    assert.same { id: 101, color: "blue", height: 55 }, thing
+
+    assert_queries {
+      [[INSERT INTO "things" ("color") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING "id", "height"]]
+    }
+
+  it "should create model with on_conflict and returning *", ->
+    mock_query "INSERT", { { id: 101, color: "gotya", other: "field" } }
+
+    class Things extends Model
+
+    thing = Things\create { color: "blue" }, on_conflict: "do_nothing", returning: "*"
+
+    assert.same { id: 101, color: "gotya", other: "field" }, thing
+
+    assert_queries {
+      [[INSERT INTO "things" ("color") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING *]]
+    }
+
+  it "should create timed model with on_conflict", ->
+    mock_query "INSERT", { { id: 101 } }
+
+    class TimedThings extends Model
+      @timestamp: true
+
+    thing = TimedThings\create { color: "blue" }, on_conflict: "do_nothing"
+
+    assert_queries {
+      [[INSERT INTO "timed_things" ("color", "created_at", "updated_at") VALUES ('blue', '2013-08-13 06:56:40', '2013-08-13 06:56:40') ON CONFLICT DO NOTHING RETURNING "id"]]
+    }
+
   it "should refresh model", ->
     class Things extends Model
     mock_query "SELECT", { { id: 123 } }

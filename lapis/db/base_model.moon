@@ -590,7 +590,17 @@ class BaseModel
         returning or= {@primary_keys!}
         table.insert returning, k
 
-    res = if returning
+    res = if opts and opts.on_conflict
+      -- use options table API when on_conflict is specified
+      insert_opts = { on_conflict: opts.on_conflict }
+      if return_all
+        insert_opts.returning = "*"
+      elseif returning
+        insert_opts.returning = returning
+      else
+        insert_opts.returning = { @primary_keys! }
+      @db.insert @table_name!, values, insert_opts
+    elseif returning
       @db.insert @table_name!, values, unpack returning
     else
       @db.insert @table_name!, values, @primary_keys!

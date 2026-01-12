@@ -1116,7 +1116,21 @@ do
       end
     end
     local res
-    if returning then
+    if opts and opts.on_conflict then
+      local insert_opts = {
+        on_conflict = opts.on_conflict
+      }
+      if return_all then
+        insert_opts.returning = "*"
+      elseif returning then
+        insert_opts.returning = returning
+      else
+        insert_opts.returning = {
+          self:primary_keys()
+        }
+      end
+      res = self.db.insert(self:table_name(), values, insert_opts)
+    elseif returning then
       res = self.db.insert(self:table_name(), values, unpack(returning))
     else
       res = self.db.insert(self:table_name(), values, self:primary_keys())
