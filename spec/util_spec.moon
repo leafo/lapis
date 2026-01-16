@@ -155,6 +155,28 @@ tests = {
     '{"nothing":null}'
   }
 
+  { -- encoding empty array with array_mt
+    ->
+      util.to_json {
+        items: setmetatable {}, json.array_mt
+      }
+    '{"items":[]}'
+  }
+
+  { -- encoding non-empty array with array_mt
+    ->
+      util.to_json {
+        items: setmetatable {1, 2, 3}, json.array_mt
+      }
+    '{"items":[1,2,3]}'
+  }
+
+  { -- encoding top-level empty array with array_mt
+    ->
+      util.to_json setmetatable({}, json.array_mt)
+    '[]'
+  }
+
   {
     ->
       util.build_url {
