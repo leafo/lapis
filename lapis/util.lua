@@ -249,13 +249,23 @@ json_encodable = function(obj, seen)
   if "table" == _exp_0 then
     if not (seen[obj]) then
       seen[obj] = true
-      local _tbl_0 = { }
-      for k, v in pairs(obj) do
-        if type(k) == "string" or type(k) == "number" then
-          _tbl_0[k] = json_encodable(v)
+      local o
+      do
+        local _tbl_0 = { }
+        for k, v in pairs(obj) do
+          if type(k) == "string" or type(k) == "number" then
+            _tbl_0[k] = json_encodable(v)
+          end
+        end
+        o = _tbl_0
+      end
+      do
+        local mt = getmetatable(obj)
+        if mt then
+          setmetatable(o, mt)
         end
       end
-      return _tbl_0
+      return o
     end
   elseif "userdata" == _exp_0 then
     return encodable_userdata[obj] and obj

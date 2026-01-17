@@ -211,7 +211,13 @@ json_encodable = (obj, seen={}) ->
     when "table"
       unless seen[obj]
         seen[obj] = true
-        { k, json_encodable(v) for k,v in pairs(obj) when type(k) == "string" or type(k) == "number" }
+        o = { k, json_encodable(v) for k,v in pairs(obj) when type(k) == "string" or type(k) == "number" }
+
+        -- keep metatables, like cjson.array_mt
+        if mt = getmetatable obj
+          setmetatable o, mt
+
+        o
     when "userdata"
       encodable_userdata[obj] and obj
     when "function", "thread"
