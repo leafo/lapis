@@ -1,6 +1,8 @@
 
 import setmetatable, getmetatable, tostring from _G
 
+local clause, is_clause
+
 class DBRaw
 raw = (val) -> setmetatable {tostring val}, DBRaw.__base
 is_raw = (val) -> getmetatable(val) == DBRaw.__base
@@ -17,6 +19,10 @@ class DBClause
       return opts.operator
 
     "AND"
+
+  __add: (other) =>
+    assert is_clause(other), "db.clause.__add: right operand must be a clause object"
+    clause { @, other }, operator: "OR"
 
 clause = (clause, opts) ->
   assert not getmetatable(clause), "db.clause: attempted to create clause from object that has metatable"

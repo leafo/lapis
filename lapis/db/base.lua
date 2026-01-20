@@ -3,6 +3,7 @@ do
   local _obj_0 = _G
   setmetatable, getmetatable, tostring = _obj_0.setmetatable, _obj_0.getmetatable, _obj_0.tostring
 end
+local clause, is_clause
 local DBRaw
 do
   local _class_0
@@ -73,6 +74,15 @@ do
         return opts.operator
       end
       return "AND"
+    end,
+    __add = function(self, other)
+      assert(is_clause(other), "db.clause.__add: right operand must be a clause object")
+      return clause({
+        self,
+        other
+      }, {
+        operator = "OR"
+      })
     end
   }
   _base_0.__index = _base_0
@@ -91,7 +101,6 @@ do
   _base_0.__class = _class_0
   DBClause = _class_0
 end
-local clause
 clause = function(clause, opts)
   assert(not getmetatable(clause), "db.clause: attempted to create clause from object that has metatable")
   return setmetatable({
@@ -99,7 +108,6 @@ clause = function(clause, opts)
     opts
   }, DBClause.__base)
 end
-local is_clause
 is_clause = function(val)
   return getmetatable(val) == DBClause.__base
 end

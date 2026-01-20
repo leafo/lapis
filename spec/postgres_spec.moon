@@ -920,6 +920,60 @@ describe "lapis.db.postgres", ->
         "db.encode_clause: passed an empty clause (use allow_empty: true to permit empty clause)"
       )
 
+    describe "+ operator", ->
+      it "combines two clauses with OR", ->
+        a = db.clause hello: "world"
+        b = db.clause { "not deleted" }
+        combined = a + b
+        assert.same '("hello" = \'world\') OR ((not deleted))', db.encode_clause combined
+
+      it "chains multiple clauses", ->
+        a = db.clause { "a" }
+        b = db.clause { "b" }
+        c = db.clause { "c" }
+        combined = a + b + c
+        assert.same '((a)) OR ((b)) OR ((c))', db.encode_clause combined
+
+      it "works with db.raw and db.NULL in clauses", ->
+        a = db.clause { status: db.raw "active" }
+        b = db.clause { deleted: db.NULL }
+        combined = a + b
+        assert.same '("status" = active) OR ("deleted" IS NULL)', db.encode_clause combined
+
+      it "works with db.list in clauses", ->
+        a = db.clause { id: db.list {1, 2, 3} }
+        b = db.clause { "archived" }
+        combined = a + b
+        assert.same '("id" IN (1, 2, 3)) OR ((archived))', db.encode_clause combined
+
+      it "errors when right operand is a plain table", ->
+        a = db.clause hello: "world"
+        assert.has_error(
+          -> a + { hello: "world" }
+          "db.clause.__add: right operand must be a clause object"
+        )
+
+      it "errors when right operand is a string", ->
+        a = db.clause hello: "world"
+        assert.has_error(
+          -> a + "not a clause"
+          "db.clause.__add: right operand must be a clause object"
+        )
+
+      it "errors when right operand is a number", ->
+        a = db.clause hello: "world"
+        assert.has_error(
+          -> a + 123
+          "db.clause.__add: right operand must be a clause object"
+        )
+
+      it "errors when right operand is nil", ->
+        a = db.clause hello: "world"
+        assert.has_error(
+          -> a + nil
+          "db.clause.__add: right operand must be a clause object"
+        )
+
   describe "encode_assigns", ->
     it "writes output to buffer", ->
       buffer = {"hello"}
