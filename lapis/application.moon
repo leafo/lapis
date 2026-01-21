@@ -157,7 +157,7 @@ class Application
       @router = nil
 
   -- dynamically create methods for common HTTP verbs
-  for meth in *{"get", "post", "delete", "put"}
+  for meth in *{"get", "post", "delete", "put", "patch", "head"}
     upper_meth = meth\upper!
 
     @__base[meth] = (route_name, path, handler) =>
