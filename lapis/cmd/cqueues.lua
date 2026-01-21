@@ -142,8 +142,9 @@ create_server = function(app_module, environment)
   local onstream
   local _exp_0 = config.code_cache
   if false == _exp_0 or "off" == _exp_0 then
-    local reset = module_reset()
+    local reset = nil
     onstream = function(self, stream)
+      reset = reset or module_reset()
       reset()
       local app
       if protected_call(stream, function()

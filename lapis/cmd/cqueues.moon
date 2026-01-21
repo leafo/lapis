@@ -90,8 +90,9 @@ create_server = (app_module, environment) ->
 
   onstream = switch config.code_cache
     when false, "off"
-      reset = module_reset!
+      reset = nil
       (stream) =>
+        reset or= module_reset!
         reset!
         local app
         if protected_call stream, -> app = load_app!
