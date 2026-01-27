@@ -59,6 +59,10 @@ simple = function(req, body)
 end
 local request
 request = function(url, str_body)
+  local _exp_0 = ngx.get_phase()
+  if "timer" == _exp_0 then
+    return require("lapis.nginx.resty_http").request(url, str_body)
+  end
   local ltn12 = require("ltn12")
   local config = lapis_config.get()
   local start_time
