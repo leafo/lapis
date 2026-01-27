@@ -9,6 +9,8 @@ describe "lapis.http", ->
       HTTP_POST: 2
       HTTP_PUT: 2
 
+      get_phase: -> "content"
+
       location: {
         capture: (_location, _options) ->
           location = _location
