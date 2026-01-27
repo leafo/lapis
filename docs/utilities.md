@@ -671,6 +671,26 @@ location /proxy {
 > This code ensures that the correct headers are set for the subrequest that is
 > created.
 
+#### Enabling SSL Verification
+
+By default, nginx's `proxy_pass` does not verify SSL certificates. To enable
+SSL verification, add the following directives to your `/proxy` location:
+
+```nginx
+location /proxy {
+  # ... existing configuration ...
+
+  proxy_ssl_verify on;
+  proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+}
+```
+
+The path to the CA certificates file varies by operating system:
+
+* Debian/Ubuntu/Gentoo/Arch Linux: `/etc/ssl/certs/ca-certificates.crt`
+* RHEL/CentOS/Fedora: `/etc/pki/tls/certs/ca-bundle.crt`
+* Alpine: `/etc/ssl/cert.pem`
+
 Additionally, in the nginx `location` that processes your Lapis requests, you
 need to define the `$_url` variable, which will hold the request URL.
 
