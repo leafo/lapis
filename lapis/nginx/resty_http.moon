@@ -1,13 +1,28 @@
 
 -- This implements a basic LuaSocket's http.request interface using lua-resty-http.
+-- Dependencies:
+--   luarocks install lua-resty-http
+--   luarocks install lua-resty-openssl
 --
 -- Usage:
 --   http = require "lapis.nginx.resty_http"
 --   body, status, headers = http.request("http://example.com")
+--
+-- From resty:
+--   resty --http-conf "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt; lua_ssl_verify_depth 2;" -e 'print(require("lapis.http").request("https://leafo.net"))'
 
 lapis_config = require "lapis.config"
 
 import increment_perf from require "lapis.nginx.context"
+
+-- convert ltn12 source to a function that resty.http can use without swalling up any error messages
+wrap_source = (source) ->
+  ->
+    chunk, err = source!
+    if err
+      ngx.log ngx.ERR, "source error: ", err
+      return nil
+    chunk
 
 ---Make an HTTP request using lua-resty-http
 ---@param url string|table URL string or request table with url, method, source, sink, headers fields
@@ -44,7 +59,7 @@ request = (url, str_body) ->
   res, err = httpc\request_uri req.url, {
     method: req.method
     headers: req.headers
-    body: req.source -- ltn12 source is compatible as body iterator; caller provides Content-Length header if needed
+    body: req.source and wrap_source req.source
     ssl_verify: true
   }
 

@@ -1,6 +1,17 @@
 local lapis_config = require("lapis.config")
 local increment_perf
 increment_perf = require("lapis.nginx.context").increment_perf
+local wrap_source
+wrap_source = function(source)
+  return function()
+    local chunk, err = source()
+    if err then
+      ngx.log(ngx.ERR, "source error: ", err)
+      return nil
+    end
+    return chunk
+  end
+end
 local request
 request = function(url, str_body)
   local http = require("resty.http")
@@ -30,7 +41,7 @@ request = function(url, str_body)
   local res, err = httpc:request_uri(req.url, {
     method = req.method,
     headers = req.headers,
-    body = req.source,
+    body = req.source and wrap_source(req.source),
     ssl_verify = true
   })
   if not (res) then
