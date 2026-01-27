@@ -98,6 +98,7 @@ build = {
     ["lapis.nginx.context"] = "lapis/nginx/context.lua",
     ["lapis.nginx.http"] = "lapis/nginx/http.lua",
     ["lapis.nginx.postgres"] = "lapis/nginx/postgres.lua",
+    ["lapis.nginx.resty_http"] = "lapis/nginx/resty_http.lua",
     ["lapis.request"] = "lapis/request.lua",
     ["lapis.router"] = "lapis/router.lua",
     ["lapis.server"] = "lapis/server.lua",
