@@ -590,7 +590,7 @@ The `lapis.http` module will attempt to select an HTTP client that works in the
 current server/environment. All of these modules should implement LuaSocket's
 `request` function interface. See: <https://lunarmodules.github.io/luasocket/http.html#request>
 
-* When using Nginx: `lapis.nginx.http`
+* When using Nginx: `lapis.nginx.http` (automatically uses `lapis.nginx.resty_http` in timer phases)
 * When using Cqueues/lua-http: `http.compat.socket`
 * Default: LuaSocket's `socket.http` (Note: `luasec` is required to perform HTTPS requests)
 
@@ -747,8 +747,11 @@ parameters of LuaSocket's request function.
 The `/proxy` location described above must exist in the same server block that
 is handling the original request for this function to work.
 
-> If you are looking for a more flexible HTTP client that is specific to Nginx,
-> look at <https://github.com/ledgetech/lua-resty-http>
+> Lapis also provides `lapis.nginx.resty_http`, an HTTP client built on
+> [lua-resty-http](https://github.com/ledgetech/lua-resty-http). It is
+> automatically used in timer phases (where `location.capture` doesn't work),
+> but can also be used directly. See [Using
+> lua-resty-http](#using-lua-resty-http) below for more details.
 
 **Parameters:**
 
@@ -772,6 +775,59 @@ Every successful HTTP request increments the following performance metrics in th
 
 - `http_count`: This metric counts the total number of HTTP requests.
 - `http_time`: This metric measures the total time taken for HTTP requests. It is calculated as the difference between the current time and the start time of the request.
+
+### Using lua-resty-http
+
+Lapis provides an HTTP client built on
+[lua-resty-http](https://github.com/ledgetech/lua-resty-http) in the
+`lapis.nginx.resty_http` module. It implements the same LuaSocket `http.request`
+interface as the other Lapis HTTP clients.
+
+This client is automatically used when making HTTP requests from timer phase
+contexts (`ngx.timer.*` callbacks), since nginx's `location.capture` doesn't
+work in those phases. You can also require and use it directly:
+
+```lua
+local http = require("lapis.nginx.resty_http")
+local body, status, headers = http.request("https://example.com")
+```
+
+**Key differences from proxy_pass approach:**
+
+- No `/proxy` location block needed in nginx config
+- SSL verification is enabled by default
+- Requires lua-resty-http and lua-resty-openssl dependencies
+
+**Dependencies:**
+
+```bash
+luarocks install lua-resty-http
+luarocks install lua-resty-openssl
+```
+
+#### Enabling HTTPS
+
+To make HTTPS requests, you must configure nginx with the path to your system's
+CA certificates. Add the following directives to your `http` block in
+`nginx.conf`:
+
+```nginx
+http {
+  lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+  lua_ssl_verify_depth 2;
+
+  # ... rest of your configuration
+}
+```
+
+The path to the CA certificates file varies by operating system (see the [SSL
+verification section above](#enabling-ssl-verification) for common paths).
+
+When using the `resty` CLI tool, pass these directives via `--http-conf`:
+
+```bash
+resty --http-conf "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt; lua_ssl_verify_depth 2;" -e 'print(require("lapis.nginx.resty_http").request("https://example.com"))'
+```
 
 ### `http.simple(req, body)`
 
