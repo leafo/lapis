@@ -44,12 +44,14 @@ cached = (fn_or_tbl) ->
   fn = fn_or_tbl
   exptime = 0
   dict_name = default_dict_name
+  use_host = false
   _cache_key = cache_key
   cond = nil
 
   if type(fn) == "table"
     exptime = fn.exptime or exptime
-    dict_name = fn.dict or dict_name
+    dict_name = fn.dict_name or dict_name
+    use_host = fn.use_host or use_host
     cond = fn.when
     _cache_key = fn.cache_key or _cache_key
 
@@ -59,7 +61,10 @@ cached = (fn_or_tbl) ->
     if (@req.method != "GET") or (cond and not cond @)
       return fn @
 
-    key = _cache_key @req.parsed_url.path, @GET, @
+    path = @req.parsed_url.path
+    path = @req.parsed_url.host .. @req.parsed_url.path if use_host
+
+    key = _cache_key path, @GET, @
     dict = get_dict dict_name, @
 
     unless dict
@@ -83,8 +88,9 @@ cached = (fn_or_tbl) ->
       @res.content
     }
 
-    dict\set key, json.encode(cache_response), exptime
-    ngx.header["x-memory-cache-save"] = "1"
+    if @res.status ~= 401
+      dict\set key, json.encode(cache_response), exptime
+      ngx.header["x-memory-cache-save"] = "1"
 
     -- reset the request
     @options = {}
