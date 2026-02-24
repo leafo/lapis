@@ -166,6 +166,7 @@ do
         do
           local _with_0 = r
           _with_0.route_name = name
+          _with_0.route_pattern = path
           support.add_params(r, r.req.params_get, "GET")
           support.add_params(r, r.req.params_post, "POST")
           support.add_params(r, params, "url_params")

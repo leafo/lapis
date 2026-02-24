@@ -637,6 +637,27 @@ describe "lapis.application", ->
       assert.has_error ->
         assert_request SomeApp, "/cool", method: "DELETE"
 
+    it "exposes matched route pattern on request", ->
+      local named_pattern, unnamed_pattern
+      local named_route_name, unnamed_route_name
+
+      class SomeApp extends lapis.Application
+        @match "named_user", "/user/:id", =>
+          named_pattern = @route_pattern
+          named_route_name = @route_name
+
+        @match "/post/:slug", =>
+          unnamed_pattern = @route_pattern
+          unnamed_route_name = @route_name
+
+      assert_request SomeApp, "/user/123"
+      assert.same "/user/:id", named_pattern
+      assert.same "named_user", named_route_name
+
+      assert_request SomeApp, "/post/hello-world"
+      assert.same "/post/:slug", unnamed_pattern
+      assert.same nil, unnamed_route_name
+
   describe "instancing", ->
     it "matchs a route", ->
       local res
@@ -886,5 +907,4 @@ describe "lapis.application", ->
       assert.same "http://leafo.net",
         mock_app "/hello", { host: "leaf", port: 2000 }, =>
           @build_url "http://leafo.net"
-
 

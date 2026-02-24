@@ -220,6 +220,7 @@ class Application
 
       with r
         .route_name = name
+        .route_pattern = path
 
         support.add_params r, r.req.params_get, "GET"
         support.add_params r, r.req.params_post, "POST"
@@ -491,4 +492,3 @@ json_params = (fn) ->
   :capture_errors, :capture_errors_json
   :json_params, :assert_error, :yield_error
 }
-

@@ -451,6 +451,14 @@ $options_table{
     ]]}
   },
   {
+    name = $self_ref{"route_pattern"},
+    description = "The route pattern string that was matched during routing, if available",
+    example = $dual_code{[[
+      app\match "my_page", "/my-page", =>
+        assert @route_pattern == "/my-page"
+    ]]}
+  },
+  {
     name = $self_ref{"params"},
     description = "A table containing all request parameters merged together, including query parameters and form-encoded parameters from the body of the request. See [Request Parameters](#request_parameters) for more details."
   },
