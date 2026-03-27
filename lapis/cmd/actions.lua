@@ -547,6 +547,10 @@ local COMMANDS = {
     name = "mcp",
     help = "Lapis MCP server runtime"
   }),
+  custom_action({
+    name = "exceptions",
+    help = "Manage tracked exceptions"
+  }),
   {
     name = "debug",
     hidden = true,
