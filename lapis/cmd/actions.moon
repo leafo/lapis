@@ -26,7 +26,7 @@ add_environment_argument = (command, summary) ->
 -- action, eg for lapis-annotate and lapis-systemd
 custom_action = (t) ->
   t.test_available = ->
-    pcall -> require "lapis.cmd.actions.#{t.name}"
+    package_searchpath "lapis.cmd.actions.#{t.name}", package.path
 
   t.argparse = (command) ->
     with command

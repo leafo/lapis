@@ -37,9 +37,7 @@ end
 local custom_action
 custom_action = function(t)
   t.test_available = function()
-    return pcall(function()
-      return require("lapis.cmd.actions." .. tostring(t.name))
-    end)
+    return package_searchpath("lapis.cmd.actions." .. tostring(t.name), package.path)
   end
   t.argparse = function(command)
     do
