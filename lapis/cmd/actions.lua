@@ -729,6 +729,26 @@ do
           self.default_action
         }
       end
+      local ok, result = parser:pparse(args)
+      if ok then
+        return result
+      end
+      local cmd_name = result:match("unknown command '(.-)'")
+      if cmd_name then
+        local mod_name = "lapis.cmd.actions." .. tostring(cmd_name)
+        if pcall(require, mod_name) then
+          local spec = custom_action({
+            name = cmd_name
+          })
+          table.insert(COMMANDS, spec)
+          local command = parser:command(cmd_name)
+          command:handle_options(false)
+          command:argument("sub_command_args", "Arguments to command"):argname("<args>"):args("*")
+          return parser:parse(args)
+        else
+          io.stderr:write("Note: tried to load command from module '" .. tostring(mod_name) .. "'\n")
+        end
+      end
       return parser:parse(args)
     end,
     execute = function(self, args)
