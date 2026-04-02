@@ -1,5 +1,5 @@
 
-import parse_flags from require "lapis.cmd.util"
+import parse_flags, package_searchpath from require "lapis.cmd.util"
 
 colors = require "ansicolors"
 
@@ -624,7 +624,7 @@ class CommandRunner
     cmd_name = result\match "unknown command '(.-)'"
     if cmd_name
       mod_name = "lapis.cmd.actions.#{cmd_name}"
-      if pcall require, mod_name
+      if package_searchpath mod_name, package.path
         spec = custom_action {name: cmd_name}
         table.insert COMMANDS, spec
 

@@ -81,4 +81,18 @@ parse_flags = (input) ->
 
   flags, filtered
 
-{ :columnize, :split, :get_free_port, :default_environment, :parse_flags }
+package_searchpath = package.searchpath or (name, path) ->
+  sep = package.config\sub 1, 1
+  name = name\gsub "%.", sep
+  errors = {}
+  for template in path\gmatch "[^;]+"
+    filepath = template\gsub "%?", name
+    f = io.open filepath, "r"
+    if f
+      f\close!
+      return filepath
+    table.insert errors, "no file '#{filepath}'"
+
+  nil, table.concat errors, "\n"
+
+{ :columnize, :split, :get_free_port, :default_environment, :parse_flags, :package_searchpath }

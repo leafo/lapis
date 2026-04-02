@@ -1,5 +1,8 @@
-local parse_flags
-parse_flags = require("lapis.cmd.util").parse_flags
+local parse_flags, package_searchpath
+do
+  local _obj_0 = require("lapis.cmd.util")
+  parse_flags, package_searchpath = _obj_0.parse_flags, _obj_0.package_searchpath
+end
 local colors = require("ansicolors")
 local unpack = unpack or table.unpack
 local default_language
@@ -736,7 +739,7 @@ do
       local cmd_name = result:match("unknown command '(.-)'")
       if cmd_name then
         local mod_name = "lapis.cmd.actions." .. tostring(cmd_name)
-        if pcall(require, mod_name) then
+        if package_searchpath(mod_name, package.path) then
           local spec = custom_action({
             name = cmd_name
           })

@@ -144,10 +144,26 @@ parse_flags = function(input)
   end
   return flags, filtered
 end
+local package_searchpath = package.searchpath or function(name, path)
+  local sep = package.config:sub(1, 1)
+  name = name:gsub("%.", sep)
+  local errors = { }
+  for template in path:gmatch("[^;]+") do
+    local filepath = template:gsub("%?", name)
+    local f = io.open(filepath, "r")
+    if f then
+      f:close()
+      return filepath
+    end
+    table.insert(errors, "no file '" .. tostring(filepath) .. "'")
+  end
+  return nil, table.concat(errors, "\n")
+end
 return {
   columnize = columnize,
   split = split,
   get_free_port = get_free_port,
   default_environment = default_environment,
-  parse_flags = parse_flags
+  parse_flags = parse_flags,
+  package_searchpath = package_searchpath
 }
