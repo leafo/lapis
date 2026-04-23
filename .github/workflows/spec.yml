@@ -39,7 +39,7 @@ jobs:
 
     - uses: leafo/gh-actions-luarocks@master
       with:
-        luarocksVersion: "3.12.2"
+        luarocksVersion: "3.13.0"
 
     - name: build
       run: |
