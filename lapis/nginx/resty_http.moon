@@ -49,6 +49,7 @@ request = (url, str_body) ->
       source: str_body and ltn12.source.string str_body
       headers: str_body and {
         "Content-type": "application/x-www-form-urlencoded"
+        "Content-Length": #str_body
       }
     }
 

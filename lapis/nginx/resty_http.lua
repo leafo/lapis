@@ -32,7 +32,8 @@ request = function(url, str_body)
       url = url,
       source = str_body and ltn12.source.string(str_body),
       headers = str_body and {
-        ["Content-type"] = "application/x-www-form-urlencoded"
+        ["Content-type"] = "application/x-www-form-urlencoded",
+        ["Content-Length"] = #str_body
       }
     }
   end
