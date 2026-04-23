@@ -745,6 +745,7 @@ do
       computed_source_key = true
     end
     local include_ids = { }
+    local has_list_source_key = false
     for _index_0 = 1, #other_records do
       local _continue_0 = false
       repeat
@@ -795,6 +796,7 @@ do
             break
           end
           if self.db.is_list(id) then
+            has_list_source_key = true
             local _list_0 = id[1]
             for _index_1 = 1, #_list_0 do
               local item = _list_0[_index_1]
@@ -862,6 +864,10 @@ do
         local res = self.db.select(query)
         if res then
           local records = { }
+          local ordered_records
+          if has_list_source_key then
+            ordered_records = { }
+          end
           for _index_0 = 1, #res do
             local t = res[_index_0]
             local row
@@ -888,6 +894,12 @@ do
                 if not (t_key) then
                   error("Model.include_in: query returnd a row that is missing the joining field (" .. tostring(tbl_name) .. ": " .. tostring(dest_key) .. ")")
                 end
+                if ordered_records then
+                  insert(ordered_records, {
+                    t_key,
+                    row
+                  })
+                end
                 if records[t_key] == nil then
                   records[t_key] = { }
                 end
@@ -897,7 +909,14 @@ do
               if composite_foreign_key then
                 _put(records, row, _fields(t, dest_key))
               else
-                records[t[dest_key]] = row
+                local t_key = t[dest_key]
+                if ordered_records then
+                  insert(ordered_records, {
+                    t_key,
+                    row
+                  })
+                end
+                records[t_key] = row
               end
             end
           end
@@ -936,11 +955,13 @@ do
                   do
                     local _accum_0 = { }
                     local _len_0 = 1
-                    for _index_1 = 1, #res do
+                    for _index_1 = 1, #ordered_records do
                       local _continue_0 = false
                       repeat
-                        local row = res[_index_1]
-                        if not (list_value_set[row[dest_key]]) then
+                        local _des_0 = ordered_records[_index_1]
+                        local t_key, row
+                        t_key, row = _des_0[1], _des_0[2]
+                        if not (list_value_set[t_key]) then
                           _continue_0 = true
                           break
                         end
@@ -957,12 +978,14 @@ do
                   end
                   other[field_name] = matched_results
                 else
-                  for _index_1 = 1, #res do
+                  for _index_1 = 1, #ordered_records do
                     local _continue_0 = false
                     repeat
                       do
-                        local row = res[_index_1]
-                        if not (list_value_set[row[dest_key]]) then
+                        local _des_0 = ordered_records[_index_1]
+                        local t_key, row
+                        t_key, row = _des_0[1], _des_0[2]
+                        if not (list_value_set[t_key]) then
                           _continue_0 = true
                           break
                         end

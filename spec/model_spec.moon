@@ -1296,6 +1296,29 @@ describe "lapis.db.model", ->
         { id: 50, name: "Item 50" }
       }, things[3].items
 
+    it "with computed list key and value option", ->
+      things = {
+        Things\load { id: 1, item_ids: {10, 20} }
+      }
+
+      mock_query "SELECT", {
+        { id: 10, name: "Item 10" }
+        { id: 20, name: "Item 20" }
+      }
+
+      Items\include_in things, {
+        id: (thing) -> db.list thing.item_ids
+      }, many: true, as: "items", value: (item) -> item.name
+
+      assert_queries {
+        [[SELECT * FROM "items" WHERE "id" IN (10, 20)]]
+      }
+
+      assert.same {
+        "Item 10"
+        "Item 20"
+      }, things[1].items
+
     it "with empty list", ->
       things = {
         Things\load { id: 1, item_ids: db.list {} }
@@ -1699,5 +1722,4 @@ describe "lapis.db.model", ->
 
       assert.same "itworks", Ones\get_relation_model "Twos"
       assert.same "definitelyworks", Ones\get_relation_model "Users"
-
 

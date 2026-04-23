@@ -340,6 +340,7 @@ class BaseModel
 
     include_ids = {} -- field value to match on model
     -- NOTE: when dealing with composite keys, db.list() tuples are put in this array
+    has_list_source_key = false
 
     for record in *other_records
       if skip_included
@@ -366,6 +367,7 @@ class BaseModel
 
         -- if the value is a list, then we want to select everything that matches
         if @db.is_list id
+          has_list_source_key = true
           for item in *id[1]
             table.insert include_ids, item
         else
@@ -422,6 +424,7 @@ class BaseModel
       if res = @db.select query
         -- holds all the fetched rows indexed by the dest_key (what was searched by)
         records = {}
+        ordered_records = {} if has_list_source_key
 
         for t in *res
           row = if load_rows
@@ -447,6 +450,8 @@ class BaseModel
               unless t_key
                 error "Model.include_in: query returnd a row that is missing the joining field (#{tbl_name}: #{dest_key})"
 
+              insert ordered_records, {t_key, row} if ordered_records
+
               if records[t_key] == nil
                 records[t_key] = {}
 
@@ -456,7 +461,9 @@ class BaseModel
             if composite_foreign_key
               _put records, row, _fields t, dest_key
             else
-              records[t[dest_key]] = row
+              t_key = t[dest_key]
+              insert ordered_records, {t_key, row} if ordered_records
+              records[t_key] = row
 
 
         -- load the rows into we feteched into the models
@@ -478,15 +485,15 @@ class BaseModel
               -- NOTE: we iterate through the the whole query result to keep the ordering across multiple values
               list_value_set = {k, true for k in *ref_value[1] when k != nil}
               if many
-                matched_results = for row in *res
-                  continue unless list_value_set[row[dest_key]]
+                matched_results = for {t_key, row} in *ordered_records
+                  continue unless list_value_set[t_key]
                   row
 
                 other[field_name] = matched_results
               else
                 -- take the first value found
-                for row in *res
-                  continue unless list_value_set[row[dest_key]]
+                for {t_key, row} in *ordered_records
+                  continue unless list_value_set[t_key]
                   other[field_name] = row
                   break
             else
