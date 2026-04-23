@@ -64,14 +64,17 @@ encode_query_string = function(t, sep)
   local _escape = ngx and ngx.escape_uri or escape
   local i = 0
   local buf = { }
-  for k, v in pairs(t) do
+  for key, value in pairs(t) do
     local _continue_0 = false
     repeat
-      if type(k) == "number" and type(v) == "table" then
-        k, v = v[1], v[2]
+      local k, v
+      if type(key) == "number" and type(value) == "table" then
+        k, v = value[1], value[2]
         if v == nil then
           v = true
         end
+      else
+        k, v = key, value
       end
       if v == false then
         _continue_0 = true

@@ -68,10 +68,13 @@ encode_query_string = (t, sep="&") ->
 
   i = 0
   buf = {}
-  for k,v in pairs t
-    if type(k) == "number" and type(v) == "table"
-      {k,v} = v
+  for key, value in pairs t
+    local k, v
+    if type(key) == "number" and type(value) == "table"
+      {k, v} = value
       v = true if v == nil -- symmetrical with parse
+    else
+      k, v = key, value
 
     if v == false
       continue
