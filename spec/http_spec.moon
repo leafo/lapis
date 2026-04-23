@@ -1,8 +1,11 @@
 
 describe "lapis.http", ->
   local location, options
+  local original_resty_http
 
   before_each ->
+    original_resty_http = package.loaded["resty.http"]
+
     stack = require "lapis.spec.stack"
     stack.push {
       HTTP_GET: 1
@@ -22,6 +25,7 @@ describe "lapis.http", ->
   after_each ->
     stack = require "lapis.spec.stack"
     stack.pop!
+    package.loaded["resty.http"] = original_resty_http
 
   describe "simple", ->
     local simple
@@ -122,3 +126,28 @@ describe "lapis.http", ->
         }
       }, options
 
+    it "should set content length for timer post body", ->
+      local resty_options
+
+      package.loaded["resty.http"] = {
+        new: ->
+          {
+            request_uri: (_, _url, _options) ->
+              resty_options = _options
+              {
+                body: "ok"
+                status: 200
+                headers: {}
+              }
+          }
+      }
+
+      ngx.get_phase = -> "timer"
+
+      body, status = request "http://leafo.net", "gold coins"
+
+      assert.same "ok", body
+      assert.same 200, status
+      assert.same "application/x-www-form-urlencoded", resty_options.headers["Content-type"]
+      assert.same 10, resty_options.headers["Content-Length"]
+      assert.same "function", type resty_options.body
