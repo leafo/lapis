@@ -125,18 +125,21 @@ describe "lapis.cmd.actions", ->
 
     stub(os, "exit").invokes (status) ->
       exit_status = status
-      coroutine.yield "os.exit"
+      error "os.exit"
 
     output = {}
 
     s_print = stub(_G, "print").invokes (...) ->
       table.insert output, table.concat {...}, "\t"
 
-    assert.same "os.exit", coroutine.wrap(-> execute {"help"})!
+    success, err = pcall -> execute {"help"}
     print\revert!
+    os.exit\revert!
 
     output = table.concat output, "\n"
 
+    assert.falsy success
+    assert.truthy err\match "os.exit"
     assert.same 0, exit_status
     assert output\match "Options:"
 
@@ -200,10 +203,11 @@ describe "lapis.cmd.actions.execute", ->
       assert.same "wow", res.environment
 
     it "fails with double env", ->
-      assert.has_error(
-        -> cmd.execute { "--environment=umm", "debug", "wow" }
-        "You tried to set the environment twice. Use either --environment or the environment argument, not both"
-      )
+      expected = "You tried to set the environment twice. Use either --environment or the environment argument, not both"
+      success, err = pcall -> cmd.execute { "--environment=umm", "debug", "wow" }
+
+      assert.falsy success
+      assert.truthy err\find expected, 1, true
 
   describe "new", ->
     before_each ->
@@ -338,4 +342,3 @@ describe "lapis.cmd.util", ->
       "new"
       "dad"
     }, args
-
