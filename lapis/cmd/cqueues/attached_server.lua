@@ -25,9 +25,7 @@ do
           overrides = nil
         end
         push(env, overrides)
-        local config = require("lapis.config").get()
-        local app_module = config.app_class or "app"
-        return start_server(app_module)
+        return start_server(require("lapis.config").get_app_module())
       end, env, to_json(overrides or { })))
       return self:wait_until_ready()
     end,

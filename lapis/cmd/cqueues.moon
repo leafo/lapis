@@ -69,18 +69,9 @@ create_server = (app_module, environment) ->
   config = require("lapis.config").get!
 
   import dispatch, protected_call from require "lapis.cqueues"
+  import load_app from require "lapis"
 
-  load_app = ->
-    app_cls = if type(app_module) == "string"
-      require(app_module)
-    else
-      app_module
-
-    if app_cls.__base -- is a class
-      app_cls!
-    else
-      app_cls\build_router!
-      app_cls
+  load_current_app = -> load_app app_module
 
   -- WARNING: https://github.com/daurnimator/lua-http/issues/204
   -- There is a bug in lua-http where if an error is thrown before the stream
@@ -94,17 +85,17 @@ create_server = (app_module, environment) ->
       (stream) =>
         reset!
         local app
-        if protected_call stream, -> app = load_app!
+        if protected_call stream, -> app = load_current_app!
           dispatch app, @, stream
     when "app_only"
       (stream) =>
         stream\get_headers!
         local app
-        if protected_call stream, -> app = load_app!
-          app = load_app!
+        if protected_call stream, -> app = load_current_app!
+          app = load_current_app!
         dispatch app, @, stream
     else
-      app = load_app!
+      app = load_current_app!
       (stream) => dispatch app, @, stream
 
   -- If this is called then we let an error escape, likely a bug in Lapis. This

@@ -19,9 +19,7 @@ unpack = unpack or table.unpack
 
     push environment
 
-    config = require("lapis.config").get!
-    app_module = config.app_class or "app"
-    start_server app_module
+    start_server require("lapis.config").get_app_module!
 
     pop!
 }

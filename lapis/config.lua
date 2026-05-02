@@ -1,7 +1,7 @@
 local insert
 insert = table.insert
 local CONFIG_MODULE = package.loaded["lapis.config_module_name"] or "config"
-local config_cache, configs, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get
+local config_cache, configs, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get, get_app_module
 config_cache = { }
 configs = { }
 default_config = {
@@ -172,8 +172,12 @@ do
     return conf
   end
 end
+get_app_module = function(override)
+  return override or get().default_app_module or "app"
+end
 return setmetatable({
   get = get,
+  get_app_module = get_app_module,
   config = config,
   merge_set = merge_set,
   default_config = default_config,

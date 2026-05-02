@@ -9,7 +9,7 @@ version = require "lapis.version"
 describe "server", ->
   setup ->
     server\load_test_server {
-      app_class: "spec_cqueues.s1.app"
+      default_app_module: "spec_cqueues.s1.app"
     }
 
   teardown ->

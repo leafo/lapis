@@ -349,7 +349,7 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:argument("path", "Path to request, may include query parameters (eg. /)")
-        _with_0:option("--app-class", "Override default app class module name")
+        _with_0:option("--app-module --app-class", "Override default app module name")
         _with_0:option("--helper", "Module name to require before loading app")
         _with_0:group("Request control", _with_0:option("--method", "HTTP method"):choices({
           "GET",
@@ -371,9 +371,7 @@ local COMMANDS = {
       if args.helper then
         require(args.helper)
       end
-      local config = require("lapis.config").get()
-      local app_module = args.app_class or config.app_class or "app"
-      local app_cls = require(app_module or config.app_class)
+      local app_cls = require(require("lapis.config").get_app_module(args.app_module))
       local simulate_request
       simulate_request = require("lapis.spec.request").simulate_request
       local input_headers, input_cookies

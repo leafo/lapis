@@ -26,9 +26,7 @@ return {
     local start_server
     start_server = require("lapis.cmd.cqueues").start_server
     push(environment)
-    local config = require("lapis.config").get()
-    local app_module = config.app_class or "app"
-    start_server(app_module)
+    start_server(require("lapis.config").get_app_module())
     return pop()
   end
 }

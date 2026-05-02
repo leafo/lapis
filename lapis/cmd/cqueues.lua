@@ -125,19 +125,10 @@ create_server = function(app_module, environment)
     dispatch, protected_call = _obj_0.dispatch, _obj_0.protected_call
   end
   local load_app
-  load_app = function()
-    local app_cls
-    if type(app_module) == "string" then
-      app_cls = require(app_module)
-    else
-      app_cls = app_module
-    end
-    if app_cls.__base then
-      return app_cls()
-    else
-      app_cls:build_router()
-      return app_cls
-    end
+  load_app = require("lapis").load_app
+  local load_current_app
+  load_current_app = function()
+    return load_app(app_module)
   end
   local onstream
   local _exp_0 = config.code_cache
@@ -147,7 +138,7 @@ create_server = function(app_module, environment)
       reset()
       local app
       if protected_call(stream, function()
-        app = load_app()
+        app = load_current_app()
       end) then
         return dispatch(app, self, stream)
       end
@@ -157,14 +148,14 @@ create_server = function(app_module, environment)
       stream:get_headers()
       local app
       if protected_call(stream, function()
-        app = load_app()
+        app = load_current_app()
       end) then
-        app = load_app()
+        app = load_current_app()
       end
       return dispatch(app, self, stream)
     end
   else
-    local app = load_app()
+    local app = load_current_app()
     onstream = function(self, stream)
       return dispatch(app, self, stream)
     end

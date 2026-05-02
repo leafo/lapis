@@ -300,7 +300,7 @@ COMMANDS = {
     argparse: (command) ->
       with command
         \argument "path", "Path to request, may include query parameters (eg. /)"
-        \option("--app-class", "Override default app class module name")
+        \option("--app-module --app-class", "Override default app module name")
         \option("--helper", "Module name to require before loading app")
 
         \group("Request control"
@@ -326,9 +326,7 @@ COMMANDS = {
       if args.helper
         require args.helper
 
-      config = require("lapis.config").get!
-      app_module = args.app_class or config.app_class or "app"
-      app_cls = require app_module or config.app_class
+      app_cls = require require("lapis.config").get_app_module args.app_module
 
       import simulate_request from require "lapis.spec.request"
 

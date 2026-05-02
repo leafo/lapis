@@ -152,8 +152,14 @@ get = do
     config_cache[name] = conf
     conf
 
+---Resolve the application module name. Falls back to `config.default_app_module`, then "app".
+---@param override? string Explicit module name to use, bypassing config
+---@return string
+get_app_module = (override) ->
+  override or get!.default_app_module or "app"
+
 setmetatable {
-  :get, :config, :merge_set, :default_config, :reset
+  :get, :get_app_module, :config, :merge_set, :default_config, :reset
 }, {
   __call: (...) => config ...
 }
