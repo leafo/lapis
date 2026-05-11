@@ -865,7 +865,7 @@ of the `lapis.db.schema` module.
 
 ### Creating and Dropping Tables
 
-#### `create_table(table_name, { table_declarations... })`
+#### `create_table(table_name, { table_declarations... }, opt)`
 
 The first argument to `create_table` is the name of the table and the second
 argument is an array table that describes the table.
@@ -880,7 +880,7 @@ schema.create_table("users", {
   {"username", types.varchar},
 
   "PRIMARY KEY (id)"
-})
+}, { if_not_exists  = true} )
 ```
 
 ```moon
@@ -893,7 +893,7 @@ create_table "users", {
   {"username", types.varchar}
 
   "PRIMARY KEY (id)"
-}
+}, {if_not_exists: true}
 ```
 
 > In MySQL you should use `types.id` to get an autoincrementing primary key ID.
