@@ -424,6 +424,43 @@ describe "lapis.db.model", ->
       id: 101
     }, row1
 
+  it "creates model with on_conflict do_nothing", ->
+    mock_query "INSERT", { { id: 101 } }
+
+    class Hi extends Model
+    row = Hi\create { color: "blue" }, on_conflict: "do_nothing"
+
+    assert.same { id: 101, color: "blue" }, row
+
+    assert_queries {
+      [[INSERT INTO "hi" ("color") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING "id"]]
+    }
+
+  it "returns nil when on_conflict do_nothing skips insert", ->
+    mock_query "INSERT", {}
+
+    class Hi extends Model
+    row, err = Hi\create { color: "blue" }, on_conflict: "do_nothing"
+
+    assert.nil row
+    assert.nil err
+
+    assert_queries {
+      [[INSERT INTO "hi" ("color") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING "id"]]
+    }
+
+  it "combines on_conflict with returning *", ->
+    mock_query "INSERT", { { id: 101, color: "gotya" } }
+
+    class Hi extends Model
+    row = Hi\create { color: "blue" }, on_conflict: "do_nothing", returning: "*"
+
+    assert.same { id: 101, color: "gotya" }, row
+
+    assert_queries {
+      [[INSERT INTO "hi" ("color") VALUES ('blue') ON CONFLICT DO NOTHING RETURNING *]]
+    }
+
   it "should refresh model", ->
     class Things extends Model
     mock_query "SELECT", { { id: 123 } }

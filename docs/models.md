@@ -435,6 +435,16 @@ $options_table{
         profile_color: "blue"
       }, returning: "*"
     ]]}
+  },
+  {
+    name = "on_conflict",
+    description = 'Controls how the insert handles conflicts. Currently only `"do_nothing"` is supported, which appends `ON CONFLICT DO NOTHING` to the insert. When a conflict causes the row to not be inserted, `create` returns `nil` (with no error message). Only supported on PostgreSQL and SQLite.',
+    example = dual_code{[[
+      Users\create {
+        id: 1
+        profile_color: "blue"
+      }, on_conflict: "do_nothing"
+    ]]}
   }
 }
 

@@ -597,12 +597,17 @@ class BaseModel
         returning or= {@primary_keys!}
         table.insert returning, k
 
-    res = if returning
+    on_conflict = opts and opts.on_conflict
+
+    res = if on_conflict
+      returning or= {@primary_keys!}
+      @db.insert @table_name!, values, :on_conflict, :returning
+    elseif returning
       @db.insert @table_name!, values, unpack returning
     else
       @db.insert @table_name!, values, @primary_keys!
 
-    if res
+    if res and res[1]
       if returning and not return_all
         for k in *returning
           values[k] = res[1][k]
@@ -615,6 +620,9 @@ class BaseModel
           values[k] = nil
 
       @load values
+    elseif on_conflict
+      -- conflict caused row to not be inserted, no values to return
+      nil
     else
       nil, "Failed to create #{@__name}"
 

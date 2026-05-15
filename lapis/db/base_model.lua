@@ -1138,13 +1138,22 @@ do
         break
       end
     end
+    local on_conflict = opts and opts.on_conflict
     local res
-    if returning then
+    if on_conflict then
+      returning = returning or {
+        self:primary_keys()
+      }
+      res = self.db.insert(self:table_name(), values, {
+        on_conflict = on_conflict,
+        returning = returning
+      })
+    elseif returning then
       res = self.db.insert(self:table_name(), values, unpack(returning))
     else
       res = self.db.insert(self:table_name(), values, self:primary_keys())
     end
-    if res then
+    if res and res[1] then
       if returning and not return_all then
         for _index_0 = 1, #returning do
           local k = returning[_index_0]
@@ -1160,6 +1169,8 @@ do
         end
       end
       return self:load(values)
+    elseif on_conflict then
+      return nil
     else
       return nil, "Failed to create " .. tostring(self.__name)
     end
