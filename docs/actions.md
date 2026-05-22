@@ -284,54 +284,9 @@ class App extends lapis.Application
 ]]
 }
 
-`respond_to` can also take a before filter of its own that will run before the
-corresponding HTTP verb action. We do this by specifying a `before` function.
-The same semantics of [before filters](#before-filters) apply, so if you call
-<span class="for_moon">`@write`</span><span
-class="for_lua">`self:write()`</span> then the rest of the action will not get
-run.
-
-$dual_code{
-lua = [[
-local lapis = require("lapis")
-local respond_to = require("lapis.application").respond_to
-local app = lapis.Application()
-
-app:match("edit_user", "/edit-user/:id", respond_to({
-  before = function(self)
-    self.user = Users:find(self.params.id)
-    if not self.user then
-      self:write({"Not Found", status = 404})
-    end
-  end,
-  GET = function(self)
-    return "Edit account " .. self.user.name
-  end,
-  POST = function(self)
-    self.user:update(self.params.user)
-    return { redirect_to = self:url_for("index") }
-  end
-}))
-]],
-moon = [[
-lapis = require "lapis"
-import respond_to from require "lapis.application"
-
-class App extends lapis.Application
-  "/edit_user/:id": respond_to {
-    before: =>
-      @user = Users\find @params.id
-      @write status: 404, "Not Found" unless @user
-
-    GET: =>
-      "Edit account #{@user.name}..."
-
-    POST: =>
-      @user\update @params.user
-      redirect_to: @url_for "index"
-  }
-]]
-}
+Beyond the HTTP verbs, the table passed to `respond_to` can include special
+keys like `before`, `on_error`, and `on_invalid_method`. See the [`respond_to`
+reference](utilities.html#application-helpers) for the full set of options.
 
 On any `POST` request, regardless of whether `respond_to` is used or not, if
 the `Content-type` header is set to `application/x-www-form-urlencoded` then

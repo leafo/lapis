@@ -1082,13 +1082,67 @@ application = require "lapis.application"
 
 ### `respond_to(verbs_to_fn={})`
 
-`verbs_to_fn` is a table of functions that maps a HTTP verb to a corresponding
-function. Returns a new function that dispatches to the correct function in the
-table based on the verb of the request. See
-[Handling HTTP verbs][1]
+`verbs_to_fn` is a table that maps an HTTP verb (e.g. `GET`, `POST`, `DELETE`,
+`PUT`) to the function to run for that verb. Returns a new action function that,
+when called, dispatches to the entry in the table matching the request's verb.
+See [Handling HTTP verbs][1] for a usage guide.
 
-If an action for `HEAD` does not exist Lapis inserts the following function to
-render nothing:
+```lua
+local respond_to = require("lapis.application").respond_to
+
+app:match("/edit-user/:id", respond_to({
+  before = function(self)
+    self.user = Users:find(self.params.id)
+    if not self.user then
+      self:write({"Not Found", status = 404})
+    end
+  end,
+  GET = function(self)
+    return { render = true }
+  end,
+  POST = function(self)
+    self.user:update(self.params.user)
+    return { redirect_to = self:url_for("index") }
+  end
+}))
+```
+
+```moon
+import respond_to from require "lapis.application"
+
+class App extends lapis.Application
+  "/edit-user/:id": respond_to {
+    before: =>
+      @user = Users\find @params.id
+      @write status: 404, "Not Found" unless @user
+
+    GET: => render: true
+
+    POST: =>
+      @user\update @params.user
+      redirect_to: @url_for "index"
+  }
+```
+
+In addition to HTTP verbs, the following special keys can be included in
+`verbs_to_fn` to control the behavior of the generated action:
+
+$options_table{
+  {
+    name = "before",
+    description = "A function run before the verb's action function. The same semantics as [before filters](actions.html#before-filters) apply: if `write` is called inside the `before` function then the verb's action will not be run."
+  },
+  {
+    name = "on_error",
+    description = "An error handler function. When provided, the action (and the `before` filter) is wrapped in `capture_errors` using this function as the error handler. Errors raised by `yield_error` or `assert_error` populate `self.errors` and cause `on_error` to be called instead of the verb's action."
+  },
+  {
+    name = "on_invalid_method",
+    description = "A function called with the request object when the request uses a verb that has no entry in the table. If not provided, the default behavior is to call Lua's `error` function, which generates a 500 page."
+  }
+}
+
+If an action for `HEAD` is not provided, Lapis inserts one that renders nothing:
 
 ```lua
 function() return { layout = false } end
@@ -1097,14 +1151,6 @@ function() return { layout = false } end
 ```moon
 -> { layout: false }
 ```
-
-If the request is a verb that is not handled then the Lua `error` function
-is called and a 500 page is generated.
-
-A special `before` key can be set to a function that should run before any
-other action. If <span class="for_moon">`@write`</span><span
-class="for_lua">`self.write`</span> is called inside the before function then
-the regular handler will not be called.
 
 ### `capture_errors(fn_or_tbl)`
 
