@@ -241,7 +241,9 @@ Once the server is started, you can use the `lapis term` command from your
 command line to stop the server.
 
 If you're deploying new code, then you can hot-reload the code without any
-downtime using the `lapis build` command.
+downtime using the `lapis build` command. Before reloading, `lapis build`
+validates the new config with `nginx -t` and refuses to reload if it's invalid,
+so a broken config can't be silently swallowed by the running server.
 
 ## How do I disable the stack trace on the error page?
 

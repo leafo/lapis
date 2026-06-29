@@ -126,14 +126,26 @@ COMMANDS = {
 
     argparse: (command) ->
       add_environment_argument command
+      command\flag "--test-config", "Validate the compiled config with nginx -t, even when no server is running to reload"
 
     (flags) =>
-      import write_config_for from require "lapis.cmd.nginx"
+      import write_config_for, test_config, send_hup, get_pid from require "lapis.cmd.nginx"
       write_config_for flags.environment
 
-      import send_hup from require "lapis.cmd.nginx"
-      pid = send_hup!
-      print colors "%{green}HUP #{pid}" if pid
+      pid = get_pid!
+
+      -- validate the freshly built config before reloading a running server, so a
+      -- broken config is caught here instead of being silently ignored on HUP.
+      -- --test-config forces the check even when there's no server to reload
+      if pid or flags.test_config
+        unless test_config!
+          @fail_with_message "nginx config test failed (see nginx output above)"
+
+      -- only reload when a server is actually running, otherwise there's nothing
+      -- to HUP and the new config will be picked up on next start
+      if pid
+        hup_pid = send_hup!
+        print colors "%{green}HUP #{hup_pid}" if hup_pid
   }
 
   {
@@ -143,12 +155,16 @@ COMMANDS = {
     context: { "nginx" }
 
     =>
-      import send_hup from require "lapis.cmd.nginx"
-      pid = send_hup!
-      if pid
-        print colors "%{green}HUP #{pid}"
-      else
+      import test_config, send_hup, get_pid from require "lapis.cmd.nginx"
+
+      unless get_pid!
         @fail_with_message "failed to find nginx process"
+
+      unless test_config!
+        @fail_with_message "nginx config test failed, not reloading server (see nginx output above)"
+
+      pid = send_hup!
+      print colors "%{green}HUP #{pid}"
   }
 
   {

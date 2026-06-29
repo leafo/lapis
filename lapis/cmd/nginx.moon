@@ -44,20 +44,41 @@ class NginxRunner
     for k in *{"config_path", "config_path_etlua", "compiled_config_path"}
       @[k] = path.join @base_path, @@.__base[k]
 
-  start_nginx: (background=false) =>
-    nginx = @find_nginx!
-    return nil, "can't find nginx" unless nginx
-
-    path.mkdir path.join @base_path, "logs"
-    @exec "touch '#{shell_escape path.join @base_path, "logs/error.log"}'"
-    @exec "touch '#{shell_escape path.join @base_path, "logs/access.log"}'"
-
-    root = if @base_path\match "^/"
+  -- the -p prefix argument passed to nginx, accounting for relative base paths
+  nginx_prefix: =>
+    if @base_path\match "^/"
       "'#{shell_escape @base_path}'"
     else
       '"$(pwd)"/' .. "'#{shell_escape @base_path}'"
 
-    cmd = nginx .. " -p #{root} -c '#{shell_escape path.filename @compiled_config_path}'"
+  -- create the logs directory and log files nginx expects to exist. nginx (even
+  -- nginx -t) will refuse to start if the pid/log paths' directory is missing
+  prepare_runtime: =>
+    path.mkdir path.join @base_path, "logs"
+    @exec "touch '#{shell_escape path.join @base_path, "logs/error.log"}'"
+    @exec "touch '#{shell_escape path.join @base_path, "logs/access.log"}'"
+
+  -- run nginx -t to validate the compiled config, returns true if valid. The
+  -- output of nginx (including any error) is left on stderr for the user to see
+  test_config: =>
+    nginx = @find_nginx!
+    return nil, "can't find nginx" unless nginx
+
+    @prepare_runtime!
+
+    cmd = nginx .. " -t -p #{@nginx_prefix!} -c '#{shell_escape path.filename @compiled_config_path}'"
+    status = @exec cmd
+    -- os.execute's return value differs between Lua versions: LuaJIT/5.1
+    -- returns the exit code (0 on success), 5.2+ returns a success boolean
+    status == true or status == 0
+
+  start_nginx: (background=false) =>
+    nginx = @find_nginx!
+    return nil, "can't find nginx" unless nginx
+
+    @prepare_runtime!
+
+    cmd = nginx .. " -p #{@nginx_prefix!} -c '#{shell_escape path.filename @compiled_config_path}'"
 
     if background
       cmd = cmd .. " > /dev/null 2>&1 &"
@@ -165,6 +186,7 @@ compiler = NginxRunner.ConfigCompiler!
 
   start_nginx: runner\start_nginx
   find_nginx: runner\find_nginx
+  test_config: runner\test_config
 
   write_config_for: runner\write_config_for
 

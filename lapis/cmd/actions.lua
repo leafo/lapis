@@ -158,17 +158,27 @@ local COMMANDS = {
       "nginx"
     },
     argparse = function(command)
-      return add_environment_argument(command)
+      add_environment_argument(command)
+      return command:flag("--test-config", "Validate the compiled config with nginx -t, even when no server is running to reload")
     end,
     function(self, flags)
-      local write_config_for
-      write_config_for = require("lapis.cmd.nginx").write_config_for
+      local write_config_for, test_config, send_hup, get_pid
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        write_config_for, test_config, send_hup, get_pid = _obj_0.write_config_for, _obj_0.test_config, _obj_0.send_hup, _obj_0.get_pid
+      end
       write_config_for(flags.environment)
-      local send_hup
-      send_hup = require("lapis.cmd.nginx").send_hup
-      local pid = send_hup()
+      local pid = get_pid()
+      if pid or flags.test_config then
+        if not (test_config()) then
+          self:fail_with_message("nginx config test failed (see nginx output above)")
+        end
+      end
       if pid then
-        return print(colors("%{green}HUP " .. tostring(pid)))
+        local hup_pid = send_hup()
+        if hup_pid then
+          return print(colors("%{green}HUP " .. tostring(hup_pid)))
+        end
       end
     end
   },
@@ -180,14 +190,19 @@ local COMMANDS = {
       "nginx"
     },
     function(self)
-      local send_hup
-      send_hup = require("lapis.cmd.nginx").send_hup
-      local pid = send_hup()
-      if pid then
-        return print(colors("%{green}HUP " .. tostring(pid)))
-      else
-        return self:fail_with_message("failed to find nginx process")
+      local test_config, send_hup, get_pid
+      do
+        local _obj_0 = require("lapis.cmd.nginx")
+        test_config, send_hup, get_pid = _obj_0.test_config, _obj_0.send_hup, _obj_0.get_pid
       end
+      if not (get_pid()) then
+        self:fail_with_message("failed to find nginx process")
+      end
+      if not (test_config()) then
+        self:fail_with_message("nginx config test failed, not reloading server (see nginx output above)")
+      end
+      local pid = send_hup()
+      return print(colors("%{green}HUP " .. tostring(pid)))
     end
   },
   {

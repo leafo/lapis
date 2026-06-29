@@ -196,7 +196,7 @@ To wrap each individual migration in a transaction use:
 ### `lapis build`
 
 ```bash
-$ lapis build [environment]
+$ lapis build [environment] [--test-config]
 ```
 
 > This command is only available for OpenResty
@@ -214,6 +214,28 @@ This is the best approach when deploying a new version of your code to
 production. You'll be able to reload everything without dropping any requests.
 
 You can read more in the [Nginx manual](http://wiki.nginx.org/CommandLine#Loading_a_New_Configuration_Using_Signals).
+
+#### Config validation
+
+Before reloading a running server, `lapis build` validates the freshly compiled
+config by running `nginx -t` on it. If the config is invalid the command prints
+Nginx's error output and aborts **without** sending the `HUP` signal, leaving
+your running server untouched on its previous, working config.
+
+This guards against a subtle failure mode: when Nginx receives a `HUP` with a
+broken config it logs the error to its `error.log` and keeps running the old
+workers with the *old* config. Without this check a bad `lapis build` would
+appear to succeed while silently failing to apply your changes.
+
+The validation only runs when there is a server to reload. If no server is
+running, the config is rebuilt without testing (any error will surface the next
+time you start the server). Pass `--test-config` to force the `nginx -t` check
+even when no server is running, which is useful as a pre-flight check before
+deploying:
+
+```bash
+$ lapis build --test-config
+```
 
 ### `lapis term`
 

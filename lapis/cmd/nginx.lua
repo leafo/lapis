@@ -41,6 +41,28 @@ do
         self[k] = path.join(self.base_path, self.__class.__base[k])
       end
     end,
+    nginx_prefix = function(self)
+      if self.base_path:match("^/") then
+        return "'" .. tostring(shell_escape(self.base_path)) .. "'"
+      else
+        return '"$(pwd)"/' .. "'" .. tostring(shell_escape(self.base_path)) .. "'"
+      end
+    end,
+    prepare_runtime = function(self)
+      path.mkdir(path.join(self.base_path, "logs"))
+      self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/error.log"))) .. "'")
+      return self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/access.log"))) .. "'")
+    end,
+    test_config = function(self)
+      local nginx = self:find_nginx()
+      if not (nginx) then
+        return nil, "can't find nginx"
+      end
+      self:prepare_runtime()
+      local cmd = nginx .. " -t -p " .. tostring(self:nginx_prefix()) .. " -c '" .. tostring(shell_escape(path.filename(self.compiled_config_path))) .. "'"
+      local status = self:exec(cmd)
+      return status == true or status == 0
+    end,
     start_nginx = function(self, background)
       if background == nil then
         background = false
@@ -49,16 +71,8 @@ do
       if not (nginx) then
         return nil, "can't find nginx"
       end
-      path.mkdir(path.join(self.base_path, "logs"))
-      self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/error.log"))) .. "'")
-      self:exec("touch '" .. tostring(shell_escape(path.join(self.base_path, "logs/access.log"))) .. "'")
-      local root
-      if self.base_path:match("^/") then
-        root = "'" .. tostring(shell_escape(self.base_path)) .. "'"
-      else
-        root = '"$(pwd)"/' .. "'" .. tostring(shell_escape(self.base_path)) .. "'"
-      end
-      local cmd = nginx .. " -p " .. tostring(root) .. " -c '" .. tostring(shell_escape(path.filename(self.compiled_config_path))) .. "'"
+      self:prepare_runtime()
+      local cmd = nginx .. " -p " .. tostring(self:nginx_prefix()) .. " -c '" .. tostring(shell_escape(path.filename(self.compiled_config_path))) .. "'"
       if background then
         cmd = cmd .. " > /dev/null 2>&1 &"
       end
@@ -254,6 +268,13 @@ return {
   find_nginx = (function()
     local _base_0 = runner
     local _fn_0 = _base_0.find_nginx
+    return function(...)
+      return _fn_0(_base_0, ...)
+    end
+  end)(),
+  test_config = (function()
+    local _base_0 = runner
+    local _fn_0 = _base_0.test_config
     return function(...)
       return _fn_0(_base_0, ...)
     end
