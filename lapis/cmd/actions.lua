@@ -383,6 +383,11 @@ local COMMANDS = {
       local set_default_environment
       set_default_environment = require("lapis.environment").set_default_environment
       set_default_environment(args.environment)
+      if not (package.loaded["lapis.http"]) then
+        package.preload["lapis.http"] = function()
+          return require("socket.http")
+        end
+      end
       if args.helper then
         require(args.helper)
       end

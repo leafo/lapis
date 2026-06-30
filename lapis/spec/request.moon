@@ -162,6 +162,10 @@ simulate_request = (app_cls, url, opts={}) ->
     -- cosocket protocol here. This should otherwise have no effect on your app
     get_phase: -> "init"
 
+    -- explicit marker so code can detect it's running under a simulated
+    -- request instead of real nginx (see lapis.nginx.is_simulate)
+    _lapis_simulate: true
+
     ctx: { }
 
     var: setmetatable {

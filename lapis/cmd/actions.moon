@@ -339,6 +339,10 @@ COMMANDS = {
       import set_default_environment from require "lapis.environment"
       set_default_environment args.environment
 
+      -- force the http client to socket.http, instead of trying to use ngx
+      unless package.loaded["lapis.http"]
+        package.preload["lapis.http"] = -> require "socket.http"
+
       if args.helper
         require args.helper
 

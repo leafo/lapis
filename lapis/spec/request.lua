@@ -208,6 +208,7 @@ simulate_request = function(app_cls, url, opts)
     get_phase = function()
       return "init"
     end,
+    _lapis_simulate = true,
     ctx = { },
     var = setmetatable({
       host = host,

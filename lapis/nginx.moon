@@ -163,6 +163,12 @@ dispatch = (app) ->
   run_after_dispatch!
   res
 
+---Returns true when running under a simulated request (`lapis simulate`,
+---mock_request, etc.) rather than real nginx. The marker is set on the fake
+---ngx pushed by lapis.spec.request.
+---@return boolean
+is_simulate = -> not not (ngx and ngx._lapis_simulate)
+
 -- wraps ngx.timer.at to ensure that after dispatch is called
 timer_at = (delay, fn, ...) ->
   callback = (_premature, fn, ...) ->
@@ -176,6 +182,6 @@ timer_at = (delay, fn, ...) ->
 
   ngx.timer.at delay, callback, fn, ...
 
-{ :build_request, :build_response, :dispatch, :timer_at }
+{ :build_request, :build_response, :dispatch, :timer_at, :is_simulate }
 
 

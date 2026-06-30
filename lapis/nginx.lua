@@ -238,6 +238,10 @@ dispatch = function(app)
   run_after_dispatch()
   return res
 end
+local is_simulate
+is_simulate = function()
+  return not not (ngx and ngx._lapis_simulate)
+end
 local timer_at
 timer_at = function(delay, fn, ...)
   local callback
@@ -254,5 +258,6 @@ return {
   build_request = build_request,
   build_response = build_response,
   dispatch = dispatch,
-  timer_at = timer_at
+  timer_at = timer_at,
+  is_simulate = is_simulate
 }
