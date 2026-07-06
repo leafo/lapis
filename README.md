@@ -75,5 +75,5 @@ changes. To test modified code, build again before running the test suite. It
 should be a quick operation since dependency installation is cached.
 
  [1]: http://moonscript.org
- [2]: http://olivinelabs.com/busted/
+ [2]: https://lunarmodules.github.io/busted
 
