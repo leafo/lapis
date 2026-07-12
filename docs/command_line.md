@@ -151,7 +151,8 @@ configuration model it will attempt to load a module called `app` to serve.
 ### `lapis migrate`
 
     Usage: lapis migrate [-h] [--migrations-module <module>]
-           [<environment>] [--transaction [{global,individual}]]
+           [--statement-timeout <timeout>] [<environment>]
+           [--transaction [{global,individual}]]
 
     Run any outstanding migrations
 
@@ -162,6 +163,9 @@ configuration model it will attempt to load a module called `app` to serve.
        -h, --help            Show this help message and exit.
        --migrations-module <module>
                              Module to load for migrations (default: migrations)
+       --statement-timeout <timeout>
+                             Set Postgres statement_timeout before migrating to
+                             abort slow queries (eg. 5000 or '5s'). Postgres only
        --transaction [{global,individual}]
 
 
@@ -191,6 +195,15 @@ You can instruct the migrations to be run in a transaction by providng the
 
 To wrap each individual migration in a transaction use:
 `--transaction=individual`
+
+When running against Postgres you can pass `--statement-timeout` to set the
+[`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT)
+before the migrations run. Any query that exceeds the timeout is aborted, which
+lets you cancel a runaway migration instead of waiting for it indefinitely. The
+value is passed directly to Postgres, so it accepts a number of milliseconds
+(eg. `--statement-timeout=5000`) or a string with units (eg.
+`--statement-timeout=5s`). This flag is only supported on Postgres; using it
+with another backend is an error.
 
 
 ### `lapis build`

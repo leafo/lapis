@@ -284,6 +284,7 @@ local COMMANDS = {
       do
         local _with_0 = command
         _with_0:option("--migrations-module", "Module to load for migrations"):argname("<module>"):default("migrations")
+        _with_0:option("--statement-timeout", "Set Postgres statement_timeout before migrating to abort slow queries (eg. 5000 or '5s'). Postgres only"):argname("<timeout>")
         _with_0:flag("--dry-run", "Immediately roll back after appyling migrations. Forces migrations to run in a transaction")
         _with_0:option("--transaction"):args("?"):choices({
           "global",
@@ -300,6 +301,11 @@ local COMMANDS = {
         show_queries = true
       })
       print(colors("%{bright yellow}Running migrations for environment:%{reset} " .. tostring(args.environment)))
+      if args.statement_timeout then
+        local db = require("lapis.db")
+        assert(db.__type == "postgres", "--statement-timeout is only supported on Postgres (current backend: " .. tostring(db.__type) .. ")")
+        db.query("SET statement_timeout TO " .. tostring(db.escape_literal(args.statement_timeout)))
+      end
       local migrations = require("lapis.db.migrations")
       migrations.run_migrations(require(args.migrations_module), nil, {
         transaction = args.transaction,

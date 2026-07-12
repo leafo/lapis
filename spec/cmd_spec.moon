@@ -120,6 +120,11 @@ describe "lapis.cmd.actions", ->
     command = get_command "wazzupf2323"
     assert.same nil, command
 
+  it "parses migrate --statement-timeout", ->
+    parser = command_runner\build_parser!
+    args = assert parser\parse {"migrate", "--statement-timeout", "5s"}
+    assert.same "5s", args.statement_timeout
+
   it "executes help", ->
     local exit_status
 

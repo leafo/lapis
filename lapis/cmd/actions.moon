@@ -237,6 +237,7 @@ COMMANDS = {
       add_environment_argument command
       with command
         \option("--migrations-module", "Module to load for migrations")\argname("<module>")\default "migrations"
+        \option("--statement-timeout", "Set Postgres statement_timeout before migrating to abort slow queries (eg. 5000 or '5s'). Postgres only")\argname("<timeout>")
         \flag("--dry-run", "Immediately roll back after appyling migrations. Forces migrations to run in a transaction")
         \option("--transaction")\args("?")\choices({"global", "individual"})\action (args, name, val) ->
           -- flatten the table that's created from args("?")
@@ -247,6 +248,12 @@ COMMANDS = {
       env.push args.environment, show_queries: true
 
       print colors "%{bright yellow}Running migrations for environment:%{reset} #{args.environment}"
+
+      if args.statement_timeout
+        db = require "lapis.db"
+        assert db.__type == "postgres",
+          "--statement-timeout is only supported on Postgres (current backend: #{db.__type})"
+        db.query "SET statement_timeout TO #{db.escape_literal args.statement_timeout}"
 
       migrations = require "lapis.db.migrations"
       migrations.run_migrations require(args.migrations_module), nil, {
