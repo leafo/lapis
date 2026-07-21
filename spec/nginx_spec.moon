@@ -73,6 +73,34 @@ describe "nginx.context", ->
 
     run_after_dispatch!
 
+  it "allows adding callbacks from another request while one is running", ->
+    import after_dispatch, run_after_dispatch from require "lapis.nginx.context"
+
+    local other_ctx
+    fn2 = -> 1
+
+    after_dispatch ->
+      -- simulate yielding into a different request
+      ngx_stack.push { ctx: {} }
+      after_dispatch fn2
+      other_ctx = ngx.ctx
+      ngx_stack.pop!
+
+    run_after_dispatch!
+
+    assert.same { after_dispatch: fn2 }, other_ctx
+
+  it "clears the running flag when a callback throws", ->
+    import after_dispatch, run_after_dispatch from require "lapis.nginx.context"
+
+    after_dispatch -> error "callback exploded"
+
+    assert.has_error -> run_after_dispatch!
+
+    fn = -> 1
+    after_dispatch fn
+    assert.same { after_dispatch: fn }, ngx.ctx
+
   describe "increment_perf", ->
     it "should increment a new key", ->
       import increment_perf from require "lapis.nginx.context"

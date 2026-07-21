@@ -4,13 +4,21 @@ import insert from table
 DEFAULT_AFTER_DISPATCH_KEY = "after_dispatch"
 DEFAULT_PERFORMANCE_KEY = "performance"
 
+call_all = (callbacks, ...) ->
+  switch type callbacks
+    when "table"
+      for fn in *callbacks
+        fn ...
+    when "function"
+      callbacks ...
+
 -- this stores a list of callbacks functions stored in the ngx.ctx
 -- and provides a method to call them
 make_callback = (name) ->
-  running = false
+  running_key = "#{name}:running"
 
   add = (callback) ->
-    if running
+    if ngx.ctx[running_key]
       error "you tried add to #{name} while running a callback"
 
     current = ngx.ctx[name]
@@ -23,20 +31,17 @@ make_callback = (name) ->
         insert current, callback
 
   run = (...) ->
-    running = true
+    ngx.ctx[running_key] = true
     callbacks = ngx.ctx[name]
 
     -- clear out callbacks so they can't be double triggered
     ngx.ctx[name] = nil
 
-    switch type callbacks
-      when "table"
-        for fn in *callbacks
-          fn ...
-      when "function"
-        callbacks ...
+    ok, err = pcall call_all, callbacks, ...
+    ngx.ctx[running_key] = nil
 
-    running = false
+    unless ok
+      error err
 
   add, run
 

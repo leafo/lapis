@@ -2,12 +2,24 @@ local insert
 insert = table.insert
 local DEFAULT_AFTER_DISPATCH_KEY = "after_dispatch"
 local DEFAULT_PERFORMANCE_KEY = "performance"
+local call_all
+call_all = function(callbacks, ...)
+  local _exp_0 = type(callbacks)
+  if "table" == _exp_0 then
+    for _index_0 = 1, #callbacks do
+      local fn = callbacks[_index_0]
+      fn(...)
+    end
+  elseif "function" == _exp_0 then
+    return callbacks(...)
+  end
+end
 local make_callback
 make_callback = function(name)
-  local running = false
+  local running_key = tostring(name) .. ":running"
   local add
   add = function(callback)
-    if running then
+    if ngx.ctx[running_key] then
       error("you tried add to " .. tostring(name) .. " while running a callback")
     end
     local current = ngx.ctx[name]
@@ -25,19 +37,14 @@ make_callback = function(name)
   end
   local run
   run = function(...)
-    running = true
+    ngx.ctx[running_key] = true
     local callbacks = ngx.ctx[name]
     ngx.ctx[name] = nil
-    local _exp_0 = type(callbacks)
-    if "table" == _exp_0 then
-      for _index_0 = 1, #callbacks do
-        local fn = callbacks[_index_0]
-        fn(...)
-      end
-    elseif "function" == _exp_0 then
-      callbacks(...)
+    local ok, err = pcall(call_all, callbacks, ...)
+    ngx.ctx[running_key] = nil
+    if not (ok) then
+      return error(err)
     end
-    running = false
   end
   return add, run
 end
