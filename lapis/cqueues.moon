@@ -151,7 +151,11 @@ dispatch = (app, server, stream) ->
   res_headers\append ":status", res.status and string.format("%d", res.status) or "200"
 
   for k,v in pairs res.headers
-    res_headers\append k,v
+    if type(v) == "table"
+      for vv in *v
+        res_headers\append k, tostring(vv)
+    else
+      res_headers\append k, tostring(v)
 
   stream\write_headers res_headers, not res.content
 
