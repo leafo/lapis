@@ -13,7 +13,9 @@ util = require "lapis.util"
 
 ### `unescape(str)`
 
-URL unescapes string, returning the resulting string.
+URL unescapes string, returning the resulting string. Only percent-encoded
+sequences are decoded, a `+` is left unchanged. Use `parse_query_string` for
+decoding form data, where `+` represents a space.
 
 $dual_code{
 lua = [[
@@ -34,7 +36,10 @@ moon = [[
 
 ### `escape(str)`
 
-URL escapes string, returning the resulting string.
+URL escapes string, returning the resulting string. The output matches
+OpenResty's `ngx.escape_uri`: letters, digits, and the characters `-._~!*'()`
+are left unescaped, and all other bytes are escaped using uppercase hex
+digits.
 
 $dual_code{
 lua = [[
@@ -42,14 +47,14 @@ lua = [[
   local original_string = "Hello, World!"
   local escaped_string = util.escape(original_string)
 
-  print(escaped_string)  -- Output: "Hello%2C%20World%21"
+  print(escaped_string)  -- Output: "Hello%2C%20World!"
 ]],
 moon = [[
   util = require "lapis.util"
   original_string = "Hello, World!"
   escaped_string = util.escape original_string
 
-  print escaped_string  -- Output: "Hello%2C%20World%21"
+  print escaped_string  -- Output: "Hello%2C%20World!"
 ]]
 }
 
@@ -81,9 +86,12 @@ inserted into the table in two ways: first as a `[key] = value`, which overwrite
 existing keys, and secondly, it is appended to the end of the array portion of the table
 as `{key, value}`.
 
-> The query string being parsed should not start with a '?'. The function only
-> processes the key-value pairs and does not handle the '?' character typically
-> used at the start of query strings in URLs.
+Keys and values are decoded as form data, like OpenResty's `ngx.decode_args`:
+`+` becomes a space and `%2B` becomes a literal `+`. Returns `nil` if there
+is nothing to parse.
+
+> A single leading `?` or `#` character is ignored, so the query portion of a
+> URL can be passed directly.
 
 $dual_code{
 lua = [[
@@ -92,9 +100,9 @@ lua = [[
   print(query_table["key1"])  -- "value2"
   print(query_table["key2"])  -- true
 
-  -- numeric indicies showing duplicates
+  -- numeric indices showing duplicates
   print(unpack(query_table[1]))  -- "key1", "value1"
-  print(unpack(query_table[2]))  -- "key2", true
+  print(unpack(query_table[2]))  -- "key2"
   print(unpack(query_table[3]))  -- "key1", "value2"
 ]],
 moon = [[
@@ -103,10 +111,10 @@ moon = [[
   print query_table["key1"]  -- "value2"
   print query_table["key2"]  -- true
 
-  -- numeric indicies showing duplicates
+  -- numeric indices showing duplicates
   print unpack query_table[1]  -- "key1", "value1"
   print unpack query_table[2]  -- "key2"
-  print unpack query_table[1]  -- "key1", "value2"
+  print unpack query_table[3]  -- "key1", "value2"
 ]]
 }
 
@@ -115,6 +123,9 @@ moon = [[
 Converts a key-value table into a query string. For ordered query strings, the
 numeric indices of the table can also be a table in the form `{key, value}`.
 The two formats can be mixed into the same table and all parameters will be encoded.
+
+A value of `true` encodes the key without a value, and a value of `false` skips
+the key entirely.
 
 > The output of `parse_query_string`, if passed directly into
 > `encode_query_string`, will cause duplicates due to the parsing structure. To
@@ -127,7 +138,7 @@ lua = [[
   print(example1)  -- Output: "key1=value1&key2"
 
   -- example with numeric indices pairs that guarantees output order
-  local example2 = util.encode_query_string({{key1 = "value1"}, {key2 = true}})
+  local example2 = util.encode_query_string({{"key1", "value1"}, {"key2", true}})
   print(example2)  -- Output: "key1=value1&key2"
 ]],
 moon = [[
@@ -268,7 +279,7 @@ lua = [[
 local db = require("lapis.db")
 local trim_filter = require("lapis.util").trim_filter
 
-unknown_input = {
+local unknown_input = {
   username = "     hello    ",
   level = "admin",
   description = " "
@@ -333,12 +344,88 @@ Converts JSON to table, a direct wrapper around Lua CJSON's `decode`.
 
 ### `time_ago_in_words(date, [parts=1], [suffix="ago"])`
 
-Returns a string in the format "1 day ago".
+Returns a string in the format "1 day ago". `date` can be a Unix timestamp, a
+date string (eg. from a database timestamp column), or a `date` object.
 
 `parts` allows you to add more words. With `parts=2`, the string
 returned would be in the format `1 day, 4 hours ago`.
 
-### `autoload(prefix, tbl={})`
+### `camelize(str)`
+
+Converts an underscore separated string to CamelCase.
+
+$dual_code{
+lua = [[
+local util = require("lapis.util")
+print(util.camelize("hello_world"))  -- Output: "HelloWorld"
+]],
+moon = [[
+util = require "lapis.util"
+print util.camelize "hello_world"  -- Output: "HelloWorld"
+]]
+}
+
+### `title_case(str)`
+
+Capitalizes the first letter of each word in a string.
+
+$dual_code{
+lua = [[
+local util = require("lapis.util")
+print(util.title_case("hello world"))  -- Output: "Hello World"
+]],
+moon = [[
+util = require "lapis.util"
+print util.title_case "hello world"  -- Output: "Hello World"
+]]
+}
+
+### `key_filter(tbl, keys...)`
+
+Removes every key from `tbl` except for the ones provided as arguments. The
+table is modified in place and returned.
+
+$dual_code{
+lua = [[
+local util = require("lapis.util")
+local params = util.key_filter({ name = "leafo", admin = true }, "name")
+-- params is now { name = "leafo" }
+]],
+moon = [[
+util = require "lapis.util"
+params = util.key_filter { name: "leafo", admin: true }, "name"
+-- params is now { name: "leafo" }
+]]
+}
+
+### `build_url(parts)`
+
+Builds a URL string from a table of components: `scheme`, `host`, `port`,
+`path`, `query`, and `fragment`. Each part is inserted as-is, so any values
+must already be escaped.
+
+$dual_code{
+lua = [[
+local util = require("lapis.util")
+print(util.build_url({
+  scheme = "https",
+  host = "leafo.net",
+  path = "/hello",
+  query = "color=blue"
+}))  -- Output: "https://leafo.net/hello?color=blue"
+]],
+moon = [[
+util = require "lapis.util"
+print util.build_url {
+  scheme: "https"
+  host: "leafo.net"
+  path: "/hello"
+  query: "color=blue"
+}  -- Output: "https://leafo.net/hello?color=blue"
+]]
+}
+
+### `autoload(prefix..., [tbl={}])`
 
 Modifies `tbl` such that accessing an unset value in `tbl` will run a `require`
 to search for the value. This is useful for autoloading components split across
@@ -349,13 +436,14 @@ is cached in the table, so the loading process only happens once. Returns the
 > By default, a new empty table is created for the 'tbl' argument, so it's not
 > necessary to provide one if you intend to create a new autoloading table.
 
-The following is the list of search patterns tried in order when requesting an
-unloaded field:
+Multiple prefixes can be provided, and they are searched in order. The
+following is the list of search patterns tried in order, for each prefix, when
+requesting an unloaded field:
 
 1. `require("#{prefix}.#{field}")`
 2. `require("#{prefix}.#{util.underscore(field)}")`
 
-If a module is not able to be located, an error is thrown.
+If the module can not be located with any prefix, then `nil` is returned.
 
 $dual_code{
 lua = [[
@@ -366,8 +454,8 @@ local _ = models.HelloWorld --> will require "models.hello_world"
 local _ = models.foo_bar --> will require "models.foo_bar"
 ]],
 moon = [[
-util = require("lapis.util")
-models = autoload("models")
+util = require "lapis.util"
+models = util.autoload "models"
 
 models.HelloWorld --> will require "models.hello_world"
 models.foo_bar --> will require "models.foo_bar"
@@ -379,13 +467,14 @@ models.foo_bar --> will require "models.foo_bar"
 
 Encoding functions are found in:
 
-```lua
+$dual_code{
+lua = [[
 local encoding = require("lapis.util.encoding")
-```
-
-```moon
+]],
+moon = [[
 encoding = require "lapis.util.encoding"
-```
+]]
+}
 
 ### `encode_base64(str)`
 
@@ -400,10 +489,21 @@ Base64 decodes a string.
 Calculates the hmac-sha1 digest of `str` using `secret`. Returns a binary
 string.
 
+### `hmac_sha256(secret, str)`
+
+Calculates the hmac-sha256 digest of `str` using `secret`. Returns a binary
+string.
+
 ### `encode_with_secret(object, secret=config.secret)`
 
-Encodes a Lua object and generates a signature for it. Returns a single string
-that contains the encoded object and signature.
+Encodes a Lua object as JSON and generates a signature for it. Returns a single
+string that contains the base64 encoded object and signature.
+
+The signature is generated with `hmac_sha1` by default. Set the
+[`hmac_digest`](configuration.html#built-in-configuration) configuration value
+to `"sha256"` to use `hmac_sha256` instead. This affects everything that is
+signed with the secret, including sessions and CSRF tokens, so changing it will
+invalidate any existing sessions.
 
 ### `decode_with_secret(msg_and_sig, secret=config.secret)`
 
@@ -416,7 +516,7 @@ message. The secret must match what was used with `encode_with_secret`.
 
 CSRF protection provides a way to prevent unauthorized requests that originate
 from other sites that are not your application. The common approach is to
-generate a special token that is placed on pages that make need to make calls
+generate a special token that is placed on pages that need to make calls
 with HTTP methods that are not *safe* (POST, PUT, DELETE, etc.). This token
 must be sent back to the server on the requests to verify the request came from
 a page generated by your application.
@@ -430,7 +530,7 @@ how it can expire.
 Before using any of the cryptographic functions it's important to set your
 application's secret. This is a string that only the application knows about.
 If your application is open source it's worthwhile to not commit this secret.
-The secret is set in [your configuration](#configuration-and-environments) like so:
+The secret is set in [your configuration](configuration.html) like so:
 
 $dual_code{
 lua = [[
@@ -463,7 +563,7 @@ local app = lapis.Application()
 
 app:get("form", "/form", function(self)
   local csrf_token = csrf.generate_token(self)
-  self:html(function()
+  return self:html(function()
     form({ method = "POST", action = self:url_for("form") }, function()
       input({ type = "hidden", name = "csrf_token", value = csrf_token })
       input({ type = "submit" })
@@ -477,7 +577,9 @@ app:post("form", "/form", capture_errors(function(self)
 end))
 ]],
 moon = [[
+lapis = require "lapis"
 csrf = require "lapis.csrf"
+import respond_to, capture_errors from require "lapis.application"
 
 class extends lapis.Application
   [form: "/form"]: respond_to {
@@ -517,7 +619,7 @@ The random string is stored in a cookie named as your session name with
 ### `csrf.validate_token(req, callback=nil)`
 
 Validates the CSRF token located in `req.params.csrf_token`. For any endpoints
-you validation the token on you must pass the query or form parameter
+you validate the token on you must pass the query or form parameter
 `csrf_token` with the value of the token returned by `generate_token`.
 
 If the validation fails then `nil` and an error message are returned. A
@@ -557,7 +659,9 @@ app:post("form", "/form", capture_errors(function(self)
 end))
 ]],
 moon = [[
+lapis = require "lapis"
 csrf = require "lapis.csrf"
+import respond_to, capture_errors from require "lapis.application"
 
 class extends lapis.Application
   [form: "/form"]: respond_to {
@@ -570,11 +674,11 @@ class extends lapis.Application
 
     POST: capture_errors =>
       csrf.assert_token @, (d) ->
-        if os.time() > (d.expires or 0) then
+        if os.time! > (d.expires or 0)
           return nil, "token is expired"
         true
 
-      "The form is valid!"
+      "The request is valid!"
   }
 ]]
 }
@@ -621,14 +725,14 @@ moon = [[
   -- a simple GET request
   body, status_code, headers = http.request "http://leafo.net"
 
-
+  -- a simple POST request
   out = {}
   _, status_code, headers = http.request {
-    url: "http://leafo.net",
-    method: "POST",
-    headers: { ["Content-type"] = "application/x-www-form-urlencoded" }
+    url: "http://leafo.net"
+    method: "POST"
+    headers: { "Content-type": "application/x-www-form-urlencoded" }
     source: ltn12.source.string "param1=value1&param2=value2"
-    sink ltn12.sink.table(out)
+    sink: ltn12.sink.table(out)
   }
 
   body = table.concat out
@@ -669,7 +773,12 @@ location /proxy {
 ```
 
 > This code ensures that the correct headers are set for the subrequest that is
-> created.
+> created. The same logic is available as a function, so the `rewrite_by_lua`
+> block can be replaced with `rewrite_by_lua_block {
+> require("lapis.nginx.http").ngx_replace_headers() }`
+>
+> If you want to use a location other than `/proxy`, call
+> `require("lapis.nginx.http").set_proxy_location("/my-proxy")`.
 
 #### Enabling SSL Verification
 
@@ -702,14 +811,14 @@ location / {
 }
 ```
 
-Now we can use the `lapis.nginx.http` module. There are two methods. `request`
-and `simple`. `request` implements the Lua Socket HTTP request API (complete
-with LTN12).
-
-`simple` is a simplified API with no LTN12:
+Now we can use the `lapis.nginx.http` module, which `lapis.http` will
+automatically select when running inside of OpenResty. There are two methods.
+`request` and `simple`. `request` implements the Lua Socket HTTP request API
+(complete with LTN12). `simple` is a deprecated simplified API with no LTN12.
 
 $dual_code{
 lua = [[
+local lapis = require("lapis")
 local http = require("lapis.http")
 
 local app = lapis.Application()
@@ -720,7 +829,8 @@ app:get("/", function(self)
 end)
 ]],
 moon = [[
-http = require "lapis.nginx.http"
+lapis = require "lapis"
+http = require "lapis.http"
 
 class extends lapis.Application
   "/": =>
@@ -761,17 +871,19 @@ is handling the original request for this function to work.
   - `source`: An `ltn12` source that generates the body of the request.
   - `headers`: A plain table of headers to include in the request.
   - `sink`: An `ltn12` sink that will receive the output of the request.
-- `body`: This arugment is only used if `url_or_table` is provided as a string. Converts the request to a POST request and adds the `"Content-type: application/x-www-form-urlencoded"` header pair
+- `body`: This argument is only used if `url_or_table` is provided as a string. Converts the request to a POST request and adds the `"Content-type: application/x-www-form-urlencoded"` header pair
 
 **Returns:**
 
 The function returns three values:
 
-1. `body`: The string result of the request. If a `sink` is provided, then the body is returned as the number value `1`, and the body should be read from the sink.
+1. `body`: The string result of the request when `url_or_table` is a string. When `url_or_table` is a table, the number value `1` is returned, and the body should be read from the `sink`, if provided.
 2. `status`: The HTTP status code of the response, as a number.
 3. `headers`: A table of headers from the response.
 
-Every successful HTTP request increments the following performance metrics in the Nginx context:
+When the [`measure_performance`](configuration.html#performance-measurement)
+configuration is enabled, every HTTP request increments the following
+performance metrics in the Nginx context:
 
 - `http_count`: This metric counts the total number of HTTP requests.
 - `http_time`: This metric measures the total time taken for HTTP requests. It is calculated as the difference between the current time and the start time of the request.
@@ -868,7 +980,8 @@ rendering of rarely changing pages because all database calls and HTML methods
 can be skipped.
 
 The Lapis cache uses the [shared dictionary
-API](http://wiki.nginx.org/HttpLuaModule#lua_shared_dict) from HttpLuaModule.
+API](https://github.com/openresty/lua-nginx-module#lua_shared_dict) from
+lua-nginx-module.
 The first thing you'll need to do is create a shared dictionary in your Nginx
 configuration.
 
@@ -905,7 +1018,8 @@ class extends lapis.Application
 
 The first request to `/hello/world` will run the action and store the result in
 the cache, all subsequent requests will skip the action and return the text
-stored in the cache.
+stored in the cache. Only `GET` requests are cached, requests with any other
+method will always run the action.
 
 The cache will remember not only the raw text output, but also the content
 type and status code.
@@ -915,8 +1029,9 @@ The cache key also takes into account any GET parameters, so a request to
 are sorted so they can come in any order and still match the same cache key.
 
 When the cache is hit, a special response header is set to 1,
-`x-memory-cache-hit`. This is useful for debugging your application to make
-sure the cache is working.
+`x-memory-cache-hit`. When a new result is stored in the cache, the header
+`x-memory-cache-save` is set to 1. These are useful for debugging your
+application to make sure the cache is working.
 
 Instead of passing a function as the action of the cache you can also pass in a
 table. When passing in a table the function must be the first numerically
@@ -924,9 +1039,9 @@ indexed item in the table.
 
 The table supports the following options:
 
-* `dict_name` -- override the name of the shared dictionary used (defaults to `"page_cache"`)
+* `dict` -- override the shared dictionary used (defaults to `"page_cache"`). Can be the name of a shared dictionary, a shared dictionary object, or a function that receives the request object and returns a shared dictionary
 * `exptime` -- how long in seconds the cache should stay alive, 0 is forever (defaults to `0`)
-* `cache_key` -- set a custom function for generating the cache key (default is described above)
+* `cache_key` -- set a custom function for generating the cache key. It receives the path, the table of GET parameters, and the request object as arguments. The default implementation is available as `require("lapis.cache").cache_key`
 * `when` -- a function that should return truthy a value if the page should be cached. Receives the request object as first argument (defaults to `nil`)
 
 For example, you could implement microcaching, where the page is cached for a
@@ -1040,18 +1155,24 @@ A validation exists for ensuring that a param is an uploaded file, it's called
 `is_file`:
 
 ```lua
+local capture_errors = require("lapis.application").capture_errors
+local assert_valid = require("lapis.validate").assert_valid
+
 local app = lapis.Application()
 
-app:post("/my_action", function(self)
+app:post("/my_action", capture_errors(function(self)
   assert_valid(self.params, {
     { "uploaded_file", is_file = true }
   })
 
   -- file is ready to be used
-end)
+end))
 ```
 
 ```moon
+import capture_errors from require "lapis.application"
+import assert_valid from require "lapis.validate"
+
 class extends lapis.Application
   "/my_action": capture_errors =>
     assert_valid @params, {
@@ -1064,7 +1185,7 @@ class extends lapis.Application
 An uploaded file is loaded entirely into memory, so you should be careful about
 the memory requirements of your application. Nginx limits the size of uploads
 through the
-[`client_max_body_size`](http://wiki.nginx.org/HttpCoreModule#client_max_body_size)
+[`client_max_body_size`](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size)
 directive. It's only 1 megabyte by default, so if you plan to allow uploads
 greater than that you should set a new value in your Nginx configuration.
 
@@ -1152,13 +1273,14 @@ function() return { layout = false } end
 -> { layout: false }
 ```
 
-### `capture_errors(fn_or_tbl)`
+### `capture_errors(fn_or_tbl, [error_handler])`
 
 Wraps a function to catch errors sent by `yield_error` or `assert_error`. See
 [Exception Handling][0] for more information.
 
 If the first argument is a function then that function is called on request and
-the following default error handler is used:
+`error_handler` is used as the error handler. If `error_handler` is not
+provided, the following default error handler is used:
 
 ```lua
 function() return { render = true } end
@@ -1187,7 +1309,7 @@ function(self) return { json = { errors = self.errors } } end
 => { json: { errors: @errors } }
 ```
 
-### `yield_error(error_message)`
+### `yield_error(error_message="unknown error")`
 
 Yields a single error message to be captured by `capture_errors`
 
@@ -1224,7 +1346,7 @@ class JsonApp extends lapis.Application
 $ curl \
   -H "Content-type: application/json" \
   -d '{"value": "hello"}' \
-  'https://localhost:8080/json'
+  'http://localhost:8080/json'
 ```
 
 The unmerged parameters can also be accessed from $self_ref{"json"}. If there
@@ -1236,13 +1358,14 @@ request will continue without error.
 This module includes a collection of LPeg patterns for working with UTF8 text.
 
 $dual_code{[[
-utf8 = requrie("lapis.util.utf8")
+utf8 = require "lapis.util.utf8"
 ]]}
 
 ### `utf8.trim`
 
-A pattern that will trim all invisible characters from either side of the
-matched string. (Utilizes the `whitespace` pattern described below)
+A pattern that will trim all whitespace characters, including Unicode
+whitespace, from either side of the matched string. (Uses the `whitespace`
+pattern described below)
 
 $dual_code{[[
 utf8 = require "lapis.util.utf8"
@@ -1255,7 +1378,7 @@ print(trimmed_string)  -- Output: "Hello, World!"
 ### `utf8.printable_character`
 
 A pattern that matches a single printable character. Note that printable
-characters include whitepace, but don't include invalid unicode codepoints or
+characters include whitespace, but don't include invalid unicode codepoints or
 control characters.
 
 ### `utf8.whitespace`
@@ -1267,7 +1390,9 @@ whitespace.
 
 Calculates the length of a string, counting each printable character. It takes
 a string as an argument and returns the number of printable characters in the
-string. This is aware of multi-byte characters:
+string. If the string contains any non-printable characters or invalid UTF8
+sequences, then `nil` and an error message are returned. This is aware of
+multi-byte characters:
 
 $dual_code{[[
 utf8 = require "lapis.util.utf8"
