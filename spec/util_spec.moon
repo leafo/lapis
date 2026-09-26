@@ -57,6 +57,71 @@ tests = {
     }
   }
 
+  -- + is decoded as space, matching ngx.decode_args
+  {
+    -> util.parse_query_string "q=hello+world&a+b=c&plus=%2B"
+    {
+      {"q", "hello world"}
+      {"a b", "c"}
+      {"plus", "+"}
+      q: "hello world"
+      "a b": "c"
+      plus: "+"
+    }
+  }
+
+  -- values may contain =, parsing continues after them
+  {
+    -> util.parse_query_string "sig=abc==&page=2&eq=a=b"
+    {
+      {"sig", "abc=="}
+      {"page", "2"}
+      {"eq", "a=b"}
+      sig: "abc=="
+      page: "2"
+      eq: "a=b"
+    }
+  }
+
+  -- empty keys and empty segments are skipped
+  {
+    -> util.parse_query_string "h&=x&&k="
+    {
+      {"h"}
+      {"k", ""}
+      h: true
+      k: ""
+    }
+  }
+
+  {
+    -> util.parse_query_string "?a=b"
+    {
+      {"a", "b"}
+      a: "b"
+    }
+  }
+
+  {
+    -> util.parse_query_string ""
+    nil
+  }
+
+  {
+    -> util.parse_query_string "&="
+    nil
+  }
+
+  {
+    -> util.unescape nil
+    ""
+  }
+
+  {
+    -> util.unescape "a+b%2B%2b"
+    "a+b++"
+  }
+
   {
     -> util.underscore "ManifestRocks"
     "manifest_rocks"

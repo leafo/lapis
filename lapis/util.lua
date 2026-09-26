@@ -13,6 +13,9 @@ local unescape, escape, escape_pattern, inject_tuples, parse_query_string, encod
 do
   local u = url.unescape
   unescape = function(str)
+    if not (str) then
+      return ""
+    end
     return (u(str))
   end
 end
@@ -57,19 +60,23 @@ do
     local _obj_0 = require("lpeg")
     C, P, S, Ct = _obj_0.C, _obj_0.P, _obj_0.S, _obj_0.Ct
   end
-  local char = (P(1) - S("=&"))
-  local chunk = C(char ^ 1)
-  local chunk_0 = C(char ^ 0)
-  local tuple = Ct(chunk / unescape * "=" * (chunk_0 / unescape) + chunk)
-  local query = S("?#") ^ -1 * Ct(tuple * (P("&") * tuple) ^ 0)
+  local decode
+  decode = function(str)
+    return unescape((str:gsub("%+", " ")))
+  end
+  local char = P(1) - P("&")
+  local key = C((char - P("=")) ^ 1) / decode
+  local value = C(char ^ 0) / decode
+  local tuple = Ct(key * (P("=") * value) ^ -1)
+  local segment = tuple + char ^ 0
+  local query = S("?#") ^ -1 * Ct(segment * (P("&") * segment) ^ 0) * -1
   parse_query_string = function(str)
-    do
-      local out = query:match(str)
-      if out then
-        inject_tuples(out)
-      end
-      return out
+    local out = query:match(str)
+    if not (out and next(out)) then
+      return nil
     end
+    inject_tuples(out)
+    return out
   end
 end
 encode_query_string = function(t, sep)

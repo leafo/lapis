@@ -31,7 +31,7 @@ build_request = (stream) ->
 
   params_post = if content_type == "application/x-www-form-urlencoded"
     -- TODO: limits for body length
-    body = stream\get_body_as_string!\gsub "+", " "
+    body = stream\get_body_as_string!
     body and filter_array(parse_query_string(body)) or {}
 
   h = req_headers\get ":authority"

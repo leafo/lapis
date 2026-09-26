@@ -35,7 +35,7 @@ build_request = function(stream)
   local content_type = req_headers:get("content-type")
   local params_post
   if content_type == "application/x-www-form-urlencoded" then
-    local body = stream:get_body_as_string():gsub("+", " ")
+    local body = stream:get_body_as_string()
     params_post = body and filter_array(parse_query_string(body)) or { }
   end
   local h = req_headers:get(":authority")

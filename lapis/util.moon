@@ -10,13 +10,16 @@ date = require "date"
 
 local *
 
----URL decode a string
+---URL decode a string. Only percent-encoded sequences are decoded, `+` is left
+---unchanged (see parse_query_string for form decoding)
 ---@param str string
 ---@return string
 -- todo: consider renaming to url_escape/url_unescape
 unescape = do
   u = url.unescape
-  (str) -> (u str)
+  (str) ->
+    return "" unless str
+    (u str)
 
 ---URL encode a string, matching the output of OpenResty's ngx.escape_uri
 ---@param str string
@@ -46,23 +49,32 @@ inject_tuples = (tbl) ->
   for tuple in *tbl
     tbl[tuple[1]] = tuple[2] or true
 
----Parse a URL query string into a table
+---Parse a URL query string into a table. Keys and values are decoded the same
+---way as OpenResty's ngx.decode_args: `+` is decoded as a space
 ---@param str string With or without leading ? or #
 ---@return table|nil
 parse_query_string = do
   import C, P, S, Ct from require "lpeg"
 
-  char = (P(1) - S("=&"))
+  -- form decoding, + must be replaced before percent decoding so that %2B
+  -- is preserved as +
+  decode = (str) -> unescape (str\gsub "%+", " ")
 
-  chunk = C char^1
-  chunk_0 = C char^0
+  char = P(1) - P"&"
+  key = C((char - P"=")^1) / decode
+  value = C(char^0) / decode
 
-  tuple = Ct(chunk / unescape * "=" * (chunk_0 / unescape) + chunk)
-  query = S"?#"^-1 * Ct tuple * (P"&" * tuple)^0
+  -- the value may contain =, a segment without a key is skipped
+  tuple = Ct(key * (P"=" * value)^-1)
+  segment = tuple + char^0
+
+  query = S"?#"^-1 * Ct(segment * (P"&" * segment)^0) * -1
 
   (str) ->
-    with out = query\match str
-      inject_tuples out if out
+    out = query\match str
+    return nil unless out and next out
+    inject_tuples out
+    out
 
 ---Encode a table as a query string
 ---@param t table Table with key-value pairs or array of tuples

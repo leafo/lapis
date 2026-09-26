@@ -52,6 +52,33 @@ describe "server", ->
         }
       }, res
 
+    it "decodes + as space in query params", ->
+      status, res, headers = server\request "/dump-params?q=hello+world&plus=%2B", {
+        expect: "json"
+      }
+
+      assert.same 200, status
+      assert.same {
+        q: "hello world"
+        plus: "+"
+      }, res
+
+    it "decodes + as space in form body", ->
+      status, res, headers = server\request "/dump-params", {
+        expect: "json"
+        method: "POST"
+        headers: {
+          "content-type": "application/x-www-form-urlencoded"
+        }
+        data: "q=hello+world&plus=%2B"
+      }
+
+      assert.same 200, status
+      assert.same {
+        q: "hello world"
+        plus: "+"
+      }, res
+
     it "dumps post params", ->
       status, res, headers = server\request "/dump-params", {
         expect: "json"
