@@ -7,7 +7,7 @@
 
 Lapis makes a distinction between two kinds of errors: Recoverable and
 non-recoverable errors. Errors thrown by Lua's runtime during execution or
-calls to  `error` are considered non-recoverable. (This also includes the Lua
+calls to `error` are considered non-recoverable. (This also includes the Lua
 built-in function `assert`)
 
 Because non-recoverable errors aren't expected to be captured by the user,
@@ -27,7 +27,7 @@ database.
 
 ## Capturing Recoverable Errors
 
-The `capture_errors` helper is used wrap an action such that it can capture
+The `capture_errors` helper is used to wrap an action such that it can capture
 errors and run an error handler.
 
 This does not capture runtime errors. You should use `pcall` if you
@@ -70,7 +70,7 @@ class="for_moon">`@errors`</span><span class="for_lua">`self.errors`</span> and
 return <span class="for_moon">`render: true`</span><span class="for_lua">`{
 render = true }`</span>. In your view you can then display the errors. This
 means that if you have a named route the view of that route will render. You
-should then code your view to sometimes have a `errors` table.
+should then code your view to sometimes have an `errors` table.
 
 If you want to have a custom error handler you can invoke `capture_errors` with
 a table: (note that <span class="for_moon">`@errors`</span><span
@@ -109,6 +109,17 @@ class App extends lapis.Application
 `capture_errors` when called with a table will use the first positional value
 as the action.
 
+The `on_error` field of the table passed to
+[`respond_to`](utilities.html#application-helpers/respond_to) also wraps the
+action with `capture_errors`, using the value as the error handler.
+
+Errors can also be thrown by the input validation functions, like
+[`assert_valid`](input_validation.html#assert-valid), and by
+[`types.assert_error`](input_validation.html#tableshape-validation/type-constructors/types.assert_error)
+when using tableshape validation. These may yield many errors at once, so
+<span class="for_moon">`@errors`</span><span
+class="for_lua">`self.errors`</span> can contain more than one message.
+
 If you're building a JSON API then another method is provided,
 `capture_errors_json`, which renders the errors in a JSON object like so:
 
@@ -137,7 +148,7 @@ class App extends lapis.Application
 Would render (with the correct content type):
 
 ```json
-{ errors: ["something bad happened"] }
+{ "errors": ["something bad happened"] }
 ```
 
 ## Error Handling Functions
@@ -150,7 +161,7 @@ application = require "lapis.application"
 
 ### `capture_errors(fn, [error_handler_fn])`
 
-Wraps action action handler `fn` in a coroutine that will look for errors
+Wraps the action handler `fn` in a coroutine that will look for errors
 thrown by `yield_error` or `assert_error`.
 
 As a convenience, `fn` can also be a table. In that case, then the first item
@@ -180,11 +191,10 @@ capture_errors_json = (fn) ->
 ]]}
 
 
-### `yield_error(msg)`
+### `yield_error(msg="unknown error")`
 
 Sends an error message up to the wrapping `capture_errors`. The coroutine is
-never resumed on error so the any code following `yield_error` will not
-execute.
+never resumed on error so any code following `yield_error` will not execute.
 
 ### `assert_error(cond, ...)`
 
