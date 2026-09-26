@@ -4,14 +4,14 @@
 # Command Line Interface
 
 A `lapis` command is installed into your system when Lapis is installed with
-LuaRocks. Run `lapis` in your terminal to install without any arguments to get
-a summary of what it can do, along with information about the installation, eg.
+LuaRocks. Run `lapis` in your terminal without any arguments to get a summary
+of what it can do, along with information about the installation, eg.
 
     Usage: lapis [-h] [--environment <name>] [--config-module <name>]
-           [--trace] <command> ...
+           [--dir <dir>] [--trace] <command> ...
 
     Control & create web applications written with Lapis
-    Lapis: 1.14.0
+    Lapis: 1.19.0
     Default environment: development
     OpenResty: /usr/local/openresty/nginx/sbin/nginx
     cqueues: 20200726 lua-http: 0.4
@@ -21,6 +21,7 @@ a summary of what it can do, along with information about the installation, eg.
        --environment <name>  Override the environment name
        --config-module <name>
                              Override module name to require configuration from (default: config)
+       --dir <dir>           Set the working directory for lapis command (requires luafilesystem)
        --trace               Show full error trace if lapis command fails
 
     Commands:
@@ -38,13 +39,18 @@ a summary of what it can do, along with information about the installation, eg.
 Note that some commands are only available for certain server types, eg. `lapis
 term` is only available for OpenResty/nginx.
 
+Libraries can add their own commands to `lapis` by providing a module named
+`lapis.cmd.actions.{command_name}`. For example, installing
+[lapis-annotate](https://github.com/leafo/lapis-annotate) adds a `lapis
+annotate` command. Installed commands are listed in the help output.
+
 To learn more about a command you can type `lapis help COMMAND`, eg. `lapis
 help migrate`.
 
 ## Default Environment
 
 Lapis will load your Application's configuration for an environment before
-executing a command. The default environment name in command line `development`
+executing a command. The default environment name on the command line is `development`
 unless otherwise overwritten.
 
 You can confirm what the default environment is by running `lapis help`.
@@ -53,7 +59,7 @@ You are free to use any environment name you want. You can change the
 environment in a few different ways:
 
 * Using the `--environment` flag on the `lapis` command will set the environment for the duration of the command
-* For convenience, some commands can also take the environment as an argument after the command name, eg `lapis server production` (This will have the same effect as using `--environment`
+* For convenience, some commands can also take the environment as an argument after the command name, eg `lapis server production` (This will have the same effect as using `--environment`)
 * Creating a `lapis_environment.lua` file in your working directory that returns a string will allow you to change the default environment to whatever is returned
 * Setting the `LAPIS_ENVIRONMENT` environment variable will change the default environment
 
@@ -85,19 +91,23 @@ The `new` command will create a blank Lapis project in the current directory by
 writing some starter files. Note that it is not necessary to use `lapis new` to
 create a new Lapis project, but it can help you get started more quickly.
 
-By default it creates the following files for a OpenResty server:
+By default it creates the following files for an OpenResty server:
 
+* `config.lua`
 * `nginx.conf`
 * `mime.types`
 * `app.lua`
-* `config.lua`
+* `models.lua`
+
+When using `--cqueues`, the `nginx.conf` and `mime.types` files are not
+created.
 
 > Use the `--moonscript` flag to generate a blank MoonScript based app
 
 The generated files are only starting points, you are encouraged to read, and
 customize them.
 
-The `--rockspec` flag can be used to generated a blank rockspec for managing
+The `--rockspec` flag can be used to generate a blank rockspec for managing
 your app's dependencies. If you need to configure the rockspec file then you
 can instead use `lapis generate rockspec` after creating your app.
 
@@ -107,7 +117,7 @@ can instead use `lapis generate rockspec` after creating your app.
 $ lapis server [environment]
 ```
 
-This command start the configured webserver for your app under the specified
+This command starts the configured webserver for your app under the specified
 environment. This command will first read your configuration file to determine
 the server type for the environment, then it will attempt to start your
 application using the entry point for the app.
@@ -122,8 +132,10 @@ Lapis ensures that it runs a version of Nginx that is OpenResty. It will search
 `$PATH` and any common OpenResty installation directories to find the correct
 binary.
 
-Lapis searches the following directories for an installation of OpenResty:
+Lapis searches the following directories for a binary named `nginx` or
+`openresty`:
 
+    "/opt/openresty/nginx/sbin/"
     "/usr/local/openresty/nginx/sbin/"
     "/usr/local/opt/openresty/bin/"
     "/usr/sbin/"
@@ -146,12 +158,14 @@ $ nginx -p "$(pwd)"/ -c "nginx.conf.compiled"
 
 When using Cqueues & lua-http, no additional processes are created. Your server
 is started directly inside of the Lapis command. After reading the
-configuration model it will attempt to load a module called `app` to serve.
+configuration it will load the application module to serve, which is `app` by
+default. The module can be changed with the `default_app_module` [configuration
+value](configuration.html#built-in-configuration).
 
 ### `lapis migrate`
 
     Usage: lapis migrate [-h] [--migrations-module <module>]
-           [--statement-timeout <timeout>] [<environment>]
+           [--statement-timeout <timeout>] [--dry-run] [<environment>]
            [--transaction [{global,individual}]]
 
     Run any outstanding migrations
@@ -166,12 +180,13 @@ configuration model it will attempt to load a module called `app` to serve.
        --statement-timeout <timeout>
                              Set Postgres statement_timeout before migrating to
                              abort slow queries (eg. 5000 or '5s'). Postgres only
+       --dry-run             Immediately roll back after applying migrations. Forces migrations to run in a transaction
        --transaction [{global,individual}]
 
 
-This will run any outstanding migrations. The migrations table if it does not
-exist yet. A database must be configured in the environment for this command to
-work.
+This will run any outstanding migrations. The migrations table will be created
+if it does not exist yet. A database must be configured in the environment for
+this command to work.
 
 This command expects a `migrations` module as described in [Running
 Migrations](database.html#database-migrations/running-migrations). The module
@@ -190,11 +205,15 @@ require("lapis.db.migrations").run_migrations(migrations)
 ]]
 }
 
-You can instruct the migrations to be run in a transaction by providng the
+You can instruct the migrations to be run in a transaction by providing the
 `--transaction` flag.
 
 To wrap each individual migration in a transaction use:
 `--transaction=individual`
+
+The `--dry-run` flag runs the migrations inside of a transaction that is rolled
+back instead of committed, so you can check that pending migrations run
+without errors before applying them.
 
 Some statements can't run inside of a transaction, like Postgres's `CREATE
 INDEX CONCURRENTLY`. Wrap a migration with `no_transaction` to always run it
@@ -252,7 +271,7 @@ is also reloaded.
 This is the best approach when deploying a new version of your code to
 production. You'll be able to reload everything without dropping any requests.
 
-You can read more in the [Nginx manual](http://wiki.nginx.org/CommandLine#Loading_a_New_Configuration_Using_Signals).
+You can read more in the [Nginx manual](https://nginx.org/en/docs/control.html#reconfiguration).
 
 #### Config validation
 
@@ -286,9 +305,29 @@ can stop it using Ctrl-C.
 
 It works by sending a TERM signal to the Nginx master process.
 
+### `lapis exec`
+
+    Usage: lapis exec [--lua] [-h] <code>
+
+    Execute Lua on the server (server: nginx)
+
+> This command is only available for OpenResty
+
+Executes a string of Lua code inside of the running server, and prints any
+output. `print` is redirected to the output of the command. If the server is
+not running then a temporary one is started for the duration of the command.
+Pass `-` as the code to read it from stdin.
+
+This is useful for inspecting the state of a running server, eg. reading from a
+shared dictionary:
+
+```bash
+$ lapis exec 'print(ngx.shared.page_cache:get("hello"))'
+```
+
 ### `lapis simulate`
 
-    Usage: lapis simulate [-h] [--app-class <app_class>]
+    Usage: lapis simulate [-h] [--app-module <app_module>]
            [--helper <helper>]
            [--method {GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH}]
            [--body <body>] [--form <form>] [--header <header>]
@@ -319,8 +358,9 @@ It works by sending a TERM signal to the Nginx master process.
 
     Other options:
        -h, --help            Show this help message and exit.
-       --app-class <app_class>
-                             Override default app class module name
+       --app-module <app_module>,
+        --app-class <app_module>
+                             Override default app module name
        --helper <helper>     Module name to require before loading app
 
 
@@ -370,17 +410,41 @@ based on templates that lapis includes. This can help simplify setting up an
 initial app. The `lapis new` command internally calls a series of generators to
 create the initial project.
 
+The following generators are available. Run `lapis generate NAME --help` to see
+the options for each:
+
+* `application` -- An empty application module
+* `config` -- A configuration module
+* `model` -- An empty [model](models.html) in the `models` directory, eg. `lapis generate model users`
+* `flow` -- An empty [flow](flows.html) in the `flows` directory, eg. `lapis generate flow edit_post`
+* `migration` -- Adds a new migration to the migrations module
+* `rockspec` -- A LuaRocks rockspec file for the app's dependencies
+
+The generators will create MoonScript files if a `config.moon` file exists in
+the current directory, otherwise Lua files are created. This can be overridden
+with `--lua` or `--moonscript`.
+
+If a module named `generators.{name}` exists in your project then it will be
+used in place of the built-in generator of the same name, letting you
+customize the templates. To preview what a generator will create without
+writing any files, set the `LAPIS_GENERATE_STDOUT` environment variable:
+
+```bash
+$ LAPIS_GENERATE_STDOUT=1 lapis generate model users
+```
+
 #### `lapis generate rockspec`
 
 Creates a LuaRocks rockspec file that can be used to manage the dependencies of the app.
 
     Usage: lapis generate rockspec [-h] [--app-name <app_name>]
-           [--version-name <version_name>] [--moonscript] [--sqlite]
-           [--postgresql] [--mysql]
+           [--version-name <version_name>] [--cqueues] [--moonscript]
+           [--sqlite] [--postgresql] [--mysql]
 
     Generate a LuaRocks rockspec file for managing dependencies
 
     Dependencies:
+       --cqueues             Include dependencies for cqueues server support
        --moonscript, --moon  Include MoonScript as dependency
        --sqlite              Include SQLite dependencies
        --postgresql, --postgres
@@ -400,8 +464,8 @@ As an example, to set up your app for using sqlite and MoonScript, you might run
 $ lapis generate rockspec --moonscript --sqlite
 ```
 
-This wil create a new `.rockspec` file in the current directory, named after
-the current directory. (You can rename name of the rockspec with `--app-name`)
+This will create a new `.rockspec` file in the current directory, named after
+the current directory. (You can change the name of the rockspec with `--app-name`)
 
 You can then use LuaRocks to install the necessary dependencies, something like:
 
@@ -419,7 +483,7 @@ $ luarocks --local --lua-version=5.1 build --only-deps --pin
 > When pinning dependencies, a luarocks.lock file is created in the current
 > directory. This should be checked into the repository. [Learn more about
 > pinning versions with
-> LuaRocks](https://github.com/luarocks/luarocks/wiki/Pinning-versions-with-a-lock-file)
+> LuaRocks](https://github.com/luarocks/luarocks/blob/main/docs/pinning_versions_with_a_lock_file.md)
 
 
 #### `lapis generate migration`
@@ -444,6 +508,3 @@ $ luarocks --local --lua-version=5.1 build --only-deps --pin
 If a migrations file does not exist, `lapis generate migration` will create a
 new migration file. It will then append a slot for a new migration to the end
 of the file. By default, the new migration will be named with a unix timestamp.
-
-
-
