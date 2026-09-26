@@ -17,9 +17,24 @@ do
   end
 end
 do
-  local e = url.escape
+  local format, byte, gsub
+  do
+    local _obj_0 = string
+    format, byte, gsub = _obj_0.format, _obj_0.byte, _obj_0.gsub
+  end
+  local patt = "[^%w%-%._~!%*'%(%)]"
+  local encode_char
+  encode_char = function(c)
+    return format("%%%02X", byte(c))
+  end
   escape = function(str)
-    return (e(str))
+    if not (str) then
+      str = ""
+    end
+    if not (type(str) == "string") then
+      str = tostring(str)
+    end
+    return (gsub(str, patt, encode_char))
   end
 end
 do

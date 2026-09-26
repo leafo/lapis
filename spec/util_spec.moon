@@ -99,7 +99,53 @@ tests = {
         "hello[hole]": "wor=ld"
       }
 
-    "dad=day&hello%5bhole%5d=wor%3dld"
+    "dad=day&hello%5Bhole%5D=wor%3Dld"
+  }
+
+  -- escape matches the output of ngx.escape_uri
+  {
+    -> util.escape "Hello, World!"
+    "Hello%2C%20World!"
+  }
+
+  {
+    -> util.escape "~-._!*'()"
+    "~-._!*'()"
+  }
+
+  {
+    -> util.escape "a b&c=d/e?f#g%"
+    "a%20b%26c%3Dd%2Fe%3Ff%23g%25"
+  }
+
+  {
+    -> util.escape "こんにちは"
+    "%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF"
+  }
+
+  {
+    -> util.escape 55
+    "55"
+  }
+
+  {
+    -> util.escape nil
+    ""
+  }
+
+  {
+    -> util.escape false
+    ""
+  }
+
+  {
+    -> util.escape true
+    "true"
+  }
+
+  {
+    -> util.unescape util.escape "a b/こ!%"
+    "a b/こ!%"
   }
 
   {

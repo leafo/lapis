@@ -18,12 +18,19 @@ unescape = do
   u = url.unescape
   (str) -> (u str)
 
----URL encode a string
+---URL encode a string, matching the output of OpenResty's ngx.escape_uri
 ---@param str string
 ---@return string
 escape = do
-  e = url.escape
-  (str) -> (e str)
+  import format, byte, gsub from string
+  -- unreserved characters (RFC 3986) and !*'() are left unescaped
+  patt = "[^%w%-%._~!%*'%(%)]"
+  encode_char = (c) -> format "%%%02X", byte c
+  (str) ->
+    -- coerce arguments the same way as ngx.escape_uri
+    str = "" unless str
+    str = tostring str unless type(str) == "string"
+    (gsub str, patt, encode_char)
 
 ---Escape special pattern characters in a string for use in Lua patterns
 ---@param str string

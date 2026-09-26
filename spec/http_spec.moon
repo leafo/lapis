@@ -81,7 +81,7 @@ describe "lapis.http", ->
       assert.same "/proxy", location
       assert.same {
         method: ngx.HTTP_POST
-        body: "color=blue%27s"
+        body: "color=blue's"
         ctx: {
           headers: {
             "Content-type": "application/x-www-form-urlencoded"
