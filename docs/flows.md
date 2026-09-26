@@ -11,7 +11,8 @@ encapsulated object the *contained object* in this guide.
 
 Typically we'll use flows to wrap the request object within Lapis, but it's not
 a requirement and you can use any Lua object. The flow will proxy method calls
-and field reads and assignments back to the contained object.
+and field reads back to the contained object. (Assignments can also be proxied,
+see [Assigning Fields Within a Flow](#assigning-fields-within-a-flow))
 
 If this explanation is confusing, don't worry. It's easier to understand a flow
 in example. We'll use the `Flow` class standalone to demonstrate how it works.
@@ -93,7 +94,7 @@ these methods part of the object's class? A flow lets you encapsulate logic
 into a separate namespace. Instead of having classes with many methods, you
 split apart your methods into flows and leave the class with a smaller
 implementation. This can help your code stay more organized and also make it
-easier to unit-test individual code paths without having to mock and entire
+easier to unit-test individual code paths without having to mock an entire
 request.
 
 ## Assigning Fields Within a Flow
@@ -102,9 +103,15 @@ If you assign to `self` in a flow it is saved on the flow instance by default.
 This can be used for private data specific to that flow. A good example might
 be caching the result of an expensive method call.
 
-If you want assignments on `self` to be sent back to the original class then
-you can use `expose_assigns`. It's a class property that tells the flow how to
-handle assignments to self.
+If you want assignments on `self` to be sent back to the contained object then
+you can use `expose_assigns`. It's a property of the flow class's instances
+that tells the flow how to handle assignments to self.
+
+<p class="for_moon">
+Note that <code>expose_assigns</code> is declared like a method, without the
+<code>@</code> prefix. Declaring it as <code>@expose_assigns</code> puts it on
+the class object instead, and it will have no effect.
+</p>
 
 `expose_assigns` can take two types of values:
 
@@ -120,23 +127,31 @@ local Flow = require("lapis.flow").Flow
 local MyFlow = Flow:extend({
   expose_assigns = {"user", "session"},
 
-  setup = function(self)
+  load_user = function(self)
     self.user = fetch_user()      -- proxied to contained object
     self.session = get_session()  -- proxied to contained object
     self.cache = {}               -- stored on flow instance (private)
   end
 })
+
+local obj = {}
+MyFlow(obj):load_user()
+-- obj.user and obj.session are now set, obj.cache is not
 ]],
 moon = [[
 import Flow from require "lapis.flow"
 
 class MyFlow extends Flow
-  @expose_assigns: {"user", "session"}
+  expose_assigns: {"user", "session"}
 
-  setup: =>
+  load_user: =>
     @user = fetch_user!      -- proxied to contained object
     @session = get_session!  -- proxied to contained object
     @cache = {}              -- stored on flow instance (private)
+
+obj = {}
+MyFlow(obj)\load_user!
+-- obj.user and obj.session are now set, obj.cache is not
 ]]
 }
 
@@ -148,7 +163,7 @@ available to views or other parts of the request handler.
 
 The contained object is stored on `self` with the name `_` (an underscore).
 Consider it a reserved field for the flow to operate correctly, don't replace
-it it, but you can access it.
+it, but you can access it.
 
 For example, if you need to access the metatable on the contained object for
 some reason:
@@ -186,12 +201,20 @@ call the flow from within your application. Because this is a common pattern,
 there's a `flow` method on the request object that makes instantiating flows
 easy.
 
+<span class="for_moon">`@flow "accounts"`</span><span
+class="for_lua">`self:flow("accounts")`</span> will `require` the module
+`flows.accounts` and instantiate the flow class it returns with the request
+object. (The `flows` prefix can be changed with the application's
+[`flows_prefix`](actions.html#application-configuration/application.flows_prefix)
+field.) The flow instance is cached on the request, so calling `flow` again
+with the same name returns the same instance.
+
 In this example, we declare a flow class for handling logging in and
 registering on a website. Logging in and registering an account may share code,
 so we can use additional flow methods to encapsulate our logic without
 repeating ourselves.
 
-From our application we call the flow:
+Here's the flow, which would be placed in the `flows/accounts` module:
 
 $dual_code{
 lua = [[
@@ -220,6 +243,8 @@ local AccountsFlow = Flow:extend({
     return { redirect_to = self:url_for("homepage") }
   end
 })
+
+return AccountsFlow
 ]],
 moon = [[
 import Flow from require "lapis.flow"
@@ -245,7 +270,7 @@ class AccountsFlow extends Flow
 ]]
 }
 
-The structure of your application could then be:
+From our application we call the flow:
 
 $dual_code{
 lua = [[
@@ -263,6 +288,9 @@ app:match("register", "/register", capture_errors(function(self)
 end))
 ]],
 moon = [[
+lapis = require "lapis"
+import capture_errors from require "lapis.application"
+
 class App extends lapis.Application
   [login: "/login"]: capture_errors => @flow("accounts")\login!
   [register: "/register"]: capture_errors => @flow("accounts")\register!
@@ -308,21 +336,40 @@ assert(flow_b._ == my_object)
 ]]
 }
 
+## Initial Flow Fields
+
+The flow constructor takes an optional second argument, a table of fields that
+will be stored on the flow instance. These fields take precedence over the
+fields of the contained object.
+
+$dual_code{
+lua = [[
+local flow = FormatterFlow(obj, { age = "unknown" })
+print(flow:format_name()) --> "Pizza Zone (age: unknown)"
+]],
+moon = [[
+flow = FormatterFlow obj, age: "unknown"
+print flow\format_name! --> "Pizza Zone (age: unknown)"
+]]
+}
+
 ## Utility Functions
 
 ### `is_flow_class(cls)`
 
-The `is_flow_class` function checks if a class or instance is a Flow:
+The `is_flow_class` function checks if a class is a Flow class. To check an
+instance, pass its class:
 
 $dual_code{
 lua = [[
 local Flow = require("lapis.flow").Flow
 local is_flow_class = require("lapis.flow").is_flow_class
 
-MyFlow = Flow:extend({})
-some_object = {}
+local MyFlow = Flow:extend({})
+local some_object = {}
 
 is_flow_class(MyFlow) --> true
+is_flow_class(MyFlow({}).__class) --> true
 is_flow_class(some_object) --> false
 ]],
 moon = [[
@@ -332,6 +379,7 @@ class MyFlow extends Flow
 some_object = {}
 
 is_flow_class MyFlow --> true
+is_flow_class MyFlow({}).__class --> true
 is_flow_class some_object --> false
 ]]
 }
