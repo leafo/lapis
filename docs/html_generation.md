@@ -22,7 +22,7 @@ language, you can use the full power of the language you're already using.
 In the context of a HTML renderer, the environment exposes functions that
 create HTML tags. The tag builder functions are generated on the fly as you
 call them via a custom function environment. The output of these functions is
-written into a buffer that is compiled in the end and returned as the result
+written into a buffer that is compiled in the end and returned as the result.
 
 Here are some examples of the HTML generation:
 
@@ -33,6 +33,7 @@ $dual_code{
     div "hi<br/>"       -- <div>hi&lt;br/&gt;</div>
     text "Hi!"          -- Hi!
     raw "<br/>"         -- <br/>
+    br!                 -- <br/>
 
     element "table", width: "100%", ->  -- <table width="100%"></table>
 
@@ -65,7 +66,7 @@ $dual_code{
 
     input({
       required = true
-    })                        -- <input required />
+    })                        -- <input required/>
 
     div(function()
       text("Hey")
@@ -91,15 +92,21 @@ need to call `element "div"`.
 > If you want to create a `<table>` or `<select>` tag you'll need to use
 > `element` because Lua uses those names in the default global environment.
 
-All strings passed to the HTML builder functions (attribute names, values, or
-tag contents) are escaped automatically. You never have to worry about
-introducing any cross site scripting vulnerabilities.
+All strings passed to the HTML builder functions as attribute values or tag
+contents are escaped automatically, so you don't have to worry about
+introducing cross site scripting vulnerabilities. Attribute names are not
+escaped, so don't use untrusted input as an attribute name.
+
+Boolean attribute values are handled specially: `true` writes the attribute
+with no value (eg. `<input required/>`), and `false` leaves the attribute out
+entirely.
 
 ### Special attributes
 
 The `class` attribute can be passed as a table, and the class list will be
-constructed from it. The table can contain either array element, or hash
-elements:
+constructed from it. The table can contain either array elements, or hash
+elements. If the resulting class list is empty then the attribute is left
+out.
 
 $dual_code{[[
 div {
@@ -124,7 +131,8 @@ functions for writing HTML tags, the following functions are also available:
 * `capture(func)` -- executes the function argument in the context of the HTML builder environment, returns the compiled result as a string instead of writing to buffer.
 * `text(args)` -- outputs the argument to the buffer, escaping it if it's a string. If it's a function, it executes the function in HTML builder environment. If it's a table, it writes each item in the table
 * `widget(some_widget)` -- renders another widget in the current output buffer. Automatically passes the enclosing context. The widget can either be an instance of a widget, or a widget class. If a class is provided, then an instance with no arguments is created.
-* `render(template_name)` -- renders another widget or view by the module name. Lets you render etlua templates from inside builder
+* `render(module_name)` -- renders another widget or view by its full module name (eg. `"views.user_card"`), without the application's `views_prefix`. Lets you render etlua templates from inside builder
+* `html_5(...)` -- writes the `<!DOCTYPE HTML>` declaration followed by an `html` tag. If no attributes table is provided then `lang="en"` is set on the `html` tag
 
 ## HTML In Actions
 
@@ -155,13 +163,14 @@ lua = [[
 }
 
 The environment of the function passed to $self_ref{"html"} is set to one that
-support the HTML builder functions described above. The return value of the
-$self_ref{"html"} method is the generated HTML as a string. Returning this from
-the action allows us to render send it right to the browser
+supports the HTML builder functions described above. The $self_ref{"html"}
+method returns a function that writes the HTML to the output buffer when the
+request is rendered. Returning it from the action sends the HTML to the
+browser.
 
 ## HTML Widgets
 
-The preferred way to write HTML is through widgets. Widgets are classes who are
+The preferred way to write HTML is through widgets. Widgets are classes that are
 only concerned with outputting HTML. Each method in the widget is executed in
 the HTML builder scope that allows you to use the syntax described above to
 write HTML to the response buffer.
@@ -261,7 +270,7 @@ $dual_code{
   ]],
   lua = [[
     app:match("index", "/", function()
-      return {render = "index"}
+      return {render = true}
     end)
   ]]
 }
@@ -276,19 +285,22 @@ moon = [[
   class Application extends lapis.Application
     views_prefix: "app_views"
 
-    -- will use "app_views.home" as the view
+    -- will load "app_views.home" as the view
     [home: "/home"]: => render: true
+
+    -- will load "app_views.profile" as the view
+    "/profile": => render: "profile"
 ]],
 lua = [[
   local app = lapis.Application()
   app.views_prefix = "app_views"
 
-  app:match("home", "/", function() 
+  app:match("home", "/home", function()
     -- will load "app_views.home" as the view
     return {render = true}
   end)
 
-  app:match("/profile", function() 
+  app:match("/profile", function()
     -- will load "app_views.profile" as the view
     return {render = "profile"}
   end)
@@ -315,7 +327,7 @@ moon = [[
     content: =>
       p "Here are my buttons:"
       for i=1,5
-        widget Button label: "button #{i}
+        widget Button label: "button #{i}"
 ]],
 lua = [[
   local Widget = require("lapis.html").Widget
@@ -327,7 +339,7 @@ lua = [[
   local MyPage = Widget:extend(function(self)
     p("Here are my buttons:")
     for i=1,5 do
-      widget(Button{ label = "button" .. i })
+      widget(Button({ label = "button " .. i }))
     end
   end)
 ]]
@@ -359,7 +371,7 @@ lua = [[
   -- app.lua
   local app = lapis.Application()
 
-  app:match("index", "/", function()
+  app:match("index", "/", function(self)
     self.page_title = "Welcome To My Page"
     return {render =  true}
   end)
@@ -396,12 +408,20 @@ lua = [[
 Widgets can also be rendered manually by instantiating them and calling the
 `render_to_string` method.
 
-$dual_code{moon = [[
+$dual_code{
+moon = [[
 Index = require "views.index"
 
 widget = Index page_title: "Hello World"
 print widget\render_to_string!
-]]}
+]],
+lua = [[
+local Index = require("views.index")
+
+local widget = Index({ page_title = "Hello World" })
+print(widget:render_to_string())
+]]
+}
 
 
 If you want to use helpers like $self_ref{"url_for"} you also need to include
@@ -422,7 +442,7 @@ class extends lapis.Application
 ```
 
 You should avoid rendering widgets manually when possible. When in an action
-use the `render` [request option](#request-object-request-options). When in
+use the `render` [render option](actions.html#render-options). When in
 another widget use the `widget` helper function. Both of these methods will
 ensure the same output buffer is shared to avoid unnecessary string
 concatenations.
@@ -457,7 +477,7 @@ class extends lapis.Application
   layout: require "views.my_layout"
 
   -- you can also write this, and it will prepend app.views_prefix
-  -- layout: = "my_layout"
+  -- layout: "my_layout"
 ]],
 lua = [[
 local app = lapis.Application()
@@ -517,24 +537,17 @@ lua = [[local Widget = require("lapis.html").Widget]]
 When sub-classing a widget, take care not to override these methods if you don't
 intend to change the default behavior.
 
-### `Widget:extend([name], fields={}, [setup_fn])`
+### `Widget:extend([name], fields={})`
 
 Creates a new subclass of the `Widget` base class. The `fields` argument is a
 table of properties that will be copied into the instance metatable of the
-newly created class, or it can be a function and it willl be set as the
+newly created class, or it can be a function and it will be set as the
 `content` field.
 
 `name` is not directly used by Lapis but it can be helpful to provide it for
-debugging and for implementing systems that derive details about the rendred
-output based on the name of the widget (eg. automatically generated a class
+debugging and for implementing systems that derive details about the rendered
+output based on the name of the widget (eg. automatically generating a class
 based on the widget's name)
-
-`setup_fn` is an optional function that will be called with the class object as
-the only argument. This function is called after properties have been set but
-before any `__inherited` callbacks are called. The default `Widget` class does
-not have any `__inherited` callbacks so it is not necessary to use this
-function unless you specifically need that behavior for a subclass you have
-created.
 
 This method returns the newly created class object, followed by the instance
 metatable.
@@ -554,7 +567,7 @@ to set render-time parameters or override methods.
 
 $dual_code{
 moon = [[
-  class SomeWidget extends html.Widget
+  class SomeWidget extends Widget
     content: =>
       div "Hello ", @name
 
@@ -571,7 +584,7 @@ lua = [[
   })
 
   local w = SomeWidget({ name = "Garf" })
-  print(widget:render_to_string()) --> <div>Hello Garf</div>
+  print(w:render_to_string()) --> <div>Hello Garf</div>
 ]]
 }
 
@@ -581,7 +594,7 @@ the initialization conditions of your widget.
 ### `Widget:include(other_class)`
 
 Makes the methods and properties from another class available on the widget
-class. This can be used to implement a form a multiple inheritance for sharing
+class. This can be used to implement a form of multiple inheritance for sharing
 code across many widgets without having to change the parent-class.
 
 The argument `other_class` can either be a reference to a class, or a string.
@@ -624,7 +637,7 @@ copied from the included classes.
 Because of this organization, the following hold true:
 
 * Any methods or properties declared directly on the widget will take precedence over any fields in the mixins class.
-* `super` can be used in the widget's methods to access overrided methods in the mixin class
+* `super` can be used in the widget's methods to access overridden methods in the mixin class
 * The included class is able to use `super`, but it will point to the widget's original parent class, and not to a method in the hierarchy of the included class
   * If the included class is using inheritance, the hierarchy is flattened when fields are copied into the mixins class
 * Because there is only one mixin class per widget class, if multiple included classes implement the same fields, they will be overwritten by subsequent calls to `include`. It is not possible to access overwritten properties
@@ -633,19 +646,39 @@ Because of this organization, the following hold true:
 The function `is_mixins_class` from the `lapis.html` module can be used to
 determine if a class is a mixins class or not.
 
-### `widget:render_to_string()`
+### `widget:render_to_string(...)`
 
 Renders the `content` method of a widget and returns the string result. This
 will automatically create a temporary buffer for the duration of the render.
-This internally calls `widget.render()` with the temporary buffer.
+This internally calls `widget.render()` with the temporary buffer. Any
+arguments are passed to the `content` method.
 
 Keep in mind that widgets must be executed in a special scope to enable the
 HTML builder functions to work. It is not possible to call the `content` method
 directly on the widget if you wish to render it, you must use this method.
 
+### `widget:render_to_file(file, ...)`
+
+Renders the `content` method of a widget directly to a file. `file` can either
+be a file handle, or a string path to a file that will be opened for writing
+and closed after rendering. Any additional arguments are passed to the
+`content` method.
+
+$dual_code{
+moon = [[
+widget = Index page_title: "Hello World"
+widget\render_to_file "index.html"
+]],
+lua = [[
+local widget = Index({ page_title = "Hello World" })
+widget:render_to_file("index.html")
+]]
+}
+
 ### `widget:render(buffer, ...)`
 
-Renders the `content` method of the widget to the provided buffer. Under normal
+Renders the `content` method of the widget to the provided buffer. Any
+additional arguments are passed to the `content` method. Under normal
 circumstances it is not necessary to use this method directly. However, it's
 worth noting it exists to avoid accidentally overwriting the method when
 sub-classing your own widgets.
@@ -698,7 +731,7 @@ use a builder function in conjunction with the `raw` function:
 
 ```moon
 @content_for "footer", ->
-  raw "<pre>this wont' be escaped</pre>"
+  raw "<pre>this won't be escaped</pre>"
 ```
 
 ### `widget:has_content_for(name)`
@@ -717,9 +750,10 @@ class MyView extends Widget
 
 ## HTML Module
 
-```moon
-html = require "lapis.html"
-```
+$dual_code{
+moon = [[html = require "lapis.html"]],
+lua = [[local html = require("lapis.html")]]
+}
 
 ### `html.Widget`
 
@@ -787,7 +821,8 @@ Converts a nested Lua table into a HTML class attribute string. Passing a
 string to this function will return the string unmodified.
 
 This function is applied to the value of the class attribute when using the
-HTML builder syntax.
+HTML builder syntax. Note that the order of classes from the hash part of a
+table is not defined.
 
 $dual_code{
 moon = [[
