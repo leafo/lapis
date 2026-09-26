@@ -179,8 +179,8 @@ These optional components can be nested and chained as much as you like:
 ### Parameter character classes
 
 A character class can be applied to a named parameter to restrict what
-characters can match. The syntax modeled after Lua's pattern character classes.
-This route will make sure the that `user_id` named parameter only contains
+characters can match. The syntax is modeled after Lua's pattern character classes.
+This route will make sure that the `user_id` named parameter only contains
 digits:
 
     /user/:user_id[%d]/posts
@@ -188,6 +188,11 @@ digits:
 And this route would only match hexadecimal strings for the `hex` parameter.
 
     /color/:hex[a-fA-F%d]
+
+A character class can be negated by starting it with `^`. This route will match
+any `name` that doesn't contain a `.`:
+
+    /file/:name[^.]
 
 ### Route precedence
 
@@ -197,8 +202,8 @@ Route precedence from highest to lowest is:
 * Literal routes `/hello/world`
 * Variable routes `/hello/:variable`
   * Each additional `:variable` will decrease the precedence of the route
-* Splat routes routes `/hello/*`
-  * Each additional splat will *increase* the precedence of the route. Given the routes `/hello/*spat` and `/hello/*splat/world/*rest`, the second one will be checked before the first.
+* Splat routes `/hello/*`
+  * Each additional splat will *increase* the precedence of the route. Given the routes `/hello/*` and `/hello/*/world/*`, the second one will be checked before the first.
 
 ## Named Routes
 
@@ -243,7 +248,7 @@ class="for_lua">`self:url_for()`</span>. The first argument is the name of the
 route, and the second optional argument is a table of values to fill a
 parameterized route with.
 
-[Read more about `url_for`](#request-object-methods/url_for) to see the
+[Read more about `url_for`](#request-object-methods/request:url_for) to see the
 different ways to generate URLs to pages.
 
 ## Handling HTTP verbs
@@ -288,17 +293,22 @@ Beyond the HTTP verbs, the table passed to `respond_to` can include special
 keys like `before`, `on_error`, and `on_invalid_method`. See the [`respond_to`
 reference](utilities.html#application-helpers) for the full set of options.
 
-On any `POST` request, regardless of whether `respond_to` is used or not, if
-the `Content-type` header is set to `application/x-www-form-urlencoded` then
-the body of the request will be parsed and all the parameters will be placed
-into <span class="for_moon">`@params`</span><span
-class="for_lua">`self.params`</span>.
+If no handler is provided for `HEAD`, a default one is used that renders an
+empty response.
 
-<span class="for_lua">You may have also seen the `app:get()` and `app:post()`
-methods being called in previous examples. These are wrappers around
-`respond_to` that let you quickly define an action for a particular HTTP verb.
-You'll find these wrappers for the most common verbs: `get`, `post`, `delete`,
-`put`. For any others you'll need to use `respond_to`.</span>
+Regardless of whether `respond_to` is used or not, the body of the request will
+be parsed and all the parameters will be placed into <span
+class="for_moon">`@params`</span><span class="for_lua">`self.params`</span> if
+it is form encoded. See [Request Parameters](#request-parameters) for more
+details.
+
+<div class="for_lua">
+
+You may have also seen the `app:get()` and `app:post()` methods being called in
+previous examples. These are wrappers around `respond_to` that let you quickly
+define an action for a particular HTTP verb. You'll find these wrappers for the
+most common verbs: `get`, `post`, `delete`, `put`. For any others you'll need
+to use `respond_to`.
 
 ```lua
 app:get("/test", function(self)
@@ -308,8 +318,25 @@ end)
 app:delete("/delete-account", function(self)
   -- do something destructive
 end)
-
 ```
+
+Calling multiple verb methods with the same route name and path will combine
+them into a single route that responds to each verb:
+
+```lua
+app:get("account", "/account", function(self)
+  return "View account"
+end)
+
+app:post("account", "/account", function(self)
+  return "Update account"
+end)
+```
+
+An error is thrown if the same route name is used with a different path, or the
+same path is used with a different route name.
+
+</div>
 
 ## Before Filters
 
@@ -400,7 +427,7 @@ $options_table{
   {
     name = $self_ref{"route_name"},
     description = "The name of the route that was matched during routing, if available",
-    example = $dual_code{[[
+    example = dual_code{[[
       app\match "my_page", "/my-page", =>
         assert @route_name == "my_page"
     ]]}
@@ -408,14 +435,14 @@ $options_table{
   {
     name = $self_ref{"route_pattern"},
     description = "The route pattern string that was matched during routing, if available",
-    example = $dual_code{[[
+    example = dual_code{[[
       app\match "my_page", "/my-page", =>
         assert @route_pattern == "/my-page"
     ]]}
   },
   {
     name = $self_ref{"params"},
-    description = "A table containing all request parameters merged together, including query parameters and form-encoded parameters from the body of the request. See [Request Parameters](#request_parameters) for more details."
+    description = "A table containing all request parameters merged together, including query parameters and form-encoded parameters from the body of the request. See [Request Parameters](#request-parameters) for more details."
   },
   {
     name = $self_ref{"GET"},
@@ -426,12 +453,16 @@ $options_table{
     description = "A table containing only the form encoded parameters included in the body of the request. Note that this field is included for any request with form data in the body, regardless of the HTTP verb."
   },
   {
+    name = $self_ref{"url_params"},
+    description = "A table containing only the parameters captured from the route pattern, eg. `id` for the route `/users/:id`."
+  },
+  {
     name = $self_ref{"req"},
     description = "An object containing the internal request information generated by the underlying server processing the request. The full structure of this object is intentionally undocumented. Only resort to referencing it if you need server specific data not available elsewhere."
   },
   {
     name = $self_ref{"res"},
-    description = "An object used to used to generate the response for the client at the end of the request. The structure of this object is specific to the underlying server processing the request, and is intentionally undocumented."
+    description = "An object used to generate the response for the client at the end of the request. The structure of this object is specific to the underlying server processing the request, and is intentionally undocumented."
   },
   {
     name = $self_ref{"app"},
@@ -440,10 +471,10 @@ $options_table{
   {
     name = $self_ref{"cookies"},
     description = "A proxy table that can be used to read any cookies that have been included with the request. New cookies can be stored for the response  by setting them on this table. Only strings are supported as field names and values. See [Cookies](#request-object/cookies) for more information.",
-    example = $dual_code{[[
+    example = dual_code{[[
       app\match "/", =>
         print @cookies.last_seen
-        @cookies.current_date = tostring os.time
+        @cookies.current_date = tostring os.time!
     ]]}
   },
   {
@@ -452,7 +483,7 @@ $options_table{
   },
   {
     name = $self_ref{"options"},
-    description = "A table of options that will controls how the request is rendered. It is populated by calls to `write`, and also set by the return value of your action. See [Render Options](#render-options) for more information."
+    description = "A table of options that controls how the request is rendered. It is populated by calls to `write`, and also set by the return value of your action. See [Render Options](#render-options) for more information."
   },
   {
     name = $self_ref{"buffer"},
@@ -483,6 +514,27 @@ $options_table{
   {
     name = $self_ref{"req.params_post"},
     description = "Unprocessed table of parameters from the body of the request"
+  },
+  {
+    name = $self_ref{"req.method"},
+    description = "The HTTP method of the request, eg. `GET`, `POST`"
+  },
+  {
+    name = $self_ref{"req.request_uri"},
+    description = "The path and query string of the request, eg. `/hello?color=blue`"
+  },
+  {
+    name = $self_ref{"req.remote_addr"},
+    description = "The IP address of the client making the request"
+  },
+  {
+    name = $self_ref{"req.read_body_as_string"},
+    description = "A function that returns the raw body of the request as a string. Useful when handling a content type that Lapis does not parse automatically",
+    example = dual_code{[[
+      app\post "/webhook", =>
+        body = @req\read_body_as_string!
+        -- ...
+    ]]}
   }
 }
 
@@ -517,9 +569,9 @@ class App extends lapis.Application
 }
 
 All new cookies created are given the default attributes `Path=/; HttpOnly`
-(know as a [*session
-cookie*](http://en.wikipedia.org/wiki/HTTP_cookie#Terminology)). You can
-configure a cookie's settings by overriding the the `cookie_attributes` method
+(known as a [*session
+cookie*](https://en.wikipedia.org/wiki/HTTP_cookie#Session_cookie)). You can
+configure a cookie's settings by overriding the `cookie_attributes` method
 on your application. Here's an example that adds an expiration date to cookies
 to make them persist:
 
@@ -528,7 +580,7 @@ lua = [[
 local date = require("date")
 local app = lapis.Application()
 
-app.cookie_attributes = function(self)
+app.cookie_attributes = function(self, name, value)
   local expires = date(true):adddays(365):fmt("${http}")
   return "Expires=" .. expires .. "; Path=/; HttpOnly"
 end
@@ -563,7 +615,7 @@ The session object can be manipulated the same way as the cookies object:
 
 $dual_code{
 lua = [[
-app.match("/", function(self)
+app:match("/", function(self)
   if not self.session.current_user then
     self.session.current_user = "Adam"
   end
@@ -609,7 +661,7 @@ user-supplied parameters sent with the request. These parameters are
 automatically loaded from the following sources:
 
 * URL parameters - These are created when using a route that has a named variable. For instance, a route `/users/:id` will create a parameter named `id`.
-* Body parameters - For request methods that support a body, such as `POST` and `PUT`, the body will be automatically parsed if the content type is `application/x-www-form-urlencoded` or `multipart/form-data`.
+* Body parameters - For request methods that support a body, such as `POST` and `PUT`, the body will be automatically parsed if the content type is `application/x-www-form-urlencoded` or `multipart/form-data`. (The cqueues server only supports `application/x-www-form-urlencoded`)
 * Query parameters - These are parameters included at the end of a request URL following the `?`. For example, `/users?filter=blue` will create a parameter called `filter` with the value `"blue"`.
 
 The $self_ref{"params"} object is a combination of all the default loaded
@@ -622,8 +674,15 @@ parameter will not be overwritten by an `?id=` query parameter.
 
 The body of the request is only parsed if the content type is
 `application/x-www-form-urlencoded` or `multipart/form-data`. For requests that
-use another content type, such as `json`, you can use the `json_params` helper
-function to parse the body.
+use another content type, such as `json`, you can use the
+[`json_params`](utilities.html#application-helpers/json_params) helper function
+to parse the body, or read the raw body with <span
+class="for_moon">`@req\read_body_as_string!`</span><span
+class="for_lua">`self.req:read_body_as_string()`</span>.
+
+> When using the cqueues server, `multipart/form-data` bodies are not parsed,
+> and the `Content-type` must be exactly `application/x-www-form-urlencoded`
+> (with no `charset` suffix) for the body to be parsed.
 
 See [How can I read JSON HTTP body?]($root/reference/quick_reference.html#how-can-i-read-json-http-body).
 
@@ -671,9 +730,11 @@ Duplicate parameter names are overwritten by subsequent values. Due to hash
 table ordering, the final value may not be consistent, so we recommend against
 setting the same parameters multiple times.
 
-When using Nginx, a default limit of 100 parameters is parsed by default from
-the body and query. This is to prevent malicious users from overloading your
-server with a large amount of data.
+When using Nginx, a default limit of 100 parameters is parsed from the body and
+query. This is to prevent malicious users from overloading your server with a
+large amount of data. The limit can be changed with the
+`max_request_args` [configuration
+value](configuration.html#built-in-configuration).
 
 > Are you storing or processing user input as a string? We highly recommend
 > adding limits on the maximum length of the string and trimming whitespace
@@ -747,7 +808,7 @@ moon = [[
 
 If the third argument, `query_params`, is supplied, it will be converted into
 query parameters and appended to the end of the generated URL. If the route
-doesn't take  any parameters in the URL then `nil`, or empty object, must be
+doesn't take any parameters in the URL then `nil`, or empty object, must be
 passed as the second argument:
 
 $dual_code{
@@ -767,8 +828,9 @@ moon = [[
 ]]
 }
 
-Any optional components of the route will only be included if all of the
-enclosed parameters are provided. If the optional component does not have any
+An optional component of the route will be included if any of the parameters
+it directly encloses are provided. Any enclosed parameters that are not
+provided are left empty. If the optional component does not have any
 parameters then it will never be included.
 
 Given the following route:
@@ -896,12 +958,12 @@ value. This allows the third `query_params` argument to still function:
 
 $dual_code{
 lua = [[
-local user = Users:find(1)
+local user = Users:find(100)
 self:url_for(user, { page = "likes" })
 -- could return: /user-profile/100?page=likes
 ]],
 moon = [[
-user = Users\find 1
+user = Users\find 100
 @url_for user, page: "likes"
 -- could return: /user-profile/100?page=likes
 ]]
@@ -909,9 +971,10 @@ user = Users\find 1
 
 #### Using the `url_key` method
 
-The value of any parameter in `params` is a string then it is inserted into the
-generated path as is. If the value is a table, then the `url_key` method is
-called on it, and the return value is inserted into the path.
+If the value of any parameter in `params` is a string then it is inserted into
+the generated path as is. If the value is a table, then the `url_key` method is
+called on it, and the return value is inserted into the path. An error is
+thrown if the table does not have a `url_key` method.
 
 For example, consider a `Users` model which we've generated a `url_key` method
 for:
@@ -919,14 +982,14 @@ for:
 $dual_code{
 lua = [[
 local Users = Model:extend("users", {
-  url_key = function(self, route_name)
+  url_key = function(self, route_name, param_name)
     return self.id
   end
 })
 ]],
 moon = [[
 class Users extends Model
-  url_key: (route_name) => @id
+  url_key: (route_name, param_name) => @id
 ]]
 }
 
@@ -958,13 +1021,18 @@ user = Users\find 1
 ]]
 }
 
-> The `url_key` method takes the name of the path as the first argument, so we
-> could change what we return based on which route is being handled.
+> The `url_key` method takes the name of the route as the first argument, and
+> the name of the parameter being filled as the second argument, so we could
+> change what we return based on which route is being handled.
 
 ### `request:build_url(path, [options])`
 
 Builds an absolute URL for the path. The current request's URI is used to build
 the URL.
+
+If `path` is already an absolute URL (eg. `https://leafo.net`) or a protocol
+relative URL (eg. `//leafo.net`) then it is returned unchanged. If `path`
+contains a `?` then the part after it is used as the query string.
 
 For example, if we are running our server on `localhost:8080`:
 
@@ -973,12 +1041,14 @@ $dual_code{
 lua = [[
 self:build_url() --> http://localhost:8080
 self:build_url("hello") --> http://localhost:8080/hello
+self:build_url("hello?color=blue") --> http://localhost:8080/hello?color=blue
 
 self:build_url("world", { host = "leafo.net", port = 2000 }) --> http://leafo.net:2000/world
 ]],
 moon = [[
 @build_url! --> http://localhost:8080
 @build_url "hello" --> http://localhost:8080/hello
+@build_url "hello?color=blue" --> http://localhost:8080/hello?color=blue
 
 @build_url "world", host: "leafo.net", port: 2000 --> http://leafo.net:2000/world
 ]]
@@ -1057,7 +1127,7 @@ class extends lapis.Application
 ]]
 }
 
-Here are the options that can used to control the how the response is generated:
+Here are the options that can be used to control how the response is generated:
 
 $options_table{
   {
@@ -1072,7 +1142,7 @@ $options_table{
     name = "render",
     description = "Renders a view to the output buffer during the rendering phase of the request. If the value is `true` then the name of the route is used as the view name. Otherwise the value must be a string or a view class. When a string is provided as the view name, it will be loaded as a module with `require` using the full module name `{app.views_prefix}.{view_name}`",
     example = dual_code{[[
-      app\match "index", "/", => render: true, "This loads views.index"
+      app\match "index", "/", => render: true -- This loads views.index
       app\match "/page1", => render: "my_view"
       app\match "/page2", => render: require "helpers.my_view"
     ]]}
@@ -1090,8 +1160,8 @@ $options_table{
   },
   {
     name = "json",
-    description = "Renders the the JSON encoded value of the option. The content type is set to `application/json` and the layout is disabled.",
-    example = $dual_code{[[
+    description = "Renders the JSON encoded value of the option. The content type is set to `application/json`, unless overridden with `content_type`, and the layout is disabled.",
+    example = dual_code{[[
       app\match "/plain", =>
         json: { name: "Hello world!", ids: {1,2,3} }
     ]]}
@@ -1114,7 +1184,7 @@ $options_table{
   },
   {
     name = "skip_render",
-    description = "Set to `true` to cause Lapis to skip it's entire rendering phase (including content, status, headers, cookies, sessions, etc.). Use this if you manually write the request response in the action method (using low level `ngx.print`, `ngx.header` or equivalent). This can be used to implement streaming output, as opposed to Lapis' default buffered output.",
+    description = "Set to `true` to cause Lapis to skip its entire rendering phase (including content, status, headers, cookies, sessions, etc.). Use this if you manually write the request response in the action method (using low level `ngx.print`, `ngx.header` or equivalent). This can be used to implement streaming output, as opposed to Lapis' default buffered output.",
     example = dual_code{[[
       app\match "/stream", =>
         ngx.print "this will..."
@@ -1170,27 +1240,40 @@ Default `require "lapis.views.layout"`
 This is the view used to render an unrecoverable error in the default
 `handle_error` callback. The value of this field is passed directly to Render
 Option `render`, enabling the use of specifying the page by view name or
-directly by a widget or template.
+directly by a widget or template. The layout is disabled when rendering the
+error page.
+
+Before rendering, the default `handle_error` sets the following fields on the
+request object, which can be used by a custom error page: <span
+class="for_moon">`@err`</span><span class="for_lua">`self.err`</span> (the
+error message), <span class="for_moon">`@trace`</span><span
+class="for_lua">`self.trace`</span> (the stack trace), and <span
+class="for_moon">`@status`</span><span class="for_lua">`self.status`</span>
+(`500`).
+
+The default error page will render a JSON object containing the error and
+stack trace instead of HTML if the request has an `Accept` header of
+`application/json`.
 
 Default `require "lapis.views.error"`
 
 ### `application.views_prefix`
 
-This is a prefix appended to the view name (joined by `.`) whenever a view is
+This is a prefix prepended to the view name (joined by `.`) whenever a view is
 specified by string to determine the full module name to require.
 
 Default `"views"`
 
 ### `application.actions_prefix`
 
-This is a prefix appended to the action name (joined by `.`) whenever an action
+This is a prefix prepended to the action name (joined by `.`) whenever an action
 is specified by string to determine the full module name to require.
 
 Default `"actions"`
 
 ### `application.flows_prefix`
 
-This is a prefix appended to the flow name (joined by `.`) whenever a flow is
+This is a prefix prepended to the flow name (joined by `.`) whenever a flow is
 specified by string to determine the full module name to require.
 
 Default `"flows"`
@@ -1208,7 +1291,7 @@ Application callbacks are special methods that can be overridden to handle
 special cases and provide additional configuration.
 
 Although they are functions stored on the application, they are called like
-like actions, meaning the first argument to the function is an instance of a
+actions, meaning the first argument to the function is an instance of a
 request object.
 
 #### `application:default_route()`
@@ -1223,15 +1306,15 @@ lua = [[
 function app:default_route()
   -- strip trailing /
   if self.req.parsed_url.path:match("./$") then
-    local stripped = self.req.parsed_url:match("^(.+)/+$")
+    local stripped = self.req.parsed_url.path:match("^(.+)/+$")
     return {
       redirect_to = self:build_url(stripped, {
-        status = 301,
         query = self.req.parsed_url.query,
-      })
+      }),
+      status = 301
     }
   else
-    self.app.handle_404(self)
+    return self.app.handle_404(self)
   end
 end
 ]],
@@ -1247,7 +1330,7 @@ default_route: =>
 }
 
 The default implementation will check for excess trailing `/` on the end of the
-URL it will attempt to redirect to a version without the trailing slash.
+URL and attempt to redirect to a version without the trailing slash.
 Otherwise it will call the `handle_404` method on the application.
 
 This method, `default_route`, is a normal method of your application. You can
@@ -1368,7 +1451,11 @@ recommended to replace it with a custom one in your production environments and
 log the exception in the background to prevent leaking file paths and function
 names related to your application.
 
-The [`lapis-exceptions`][2] module augments the error handler to records errors
+When running in the `test` environment, the error and stack trace are also
+included as JSON in the `X-Lapis-Error` response header to make it easier to
+debug failing requests in your tests.
+
+The [`lapis-exceptions`][2] module augments the error handler to record errors
 in a database. It can also email you when there's an exception.
 
 ## Application Methods
@@ -1377,7 +1464,7 @@ A Lapis Application can be built either by subclassing it (via MoonScript or
 `extend`), or by creating an instance of it and calling the appropriate methods
 or overriding the appropriate fields.
 
-### `application:match([route_name], route_patch, action_fn)`
+### `application:match([route_name], route_path, action_fn)`
 
 Adds a new route to the route group contained by the application. See above for
 more information on registering actions. Note that routes are inherited by
@@ -1387,7 +1474,8 @@ You can overwrite a route by re-using the same route name, or path, and that
 route will take precedence over one defined further up in the inheritance
 chain.
 
-Class approach:
+Class approach: (In Lua, `extend` returns the new class object, which `match`
+can be called on directly)
 
 $dual_code{
 lua = [[
@@ -1415,28 +1503,36 @@ app\match "/about", => "My site is cool"
 
 ### `application:get(...)`
 
-Shortcut method for adding route for a specific HTTP verb by utilizing the
+Shortcut method for adding a route for a specific HTTP verb by utilizing
 `respond_to` via `match`. Same arguments as `match`.
+
+Calling multiple verb methods with the same route name and path will add each
+verb to the same route. See [Handling HTTP verbs](#handling-http-verbs).
 
 ### `application:post(...)`
 
-Shortcut method for adding route for a specific HTTP verb by utilizing the
+Shortcut method for adding a route for a specific HTTP verb by utilizing
 `respond_to` via `match`. Same arguments as `match`.
 
 ### `application:delete(...)`
 
-Shortcut method for adding route for a specific HTTP verb by utilizing the
+Shortcut method for adding a route for a specific HTTP verb by utilizing
 `respond_to` via `match`. Same arguments as `match`.
 
 ### `application:put(...)`
 
-Shortcut method for adding route for a specific HTTP verb by utilizing the
+Shortcut method for adding a route for a specific HTTP verb by utilizing
 `respond_to` via `match`. Same arguments as `match`.
 
 ### `application:enable(feature)`
 
-Loads a module named `feature` using `require`. If the result of that module is
-callable, then it will be called with one argument, `application`.
+Loads the module `lapis.features.{feature}` using `require`. If the result of
+that module is callable, then it will be called with one argument,
+`application`. Lapis comes with the `etlua` feature, which enables [etlua
+templates](etlua_templates.html).
+
+Features can not be enabled on the base `lapis.Application` class, you must
+enable them on a subclass or instance.
 
 ### `application:before_filter(fn)`
 
@@ -1454,12 +1550,14 @@ See [Before Filters](#before-filters) for more information.
 ### `application:include(other_app, opts={})`
 
 Copies all the routes from `other_app` into the current app. `other_app` can be
-either an application class or an instance. If there are any before filters in
-`other_app`, every action of `other_app` will be be wrapped in a new function
-that calls those before filters before calling the original function.
+either an application class, an instance, or a string module name that will be
+loaded with `require`. If there are any before filters in `other_app`, every
+action of `other_app` will be wrapped in a new function that calls those
+before filters before calling the original function.
 
 Options can either be provided in the argument `opts`, or will be pulled from
-`other_app`, with precedence going to the value provided in `opts` if provided.
+the `path` and `name` fields of `other_app`, with precedence going to the value
+provided in `opts` if provided.
 
 Note that application instance configuration like `layout` and `views_prefix`
 are not kept from the included application.
@@ -1471,7 +1569,7 @@ $options_table{
   },
   {
     name = "name",
-    description = "If provided, every route name will be prefixed with the value of the this option. Provide a trailing `.` if desired."
+    description = "If provided, every route name will be prefixed with the value of this option. Provide a trailing `.` if desired."
   }
 }
 
@@ -1486,11 +1584,26 @@ action like `true` or a module name
 
 Returns `nil` if no action could be found.
 
-### `Application:extend([name], fields={}, [init_fn])`
+### `Application:extend([name], fields={})`
 
 Creates a subclass of the Application class. This method is only available on
-the class object, not the instance. Instance fields can be provided as via the
-`fields` argument or by mutating the returned metatable object.
+the class object, not the instance. `name` is an optional string used as the
+name of the class. Instance fields can be provided via the `fields` argument or
+by mutating the returned metatable object.
+
+If `fields` contains a `new` function, it will be used as the constructor. The
+class object has a `super` method that can be used to call the parent
+constructor, which must be called to initialize the application:
+
+```lua
+local MyApp
+MyApp = lapis.Application:extend("MyApp", {
+  new = function(self)
+    MyApp:super(self, "new")
+    -- custom initialization...
+  end
+})
+```
 
 This method returns the newly created class object, and the metatable for any
 instances of the class.
@@ -1509,5 +1622,5 @@ end
 MyApp:match("home", "/", function(self) return "Hello world!" end)
 ```
 
-[1]: http://www.lua.org/manual/5.1/manual.html#pdf-xpcall
+[1]: https://www.lua.org/manual/5.1/manual.html#pdf-xpcall
 [2]: https://github.com/leafo/lapis-exceptions
