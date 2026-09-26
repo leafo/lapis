@@ -22,7 +22,7 @@ local validate_functions = {
     return tostring(input):match("^%d+$"), "%s must be an integer"
   end,
   is_color = (function()
-    local hex = "[a-fA-f0-9]"
+    local hex = "[a-fA-F0-9]"
     local three = "^#" .. tostring(hex:rep(3)) .. "$"
     local six = "^#" .. tostring(hex:rep(6)) .. "$"
     return function(input)

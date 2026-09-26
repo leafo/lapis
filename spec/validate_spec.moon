@@ -120,6 +120,17 @@ describe "lapis.validate", ->
       rupture: "rupture is required"
     }
 
+  it "validates is_color", ->
+    for color in *{"#fff", "#FFF", "#1234aA", "#a0B1c2"}
+      assert.same nil, validate({ :color }, {
+        { "color", is_color: true }
+      }), color
+
+    for color in *{"#GGG", "#g0g0g0", "#__1", "#ZZZZZZ", "fff", "#ffff", ""}
+      assert.same { "color must be a color" }, validate({ :color }, {
+        { "color", is_color: true }
+      }), color
+
   describe "assert_valid", ->
     it "throws error", ->
       import assert_valid from require "lapis.validate"

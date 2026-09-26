@@ -29,7 +29,7 @@ validate_functions = {
     tostring(input)\match"^%d+$", "%s must be an integer"
 
   is_color: do
-    hex = "[a-fA-f0-9]"
+    hex = "[a-fA-F0-9]"
     three = "^##{hex\rep 3}$"
     six = "^##{hex\rep 6}$"
     (input) ->
