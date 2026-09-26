@@ -85,6 +85,22 @@ rollback_transaction = function()
   local db = require("lapis.db")
   return db.query("ROLLBACK")
 end
+local NO_TRANSACTION_MT = {
+  __call = function(self, ...)
+    return self:fn(...)
+  end
+}
+local no_transaction
+no_transaction = function(fn)
+  assert(type(fn) == "function", "no_transaction: expected function")
+  return setmetatable({
+    fn = fn
+  }, NO_TRANSACTION_MT)
+end
+local is_no_transaction
+is_no_transaction = function(m)
+  return getmetatable(m) == NO_TRANSACTION_MT
+end
 local run_migrations
 run_migrations = function(migrations, prefix, options)
   if options == nil then
@@ -133,27 +149,53 @@ run_migrations = function(migrations, prefix, options)
   end
   local count = 0
   for _, _des_0 in ipairs(tuples) do
-    local name, fn
-    name, fn = _des_0[1], _des_0[2]
-    if prefix then
-      assert(type(prefix) == "string", "got a prefix for `run_migrations` but it was not a string")
-      name = tostring(prefix) .. "_" .. tostring(name)
-    end
-    if not (exists[tostring(name)]) then
-      logger.migration(name)
-      if transaction == "individual" then
-        start_transaction()
+    local _continue_0 = false
+    repeat
+      local name, fn
+      name, fn = _des_0[1], _des_0[2]
+      if prefix then
+        assert(type(prefix) == "string", "got a prefix for `run_migrations` but it was not a string")
+        name = tostring(prefix) .. "_" .. tostring(name)
       end
-      fn(name)
-      LapisMigrations:create(name)
-      if transaction == "individual" then
-        if dry_run then
-          rollback_transaction()
-        else
-          commit_transaction()
+      if not (exists[tostring(name)]) then
+        if is_no_transaction(fn) then
+          if dry_run then
+            logger.notice("Stopping dry run at `" .. tostring(name) .. "`, it must run outside of a transaction")
+            break
+          end
+          logger.migration(name)
+          logger.notice("Running `" .. tostring(name) .. "` outside of a transaction")
+          if transaction == "global" then
+            commit_transaction()
+          end
+          fn(name)
+          LapisMigrations:create(name)
+          if transaction == "global" then
+            start_transaction()
+          end
+          count = count + 1
+          _continue_0 = true
+          break
         end
+        logger.migration(name)
+        if transaction == "individual" then
+          start_transaction()
+        end
+        fn(name)
+        LapisMigrations:create(name)
+        if transaction == "individual" then
+          if dry_run then
+            rollback_transaction()
+          else
+            commit_transaction()
+          end
+        end
+        count = count + 1
       end
-      count = count + 1
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
     end
   end
   logger.migration_summary(count)
@@ -168,5 +210,6 @@ end
 return {
   create_migrations_table = create_migrations_table,
   run_migrations = run_migrations,
+  no_transaction = no_transaction,
   LapisMigrations = LapisMigrations
 }

@@ -71,3 +71,77 @@ describe "lapis.db.migrations", ->
       [[COMMIT]]
     }, query_log
 
+
+  describe "no_transaction", ->
+    local count, m
+
+    before_each ->
+      import no_transaction from require "lapis.db.migrations"
+      count = 0
+      m = {
+        -> count += 1
+        no_transaction -> count += 1
+        -> count += 1
+      }
+
+    it "commits the global transaction around it", ->
+      migrations = require "lapis.db.migrations"
+      migrations.run_migrations m, nil, transaction: "global"
+
+      assert.same 3, count, "Migrations run"
+
+      assert.same {
+        [[BEGIN]]
+        [[SELECT COUNT(*) AS c FROM pg_class WHERE relname = 'lapis_migrations']]
+        [[CREATE TABLE "lapis_migrations" (
+  "name" character varying(255) NOT NULL,
+  PRIMARY KEY(name)
+)]]
+        [[SELECT * FROM "lapis_migrations" ]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('1') RETURNING "name"]]
+        [[COMMIT]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('2') RETURNING "name"]]
+        [[BEGIN]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('3') RETURNING "name"]]
+        [[COMMIT]]
+      }, query_log
+
+    it "skips the transaction in individual mode", ->
+      migrations = require "lapis.db.migrations"
+      migrations.run_migrations m, nil, transaction: "individual"
+
+      assert.same 3, count, "Migrations run"
+
+      assert.same {
+        [[SELECT COUNT(*) AS c FROM pg_class WHERE relname = 'lapis_migrations']]
+        [[CREATE TABLE "lapis_migrations" (
+  "name" character varying(255) NOT NULL,
+  PRIMARY KEY(name)
+)]]
+        [[SELECT * FROM "lapis_migrations" ]]
+        [[BEGIN]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('1') RETURNING "name"]]
+        [[COMMIT]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('2') RETURNING "name"]]
+        [[BEGIN]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('3') RETURNING "name"]]
+        [[COMMIT]]
+      }, query_log
+
+    it "stops a dry run before it", ->
+      migrations = require "lapis.db.migrations"
+      migrations.run_migrations m, nil, dry_run: true
+
+      assert.same 1, count, "Migrations run"
+
+      assert.same {
+        [[BEGIN]]
+        [[SELECT COUNT(*) AS c FROM pg_class WHERE relname = 'lapis_migrations']]
+        [[CREATE TABLE "lapis_migrations" (
+  "name" character varying(255) NOT NULL,
+  PRIMARY KEY(name)
+)]]
+        [[SELECT * FROM "lapis_migrations" ]]
+        [[INSERT INTO "lapis_migrations" ("name") VALUES ('1') RETURNING "name"]]
+        [[ROLLBACK]]
+      }, query_log

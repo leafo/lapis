@@ -39,6 +39,19 @@ rollback_transaction = ->
   db = require "lapis.db"
   db.query "ROLLBACK"
 
+-- marks a migration to be run outside of a transaction, for statements that
+-- can't run in one, eg. Postgres's CREATE INDEX CONCURRENTLY
+NO_TRANSACTION_MT = {
+  __call: (...) => @fn ...
+}
+
+no_transaction = (fn) ->
+  assert type(fn) == "function", "no_transaction: expected function"
+  setmetatable { :fn }, NO_TRANSACTION_MT
+
+is_no_transaction = (m) ->
+  getmetatable(m) == NO_TRANSACTION_MT
+
 run_migrations = (migrations, prefix, options={}) ->
   assert type(migrations) == "table", "expecting a table of migrations for run_migrations"
 
@@ -67,6 +80,26 @@ run_migrations = (migrations, prefix, options={}) ->
       name = "#{prefix}_#{name}"
 
     unless exists[tostring name]
+      if is_no_transaction fn
+        if dry_run
+          logger.notice "Stopping dry run at `#{name}`, it must run outside of a transaction"
+          break
+
+        logger.migration name
+        logger.notice "Running `#{name}` outside of a transaction"
+
+        if transaction == "global"
+          commit_transaction!
+
+        fn name
+        LapisMigrations\create name
+
+        if transaction == "global"
+          start_transaction!
+
+        count += 1
+        continue
+
       logger.migration name
 
       if transaction == "individual"
@@ -93,5 +126,5 @@ run_migrations = (migrations, prefix, options={}) ->
 
   return
 
-{ :create_migrations_table, :run_migrations, :LapisMigrations }
+{ :create_migrations_table, :run_migrations, :no_transaction, :LapisMigrations }
 

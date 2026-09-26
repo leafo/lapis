@@ -196,6 +196,32 @@ You can instruct the migrations to be run in a transaction by providng the
 To wrap each individual migration in a transaction use:
 `--transaction=individual`
 
+Some statements can't run inside of a transaction, like Postgres's `CREATE
+INDEX CONCURRENTLY`. Wrap a migration with `no_transaction` to always run it
+outside of one. In `global` mode the open transaction is committed before the
+migration runs and a new one is started after it. A dry run stops before any
+`no_transaction` migration, since it can't be rolled back.
+
+$dual_code{
+moon = [[
+import no_transaction from require "lapis.db.migrations"
+
+{
+  [1790452452]: no_transaction =>
+    db.query "create index concurrently games_title_idx on games (title)"
+}
+]],
+lua = [[
+local no_transaction = require("lapis.db.migrations").no_transaction
+
+return {
+  [1790452452] = no_transaction(function()
+    db.query("create index concurrently games_title_idx on games (title)")
+  end)
+}
+]]
+}
+
 When running against Postgres you can pass `--statement-timeout` to set the
 [`statement_timeout`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT)
 before the migrations run. Any query that exceeds the timeout is aborted, which
