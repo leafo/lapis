@@ -9,7 +9,7 @@ code inline in a template file to produce a dynamic output. In Lapis we use
 
 `etlua` files use the `.etlua` extension. Lapis knows how to load those types
 of files automatically using Lua's `require` function after you've enabled
-`etlua`
+`etlua`.
 
 For example, here's a simple template that renders a random number:
 
@@ -45,7 +45,7 @@ is suitable for use in the content or attributes of an HTML tag.
 
 In some cases it may be cumbersome to use `<%= lua_expression %>` in multiple
 places when constructing HTML elements. The `element` function can be used to
-write a tag to the buffer programatically in Lua code. It will automatically
+write a tag to the buffer programmatically in Lua code. It will automatically
 escape any values passed to it and generate valid markup.
 
 In this example the `element` function is used to generate the link to the
@@ -145,7 +145,7 @@ return app
 
 ### Passing Data to Views
 
-Data prepared in an action can be passed the view by storing it on `self`. For
+Data prepared in an action can be passed to the view by storing it on `self`. For
 example we might set some state for our template to render:
 
 $dual_code{
@@ -173,9 +173,10 @@ end)
 </ul>
 ```
 
-You'll notice that we don't need to refer scope the values with `self` when
-retrieving their values in the template. Any variables are automatically looked
-up in that table by default.
+You'll notice that we don't need to prefix the values with `self` when
+retrieving them in the template. Any variables are automatically looked up in
+that table by default. `self` is also available in the template if you need to
+refer to the object directly.
 
 
 ## Calling Helper Functions from Views
@@ -230,9 +231,10 @@ argument to require, in this case `"views.navigation"`, which points to
 `views/navigation.etlua`. (The `views_prefix` is only used when an application
 is specifying a template to use)
 
-The `render()` function can take any *renderable* object. This means you can
-use [`Widget` classes](html_generation.html) or `etlua` templates. When a
-string is provided as the object to render, it will be loaded with `require()`.
+The `render()` function takes a module name that is loaded with `require()`,
+so it can render either `etlua` templates or [`Widget`
+classes](html_generation.html) stored in modules. To render a widget class or
+instance that you already have a reference to, use the `widget()` function.
 
 Any values and helpers available in the parent template are made available in
 the scope of the rendered sub-template.
@@ -252,7 +254,7 @@ Here's a contrived example of using a sub-template to render a list of numbers:
 ```erb
 <!-- templates/list.etlua -->
 <div class="list">
-<% for i, value in ipairs({}) do %>
+<% for i, value in ipairs(numbers) do %>
   <% render("templates.list_item", { number_value = value }) %>
 <% end %>
 </div>
@@ -264,18 +266,50 @@ The following functions are globally available in any `etlua` template loaded
 by Lapis to be used as a view.
 
 * `render(template_name, [template_params])` -- loads and renders a template to the buffer
-* `widget(widget_instance)` -- renders and instance of a `Widget` to the buffer
+* `widget(widget)` -- renders a `Widget` to the buffer. Either a widget instance or a widget class can be provided
 * `element(name, ...)` -- renders an HTML element to the buffer with `name`, supporting the full HTML builder syntax for any nested functions
+* `content_for(name, [content])` -- when called with only `name`, writes the content block of that name to the buffer. When called with `content`, appends to the content block. Strings are escaped. See [`content_for`](html_generation.html#widget-methods/widget:content_for)
+* `has_content_for(name)` -- returns `true` if a content block with that name has been set
 
 Note that when a helper renders to the buffer, there will be no return value.
 It is not necessary to use an etlua tag that will print the output of the
 function.
 
+### Layouts
+
+A layout can also be written as an `etlua` template. Use `content_for` to write
+the content of the page, and any other content blocks, into the layout:
+
+```erb
+<!-- views/layout.etlua -->
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <title><% content_for("title") %></title>
+</head>
+<body>
+  <% content_for("inner") %>
+</body>
+</html>
+```
+
+$dual_code{
+moon = [[
+class App extends lapis.Application
+  @enable "etlua"
+  layout: "layout"
+]],
+lua = [[
+local app = lapis.Application()
+app:enable("etlua")
+app.layout = "layout"
+]]}
+
 ## `EtluaWidget` reference
 
 Lapis transparently converts `.etlua` files to `EtluaWidget`s when you request
 them to be used as a template (after enabling `etlua`). You can manually
-compile template code programatically by interacting directly with the
+compile template code programmatically by interacting directly with the
 `EtluaWidget` class.
 
 It is not necessary to *enable* `etlua` if you are using the `EtluaWidget`
@@ -290,18 +324,20 @@ persist between requests.
 
 ### `EtluaWidget:load(template_code)`
 
-The `load` method takes a etlua template string, compiles it and creates a new
+The `load` method takes an etlua template string, compiles it and creates a new
 `EtluaWidget` class that can be used to render the template with parameters.
+If the template fails to compile then `nil` and an error message are returned.
 
 $dual_code{
 moon = [==[
 import EtluaWidget from require "lapis.etlua"
 
-widget = EtluaWidget\load [[
+MyWidget = EtluaWidget\load [[
   <h1>Hello <%= username %></h1>
 ]]
 
-widget(username: "Garf")\render_to_string!
+w = MyWidget username: "Garf"
+print w\render_to_string! --> <h1>Hello Garf</h1>
 ]==],
 lua = [==[
 local etlua = require("lapis.etlua")
@@ -326,7 +362,7 @@ will be available in scope for the template when it is rendered.
 Renders the template and returns the string result. This will automatically
 create a temporary buffer for the duration of the render.
 
-### `etluawidget:render(buffer, ...)`
+### `etluawidget:render(buffer)`
 
 Renders the template to the provided buffer. Under normal circumstances it is
 not necessary to use this method directly.
