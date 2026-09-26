@@ -5,10 +5,10 @@
 
 Lapis comes with a set of classes and functions for working with either
 [PostgreSQL](http://www.postgresql.org/), [MySQL](https://www.mysql.com/) or
-[SQLite](http://https://sqlite.org/index.html).
+[SQLite](https://sqlite.org/).
 
 In the supported environments, queries are performed asynchronously (eg.
-[OpenResty cosocket API](http://wiki.nginx.org/HttpLuaModule#ngx.socket.tcp))
+[OpenResty cosocket API](https://github.com/openresty/lua-nginx-module#ngxsockettcp))
 to allow for high throughput under heavy load. A request will yield and resume
 automatically when issuing queries so there's no need to code with callbacks,
 queries can be written sequentially as if they were in a synchronous
@@ -21,7 +21,7 @@ application.
 > Since SQLite is embedded into your application, all queries are blocking and no connection pooling is used.
 
 Depending on which database you use, a different library is used. You may need
-to install these libraries manually if you wish the use the associated
+to install these libraries manually if you wish to use the associated
 database. (It is recommended to add supplemental dependencies of your
 application to a local [rockspec
 file](https://github.com/luarocks/luarocks/wiki/Rockspec-format).)
@@ -49,7 +49,7 @@ following three require statements above will actually load the following
 modules: `lapis.db.postgres`, `lapis.db.postgres.model` and
 `lapis.db.postgres.schema`.
 
-The precedence for selecting a datbase is PostgreSQL, MySQL, SQLite. If you
+The precedence for selecting a database is PostgreSQL, MySQL, SQLite. If you
 have multiple database configurations then you will need to manually require
 the module for the database you wish to use.
 
@@ -103,8 +103,8 @@ config("development", {
 
 `host` defaults to `127.0.0.1` and `user` defaults to `postgres`, so you can
 leave those fields out if they aren't different from the defaults. If a
-non-default port is required it can be appended to the `host` with colon
-syntax: `my_host:1234` (Otherwise `5432`, the PostgreSQL default, is used).
+non-default port is required it can be set with the `port` field (Otherwise
+`5432`, the PostgreSQL default, is used).
 
 ### MySQL
 
@@ -171,11 +171,11 @@ config("development", {
 
 There are generally two ways to work with the data in your database:
 
-1. The `lapis.db` module is a collection of functions to make queries to the database, returning the reults as plain Lua tables.
+1. The `lapis.db` module is a collection of functions to make queries to the database, returning the results as plain Lua tables.
 1. The [`Model` class](models.html) is a wrapper around a Lua table that helps you synchronize it with a row in a database table. When appropriate, the results from the database are converted to instances of the model's class.
 
 The `Model` class is the preferred way to interact with the database. Issuing
-queries from the `lapis.db` module should preferred for achieving things the
+queries from the `lapis.db` module should be preferred for achieving things the
 `Model` class is unable to do easily.
 
 Here's an example of how you might use the `query` function in the `lapis.db`
@@ -238,7 +238,9 @@ return app
 
 
 By default all queries will log to the Nginx notice log. You'll be able to see
-each query as it happens.
+each query as it happens. Query logging can be disabled with the `queries`
+field of the [logging
+configuration](configuration.html#built-in-configuration/logging-configuration).
 
 You can also issue queries in your command line scripts using the same
 configuration, just require the model or `lapis.db` module and start using it.
@@ -301,7 +303,7 @@ Lapis does.
 
 ### `db.select(query, params...)`
 
-Similar to `db.query`, but it appends `"SELECT"` to the front of the query.
+Similar to `db.query`, but it prepends `"SELECT "` to the query.
 
 $dual_code{[[
 res = db.select "* from hello where active = ?", false
@@ -339,16 +341,16 @@ res = db.insert "some_other_table", {
 INSERT INTO "some_other_table" ("name") VALUES ('Hello World') RETURNING "id"
 ```
 
-> `RETURNING` and `ON CONFLICT` are PostgreSQL feature, and not available when using MySQL
+> `RETURNING` and `ON CONFLICT` are supported by PostgreSQL and SQLite, and not available when using MySQL
 
-Alternatively, a options table can be provided as third argument with support
+Alternatively, an options table can be provided as third argument with support
 for the following fields: (When providing an options table, all other arguments
 are ignored)
 
 $options_table{
   {
     name = "returning",
-    description = "An array table of column names or the string `'*'` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object. `db.raw` can be used for more advanced expressions",
+    description = "An array table of column names or the string `'*'` to represent all column names. Their values will be returned from the insertion query using `RETURNING` clause to initially populate the model object. `db.raw` can be used for more advanced expressions",
     example = dual_code{[[
       res = db.insert "my_table", { color: "blue" }, returning: "*"
       res = db.insert "my_table", {
@@ -418,7 +420,7 @@ db.update "cats", {
 ]]}
 
 ```sql
-UPDATE "cats" SET "count" = count + 1, WHERE "id" = 1200 RETURNING count
+UPDATE "cats" SET "count" = count + 1 WHERE "id" = 1200 RETURNING "count"
 ```
 
 > You can use a `db.raw()` in place of the returning identifier name to
@@ -428,15 +430,15 @@ When using the returning clause the return value of `db.update` will be an
 array of rows generated by the `RETURNING` expression, in addition to
 containing the `affected_rows` field.
 
-> `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
+> `RETURNING` is supported by PostgreSQL and SQLite, and is not available when using MySQL
 
 ### `db.delete(table, conditions, params...)`
 
 Deletes rows from `table` that match `conditions`.
 
-The `conditions` arugment can either be a Lua table mapping column to value, a
+The `conditions` argument can either be a Lua table mapping column to value, a
 `db.clause`, or a string as a SQL fragment. When using the string condition,
-the remaining arguments as passed as parameters to the SQL fragment as if you
+the remaining arguments are passed as parameters to the SQL fragment as if you
 called `db.interpolate_query`.
 
 The return value is a table containing the status of the delete. The number of
@@ -474,7 +476,7 @@ DELETE FROM "cats" WHERE "id" = 1200 RETURNING "last_updated_at"
 The return value will now be an array of rows generated by the return values,
 in addition to containing the `affected_rows` field.
 
-> `RETURNING` is a PostgreSQL feature, and is not available when using MySQL
+> `RETURNING` is supported by PostgreSQL and SQLite, and is not available when using MySQL
 
 
 ### `db.escape_literal(value)`
@@ -482,15 +484,15 @@ in addition to containing the `affected_rows` field.
 Escapes a value for use in a query. A value is any type that can be stored in a
 column. Numbers, strings, and booleans will be escaped accordingly.
 
-```lua
+$dual_code{
+lua=[[
 local escaped = db.escape_literal(value)
 local res = db.query("select * from hello where id = " .. escaped)
-```
-
-```moon
+]],
+moon=[[
 escaped = db.escape_literal value
 res = db.query "select * from hello where id = #{escaped}"
-```
+]]}
 
 `escape_literal` is not appropriate for escaping column or table names. See
 `escape_identifier`.
@@ -500,15 +502,15 @@ res = db.query "select * from hello where id = #{escaped}"
 Escapes a string for use in a query as an identifier. An identifier is a column
 or table name.
 
-```lua
+$dual_code{
+lua=[[
 local table_name = db.escape_identifier("table")
 local res = db.query("select * from " .. table_name)
-```
-
-```moon
+]],
+moon=[[
 table_name = db.escape_identifier "table"
 res = db.query "select * from #{table_name}"
-```
+]]}
 
 `escape_identifier` is not appropriate for escaping values. See
 `escape_literal` for escaping values.
@@ -600,12 +602,12 @@ db = require "lapis.db"
 
 ### `db.raw(str)`
 
-Returns a an object wrapping the string argument that will be inserted verbatim
+Returns an object wrapping the string argument that will be inserted verbatim
 into a query without being escaped. Special care should be taken to avoid
-generating invalid SQL and and to avoid introducing SQL injection attacks by
-concatenated unsafe data into the string.
+generating invalid SQL and to avoid introducing SQL injection attacks by
+concatenating unsafe data into the string.
 
-`db.raw` can be used inin almost any place where SQL query construction takes
+`db.raw` can be used in almost any place where SQL query construction takes
 place.  For example, `db.escape_literal` and `db.escape_identifier` will both
 pass the string through unchanged. It can also be used in `db.encode_clause`
 for both keys and values. You can use it where things like column names or
@@ -645,12 +647,17 @@ is used.
 
 $dual_code{[[
 ids = db.list {3,2,1,5}
-res = db.select "* from another table where id in ?", ids
+res = db.select "* from another_table where id in ?", ids
 
 db.update "the_table", {
   height: 55
-}, { :ids }
+}, { id: ids }
 ]]}
+
+```sql
+SELECT * from another_table where id in (3, 2, 1, 5)
+UPDATE "the_table" SET "height" = 55 WHERE "id" IN (3, 2, 1, 5)
+```
 
 ### `db.is_list(obj)`
 
@@ -660,22 +667,22 @@ Returns `true` if `obj` is a value created by `db.list`.
 
 Creates a *clause* object that can be encoded into a boolean SQL expression for
 filtering or finding operations in the database. A clause object is an
-encodable type that can be used in places like `db.encode_clause` and and
+encodable type that can be used in places like `db.encode_clause` and
 `db.interpolate_query` to safely generate an SQL fragment where all values are
 escaped accordingly. Any built in Lapis functions that can take an object to
 filter the affected rows can also take a clause object in place of a query
 fragment or plain Lua table.
 
-By default, a clause object will combine all paramters contained with the `AND`
+By default, a clause object will combine all parameters contained with the `AND`
 operator.
 
 When encoded to SQL, the clause object will attempt to extract filters from all
 entries in the table:
 
 * Key, value pairs in the hash-table portion of the clause table will be converted to a SQL fragment similar to `db.escape_identifier(key) = db.escape_literal(value)`. This mode is aware of booleans and `db.list` objects to generate the correct syntax
-* Values in the array portion of the clause table will handled based on their type:
-  * String values will be treated as raw SQL fragments that will be concatenated into the clause directly. All string values are warpped in `()` to ensure there are no precedence issues
-  * Table values will passed to `interpolate_query` if the sub-table's first item is a string, eg. `{"views_count > ?", 100}`
+* Values in the array portion of the clause table will be handled based on their type:
+  * String values will be treated as raw SQL fragments that will be concatenated into the clause directly. All string values are wrapped in `()` to ensure there are no precedence issues
+  * Table values will be passed to `interpolate_query` if the sub-table's first item is a string, eg. `{"views_count > ?", 100}`
   * A `nil` value will be skipped, meaning you can place conditionals directly inside of the clause
   * Clause objects can be nested by placing them in the array portion of the clause table
 
@@ -701,8 +708,49 @@ res = db.query "SELECT * FROM profiles WHERE ?", filter
 The following SQL will be generated:
 
 ```sql
-SELECT * FROM profiles WHERE (username like '%admin') AND (views_count > 100) AND ("active" OR "promoted") AND "status" IN (3, 4) AND "id" = 12 AND not "deleted",
+SELECT * FROM profiles WHERE (username like '%admin') AND (views_count > 100) AND ("active" OR "promoted") AND "status" IN (3, 4) AND "id" = 12 AND NOT "deleted"
 ```
+
+Keys in the hash-table portion of a clause are normally column names, but a
+`db.raw` or a `db.list` can also be used as a key. This makes it possible to
+filter on an expression or on multiple columns at once:
+
+$dual_code{
+moon=[[
+filter = db.clause {
+  [db.raw "lower(email)"]: "leafo@example.com"
+  [db.list {db.raw("user_id"), db.raw("game_id")}]: db.list {
+    db.list {1, 100}
+    db.list {2, 200}
+  }
+}
+]],
+lua=[[
+local filter = db.clause({
+  [db.raw("lower(email)")] = "leafo@example.com",
+  [db.list({db.raw("user_id"), db.raw("game_id")})] = db.list({
+    db.list({1, 100}),
+    db.list({2, 200})
+  })
+})
+]]}
+
+```sql
+lower(email) = 'leafo@example.com' AND (user_id, game_id) IN ((1, 100), (2, 200))
+```
+
+Two clause objects can be combined with the `+` operator, which returns a new
+clause that joins them with `OR`:
+
+$dual_code{
+moon=[[
+filter = db.clause(status: "deleted") + db.clause(banned: true)
+print db.encode_clause filter --> ("status" = 'deleted') OR ("banned")
+]],
+lua=[[
+local filter = db.clause({ status = "deleted" }) + db.clause({ banned = true })
+print(db.encode_clause(filter)) --> ("status" = 'deleted') OR ("banned")
+]]}
 
 The second argument can be a table of options. The following properties are
 supported:
@@ -741,7 +789,7 @@ $options_table{
   }, {
     name = "allow_empty",
     description = [[
-      By default, an empty clause will throw an error when it is attampted to
+      By default, an empty clause will throw an error when it is attempted to
       be encoded. This is to prevent you from accidentally filtering on
       something that has a nil value that should actually be provided. You must
       set this field to `true` in order to allow for the empty clause to be
@@ -753,22 +801,28 @@ $options_table{
       -- This will throw an error to prevent you from accidentally deleting all
       -- rows because of an empty clause created by a nil value
       db.delete "users", db.clause {
-        user_id: something.id -- oops, used the wrong field name and set this to nil
+        user_id: some_object.id -- oops, used the wrong field name and set this to nil
       }
+
+      -- An empty clause is only permitted when explicitly requested
+      print db.encode_clause db.clause({}, allow_empty: true) --> ""
     ]], lua=[[
       local some_object = { the_id = 1 }
 
       -- This will throw an error to prevent you from accidentally deleting all
       -- rows because of an empty clause created by a nil value
       db.delete("users", db.clause({
-        user_id = something.id -- oops, used the wrong field name and set this to nil
+        user_id = some_object.id -- oops, used the wrong field name and set this to nil
       }))
+
+      -- An empty clause is only permitted when explicitly requested
+      print(db.encode_clause(db.clause({}, { allow_empty = true }))) --> ""
     ]]}
   },{
     name = "prefix",
     description = [[
-      Will append the string provied (separated by a space) to the front of the
-      encoded result only if there is something in the table to be encoded.
+      Will prepend the string provided (separated by a space) to the encoded
+      result only if there is something in the table to be encoded.
       This can be combined with `allow_empty` to easily build optional `WHERE`
       clauses for queries
 
@@ -776,18 +830,18 @@ $options_table{
       > untrusted input to avoid SQL injection.
     ]],
     example = dual_code{moon=[[
-      db.encode_clause(db.clause({}, {prefix: "WHERE", allow_empty: true}) --> ""
-      db.encode_clause(db.clause({id: 5}, {prefix: "WHERE", allow_empty: true}) --> [[WHERE "id" = 5]]
+      db.encode_clause db.clause({}, {prefix: "WHERE", allow_empty: true}) --> ""
+      db.encode_clause db.clause({id: 5}, {prefix: "WHERE", allow_empty: true}) --> 'WHERE "id" = 5'
 
-      db.query "SELECT FROM users ?", db.clause {
+      db.query "SELECT * FROM users ?", db.clause {
         -- if params.id is nil, then the clause will be encoded to empty string
         id: params.id
       }, prefix: "WHERE", allow_empty: true
     ]], lua=[[
       db.encode_clause(db.clause({}, {prefix = "WHERE", allow_empty = true})) --> ""
-      db.encode_clause(db.clause({id = 5}, {prefix = "WHERE", allow_empty = true})) --> [[WHERE "id" = 5]]
+      db.encode_clause(db.clause({id = 5}, {prefix = "WHERE", allow_empty = true})) --> 'WHERE "id" = 5'
 
-      db.query("SELECT FROM users ?", db.clause({
+      db.query("SELECT * FROM users ?", db.clause({
         -- if params.id is nil, then the clause will be encoded to empty string
         id = params.id
       }, { prefix = "WHERE", allow_empty = true }))
@@ -802,7 +856,8 @@ Returns `true` if `obj` is a value created by `db.clause`.
 ### `db.array({values...})`
 
 Converts the argument passed to an array type that will be inserted/updated
-using PostgreSQL's array syntax. This function does not exist for MySQL.
+using PostgreSQL's array syntax. This function does not exist for MySQL or
+SQLite.
 
 The return value of this function can be used in place of any regular value
 passed to a SQL query function. Each item in the list will be escaped with
@@ -845,7 +900,7 @@ db.update "the_table", {
 ]]}
 
 ```sql
-UPDATE "the_table" SET name = NULL
+UPDATE "the_table" SET "name" = NULL
 ```
 
 ### `db.TRUE`
@@ -865,10 +920,11 @@ of the `lapis.db.schema` module.
 
 ### Creating and Dropping Tables
 
-#### `create_table(table_name, { table_declarations... })`
+#### `create_table(table_name, { table_declarations... }, [options])`
 
 The first argument to `create_table` is the name of the table and the second
-argument is an array table that describes the table.
+argument is an array table that describes the table. An optional third argument
+is a table of options.
 
 ```lua
 local schema = require("lapis.db.schema")
@@ -902,7 +958,7 @@ create_table "users", {
 This will generate the following SQL:
 
 ```sql
-CREATE TABLE IF NOT EXISTS "users" (
+CREATE TABLE "users" (
   "id" serial NOT NULL,
   "username" character varying(255) NOT NULL,
   PRIMARY KEY (id)
@@ -922,6 +978,32 @@ NULL`. See more about types below.
 
 If the value to the second argument is a string then it is inserted directly
 into the `CREATE TABLE` statement, that's how we create the primary key above.
+
+The following options are supported:
+
+$options_table{
+  {
+    name = "if_not_exists",
+    description = [[
+      Generate `CREATE TABLE IF NOT EXISTS` so no error is thrown if the table
+      already exists.
+    ]],
+    default = '`false`'
+  }, {
+    name = "strict",
+    description = "Create a [`STRICT`](https://sqlite.org/stricttables.html) table. (SQLite only)"
+  }, {
+    name = "without_rowid",
+    description = "Create a [`WITHOUT ROWID`](https://sqlite.org/withoutrowid.html) table. (SQLite only)"
+  }, {
+    name = "engine",
+    description = "Set the `ENGINE` of the table. (MySQL only)"
+  }, {
+    name = "charset",
+    description = "Set the `CHARSET` of the table. (MySQL only)",
+    default = '`"UTF8"`'
+  }
+}
 
 #### `drop_table(table_name)`
 
@@ -968,11 +1050,36 @@ $options_table{
     description = [[
       A string value that overrides the default generated index name.
     ]]
+  }, {
+    name = "if_not_exists",
+    description = [[
+      Generate `CREATE INDEX IF NOT EXISTS` so no error is thrown if the index
+      already exists. (PostgreSQL and SQLite only)
+    ]]
+  }, {
+    name = "concurrently",
+    description = [[
+      Generate `CREATE INDEX CONCURRENTLY` to build the index without locking
+      writes to the table. This can't be run inside of a transaction, see
+      [`no_transaction`](#database-migrations/manually-running-migrations). (PostgreSQL only)
+    ]]
+  }, {
+    name = "method",
+    description = [[
+      The index method to use, eg. `"gin"`, inserted as `USING method`.
+      (PostgreSQL only, MySQL uses the `using` option)
+    ]]
+  }, {
+    name = "tablespace",
+    description = "The tablespace to create the index in. (PostgreSQL only)"
   }
 }
 
-`create_index` will also check if the index exists before attempting to create
-it. If the index exists then nothing will happen.
+By default, an error will be thrown if an index with the same name already
+exists. Use the `if_not_exists` option to skip creating the index when it
+already exists.
+
+A column can also be a `db.raw` value to create an index on an expression.
 
 Here are some example indexes:
 
@@ -999,10 +1106,10 @@ create_index "uploads", "name", where: "not deleted"
 This will generate the following SQL:
 
 ```sql
-CREATE INDEX "users_created_at_idx" ON "users" (created_at);
-CREATE UNIQUE INDEX "users_username_idx" ON "users" (username);
-CREATE INDEX "posts_category_title_idx" ON "posts" (category, title);
-CREATE INDEX "uploads_name_idx" ON "uploads" (name) WHERE not deleted;
+CREATE INDEX "users_created_at_idx" ON "users" ("created_at");
+CREATE UNIQUE INDEX "users_username_idx" ON "users" ("username");
+CREATE INDEX "posts_category_title_idx" ON "posts" ("category", "title");
+CREATE INDEX "uploads_name_idx" ON "uploads" ("name") WHERE not deleted;
 ```
 
 The index name is generated by concatenating the table name and the column
@@ -1015,11 +1122,12 @@ To override the default index name, you can use the `index_name` option when
 creating an index.
 
 
-#### `drop_index(table_name, col1, col2...)`
+#### `drop_index(table_name, col1, col2..., [options])`
 
 Drops an index from a table. It calculates the name of the index from the table
 name and columns. This is the same as the default index name generated by
-database on creation.
+`create_index`. The `index_name` option can be used to provide the name
+directly. On PostgreSQL, the `cascade` option will append `CASCADE`.
 
 ```lua
 local drop_index = schema.drop_index
@@ -1104,6 +1212,9 @@ Generates the SQL:
 ALTER TABLE "users" RENAME COLUMN "age" TO "lifespan"
 ```
 
+> In MySQL, `rename_column` takes a required fourth argument, the column type,
+> since the query is generated with `CHANGE COLUMN`.
+
 #### `rename_table(old_name, new_name)`
 
 Changes the name of a table.
@@ -1145,7 +1256,7 @@ print(types.numeric)       --> numeric NOT NULL DEFAULT 0
 print(types.real)          --> real NOT NULL DEFAULT 0
 print(types.serial)        --> serial NOT NULL
 print(types.text)          --> text NOT NULL
-print(types.time)          --> timestamp without time zone NOT NULL
+print(types.time)          --> timestamp NOT NULL
 print(types.varchar)       --> character varying(255) NOT NULL
 print(types.enum)          --> smallint NOT NULL
 ```
@@ -1162,7 +1273,7 @@ types.numeric       --> numeric NOT NULL DEFAULT 0
 types.real          --> real NOT NULL DEFAULT 0
 types.serial        --> serial NOT NULL
 types.text          --> text NOT NULL
-types.time          --> timestamp without time zone NOT NULL
+types.time          --> timestamp NOT NULL
 types.varchar       --> character varying(255) NOT NULL
 types.enum          --> smallint NOT NULL
 ```
@@ -1191,7 +1302,12 @@ $options_table{
   }, {
     name = "array",
     description = [[
-      Makes the type an array (PostgreSQL Only), pass number to set how many dimensions the array is, or set to `true` to make a 1 dimensional array.
+      Makes the type an array (PostgreSQL Only), pass number to set how many dimensions the array is, or set to `true` to make a 1 dimensional array. The type's default value is not used for arrays.
+    ]]
+  }, {
+    name = "timezone",
+    description = [[
+      Only for `types.time`, generates `timestamp WITH TIME ZONE`. (PostgreSQL only)
     ]]
   }
 }
@@ -1204,18 +1320,24 @@ types.integer({ default = 1, null = true })  --> integer DEFAULT 1
 types.integer({ primary_key = true })        --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text({ null = true })                  --> text
 types.varchar({ primary_key = true })        --> character varying(255) NOT NULL PRIMARY KEY
-types.real({ array = true })                 --> real[]
+types.real({ array = true })                 --> real[] NOT NULL
+types.text({ array = 2 })                    --> text[][] NOT NULL
+types.time({ timezone = true })              --> timestamp WITH TIME ZONE NOT NULL
 ]],
 moon=[[
 types.integer default: 1, null: true  --> integer DEFAULT 1
 types.integer primary_key: true       --> integer NOT NULL DEFAULT 0 PRIMARY KEY
 types.text null: true                 --> text
 types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMARY KEY
-types.real array: true                --> real[]
-types.text array: 2                   --> text[][]
+types.real array: true                --> real[] NOT NULL
+types.text array: 2                   --> text[][] NOT NULL
+types.time timezone: true             --> timestamp WITH TIME ZONE NOT NULL
 ]]}
 
-> MySQL has a complete different type set than PostgreSQL, see [MySQL types](https://github.com/leafo/lapis/blob/master/lapis/db/mysql/schema.moon#L162)
+> MySQL has a completely different type set than PostgreSQL, see [MySQL
+> types](https://github.com/leafo/lapis/blob/master/lapis/db/mysql/schema.moon).
+> SQLite provides `integer`, `text`, `blob`, `real`, `numeric` and `any`, see
+> [SQLite types](https://github.com/leafo/lapis/blob/master/lapis/db/sqlite/schema.moon).
 
 ## Database Migrations
 
@@ -1352,11 +1474,15 @@ migrations.create_migrations_table!
 It will execute the following SQL:
 
 ```sql
-CREATE TABLE IF NOT EXISTS "lapis_migrations" (
+CREATE TABLE "lapis_migrations" (
   "name" character varying(255) NOT NULL,
   PRIMARY KEY(name)
 );
 ```
+
+> `run_migrations` will automatically create the migrations table if it
+> doesn't exist, so it is not necessary to call `create_migrations_table`
+> first.
 
 Then we can manually run migrations with the following code:
 
@@ -1370,6 +1496,34 @@ moon=[[
 import run_migrations from require "lapis.db.migrations"
 run_migrations require "migrations"
 ]]}
+
+The full signature is `run_migrations(migrations, prefix, options)`. If
+`prefix` is provided then it is prepended to the name of each migration, joined
+with `_`, when checking and recording which migrations have run. The following
+options are supported:
+
+$options_table{
+  {
+    name = "transaction",
+    description = [[
+      Set to `"global"` to run all the migrations inside of a single
+      transaction, or `"individual"` to run each migration in its own
+      transaction.
+    ]]
+  }, {
+    name = "dry_run",
+    description = [[
+      Run the migrations inside of a transaction that is rolled back instead
+      of committed. Defaults `transaction` to `"global"`.
+    ]]
+  }
+}
+
+Some statements can't be run inside of a transaction, like PostgreSQL's
+`CREATE INDEX CONCURRENTLY`. Wrap a migration function with `no_transaction`
+from `lapis.db.migrations` to always run it outside of a transaction. See [the
+migrate command](command_line.html#command-reference/lapis-migrate) for more
+details and an example.
 
 ## Database Helpers
 
