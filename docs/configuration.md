@@ -21,9 +21,10 @@ The default environment is used when you don't explicitly specify an
 environment. The following conditions are checked in order to determine the
 default environment:
 
-1. When inside of a test suite (supported environments: [Busted](http://olivinelabs.com/busted/)), the default environment is set to `test`
-2. When a module named `lapis_environment` exists, the return value of that module is used as the default environment
-3. Otherwise, default environment is set to `development`
+1. When the `LAPIS_ENVIRONMENT` environment variable is set, its value is used
+2. When inside of a test suite (supported environments: [Busted](https://lunarmodules.github.io/busted/)), the default environment is set to `test`
+3. When a module named `lapis_environment` exists, the return value of that module is used as the default environment
+4. Otherwise, default environment is set to `development`
 
 The default environment affects what configuration is loaded by default. The
 environment name has no effect unless you are working with configurations.
@@ -35,7 +36,10 @@ environment name has no effect unless you are working with configurations.
 ### Overriding The Default Environment
 
 You can override the default environment by setting a `LAPIS_ENVIRONMENT`
-environment variable on your system before executing any Lapis code.
+environment variable on your system before executing any Lapis code. To
+prevent accidentally running tests against a production database, an error is
+thrown if `LAPIS_ENVIRONMENT` is set to `production` while running in a test
+suite.
 
 Some `lapis` commands also let you explicitly set the environment to override
 the default.
@@ -49,7 +53,9 @@ environment specific variables. It's a standard Lua/MoonScript file.
 > If the `config` module is not found no error is thrown, and only the default
 > configuration is available.
 
-```lua
+$dual_code{
+lua = [[
+-- config.lua
 local config = require("lapis.config")
 
 config("development", {
@@ -61,10 +67,8 @@ config("production", {
   num_workers = 4,
   code_cache = "on"
 })
-
-```
-
-```moon
+]],
+moon = [[
 -- config.moon
 config = require "lapis.config"
 
@@ -75,8 +79,8 @@ config "production", ->
   port 80
   num_workers 4
   code_cache "on"
-
-```
+]]
+}
 
 We use the configuration helpers provided in `"lapis.config"` to create our
 configurations. This defines a domain specific language for setting variables.
@@ -89,16 +93,17 @@ construct the configuration tables.
 We can configure multiple environments at once by passing in an array table for
 environment names:
 
-```lua
+$dual_code{
+lua = [[
 config({"development", "production"}, {
   session_name = "my_app_session"
 })
-```
-
-```moon
+]],
+moon = [[
 config {"development", "production"}, ->
   session_name "my_app_session"
-```
+]]
+}
 
 The configuration file has access to a nice syntax for combining nested
 tables. Both MoonScript and Lua have their own variations, for more details
@@ -149,7 +154,7 @@ $config_table{
   {
     name = "session_name",
     default = '`"lapis_session"`',
-    description = "Name of cookie used to store the [session]($root/reference/actions.html#request-object-session)"
+    description = "Name of cookie used to store the [session]($root/reference/actions.html#request-object/session)"
   },
   {
     name = "code_cache",
@@ -171,7 +176,7 @@ $config_table{
   },
   {
     name = "logging",
-    description = "A table of loggers to enable, or `false` to disable all logging", 
+    description = "A table of loggers to enable, or `false` to disable all logging",
     default = "See below"
   },
   {
@@ -185,8 +190,14 @@ $config_table{
   {
     name = "measure_performance",
     default = '`false`',
-    description = "Enables per-request performance metric collection, see [Performance Measurement](#performance-measurement)."
-  }, 
+    description = "Enables per-request performance metric collection, see [Performance Measurement](#performance-measurement).",
+    servers = {"nginx"}
+  },
+  {
+    name = "default_app_module",
+    default = '`"app"`',
+    description = "The name of the module that contains your application, used by commands like `lapis server` and `lapis simulate` when starting the application"
+  },
   {
     name = "postgres",
     description = "PostgreSQL connection settings",
@@ -215,18 +226,18 @@ disabled.
 
 $config_table{
   {
-    name = "server", 
+    name = "server",
     default = "`true`",
     description = "Show server start message",
     servers = {"cqueues"}
   },
   {
-    name = "queries", 
+    name = "queries",
     default = "`true`",
     description = "Show queries sent to database"
   },
   {
-    name = "requests", 
+    name = "requests",
     default = "`true`",
     description = "Show path and status for every request"
   }
@@ -240,64 +251,99 @@ directive](http://nginx.org/en/docs/ngx_core_module.html#error_log).
 
 Otherwise, logs are written to standard out using Lua's `print` function.
 
+Setting the `LAPIS_SHOW_QUERIES` environment variable will log queries
+regardless of the logging configuration. Set it to `0` to disable query
+logging.
+
 ## Configurations and Nginx
 
 The values in the configuration are used when compiling `nginx.conf`.
-Interpolated Nginx configuration variables are case insensitive. They are
-typically written in all capitals because the shell's environment is checked
-for a value before the configuration is checked.
+Configuration values are inserted with the `${{name}}` syntax. Variable names
+are case insensitive, and nested tables can be accessed with `.`. Any
+variables that don't have a value are left unchanged.
 
-For example, here's a chunk of an Lapis Nginx configuration:
+For example, here's a chunk of a Lapis Nginx configuration:
 
 ```nginx
-events {
-  worker_connections ${{WORKER_CONNECTIONS}};
+worker_processes ${{num_workers}};
+
+http {
+  lua_shared_dict page_cache ${{cache.size}};
+
+  server {
+    listen ${{port}};
+    lua_code_cache ${{code_cache}};
+    # ...
+  }
 }
 ```
 
-## Overriding With Environment Variables
+The `pg` filter will convert a `postgres` configuration table into a
+PostgreSQL connection string, eg. for use with `ngx_postgres`: `${{pg
+postgres}}`.
 
-You can override any configuration value with an environment variable. Prefix
-the configuration name with `LAPIS_` and make the rest of the name all
-uppercase. For example, to override the `worker_connections` variable:
+If a file named `nginx.conf.etlua` exists then it is used instead of
+`nginx.conf`, and is compiled as an [etlua](https://github.com/leafo/etlua)
+template with the configuration values in scope. This can be used for more
+complex logic like conditionally including blocks:
 
-```bash
-$ LAPIS_WORKER_CONNECTIONS=5 lapis server
+```nginx
+worker_processes <%= num_workers %>;
+
+<% if enable_gzip then %>
+gzip on;
+<% end %>
 ```
 
-This can be used with any configuration variable. Keep in mind that the value
-will always be a string type, so you may need to add additional type coercion
-to you code that reads it.
+### Overriding With Environment Variables
+
+When compiling `nginx.conf`, any configuration value can be overridden with an
+environment variable. Prefix the configuration name with `LAPIS_` and make the
+rest of the name all uppercase. For example, to override the `port`:
+
+```bash
+$ LAPIS_PORT=9090 lapis server
+```
+
+> These environment variables only change the values used when compiling the
+> Nginx configuration file. They do not change the values returned by
+> `require("lapis.config").get()` in your application. To read environment
+> variables in your application, use `os.getenv` in your configuration file.
 
 ## Accessing Configuration From Application
 
 The configuration is also made available in the application. We can get access
 to the configuration table like so:
 
-```lua
+$dual_code{
+lua = [[
 local config = require("lapis.config").get()
 print(config.port) -- shows the current port
-```
-
-
-```moon
+]],
+moon = [[
 config = require("lapis.config").get!
 print config.port -- shows the current port
-```
+]]
+}
 
 The name of the environment is stored in `_name`.
 
-```lua
+$dual_code{
+lua = [[
 print(config._name) -- development, production, etc...
-```
-
-```moon
+]],
+moon = [[
 print config._name -- development, production, etc...
-```
+]]
+}
+
+To get the configuration of an environment other than the current one, pass
+its name to `get`: <span class="for_moon">`config.get "production"`</span><span
+class="for_lua">`config.get("production")`</span>.
 ## Performance Measurement
 
-Lapis can collect timings and counts for various actions if the
-`measure_performance` configuration value is set to true.
+When running in OpenResty, Lapis can collect timings and counts for various
+actions if the `measure_performance` configuration value is set to true.
 
 The data is stored in `ngx.ctx.performance`. The following fields are collected
 in a table:
