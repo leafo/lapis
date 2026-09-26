@@ -70,7 +70,7 @@ some_user = Users\find 1
 print some_user\get_display_name!
 ]],
 lua = [[
-local Users, Users_mt = Model.extend("users")
+local Users, Users_mt = Model:extend("users")
 
 -- this method will be available on all User instances
 function Users_mt:get_display_name()
@@ -97,7 +97,7 @@ method](actions.html#request-object-methods/request:url_for/passing-an-object-to
 
 ## Primary Keys
 
-By default all models expect the table to have a primary key called`"id"`. This
+By default all models expect the table to have a primary key called `"id"`. This
 can be changed by setting the $self_ref{"primary_key"} field on the class.
 
 
@@ -128,7 +128,7 @@ class Followings extends Model
 }
 
 A unique primary key is needed for every row in order to `update` and `delete`
-rows without affecting other rows unintentially.
+rows without affecting other rows unintentionally.
 
 ## Class Methods
 
@@ -206,7 +206,7 @@ SELECT * from "users" where lower(email) = 'person@example.com' limit 1
 
 When searching for multiple rows the `select` class method is used. It works
 similarly to the [`select` function from the raw query
-interface](database.html#query-interface-selectquery-params) except you specify
+interface](database.html#query-interface/db.select) except you specify
 the part of the query after the list of columns to select.
 
 $dual_code{[[
@@ -232,11 +232,11 @@ $options_table{
       A SQL fragment used for the list of fields to return from the query. Do
       not use untrusted strings otherwise you may be vulnerable to SQL
       injection. Use
-      [`db.escape_identifier`](database.html#query-interface/escape_identifier)
+      [`db.escape_identifier`](database.html#query-interface/db.escape_identifier)
       to escape column names.
     ]],
     default = [[`"*"`]],
-    example = $dual_code{[[
+    example = dual_code{[[
       tags = Tags\select "where tag = ?", "merchant", fields: "created_at as c"
     ]]}
   },
@@ -275,14 +275,14 @@ can pass in the optional second argument:
 
 $dual_code{
 moon = [[
-users = UserProfile\find_all { 1,2,3,4,5 }, "user_id"
+users = UserProfiles\find_all { 1,2,3,4,5 }, "user_id"
 ]],
 lua = [[
-local users = UserProfile:find_all({ 1,2,3,4,5 }, "user_id")
+local users = UserProfiles:find_all({ 1,2,3,4,5 }, "user_id")
 ]]}
 
 ```sql
-SELECT * from "UserProfile" where "user_id" in (1, 2, 3, 4, 5)
+SELECT * from "user_profiles" where "user_id" in (1, 2, 3, 4, 5)
 ```
 
 The second argument can also be a table of options. The following properties
@@ -291,7 +291,7 @@ are supported:
 $options_table{
   {
     name = "key",
-    description = "Specify the column name to find by, same effect as passing in a string as the second argument. The column name will be escaped with `db.escape_literal`.",
+    description = "Specify the column name to find by, same effect as passing in a string as the second argument. The column name will be escaped as an identifier.",
     default = "the table's primary key"
   },
   {
@@ -313,7 +313,7 @@ For example:
 
 $dual_code{
 lua = [[
-local users = UserProfile:find_all({1,2,3,4}, {
+local users = UserProfiles:find_all({1,2,3,4}, {
   key = "user_id",
   fields = "user_id, twitter_account",
   where = {
@@ -322,7 +322,7 @@ local users = UserProfile:find_all({1,2,3,4}, {
 })
 ]],
 moon = [[
-users = UserProfile\find_all {1,2,3,4}, {
+users = UserProfiles\find_all {1,2,3,4}, {
   key: "user_id"
   fields: "user_id, twitter_account"
   where: {
@@ -333,30 +333,34 @@ users = UserProfile\find_all {1,2,3,4}, {
 }
 
 ```sql
-SELECT user_id, twitter_account from "things" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
+SELECT user_id, twitter_account from "user_profiles" where "user_id" in (1, 2, 3, 4) and "public" = TRUE
 ```
 
 ### `Model:count(clause, ...)`
 
 Counts the number of records in the table that match the clause. The `clause`
-arugment can either be a string, or a `db.clause` object. If a string is
+argument can either be a string, or a `db.clause` object. If a string is
 passed, then it will be automatically prepended with the substring `"WHERE "`,
 and will be interpolated with `db.interpolate_query` with the remaining
 arguments.
 
-If `clause` is not providsed (or is `nil`), then every row in the table will be
+If `clause` is not provided (or is `nil`), then every row in the table will be
 counted.
 
 $dual_code{
 moon=[[
 total = Users\count!
 count = Users\count "username like '%' || ? || '%'", "leafo"
+]],
+lua=[[
+local total = Users:count()
+local count = Users:count("username like '%' || ? || '%'", "leafo")
 ]]}
 
 
 ```sql
-SELECT COUNT(*) "users"
-SELECT COUNT(*) "users" where username like '%' || 'leafo' || '%'
+SELECT COUNT(*) AS c FROM "users"
+SELECT COUNT(*) AS c FROM "users" WHERE username like '%' || 'leafo' || '%'
 ```
 
 ### `Model:create(values, create_opts=nil)`
@@ -390,8 +394,8 @@ INSERT INTO "users" ("password", "login") VALUES ('1234', 'superuser') RETURNING
 ```
 
 If any of the column values are
-[`db.raw`](database.html#query-interface-rawstr) then their computed values
-will also be fetched using the `RETURN` clause of the `CREATE` statement. The
+[`db.raw`](database.html#database-primitives/db.raw) then their computed values
+will also be fetched using the `RETURNING` clause of the `INSERT` statement. The
 raw values are replaced by the values returned by the database.
 
 For example, we might create a new row in a table with a `position` column set
@@ -412,12 +416,13 @@ user = Users\create {
 }
 
 ```sql
-INSERT INTO "users" (position)
+INSERT INTO "users" ("position")
 VALUES ((select coalesce(max(position) + 1, 0) from users))
 RETURNING "id", "position"
 ```
 
-> `RETURNING` is not available in MySQL
+> `RETURNING` is not available in MySQL. The `returning` and `on_conflict`
+> options below are ignored when using MySQL.
 
 If your model has any [constraints](#constraints) they will be checked before trying to create
 a new row. If a constraint fails then `nil` and the error message are returned
@@ -428,7 +433,7 @@ from the `create` function.
 $options_table{
   {
     name = "returning",
-    description = 'An array table of column names or the string `"*"` to represent all column names. Their values will be return from the insertion query using `RETURNING` clause to initially populate the model object',
+    description = 'An array table of column names or the string `"*"` to represent all column names. Their values will be returned from the insertion query using `RETURNING` clause to initially populate the model object',
     default = "Automatically calculated to include any columns that have `db.raw` values, and the primary keys",
     example = dual_code{[[
       Users\create {
@@ -552,7 +557,8 @@ It works by mutating the objects in the array, inserting a new field into each
 item where the query returned a result. The name of this new field is either
 derived from the model's table name, or manually specified via an option.
 
-Returns the `objects` array table.
+Returns the `objects` array table. If `objects` is empty then no query is
+issued and `nil` is returned.
 
 > `include_in` can assign the same reference to different
 > items in `objects`. The query will fetch only unique rows that meet the
@@ -576,7 +582,7 @@ Possible values for `key` argument:
 * **String** -- For each object, the value `object[key]` is used to look up instances of the model by the model's primary key. It's assumed that the model has a singular primary key; otherwise, an error will occur.
   * With `flip` enabled: `key` is used as the foreign key column name, and `object[opts.local_key or "id"]` is used to retrieve the values.
 * **Array of Strings** -- For each object, a composite key is created by mapping each field of the key array individually via `object[key]` to the composite primary key of the model.
-* **Column Mapping Table** -- This allows for the explicit specification of the mapping of fields to columns. The *key* of the table is used as the column name, while the value in the table is used as the field name referenced from the `objects` argument. If the value is a function, this function will be called for each object to dynamically calculate the foreign key value.
+* **Column Mapping Table** -- This allows for the explicit specification of the mapping of fields to columns. The *key* of the table is used as the column name, while the value in the table is used as the field name referenced from the `objects` argument. If the value is a function, this function will be called for each object to dynamically calculate the foreign key value. The key can also be a `db.raw` SQL expression to match against a computed value instead of a column, eg. `{[db.raw "lower(email)"]: "email"}`.
 
 `include_in` supports the following options (via the optional `opts` argument):
 
@@ -623,15 +629,24 @@ $options_table{
     description = "group by clause. Taken as a raw SQL clause"
   },
   {
+    name = "load",
+    description = "Set to `false` to skip loading the fetched rows as instances of the model, leaving them as plain Lua tables",
+    default = "`true`"
+  },
+  {
+    name = "skip_included",
+    description = "Set to `true` to skip any objects that already have a value in the destination field (or that have the relation loaded, when preloading a relation). Useful for avoiding refetching data that has already been loaded"
+  },
+  {
     name = "loaded_results_callback",
     description = [[
       A callback function to be called with one argument, the resulting array
       from the query generated by `include_in`. Each row of the result array will
       have been loaded as the target model, unless loading is disabled with `{
       load = false }`. This can be used to add custom preloading logic to the
-      objects found with `include_in`. Note that this will return only the number
-      of results fetched. It's possible for the items in `objects` to point to
-      the same fetched row.
+      objects found with `include_in`. Note that the array contains each unique
+      row fetched, not a row for each item in `objects`, since multiple items
+      in `objects` can point to the same fetched row.
     ]],
     example = dual_code{[[
       Users\include_in posts, "user_id", {
@@ -790,8 +805,8 @@ in the `id` field from the users array to use as values to look up rows in
 The table value can also be a function. That function receives the current
 object and should return the foreign-key value that will be placed into the
 `IN` clause. This is known as a *computed foreign key*. The return value must
-be a simple databse value (number, string, `db.NULL`) or nil to ignore loading
-anything for that model
+be a simple database value (number, string, `db.NULL`) or nil to ignore loading
+anything for that model.
 
 $dual_code{[[
 some_books = Books\select!
@@ -805,12 +820,12 @@ Authors\include_in some_books, {
 ]]}
 
 A *computed foreign key* can also return a
-[`db.list`](database.html#dblistvalues) type to match multiple rows from the
+[`db.list`](database.html#database-primitives/db.list) type to match multiple rows from the
 related table. Keep in mind that unless `many = true` is used, only the first
 row will be assigned to the model instance.
 
 In this example, only the `TagDescriptions` for distinct `tag_name` values are
-efficienctly fetched and assigned to the respective `pages`.
+efficiently fetched and assigned to the respective `pages`.
 
 $dual_code{[[
 TagDescriptions\include_in pages, {
@@ -851,19 +866,50 @@ derived field name when `many` is true.)
 
 Similar to `select` but returns a `Paginator`. Read more in [Pagination](#pagination).
 
+If the options table passed as the last argument contains an `ordered` field
+then an [`OrderedPaginator`](#ordered-paginator) is created instead, using the
+value of `ordered` as the column or columns to order by.
+
+$dual_code{[[
+pager = Events\paginated "where user_id = ?", 123, ordered: {"id"}, per_page: 50
+]]}
+
 ### `Model:get_relation_model(name)`
 
 
 This method is used to look up the model for a relation by the name specified
-in the relation. By default the following function is provided:
+in the relation. The default implementation handles the following types:
 
-$dual_code{[[
-get_relation_model = (name) =>
-  require("models")[name]
-]]}
+* **String** -- The model is loaded from the module named by the
+  <span class="for_moon">`@relation_models_module`</span><span class="for_lua">`relation_models_module`</span>
+  class property, which defaults to `"models"`. eg. `require("models")[name]`
+* **Function** -- The function is called with no arguments, and its return value is used as the model
+* **Model class** -- The model class is used directly
 
-If your model has relations that are pulled from other sources than the
-`models` module, then you can overwrite this method to handle loading the
+If your models are located in a module other than `models`, you can set
+`relation_models_module` on your model class:
+
+$dual_code{
+lua = [[
+local Posts = Model:extend("posts", {
+  relations = {
+    {"user", belongs_to = "Users"}
+  }
+})
+
+-- must be set on the class object, extend does not copy this field
+Posts.relation_models_module = "app.models"
+]],
+moon = [[
+class Posts extends Model
+  @relation_models_module: "app.models"
+  @relations: {
+    {"user", belongs_to: "Users"}
+  }
+]]
+}
+
+For anything more complex you can override this method to handle loading the
 models for those relations.
 
 ### `Model:extend(table_name, fields={})`
@@ -952,11 +998,11 @@ UPDATE "users" SET "login" = 'uberuser', "email" = 'admin@example.com' WHERE "id
 If any of values used for the update are SQL fragments generated by something
 like `db.raw`, then a `RETURNING` clause will be used to determine the final
 value from the database to store on the model instance, similar to the
-[`create` class method](#class-methods-createopts).
+[`create` class method](#class-methods/Model:create).
 
 
 $dual_code{[[
-user = Users\crate {
+user = Users\create {
   id: 10
   views: 1
 }
@@ -966,7 +1012,7 @@ user\update {
 }
 
 -- the result of the query is assigned to the model:
-assert count == 13
+assert user.views == 13
 ]]}
 
 **Options**
@@ -990,7 +1036,7 @@ $options_table{
   {
     name = "where",
     default = "`nil`",
-    description = "A table of additional conditions to add to the `WHERE` clause of the updated query. This can be used to have an atomic conditional update. The return value should be checked to see if the update succeeeded or not.",
+    description = "A table of additional conditions to add to the `WHERE` clause of the updated query. This can be used to have an atomic conditional update. The return value should be checked to see if the update succeeded or not.",
     example = dual_code{[[
       user\update {
         views_count: db.raw "views_count + 1"
@@ -998,6 +1044,9 @@ $options_table{
     ]]}
   }
 }
+
+> When using MySQL, the `returning` and `where` options are not supported and
+> are ignored. `db.raw` values will not be replaced with their updated values.
 
 ### `model:delete(...)`
 
@@ -1029,7 +1078,7 @@ user\delete db.clause {
 DELETE FROM "users" WHERE "id" = 1 and not "active"
 ```
 
-Any remaining arugments will be append as `RETURNING` columns for the result
+Any remaining arguments will be appended as `RETURNING` columns for the result
 object in the second return value. This can be used to atomically know what the
 row contained at the time of deletion, as the model instance that delete was
 called on may be out of date if two requests are processing the same request at
@@ -1052,7 +1101,7 @@ deleted. It's important to check this value to avoid any race conditions when
 running code in response to a delete.
 
 The following is an example of an incorrect way to delete a row with side
-effects. It's possible that the delete did not if another thread processed the
+effects. It's possible that the delete did not happen if another thread processed the
 request first.
 
 $dual_code{[[
@@ -1070,7 +1119,7 @@ if user\delete!
   decrement_total_user_count!
 ]]}
 
-Because multiple request can be processed at the same time, it's possible that
+Because multiple requests can be processed at the same time, it's possible that
 if two requests are able to load the model instance at the same time, and
 `delete` may end up getting called twice. This isn't a problem by itself, but
 the `decrement_total_user_count` function would get called twice and may
@@ -1083,7 +1132,7 @@ Updates the values of the fields on the instance from the database.
 If your model instance becomes out of date from an external change, use the
 `refresh` method to re-fetch and re-populate its data.
 
-If the row now longer exists in the database, then `refresh` will throw an
+If the row no longer exists in the database, then `refresh` will throw an
 error.
 
 ```moon
@@ -1099,8 +1148,11 @@ post:refresh()
 ```
 
 ```sql
-SELECT * from "posts" where id = 1
+SELECT * from "posts" where "id" = 1
 ```
+
+When refreshing all fields, any cached relations on the instance are also
+cleared so they will be fetched again on the next call to their `get_` method.
 
 By default all fields are refreshed. If you only want to refresh specific fields
 then pass them in as arguments:
@@ -1119,8 +1171,10 @@ post:refresh("color", "height")
 ```
 
 ```sql
-SELECT "color", "height" from "posts" where id = 1
+SELECT "color", "height" from "posts" where "id" = 1
 ```
+
+> Refreshing specific fields does not clear any cached relations.
 
 ### `model:url_key(...)`
 
@@ -1156,7 +1210,7 @@ like this:
 ```lua
 local schema = require "lapis.db.schema"
 
-scehma.create_table("some_table", {
+schema.create_table("some_table", {
   -- ...
   {"created_at", schema.types.time},
   {"updated_at", schema.types.time}
@@ -1176,7 +1230,7 @@ create_table "some_table", {
 ```
 
 
-You'll notice both columns are stored without timezone. Lapis stored
+You'll notice both columns are stored without timezone. Lapis stores
 `created_at` and `updated_at` in UTC time.
 
 
@@ -1348,7 +1402,7 @@ $options_table{
   {
     name = "per_page",
     description = "The number of items fetched per page",
-    default = "`10`",
+    default = "`10`, or the value of the `per_page` field on the model class if set",
     example = dual_code{[[
       pager = Users\paginated "where group_id = ?", 4, per_page: 100
     ]]}
@@ -1356,7 +1410,7 @@ $options_table{
   {
     name = "prepare_results",
     description = [[
-      A function that is passed the results of any fetched page to prepare the objects before being retuned from methods like `get_page`, `get_all`, and `each_item`. It should return the results after they have been prepared or updated.
+      A function that is passed the results of any fetched page to prepare the objects before being returned from methods like `get_page`, `get_all`, and `each_item`. It should return the results after they have been prepared or updated.
 
       This is useful for preloading related data automatically when fetching results to avoid the [n+1 queries problem](https://leafo.net/guides/postgresql-preloading.html).
     ]],
@@ -1413,17 +1467,26 @@ users = paginated\total_items!
 SELECT COUNT(*) as c from "users" where group_id = 123
 ```
 
+> An error is thrown if the query contains a `GROUP BY` clause, since the
+> total can't be calculated by removing the other clauses.
+
 ### `each_page(starting_page=1)`
 
 Returns an iterator function that can be used to iterate through each page of
 the results. Useful for processing a large query without having the entire
 result set loaded in memory at once.
 
-Each item is preloaded with the `prepare_results` function if provided.
+Each page is preloaded with the `prepare_results` function if provided.
 
-$dual_code{[[
-for page_results, page_num in paginated\each_page!
-  print(page_results, page_num)
+$dual_code{
+moon = [[
+for page_results in paginated\each_page!
+  print #page_results
+]],
+lua = [[
+for page_results in paginated:each_page() do
+  print(#page_results)
+end
 ]]}
 
 > Be careful modifying rows in the database when iterating over each page, as
@@ -1433,7 +1496,7 @@ for page_results, page_num in paginated\each_page!
 
 ### `each_item()`
 
-Returns an iterator for every item retuned by the pager. It uses `each_page` to
+Returns an iterator for every item returned by the pager. It uses `each_page` to
 fetch results in chunks of `per_page` items. Because data is pulled
 incrementally it's suitable for iterating over large data sets.
 
@@ -1488,7 +1551,7 @@ SELECT * from "users" where group_id = 123 order by name asc
 
 ## Ordered Paginator
 
-The default paginator, also know as the `OffsetPaginator`, uses `LIMIT` and
+The default paginator, also known as the `OffsetPaginator`, uses `LIMIT` and
 `OFFSET` to handle fetching pages. For large data sets, this can become
 inefficient for viewing later pages since the database has to scan past all the
 preceding rows when handling the offset.
@@ -1534,7 +1597,7 @@ local Events = Model:extend("events")
 
 Here's how to instantiate an ordered paginator that can iterate over the `events`
 table for a specific user id, in ascending order:
- 
+
 
 $dual_code{
 moon = [[
@@ -1555,8 +1618,8 @@ regular `Paginator` except it takes an additional argument after the model name:
 the name of the column(s) to order by.
 
 Call `get_page` with no arguments to get the first page of results. In addition
-to the results of the query, the addition arguments contain the values that
-should be passed to get page to get the next page of results.
+to the results of the query, the additional return values contain the values that
+should be passed to `get_page` to get the next page of results.
 
 $dual_code{
 moon = [[
@@ -1716,8 +1779,8 @@ property.
 local Model = require("lapis.db.model").Model
 local Posts = Model:extend("posts", {
   relations = {
-    {"users", belongs_to = "Users"},
-    {"posts", has_many = "Tags"}
+    {"user", belongs_to = "Users"},
+    {"tags", has_many = "Tags"}
   }
 })
 ```
@@ -1727,7 +1790,7 @@ import Model from require "lapis.db.model"
 class Posts extends Model
   @relations: {
     {"user", belongs_to: "Users"}
-    {"posts", has_many: "Tags"}
+    {"tags", has_many: "Tags"}
   }
 ```
 
@@ -1763,7 +1826,7 @@ The following relations are available:
 A relation that fetches a single related model. The foreign key column used to
 fetch the other model is located on the same table as the model. For example, a
 table named `posts` with a column named `user_id` would belong to a table named
-`users`.  From the opposite end, the `users` table can either user `has_one` or
+`users`.  From the opposite end, the `users` table can either use `has_one` or
 `has_many` to relate to the `posts` table.
 
 The name of the relation is used to derive the name of the column used as the
@@ -1801,18 +1864,25 @@ user = post\get_user!
 
 
 ```sql
-SELECT * from "users" where "user_id" = 123;
+SELECT * from "users" where "id" = 123;
 ```
 
 The relation definition can take an optional `key` option to override what
-field is used on the current model to reference as the foreign key.
+field is used on the current model to reference as the foreign key. For
+`belongs_to` the `key` must be a single column name, use `has_one` if you need
+a composite or computed key.
+
+The `as` option can be used to override the name of the generated getter
+method. For example, `as: "get_author"` will generate a `get_author` method
+instead of `get_user`. The fetched value is still stored in the field named
+after the relation.
 
 If the relation returns `nil` from the database, then that will be cached on
 the model and subsequent calls will return `nil` without issuing another query.
 You can call the `refresh` method to clear the relation caches.
 
 A variation of the `belongs_to` relation is
-[`polymorphic_belongs_to`](#relations/polymorphic-belongs-to), which lets a
+[`polymorphic_belongs_to`](#relations/polymorphic_belongs_to), which lets a
 relation point to one of many different models.
 
 ### `has_one`
@@ -1889,6 +1959,43 @@ profile = user\get_user_profile!
 SELECT * from "user_profiles" where "owner_id" = 123;
 ```
 
+By default the value of the foreign key is read from the primary key of the
+current model. If the foreign key references a different field, pass a table
+to `key` that maps the column name on the related table to the field name on
+the current model:
+
+$dual_code{
+lua = [[
+local Users = Model:extend("users", {
+  relations = {
+    -- user_profiles.owner_id references users.internal_id
+    {"user_profile", has_one = "UserProfiles", key = { owner_id = "internal_id" }}
+  }
+})
+]],
+moon = [[
+class Users extends Model
+  @relations: {
+    -- user_profiles.owner_id references users.internal_id
+    {"user_profile", has_one: "UserProfiles", key: { owner_id: "internal_id" }}
+  }
+]]
+}
+
+```sql
+SELECT * from "user_profiles" where "owner_id" = 456;
+```
+
+A mapping table can contain multiple entries to join on a composite key, and a
+value can be a function that takes the model instance and returns the value to
+search for.
+
+`has_one` supports the following additional options:
+
+* `where` -- A table of additional conditions for the query
+* `as` -- Override the name of the generated getter method
+* `local_key` -- ***(deprecated)*** The name of the field on the current model to read the foreign key value from. Use a mapping table for `key` instead: `key: {owner_id: "internal_id"}` replaces `key: "owner_id", local_key: "internal_id"`
+
 If the relation returns `nil` from the database, then that will be cached on
 the model and subsequent calls will return `nil` without issuing another query.
 You can call the `refresh` method to clear the relation caches.
@@ -1911,6 +2018,14 @@ local Users = Model:extend("users", {
 })
 ```
 
+```moon
+import Model from require "lapis.db.model"
+class Users extends Model
+  @relations: {
+    {"posts", has_many: "Posts"}
+  }
+```
+
 In the above example, the `Users` model will expect that the table backed by
 the `Posts` model contains a column `user_id` that will be used to find the
 associated posts for each user.
@@ -1923,8 +2038,16 @@ $options_table{
     name = "key",
     description = [[
       The foreign key to search on. Either a string for singular foreign key,
-      an array table to specify composite foreign keys, or a key-value table to
-      specify cross-table column mapping.
+      an array table to specify composite foreign keys, or a mapping table to
+      specify which field on the current model each column is matched
+      against.
+
+      A string key is matched against the primary key of the current model.
+      In a mapping table, each key is a column name on the related table and
+      each value is the name of a field on the current model (or a function
+      that takes the model instance and returns a value). For example,
+      `key: {owner_id: "internal_id"}` finds posts where `posts.owner_id`
+      matches the `internal_id` of the user.
 
       Defaults a singular foreign key by appending `_id` to the singular form of the table name, eg. `Users` → `user_id`
     ]],
@@ -1964,20 +2087,21 @@ $options_table{
     description = "A SQL fragment as a string used to specify a default `order by` clause when the relation is fetched"
   },
   {
+    name = "local_key",
+    description = '***(deprecated)*** The name of the field on the current model to read the foreign key value from when using a singular `key`. Use a mapping table for `key` instead: `key: {owner_id: "internal_id"}` replaces `key: "owner_id", local_key: "internal_id"`',
+    default = "the model's primary key"
+  },
+  {
     name = "as",
-    description = "Override the name included in the generated methods, and the cached object",
-    default = "*relation name*"
+    description = "Override the name of the generated getter method. The paginated method is named by appending `_paginated`. The fetched value is still stored in the field named after the relation",
+    default = "`get_{relation name}`"
+  },
+  {
+    name = "pager",
+    description = "Set to `false` to disable generating the `get_X_paginated` method",
+    default = "`true`"
   }
 }
-
-
-```moon
-import Model from require "lapis.db.model"
-class Users extends Model
-  @relations: {
-    {"posts", has_many: "Posts"}
-  }
-```
 
 The following methods are added to the model for the `posts` relation shown above:
 
@@ -2006,14 +2130,15 @@ iterating through the related objects. This is useful if you know the relation
 could include a large number of things and it does not make sense to fetch them
 all at once.
 
-> It is highly recommended that you either specify and order in the relation,
+> It is highly recommended that you either specify an order in the relation,
 > or use the ordered paginator otherwise the database may return items out of
-> order when iterating over the pages of results. This could cause you see
+> order when iterating over the pages of results. This could cause you to see
 > duplicate items or skip items entirely.
 
 Any arguments passed to the `get_X_paginated` method are passed to the
 paginator's constructor, so you can specify things like `fields`,
-`prepare_results`, and `per_page`:
+`prepare_results`, and `per_page`. Additionally, the `where` and `order` options
+can be used to add extra conditions or change the order of the query:
 
 
 $dual_code{[[
@@ -2144,7 +2269,7 @@ each instance.  All of the instances will be marked as having the relation
 loaded, regardless of if you set a value or not. This means that future calls
 to `get_` will return the cached value.
 
-To simplify writting getters, `fetch` can be set to `true` to autogenerate a
+To simplify writing getters, `fetch` can be set to `true` to autogenerate a
 function based on the `preload` function when getting the associated value from
 a single instance of the model.
 
@@ -2158,7 +2283,7 @@ local Users = Model:extend("users", {
       -- generated based on the preload function
       fetch = true,
       preload = function(objs)
-        for object in pairs(objs) do
+        for _, object in ipairs(objs) do
           -- provide your own preload code and store the result on the object
           object.recent_posts = some_preloading_code(object)
         end
@@ -2192,26 +2317,26 @@ models. For example, you might have a `Purchases` model that is associated with
 the object that was bought, which could be one of many types: `VideoGames`,
 `Books`. The related models are fetched up by their primary key.
 
-The type of the related object is stored in an [`enum` field](#enum)
-automatically created during relation initialization. The `enum` is named after
-the type of the relation, suffixed with `_type`. The string values in the
-`enum` are the names of the tables.
+The type of the related object is stored in an integer column, and an
+[`enum`](#enum) is automatically created on the model class during relation
+initialization to map between type names and integers. The `enum` is named
+after the relation, suffixed with `_types`.
 
-The syntax for creating a `polymorphic_belongs_to` takes the type's id with the
-name of the model class it points to. Integers are used to represent types.
-Just like `enum`, it's recommended to explicitly write the integer keys to make
-it clear that they can't be reordered without changing the meaning of the
-relation.
+The syntax for creating a `polymorphic_belongs_to` takes a table mapping each
+type's integer id to a tuple of the type name and the name of the model class
+it points to. Just like `enum`, it's recommended to explicitly write the
+integer keys to make it clear that they can't be reordered without changing
+the meaning of the relation.
 
 $dual_code{
 moon = [[
 import Model from require "lapis.db.model"
 
-class Posts extends Model
+class Purchases extends Model
   @relations: {
     {"object", polymorphic_belongs_to: {
-      [1]: "VideoGames"
-      [2]: "Books"
+      [1]: {"video_game", "VideoGames"}
+      [2]: {"book", "Books"}
     }}
   }
 ]],
@@ -2221,32 +2346,41 @@ local Model = require("lapis.db.model").Model
 local Purchases = Model:extend("purchases", {
   relations = {
     {"object", polymorphic_belongs_to = {
-      [1] = "VideoGames",
-      [2] = "Books",
+      [1] = {"video_game", "VideoGames"},
+      [2] = {"book", "Books"},
     }}
   }
 })
 ]]
 }
 
-In the example above, an `enum` named `object_types` is created. Note that is
-uses the table names, instead of the class names. It is equivalent to:
+In the example above, an `enum` named `object_types` is created using the type
+names provided. It is equivalent to:
 
 $dual_code{
 moon = [[
 Purchases.object_types = enum {
-  video_games: 1
-  books: 2
+  video_game: 1
+  book: 2
 }
+]],
+lua = [[
+Purchases.object_types = enum({
+  video_game = 1,
+  book = 2
+})
 ]]
 }
+
+The relation uses the columns `object_id` and `object_type` on the model's
+table.
 
 The following methods are automatically generated on the model class with the
 polymorphic relation: (where `{name}` is the name of the relation)
 
 * `model_for_{name}_type(type)` -- Takes the integer or name from type `enum` and returns the model class associated to that type. If the class could not be found an error is raised
 * `{name}_type_for_model(model)` -- Takes a model and returns the `enum` type for it (as integer)
-* `{name}_type_for_object(obj)` -- Takes an instances of an object and returns the `enum` type for it (as integer)
+* `{name}_type_for_object(obj)` -- Takes an instance of an object and returns the `enum` type for it (as integer)
 
 
 A *getter* instance method is added to the model:
@@ -2255,6 +2389,8 @@ A *getter* instance method is added to the model:
 
 Additionally, a preloader is installed into the model that will allow all
 associated objects across all the different tables to be loaded efficiently.
+When preloading, the `fields` option can be a table mapping type names to the
+fields to select for that type's model, eg. `{video_game: "id, title"}`.
 
 #### Migrating for a New Polymorphic Relation
 
@@ -2310,9 +2446,11 @@ local preload = require("lapis.db.model").preload
 import preload from require "lapis.db.model"
 ```
 
-The `preload` function is a general purpose preloading for loading relations on
+The `preload` function is a general purpose function for loading relations on
 model instances. The first argument is an array of instances, and all other
-arguments are the names of the relations to load.
+arguments are the names of the relations to load. The array can contain
+instances of different models, and they will be grouped by model before
+loading.
 
 You can also preload nested relations by using the hash table syntax:
 
@@ -2329,17 +2467,58 @@ letting you preload complex sets of data in a single line. In the examples
 above, the `user` relation is loaded on the posts, then every user has the
 `twitter_account` relation loaded.
 
+The value in the hash table syntax can be one of the following:
+
+* **String or table** -- The nested relation(s) to load on the fetched objects
+* **`false`** -- The relation is skipped, which is useful for conditionally disabling a relation
+* **Function** -- Called with the array of fetched objects, as the `loaded_results_callback` option of `include_in`, instead of loading nested relations
+
+Options can be passed to the preloader of a relation by using the `preload`
+function itself as a key in the table. The options are passed to `include_in`
+(or to the `preload` function of a `fetch` relation):
+
+$dual_code{
+lua = [[
+preload(posts, {
+  user = {
+    "twitter_account",
+    [preload] = { fields = "id, name", skip_included = true }
+  }
+})
+]],
+moon = [[
+preload posts, user: {
+  "twitter_account"
+  [preload]: { fields: "id, name", skip_included: true }
+}
+]]
+}
+
+A relation name can be prefixed with `?` to make it optional. An optional
+relation is skipped if the model doesn't have a relation with that name, instead
+of throwing an error. This is useful when preloading an array of objects that
+contains different models.
+
+$dual_code{
+lua = [[
+preload(objects, "?user")
+]],
+moon = [[
+preload objects, "?user"
+]]
+}
+
 ### `Model:preload_relation(instances, name, ...)`
 
 > This function should be avoided in favor of the `preload` function when
-> possible. If you need to pass parameters to a preload call then you need to
-> use `preload_relation`
+> possible. Options can be passed to preloaders with `preload` using the
+> `[preload]` key syntax described above.
 
 The class method `preload_relation` takes an array table of instances of the
 model, and the name of a relation. It fills all the instances with the
 associated models with a single query.
 
-Internally this method called the `include_in` method. Any additional arguments
+Internally this method calls the `include_in` method. Any additional arguments
 passed to `preload_relation` are merged in the options to the call to
 `include_in`.
 

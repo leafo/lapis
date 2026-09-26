@@ -555,7 +555,7 @@ print db.encode_clause {
 
 
 If provided a `db.clause`, then a richer set of conditions can be described.
-See the documentation for [`db.clause`](#database-primitives/clause)
+See the documentation for [`db.clause`](#database-primitives/db.clause)
 
 `db.encode_clause` will throw an error on an empty clause. This is to prevent
 the mistake of accidentally providing `nil` in place of a value of `db.NULL`
