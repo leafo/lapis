@@ -23,10 +23,11 @@ before you start using them. Validation is also able to *transform* malformed
 input to turn it into something usable, eg. stripping whitespace from the start
 and end of a string.
 
-> Lapis is currently introducing a new validation system based around
-> [Tableshape](https://github.com/leafo/tableshape). The legacy validation
-> functions will remain unchanged until further notice, but we recommend using
-> the Tableshape validation when possible.
+> Lapis has two validation systems: the recommended system based around
+> [Tableshape](https://github.com/leafo/tableshape), and the legacy
+> [`assert_valid`](#assert-valid) system. The legacy validation functions will
+> remain unchanged until further notice, but we recommend using the Tableshape
+> validation when possible.
 
 ## Tableshape Validation
 
@@ -49,7 +50,8 @@ $ luarocks install tableshape
 Types and type-constructors are located in the `lapis.validate.types` module.
 
 $dual_code{
-moon = [[types = require "lapis.validate.types"]]
+moon = [[types = require "lapis.validate.types"]],
+lua = [[local types = require("lapis.validate.types")]]
 }
 
 > The `lapis.validate.types` module has its `__index` metamethod set to the
@@ -63,8 +65,8 @@ moon = [[types = require "lapis.validate.types"]]
 ### `with_params(t, fn)`
 
 The `with_params` is a helper function for wrapping an action function such
-that it only runs if fields from $self_ref{"params"} can be validated. The
-validated parameter table is passed as the first argument to `fn`.
+that it only runs if fields from $self_ref{"params"} can be validated. `fn` is
+called with the request object followed by the validated parameter table.
 
 > $self_ref{"params"} is left unchanged. This enables the calling of nested
 > functions that use `with_params` to work with other sets of parameters
@@ -94,11 +96,13 @@ class App extends lapis.Application
 lua = [[
 local lapis = require "lapis"
 local capture_errors_json = require("lapis.application").capture_errors_json
+
+local types = require("lapis.validate.types")
 local with_params = require("lapis.validate").with_params
 
 local app = lapis.Application()
 
-app:post("/user/:id", capture_errors_json(with_params({
+app:match("/user/:id", capture_errors_json(with_params({
   {"id", types.db_id},
   {"action", types.one_of {"delete", "update"}}
 }, function(self, params)
@@ -121,18 +125,18 @@ Creates a type checker that is suitable for extracting validated values from a
 parameters objects (or any other plain Lua table). `params_shape` is similar
 to `types.shape` from Tableshape with a few key differences:
 
-* Fields to verify are specified in an array of tuples, values are checked in the order they provided.
+* Fields to verify are specified in an array of tuples, values are checked in the order they are provided.
 * Any excess fields that are not explicitly specified within `param_spec` do not generate an error, and are left out of the transformed result.
 * The error returned by the type checker is not a single string value, but instead an array of errors that is compatible with the $self_ref{"errors"} pattern seen in Lapis actions.
-* The formatting of error mesages can be customized.
+* The formatting of error messages can be customized.
 * A new object is always returned from transform, even if the input matches the output
 
 `types.params_shape` is designed to be used with the transform API of
 Tableshape. The resulting transformed object is a validated table of
 parameters.
 
-`param_spec` is an array of parameter specification objects object, the
-parameters are checked in order:
+`param_spec` is an array of parameter specification objects, the parameters
+are checked in order:
 
 $dual_code{
 moon = [[
@@ -174,7 +178,7 @@ $options_table{
   }
 }
 
-Each item in `params_spec` is a Lua table that matches the following format:
+Each item in `param_spec` is a Lua table that matches the following format:
 
     {"field_name", type_checker, additional_options...}
 
@@ -289,9 +293,19 @@ assert_empty = types.assert_error(types.empty)
 
 some_value = ...
 
-empy_val = assert_empty\transform some_value
+empty_val = assert_empty\transform some_value
 
 print "We are guaranteed to have an empty value"
+]],
+lua = [[
+local types = require("lapis.validate.types")
+local assert_empty = types.assert_error(types.empty)
+
+local some_value = ...
+
+local empty_val = assert_empty:transform(some_value)
+
+print("We are guaranteed to have an empty value")
 ]]}
 
 
@@ -300,9 +314,9 @@ print "We are guaranteed to have an empty value"
 Converts errors that might be contained in an array table into a single string
 error message.
 
-The constructors `params_shape` and `params_array` accumulate errors into an
-array table to enhance error reporting for end-users. However, this error
-format is not compatible with standard tableshape error handling, as it expects
+The constructors `params_shape`, `params_array`, and `params_map` accumulate
+errors into an array table to enhance error reporting for end-users. However,
+this error format is not compatible with standard tableshape error handling, as it expects
 a single string. This ensures that any error messages generated by the
 contained type, `t`, are single strings.
 
@@ -320,7 +334,7 @@ $dual_code{
 lua = [[
 types.empty("") --> true
 types.empty("  ") --> true
-types.empty("Hello") --> false
+types.empty("Hello") --> nil, "expected empty"
 
 types.empty:transform("") --> nil
 types.empty:transform("   ") --> nil
@@ -329,7 +343,7 @@ types.empty:transform(nil) --> nil
 moon = [[
 types.empty "" --> true
 types.empty "  " --> true
-types.empty "Hello" --> false
+types.empty "Hello" --> nil, "expected empty"
 
 types.empty\transform "" --> nil
 types.empty\transform "   " --> nil
@@ -339,9 +353,9 @@ types.empty\transform nil --> nil
 
 > On failure, `transform` returns `nil`, and an error. Transforming an invalid
 > value with `types.empty` and only checking the first return value may not be
-> desirable.  The transform method can be combined with a type check to ensure
+> desirable. The transform method can be combined with a type check to ensure
 > an empty value is provided. When using nested type checkers, like
-> `types.shape` and `table.params_shape`, Tableshape is aware of this
+> `types.shape` and `types.params_shape`, Tableshape is aware of this
 > distinction and no additional code is necessary.
 >
 > $dual_code{
@@ -357,7 +371,7 @@ if types.empty some_value
 
 #### `types.valid_text`
 
-Matches a string that is valid UTF8. Invalid characters sequences or
+Matches a string that is valid UTF8. Invalid character sequences or
 unprintable characters will cause validation to fail.
 
 $dual_code{
@@ -393,28 +407,33 @@ types.cleaned_text:transform(55) --> nil, "expected text"
 
 #### `types.trimmed_text`
 
-Matches a string that is valid UTF8, and transforms such that any whitespace or
-empty UTF8 characters stripped from either side.
+Matches a string that is valid UTF8, and transforms it such that any
+whitespace or empty UTF8 characters are stripped from either side. A string
+that is empty after trimming will fail to match.
 
 $dual_code{
 moon = [[
 types.trimmed_text\transform "hello" --> "hello"
 types.trimmed_text\transform " wor ld \t " --> "wor ld"
+types.trimmed_text\transform "   " --> nil, "expected text"
 ]],
 lua = [[
 types.trimmed_text:transform("hello") --> "hello"
 types.trimmed_text:transform(" wor ld \t ") --> "wor ld"
+types.trimmed_text:transform("   ") --> nil, "expected text"
 ]]
 }
 
-This type is equivalent to the following: `types.valid_text / trim`, where
-`trim` is implemented using the pattern in `lapis.util.utf8`
+To allow an empty value, combine it with `types.empty`, eg. `types.empty +
+types.trimmed_text`. The same applies to `truncated_text` and `limited_text`,
+which are built on `trimmed_text`.
 
 #### `types.truncated_text(len)`
 
 Matches a string that is valid UTF8, and transforms it such that it is `len`
 characters or shorter. Note that length is UTF8 aware, and will truncate by the
-number of characters and not bytes.
+number of characters and not bytes. Whitespace is trimmed from both sides
+before truncating.
 
 $dual_code{
 moon = [[
@@ -422,14 +441,14 @@ types.truncated_text(5)\transform "hello" --> "hello"
 types.truncated_text(5)\transform "hi world" --> "hi wo"
 
 -- invalid types are rejected
-types.truncated_text(5)\transform(true) --> nil, "expected text"
+types.truncated_text(5)\transform(true) --> nil, "expected valid text"
 ]],
 lua = [[
 types.truncated_text(5):transform("hello") --> "hello"
 types.truncated_text(5):transform("hi world") --> "hi wo"
 
 -- invalid types are rejected
-types.truncated_text(5):transform(true) --> nil, "expected text"
+types.truncated_text(5):transform(true) --> nil, "expected valid text"
 ]]
 }
 
@@ -438,7 +457,8 @@ types.truncated_text(5):transform(true) --> nil, "expected text"
 
 Matches a string that is valid UTF8 and has a length within the specified range
 of `min_len` to `max_len`, inclusive. Note that length is UTF8 aware, and will
-count by the number of characters and not bytes.
+count by the number of characters and not bytes. Whitespace is trimmed from
+both sides of the string, like `trimmed_text`.
 
 $dual_code{
 moon = [[
@@ -538,7 +558,29 @@ check_status:transform("2") --> 2
 
 -- value out of range is rejected
 check_status:transform(5) --> nil, "expected enum(default, banned, deleted)"
+]]
+}
 
+#### `types.file_upload`
+
+Matches a file upload table as generated when a file is included in a
+`multipart/form-data` request, see [File Uploads][0]. The file must have a
+non-empty `filename` and non-empty `content`.
+
+$dual_code{
+moon = [[
+check_file = types.params_shape {
+  {"upload", types.file_upload}
+}
+
+params = check_file\transform @params
+]],
+lua = [[
+local check_file = types.params_shape({
+  {"upload", types.file_upload}
+})
+
+local params = check_file:transform(self.params)
 ]]
 }
 
@@ -546,8 +588,8 @@ check_status:transform(5) --> nil, "expected enum(default, banned, deleted)"
 ## Assert Valid
 
 > **This is the legacy validation system.** Due to shortcomings addressed by
-> the Tableshape validation system, it is not recommended to `assert_valid` and
-> related functions any more
+> the Tableshape validation system, it is not recommended to use `assert_valid`
+> and related functions any more
 
 The `assert_valid` function is Lapis's legacy validation framework. It provides
 a simple set of validation functions. Here's a complete example:
@@ -606,7 +648,8 @@ return app
 
 
 `assert_valid` takes two arguments, a table to be validated, and a second array
-table with a list of validations to perform. Each validation is the following format:
+table with a list of validations to perform. Each validation is the following
+format:
 
     { Validation_Key, [Error_Message], Validation_Function: Validation_Argument, ... }
 
@@ -629,10 +672,12 @@ validation functions as demonstrated in the example above.
 * `max_length: Max_Length` -- value must be at most `Max_Length` chars (Warning: this counts by number of bytes, not characters)
 * `is_integer: true` -- value matches integer pattern
 * `is_color: true` -- value matches CSS hex color (eg. `#1234AA`)
+* `is_timestamp: true` -- value matches a database timestamp (eg. `2024-01-30 12:00:00`)
 * `is_file: true` -- value is an uploaded file, see [File Uploads][0]
 * `equals: String` -- value is equal to String
 * `type: String` -- type of value is equal to String
 * `one_of: {A, B, C, ...}` -- value is equal to one of the elements in the array table
+* `test: fn` -- calls `fn` with the value, the validation fails if `fn` returns a falsey value. `fn` should return an error message as a second return value (`%s` is replaced with the field name), unless an error message is provided in the validation
 
 ### Optional validations
 
@@ -704,8 +749,29 @@ lua = [[
 local validate = require("lapis.validate").validate
 ]]}
 
-* `validate(object, validation)` -- takes the same exact arguments as
-  `assert_valid`, but returns either errors or `nil` on failure instead of
-  yielding the error.
+* `validate(object, validations, opts)` -- takes the same arguments as
+  `assert_valid`, but instead of yielding the error it returns an array table
+  of error messages on failure, or `nil` on success. If the option `keys` is
+  set to `true`, then the errors are returned in a table keyed by the name of
+  the field that failed.
+
+$dual_code{
+moon = [[
+errors = validate @params, {
+  { "username", exists: true }
+}
+
+if errors
+  print "Validation failed:", table.concat errors, ", "
+]],
+lua = [[
+local errors = validate(self.params, {
+  { "username", exists = true }
+})
+
+if errors then
+  print("Validation failed:", table.concat(errors, ", "))
+end
+]]}
 
 [0]: utilities.html#file-uploads
