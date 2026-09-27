@@ -12,51 +12,52 @@ questions organized on a single page suitable for searching.
 If there's a question that you think belongs here please open an issue on the
 [issues tracker](https://github.com/leafo/lapis/issues).
 
-## How do I read a HTTP header?
+## How do I read an HTTP header?
 
-The `req` field of the `self` passed to actions has a headers fields with all
+The `req` field of the `self` passed to actions has a `headers` field with all
 the request headers. They are normalized so you don't have to be concerned
 about capitalization.
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 
 app:match("/", function(self)
-  return self.req.headers["referrer"]
+  return self.req.headers["referer"]
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
   "/": =>
-    @req.headers["referrer"]
-```
+    @req.headers["referer"]
+]]
+}
 
-## How do I write a HTTP header?
+## How do I write an HTTP header?
 
 There are two ways to write headers. In these examples we set the
 `Access-Control-Allow-Origin` header to `*`
 
 You can return a headers field (or pass it to `write`) from an action:
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 
 app:match("/", function(self)
   return {
-    "OK",
+    "ok",
     headers = {
       ["Access-Control-Allow-Origin"] = "*"
     }
   }
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
@@ -66,12 +67,14 @@ class App extends lapis.Application
         "Access-Control-Allow-Origin": "*"
       }
     }
-```
+]]
+}
 
 Alternatively, the `res` field of the `self` has a `headers` field that lets
 you set headers.
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 
@@ -79,16 +82,16 @@ app:match("/", function(self)
   self.res.headers["Access-Control-Allow-Origin"] = "*"
   return "ok"
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
   "/": =>
     @res.headers["Access-Control-Allow-Origin"] = "*"
     "ok"
-```
+]]
+}
 
 If you need to change the content type see below.
 
@@ -97,29 +100,31 @@ If you need to change the content type see below.
 Either manually set the header as described above, or use the `content_type`
 option of the `write` method, or action return value:
 
-```lua
+$dual_code{
+lua = [==[
 local lapis = require("lapis")
 local app = lapis.Application()
 
 app:match("/", function(self)
   return { content_type = "text/rss", [[<rss version="2.0"></rss>]] }
 end)
-```
-
-```moon
+]==],
+moon = [==[
 lapis = require "lapis"
 
 class App extends lapis.Application
   "/": =>
     [[<rss version="2.0"></rss>]], content_type: "text/rss"
-```
+]==]
+}
 
 
 ## How do I render JSON?
 
 Use the `json` option of the `write` method, or the action's return value:
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 
@@ -131,9 +136,8 @@ app:match("/", function(self)
     }
   }
 end)
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 
 class App extends lapis.Application
@@ -144,7 +148,8 @@ class App extends lapis.Application
         message: "hello world"
       }
     }
-```
+]]
+}
 
 ## How can I read JSON HTTP body?
 
@@ -152,22 +157,26 @@ By default Lapis will only parse form-encoded request bodies. You can extract a
 json encoded request body by using the `json_params` action decorator function.
 The values are placed into `params`.
 
-```lua
+$dual_code{
+lua = [[
+local lapis = require("lapis")
 local json_params = require("lapis.application").json_params
+
+local app = lapis.Application()
 
 app:match("/json", json_params(function(self)
   return self.params.value
 end))
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 import json_params from require "lapis.application"
 
 class App extends lapis.Application
-  "/": json_params =>
+  "/json": json_params =>
     @params.value
-```
+]]
+}
 
 The `application/json` content type must be included in order for the data to
 be extracted.
@@ -176,7 +185,7 @@ be extracted.
 $ curl \
   -H "Content-type: application/json" \
   -d '{"value": "hello"}' \
-  'https://localhost:8080/json'
+  'http://localhost:8080/json'
 ```
 
 ## How do I respond to GET, POST, DELETE or other HTTP verbs?
@@ -187,12 +196,13 @@ different code depending on the HTTP method.
 > `try_to_login` is a hypothetical function, and not regularly globally
 > available
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 local respond_to = require("lapis.application").respond_to
 
-app:match("/", respond_to({
+app:match("/login", respond_to({
   -- do common setup
   before = function(self)
     if self.session.current_user then
@@ -211,9 +221,8 @@ app:match("/", respond_to({
     return { redirect_to = "/" }
   end
 }))
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
 import respond_to from require "lapis.application"
 
@@ -233,7 +242,8 @@ class App extends lapis.Application
       @session.current_user = try_to_login(@params.username, @params.password)
       redirect_to: "/"
   }
-```
+]]
+}
 
 ## How do I restart a running server, or reload the code?
 
@@ -251,29 +261,35 @@ By default Lapis will print the stack trace for any server errors. You can
 prevent this from happening by overriding the `handle_error` method on your
 application:
 
-```lua
+$dual_code{
+lua = [[
 local lapis = require("lapis")
 local app = lapis.Application()
 
 function app:handle_error(err, trace)
-  return "There was an error"
+  -- log err and trace somewhere before returning a response
+  return { status = 500, layout = false, "There was an error" }
 end
-```
-
-```moon
+]],
+moon = [[
 lapis = require "lapis"
-import respond_to from require "lapis.application"
 
 class App extends lapis.Application
   handle_error: (err, trace) =>
-    "There was an error"
-```
+    -- log err and trace somewhere before returning a response
+    status: 500, layout: false, "There was an error"
+]]
+}
+
+See [`handle_error`](actions.html#application-configuration/callbacks/application:handle_error)
+for more details.
 
 ## What versions of Lua are supported?
 
-Lapis is tested against all versions of Lua (5.4 as of this guide). The default
-server is OpenResty, which is tied to LuaJIT (which is a hybrid version of
-Lua5.1)
+Lapis is tested against Lua 5.1, 5.2, 5.3, 5.4, and LuaJIT. The default server
+is OpenResty, which is tied to LuaJIT (which is a hybrid version of Lua 5.1).
+When installing Lapis to use with OpenResty, make sure you install it for Lua
+5.1 with `luarocks --lua-version=5.1`.
 
 ## How do I handle multiple domains and subdomains?
 
@@ -284,14 +300,27 @@ application.
 
 ## How can I read the entire body of the request?
 
-Lapis currently doesn't provide a generalized interface for reading the raw
-body or working with streaming large bodies. You will have to use the server
-specific interface.
+Call the `read_body_as_string` method on the `req` field of the request object.
+It returns the body as a string, or `nil` if there's no body:
 
-For OpenResty and `ngx_lua`: Load the body into memory by calling
-`ngx.req.read_body()`. Next call `ngx.req.get_body_data()` to get the contents
-of the body.
+$dual_code{
+lua = [[
+app:post("/webhook", function(self)
+  local body = self.req:read_body_as_string()
+  -- ...
+end)
+]],
+moon = [[
+class App extends lapis.Application
+  "/webhook": =>
+    body = @req\read_body_as_string!
+    -- ...
+]]
+}
 
-If the body does not fit in to the size set by the Nginx configuration
-directive `client_max_body_size` then these functions will fail and return
-`nil`.
+In OpenResty, request bodies larger than the
+[`client_body_buffer_size`](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size)
+directive are written to a temporary file instead of memory, and
+`read_body_as_string` will return `nil`. Increase `client_body_buffer_size` if
+you need to read larger bodies. Streaming large bodies requires using the
+server specific interface.
