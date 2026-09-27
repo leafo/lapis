@@ -225,4 +225,94 @@ describe "lapis.config", ->
     assert.same { backend: "pgmoon" }, config.get("beta").postgres
     assert.same { backend: "pgmoon", database: "lazuli_dev" }, config.get("gamma").postgres
 
+  it "replaces arrays instead of merging them", ->
+    config {"alpha", "beta"}, ->
+      emails {"one@example.com", "two@example.com"}
+
+    config "beta", ->
+      emails {"three@example.com"}
+
+    assert.same {"one@example.com", "two@example.com"}, config.get("alpha").emails
+    assert.same {"three@example.com"}, config.get("beta").emails
+
+  it "doesn't share arrays between environments", ->
+    config {"alpha", "beta"}, {
+      things: { {name: "a"} }
+    }
+
+    config.get("alpha").things[1].name = "changed"
+    assert.same { {name: "a"} }, config.get("beta").things
+
+  it "replaces a map with an array", ->
+    config "alpha", ->
+      thing -> color "blue"
+
+    config "alpha", ->
+      thing {1, 2}
+
+    assert.same {1, 2}, config.get("alpha").thing
+
+  it "merges maps with numeric keys", ->
+    config "alpha", ->
+      ids { [100]: true }
+
+    config "alpha", ->
+      ids { [200]: true }
+
+    assert.same { [100]: true, [200]: true }, config.get("alpha").ids
+
+  it "clears an array with an empty table", ->
+    config "alpha", ->
+      things {1, 2}
+
+    config "alpha", ->
+      things {}
+
+    assert.same {}, config.get("alpha").things
+
+  it "merges an empty table into a map as a no-op", ->
+    config "alpha", ->
+      postgres -> database "app"
+
+    config "alpha", ->
+      postgres {}
+
+    assert.same { database: "app" }, config.get("alpha").postgres
+
+  it "sets an empty table when there's no existing value", ->
+    config "alpha", ->
+      things {}
+
+    assert.same {}, config.get("alpha").things
+
+  it "errors on mixed table", ->
+    config "alpha", ->
+      thing { 1, 2, color: "blue" }
+
+    assert.has_error (-> config.get "alpha"), "config: `thing` is a table with both array and hash keys, it can't be merged"
+
+  it "errors on array with holes", ->
+    things = {1, 2, 3, 4, 5, 6, 7, 8}
+    things[2] = nil
+
+    config "alpha", ->
+      thing things
+
+    assert.has_error (-> config.get "alpha"), "config: `thing` is an array with missing (nil) values, it can't be merged"
+
+  it "errors on array with nil in constructor", ->
+    config "alpha", ->
+      thing { 1, nil, 3 }
+
+    assert.has_error (-> config.get "alpha"), "config: `thing` is an array with missing (nil) values, it can't be merged"
+
+  it "errors when merging map into array", ->
+    config "alpha", ->
+      thing {1, 2}
+
+    config "alpha", ->
+      thing -> color "blue"
+
+    assert.has_error (-> config.get "alpha"), "config: can't merge hash table into existing array `thing`"
+
 

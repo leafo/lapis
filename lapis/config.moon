@@ -51,17 +51,59 @@ default_config = {
   }
 }
 
-merge_set = (t, k, v) ->
-  existing = t[k]
-  if type(v) == "table"
-    if type(existing) != "table"
-      existing = {}
-      t[k] = existing
+-- returns "array" for a table of sequential integer keys starting at 1, "map"
+-- for a table without [1], "sparse" for integer keys with holes, otherwise
+-- "mixed". The # operator isn't used since its result is undefined for tables
+-- with holes
+table_kind = (t) ->
+  return "map" if t[1] == nil
+  count = 0
+  max = 0
+  for k in pairs t
+    unless type(k) == "number" and k >= 1 and k % 1 == 0
+      return "mixed"
 
-    for sub_k, sub_v in pairs v
-      merge_set existing, sub_k, sub_v
-  else
+    count += 1
+    max = k if k > max
+
+  count == max and "array" or "sparse"
+
+-- maps are merged key by key, arrays replace the existing value, as there's
+-- no meaningful way to merge them by index. Mixed tables have no sensible
+-- merge, so they are rejected
+merge_set = (t, k, v) ->
+  unless type(v) == "table"
     t[k] = v
+    return
+
+  switch table_kind v
+    when "mixed"
+      error "config: `#{k}` is a table with both array and hash keys, it can't be merged"
+    when "sparse"
+      error "config: `#{k}` is an array with missing (nil) values, it can't be merged"
+    when "array"
+      -- copy so environments configured together don't share a table
+      copy = {}
+      for i, item in ipairs v
+        merge_set copy, i, item
+
+      t[k] = copy
+      return
+
+  existing = t[k]
+  if type(existing) != "table"
+    existing = {}
+    t[k] = existing
+  elseif table_kind(existing) == "array"
+    -- an empty table is treated as an empty array, clearing the existing one
+    unless next(v)
+      t[k] = {}
+      return
+
+    error "config: can't merge hash table into existing array `#{k}`"
+
+  for sub_k, sub_v in pairs v
+    merge_set existing, sub_k, sub_v
 
 set = (conf, k, v) ->
   if type(k) == "table"

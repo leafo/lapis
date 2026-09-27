@@ -1,7 +1,7 @@
 local insert
 insert = table.insert
 local CONFIG_MODULE = package.loaded["lapis.config_module_name"] or "config"
-local config_cache, configs, default_config, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get, get_app_module, config_module
+local config_cache, configs, default_config, table_kind, merge_set, set, scope_meta, config, reset, run_with_scope, get_env, get, get_app_module, config_module
 config_cache = { }
 configs = { }
 default_config = {
@@ -17,18 +17,54 @@ default_config = {
     server = true
   }
 }
+table_kind = function(t)
+  if t[1] == nil then
+    return "map"
+  end
+  local count = 0
+  local max = 0
+  for k in pairs(t) do
+    if not (type(k) == "number" and k >= 1 and k % 1 == 0) then
+      return "mixed"
+    end
+    count = count + 1
+    if k > max then
+      max = k
+    end
+  end
+  return count == max and "array" or "sparse"
+end
 merge_set = function(t, k, v)
-  local existing = t[k]
-  if type(v) == "table" then
-    if type(existing) ~= "table" then
-      existing = { }
-      t[k] = existing
-    end
-    for sub_k, sub_v in pairs(v) do
-      merge_set(existing, sub_k, sub_v)
-    end
-  else
+  if not (type(v) == "table") then
     t[k] = v
+    return 
+  end
+  local _exp_0 = table_kind(v)
+  if "mixed" == _exp_0 then
+    error("config: `" .. tostring(k) .. "` is a table with both array and hash keys, it can't be merged")
+  elseif "sparse" == _exp_0 then
+    error("config: `" .. tostring(k) .. "` is an array with missing (nil) values, it can't be merged")
+  elseif "array" == _exp_0 then
+    local copy = { }
+    for i, item in ipairs(v) do
+      merge_set(copy, i, item)
+    end
+    t[k] = copy
+    return 
+  end
+  local existing = t[k]
+  if type(existing) ~= "table" then
+    existing = { }
+    t[k] = existing
+  elseif table_kind(existing) == "array" then
+    if not (next(v)) then
+      t[k] = { }
+      return 
+    end
+    error("config: can't merge hash table into existing array `" .. tostring(k) .. "`")
+  end
+  for sub_k, sub_v in pairs(v) do
+    merge_set(existing, sub_k, sub_v)
   end
 end
 set = function(conf, k, v)
