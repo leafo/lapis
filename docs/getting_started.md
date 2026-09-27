@@ -3,9 +3,9 @@
 }
 # Getting Started With Lapis
 
-[Lapis](http://leafo.net/lapis/) is a web framework written for Lua and
+[Lapis](https://leafo.net/lapis/) is a web framework written for Lua and
 MoonScript. Lapis is designed with performance in mind so by default it runs
-configured for the Nginx distribution OpenResty. Your web application is run
+configured for the Nginx distribution [OpenResty][0]. Your web application is run
 directly inside of Nginx. Nginx's event loop lets you make asynchronous HTTP
 requests, database queries and other requests using the modules provided with
 OpenResty. Lua's coroutines allow you to write synchronous looking code that is
@@ -14,7 +14,7 @@ event driven behind the scenes.
 The web framework comes with an environment based configuration, URL routing,
 HTML templating, CSRF and session support, a relational database object
 relational mapper for working with models and a handful of other useful
-functions needed for developing websites and more
+functions needed for developing websites and more.
 
 This introduction guide functions as both a tutorial and a reference.
 
@@ -31,7 +31,7 @@ $ luarocks install lapis
 
 > OpenResty is designed for LuaJIT which targets Lua 5.1.  If you plan to only
 > use OpenResty, then in order to ensure that OpenResty is able to load Lapis
-> within its own runtime you will want to install Lapis targetting Lua 5.1. You
+> within its own runtime you will want to install Lapis targeting Lua 5.1. You
 > can use the `--lua-version=5.1` flag with LuaRocks to accomplish this.
 
 ## Creating An Application
@@ -54,19 +54,21 @@ Navigate to an empty directory where you want to keep your project and run the
 following:
 
 ```bash
-$  lapis new
+$ lapis new
 
-wrote	nginx.conf
-wrote	mime.types
-wrote	app.lua
-wrote	config.lua
+write	config.lua
+write	nginx.conf
+write	mime.types
+write	app.lua
+write	models.lua
 ```
 
 If you wish to continue this guide without OpenResty, you can run `lapis new
 --cqueues`.
 
-When generating a new project for OpenResty, a basic Nginx configuration and a
-blank Lapis application are written.
+When generating a new project for OpenResty, a configuration file, a basic
+Nginx configuration, a blank Lapis application, and a `models` module that
+autoloads your [models](models.html) from the `models` directory are written.
 
 Here's a brief overview of the default `nginx.conf`
 
@@ -90,7 +92,7 @@ application to production.
 Here is the `nginx.conf` that has been generated:
 
 ```nginx
-worker_processes ${{NUM_WORKERS}};
+worker_processes ${{num_workers}};
 error_log stderr notice;
 daemon off;
 pid logs/nginx.pid;
@@ -102,15 +104,18 @@ events {
 http {
   include mime.types;
 
+  init_by_lua_block {
+    require "lpeg"
+  }
+
   server {
-    listen ${{PORT}};
-    lua_code_cache ${{CODE_CACHE}};
+    listen ${{port}};
+    lua_code_cache ${{code_cache}};
 
     location / {
-      default_type text/html;
-      content_by_lua '
+      content_by_lua_block {
         require("lapis").serve("app")
-      ';
+      }
     }
 
     location /static/ {
@@ -125,8 +130,9 @@ http {
 ```
 
 The first thing to notice is that this is not a normal Nginx configuration
-file. Special `${{VARIABLE}}` syntax is used by Lapis to inject environment
-settings before starting the server.
+file. Special `${{variable}}` syntax is used by Lapis to inject values from
+your configuration before starting the server. See [Configurations and
+Nginx](configuration.html#configurations-and-nginx) for more details.
 
 There are a couple interesting things provided by the default configuration.
 `error_log stderr notice` and `daemon off` lets our server run in the
@@ -136,13 +142,14 @@ but worth turning off in a production environment.
 `lua_code_cache` is also another setting useful for development. When set to
 `off` it causes all Lua modules to be reloaded on each request. Modifications to
 the web application's source code can then be reloaded automatically. In a
-production environment the cache should be enabled (`on`) for optimal performance.
-Defaults to `off`.
+production environment the cache should be enabled (`on`) for optimal
+performance. The generated `config.lua` sets it to `off` for the `development`
+environment.
 
-The `content_by_lua` directive specifies a chunk of Lua code that will handle
-any request that doesn't match the other locations. It loads Lapis and tells it
-to serve the module named `"app"`. The `lapis new` command ran earlier provides
-a skeleton `app` module to get started with
+The `content_by_lua_block` directive specifies a chunk of Lua code that will
+handle any request that doesn't match the other locations. It loads Lapis and
+tells it to serve the module named `"app"`. The `lapis new` command ran earlier
+provides a skeleton `app` module to get started with.
 
 ## Starting The Server
 
@@ -151,13 +158,17 @@ configuration and starting the server into a single convenient command.
 
 Running `lapis server` in the shell will start the server. Lapis will
 attempt to find your OpenResty installation. It will search the following
-directories for an `nginx` binary. (The last one represents anything in your
-`PATH`)
+directories for a binary named `nginx` or `openresty`. (The last one represents
+anything in your `PATH`)
 
+    "/opt/openresty/nginx/sbin/"
     "/usr/local/openresty/nginx/sbin/"
     "/usr/local/opt/openresty/bin/"
     "/usr/sbin/"
     ""
+
+If your OpenResty is installed somewhere else, set the `LAPIS_OPENRESTY`
+environment variable to the path of the binary.
 
 > Remember that you need OpenResty and not a normal installation of Nginx.
 > Lapis will ignore regular Nginx binaries.
@@ -174,11 +185,11 @@ The default configuration puts the server in the foreground, use `CTRL+C` to
 stop the server.
 
 If the server is running in the background it can be stopped with the command
-`lapis term`. It must be run in the root directory of the application.  This
+`lapis term`. It must be run in the root directory of the application. This
 command looks for the PID file for a running server and sends a `TERM` message
 to that process if it exists.
 
-## Creating An Application
+## Writing Application Code
 
 Now that you know how to generate a new project and start and stop the server
 you're ready to start writing application code. This guide splits into two for
@@ -187,6 +198,6 @@ Lua and MoonScript.
  * [Create an application with Lua][1]
  * [Create an application with MoonScript][2]
 
-[0]: http://openresty.org/
+[0]: https://openresty.org/
 [1]: lua_getting_started.html
 [2]: moon_getting_started.html

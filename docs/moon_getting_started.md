@@ -14,8 +14,10 @@ following command:
 $ lapis new --moonscript
 ```
 
-This provides us with a default Nginx configuration, `nginx.conf`, and a
-skeleton application, `app.moon`. The skeleton application looks like this:
+This provides us with a configuration file, `config.moon`, a default Nginx
+configuration, `nginx.conf`, a `models.moon` module for loading
+[models](models.html), and a skeleton application, `app.moon`. The skeleton
+application looks like this:
 
 ```moon
 -- app.moon
@@ -31,8 +33,8 @@ return in MoonScript states that the last statement in a block of code is the
 return value.)
 
 > Don't forget to compile the `.moon` files when changing and creating them.
-> You can watch the current directory and compile automatically with `moonc
-> -w` but be aware new files aren’t picked up, you have to restart `moonc`.
+> You can watch the current directory and compile automatically with [`moonc
+> -w`][1] but be aware new files aren't picked up, you have to restart `moonc`.
 
 Try it out by starting the server:
 
@@ -123,8 +125,9 @@ represent the current request.
 We can also access the instance of the application with `@app`. You should
 treat `@app` as read only because the instance is shared among many requests.
 
-The members of the class that you want to be routes must start with `"/"`,
-otherwise they are treated as regular methods of the application class.
+The members of the class that you want to be routes must start with `"/"`, or
+be a table with a route name and path like `[index: "/"]`, otherwise they are
+treated as regular methods of the application class.
 
 ### Sub-Applications
 
@@ -141,8 +144,8 @@ Let's say we've got a separate application for handling users:
 lapis = require "lapis"
 
 class UsersApplication extends lapis.Application
-  [login: "/login"]: do_login!
-  [logout: "/logout"]: do_logout!
+  [login: "/login"]: => "Log in page"
+  [logout: "/logout"]: => "Log out page"
 ```
 
 We can include this application into our main one:
@@ -165,7 +168,7 @@ into our root one. `include` copies all the routes of the other application,
 leaving the original untouched.
 
 Sub-applications are allowed to have before filters, and the before filters
-will only apply to all actions enclosed by the application.
+will only apply to the actions enclosed by that application.
 
 A sub-application supports special `path` and `name` class values:
 
@@ -194,5 +197,5 @@ class extends lapis.Application
     @url_for("user_login") -- returns "/users/login"
 ```
 
-[1]: http://moonscript.org/reference/#moonc
+[1]: https://moonscript.org/reference/command_line.html
 [2]: $root/reference/actions.html
