@@ -69,3 +69,41 @@ This results in the following two configurations (default values omitted):
 You can call the `config` function as many times as you like on the same
 configuration names, each time the passed in table is merged into the
 configuration.
+
+> Tables with named keys are merged key by key. Arrays are not merged: an
+> array replaces any existing value, so setting `{9}` on top of `{1, 2, 3}`
+> results in `{9}`, and setting `{}` clears the array. An error is thrown for
+> a table with both array items and named keys, or an array with missing
+> (`nil`) values.
+
+## Function Syntax
+
+Instead of a table, a function can be passed to `config`. Inside the function,
+calling a name as a function sets that value in the configuration. Passing a
+function as the value creates a nested table. This is the same syntax used by
+[MoonScript configurations](moon_creating_configurations.html), and lets you
+add logic around your assignments:
+
+```lua
+-- config.lua
+local config = require("lapis.config")
+
+config("development", function()
+  port(8080)
+
+  if os.getenv("USE_SQLITE") then
+    sqlite(function()
+      database("my_app.sqlite")
+    end)
+  else
+    postgres(function()
+      database("my_app")
+    end)
+  end
+end)
+```
+
+Names that are already global variables in Lua, like `type` or `table`, can't
+be set this way because the global is found instead. Use `set` to assign them:
+`set("type", "fast")`. `unset` removes previously set values, eg.
+`unset("email_enabled")`.

@@ -1,7 +1,7 @@
 {
   title: "MoonScript Configuration Syntax"
 }
-<div class="override_lang"></div>
+<div class="override_lang" data-lang="moonscript"></div>
 
 # MoonScript Configuration Syntax
 
@@ -16,6 +16,8 @@ Here's an example of the configuration DSL (domain specific language) and the
 table it generates:
 
 ```moon
+config = require "lapis.config"
+
 some_function = -> steak "medium_well"
 
 config "development", ->
@@ -53,6 +55,8 @@ config "development", ->
   set "include", "hello"
 ```
 
+Which generates the following table:
+
 ```moon
 {
   hello: "world"
@@ -78,3 +82,20 @@ config "development", ->
 }
 ```
 
+Names that are already global variables in Lua, like `type` or `table`, can't
+be set by calling them because the global is found instead. The same applies
+to the special functions `set`, `unset`, and `include`. Use `set` to assign
+values with these names.
+
+`unset` removes values that were set by a previous configuration:
+
+```moon
+config "production", ->
+  unset "custom_settings", "extra"
+```
+
+> Tables with named keys are merged key by key. Arrays are not merged: an
+> array replaces any existing value, so setting `{9}` on top of `{1, 2, 3}`
+> results in `{9}`, and setting `{}` clears the array. An error is thrown for
+> a table with both array items and named keys, or an array with missing
+> (`nil`) values.
