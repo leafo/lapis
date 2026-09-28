@@ -22,7 +22,6 @@ default_config = {
   -- optional:
   -- max_request_args: nil
   -- measure_performance: false
-  -- show_queries: false
   -- mysql: {
   --   backend: "" -- luasql, resty_mysql
   --   host: ""

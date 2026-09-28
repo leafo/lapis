@@ -245,7 +245,7 @@ COMMANDS = {
 
     (args) =>
       env = require "lapis.environment"
-      env.push args.environment, show_queries: true
+      env.push args.environment
 
       print colors "%{bright yellow}Running migrations for environment:%{reset} #{args.environment}"
 
