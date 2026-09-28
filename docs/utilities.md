@@ -780,7 +780,7 @@ location /proxy {
 > If you want to use a location other than `/proxy`, call
 > `require("lapis.nginx.http").set_proxy_location("/my-proxy")`.
 
-#### Enabling SSL Verification
+### Enabling SSL Verification
 
 By default, nginx's `proxy_pass` does not verify SSL certificates. To enable
 SSL verification, add the following directives to your `/proxy` location:
@@ -861,7 +861,7 @@ is handling the original request for this function to work.
 > [lua-resty-http](https://github.com/ledgetech/lua-resty-http). It is
 > automatically used in timer phases (where `location.capture` doesn't work),
 > but can also be used directly. See [Using
-> lua-resty-http](#using-lua-resty-http) below for more details.
+> lua-resty-http](#making-http-requests/using-lua-resty-http) below for more details.
 
 **Parameters:**
 
@@ -933,7 +933,7 @@ http {
 ```
 
 The path to the CA certificates file varies by operating system (see the [SSL
-verification section above](#enabling-ssl-verification) for common paths).
+verification section above](#making-http-requests/enabling-ssl-verification) for common paths).
 
 When using the `resty` CLI tool, pass these directives via `--http-conf`:
 
