@@ -6,7 +6,7 @@ argparser = ->
 
       name
 
-    \option("--class-name", "Override the generated class name. Defauls to camelize(model_name)")\argname "<name>"
+    \option("--class-name", "Override the generated class name. Defaults to camelize(model_name)")\argname "<name>"
     \option("--models-dir", "The directory where the model file is written")\argname("<dir>")\default "models"
 
     \mutex(

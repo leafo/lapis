@@ -238,7 +238,7 @@ COMMANDS = {
       with command
         \option("--migrations-module", "Module to load for migrations")\argname("<module>")\default "migrations"
         \option("--statement-timeout", "Set Postgres statement_timeout before migrating to abort slow queries (eg. 5000 or '5s'). Postgres only")\argname("<timeout>")
-        \flag("--dry-run", "Immediately roll back after appyling migrations. Forces migrations to run in a transaction")
+        \flag("--dry-run", "Immediately roll back after applying migrations. Forces migrations to run in a transaction")
         \option("--transaction")\args("?")\choices({"global", "individual"})\action (args, name, val) ->
           -- flatten the table that's created from args("?")
           args[name] = val[next(val)] or "global"

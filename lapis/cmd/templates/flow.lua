@@ -8,7 +8,7 @@ argparser = function()
       end
       return name
     end)
-    _with_0:option("--class-name", "Override the generated class name. Defauls to {camelize(flow_name)}Flow"):argname("<name>")
+    _with_0:option("--class-name", "Override the generated class name. Defaults to {camelize(flow_name)}Flow"):argname("<name>")
     _with_0:option("--flows-dir", "The directory where the flow file is written"):argname("<dir>"):default("flows")
     _with_0:mutex(_with_0:flag("--lua", "Force output to be Lua"), _with_0:flag("--moonscript --moon", "Force output to be MoonScript"))
     return _with_0

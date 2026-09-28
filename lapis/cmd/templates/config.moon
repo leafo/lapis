@@ -1,6 +1,6 @@
 argparser = ->
   with require("argparse") "lapis generate config", "Generate a config module for lapis applications"
-    \option("--config-module --module", "The module name of the migrations file")\default "config"
+    \option("--config-module --module", "The module name of the config file")\default "config"
 
     \mutex(
       \flag "--cqueues", "Configured for cqueues/lua-http server"

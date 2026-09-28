@@ -1,6 +1,6 @@
 argparser = ->
-  with require("argparse") "lapis generate application", "Generate a models loader module"
-    \option("--models-module --module", "The module name of the generated application")\default "models"
+  with require("argparse") "lapis generate models", "Generate a models loader module"
+    \option("--models-module --module", "The module name of the generated models loader")\default "models"
 
     \mutex(
       \flag "--lua", "Force output to be Lua"

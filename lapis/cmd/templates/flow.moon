@@ -6,7 +6,7 @@ argparser = ->
 
       name
 
-    \option("--class-name", "Override the generated class name. Defauls to {camelize(flow_name)}Flow")\argname "<name>"
+    \option("--class-name", "Override the generated class name. Defaults to {camelize(flow_name)}Flow")\argname "<name>"
     \option("--flows-dir", "The directory where the flow file is written")\argname("<dir>")\default "flows"
 
     \mutex(

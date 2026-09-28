@@ -285,7 +285,7 @@ local COMMANDS = {
         local _with_0 = command
         _with_0:option("--migrations-module", "Module to load for migrations"):argname("<module>"):default("migrations")
         _with_0:option("--statement-timeout", "Set Postgres statement_timeout before migrating to abort slow queries (eg. 5000 or '5s'). Postgres only"):argname("<timeout>")
-        _with_0:flag("--dry-run", "Immediately roll back after appyling migrations. Forces migrations to run in a transaction")
+        _with_0:flag("--dry-run", "Immediately roll back after applying migrations. Forces migrations to run in a transaction")
         _with_0:option("--transaction"):args("?"):choices({
           "global",
           "individual"

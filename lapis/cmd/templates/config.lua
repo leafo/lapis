@@ -2,7 +2,7 @@ local argparser
 argparser = function()
   do
     local _with_0 = require("argparse")("lapis generate config", "Generate a config module for lapis applications")
-    _with_0:option("--config-module --module", "The module name of the migrations file"):default("config")
+    _with_0:option("--config-module --module", "The module name of the config file"):default("config")
     _with_0:mutex(_with_0:flag("--cqueues", "Configured for cqueues/lua-http server"), _with_0:flag("--nginx", "Configured for nginx server"))
     _with_0:mutex(_with_0:flag("--lua", "Create a Lua module for config"), _with_0:flag("--moonscript --moon", "Create a MoonScript module for config"))
     return _with_0
