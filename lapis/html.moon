@@ -80,11 +80,52 @@ classnames = (t) ->
 
   table.concat ccs, " "
 
+-- attribute names can't be escaped in HTML, so unsafe names are rejected.
+-- Valid names are cached since pattern matching is slow in LuaJIT, the cache
+-- size is capped and seeded with common attribute names
+check_attribute_name = do
+  invalid_name = "[%s%c\"'>/=]"
+  max_cached = 10000
+
+  valid_names = {}
+  cached_count = 0
+
+  -- common names are always cached
+  for name in *{
+    "accept", "action", "alt", "aria-hidden", "aria-label", "async",
+    "autocomplete", "autofocus", "charset", "checked", "class", "cols",
+    "colspan", "content", "crossorigin", "datetime", "defer", "dir",
+    "disabled", "download", "enctype", "for", "height", "hidden", "href",
+    "http-equiv", "id", "integrity", "label", "lang", "loading", "max",
+    "maxlength", "media", "method", "min", "multiple", "name", "pattern",
+    "placeholder", "property", "readonly", "rel", "required", "role", "rows",
+    "rowspan", "selected", "sizes", "src", "srcset", "step", "style",
+    "tabindex", "target", "title", "type", "value", "width"
+
+    -- svg
+    "cx", "cy", "d", "fill", "points", "r", "stroke", "stroke-linecap",
+    "stroke-linejoin", "stroke-width", "version", "viewBox", "x", "x1", "x2",
+    "xmlns", "y", "y1", "y2"
+  }
+    valid_names[name] = true
+    cached_count += 1
+
+  (name) ->
+    return if valid_names[name]
+
+    if name == "" or name\match invalid_name
+      error "html: invalid attribute name: #{name}"
+
+    if cached_count < max_cached
+      valid_names[name] = true
+      cached_count += 1
+
 element_attributes = (buffer, t) ->
   return unless type(t) == "table"
 
   for k,v in pairs t
     if type(k) == "string" and not k\match "^__"
+      check_attribute_name k
       vtype = type(v)
       if vtype == "boolean"
         if v

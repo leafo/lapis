@@ -65,6 +65,12 @@ describe "lapis.html", ->
 
     assert.same [[<span required></span><div></div>]], output
 
+  it "errors on invalid attribute names", ->
+    for name in *{"", "a b", "on=x", "a>b", "a/b", "a\"b", "a'b", "a\nb"}
+      assert.has_error (->
+        render_html -> div [name]: "x"
+      ), "html: invalid attribute name: #{name}"
+
   it "should capture", ->
     -- we have to do it this way because in plain Lua 5.1, upvalues can't be
     -- joined, we only have a copy of the value.

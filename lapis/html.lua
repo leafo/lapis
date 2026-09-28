@@ -126,6 +126,110 @@ classnames = function(t)
   end
   return table.concat(ccs, " ")
 end
+local check_attribute_name
+do
+  local invalid_name = "[%s%c\"'>/=]"
+  local max_cached = 10000
+  local valid_names = { }
+  local cached_count = 0
+  local _list_0 = {
+    "accept",
+    "action",
+    "alt",
+    "aria-hidden",
+    "aria-label",
+    "async",
+    "autocomplete",
+    "autofocus",
+    "charset",
+    "checked",
+    "class",
+    "cols",
+    "colspan",
+    "content",
+    "crossorigin",
+    "datetime",
+    "defer",
+    "dir",
+    "disabled",
+    "download",
+    "enctype",
+    "for",
+    "height",
+    "hidden",
+    "href",
+    "http-equiv",
+    "id",
+    "integrity",
+    "label",
+    "lang",
+    "loading",
+    "max",
+    "maxlength",
+    "media",
+    "method",
+    "min",
+    "multiple",
+    "name",
+    "pattern",
+    "placeholder",
+    "property",
+    "readonly",
+    "rel",
+    "required",
+    "role",
+    "rows",
+    "rowspan",
+    "selected",
+    "sizes",
+    "src",
+    "srcset",
+    "step",
+    "style",
+    "tabindex",
+    "target",
+    "title",
+    "type",
+    "value",
+    "width",
+    "cx",
+    "cy",
+    "d",
+    "fill",
+    "points",
+    "r",
+    "stroke",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "stroke-width",
+    "version",
+    "viewBox",
+    "x",
+    "x1",
+    "x2",
+    "xmlns",
+    "y",
+    "y1",
+    "y2"
+  }
+  for _index_0 = 1, #_list_0 do
+    local name = _list_0[_index_0]
+    valid_names[name] = true
+    cached_count = cached_count + 1
+  end
+  check_attribute_name = function(name)
+    if valid_names[name] then
+      return 
+    end
+    if name == "" or name:match(invalid_name) then
+      error("html: invalid attribute name: " .. tostring(name))
+    end
+    if cached_count < max_cached then
+      valid_names[name] = true
+      cached_count = cached_count + 1
+    end
+  end
+end
 local element_attributes
 element_attributes = function(buffer, t)
   if not (type(t) == "table") then
@@ -135,6 +239,7 @@ element_attributes = function(buffer, t)
     local _continue_0 = false
     repeat
       if type(k) == "string" and not k:match("^__") then
+        check_attribute_name(k)
         local vtype = type(v)
         if vtype == "boolean" then
           if v then

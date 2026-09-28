@@ -94,8 +94,9 @@ need to call `element "div"`.
 
 All strings passed to the HTML builder functions as attribute values or tag
 contents are escaped automatically, so you don't have to worry about
-introducing cross site scripting vulnerabilities. Attribute names are not
-escaped, so don't use untrusted input as an attribute name.
+introducing cross site scripting vulnerabilities. Attribute names can't be
+escaped, so an error is thrown for any attribute name that contains whitespace,
+control characters, or any of `"'>/=`.
 
 Boolean attribute values are handled specially: `true` writes the attribute
 with no value (eg. `<input required/>`), and `false` leaves the attribute out
