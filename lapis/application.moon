@@ -363,9 +363,9 @@ class Application
   default_route: =>
     -- strip trailing /
     if @req.parsed_url.path\match "./$"
-      stripped = @req.parsed_url.path\match "^(.+)/+$"
-      -- TODO: if the path starts with // here then build URL will treat it as
-      -- an absolute URL and redirect off domain
+      -- collapse leading slashes, otherwise build_url would treat a path like
+      -- //evil.com as a protocol relative URL and redirect off domain
+      stripped = @req.parsed_url.path\match("^(.+)/+$")\gsub "^/+", "/"
       redirect_to: @build_url(stripped, query: @req.parsed_url.query), status: 301
     else
       @app.handle_404 @

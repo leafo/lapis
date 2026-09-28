@@ -770,6 +770,19 @@ describe "lapis.application", ->
       assert.same 301, status
       assert.same "http://localhost/hello", headers.location
 
+    it "doesn't redirect off domain when stripping trailing /", ->
+      app = lapis.Application!
+      app\match "/", ->
+      app\build_router!
+
+      status, _, headers = simulate_request app, "//evil.com/", allow_error: true
+      assert.same 301, status
+      assert.same "http://localhost/evil.com", headers.location
+
+      status, _, headers = simulate_request app, "///evil.com/?a=b", allow_error: true
+      assert.same 301, status
+      assert.same "http://localhost/evil.com?a=b", headers.location
+
     it "preserves order of route", ->
       app = lapis.Application!
 

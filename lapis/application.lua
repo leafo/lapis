@@ -290,7 +290,7 @@ do
     end,
     default_route = function(self)
       if self.req.parsed_url.path:match("./$") then
-        local stripped = self.req.parsed_url.path:match("^(.+)/+$")
+        local stripped = self.req.parsed_url.path:match("^(.+)/+$"):gsub("^/+", "/")
         return {
           redirect_to = self:build_url(stripped, {
             query = self.req.parsed_url.query
