@@ -19,7 +19,7 @@ else
 ---Generate HMAC-SHA256 hash
 ---@param secret string Secret key for HMAC
 ---@param str string String to hash
----@return string hash Base64 encoded HMAC-SHA256 hash
+---@return string hash Binary HMAC-SHA256 digest
 hmac_sha256 = (secret, str) ->
   hmac = openssl_hmac.new secret, "sha256"
   hmac\final str
