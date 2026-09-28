@@ -1,3 +1,6 @@
+-- load generator templates while in the project directory, the generate
+-- tests run in a temporary directory where this checkout isn't on the path
+require "lapis.cmd.templates.spec"
 
 nginx = require "lapis.cmd.nginx"
 
@@ -286,6 +289,28 @@ describe "lapis.cmd.actions.execute", ->
     it "lapis generate spec models.things --moonscript", ->
       cmd.execute { "generate", "spec", "models.things", "--moonscript" }
       assert_files { "spec/models/things_spec.moon" }
+
+    describe "generated spec files run", ->
+      -- runs the top level of the generated file, which loads its
+      -- dependencies, with a describe that doesn't run the tests
+      import read_file from require "lapis.cmd.path"
+      import setfenv from require "lapis.util.fenv"
+
+      run_generated = (code) ->
+        env = setmetatable { describe: -> }, __index: _G
+        fn = assert (loadstring or load) code
+        setfenv fn, env
+        fn!
+
+      for spec_type in *{"models", "applications", "helpers"}
+        it "#{spec_type} in lua", ->
+          cmd.execute { "generate", "spec", "#{spec_type}.things", "--type", spec_type, "--lua" }
+          run_generated read_file "spec/#{spec_type}/things_spec.lua"
+
+        it "#{spec_type} in moonscript", ->
+          cmd.execute { "generate", "spec", "#{spec_type}.things", "--type", spec_type, "--moonscript" }
+          moonscript = require "moonscript.base"
+          run_generated assert moonscript.to_lua read_file "spec/#{spec_type}/things_spec.moon"
 
     it "lapis generate migration in lua", ->
       cmd.execute { "generate", "migration", "--lua" }

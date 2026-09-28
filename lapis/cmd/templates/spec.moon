@@ -27,7 +27,7 @@ SPEC_TYPES = {
       model_class_name = camelize model_name
 
       [[
-local truncate_tables = reuqire("lapis.spec.db").truncate_tables
+local truncate_tables = require("lapis.spec.db").truncate_tables
 
 describe("]] .. name .. [[", function()
   local ]] .. model_class_name .. [[ = require("models").]] .. model_class_name .. [[
@@ -109,6 +109,9 @@ describe "]] ..name .. [[", ->
 ]]
   }
 }
+
+-- helper specs have no special setup
+SPEC_TYPES.helpers = SPEC_TYPES.default
 
 write = (args) =>
   output_language = if args.lua

@@ -25,7 +25,7 @@ local SPEC_TYPES = {
       local camelize
       camelize = require("lapis.util").camelize
       local model_class_name = camelize(model_name)
-      return [[local truncate_tables = reuqire("lapis.spec.db").truncate_tables
+      return [[local truncate_tables = require("lapis.spec.db").truncate_tables
 
 describe("]] .. name .. [[", function()
   local ]] .. model_class_name .. [[ = require("models").]] .. model_class_name .. [[
@@ -102,6 +102,7 @@ describe "]] .. name .. [[", ->
     end
   }
 }
+SPEC_TYPES.helpers = SPEC_TYPES.default
 local write
 write = function(self, args)
   local output_language
