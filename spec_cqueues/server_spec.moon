@@ -79,6 +79,19 @@ describe "server", ->
         plus: "+"
       }, res
 
+    it "parses form body with charset in content type", ->
+      status, res, headers = server\request "/dump-params", {
+        expect: "json"
+        method: "POST"
+        headers: {
+          "content-type": "Application/X-WWW-Form-Urlencoded; charset=UTF-8"
+        }
+        data: "color=blue"
+      }
+
+      assert.same 200, status
+      assert.same { color: "blue" }, res
+
     it "dumps post params", ->
       status, res, headers = server\request "/dump-params", {
         expect: "json"

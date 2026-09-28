@@ -27,9 +27,12 @@ build_request = (stream) ->
   query = query and filter_array(parse_query_string(query)) or {}
   method = req_headers\get ":method"
 
+  -- compare the media type only, ignoring parameters like charset
   content_type = req_headers\get "content-type"
+  media_type = content_type and content_type\match("^%s*([^;%s]+)")
+  media_type = media_type and media_type\lower!
 
-  params_post = if content_type == "application/x-www-form-urlencoded"
+  params_post = if media_type == "application/x-www-form-urlencoded"
     -- TODO: limits for body length
     body = stream\get_body_as_string!
     body and filter_array(parse_query_string(body)) or {}

@@ -33,8 +33,10 @@ build_request = function(stream)
   query = query and filter_array(parse_query_string(query)) or { }
   local method = req_headers:get(":method")
   local content_type = req_headers:get("content-type")
+  local media_type = content_type and content_type:match("^%s*([^;%s]+)")
+  media_type = media_type and media_type:lower()
   local params_post
-  if content_type == "application/x-www-form-urlencoded" then
+  if media_type == "application/x-www-form-urlencoded" then
     local body = stream:get_body_as_string()
     params_post = body and filter_array(parse_query_string(body)) or { }
   end
