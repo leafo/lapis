@@ -369,6 +369,9 @@ simulate_action = function(app_cls, url, opts, fn)
     fn = opts
     opts = { }
   end
+  if not (type(url) == "string") then
+    error("simulate_action: url must be a string, got " .. tostring(type(url)))
+  end
   local ret
   local handler
   handler = function(...)

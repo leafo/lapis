@@ -280,6 +280,9 @@ simulate_action = (app_cls, url, opts, fn) ->
     fn = opts
     opts = {}
 
+  unless type(url) == "string"
+    error "simulate_action: url must be a string, got #{type url}"
+
   local ret
   handler = (...) ->
     ret = { fn ... }
