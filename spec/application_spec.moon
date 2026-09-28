@@ -770,6 +770,15 @@ describe "lapis.application", ->
       assert.same 301, status
       assert.same "http://localhost/hello", headers.location
 
+      -- multiple trailing slashes collapse to one first
+      status, _, headers = assert_request app, "/hello///"
+      assert.same 301, status
+      assert.same "http://localhost/hello/", headers.location
+
+      status, _, headers = assert_request app, "/world//"
+      assert.same 301, status
+      assert.same "http://localhost/world/", headers.location
+
     it "doesn't redirect off domain when stripping trailing /", ->
       app = lapis.Application!
       app\match "/", ->

@@ -361,12 +361,20 @@ class Application
   -- run with Request as self, instead of application
 
   default_route: =>
-    -- strip trailing /
-    if @req.parsed_url.path\match "./$"
+    path = @req.parsed_url.path
+    if path\match "./$"
+      -- multiple trailing slashes are collapsed to one first, so a route that
+      -- ends in / can still match, a single trailing slash is removed
+      path = if path\match "//$"
+        (path\gsub "/+$", "/")
+      else
+        (path\gsub "/$", "")
+
       -- collapse leading slashes, otherwise build_url would treat a path like
       -- //evil.com as a protocol relative URL and redirect off domain
-      stripped = @req.parsed_url.path\match("^(.+)/+$")\gsub "^/+", "/"
-      redirect_to: @build_url(stripped, query: @req.parsed_url.query), status: 301
+      path = path\gsub "^/+", "/"
+
+      redirect_to: @build_url(path, query: @req.parsed_url.query), status: 301
     else
       @app.handle_404 @
 

@@ -289,10 +289,16 @@ do
       end)
     end,
     default_route = function(self)
-      if self.req.parsed_url.path:match("./$") then
-        local stripped = self.req.parsed_url.path:match("^(.+)/+$"):gsub("^/+", "/")
+      local path = self.req.parsed_url.path
+      if path:match("./$") then
+        if path:match("//$") then
+          path = (path:gsub("/+$", "/"))
+        else
+          path = (path:gsub("/$", ""))
+        end
+        path = path:gsub("^/+", "/")
         return {
-          redirect_to = self:build_url(stripped, {
+          redirect_to = self:build_url(path, {
             query = self.req.parsed_url.query
           }),
           status = 301
