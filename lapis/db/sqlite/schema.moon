@@ -161,7 +161,7 @@ class ColumnType
   __tostring: => @__call @default_options
 
 C = ColumnType
-types = {
+types = setmetatable {
   integer:    C "INTEGER"
   text:       C "TEXT"
   blob:       C "BLOB"

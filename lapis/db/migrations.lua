@@ -60,7 +60,7 @@ create_migrations_table = function(table_name)
   return create_table(table_name, {
     {
       "name",
-      types.varchar or types.text
+      rawget(types, "varchar") or types.text
     },
     "PRIMARY KEY(name)"
   })

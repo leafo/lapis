@@ -386,6 +386,9 @@ describe "lapis.db.sqlite", ->
     }, query_log
 
   describe "lapis.db.sqlite.schema", ->
+    it "errors on unknown column type", ->
+      assert.has_error (-> schema.types.varchar), "Don't know column type `varchar`"
+
     it "creates and drops table", ->
       res = schema.create_table "my table", {
         {"id", schema.types.integer}

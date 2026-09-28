@@ -17,7 +17,8 @@ create_migrations_table = (table_name=LapisMigrations\table_name!) ->
   schema = require "lapis.db.schema"
   import create_table, types, entity_exists from schema
   create_table table_name, {
-    { "name", types.varchar or types.text }
+    -- sqlite has no varchar type
+    { "name", rawget(types, "varchar") or types.text }
     "PRIMARY KEY(name)"
   }
 

@@ -238,7 +238,7 @@ do
   ColumnType = _class_0
 end
 local C = ColumnType
-local types = {
+local types = setmetatable({
   integer = C("INTEGER"),
   text = C("TEXT"),
   blob = C("BLOB"),
@@ -249,7 +249,7 @@ local types = {
   __index = function(self, key)
     return error("Don't know column type `" .. tostring(key) .. "`")
   end
-}
+})
 return {
   types = types,
   create_table = create_table,
