@@ -189,8 +189,6 @@ class Request
         if front
           curr = @params
           has_nesting = false
-          -- equivalent to k\gmatch "%[([^%]]+)%]", but plain find keeps it
-          -- linear when there are many [ without a closing ]
           pos = 1
           while true
             open = k\find "[", pos, true

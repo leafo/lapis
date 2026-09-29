@@ -134,8 +134,6 @@ parse_content_disposition = do
 parse_cookie_string = (str) ->
   return {} unless str
   out = {}
-  -- split on ; and use a plain find for =, an unanchored pattern here is
-  -- quadratic on long input that has no =
   for pair in str\gmatch "[^;]+"
     eq = pair\find "=", 1, true
     continue unless eq
@@ -154,7 +152,14 @@ slugify = (str) ->
 ---@return string
 -- TODO: make this not suck
 underscore = (str) ->
-  words = [word\lower! for word in str\gmatch "%L*%l+"]
+  words = {}
+  pos = 1
+  while true
+    first, last = str\find "%l+", pos
+    break unless first
+    words[#words + 1] = str\sub(pos, last)\lower!
+    pos = last + 1
+
   concat words, "_"
 
 ---Convert a string to CamelCase
@@ -485,9 +490,12 @@ singularize = do
     irregulars[k\upper!] = irregulars[k]\upper!
 
   (name) ->
-    out = name\gsub "(%w+)$", irregulars
-    if out != name
-      return out
+    prefix, word = name\match "^(.*%W)(%w+)$"
+    unless prefix
+      prefix, word = "", name\match "^%w+$"
+
+    if irregular = word and irregulars[word]
+      return prefix .. irregular
 
     out = name\gsub("[iI][eE]([sS])$", {s: "y", S: "Y"})\gsub("([oO])[eE][sS]$", "%1")
 

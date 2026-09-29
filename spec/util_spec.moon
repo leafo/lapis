@@ -143,6 +143,11 @@ tests = {
   }
 
   {
+    -> util.underscore "HelloWORLD"
+    "hello"
+  }
+
+  {
     -> util.camelize "hello"
     "Hello"
   }
@@ -564,6 +569,8 @@ describe "lapis.util", ->
   it "should singularize words", ->
     words = {
       {"banks", "bank"}
+      {"some_children", "some_child"}
+      {"BIG-PEOPLE", "BIG-PERSON"}
       {"chemists", "chemist"}
       {"hospitals", "hospital"}
       {"letters", "letter"}
@@ -603,6 +610,17 @@ describe "lapis.util", ->
     start = os.clock!
     assert.same {}, util.parse_cookie_string string.rep "a", 100000
     assert.same {}, util.parse_cookie_string string.rep ";", 100000
+    assert.true os.clock! - start < 1
+
+  it "underscores long string without lowercase in linear time", ->
+    start = os.clock!
+    assert.same "", util.underscore string.rep "A", 100000
+    assert.true os.clock! - start < 1
+
+  it "singularizes long string not ending in a word in linear time", ->
+    str = string.rep("a", 100000) .. "!"
+    start = os.clock!
+    assert.same str, util.singularize str
     assert.true os.clock! - start < 1
 
 

@@ -14,7 +14,6 @@ config = require("lapis.config").get!
 
 local *
 
--- nested tables past this depth are written as { ... }
 max_flatten_depth = 5
 
 flatten_params_helper = (params, out = {}, sep= ", ", depth=1)->

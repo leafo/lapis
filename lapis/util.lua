@@ -168,15 +168,15 @@ slugify = function(str)
   return (str:gsub("[%s_]+", "-"):gsub("[^%w%-]+", ""):gsub("-+", "-")):lower()
 end
 underscore = function(str)
-  local words
-  do
-    local _accum_0 = { }
-    local _len_0 = 1
-    for word in str:gmatch("%L*%l+") do
-      _accum_0[_len_0] = word:lower()
-      _len_0 = _len_0 + 1
+  local words = { }
+  local pos = 1
+  while true do
+    local first, last = str:find("%l+", pos)
+    if not (first) then
+      break
     end
-    words = _accum_0
+    words[#words + 1] = str:sub(pos, last):lower()
+    pos = last + 1
   end
   return concat(words, "_")
 end
@@ -535,11 +535,17 @@ do
     irregulars[k:upper()] = irregulars[k]:upper()
   end
   singularize = function(name)
-    local out = name:gsub("(%w+)$", irregulars)
-    if out ~= name then
-      return out
+    local prefix, word = name:match("^(.*%W)(%w+)$")
+    if not (prefix) then
+      prefix, word = "", name:match("^%w+$")
     end
-    out = name:gsub("[iI][eE]([sS])$", {
+    do
+      local irregular = word and irregulars[word]
+      if irregular then
+        return prefix .. irregular
+      end
+    end
+    local out = name:gsub("[iI][eE]([sS])$", {
       s = "y",
       S = "Y"
     }):gsub("([oO])[eE][sS]$", "%1")
