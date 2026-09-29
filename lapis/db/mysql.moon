@@ -224,6 +224,9 @@ _select = (str, ...) ->
 
 
 _insert = (tbl, values, ...) ->
+  if (...) != nil
+    error "db.insert: returning and insert options are not supported by the MySQL backend"
+
   buff = {
     "INSERT INTO "
     escape_identifier(tbl)
@@ -234,6 +237,9 @@ _insert = (tbl, values, ...) ->
   raw_query concat buff
 
 _update = (table, values, cond, ...) ->
+  if type(cond) == "table" and (...) != nil
+    error "db.update: returning is not supported by the MySQL backend"
+
   buff = {
     "UPDATE "
     escape_identifier(table)
@@ -248,6 +254,9 @@ _update = (table, values, cond, ...) ->
   raw_query concat buff
 
 _delete = (table, cond, ...) ->
+  if type(cond) == "table" and (...) != nil
+    error "db.delete: returning is not supported by the MySQL backend"
+
   buff = {
     "DELETE FROM "
     escape_identifier(table)

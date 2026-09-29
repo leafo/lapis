@@ -268,6 +268,9 @@ _select = function(str, ...)
 end
 local _insert
 _insert = function(tbl, values, ...)
+  if (...) ~= nil then
+    error("db.insert: returning and insert options are not supported by the MySQL backend")
+  end
   local buff = {
     "INSERT INTO ",
     escape_identifier(tbl),
@@ -278,6 +281,9 @@ _insert = function(tbl, values, ...)
 end
 local _update
 _update = function(table, values, cond, ...)
+  if type(cond) == "table" and (...) ~= nil then
+    error("db.update: returning is not supported by the MySQL backend")
+  end
   local buff = {
     "UPDATE ",
     escape_identifier(table),
@@ -291,6 +297,9 @@ _update = function(table, values, cond, ...)
 end
 local _delete
 _delete = function(table, cond, ...)
+  if type(cond) == "table" and (...) ~= nil then
+    error("db.delete: returning is not supported by the MySQL backend")
+  end
   local buff = {
     "DELETE FROM ",
     escape_identifier(table)

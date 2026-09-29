@@ -279,3 +279,51 @@ describe "lapis.db.mysql", ->
       else
         assert.same group[2], output
 
+
+  describe "unsupported options", ->
+    it "errors on db.insert returning", ->
+      assert.has_error (-> db.insert "cats", { age: 1 }, "id"),
+        "db.insert: returning and insert options are not supported by the MySQL backend"
+
+    it "errors on db.update returning", ->
+      assert.has_error (-> db.update "cats", { age: 1 }, { id: 1 }, "age"),
+        "db.update: returning is not supported by the MySQL backend"
+
+    it "errors on db.delete returning", ->
+      assert.has_error (-> db.delete "cats", { id: 1 }, "age"),
+        "db.delete: returning is not supported by the MySQL backend"
+
+    describe "model", ->
+      import Model from require "lapis.db.mysql.model"
+
+      class Cats extends Model
+
+      it "errors on create returning", ->
+        assert.has_error (-> Cats\create { age: 1 }, returning: "*"),
+          "Cats.create: returning is not supported by the MySQL backend"
+
+      it "errors on create on_conflict", ->
+        assert.has_error (-> Cats\create { age: 1 }, on_conflict: "do_nothing"),
+          "Cats.create: on_conflict is not supported by the MySQL backend"
+
+      it "errors on update returning without changing the instance", ->
+        cat = Cats\load { id: 1, age: 1 }
+        assert.has_error (-> cat\update { age: 2 }, returning: "*"),
+          "Cats.update: returning is not supported by the MySQL backend"
+
+        assert.same 1, cat.age
+
+  describe "model update where", ->
+    import Model from require "lapis.db.mysql.model"
+
+    class Cats extends Model
+
+    it "adds where table to the update condition", ->
+      cat = Cats\load { id: 1, age: 1 }
+      _, query = cat\update { age: 2 }, where: { age: 1 }
+      assert.same "UPDATE `cats` SET `age` = 2 WHERE `id` = 1 AND (`age` = 1)", query
+
+    it "adds where clause to the update condition", ->
+      cat = Cats\load { id: 1, age: 1 }
+      _, query = cat\update { age: 2 }, where: db.clause { {"age < ?", 10} }
+      assert.same "UPDATE `cats` SET `age` = 2 WHERE `id` = 1 AND (age < 10)", query

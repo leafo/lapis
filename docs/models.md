@@ -421,8 +421,8 @@ VALUES ((select coalesce(max(position) + 1, 0) from users))
 RETURNING "id", "position"
 ```
 
-> `RETURNING` is not available in MySQL. The `returning` and `on_conflict`
-> options below are ignored when using MySQL.
+> `RETURNING` is not available in MySQL. An error is thrown if the `returning`
+> or `on_conflict` options below are used with MySQL.
 
 If your model has any [constraints](#constraints) they will be checked before trying to create
 a new row. If a constraint fails then `nil` and the error message are returned
@@ -1045,8 +1045,8 @@ $options_table{
   }
 }
 
-> When using MySQL, the `returning` and `where` options are not supported and
-> are ignored. `db.raw` values will not be replaced with their updated values.
+> When using MySQL, an error is thrown if the `returning` option is used.
+> `db.raw` values will not be replaced with their updated values.
 
 ### `model:delete(...)`
 

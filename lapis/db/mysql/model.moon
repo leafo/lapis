@@ -16,6 +16,13 @@ class Model extends BaseModel
 
   -- create from table of values, return loaded object
   @create: (values, opts) =>
+    if opts
+      if opts.returning != nil
+        error "#{@__name}.create: returning is not supported by the MySQL backend"
+
+      if opts.on_conflict != nil
+        error "#{@__name}.create: on_conflict is not supported by the MySQL backend"
+
     if @constraints
       for key in pairs @constraints
         if err = @_check_constraint key, values and values[key], values
@@ -54,7 +61,31 @@ class Model extends BaseModel
   --   col3: "Hello"
   -- }
   update: (first, ...) =>
+    -- update options
+    nargs = select "#", ...
+    last = nargs > 0 and select nargs, ...
+
+    opts = if type(last) == "table" then last
+
+    if opts
+      if opts.returning != nil
+        error "#{@@__name}.update: returning is not supported by the MySQL backend"
+
+      if opts.where != nil
+        assert type(opts.where) == "table", "#{@@__name}.update: where condition must be a table or db.clause"
+
     cond = @_primary_cond!
+
+    if opts and opts.where
+      where = if @@db.is_clause opts.where
+        opts.where
+      else
+        @@db.encode_clause opts.where
+
+      cond = @@db.clause {
+        @@db.clause cond
+        where
+      }
 
     columns = if type(first) == "table"
       for k,v in pairs first
@@ -74,12 +105,6 @@ class Model extends BaseModel
           return nil, err
 
     values = { col, @[col] for col in *columns }
-
-    -- update options
-    nargs = select "#", ...
-    last = nargs > 0 and select nargs, ...
-
-    opts = if type(last) == "table" then last
 
     if @@timestamp and not (opts and opts.timestamp == false)
       time = @@db.format_date!

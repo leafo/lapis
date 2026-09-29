@@ -12,7 +12,33 @@ do
   local _parent_0 = BaseModel
   local _base_0 = {
     update = function(self, first, ...)
+      local nargs = select("#", ...)
+      local last = nargs > 0 and select(nargs, ...)
+      local opts
+      if type(last) == "table" then
+        opts = last
+      end
+      if opts then
+        if opts.returning ~= nil then
+          error(tostring(self.__class.__name) .. ".update: returning is not supported by the MySQL backend")
+        end
+        if opts.where ~= nil then
+          assert(type(opts.where) == "table", tostring(self.__class.__name) .. ".update: where condition must be a table or db.clause")
+        end
+      end
       local cond = self:_primary_cond()
+      if opts and opts.where then
+        local where
+        if self.__class.db.is_clause(opts.where) then
+          where = opts.where
+        else
+          where = self.__class.db.encode_clause(opts.where)
+        end
+        cond = self.__class.db.clause({
+          self.__class.db.clause(cond),
+          where
+        })
+      end
       local columns
       if type(first) == "table" then
         do
@@ -56,12 +82,6 @@ do
           _tbl_0[col] = self[col]
         end
         values = _tbl_0
-      end
-      local nargs = select("#", ...)
-      local last = nargs > 0 and select(nargs, ...)
-      local opts
-      if type(last) == "table" then
-        opts = last
       end
       if self.__class.timestamp and not (opts and opts.timestamp == false) then
         local time = self.__class.db.format_date()
@@ -119,6 +139,14 @@ do
     return columns
   end
   self.create = function(self, values, opts)
+    if opts then
+      if opts.returning ~= nil then
+        error(tostring(self.__name) .. ".create: returning is not supported by the MySQL backend")
+      end
+      if opts.on_conflict ~= nil then
+        error(tostring(self.__name) .. ".create: on_conflict is not supported by the MySQL backend")
+      end
+    end
     if self.constraints then
       for key in pairs(self.constraints) do
         do
