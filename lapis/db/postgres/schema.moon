@@ -126,6 +126,14 @@ rename_table = (tname_from, tname_to) ->
   tname_to = escape_identifier tname_to
   db.query "ALTER TABLE #{tname_from} RENAME TO #{tname_to}"
 
+referential_actions = {
+  cascade: "CASCADE"
+  restrict: "RESTRICT"
+  set_null: "SET NULL"
+  set_default: "SET DEFAULT"
+  no_action: "NO ACTION"
+}
+
 class ColumnType
   default_options: { null: false }
 
@@ -154,6 +162,33 @@ class ColumnType
 
     if opts.primary_key
       out ..= " PRIMARY KEY"
+
+    if ref = opts.references
+      out ..= " REFERENCES " .. if type(ref) == "string"
+        escape_identifier ref
+      elseif is_raw ref
+        escape_literal ref
+      elseif type(ref) == "table"
+        table_name, column_name = next ref
+        unless type(table_name) == "string" and type(column_name) == "string" and next(ref, table_name) == nil
+          error "schema: references table must have exactly one table name to column name pair"
+
+        "#{escape_identifier table_name}(#{escape_identifier column_name})"
+      else
+        error "schema: references must be a table name, table, or db.raw"
+
+    for {name, clause} in *{{"on_delete", "ON DELETE"}, {"on_update", "ON UPDATE"}}
+      action = opts[name]
+      continue unless action
+
+      unless opts.references
+        error "schema: #{name} requires references"
+
+      sql_action = referential_actions[action]
+      unless sql_action
+        error "schema: unsupported value for #{name} option: #{tostring action}"
+
+      out ..= " #{clause} #{sql_action}"
 
     out
 
@@ -193,4 +228,3 @@ types = setmetatable {
   :types, :create_table, :drop_table, :create_index, :drop_index, :add_column,
   :drop_column, :rename_column, :rename_table, :entity_exists, :gen_index_name
 }
-

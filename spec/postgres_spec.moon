@@ -568,6 +568,31 @@ TESTS = {
   }
 
   {
+    -> tostring schema.types.foreign_key references: "users"
+    [[integer NOT NULL REFERENCES "users"]]
+  }
+
+  {
+    -> tostring schema.types.foreign_key references: {users: "id"}, null: true
+    [[integer REFERENCES "users"("id")]]
+  }
+
+  {
+    -> tostring schema.types.foreign_key references: "users", on_delete: "cascade"
+    [[integer NOT NULL REFERENCES "users" ON DELETE CASCADE]]
+  }
+
+  {
+    -> tostring schema.types.foreign_key references: {users: "id"}, null: true, on_delete: "set_null", on_update: "no_action"
+    [[integer REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION]]
+  }
+
+  {
+    -> tostring schema.types.foreign_key references: db.raw("users(id) ON DELETE CASCADE"), primary_key: true
+    [[integer NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE]]
+  }
+
+  {
     ->
       import foreign_key, boolean, varchar, text from schema.types
       schema.create_table "user_data", {
@@ -899,6 +924,35 @@ describe "lapis.db.postgres", ->
         assert.one_of output, { unpack group, 2 }
       else
         assert.same group[2], output
+
+  describe "schema types", ->
+    it "fails on invalid references", ->
+      for bad in *{
+        {}
+        {"users", "id"}
+        {users: "id", teams: "id"}
+        {users: true}
+      }
+        assert.has_error(
+          -> tostring schema.types.foreign_key references: bad
+          "schema: references table must have exactly one table name to column name pair"
+        )
+
+      assert.has_error(
+        -> tostring schema.types.foreign_key references: true
+        "schema: references must be a table name, table, or db.raw"
+      )
+
+    it "fails on invalid referential actions", ->
+      assert.has_error(
+        -> tostring schema.types.foreign_key on_delete: "cascade"
+        "schema: on_delete requires references"
+      )
+
+      assert.has_error(
+        -> tostring schema.types.foreign_key references: "users", on_update: "CASCADE"
+        "schema: unsupported value for on_update option: CASCADE"
+      )
 
   describe "db.clause", ->
     it "fails to create clause from object with a metatable", ->

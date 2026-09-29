@@ -1309,6 +1309,21 @@ $options_table{
     description = [[
       Only for `types.time`, generates `timestamp WITH TIME ZONE`. (PostgreSQL only)
     ]]
+  }, {
+    name = "references",
+    description = [[
+      Adds a foreign key constraint. Pass a table name to reference its primary key, a table with a single table name to column name pair like `{users = "id"}` to reference a specific column, or `db.raw` for anything else, like `db.raw "users(id) DEFERRABLE"`. Table names are quoted as a single identifier, so use `db.raw '"public"."users"("id")'` for a schema-qualified reference instead of `"public.users"`. (PostgreSQL only)
+    ]]
+  }, {
+    name = "on_delete",
+    description = [[
+      Sets the `ON DELETE` action of a `references` constraint. One of `"cascade"`, `"restrict"`, `"set_null"`, `"set_default"`, or `"no_action"`. Use `null = true` with `"set_null"` so the action can set the column to `NULL`; columns default to `NOT NULL`. (PostgreSQL only)
+    ]]
+  }, {
+    name = "on_update",
+    description = [[
+      Sets the `ON UPDATE` action of a `references` constraint, takes the same values as `on_delete`. As with `on_delete`, use `null = true` with `"set_null"`. (PostgreSQL only)
+    ]]
   }
 }
 
@@ -1323,6 +1338,11 @@ types.varchar({ primary_key = true })        --> character varying(255) NOT NULL
 types.real({ array = true })                 --> real[] NOT NULL
 types.text({ array = 2 })                    --> text[][] NOT NULL
 types.time({ timezone = true })              --> timestamp WITH TIME ZONE NOT NULL
+types.foreign_key({ references = "users" }) --> integer NOT NULL REFERENCES "users"
+types.foreign_key({ references = { users = "id" } }) --> integer NOT NULL REFERENCES "users"("id")
+types.foreign_key({ references = "users", on_delete = "cascade" }) --> integer NOT NULL REFERENCES "users" ON DELETE CASCADE
+types.foreign_key({ references = "users", on_delete = "set_null", null = true }) --> integer REFERENCES "users" ON DELETE SET NULL
+types.foreign_key({ references = db.raw('"public"."users"("id")') }) --> integer NOT NULL REFERENCES "public"."users"("id")
 ]],
 moon=[[
 types.integer default: 1, null: true  --> integer DEFAULT 1
@@ -1332,6 +1352,11 @@ types.varchar primary_key: true       --> character varying(255) NOT NULL PRIMAR
 types.real array: true                --> real[] NOT NULL
 types.text array: 2                   --> text[][] NOT NULL
 types.time timezone: true             --> timestamp WITH TIME ZONE NOT NULL
+types.foreign_key references: "users" --> integer NOT NULL REFERENCES "users"
+types.foreign_key references: {users: "id"} --> integer NOT NULL REFERENCES "users"("id")
+types.foreign_key references: "users", on_delete: "cascade" --> integer NOT NULL REFERENCES "users" ON DELETE CASCADE
+types.foreign_key references: "users", on_delete: "set_null", null: true --> integer REFERENCES "users" ON DELETE SET NULL
+types.foreign_key references: db.raw('"public"."users"("id")') --> integer NOT NULL REFERENCES "public"."users"("id")
 ]]}
 
 > MySQL has a completely different type set than PostgreSQL, see [MySQL

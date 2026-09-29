@@ -174,6 +174,13 @@ rename_table = function(tname_from, tname_to)
   tname_to = escape_identifier(tname_to)
   return db.query("ALTER TABLE " .. tostring(tname_from) .. " RENAME TO " .. tostring(tname_to))
 end
+local referential_actions = {
+  cascade = "CASCADE",
+  restrict = "RESTRICT",
+  set_null = "SET NULL",
+  set_default = "SET DEFAULT",
+  no_action = "NO ACTION"
+}
 local ColumnType
 do
   local _class_0
@@ -215,6 +222,61 @@ do
       end
       if opts.primary_key then
         out = out .. " PRIMARY KEY"
+      end
+      do
+        local ref = opts.references
+        if ref then
+          out = out .. (" REFERENCES " .. (function()
+            if type(ref) == "string" then
+              return escape_identifier(ref)
+            elseif is_raw(ref) then
+              return escape_literal(ref)
+            elseif type(ref) == "table" then
+              local table_name, column_name = next(ref)
+              if not (type(table_name) == "string" and type(column_name) == "string" and next(ref, table_name) == nil) then
+                error("schema: references table must have exactly one table name to column name pair")
+              end
+              return tostring(escape_identifier(table_name)) .. "(" .. tostring(escape_identifier(column_name)) .. ")"
+            else
+              return error("schema: references must be a table name, table, or db.raw")
+            end
+          end)())
+        end
+      end
+      local _list_0 = {
+        {
+          "on_delete",
+          "ON DELETE"
+        },
+        {
+          "on_update",
+          "ON UPDATE"
+        }
+      }
+      for _index_0 = 1, #_list_0 do
+        local _continue_0 = false
+        repeat
+          local _des_0 = _list_0[_index_0]
+          local name, clause
+          name, clause = _des_0[1], _des_0[2]
+          local action = opts[name]
+          if not (action) then
+            _continue_0 = true
+            break
+          end
+          if not (opts.references) then
+            error("schema: " .. tostring(name) .. " requires references")
+          end
+          local sql_action = referential_actions[action]
+          if not (sql_action) then
+            error("schema: unsupported value for " .. tostring(name) .. " option: " .. tostring(tostring(action)))
+          end
+          out = out .. " " .. tostring(clause) .. " " .. tostring(sql_action)
+          _continue_0 = true
+        until true
+        if not _continue_0 then
+          break
+        end
       end
       return out
     end,
