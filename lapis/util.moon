@@ -133,7 +133,15 @@ parse_content_disposition = do
 ---@return table cookies Empty table if str is nil
 parse_cookie_string = (str) ->
   return {} unless str
-  {unescape(key), unescape(value) for key, value in str\gmatch("([^=%s]*)=([^;]*)")}
+  out = {}
+  -- split on ; and use a plain find for =, an unanchored pattern here is
+  -- quadratic on long input that has no =
+  for pair in str\gmatch "[^;]+"
+    eq = pair\find "=", 1, true
+    continue unless eq
+    out[unescape trim pair\sub 1, eq - 1] = unescape pair\sub eq + 1
+
+  out
 
 ---Convert a string to a URL-friendly slug
 ---@param str string

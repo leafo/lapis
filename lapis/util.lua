@@ -146,11 +146,23 @@ parse_cookie_string = function(str)
   if not (str) then
     return { }
   end
-  local _tbl_0 = { }
-  for key, value in str:gmatch("([^=%s]*)=([^;]*)") do
-    _tbl_0[unescape(key)] = unescape(value)
+  local out = { }
+  for pair in str:gmatch("[^;]+") do
+    local _continue_0 = false
+    repeat
+      local eq = pair:find("=", 1, true)
+      if not (eq) then
+        _continue_0 = true
+        break
+      end
+      out[unescape(trim(pair:sub(1, eq - 1)))] = unescape(pair:sub(eq + 1))
+      _continue_0 = true
+    until true
+    if not _continue_0 then
+      break
+    end
   end
-  return _tbl_0
+  return out
 end
 slugify = function(str)
   return (str:gsub("[%s_]+", "-"):gsub("[^%w%-]+", ""):gsub("-+", "-")):lower()

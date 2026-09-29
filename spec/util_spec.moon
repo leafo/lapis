@@ -389,6 +389,28 @@ tests = {
   }
 
   {
+    -> util.parse_cookie_string "a=1;b=2;;c=x=y; d=%20z; junk;=empty; e f=g"
+    {
+      a: "1"
+      b: "2"
+      c: "x=y"
+      d: " z"
+      "": "empty"
+      "e f": "g"
+    }
+  }
+
+  {
+    -> util.parse_cookie_string "a=1;b"
+    { a: "1" }
+  }
+
+  {
+    -> util.parse_cookie_string nil
+    {}
+  }
+
+  {
     -> util.slugify "What is going on right now?"
     "what-is-going-on-right-now"
   }
@@ -576,6 +598,12 @@ describe "lapis.util", ->
 
     for {plural, single} in *words
       assert.same single, util.singularize plural
+
+  it "parses long cookie string without = in linear time", ->
+    start = os.clock!
+    assert.same {}, util.parse_cookie_string string.rep "a", 100000
+    assert.same {}, util.parse_cookie_string string.rep ";", 100000
+    assert.true os.clock! - start < 1
 
 
 describe "lapis.util.utf8", ->
