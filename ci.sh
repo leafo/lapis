@@ -28,7 +28,12 @@ mkdir -p /run/mysqld
 make build
 make test_db
 
-# note we do this after build to give mysql time to fully start
+# mysql is started in the background, wait until it accepts connections
+for i in $(seq 1 60); do
+  mysql -u root -e 'select 1' > /dev/null 2>&1 && break
+  sleep 1
+done
+
 echo 'ALTER USER root@localhost IDENTIFIED VIA unix_socket OR mysql_native_password USING PASSWORD("")' | mysql -u root
 make mysql_test_db
 
