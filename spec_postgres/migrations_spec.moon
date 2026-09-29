@@ -84,6 +84,17 @@ describe "lapis.db.migrations", ->
         -> count += 1
       }
 
+    it "passes migration name to the wrapped function", ->
+      import no_transaction from require "lapis.db.migrations"
+      migrations = require "lapis.db.migrations"
+
+      local args
+      migrations.run_migrations {
+        [1790452452]: no_transaction (...) -> args = {...}
+      }
+
+      assert.same {1790452452}, args
+
     it "commits the global transaction around it", ->
       migrations = require "lapis.db.migrations"
       migrations.run_migrations m, nil, transaction: "global"

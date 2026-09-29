@@ -43,7 +43,7 @@ rollback_transaction = ->
 -- marks a migration to be run outside of a transaction, for statements that
 -- can't run in one, eg. Postgres's CREATE INDEX CONCURRENTLY
 NO_TRANSACTION_MT = {
-  __call: (...) => @fn ...
+  __call: (...) => @.fn ...
 }
 
 no_transaction = (fn) ->

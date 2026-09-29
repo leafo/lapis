@@ -87,7 +87,7 @@ rollback_transaction = function()
 end
 local NO_TRANSACTION_MT = {
   __call = function(self, ...)
-    return self:fn(...)
+    return self.fn(...)
   end
 }
 local no_transaction
