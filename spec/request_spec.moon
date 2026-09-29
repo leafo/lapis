@@ -121,6 +121,20 @@ describe "lapis.request", ->
         }
       }, params
 
+    it "parses nested params up to max depth", ->
+      assert.same 200, (simulate_request QueryApp, "/hello?a#{string.rep "[a]", 64}=x")
+
+      expected = "x"
+      for i=1,65
+        expected = { a: expected }
+
+      assert.same expected, params
+
+    it "keeps params nested past max depth as flat key", ->
+      key = "a#{string.rep "[a]", 65}"
+      assert.same 200, (simulate_request QueryApp, "/hello?#{key}=x&b[c]=y")
+      assert.same { [key]: "x", b: { c: "y" } }, params
+
     it "parses long key of unclosed brackets in linear time", ->
       key = "a" .. string.rep "[", 100000
       start = os.clock!

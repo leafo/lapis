@@ -736,6 +736,9 @@ large amount of data. The limit can be changed with the
 `max_request_args` [configuration
 value](configuration.html#built-in-configuration).
 
+Nested parameters are expanded up to 64 levels deep. A parameter name with more
+levels than that is kept as a single flat key.
+
 > Are you storing or processing user input as a string? We highly recommend
 > adding limits on the maximum length of the string and trimming whitespace
 > from the sides. Additionally, verifying that the data is a valid Unicode

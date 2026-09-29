@@ -12,6 +12,7 @@ do
 end
 local insert
 insert = table.insert
+local MAX_PARAM_DEPTH = 64
 local get_time
 get_time = function(config)
   if ngx then
@@ -317,8 +318,7 @@ do
           front = k:match("^([^%[]+)%[")
         end
         if front then
-          local curr = self.params
-          local has_nesting = false
+          local segments = { }
           local pos = 1
           while true do
             local _continue_0 = false
@@ -336,22 +336,28 @@ do
                 _continue_0 = true
                 break
               end
-              local match = k:sub(open + 1, close - 1)
-              has_nesting = true
-              local new = curr[front]
-              if type(new) ~= "table" then
-                new = { }
-                curr[front] = new
+              segments[#segments + 1] = k:sub(open + 1, close - 1)
+              if #segments > MAX_PARAM_DEPTH then
+                break
               end
-              curr = new
-              front = match
               _continue_0 = true
             until true
             if not _continue_0 then
               break
             end
           end
-          if has_nesting then
+          if segments[1] and #segments <= MAX_PARAM_DEPTH then
+            local curr = self.params
+            for _index_0 = 1, #segments do
+              local segment = segments[_index_0]
+              local new = curr[front]
+              if type(new) ~= "table" then
+                new = { }
+                curr[front] = new
+              end
+              curr = new
+              front = segment
+            end
             curr[front] = v
           else
             self.params[k] = v

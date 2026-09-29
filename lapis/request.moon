@@ -9,6 +9,8 @@ import parse_cookie_string, to_json, build_url, auto_table from require "lapis.u
 
 import insert from table
 
+MAX_PARAM_DEPTH = 64
+
 get_time = (config) ->
   if ngx
     ngx.update_time!
@@ -187,8 +189,7 @@ class Request
         front = k\match "^([^%[]+)%[" if type(k) == "string"
 
         if front
-          curr = @params
-          has_nesting = false
+          segments = {}
           pos = 1
           while true
             open = k\find "[", pos, true
@@ -198,20 +199,23 @@ class Request
             pos = close + 1
             continue if close == open + 1 -- skip empty []
 
-            match = k\sub open + 1, close - 1
-            has_nesting = true
-            new = curr[front]
-            if type(new) != "table"
-              new = {}
-              curr[front] = new
+            segments[#segments + 1] = k\sub open + 1, close - 1
+            break if #segments > MAX_PARAM_DEPTH
 
-            curr = new
-            front = match
+          if segments[1] and #segments <= MAX_PARAM_DEPTH
+            curr = @params
+            for segment in *segments
+              new = curr[front]
+              if type(new) != "table"
+                new = {}
+                curr[front] = new
 
-          if has_nesting
+              curr = new
+              front = segment
+
             curr[front] = v
           else
-            -- couldn't parse valid nesting, just bail
+            -- no valid nesting, or nested too deep
             @params[k] = v
         else
           @params[k] = v
