@@ -857,11 +857,11 @@ params type {
       assert.same {nil, [[expected type "string", or type "number"]]}, {t\transform true}
       assert.same {nil, [[expected type "string", or type "number"]]}, {t\transform true}
 
-  describe "multi_params", ->
+  describe "params_join", ->
     types = require "lapis.validate.types"
 
     it "tests two params objects", ->
-      t = types.multi_params {
+      t = types.params_join {
         types.params_shape {
           {"id", types.db_id}
         }
@@ -905,8 +905,8 @@ params type {
       }, { t\transform {name: "hello", thing: "ff", id: 12} }
 
 
-    it "tests multi params objects with conditional", ->
-      t = types.multi_params {
+    it "tests params join with alternation", ->
+      t = types.params_join {
         types.params_shape {
           {"id", types.db_id}
         }
@@ -1003,6 +1003,81 @@ params type {
         type: "b"
         label: "cool"
       } }
+
+    it "returns a fresh object", ->
+      t = types.params_join {
+        types.params_shape {
+          {"id", types.db_id}
+        }
+        types.params_shape {
+          {"name", types.valid_text, as: "label"}
+        }
+      }
+
+      input = { id: "5", name: "hi", extra: "x" }
+      out = t\transform input
+
+      assert.same { id: 5, label: "hi" }, out
+      assert.same { id: "5", name: "hi", extra: "x" }, input
+
+    it "nests params joins", ->
+      t = types.params_join {
+        types.params_join {
+          types.params_shape { {"id", types.db_id} }
+          types.params_shape { {"name", types.valid_text} }
+        }
+        types.params_shape { {"page", types.db_id} }
+      }
+
+      assert.same {
+        { id: 1, name: "hi", page: 2 }
+      }, { t\transform { id: "1", name: "hi", page: "2" } }
+
+      assert.same {
+        nil, {
+          "id: expected database ID integer"
+          "name: expected valid text"
+          "page: expected database ID integer"
+        }
+      }, { t\transform {} }
+
+    it "fails on empty list", ->
+      assert.has_error(
+        -> types.params_join {}
+        "params_join: expected array of params types"
+      )
+
+    it "fails on types that can't be joined", ->
+      a = types.params_shape { {"id", types.db_id} }
+
+      for bad in *{
+        types.shape { id: types.number }
+        types.params_map types.string, types.string
+        types.params_array a
+        types.assert_error a
+        a + types.shape {}
+      }
+        assert.has_error(
+          -> types.params_join { a, bad }
+          "params_join: expected params_shape, params_join, or alternation of them (index: 2)"
+        )
+
+    it "fails when multiple types output the same field", ->
+      assert.has_error(
+        -> types.params_join {
+          types.params_shape { {"id", types.db_id} }
+          types.params_shape { {"id", types.string} }
+        }
+        "params_join: field is output by multiple types: id"
+      )
+
+      assert.has_error(
+        -> types.params_join {
+          types.params_shape { {"name", types.string, as: "label"} }
+          types.params_shape({ {"label", types.string} }) + types.params_shape { {"other", types.string} }
+        }
+        "params_join: field is output by multiple types: label"
+      )
 
   describe "empty", ->
     types = require "lapis.validate.types"

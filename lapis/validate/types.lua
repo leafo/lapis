@@ -513,39 +513,37 @@ do
   end
   FlattenErrors = _class_0
 end
-local MultiParamsType
+local ParamsJoinType
 do
   local _class_0
   local _parent_0 = BaseType
+  local output_fields
   local _base_0 = {
     _transform = function(self, value, state)
-      local out, errors
-      local _list_0 = self.params_shapes
+      local out = { }
+      local errors
+      local _list_0 = self.params_types
       for _index_0 = 1, #_list_0 do
-        local params = _list_0[_index_0]
-        local res, new_state = params:_transform(value, state)
+        local t = _list_0[_index_0]
+        local res, state_or_err = t:_transform(value, state)
         if res == FailedTransform then
           errors = errors or { }
-          local _exp_0 = type(new_state)
+          local _exp_0 = type(state_or_err)
           if "table" == _exp_0 then
-            for _index_1 = 1, #new_state do
-              local err = new_state[_index_1]
+            for _index_1 = 1, #state_or_err do
+              local err = state_or_err[_index_1]
               table.insert(errors, err)
             end
           elseif "string" == _exp_0 then
-            table.insert(errors, new_state)
+            table.insert(errors, state_or_err)
           end
           if not (types.table(value)) then
             return FailedTransform, errors
           end
         else
-          state = new_state
-          if out then
-            for k, v in pairs(res) do
-              out[k] = v
-            end
-          else
-            out = res
+          state = state_or_err
+          for k, v in pairs(res) do
+            out[k] = v
           end
         end
       end
@@ -553,19 +551,47 @@ do
         return FailedTransform, errors
       end
       return out, state
+    end,
+    _describe = function(self)
+      local rows
+      do
+        local _accum_0 = { }
+        local _len_0 = 1
+        local _list_0 = self.params_types
+        for _index_0 = 1, #_list_0 do
+          local t = _list_0[_index_0]
+          _accum_0[_len_0] = indent(tostring(t))
+          _len_0 = _len_0 + 1
+        end
+        rows = _accum_0
+      end
+      return "params join {\n  " .. tostring(table.concat(rows, "\n  ")) .. "\n}"
     end
   }
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
-    __init = function(self, params_shapes)
-      if params_shapes == nil then
-        params_shapes = { }
+    __init = function(self, params_types)
+      self.params_types = params_types
+      if not (type(self.params_types) == "table" and self.params_types[1]) then
+        error("params_join: expected array of params types")
       end
-      self.params_shapes = params_shapes
+      self.fields = { }
+      for idx, t in ipairs(self.params_types) do
+        local fields = output_fields(t)
+        if not (fields) then
+          error("params_join: expected params_shape, params_join, or alternation of them (index: " .. tostring(idx) .. ")")
+        end
+        for name in pairs(fields) do
+          if self.fields[name] then
+            error("params_join: field is output by multiple types: " .. tostring(name))
+          end
+          self.fields[name] = true
+        end
+      end
     end,
     __base = _base_0,
-    __name = "MultiParamsType",
+    __name = "ParamsJoinType",
     __parent = _parent_0
   }, {
     __index = function(cls, name)
@@ -586,10 +612,39 @@ do
     end
   })
   _base_0.__class = _class_0
+  local self = _class_0
+  output_fields = function(t)
+    local _exp_0 = t.__class
+    if ParamsShapeType == _exp_0 then
+      local _tbl_0 = { }
+      local _list_0 = t.params_spec
+      for _index_0 = 1, #_list_0 do
+        local v = _list_0[_index_0]
+        _tbl_0[v.as or v.field] = true
+      end
+      return _tbl_0
+    elseif ParamsJoinType == _exp_0 then
+      return t.fields
+    elseif types._first_of == _exp_0 then
+      local fields = { }
+      local _list_0 = t.options
+      for _index_0 = 1, #_list_0 do
+        local option = _list_0[_index_0]
+        local option_fields = output_fields(option)
+        if not (option_fields) then
+          return nil
+        end
+        for name in pairs(option_fields) do
+          fields[name] = true
+        end
+      end
+      return fields
+    end
+  end
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
-  MultiParamsType = _class_0
+  ParamsJoinType = _class_0
 end
 local printable_character, trim
 do
@@ -700,7 +755,7 @@ return setmetatable({
   params_array = ParamsArrayType,
   params_map = ParamsMapType,
   flatten_errors = FlattenErrors,
-  multi_params = MultiParamsType,
+  params_join = ParamsJoinType,
   assert_error = AssertErrorType,
   cleaned_text = cleaned_text,
   valid_text = valid_text,

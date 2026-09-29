@@ -269,52 +269,76 @@ class FlattenErrors extends BaseType
 
     value, state_or_err
 
--- Combines multiple params_shapes into a single result. Each params object is
--- tested in order, and the entire result set is joined into a final object.
--- All of them must pass. the joint error message is returned. receives an
--- array of params types
--- eg.
--- s = types.multi_params {
---   types.params_shape { id: types.int }
---   types.params_shape { name: types.string }
--- }
-class MultiParamsType extends BaseType
-  new: (@params_shapes={}) =>
+-- Runs every member against the same input and merges their outputs into a
+-- fresh object. Members are limited to types with known output fields so
+-- collisions can be rejected when the type is created
+class ParamsJoinType extends BaseType
+  -- returns set of output field names, or nil if the type can't be joined
+  output_fields = (t) ->
+    switch t.__class
+      when ParamsShapeType
+        { v.as or v.field, true for v in *t.params_spec }
+      when ParamsJoinType
+        t.fields
+      when types._first_of
+        -- only one option passes, so any of their fields may be output
+        fields = {}
+        for option in *t.options
+          option_fields = output_fields option
+          return nil unless option_fields
+          for name in pairs option_fields
+            fields[name] = true
+        fields
+
+  new: (@params_types) =>
+    unless type(@params_types) == "table" and @params_types[1]
+      error "params_join: expected array of params types"
+
+    @fields = {}
+    for idx, t in ipairs @params_types
+      fields = output_fields t
+      unless fields
+        error "params_join: expected params_shape, params_join, or alternation of them (index: #{idx})"
+
+      for name in pairs fields
+        if @fields[name]
+          error "params_join: field is output by multiple types: #{name}"
+
+        @fields[name] = true
 
   _transform: (value, state) =>
-    local out, errors
+    out = {}
+    local errors
 
-    for params in *@params_shapes
-      res, new_state = params\_transform value, state
+    for t in *@params_types
+      res, state_or_err = t\_transform value, state
 
       if res == FailedTransform
         errors or= {}
 
-        switch type(new_state)
-          -- append all errors
+        switch type(state_or_err)
           when "table"
-            for err in *new_state
+            for err in *state_or_err
               table.insert errors, err
           when "string"
-            table.insert errors, new_state
+            table.insert errors, state_or_err
 
-        -- we terminate early if the input value is the wrong type
+        -- every member fails the same way when the input isn't a table
         unless types.table value
           return FailedTransform, errors
       else
-        state = new_state
-        -- we should only merge res if we are sure it came from a safe object for output ?
-
-        if out
-          for k,v in pairs res
-            out[k] = v
-        else
-          out = res
+        state = state_or_err
+        for k, v in pairs res
+          out[k] = v
 
     if errors
       return FailedTransform, errors
 
     out, state
+
+  _describe: =>
+    rows = [indent tostring t for t in *@params_types]
+    "params join {\n  #{table.concat rows, "\n  "}\n}"
 
 import printable_character, trim from require "lapis.util.utf8"
 
@@ -395,7 +419,7 @@ setmetatable {
   params_map: ParamsMapType
   flatten_errors: FlattenErrors
 
-  multi_params: MultiParamsType
+  params_join: ParamsJoinType
   assert_error: AssertErrorType
 
   :cleaned_text
