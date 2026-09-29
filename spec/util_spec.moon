@@ -293,6 +293,28 @@ tests = {
     '[]'
   }
 
+  { -- stripping recursive references
+    ->
+      t = { color: "blue" }
+      t.self = t
+      t.child = { parent: t, height: 10 }
+      json.decode util.to_json t
+    {
+      color: "blue"
+      child: { height: 10 }
+    }
+  }
+
+  { -- encoding a table used more than once
+    ->
+      shared = { 1, 2 }
+      json.decode util.to_json { a: shared, b: { c: shared } }
+    {
+      a: { 1, 2 }
+      b: { c: { 1, 2 } }
+    }
+  }
+
   {
     ->
       util.build_url {

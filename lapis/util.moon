@@ -245,7 +245,9 @@ json_encodable = (obj, seen={}) ->
     when "table"
       unless seen[obj]
         seen[obj] = true
-        o = { k, json_encodable(v) for k,v in pairs(obj) when type(k) == "string" or type(k) == "number" }
+        o = { k, json_encodable(v, seen) for k,v in pairs(obj) when type(k) == "string" or type(k) == "number" }
+        -- cleared so a table used in two places isn't treated as a cycle
+        seen[obj] = nil
 
         -- keep metatables, like cjson.array_mt
         if mt = getmetatable obj
