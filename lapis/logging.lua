@@ -16,27 +16,38 @@ local colors = require("ansicolors")
 local insert
 insert = table.insert
 local config = require("lapis.config").get()
-local flatten_params_helper, flatten_params, query, db_connection, request, migration, notice, migration_summary, start_server
-flatten_params_helper = function(params, out, sep)
+local max_flatten_depth, flatten_params_helper, flatten_params, query, db_connection, request, migration, notice, migration_summary, start_server
+max_flatten_depth = 5
+flatten_params_helper = function(params, out, sep, depth)
   if out == nil then
     out = { }
   end
   if sep == nil then
     sep = ", "
   end
+  if depth == nil then
+    depth = 1
+  end
   if not (params) then
     return {
       "{}"
     }
   end
+  if depth > max_flatten_depth then
+    insert(out, "{ ... }")
+    return out
+  end
   insert(out, "{ ")
   for k, v in pairs(params) do
     insert(out, tostring(k))
     insert(out, ": ")
-    if type(v) == "table" then
-      flatten_params(v, out)
-    else
+    local _exp_0 = type(v)
+    if "table" == _exp_0 then
+      flatten_params_helper(v, out, sep, depth + 1)
+    elseif "string" == _exp_0 or "number" == _exp_0 then
       insert(out, ("%q"):format(v))
+    else
+      insert(out, tostring(v))
     end
     insert(out, sep)
   end

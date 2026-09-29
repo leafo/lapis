@@ -14,17 +14,27 @@ config = require("lapis.config").get!
 
 local *
 
-flatten_params_helper = (params, out = {}, sep= ", ")->
+-- nested tables past this depth are written as { ... }
+max_flatten_depth = 5
+
+flatten_params_helper = (params, out = {}, sep= ", ", depth=1)->
   return {"{}"} unless params
+
+  if depth > max_flatten_depth
+    insert out, "{ ... }"
+    return out
 
   insert out, "{ "
   for k,v in pairs params
     insert out, tostring k
     insert out, ": "
-    if type(v) == "table"
-      flatten_params v, out
-    else
-      insert out, ("%q")\format v
+    switch type v
+      when "table"
+        flatten_params_helper v, out, sep, depth + 1
+      when "string", "number"
+        insert out, ("%q")\format v
+      else
+        insert out, tostring v
     insert out, sep
 
   -- remove last ", "
