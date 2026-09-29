@@ -44,7 +44,7 @@ flatten_params_helper = function(params, out, sep, depth)
     local _exp_0 = type(v)
     if "table" == _exp_0 then
       flatten_params_helper(v, out, sep, depth + 1)
-    elseif "string" == _exp_0 or "number" == _exp_0 then
+    elseif "string" == _exp_0 then
       insert(out, ("%q"):format(v))
     else
       insert(out, tostring(v))

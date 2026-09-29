@@ -10,7 +10,7 @@ describe "lapis.logging", ->
 
     it "flattens values", ->
       assert.same '{ a: "hello" }', flatten_params { a: "hello" }
-      assert.same '{ a: "5" }', flatten_params { a: 5 }
+      assert.same '{ a: 5 }', flatten_params { a: 5 }
       assert.same '{ a: true }', flatten_params { a: true }
 
     it "flattens nested tables", ->

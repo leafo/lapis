@@ -30,7 +30,7 @@ flatten_params_helper = (params, out = {}, sep= ", ", depth=1)->
     switch type v
       when "table"
         flatten_params_helper v, out, sep, depth + 1
-      when "string", "number"
+      when "string"
         insert out, ("%q")\format v
       else
         insert out, tostring v
