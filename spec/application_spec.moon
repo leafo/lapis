@@ -779,6 +779,22 @@ describe "lapis.application", ->
       assert.same 301, status
       assert.same "http://localhost/world/", headers.location
 
+      status, _, headers = assert_request app, "////"
+      assert.same 301, status
+      assert.same "http://localhost/", headers.location
+
+    it "strips trailing / in linear time", ->
+      app = lapis.Application!
+      app\match "/", ->
+      app\build_router!
+
+      path = "/" .. string.rep("/", 100000) .. "a//"
+      start = os.clock!
+      status, _, headers = simulate_request app, path, allow_error: true
+      assert.true os.clock! - start < 1
+      assert.same 301, status
+      assert.same "http://localhost/a/", headers.location
+
     it "doesn't redirect off domain when stripping trailing /", ->
       app = lapis.Application!
       app\match "/", ->

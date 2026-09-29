@@ -292,7 +292,7 @@ do
       local path = self.req.parsed_url.path
       if path:match("./$") then
         if path:match("//$") then
-          path = (path:gsub("/+$", "/"))
+          path = (path:match("^(.*[^/])/+$") or "") .. "/"
         else
           path = (path:gsub("/$", ""))
         end

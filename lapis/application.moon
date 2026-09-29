@@ -366,7 +366,7 @@ class Application
       -- multiple trailing slashes are collapsed to one first, so a route that
       -- ends in / can still match, a single trailing slash is removed
       path = if path\match "//$"
-        (path\gsub "/+$", "/")
+        (path\match("^(.*[^/])/+$") or "") .. "/"
       else
         (path\gsub "/$", "")
 
