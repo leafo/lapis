@@ -529,7 +529,7 @@ $options_table{
   },
   {
     name = $self_ref{"req.read_body_as_string"},
-    description = "A function that returns the raw body of the request as a string. Useful when handling a content type that Lapis does not parse automatically",
+    description = "A function that returns the raw body of the request as a string. Useful when handling a content type that Lapis does not parse automatically. With OpenResty, this returns `nil` if nginx buffered the body to a temporary file because it was larger than `client_body_buffer_size`",
     example = dual_code{[[
       app\post "/webhook", =>
         body = @req\read_body_as_string!
