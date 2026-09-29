@@ -105,6 +105,29 @@ describe "lapis.request", ->
         "four[][][]": "2"
       }, params
 
+    it "parses nested params with unbalanced brackets", ->
+      assert.same 200, (simulate_request QueryApp, "/hello?one[a[b]=x&two[a]]=y&three[[[=z&four[a][b=w")
+
+      assert.same {
+        one: {
+          "a[b": "x"
+        }
+        two: {
+          a: "y"
+        }
+        "three[[[": "z"
+        four: {
+          a: "w"
+        }
+      }, params
+
+    it "parses long key of unclosed brackets in linear time", ->
+      key = "a" .. string.rep "[", 100000
+      start = os.clock!
+      assert.same 200, (simulate_request QueryApp, "/hello?#{key}=x")
+      assert.true os.clock! - start < 1
+      assert.same { [key]: "x" }, params
+
   describe "json request", ->
     import json_params from require "lapis.application"
 

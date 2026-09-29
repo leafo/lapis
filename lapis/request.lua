@@ -319,15 +319,37 @@ do
         if front then
           local curr = self.params
           local has_nesting = false
-          for match in k:gmatch("%[([^%]]+)%]") do
-            has_nesting = true
-            local new = curr[front]
-            if type(new) ~= "table" then
-              new = { }
-              curr[front] = new
+          local pos = 1
+          while true do
+            local _continue_0 = false
+            repeat
+              local open = k:find("[", pos, true)
+              if not (open) then
+                break
+              end
+              local close = k:find("]", open + 1, true)
+              if not (close) then
+                break
+              end
+              pos = close + 1
+              if close == open + 1 then
+                _continue_0 = true
+                break
+              end
+              local match = k:sub(open + 1, close - 1)
+              has_nesting = true
+              local new = curr[front]
+              if type(new) ~= "table" then
+                new = { }
+                curr[front] = new
+              end
+              curr = new
+              front = match
+              _continue_0 = true
+            until true
+            if not _continue_0 then
+              break
             end
-            curr = new
-            front = match
           end
           if has_nesting then
             curr[front] = v

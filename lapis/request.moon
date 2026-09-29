@@ -189,7 +189,18 @@ class Request
         if front
           curr = @params
           has_nesting = false
-          for match in k\gmatch "%[([^%]]+)%]"
+          -- equivalent to k\gmatch "%[([^%]]+)%]", but plain find keeps it
+          -- linear when there are many [ without a closing ]
+          pos = 1
+          while true
+            open = k\find "[", pos, true
+            break unless open
+            close = k\find "]", open + 1, true
+            break unless close
+            pos = close + 1
+            continue if close == open + 1 -- skip empty []
+
+            match = k\sub open + 1, close - 1
             has_nesting = true
             new = curr[front]
             if type(new) != "table"
