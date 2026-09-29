@@ -6,7 +6,7 @@ schema = require "lapis.db.mysql.schema"
 
 unpack = unpack or table.unpack
 
-import sorted_pairs from require "spec.helpers"
+import sorted_pairs, with_query_fn from require "spec.helpers"
 
 -- TODO: we can't test escape_literal with strings here because we need a
 -- connection for escape function
@@ -327,3 +327,60 @@ describe "lapis.db.mysql", ->
       cat = Cats\load { id: 1, age: 1 }
       _, query = cat\update { age: 2 }, where: db.clause { {"age < ?", 10} }
       assert.same "UPDATE `cats` SET `age` = 2 WHERE `id` = 1 AND (age < 10)", query
+
+  describe "model update result", ->
+    import Model from require "lapis.db.mysql.model"
+
+    class Cats extends Model
+
+    local queries, affected_rows, restore_query
+
+    before_each ->
+      queries = {}
+      affected_rows = 1
+      query = (q) ->
+        table.insert queries, q
+        { :affected_rows }
+
+      restore_query = with_query_fn query, nil, db
+
+    after_each ->
+      restore_query!
+
+    it "stores values into the instance after update", ->
+      cat = Cats\load { id: 1, age: 1, name: "leo" }
+      assert.true (cat\update { age: 2, name: db.NULL })
+      assert.same { "UPDATE `cats` SET `age` = 2, `name` = NULL WHERE `id` = 1" }, queries
+      assert.same { id: 1, age: 2 }, { k, v for k, v in pairs cat }
+
+    it "doesn't change the instance when where matches no rows", ->
+      affected_rows = 0
+      cat = Cats\load { id: 1, age: 1 }
+      assert.false (cat\update { age: 3 }, where: { age: 2 })
+      assert.same 1, cat.age
+
+    it "doesn't change the instance when a constraint fails", ->
+      class ConstrainedCats extends Model
+        @table_name: => "cats"
+        @constraints: {
+          age: (value) => "age too high" if value > 10
+        }
+
+      cat = ConstrainedCats\load { id: 1, age: 1 }
+      assert.same { nil, "age too high" }, { cat\update { age: 20 } }
+      assert.same 1, cat.age
+      assert.same {}, queries
+
+    it "stores updated_at into the instance", ->
+      -- raw since escaping a string literal needs a connection
+      now = db.raw "NOW()"
+      stub(db, "format_date").returns now
+
+      class TimestampCats extends Model
+        @table_name: => "cats"
+        @timestamp: true
+
+      cat = TimestampCats\load { id: 1, age: 1 }
+      assert.true (cat\update { age: 2 })
+      assert.same { "UPDATE `cats` SET `age` = 2, `updated_at` = NOW() WHERE `id` = 1" }, queries
+      assert.equal now, cat.updated_at

@@ -39,6 +39,7 @@ do
           where
         })
       end
+      local update_fields = { }
       local columns
       if type(first) == "table" then
         do
@@ -46,9 +47,10 @@ do
           local _len_0 = 1
           for k, v in pairs(first) do
             if type(k) == "number" then
+              update_fields[v] = self[v]
               _accum_0[_len_0] = v
             else
-              self[k] = v
+              update_fields[k] = v
               _accum_0[_len_0] = k
             end
             _len_0 = _len_0 + 1
@@ -60,35 +62,41 @@ do
           first,
           ...
         }
+        for _index_0 = 1, #columns do
+          local c = columns[_index_0]
+          update_fields[c] = self[c]
+        end
       end
       if next(columns) == nil then
         return nil, "nothing to update"
       end
       if self.__class.constraints then
-        for _, column in pairs(columns) do
+        for _index_0 = 1, #columns do
+          local column = columns[_index_0]
           do
-            local err = self.__class:_check_constraint(column, self[column], self)
+            local err = self.__class:_check_constraint(column, update_fields[column], self)
             if err then
               return nil, err
             end
           end
         end
       end
-      local values
-      do
-        local _tbl_0 = { }
-        for _index_0 = 1, #columns do
-          local col = columns[_index_0]
-          _tbl_0[col] = self[col]
-        end
-        values = _tbl_0
-      end
       if self.__class.timestamp and not (opts and opts.timestamp == false) then
         local time = self.__class.db.format_date()
-        values.updated_at = values.updated_at or time
+        update_fields.updated_at = update_fields.updated_at or time
       end
-      local res = db.update(self.__class:table_name(), values, cond)
-      return (res.affected_rows or 0) > 0, res
+      local res = db.update(self.__class:table_name(), update_fields, cond)
+      local did_update = (res.affected_rows or 0) > 0
+      if did_update then
+        for k, v in pairs(update_fields) do
+          if v == self.__class.db.NULL then
+            self[k] = nil
+          else
+            self[k] = v
+          end
+        end
+      end
+      return did_update, res
     end
   }
   _base_0.__index = _base_0

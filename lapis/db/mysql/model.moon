@@ -87,30 +87,43 @@ class Model extends BaseModel
         where
       }
 
-    columns = if type(first) == "table"
-      for k,v in pairs first
+    update_fields = {}
+    local columns
+
+    if type(first) == "table"
+      columns = for k,v in pairs first
         if type(k) == "number"
+          update_fields[v] = @[v]
           v
         else
-          @[k] = v
+          update_fields[k] = v
           k
     else
-      {first, ...}
+      columns = {first, ...}
+      for c in *columns
+        update_fields[c] = @[c]
 
     return nil, "nothing to update" if next(columns) == nil
 
     if @@constraints
-      for _, column in pairs columns
-        if err = @@_check_constraint column, @[column], @
+      for column in *columns
+        if err = @@_check_constraint column, update_fields[column], @
           return nil, err
-
-    values = { col, @[col] for col in *columns }
 
     if @@timestamp and not (opts and opts.timestamp == false)
       time = @@db.format_date!
-      values.updated_at or= time
+      update_fields.updated_at or= time
 
-    res = db.update @@table_name!, values, cond
-    (res.affected_rows or 0) > 0, res
+    res = db.update @@table_name!, update_fields, cond
+    did_update = (res.affected_rows or 0) > 0
+
+    if did_update
+      for k, v in pairs update_fields
+        if v == @@db.NULL
+          @[k] = nil
+        else
+          @[k] = v
+
+    did_update, res
 
 { :Model, :Enum, :enum, :preload }
