@@ -56,8 +56,7 @@ inject_tuples = (tbl) ->
 parse_query_string = do
   import C, P, S, Ct from require "lpeg"
 
-  -- form decoding, + must be replaced before percent decoding so that %2B
-  -- is preserved as +
+  -- replace + before percent decoding so %2B stays a literal +
   decode = (str) -> unescape (str\gsub "%+", " ")
 
   char = P(1) - P"&"

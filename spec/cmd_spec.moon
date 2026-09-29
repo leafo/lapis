@@ -300,7 +300,13 @@ describe "lapis.cmd.actions.execute", ->
         env = setmetatable { describe: -> }, __index: _G
         fn = assert (loadstring or load) code
         setfenv fn, env
-        fn!
+
+        -- model specs load the app's models module, which doesn't exist here
+        old_models = package.loaded.models
+        package.loaded.models = setmetatable {}, __index: -> {}
+        ok, err = pcall fn
+        package.loaded.models = old_models
+        assert ok, err
 
       for spec_type in *{"models", "applications", "helpers"}
         it "#{spec_type} in lua", ->
