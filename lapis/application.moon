@@ -483,7 +483,9 @@ assert_error = (thing, msg, ...) ->
 ---@return function wrapped_fn Function that parses JSON body before calling handler
 json_params = (fn) ->
   (...) =>
-    if content_type = @req.headers["content-type"]
+    content_type = @req.headers["content-type"]
+    -- a header sent multiple times is read as a table, skip it as ambiguous
+    if type(content_type) == "string"
       -- Header often ends with ;UTF-8
       if string.find content_type\lower!, "application/json", nil, true
         body = @req\read_body_as_string!

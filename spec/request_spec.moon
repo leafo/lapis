@@ -149,6 +149,21 @@ describe "lapis.request", ->
         body: 'helloworldland'
       }
 
+    it "ignores body when content-type is sent multiple times", ->
+      local res
+      class SomeApp extends lapis.Application
+        "/": json_params =>
+          res = @params.thing
+
+      assert_request SomeApp, "/", {
+        headers: {
+          "content-type": {"application/json", "application/json"}
+        }
+        body: '{"thing": 1234}'
+      }
+
+      assert.same nil, res
+
   describe "write", ->
     write = (fn, ...) ->
       class A extends lapis.Application

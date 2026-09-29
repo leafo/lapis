@@ -487,17 +487,15 @@ end
 local json_params
 json_params = function(fn)
   return function(self, ...)
-    do
-      local content_type = self.req.headers["content-type"]
-      if content_type then
-        if string.find(content_type:lower(), "application/json", nil, true) then
-          local body = self.req:read_body_as_string()
-          local success, obj_or_err = pcall(function()
-            return json.decode(body)
-          end)
-          if success then
-            self.__class.support.add_params(self, obj_or_err, "json")
-          end
+    local content_type = self.req.headers["content-type"]
+    if type(content_type) == "string" then
+      if string.find(content_type:lower(), "application/json", nil, true) then
+        local body = self.req:read_body_as_string()
+        local success, obj_or_err = pcall(function()
+          return json.decode(body)
+        end)
+        if success then
+          self.__class.support.add_params(self, obj_or_err, "json")
         end
       end
     end
